@@ -1,33 +1,116 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
+# -------------------------------
+# IntelliJ IDEA / JetBrains
+# -------------------------------
+.idea/
 *.iml
+*.iws
 *.ipr
+out/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+# IntelliJ local workspace files
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries/
+.idea/shelf/
+
+# -------------------------------
+# Maven
+# -------------------------------
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# Maven wrapper JAR is usually kept
+# Do NOT ignore:
+# .mvn/wrapper/maven-wrapper.jar
+
+# -------------------------------
+# Gradle
+# -------------------------------
+.gradle/
 build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+!gradle/wrapper/gradle-wrapper.jar
 
-### VS Code ###
+# -------------------------------
+# Spring Boot / Logs
+# -------------------------------
+logs/
+*.log
+*.log.*
+spring.log
+
+# -------------------------------
+# Environment / Secrets
+# -------------------------------
+.env
+.env.*
+*.env
+application-local.properties
+application-local.yml
+application-dev.properties
+application-dev.yml
+application-prod.properties
+application-prod.yml
+
+# Keep main config files if they do not contain secrets
+# src/main/resources/application.properties
+# src/main/resources/application.yml
+
+# -------------------------------
+# Java compiled files
+# -------------------------------
+*.class
+*.jar
+*.war
+*.ear
+
+# -------------------------------
+# OS generated files
+# -------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -------------------------------
+# VS Code
+# -------------------------------
 .vscode/
+
+# -------------------------------
+# Eclipse / STS
+# -------------------------------
+.project
+.classpath
+.settings/
+.springBeans
+.sts4-cache/
+
+# -------------------------------
+# Temporary files
+# -------------------------------
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# -------------------------------
+# Test / Coverage reports
+# -------------------------------
+coverage/
+*.lcov
+.jacoco/
+jacoco.exec
+
+# -------------------------------
+# Node / Frontend if used
+# -------------------------------
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
