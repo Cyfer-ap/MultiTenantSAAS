@@ -1,0 +1,58 @@
+1. Project setup using spring initializer
+
+2. Dependencies:
+- Spring Web : To create RESTful web services using Spring MVC. It provides features for building web applications, including RESTful APIs.
+- Spring Boot DevTools : Provides additional development tools and features, such as automatic restarts and live reload, to enhance the development experience.
+- Validation : Provides support for validating Java beans using annotations. It allows you to define validation rules for your data models and ensures that the data meets those rules before processing it.
+- Lombok : A Java library that helps reduce boilerplate code by generating common methods (like getters, setters, toString, etc.) at compile time using annotations. It can help improve code readability and maintainability.
+- Spring Boot Actuator : Provides production-ready features for monitoring and managing your Spring Boot application. It includes endpoints for health checks, metrics, and other application insights.
+
+3. Spring Boot Application starts using this method:
+         @SpringBootApplication
+         public class MultitenantSaasApplication {
+             public static void main(String[] args) {
+                 SpringApplication.run(MultitenantSaasApplication.class, args);
+             }
+         }
+	what it does?
+
+ 	1. Start the application
+    2. Auto-configure required components
+    3. Scan your package for controllers, services, configs, etc.
+
+4. Create a REST controller to handle HTTP requests and define endpoints for your application.
+
+5. ResponseEntity lets us control the HTTP response properly
+	:- Instead of every API returning random formats, all future endpoints can return a consistent structure:
+
+        {
+          "success": true,
+          "message": "...",
+          "data": "...",
+          "timestamp": "..."
+        }
+
+	For example:
+	ResponseEntity.ok(...)
+	means:
+	HTTP 200 OK
+
+6. Record is a compact Java class used for immutable data objects.
+
+                  This:
+                  ApiResponse<T>
+                  means the response can hold any type of data.
+                  Example:
+                  ApiResponse<String>
+                  ApiResponse<Tenant>
+                  ApiResponse<List<User>>
+
+                  So later, if we return a tenant object, we can do:
+                  ApiResponse<TenantResponse>
+
+7. New dependecied added:
+	- spring-boot-starter-data-jpa : Adds JPA and Hibernate support. This lets Java classes map to database tables.
+	- h2 : Adds the H2 database engine.
+	- spring-boot-h2console : Adds the browser-based H2 console support required in Spring Boot 4.
+	- hibernate : implementation used by Spring Boot
+
