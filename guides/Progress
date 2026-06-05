@@ -75,3 +75,23 @@
      :- @PrePersist runs before the record is first saved.
      :- @PreUpdate runs before the record is updated.
 
+9. Added:
+	TenantRepository → database access
+    TenantService    → business logic
+    TenantController → API endpoints
+    Tenant DTOs      → clean request/response objects
+
+    This is the standard Spring Boot flow:
+    Client → Controller → Service → Repository → Database
+
+    JpaRepository<Tenant, UUID> gives us ready-made database methods:
+    save()
+    findAll()
+    findById()
+    deleteById()
+    existsById()
+
+    The custom methods:
+    	findBySlug(String slug);
+    	existsBySlug(String slug);
+    are automatically implemented by Spring Data JPA based on their method names.
