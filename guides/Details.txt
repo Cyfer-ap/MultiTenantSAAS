@@ -1,0 +1,7 @@
+H2 Console : http://localhost:8081/h2-console
+
+Login:
+	JDBC URL: jdbc:h2:mem:multitenant_saas_db
+    Username: sa
+    Password: empty
+

@@ -50,9 +50,28 @@
                   So later, if we return a tenant object, we can do:
                   ApiResponse<TenantResponse>
 
-7. New dependecied added:
+7. New dependencies added:
 	- spring-boot-starter-data-jpa : Adds JPA and Hibernate support. This lets Java classes map to database tables.
 	- h2 : Adds the H2 database engine.
 	- spring-boot-h2console : Adds the browser-based H2 console support required in Spring Boot 4.
 	- hibernate : implementation used by Spring Boot
+
+8. Added database entity: Tenant
+	Why we added it
+
+    In a multi-tenant SaaS system, almost every business object will eventually belong to a tenant.
+
+    For example, later we may have:
+
+    Tenant → Users
+    Tenant → Roles
+    Tenant → Projects
+    Tenant → Subscriptions
+    Tenant → Settings
+
+     :- @Entity means: This Java class maps to a database table.
+     :- @Id means: This field is the primary key.
+     :- @GeneratedValue means: The database will automatically generate a unique value for this field when a new record is inserted.
+     :- @PrePersist runs before the record is first saved.
+     :- @PreUpdate runs before the record is updated.
 
