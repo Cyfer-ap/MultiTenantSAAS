@@ -5,7 +5,7 @@ import com.chacha.multitenantsaas.dto.TenantResponse;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import org.springframework.stereotype.Service;
-
+import com.chacha.multitenantsaas.exception.DuplicateResourceException;
 import java.util.List;
 
 @Service
@@ -19,7 +19,7 @@ public class TenantService {
 
     public TenantResponse createTenant(TenantCreateRequest request) {
         if (tenantRepository.existsBySlug(request.slug())) {
-            throw new IllegalArgumentException("Tenant slug already exists: " + request.slug());
+            throw new DuplicateResourceException("Tenant slug already exists: " + request.slug());
         }
 
         Tenant tenant = new Tenant(request.name(), request.slug());

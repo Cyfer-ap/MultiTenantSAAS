@@ -95,3 +95,12 @@
     	findBySlug(String slug);
     	existsBySlug(String slug);
     are automatically implemented by Spring Data JPA based on their method names.
+
+What we added
+	DuplicateResourceException
+	ResourceNotFoundException
+	GlobalExceptionHandler
+	Clean validation error response
+	Clean duplicate resource response
+
+	* @RestControllerAdvice is a global error handler. It catches exceptions thrown by any controller and allows us to return a consistent error response format.
