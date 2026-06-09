@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/tenants")
@@ -39,5 +40,26 @@ public class TenantController {
                 ApiResponse.success("Tenants fetched successfully", tenants)
         );
     }
-}
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<TenantResponse>> getTenantById(
+            @PathVariable UUID id
+    ) {
+        TenantResponse tenant = tenantService.getTenantById(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Tenant fetched successfully", tenant)
+        );
+    }
+
+    @GetMapping("/slug/{slug}")
+    public ResponseEntity<ApiResponse<TenantResponse>> getTenantBySlug(
+            @PathVariable String slug
+    ) {
+        TenantResponse tenant = tenantService.getTenantBySlug(slug);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Tenant fetched successfully", tenant)
+        );
+    }
+}

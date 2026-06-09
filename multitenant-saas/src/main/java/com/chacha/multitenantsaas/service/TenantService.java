@@ -3,10 +3,13 @@ package com.chacha.multitenantsaas.service;
 import com.chacha.multitenantsaas.dto.TenantCreateRequest;
 import com.chacha.multitenantsaas.dto.TenantResponse;
 import com.chacha.multitenantsaas.entity.Tenant;
+import com.chacha.multitenantsaas.exception.DuplicateResourceException;
+import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import org.springframework.stereotype.Service;
-import com.chacha.multitenantsaas.exception.DuplicateResourceException;
+
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class TenantService {
@@ -36,6 +39,20 @@ public class TenantService {
                 .toList();
     }
 
+    public TenantResponse getTenantById(UUID id) {
+        Tenant tenant = tenantRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + id));
+
+        return mapToResponse(tenant);
+    }
+
+    public TenantResponse getTenantBySlug(String slug) {
+        Tenant tenant = tenantRepository.findBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with slug: " + slug));
+
+        return mapToResponse(tenant);
+    }
+
     private TenantResponse mapToResponse(Tenant tenant) {
         return new TenantResponse(
                 tenant.getId(),
@@ -47,4 +64,3 @@ public class TenantService {
         );
     }
 }
-

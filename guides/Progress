@@ -104,3 +104,36 @@ What we added
 	Clean duplicate resource response
 
 	* @RestControllerAdvice is a global error handler. It catches exceptions thrown by any controller and allows us to return a consistent error response format.
+
+
+What we added:
+	Get tenant by ID
+	Get tenant by slug
+	ResourceNotFoundException usage
+	Clean 404 responses
+Why we added it: Most future modules will need tenant lookup.
+
+	For example, later when a request comes from:
+
+	acme.yoursaas.com
+
+	or from a header like:
+
+	X-Tenant-Slug: acme
+
+	the backend must resolve:
+
+	slug → tenant record → tenant context
+	What you need to remember
+
+@PathVariable extracts values from the URL.
+
+	Example:
+
+	@GetMapping("/{id}")
+	public ResponseEntity<?> getTenantById(@PathVariable UUID id)
+
+For this URL:  /api/tenants/123
+
+	Spring automatically puts 123 into the id variable.
+

@@ -1,0 +1,65 @@
+Test the APIs
+
+First create a tenant if you do not already have one:
+
+POST http://localhost:8081/api/tenants
+Content-Type: application/json
+
+Body:
+
+{
+  "name": "Acme Corporation",
+  "slug": "acme"
+}
+
+Now fetch all tenants:
+
+GET http://localhost:8081/api/tenants
+
+Copy the returned id.
+
+Then test:
+
+GET http://localhost:8081/api/tenants/{id}
+
+Example:
+
+GET http://localhost:8081/api/tenants/2a3c7f3e-1b8a-4d6c-b3f5-2e1e8f7b9a11
+
+Also test by slug:
+
+GET http://localhost:8081/api/tenants/slug/acme
+
+Expected response:
+
+{
+  "success": true,
+  "message": "Tenant fetched successfully",
+  "data": {
+    "id": "...",
+    "name": "Acme Corporation",
+    "slug": "acme",
+    "status": "ACTIVE",
+    "createdAt": "...",
+    "updatedAt": "..."
+  },
+  "timestamp": "..."
+}
+Test not-found case
+
+Try:
+
+GET http://localhost:8081/api/tenants/slug/unknown-company
+
+Expected response:
+
+{
+  "success": false,
+  "message": "Tenant not found with slug: unknown-company",
+  "data": null,
+  "timestamp": "..."
+}
+
+HTTP status:
+
+404 Not Found
