@@ -1,1 +1,62 @@
-CREATE:
+Health Check
+	GET http://localhost:8081/api/health
+
+	Body: none
+
+Actuator Health
+	GET http://localhost:8081/actuator/health
+
+	Body: none
+
+H2 Console
+	GET http://localhost:8081/h2-console
+
+	Body: none
+
+Create Tenant
+	POST http://localhost:8081/api/tenants
+
+	Body:
+
+	{
+	  "name": "Acme Corporation",
+	  "slug": "acme"
+	}
+
+Get All Tenants
+	GET http://localhost:8081/api/tenants
+
+	Body: none
+
+Get Tenant by ID
+	GET http://localhost:8081/api/tenants/{id}
+
+	Body: none
+
+Get Tenant by Slug
+	GET http://localhost:8081/api/tenants/slug/{slug}
+
+	Body: none
+
+Update Tenant
+	PUT http://localhost:8081/api/tenants/{id}
+
+	Body:
+
+	{
+	  "name": "Acme Corporation Updated",
+	  "slug": "acme-updated"
+	}
+Update Tenant Status
+	PATCH http://localhost:8081/api/tenants/{id}/status
+
+	Body:
+
+	{
+	  "status": "SUSPENDED"
+	}
+
+Valid status values:
+	ACTIVE
+	INACTIVE
+	SUSPENDED

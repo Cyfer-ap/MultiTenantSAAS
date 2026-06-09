@@ -107,4 +107,51 @@ Update:
       "timestamp": "..."
     }
 
+-----------------------------------------------------------------------------------------
 
+Update Tenant Status:
+
+    First get all tenants:
+
+    GET http://localhost:8081/api/tenants
+
+    Copy one tenant id.
+
+    Now update status:
+
+    PATCH http://localhost:8081/api/tenants/{id}/status
+    Content-Type: application/json
+
+    Body:
+
+    {
+      "status": "SUSPENDED"
+    }
+
+    Expected response:
+
+    {
+      "success": true,
+      "message": "Tenant status updated successfully",
+      "data": {
+        "id": "...",
+        "name": "Acme Corporation Updated",
+        "slug": "acme-updated",
+        "status": "SUSPENDED",
+        "createdAt": "...",
+        "updatedAt": "..."
+      },
+      "timestamp": "..."
+    }
+
+    You can also test:
+
+    {
+      "status": "ACTIVE"
+    }
+
+    or:
+
+    {
+      "status": "INACTIVE"
+    }

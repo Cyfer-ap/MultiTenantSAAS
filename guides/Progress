@@ -160,4 +160,32 @@ What we added:
 
 	It allows the same tenant to keep its own slug, but blocks another tenant from using it.
 
+Update Tenant Status:
 
+	TenantStatusUpdateRequest
+	PATCH /api/tenants/{id}/status
+	Tenant activation/deactivation/suspension logic
+	Cleaner invalid JSON/enum error handling
+	Why we added it
+
+	In SaaS platforms, tenant accounts should usually be disabled or suspended, not deleted. This preserves historical data, billing records, audit logs, and user activity.
+
+	What you need to remember
+
+	Use:
+
+	INACTIVE
+
+	when a tenant is simply disabled.
+
+	Use:
+
+	SUSPENDED
+
+	when the tenant is blocked due to billing, abuse, policy violation, or administrative action.
+
+	Use:
+
+	ACTIVE
+
+	when the tenant is allowed to use the platform normally.
