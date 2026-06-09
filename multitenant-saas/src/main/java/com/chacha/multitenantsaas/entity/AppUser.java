@@ -1,0 +1,132 @@
+package com.chacha.multitenantsaas.entity;
+
+import jakarta.persistence.*;
+
+import java.time.Instant;
+import java.util.UUID;
+
+@Entity
+@Table(
+        name = "app_users",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_user_email_per_tenant",
+                        columnNames = {"tenant_id", "email"}
+                )
+        }
+)
+public class AppUser {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
+
+    @Column(nullable = false, length = 150)
+    private String fullName;
+
+    @Column(nullable = false, length = 150)
+    private String email;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private UserRole role = UserRole.TENANT_USER;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private UserStatus status = UserStatus.ACTIVE;
+
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
+
+    private Instant updatedAt;
+
+    public AppUser() {
+    }
+
+    public AppUser(Tenant tenant, String fullName, String email, UserRole role) {
+        this.tenant = tenant;
+        this.fullName = fullName;
+        this.email = email;
+        this.role = role;
+        this.status = UserStatus.ACTIVE;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public Tenant getTenant() {
+        return tenant;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public UserRole getRole() {
+        return role;
+    }
+
+    public UserStatus getStatus() {
+        return status;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public void setTenant(Tenant tenant) {
+        this.tenant = tenant;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role;
+    }
+
+    public void setStatus(UserStatus status) {
+        this.status = status;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+}

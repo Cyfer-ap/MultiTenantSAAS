@@ -189,3 +189,43 @@ Update Tenant Status:
 	ACTIVE
 
 	when the tenant is allowed to use the platform normally.
+
+
+**********************************************************************************************************************************
+
+User Role Management
+What we added:
+
+	UserRole
+    UserStatus
+    AppUser entity
+    AppUserRepository
+
+    Why we added it
+
+    A SaaS user should belong to a specific tenant. That is why AppUser has this relationship:
+
+		@ManyToOne(fetch = FetchType.LAZY)
+		@JoinColumn(name = "tenant_id", nullable = false)
+		private Tenant tenant;
+
+    This means:
+
+    Many users can belong to one tenant.
+    What you need to remember:    We are using AppUser, not User, because User often conflicts with Spring Security classes later.
+
+    Also, this constraint:
+		columnNames = {"tenant_id", "email"}
+    means the same email cannot be repeated inside the same tenant.
+    But later, the same email could theoretically exist in another tenant:
+
+    Tenant A → admin@example.com
+    Tenant B → admin@example.com
+
+    That is a common SaaS design choice.
+
+    Now run the app and check H2 Console:
+
+    SELECT * FROM APP_USERS;
+
+    The table should exist and be empty.
