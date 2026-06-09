@@ -267,3 +267,28 @@ User Creation In a Tenant:
 
     Admin@Acme.com
     admin@acme.com
+
+What we added
+	GET user by ID inside tenant
+	Update user role
+	Update user status
+	Tenant-scoped user lookup
+	Why we added it
+
+	In a multi-tenant system, this is safer:
+
+	/api/tenants/{tenantId}/users/{userId}
+
+	than this:
+
+	/api/users/{userId}
+
+	because every user lookup is constrained by tenantId.
+
+	What you need to remember
+
+	This repository method is important:
+
+	findByTenantIdAndId(UUID tenantId, UUID userId)
+
+	It ensures the user belongs to the requested tenant. This is one of the earliest foundations of tenant isolation.

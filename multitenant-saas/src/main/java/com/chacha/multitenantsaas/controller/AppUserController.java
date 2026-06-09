@@ -7,6 +7,8 @@ import com.chacha.multitenantsaas.service.AppUserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.chacha.multitenantsaas.dto.AppUserRoleUpdateRequest;
+import com.chacha.multitenantsaas.dto.AppUserStatusUpdateRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +43,44 @@ public class AppUserController {
 
         return ResponseEntity.ok(
                 ApiResponse.success("Users fetched successfully", users)
+        );
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponse<AppUserResponse>> getUserById(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID userId
+    ) {
+        AppUserResponse user = appUserService.getUserByTenantAndId(tenantId, userId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("User fetched successfully", user)
+        );
+    }
+
+    @PatchMapping("/{userId}/role")
+    public ResponseEntity<ApiResponse<AppUserResponse>> updateUserRole(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID userId,
+            @Valid @RequestBody AppUserRoleUpdateRequest request
+    ) {
+        AppUserResponse user = appUserService.updateUserRole(tenantId, userId, request);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("User role updated successfully", user)
+        );
+    }
+
+    @PatchMapping("/{userId}/status")
+    public ResponseEntity<ApiResponse<AppUserResponse>> updateUserStatus(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID userId,
+            @Valid @RequestBody AppUserStatusUpdateRequest request
+    ) {
+        AppUserResponse user = appUserService.updateUserStatus(tenantId, userId, request);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("User status updated successfully", user)
         );
     }
 }

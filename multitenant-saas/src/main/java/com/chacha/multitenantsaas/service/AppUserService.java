@@ -9,6 +9,9 @@ import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import org.springframework.stereotype.Service;
+import com.chacha.multitenantsaas.dto.AppUserRoleUpdateRequest;
+import com.chacha.multitenantsaas.dto.AppUserStatusUpdateRequest;
+
 
 import java.util.List;
 import java.util.UUID;
@@ -71,5 +74,48 @@ public class AppUserService {
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );
+    }
+
+    public AppUserResponse getUserByTenantAndId(UUID tenantId, UUID userId) {
+        AppUser user = appUserRepository.findByTenantIdAndId(tenantId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "User not found with id: " + userId + " for tenant: " + tenantId
+                ));
+
+        return mapToResponse(user);
+    }
+
+    public AppUserResponse updateUserRole(
+            UUID tenantId,
+            UUID userId,
+            AppUserRoleUpdateRequest request
+    ) {
+        AppUser user = appUserRepository.findByTenantIdAndId(tenantId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "User not found with id: " + userId + " for tenant: " + tenantId
+                ));
+
+        user.setRole(request.role());
+
+        AppUser updatedUser = appUserRepository.save(user);
+
+        return mapToResponse(updatedUser);
+    }
+
+    public AppUserResponse updateUserStatus(
+            UUID tenantId,
+            UUID userId,
+            AppUserStatusUpdateRequest request
+    ) {
+        AppUser user = appUserRepository.findByTenantIdAndId(tenantId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "User not found with id: " + userId + " for tenant: " + tenantId
+                ));
+
+        user.setStatus(request.status());
+
+        AppUser updatedUser = appUserRepository.save(user);
+
+        return mapToResponse(updatedUser);
     }
 }
