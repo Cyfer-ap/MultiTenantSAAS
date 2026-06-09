@@ -114,3 +114,8 @@ dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+
+data/
+*.mv.db
+*.trace.db
