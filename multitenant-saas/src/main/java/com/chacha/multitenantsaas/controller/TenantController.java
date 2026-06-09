@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.chacha.multitenantsaas.dto.TenantUpdateRequest;
+import com.chacha.multitenantsaas.dto.TenantStatusUpdateRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -73,6 +74,18 @@ public class TenantController {
 
         return ResponseEntity.ok(
                 ApiResponse.success("Tenant updated successfully", tenant)
+        );
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<TenantResponse>> updateTenantStatus(
+            @PathVariable UUID id,
+            @Valid @RequestBody TenantStatusUpdateRequest request
+    ) {
+        TenantResponse tenant = tenantService.updateTenantStatus(id, request);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Tenant status updated successfully", tenant)
         );
     }
 }
