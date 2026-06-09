@@ -7,6 +7,7 @@ import com.chacha.multitenantsaas.exception.DuplicateResourceException;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import org.springframework.stereotype.Service;
+import com.chacha.multitenantsaas.dto.TenantUpdateRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -53,6 +54,25 @@ public class TenantService {
         return mapToResponse(tenant);
     }
 
+    public TenantResponse updateTenant(UUID id, TenantUpdateRequest request) {
+        Tenant tenant = tenantRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + id));
+
+        tenantRepository.findBySlug(request.slug())
+                .ifPresent(existingTenant -> {
+                    if (!existingTenant.getId().equals(id)) {
+                        throw new DuplicateResourceException("Tenant slug already exists: " + request.slug());
+                    }
+                });
+
+        tenant.setName(request.name());
+        tenant.setSlug(request.slug());
+
+        Tenant updatedTenant = tenantRepository.save(tenant);
+
+        return mapToResponse(updatedTenant);
+    }
+
     private TenantResponse mapToResponse(Tenant tenant) {
         return new TenantResponse(
                 tenant.getId(),
@@ -64,3 +84,4 @@ public class TenantService {
         );
     }
 }
+

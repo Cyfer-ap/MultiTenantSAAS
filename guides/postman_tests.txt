@@ -63,3 +63,47 @@ Expected response:
 HTTP status:
 
 404 Not Found
+
+Update:
+
+	Step 4: Test the API
+
+    First, fetch all tenants:
+
+    GET http://localhost:8081/api/tenants
+
+    Copy one tenant id.
+
+    Now send:
+
+    PUT http://localhost:8081/api/tenants/{id}
+    Content-Type: application/json
+
+    Example:
+
+    PUT http://localhost:8081/api/tenants/your-tenant-id-here
+
+    Request body:
+
+    {
+      "name": "Acme Corporation Updated",
+      "slug": "acme-updated"
+    }
+
+    Expected response:
+
+    {
+      "success": true,
+      "message": "Tenant updated successfully",
+      "data": {
+        "id": "...",
+        "name": "Acme Corporation Updated",
+        "slug": "acme-updated",
+        "status": "ACTIVE",
+        "createdAt": "...",
+        "updatedAt": "..."
+      },
+      "timestamp": "..."
+    }
+
+

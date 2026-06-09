@@ -137,3 +137,27 @@ For this URL:  /api/tenants/123
 
 	Spring automatically puts 123 into the id variable.
 
+What we added:
+
+	TenantUpdateRequest
+	PUT /api/tenants/{id}
+	Tenant update logic
+	Duplicate slug protection during update
+	Why we added it
+
+	Tenant data must be editable, but the slug must remain unique because later it will help identify tenants through URLs, headers, or subdomains.
+
+	What you need to remember
+
+	This part protects us from duplicate slugs:
+
+	tenantRepository.findBySlug(request.slug())
+			.ifPresent(existingTenant -> {
+				if (!existingTenant.getId().equals(id)) {
+					throw new DuplicateResourceException("Tenant slug already exists: " + request.slug());
+				}
+			});
+
+	It allows the same tenant to keep its own slug, but blocks another tenant from using it.
+
+
