@@ -1,0 +1,75 @@
+package com.chacha.multitenantsaas.service;
+
+import com.chacha.multitenantsaas.dto.AppUserCreateRequest;
+import com.chacha.multitenantsaas.dto.AppUserResponse;
+import com.chacha.multitenantsaas.entity.AppUser;
+import com.chacha.multitenantsaas.entity.Tenant;
+import com.chacha.multitenantsaas.exception.DuplicateResourceException;
+import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
+import com.chacha.multitenantsaas.repository.AppUserRepository;
+import com.chacha.multitenantsaas.repository.TenantRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class AppUserService {
+
+    private final AppUserRepository appUserRepository;
+    private final TenantRepository tenantRepository;
+
+    public AppUserService(
+            AppUserRepository appUserRepository,
+            TenantRepository tenantRepository
+    ) {
+        this.appUserRepository = appUserRepository;
+        this.tenantRepository = tenantRepository;
+    }
+
+    public AppUserResponse createUser(UUID tenantId, AppUserCreateRequest request) {
+        Tenant tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+
+        String normalizedEmail = request.email().trim().toLowerCase();
+
+        if (appUserRepository.existsByTenantIdAndEmail(tenantId, normalizedEmail)) {
+            throw new DuplicateResourceException("User email already exists for this tenant: " + normalizedEmail);
+        }
+
+        AppUser user = new AppUser(
+                tenant,
+                request.fullName().trim(),
+                normalizedEmail,
+                request.role()
+        );
+
+        AppUser savedUser = appUserRepository.save(user);
+
+        return mapToResponse(savedUser);
+    }
+
+    public List<AppUserResponse> getUsersByTenant(UUID tenantId) {
+        if (!tenantRepository.existsById(tenantId)) {
+            throw new ResourceNotFoundException("Tenant not found with id: " + tenantId);
+        }
+
+        return appUserRepository.findByTenantId(tenantId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    private AppUserResponse mapToResponse(AppUser user) {
+        return new AppUserResponse(
+                user.getId(),
+                user.getTenant().getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getStatus(),
+                user.getCreatedAt(),
+                user.getUpdatedAt()
+        );
+    }
+}

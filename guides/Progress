@@ -229,3 +229,41 @@ What we added:
     SELECT * FROM APP_USERS;
 
     The table should exist and be empty.
+
+**********************************************************************************************************************
+
+User Creation In a Tenant:
+	What we added:
+
+    AppUserCreateRequest
+    AppUserResponse
+    AppUserService
+    AppUserController
+    POST /api/tenants/{tenantId}/users
+    GET  /api/tenants/{tenantId}/users
+    Why we added it
+
+    This establishes the first parent-child SaaS relationship:
+
+    Tenant → Users
+
+    A user is now scoped under a tenant, which is the foundation for tenant isolation later.
+
+    What you need to remember
+
+    This URL design:
+
+    /api/tenants/{tenantId}/users
+
+    means:
+
+    Manage users belonging to one specific tenant
+
+    Also, we normalize emails before saving:
+
+    request.email().trim().toLowerCase()
+
+    This prevents duplicate-looking emails like:
+
+    Admin@Acme.com
+    admin@acme.com

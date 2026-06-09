@@ -60,3 +60,21 @@ Valid status values:
 	ACTIVE
 	INACTIVE
 	SUSPENDED
+
+Create User in Tenant
+	POST http://localhost:8081/api/tenants/{tenantId}/users
+    Content-Type: application/json
+
+    Body:
+
+    	{
+          "fullName": "Acme Admin",
+          "email": "admin@acme.com",
+          "role": "TENANT_ADMIN"
+        }
+
+Fetch User in Tenant
+	GET http://localhost:8081/api/tenants/{tenantId}/users
+
+	Body: none
+
