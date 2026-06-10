@@ -13,7 +13,7 @@ import com.chacha.multitenantsaas.dto.AppUserRoleUpdateRequest;
 import com.chacha.multitenantsaas.dto.AppUserStatusUpdateRequest;
 import com.chacha.multitenantsaas.dto.AppUserUpdateRequest;
 import com.chacha.multitenantsaas.entity.UserStatus;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,13 +23,16 @@ public class AppUserService {
 
     private final AppUserRepository appUserRepository;
     private final TenantRepository tenantRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public AppUserService(
             AppUserRepository appUserRepository,
-            TenantRepository tenantRepository
+            TenantRepository tenantRepository,
+            PasswordEncoder passwordEncoder
     ) {
         this.appUserRepository = appUserRepository;
         this.tenantRepository = tenantRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public AppUserResponse createUser(UUID tenantId, AppUserCreateRequest request) {
@@ -42,10 +45,13 @@ public class AppUserService {
             throw new DuplicateResourceException("User email already exists for this tenant: " + normalizedEmail);
         }
 
+        String passwordHash = passwordEncoder.encode(request.password());
+
         AppUser user = new AppUser(
                 tenant,
                 request.fullName().trim(),
                 normalizedEmail,
+                passwordHash,
                 request.role()
         );
 

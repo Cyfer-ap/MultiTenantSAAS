@@ -77,4 +77,13 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.failure("Invalid request body. Please check the submitted values.", null));
     }
+
+    @ExceptionHandler(AuthenticationFailedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAuthenticationFailedException(
+            AuthenticationFailedException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.failure(exception.getMessage(), null));
+    }
 }

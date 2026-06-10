@@ -1,0 +1,8 @@
+package com.chacha.multitenantsaas.exception;
+
+public class AuthenticationFailedException extends RuntimeException {
+
+    public AuthenticationFailedException(String message) {
+        super(message);
+    }
+}

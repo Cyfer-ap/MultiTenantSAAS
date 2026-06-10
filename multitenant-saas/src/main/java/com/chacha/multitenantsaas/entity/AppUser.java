@@ -31,6 +31,9 @@ public class AppUser {
     @Column(nullable = false, length = 150)
     private String email;
 
+    @Column(name = "password_hash", length = 255)
+    private String passwordHash;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private UserRole role = UserRole.TENANT_USER;
@@ -47,10 +50,11 @@ public class AppUser {
     public AppUser() {
     }
 
-    public AppUser(Tenant tenant, String fullName, String email, UserRole role) {
+    public AppUser(Tenant tenant, String fullName, String email, String passwordHash, UserRole role) {
         this.tenant = tenant;
         this.fullName = fullName;
         this.email = email;
+        this.passwordHash = passwordHash;
         this.role = role;
         this.status = UserStatus.ACTIVE;
     }
@@ -128,5 +132,13 @@ public class AppUser {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 }
