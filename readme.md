@@ -1,8 +1,10 @@
 # Multi-Tenant SaaS Backend
 
-A learning-focused Multi-Tenant SaaS backend built with Spring Boot.
+A learning-focused Multi-Tenant SaaS backend built with **Spring Boot**.
 
-The goal of this project is to understand and implement core SaaS backend concepts step by step, including tenant management, authentication, role-based access control, tenant isolation, subscription handling, and scalable API design.
+The goal of this project is to understand and implement core SaaS backend concepts step by step, including tenant management, user management, authentication, role-based access control, tenant isolation, subscription handling, and scalable REST API design.
+
+---
 
 ## Project Blueprint
 
@@ -11,16 +13,19 @@ This backend will gradually include the following modules:
 ```text
 1. Project setup and base architecture
 2. Tenant management
-3. User authentication and authorization
-4. Role-based access control
-5. Tenant isolation
-6. Organization/user management
-7. Subscription and plan management
-8. Admin and tenant dashboards API
-9. Audit logging
-10. Production database migration
-11. API documentation and testing
+3. User management
+4. Authentication and JWT authorization
+5. Role-based access control
+6. Tenant isolation
+7. Organization-level operations
+8. Subscription and plan management
+9. Admin and tenant dashboard APIs
+10. Audit logging
+11. PostgreSQL migration
+12. API documentation and testing
 ```
+
+---
 
 ## Tech Stack
 
@@ -30,41 +35,38 @@ Language: Java 21
 Build Tool: Maven
 Database: H2 for development, PostgreSQL later
 ORM: Spring Data JPA / Hibernate
+Security: Spring Security
+Authentication: JWT
 API Style: REST
 Server Port: 8081
 ```
+
+---
 
 ## Current Package Structure
 
 ```text
 com.chacha.multitenantsaas
  ├── common
- │   └── ApiResponse.java
  ├── config
  ├── controller
- │   ├── HealthCheckController.java
- │   └── TenantController.java
  ├── dto
- │   ├── TenantCreateRequest.java
- │   └── TenantResponse.java
  ├── entity
- │   ├── Tenant.java
- │   └── TenantStatus.java
  ├── exception
  ├── repository
- │   └── TenantRepository.java
  ├── security
  ├── service
- │   └── TenantService.java
  ├── tenant
  └── MultitenantSaasApplication.java
 ```
+
+---
 
 ## What Has Been Done So Far
 
 The project has been initialized with Spring Boot and Maven.
 
-A clean base package structure has been created for future SaaS modules. The backend is running on port `8081`.
+A clean package structure has been created for building the SaaS backend step by step. The backend currently runs on port `8081`.
 
 Currently completed:
 
@@ -73,93 +75,61 @@ Spring Boot project setup
 Base package structure
 Health check API
 Common API response wrapper
+Global exception handling
 H2 database integration
+File-based H2 persistence
 Spring Data JPA setup
 Hibernate configuration
 H2 browser console setup
 Actuator health endpoint
-Tenant entity creation
-Tenant status enum
-Tenant repository
-Tenant request and response DTOs
-Tenant service layer
-Tenant controller
-Basic tenant creation API
-Basic tenant listing API
+
+Tenant entity
+Tenant status management
+Tenant CRUD-style APIs
+Tenant soft delete / deactivation
+
+User entity under tenant
+User role and status management
+Tenant-scoped user APIs
+User soft delete / deactivation
+
+Dashboard summary API
+
+Spring Security setup
+Password hashing with BCrypt
+Basic login API
+JWT access token generation
 ```
 
-## Current Endpoints
+---
+
+## Main Modules Implemented
+
+### 1. Health Check
+
+Used to verify that the backend is running correctly.
 
 ```text
-GET  /api/health
-GET  /actuator/health
-GET  /h2-console
-
-POST /api/tenants
-GET  /api/tenants
+GET /api/health
+GET /actuator/health
 ```
 
-## API Response Format
+---
 
-All custom APIs currently follow a common response structure:
-
-```json
-{
-  "success": true,
-  "message": "Operation message",
-  "data": {},
-  "timestamp": "2026-06-05T00:00:00Z"
-}
-```
-
-This response format is handled through:
-
-```text
-common/ApiResponse.java
-```
-
-## Health Check API
-
-### Request
-
-```http
-GET http://localhost:8081/api/health
-```
-
-### Expected Response
-
-```json
-{
-  "success": true,
-  "message": "Health check successful",
-  "data": "Multi-Tenant SaaS Backend is running on port 8081",
-  "timestamp": "..."
-}
-```
-
-## Tenant Module
-
-The first SaaS domain module has been started.
+### 2. Tenant Management
 
 A tenant represents an organization, company, or customer using the SaaS platform.
 
-Example:
+Current tenant features:
 
 ```text
-Tenant 1 → Acme Corporation
-Tenant 2 → Demo School
-Tenant 3 → BlueSoft Technologies
-```
-
-The current Tenant model includes:
-
-```text
-id
-name
-slug
-status
-createdAt
-updatedAt
+Create tenant
+List tenants
+Get tenant by ID
+Get tenant by slug
+Update tenant details
+Update tenant status
+Deactivate tenant
 ```
 
 Tenant status values:
@@ -170,78 +140,160 @@ INACTIVE
 SUSPENDED
 ```
 
-## Tenant APIs
+Tenant endpoints:
 
-### Create Tenant
-
-```http
-POST http://localhost:8081/api/tenants
-Content-Type: application/json
+```text
+POST   /api/tenants
+GET    /api/tenants
+GET    /api/tenants/{id}
+GET    /api/tenants/slug/{slug}
+PUT    /api/tenants/{id}
+PATCH  /api/tenants/{id}/status
+DELETE /api/tenants/{id}
 ```
 
-Request body:
+---
 
-```json
-{
-  "name": "Acme Corporation",
-  "slug": "acme"
-}
+### 3. User Management
+
+Users are created inside a tenant. This keeps user operations tenant-scoped and prepares the project for tenant isolation.
+
+Current user features:
+
+```text
+Create user under tenant
+List users under tenant
+Get single user under tenant
+Update user details
+Update user role
+Update user status
+Deactivate user
 ```
 
-Expected response:
+User roles:
+
+```text
+TENANT_ADMIN
+TENANT_MANAGER
+TENANT_USER
+```
+
+User status values:
+
+```text
+ACTIVE
+INACTIVE
+SUSPENDED
+```
+
+User endpoints:
+
+```text
+POST   /api/tenants/{tenantId}/users
+GET    /api/tenants/{tenantId}/users
+GET    /api/tenants/{tenantId}/users/{userId}
+PUT    /api/tenants/{tenantId}/users/{userId}
+PATCH  /api/tenants/{tenantId}/users/{userId}/role
+PATCH  /api/tenants/{tenantId}/users/{userId}/status
+DELETE /api/tenants/{tenantId}/users/{userId}
+```
+
+---
+
+### 4. Authentication
+
+Basic authentication flow has been added.
+
+Current authentication features:
+
+```text
+Password field added during user creation
+Password stored as BCrypt hash
+Login validates tenant, user, password, tenant status, and user status
+JWT access token generated after successful login
+```
+
+Authentication endpoint:
+
+```text
+POST /api/tenants/{tenantId}/auth/login
+```
+
+Current login response includes:
+
+```text
+tenantId
+userId
+fullName
+email
+role
+accessToken
+tokenType
+expiresInSeconds
+```
+
+JWT validation and protected endpoints are not yet implemented.
+
+---
+
+### 5. Dashboard Summary
+
+A basic dashboard summary endpoint has been added to quickly check system-level counts.
+
+Current dashboard data includes:
+
+```text
+Total tenants
+Active tenants
+Inactive tenants
+Suspended tenants
+Total users
+Active users
+Inactive users
+Suspended users
+```
+
+Dashboard endpoint:
+
+```text
+GET /api/dashboard/summary
+```
+
+---
+
+## API Response Format
+
+All custom APIs follow a common response format:
 
 ```json
 {
   "success": true,
-  "message": "Tenant created successfully",
-  "data": {
-    "id": "...",
-    "name": "Acme Corporation",
-    "slug": "acme",
-    "status": "ACTIVE",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
+  "message": "Operation message",
+  "data": {},
   "timestamp": "..."
 }
 ```
 
-### Get All Tenants
+This response format is handled through:
 
-```http
-GET http://localhost:8081/api/tenants
+```text
+common/ApiResponse.java
 ```
 
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "Tenants fetched successfully",
-  "data": [
-    {
-      "id": "...",
-      "name": "Acme Corporation",
-      "slug": "acme",
-      "status": "ACTIVE",
-      "createdAt": "...",
-      "updatedAt": "..."
-    }
-  ],
-  "timestamp": "..."
-}
-```
+---
 
 ## Local Development Configuration
 
-The project currently uses an in-memory H2 database for development.
+The project currently uses H2 for local development.
+
+Recommended file-based H2 configuration:
 
 ```properties
 spring.application.name=multitenant-saas
 
 server.port=8081
 
-spring.datasource.url=jdbc:h2:mem:multitenant_saas_db
+spring.datasource.url=jdbc:h2:file:./data/multitenant_saas_db
 spring.datasource.driver-class-name=org.h2.Driver
 spring.datasource.username=sa
 spring.datasource.password=
@@ -255,7 +307,13 @@ spring.h2.console.path=/h2-console
 
 management.endpoints.web.exposure.include=health,info
 management.endpoint.health.show-details=always
+
+app.jwt.secret=change-this-secret-key-to-a-secure-32-byte-minimum-value-for-dev
+app.jwt.expiration-minutes=60
+app.jwt.issuer=multitenant-saas
 ```
+
+---
 
 ## H2 Console
 
@@ -265,19 +323,25 @@ H2 Console URL:
 http://localhost:8081/h2-console
 ```
 
-Login details:
+Login details for file-based H2:
 
 ```text
-JDBC URL: jdbc:h2:mem:multitenant_saas_db
+JDBC URL: jdbc:h2:file:./data/multitenant_saas_db
 Username: sa
 Password: empty
 ```
 
-Useful query:
+Useful queries:
 
 ```sql
 SELECT * FROM TENANTS;
 ```
+
+```sql
+SELECT * FROM APP_USERS;
+```
+
+---
 
 ## Current Maven Dependencies
 
@@ -291,11 +355,13 @@ Spring Data JPA
 Hibernate
 H2 Database
 H2 Console
+Spring Security
+OAuth2 Resource Server / JWT support
 Lombok
 Spring Boot DevTools
 ```
 
-For Spring Boot 4, H2 Console support requires the H2 console dependency:
+For Spring Boot 4, H2 Console support requires:
 
 ```xml
 <dependency>
@@ -303,6 +369,8 @@ For Spring Boot 4, H2 Console support requires the H2 console dependency:
     <artifactId>spring-boot-h2console</artifactId>
 </dependency>
 ```
+
+---
 
 ## Current Development Flow
 
@@ -320,59 +388,54 @@ Repository
 Database
 ```
 
-For the Tenant module:
+For tenant-scoped user operations:
 
 ```text
-TenantController
+Client
   ↓
-TenantService
+AppUserController
   ↓
-TenantRepository
+AppUserService
   ↓
-TENANTS table
+AppUserRepository
+  ↓
+APP_USERS table
 ```
+
+---
 
 ## Current Limitations
 
-The project is still in early development.
+The project is still in active development.
 
 Currently missing:
 
 ```text
-Global exception handling
-Update tenant API
-Get tenant by ID API
-Get tenant by slug API
-Delete or deactivate tenant API
-Authentication
-Authorization
-Tenant isolation
-User management
-Role and permission system
+JWT token validation
+Protected API endpoints
+Role-based authorization
+Tenant context resolution
+Automatic tenant isolation
+Refresh tokens
+Logout handling
+Audit logging
+Subscription and plan management
 PostgreSQL integration
+Database migrations
 API documentation
 Automated tests
 ```
 
+---
+
 ## Next Planned Step
 
-The next development step is to add proper global exception handling.
+The next development step is to validate JWT tokens and protect selected APIs.
 
-This will improve API error responses for cases such as:
-
-```text
-Duplicate tenant slug
-Invalid request body
-Validation errors
-Resource not found
-Unexpected server errors
-```
-
-After that, the Tenant module can be expanded with additional APIs such as:
+This will allow the backend to start enforcing authentication using:
 
 ```text
-Get tenant by ID
-Get tenant by slug
-Update tenant
-Deactivate tenant
+Authorization: Bearer <accessToken>
 ```
+
+After that, the project can move toward role-based authorization and tenant-aware request handling.
