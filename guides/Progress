@@ -292,3 +292,34 @@ What we added
 	findByTenantIdAndId(UUID tenantId, UUID userId)
 
 	It ensures the user belongs to the requested tenant. This is one of the earliest foundations of tenant isolation.
+
+************************************************************************************************************************
+
+Update User Details:
+	What we added
+    AppUserUpdateRequest
+    PUT /api/tenants/{tenantId}/users/{userId}
+    User full name update
+    User email update
+    Duplicate email protection inside tenant
+    Why we added it
+
+    Users should be editable, but email uniqueness must remain tenant-scoped.
+
+    This means this is blocked:
+
+    Same tenant → same email twice
+
+    But this is allowed by our current design:
+
+    Tenant A → admin@example.com
+    Tenant B → admin@example.com
+
+	What you need to remember:
+		This method keeps the lookup tenant-safe:
+
+		findByTenantIdAndId(tenantId, userId)
+
+		So even during update, a user from one tenant cannot be modified through another tenant’s URL.
+
+The duplicate email check is similar to the tenant slug check we did earlier:
