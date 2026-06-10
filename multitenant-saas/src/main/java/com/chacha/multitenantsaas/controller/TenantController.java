@@ -88,4 +88,15 @@ public class TenantController {
                 ApiResponse.success("Tenant status updated successfully", tenant)
         );
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<TenantResponse>> deactivateTenant(
+            @PathVariable UUID id
+    ) {
+        TenantResponse tenant = tenantService.deactivateTenant(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Tenant deactivated successfully", tenant)
+        );
+    }
 }

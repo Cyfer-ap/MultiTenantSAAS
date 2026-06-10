@@ -322,4 +322,29 @@ Update User Details:
 
 		So even during update, a user from one tenant cannot be modified through another tenant’s URL.
 
-The duplicate email check is similar to the tenant slug check we did earlier:
+Deactivate Tenant:
+	What we added
+    DELETE /api/tenants/{id}
+    Tenant soft delete behavior
+    Tenant deactivation logic
+    Why we added it
+
+    In SaaS systems, tenants should usually not be physically deleted because they may have users, subscriptions, billing records, audit logs, and historical data.
+
+    So we keep the tenant record and mark it inactive.
+
+    What you need to remember
+
+    This is called soft delete.
+
+    The API uses:
+
+    DELETE /api/tenants/{id}
+
+    But internally we do:
+
+    tenant.setStatus(TenantStatus.INACTIVE);
+
+    So the record remains in the database.
+
+
