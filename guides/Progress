@@ -347,4 +347,25 @@ Deactivate Tenant:
 
     So the record remains in the database.
 
+************************************************************************************************************************
 
+DashBoard Summary endpoint:
+    What we added
+    DashboardSummaryResponse
+    DashboardService
+    DashboardController
+    GET /api/dashboard/summary
+    Repository count methods
+    Why we added it
+
+    This gives us a quick system-level view before moving into authentication and authorization.
+
+    What you need to remember
+
+    Spring Data JPA can create query methods from method names.
+
+    This:
+
+    long countByStatus(UserStatus status);
+
+    automatically becomes a SQL count query filtered by status.

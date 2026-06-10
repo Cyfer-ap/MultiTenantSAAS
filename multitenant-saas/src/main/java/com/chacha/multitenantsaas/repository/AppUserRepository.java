@@ -1,6 +1,7 @@
 package com.chacha.multitenantsaas.repository;
 
 import com.chacha.multitenantsaas.entity.AppUser;
+import com.chacha.multitenantsaas.entity.UserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -16,4 +17,6 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
     Optional<AppUser> findByTenantIdAndEmail(UUID tenantId, String email);
 
     boolean existsByTenantIdAndEmail(UUID tenantId, String email);
+
+    long countByStatus(UserStatus status);
 }
