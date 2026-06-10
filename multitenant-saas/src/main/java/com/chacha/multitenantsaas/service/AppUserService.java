@@ -11,6 +11,7 @@ import com.chacha.multitenantsaas.repository.TenantRepository;
 import org.springframework.stereotype.Service;
 import com.chacha.multitenantsaas.dto.AppUserRoleUpdateRequest;
 import com.chacha.multitenantsaas.dto.AppUserStatusUpdateRequest;
+import com.chacha.multitenantsaas.dto.AppUserUpdateRequest;
 
 
 import java.util.List;
@@ -113,6 +114,35 @@ public class AppUserService {
                 ));
 
         user.setStatus(request.status());
+
+        AppUser updatedUser = appUserRepository.save(user);
+
+        return mapToResponse(updatedUser);
+    }
+
+    public AppUserResponse updateUser(
+            UUID tenantId,
+            UUID userId,
+            AppUserUpdateRequest request
+    ) {
+        AppUser user = appUserRepository.findByTenantIdAndId(tenantId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "User not found with id: " + userId + " for tenant: " + tenantId
+                ));
+
+        String normalizedEmail = request.email().trim().toLowerCase();
+
+        appUserRepository.findByTenantIdAndEmail(tenantId, normalizedEmail)
+                .ifPresent(existingUser -> {
+                    if (!existingUser.getId().equals(userId)) {
+                        throw new DuplicateResourceException(
+                                "User email already exists for this tenant: " + normalizedEmail
+                        );
+                    }
+                });
+
+        user.setFullName(request.fullName().trim());
+        user.setEmail(normalizedEmail);
 
         AppUser updatedUser = appUserRepository.save(user);
 

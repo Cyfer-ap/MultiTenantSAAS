@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.chacha.multitenantsaas.dto.AppUserRoleUpdateRequest;
 import com.chacha.multitenantsaas.dto.AppUserStatusUpdateRequest;
+import com.chacha.multitenantsaas.dto.AppUserUpdateRequest;
+
 
 import java.util.List;
 import java.util.UUID;
@@ -83,4 +85,18 @@ public class AppUserController {
                 ApiResponse.success("User status updated successfully", user)
         );
     }
+
+    @PutMapping("/{userId}")
+    public ResponseEntity<ApiResponse<AppUserResponse>> updateUser(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID userId,
+            @Valid @RequestBody AppUserUpdateRequest request
+    ) {
+        AppUserResponse user = appUserService.updateUser(tenantId, userId, request);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("User updated successfully", user)
+        );
+    }
+
 }
