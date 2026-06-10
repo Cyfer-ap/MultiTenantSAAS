@@ -21,15 +21,18 @@ public class AuthService {
     private final TenantRepository tenantRepository;
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public AuthService(
             TenantRepository tenantRepository,
             AppUserRepository appUserRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService
     ) {
         this.tenantRepository = tenantRepository;
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public LoginResponse login(UUID tenantId, LoginRequest request) {
@@ -62,12 +65,17 @@ public class AuthService {
             throw new AuthenticationFailedException("Invalid email or password");
         }
 
+        String accessToken = jwtService.generateAccessToken(tenant, user);
+
         return new LoginResponse(
                 tenant.getId(),
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),
                 user.getRole(),
+                accessToken,
+                "Bearer",
+                jwtService.getExpirationSeconds(),
                 "Login successful"
         );
     }
