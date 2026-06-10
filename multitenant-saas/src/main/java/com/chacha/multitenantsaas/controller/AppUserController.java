@@ -98,5 +98,15 @@ public class AppUserController {
                 ApiResponse.success("User updated successfully", user)
         );
     }
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<ApiResponse<AppUserResponse>> deactivateUser(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID userId
+    ) {
+        AppUserResponse user = appUserService.deactivateUser(tenantId, userId);
 
+        return ResponseEntity.ok(
+                ApiResponse.success("User deactivated successfully", user)
+        );
+    }
 }

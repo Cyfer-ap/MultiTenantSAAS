@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.chacha.multitenantsaas.dto.AppUserRoleUpdateRequest;
 import com.chacha.multitenantsaas.dto.AppUserStatusUpdateRequest;
 import com.chacha.multitenantsaas.dto.AppUserUpdateRequest;
+import com.chacha.multitenantsaas.entity.UserStatus;
 
 
 import java.util.List;
@@ -148,4 +149,19 @@ public class AppUserService {
 
         return mapToResponse(updatedUser);
     }
+
+    public AppUserResponse deactivateUser(UUID tenantId, UUID userId) {
+        AppUser user = appUserRepository.findByTenantIdAndId(tenantId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "User not found with id: " + userId + " for tenant: " + tenantId
+                ));
+
+        user.setStatus(UserStatus.INACTIVE);
+
+        AppUser updatedUser = appUserRepository.save(user);
+
+        return mapToResponse(updatedUser);
+    }
+
+
 }
