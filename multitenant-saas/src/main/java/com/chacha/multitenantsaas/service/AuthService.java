@@ -21,6 +21,8 @@ import com.chacha.multitenantsaas.dto.TokenRefreshResponse;
 import com.chacha.multitenantsaas.dto.LogoutRequest;
 import com.chacha.multitenantsaas.dto.LogoutResponse;
 import org.springframework.security.oauth2.jwt.Jwt;
+import com.chacha.multitenantsaas.dto.ChangePasswordRequest;
+import com.chacha.multitenantsaas.dto.ChangePasswordResponse;
 import java.util.UUID;
 
 @Service
@@ -157,5 +159,50 @@ public class AuthService {
         refreshTokenService.revokeAllActiveTokensForUser(currentUser.userId());
 
         return new LogoutResponse("Logged out from all devices successfully");
+    }
+
+    public ChangePasswordResponse changePassword(Jwt jwt, ChangePasswordRequest request) {
+        AuthenticatedUserContext currentUser = jwtContextService.getCurrentUser(jwt);
+
+        AppUser user = appUserRepository.findByTenantIdAndId(
+                currentUser.tenantId(),
+                currentUser.userId()
+        ).orElseThrow(() -> new AuthenticationFailedException("User not found"));
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new AuthenticationFailedException("User account is not active");
+        }
+
+        if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
+            throw new AuthenticationFailedException("Password is not set for this user");
+        }
+
+        boolean currentPasswordMatches = passwordEncoder.matches(
+                request.currentPassword(),
+                user.getPasswordHash()
+        );
+
+        if (!currentPasswordMatches) {
+            throw new AuthenticationFailedException("Current password is incorrect");
+        }
+
+        if (!request.newPassword().equals(request.confirmPassword())) {
+            throw new IllegalArgumentException("New password and confirm password do not match");
+        }
+
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("New password must be different from current password");
+        }
+
+        String newPasswordHash = passwordEncoder.encode(request.newPassword());
+
+        user.setPasswordHash(newPasswordHash);
+        appUserRepository.save(user);
+
+        refreshTokenService.revokeAllActiveTokensForUser(user.getId());
+
+        return new ChangePasswordResponse(
+                "Password changed successfully. Please login again."
+        );
     }
 }
