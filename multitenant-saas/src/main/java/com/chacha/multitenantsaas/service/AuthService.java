@@ -16,7 +16,8 @@ import com.chacha.multitenantsaas.dto.CurrentUserResponse;
 import org.springframework.security.oauth2.jwt.Jwt;
 import com.chacha.multitenantsaas.security.AuthenticatedUserContext;
 import com.chacha.multitenantsaas.security.JwtContextService;
-
+import com.chacha.multitenantsaas.dto.RefreshTokenRequest;
+import com.chacha.multitenantsaas.dto.TokenRefreshResponse;
 
 import java.util.UUID;
 
@@ -28,19 +29,22 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final JwtContextService jwtContextService;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthService(
             TenantRepository tenantRepository,
             AppUserRepository appUserRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            JwtContextService jwtContextService
+            JwtContextService jwtContextService,
+            RefreshTokenService refreshTokenService
     ) {
         this.tenantRepository = tenantRepository;
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.jwtContextService = jwtContextService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     public LoginResponse login(UUID tenantId, LoginRequest request) {
@@ -74,6 +78,7 @@ public class AuthService {
         }
 
         String accessToken = jwtService.generateAccessToken(tenant, user);
+        String refreshToken = refreshTokenService.createRefreshToken(user);
 
         return new LoginResponse(
                 tenant.getId(),
@@ -82,6 +87,7 @@ public class AuthService {
                 user.getEmail(),
                 user.getRole(),
                 accessToken,
+                refreshToken,
                 "Bearer",
                 jwtService.getExpirationSeconds(),
                 "Login successful"
@@ -116,6 +122,24 @@ public class AuthService {
                 user.getEmail(),
                 user.getRole(),
                 user.getStatus()
+        );
+    }
+
+    public TokenRefreshResponse refreshToken(RefreshTokenRequest request) {
+        RefreshTokenService.RefreshTokenData refreshTokenData =
+                refreshTokenService.rotateRefreshToken(request.refreshToken());
+
+        String newAccessToken = jwtService.generateAccessToken(
+                refreshTokenData.tenant(),
+                refreshTokenData.user()
+        );
+
+        return new TokenRefreshResponse(
+                newAccessToken,
+                refreshTokenData.refreshToken(),
+                "Bearer",
+                jwtService.getExpirationSeconds(),
+                "Token refreshed successfully"
         );
     }
 }

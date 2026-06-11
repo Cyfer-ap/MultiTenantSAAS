@@ -11,6 +11,7 @@ public record LoginResponse(
         String email,
         UserRole role,
         String accessToken,
+        String refreshToken,
         String tokenType,
         long expiresInSeconds,
         String message

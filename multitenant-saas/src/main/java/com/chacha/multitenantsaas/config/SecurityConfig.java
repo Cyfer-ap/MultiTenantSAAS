@@ -59,6 +59,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.POST, "/api/tenants").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/tenants/*/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
 
                         .requestMatchers("/api/dashboard/**").hasAuthority("TENANT_ADMIN")
 
