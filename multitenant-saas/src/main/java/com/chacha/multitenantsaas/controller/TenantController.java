@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.chacha.multitenantsaas.dto.TenantUpdateRequest;
 import com.chacha.multitenantsaas.dto.TenantStatusUpdateRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
+
 
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +36,7 @@ public class TenantController {
         );
     }
 
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<TenantResponse>>> getAllTenants() {
         List<TenantResponse> tenants = tenantService.getAllTenants();
@@ -43,6 +46,7 @@ public class TenantController {
         );
     }
 
+    @PreAuthorize("@tenantSecurity.isSameTenant(#id)")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> getTenantById(
             @PathVariable UUID id
@@ -54,6 +58,7 @@ public class TenantController {
         );
     }
 
+    @PreAuthorize("@tenantSecurity.isSameTenantBySlug(#slug)")
     @GetMapping("/slug/{slug}")
     public ResponseEntity<ApiResponse<TenantResponse>> getTenantBySlug(
             @PathVariable String slug
@@ -65,6 +70,7 @@ public class TenantController {
         );
     }
 
+    @PreAuthorize("@tenantSecurity.isTenantAdmin(#id)")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> updateTenant(
             @PathVariable UUID id,
@@ -77,6 +83,7 @@ public class TenantController {
         );
     }
 
+    @PreAuthorize("@tenantSecurity.isTenantAdmin(#id)")
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<TenantResponse>> updateTenantStatus(
             @PathVariable UUID id,
@@ -89,6 +96,7 @@ public class TenantController {
         );
     }
 
+    @PreAuthorize("@tenantSecurity.isTenantAdmin(#id)")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> deactivateTenant(
             @PathVariable UUID id

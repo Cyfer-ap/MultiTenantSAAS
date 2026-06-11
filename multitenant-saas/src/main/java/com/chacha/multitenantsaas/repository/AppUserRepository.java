@@ -19,4 +19,8 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
     boolean existsByTenantIdAndEmail(UUID tenantId, String email);
 
     long countByStatus(UserStatus status);
+
+    long countByTenantId(UUID tenantId);
+
+    long countByTenantIdAndStatus(UUID tenantId, UserStatus status);
 }

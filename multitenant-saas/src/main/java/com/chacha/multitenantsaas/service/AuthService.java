@@ -12,6 +12,8 @@ import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.chacha.multitenantsaas.dto.CurrentUserResponse;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.UUID;
 
@@ -78,5 +80,40 @@ public class AuthService {
                 jwtService.getExpirationSeconds(),
                 "Login successful"
         );
+
+    }
+    public CurrentUserResponse getCurrentUser(Jwt jwt) {
+        try {
+            UUID userId = UUID.fromString(jwt.getSubject());
+            UUID tenantId = UUID.fromString(jwt.getClaimAsString("tenantId"));
+
+            Tenant tenant = tenantRepository.findById(tenantId)
+                    .orElseThrow(() -> new AuthenticationFailedException("Tenant not found"));
+
+            if (tenant.getStatus() != TenantStatus.ACTIVE) {
+                throw new AuthenticationFailedException("Tenant is not active");
+            }
+
+            AppUser user = appUserRepository.findByTenantIdAndId(tenantId, userId)
+                    .orElseThrow(() -> new AuthenticationFailedException("User not found"));
+
+            if (user.getStatus() != UserStatus.ACTIVE) {
+                throw new AuthenticationFailedException("User account is not active");
+            }
+
+            return new CurrentUserResponse(
+                    tenant.getId(),
+                    tenant.getName(),
+                    tenant.getSlug(),
+                    user.getId(),
+                    user.getFullName(),
+                    user.getEmail(),
+                    user.getRole(),
+                    user.getStatus()
+            );
+
+        } catch (IllegalArgumentException exception) {
+            throw new AuthenticationFailedException("Invalid token data");
+        }
     }
 }
