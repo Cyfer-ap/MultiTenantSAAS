@@ -7,6 +7,8 @@ import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
+import com.chacha.multitenantsaas.security.AuthenticatedUserContext;
+import com.chacha.multitenantsaas.security.JwtContextService;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -17,23 +19,22 @@ public class TenantDashboardService {
 
     private final TenantRepository tenantRepository;
     private final AppUserRepository appUserRepository;
+    private final JwtContextService jwtContextService;
 
     public TenantDashboardService(
             TenantRepository tenantRepository,
-            AppUserRepository appUserRepository
+            AppUserRepository appUserRepository,
+            JwtContextService jwtContextService
     ) {
         this.tenantRepository = tenantRepository;
         this.appUserRepository = appUserRepository;
+        this.jwtContextService = jwtContextService;
     }
 
     public TenantDashboardSummaryResponse getTenantSummary(Jwt jwt) {
-        UUID tenantId;
+        AuthenticatedUserContext currentUser = jwtContextService.getCurrentUser(jwt);
 
-        try {
-            tenantId = UUID.fromString(jwt.getClaimAsString("tenantId"));
-        } catch (IllegalArgumentException exception) {
-            throw new AuthenticationFailedException("Invalid token data");
-        }
+        UUID tenantId = currentUser.tenantId();
 
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new AuthenticationFailedException("Tenant not found"));

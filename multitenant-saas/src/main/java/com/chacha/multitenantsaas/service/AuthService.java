@@ -14,6 +14,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.chacha.multitenantsaas.dto.CurrentUserResponse;
 import org.springframework.security.oauth2.jwt.Jwt;
+import com.chacha.multitenantsaas.security.AuthenticatedUserContext;
+import com.chacha.multitenantsaas.security.JwtContextService;
+
 
 import java.util.UUID;
 
@@ -24,17 +27,20 @@ public class AuthService {
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final JwtContextService jwtContextService;
 
     public AuthService(
             TenantRepository tenantRepository,
             AppUserRepository appUserRepository,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService
+            JwtService jwtService,
+            JwtContextService jwtContextService
     ) {
         this.tenantRepository = tenantRepository;
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.jwtContextService = jwtContextService;
     }
 
     public LoginResponse login(UUID tenantId, LoginRequest request) {
@@ -83,37 +89,33 @@ public class AuthService {
 
     }
     public CurrentUserResponse getCurrentUser(Jwt jwt) {
-        try {
-            UUID userId = UUID.fromString(jwt.getSubject());
-            UUID tenantId = UUID.fromString(jwt.getClaimAsString("tenantId"));
+        AuthenticatedUserContext currentUser = jwtContextService.getCurrentUser(jwt);
 
-            Tenant tenant = tenantRepository.findById(tenantId)
-                    .orElseThrow(() -> new AuthenticationFailedException("Tenant not found"));
+        Tenant tenant = tenantRepository.findById(currentUser.tenantId())
+                .orElseThrow(() -> new AuthenticationFailedException("Tenant not found"));
 
-            if (tenant.getStatus() != TenantStatus.ACTIVE) {
-                throw new AuthenticationFailedException("Tenant is not active");
-            }
-
-            AppUser user = appUserRepository.findByTenantIdAndId(tenantId, userId)
-                    .orElseThrow(() -> new AuthenticationFailedException("User not found"));
-
-            if (user.getStatus() != UserStatus.ACTIVE) {
-                throw new AuthenticationFailedException("User account is not active");
-            }
-
-            return new CurrentUserResponse(
-                    tenant.getId(),
-                    tenant.getName(),
-                    tenant.getSlug(),
-                    user.getId(),
-                    user.getFullName(),
-                    user.getEmail(),
-                    user.getRole(),
-                    user.getStatus()
-            );
-
-        } catch (IllegalArgumentException exception) {
-            throw new AuthenticationFailedException("Invalid token data");
+        if (tenant.getStatus() != TenantStatus.ACTIVE) {
+            throw new AuthenticationFailedException("Tenant is not active");
         }
+
+        AppUser user = appUserRepository.findByTenantIdAndId(
+                currentUser.tenantId(),
+                currentUser.userId()
+        ).orElseThrow(() -> new AuthenticationFailedException("User not found"));
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new AuthenticationFailedException("User account is not active");
+        }
+
+        return new CurrentUserResponse(
+                tenant.getId(),
+                tenant.getName(),
+                tenant.getSlug(),
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getStatus()
+        );
     }
 }
