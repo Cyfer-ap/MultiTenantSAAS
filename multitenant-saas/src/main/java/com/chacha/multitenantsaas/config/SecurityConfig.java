@@ -58,10 +58,11 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/api/tenants").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/tenants/*/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/tenants/{tenantId}/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/tenants/{tenantId}/auth/forgot-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
 
                         .requestMatchers("/api/dashboard/**").hasAuthority("TENANT_ADMIN")
 
