@@ -18,6 +18,8 @@ import com.chacha.multitenantsaas.security.AuthenticatedUserContext;
 import com.chacha.multitenantsaas.security.JwtContextService;
 import com.chacha.multitenantsaas.dto.RefreshTokenRequest;
 import com.chacha.multitenantsaas.dto.TokenRefreshResponse;
+import com.chacha.multitenantsaas.dto.LogoutRequest;
+import com.chacha.multitenantsaas.dto.LogoutResponse;
 
 import java.util.UUID;
 
@@ -141,5 +143,11 @@ public class AuthService {
                 jwtService.getExpirationSeconds(),
                 "Token refreshed successfully"
         );
+    }
+
+    public LogoutResponse logout(LogoutRequest request) {
+        refreshTokenService.revokeRefreshToken(request.refreshToken());
+
+        return new LogoutResponse("Logout successful");
     }
 }

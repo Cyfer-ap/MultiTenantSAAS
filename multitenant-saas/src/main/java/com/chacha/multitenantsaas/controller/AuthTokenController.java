@@ -7,6 +7,8 @@ import com.chacha.multitenantsaas.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.chacha.multitenantsaas.dto.LogoutRequest;
+import com.chacha.multitenantsaas.dto.LogoutResponse;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -26,6 +28,17 @@ public class AuthTokenController {
 
         return ResponseEntity.ok(
                 ApiResponse.success("Token refreshed successfully", response)
+        );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<LogoutResponse>> logout(
+            @Valid @RequestBody LogoutRequest request
+    ) {
+        LogoutResponse response = authService.logout(request);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Logout successful", response)
         );
     }
 }

@@ -113,4 +113,18 @@ public class RefreshTokenService {
             String refreshToken
     ) {
     }
+
+    @Transactional
+    public void revokeRefreshToken(String rawRefreshToken) {
+        String tokenHash = hashToken(rawRefreshToken);
+
+        refreshTokenRepository.findByTokenHash(tokenHash)
+                .ifPresent(refreshToken -> {
+                    if (!refreshToken.isRevoked()) {
+                        refreshToken.setRevoked(true);
+                        refreshToken.setRevokedAt(Instant.now());
+                        refreshTokenRepository.save(refreshToken);
+                    }
+                });
+    }
 }
