@@ -18,6 +18,9 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 
+import java.util.List;
+import java.util.UUID;
+
 @Service
 public class RefreshTokenService {
 
@@ -126,5 +129,19 @@ public class RefreshTokenService {
                         refreshTokenRepository.save(refreshToken);
                     }
                 });
+    }
+
+    @Transactional
+    public void revokeAllActiveTokensForUser(UUID userId) {
+        List<RefreshToken> activeTokens = refreshTokenRepository.findByUserIdAndRevokedFalse(userId);
+
+        activeTokens.forEach(refreshToken -> {
+            if (!refreshToken.isExpired()) {
+                refreshToken.setRevoked(true);
+                refreshToken.setRevokedAt(Instant.now());
+            }
+        });
+
+        refreshTokenRepository.saveAll(activeTokens);
     }
 }

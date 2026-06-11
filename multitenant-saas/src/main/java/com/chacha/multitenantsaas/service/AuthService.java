@@ -20,7 +20,7 @@ import com.chacha.multitenantsaas.dto.RefreshTokenRequest;
 import com.chacha.multitenantsaas.dto.TokenRefreshResponse;
 import com.chacha.multitenantsaas.dto.LogoutRequest;
 import com.chacha.multitenantsaas.dto.LogoutResponse;
-
+import org.springframework.security.oauth2.jwt.Jwt;
 import java.util.UUID;
 
 @Service
@@ -149,5 +149,13 @@ public class AuthService {
         refreshTokenService.revokeRefreshToken(request.refreshToken());
 
         return new LogoutResponse("Logout successful");
+    }
+
+    public LogoutResponse logoutAllDevices(Jwt jwt) {
+        AuthenticatedUserContext currentUser = jwtContextService.getCurrentUser(jwt);
+
+        refreshTokenService.revokeAllActiveTokensForUser(currentUser.userId());
+
+        return new LogoutResponse("Logged out from all devices successfully");
     }
 }

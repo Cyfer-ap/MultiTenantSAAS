@@ -9,6 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.chacha.multitenantsaas.dto.LogoutRequest;
 import com.chacha.multitenantsaas.dto.LogoutResponse;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -39,6 +42,17 @@ public class AuthTokenController {
 
         return ResponseEntity.ok(
                 ApiResponse.success("Logout successful", response)
+        );
+    }
+
+    @PostMapping("/logout-all")
+    public ResponseEntity<ApiResponse<LogoutResponse>> logoutAllDevices(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        LogoutResponse response = authService.logoutAllDevices(jwt);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Logged out from all devices successfully", response)
         );
     }
 }
