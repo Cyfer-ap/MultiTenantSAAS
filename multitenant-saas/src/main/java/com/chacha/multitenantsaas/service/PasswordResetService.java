@@ -194,4 +194,5 @@ public class PasswordResetService {
             throw new IllegalStateException("Could not hash reset token", exception);
         }
     }
+
 }

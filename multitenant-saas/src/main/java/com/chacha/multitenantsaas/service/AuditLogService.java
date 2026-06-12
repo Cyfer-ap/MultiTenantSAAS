@@ -1,14 +1,16 @@
 package com.chacha.multitenantsaas.service;
 
 import com.chacha.multitenantsaas.dto.AuditLogResponse;
+import com.chacha.multitenantsaas.dto.PageResponse;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.AuditAction;
 import com.chacha.multitenantsaas.entity.AuditLog;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.repository.AuditLogRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -38,18 +40,40 @@ public class AuditLogService {
         auditLogRepository.save(auditLog);
     }
 
-    public List<AuditLogResponse> getAuditLogsByTenant(UUID tenantId) {
-        return auditLogRepository.findByTenantIdOrderByCreatedAtDesc(tenantId)
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+    public PageResponse<AuditLogResponse> getAuditLogsByTenant(
+            UUID tenantId,
+            Pageable pageable
+    ) {
+        Page<AuditLog> auditLogs = auditLogRepository
+                .findByTenantIdOrderByCreatedAtDesc(tenantId, pageable);
+
+        return mapToPageResponse(auditLogs);
     }
 
-    public List<AuditLogResponse> getAuditLogsByTenantAndUser(UUID tenantId, UUID userId) {
-        return auditLogRepository.findByTenantIdAndUserIdOrderByCreatedAtDesc(tenantId, userId)
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+    public PageResponse<AuditLogResponse> getAuditLogsByTenantAndUser(
+            UUID tenantId,
+            UUID userId,
+            Pageable pageable
+    ) {
+        Page<AuditLog> auditLogs = auditLogRepository
+                .findByTenantIdAndUserIdOrderByCreatedAtDesc(tenantId, userId, pageable);
+
+        return mapToPageResponse(auditLogs);
+    }
+
+    private PageResponse<AuditLogResponse> mapToPageResponse(Page<AuditLog> auditLogs) {
+        return new PageResponse<>(
+                auditLogs.getContent()
+                        .stream()
+                        .map(this::mapToResponse)
+                        .toList(),
+                auditLogs.getNumber(),
+                auditLogs.getSize(),
+                auditLogs.getTotalElements(),
+                auditLogs.getTotalPages(),
+                auditLogs.isFirst(),
+                auditLogs.isLast()
+        );
     }
 
     private AuditLogResponse mapToResponse(AuditLog auditLog) {

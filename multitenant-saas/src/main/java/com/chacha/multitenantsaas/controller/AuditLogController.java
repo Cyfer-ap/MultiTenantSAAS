@@ -2,12 +2,14 @@ package com.chacha.multitenantsaas.controller;
 
 import com.chacha.multitenantsaas.common.ApiResponse;
 import com.chacha.multitenantsaas.dto.AuditLogResponse;
+import com.chacha.multitenantsaas.dto.PageResponse;
 import com.chacha.multitenantsaas.service.AuditLogService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -22,10 +24,17 @@ public class AuditLogController {
 
     @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getTenantAuditLogs(
-            @PathVariable UUID tenantId
+    public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getTenantAuditLogs(
+            @PathVariable UUID tenantId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        List<AuditLogResponse> auditLogs = auditLogService.getAuditLogsByTenant(tenantId);
+        Pageable pageable = PageRequest.of(page, size);
+
+        PageResponse<AuditLogResponse> auditLogs = auditLogService.getAuditLogsByTenant(
+                tenantId,
+                pageable
+        );
 
         return ResponseEntity.ok(
                 ApiResponse.success("Audit logs fetched successfully", auditLogs)
@@ -34,13 +43,18 @@ public class AuditLogController {
 
     @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
     @GetMapping("/users/{userId}")
-    public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getUserAuditLogs(
+    public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getUserAuditLogs(
             @PathVariable UUID tenantId,
-            @PathVariable UUID userId
+            @PathVariable UUID userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        List<AuditLogResponse> auditLogs = auditLogService.getAuditLogsByTenantAndUser(
+        Pageable pageable = PageRequest.of(page, size);
+
+        PageResponse<AuditLogResponse> auditLogs = auditLogService.getAuditLogsByTenantAndUser(
                 tenantId,
-                userId
+                userId,
+                pageable
         );
 
         return ResponseEntity.ok(
