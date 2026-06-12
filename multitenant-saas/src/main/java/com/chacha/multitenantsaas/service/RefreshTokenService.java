@@ -119,17 +119,9 @@ public class RefreshTokenService {
 
     @Transactional
     public void revokeRefreshToken(String rawRefreshToken) {
-        String tokenHash = hashToken(rawRefreshToken);
-
-        refreshTokenRepository.findByTokenHash(tokenHash)
-                .ifPresent(refreshToken -> {
-                    if (!refreshToken.isRevoked()) {
-                        refreshToken.setRevoked(true);
-                        refreshToken.setRevokedAt(Instant.now());
-                        refreshTokenRepository.save(refreshToken);
-                    }
-                });
+        revokeRefreshTokenAndReturnData(rawRefreshToken);
     }
+
 
     @Transactional
     public void revokeAllActiveTokensForUser(UUID userId) {
@@ -143,5 +135,28 @@ public class RefreshTokenService {
         });
 
         refreshTokenRepository.saveAll(activeTokens);
+    }
+
+    @Transactional
+    public RefreshTokenData revokeRefreshTokenAndReturnData(String rawRefreshToken) {
+        String tokenHash = hashToken(rawRefreshToken);
+
+        RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(tokenHash)
+                .orElseThrow(() -> new AuthenticationFailedException("Invalid refresh token"));
+
+        AppUser user = refreshToken.getUser();
+        Tenant tenant = user.getTenant();
+
+        if (!refreshToken.isRevoked()) {
+            refreshToken.setRevoked(true);
+            refreshToken.setRevokedAt(Instant.now());
+            refreshTokenRepository.save(refreshToken);
+        }
+
+        return new RefreshTokenData(
+                tenant,
+                user,
+                rawRefreshToken
+        );
     }
 }

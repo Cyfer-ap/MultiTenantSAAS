@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.chacha.multitenantsaas.entity.AuditAction;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -38,6 +38,8 @@ public class PasswordResetService {
     private final RefreshTokenService refreshTokenService;
     private final long expirationMinutes;
     private final SecureRandom secureRandom = new SecureRandom();
+    private final AuditLogService auditLogService;
+
 
     public PasswordResetService(
             TenantRepository tenantRepository,
@@ -45,6 +47,7 @@ public class PasswordResetService {
             PasswordResetTokenRepository passwordResetTokenRepository,
             PasswordEncoder passwordEncoder,
             RefreshTokenService refreshTokenService,
+            AuditLogService auditLogService,
             @Value("${app.password-reset.expiration-minutes}") long expirationMinutes
     ) {
         this.tenantRepository = tenantRepository;
@@ -52,6 +55,7 @@ public class PasswordResetService {
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenService = refreshTokenService;
+        this.auditLogService = auditLogService;
         this.expirationMinutes = expirationMinutes;
     }
 
@@ -85,6 +89,14 @@ public class PasswordResetService {
         );
 
         passwordResetTokenRepository.save(resetToken);
+
+        auditLogService.record(
+                tenant,
+                user,
+                AuditAction.PASSWORD_RESET_REQUESTED,
+                true,
+                "Password reset token requested"
+        );
 
         return new ForgotPasswordResponse(
                 "Password reset token generated successfully. In production, this should be sent by email.",
@@ -130,6 +142,14 @@ public class PasswordResetService {
         passwordResetTokenRepository.save(resetToken);
 
         refreshTokenService.revokeAllActiveTokensForUser(user.getId());
+
+        auditLogService.record(
+                tenant,
+                user,
+                AuditAction.PASSWORD_RESET_COMPLETED,
+                true,
+                "Password reset completed successfully"
+        );
 
         return new ResetPasswordResponse(
                 "Password reset successfully. Please login again."
