@@ -10,7 +10,7 @@ import com.chacha.multitenantsaas.repository.AuditLogRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
+import com.chacha.multitenantsaas.entity.AuditAction;
 import java.util.UUID;
 
 @Service
@@ -42,10 +42,16 @@ public class AuditLogService {
 
     public PageResponse<AuditLogResponse> getAuditLogsByTenant(
             UUID tenantId,
+            AuditAction action,
+            Boolean success,
             Pageable pageable
     ) {
-        Page<AuditLog> auditLogs = auditLogRepository
-                .findByTenantIdOrderByCreatedAtDesc(tenantId, pageable);
+        Page<AuditLog> auditLogs = auditLogRepository.findTenantAuditLogs(
+                tenantId,
+                action,
+                success,
+                pageable
+        );
 
         return mapToPageResponse(auditLogs);
     }
@@ -53,13 +59,21 @@ public class AuditLogService {
     public PageResponse<AuditLogResponse> getAuditLogsByTenantAndUser(
             UUID tenantId,
             UUID userId,
+            AuditAction action,
+            Boolean success,
             Pageable pageable
     ) {
-        Page<AuditLog> auditLogs = auditLogRepository
-                .findByTenantIdAndUserIdOrderByCreatedAtDesc(tenantId, userId, pageable);
+        Page<AuditLog> auditLogs = auditLogRepository.findUserAuditLogs(
+                tenantId,
+                userId,
+                action,
+                success,
+                pageable
+        );
 
         return mapToPageResponse(auditLogs);
     }
+
 
     private PageResponse<AuditLogResponse> mapToPageResponse(Page<AuditLog> auditLogs) {
         return new PageResponse<>(

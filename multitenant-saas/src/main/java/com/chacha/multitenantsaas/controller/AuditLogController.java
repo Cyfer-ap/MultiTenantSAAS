@@ -3,6 +3,7 @@ package com.chacha.multitenantsaas.controller;
 import com.chacha.multitenantsaas.common.ApiResponse;
 import com.chacha.multitenantsaas.dto.AuditLogResponse;
 import com.chacha.multitenantsaas.dto.PageResponse;
+import com.chacha.multitenantsaas.entity.AuditAction;
 import com.chacha.multitenantsaas.service.AuditLogService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,12 +28,16 @@ public class AuditLogController {
     public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getTenantAuditLogs(
             @PathVariable UUID tenantId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) AuditAction action,
+            @RequestParam(required = false) Boolean success
     ) {
         Pageable pageable = PageRequest.of(page, size);
 
         PageResponse<AuditLogResponse> auditLogs = auditLogService.getAuditLogsByTenant(
                 tenantId,
+                action,
+                success,
                 pageable
         );
 
@@ -47,13 +52,17 @@ public class AuditLogController {
             @PathVariable UUID tenantId,
             @PathVariable UUID userId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) AuditAction action,
+            @RequestParam(required = false) Boolean success
     ) {
         Pageable pageable = PageRequest.of(page, size);
 
         PageResponse<AuditLogResponse> auditLogs = auditLogService.getAuditLogsByTenantAndUser(
                 tenantId,
                 userId,
+                action,
+                success,
                 pageable
         );
 
