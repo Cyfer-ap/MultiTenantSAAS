@@ -10,7 +10,11 @@ import org.springframework.web.bind.annotation.*;
 import com.chacha.multitenantsaas.dto.TenantUpdateRequest;
 import com.chacha.multitenantsaas.dto.TenantStatusUpdateRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
-
+import com.chacha.multitenantsaas.common.PaginationUtils;
+import com.chacha.multitenantsaas.dto.PageResponse;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,8 +42,19 @@ public class TenantController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<TenantResponse>>> getAllTenants() {
-        List<TenantResponse> tenants = tenantService.getAllTenants();
+    public ResponseEntity<ApiResponse<PageResponse<TenantResponse>>> getAllTenants(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        Pageable pageable = PageRequest.of(
+                PaginationUtils.validatePage(page),
+                PaginationUtils.validateSize(size),
+                getSortDirection(sortDir),
+                "createdAt"
+        );
+
+        PageResponse<TenantResponse> tenants = tenantService.getAllTenants(pageable);
 
         return ResponseEntity.ok(
                 ApiResponse.success("Tenants fetched successfully", tenants)
@@ -106,5 +121,17 @@ public class TenantController {
         return ResponseEntity.ok(
                 ApiResponse.success("Tenant deactivated successfully", tenant)
         );
+    }
+
+    private Sort.Direction getSortDirection(String sortDir) {
+        if ("asc".equalsIgnoreCase(sortDir)) {
+            return Sort.Direction.ASC;
+        }
+
+        if ("desc".equalsIgnoreCase(sortDir)) {
+            return Sort.Direction.DESC;
+        }
+
+        throw new IllegalArgumentException("sortDir must be either 'asc' or 'desc'");
     }
 }

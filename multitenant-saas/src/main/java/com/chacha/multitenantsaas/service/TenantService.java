@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 import com.chacha.multitenantsaas.dto.TenantUpdateRequest;
 import com.chacha.multitenantsaas.dto.TenantStatusUpdateRequest;
 import com.chacha.multitenantsaas.entity.TenantStatus;
+import com.chacha.multitenantsaas.dto.PageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
@@ -35,11 +38,21 @@ public class TenantService {
         return mapToResponse(savedTenant);
     }
 
-    public List<TenantResponse> getAllTenants() {
-        return tenantRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+    public PageResponse<TenantResponse> getAllTenants(Pageable pageable) {
+        Page<Tenant> tenants = tenantRepository.findAll(pageable);
+
+        return new PageResponse<>(
+                tenants.getContent()
+                        .stream()
+                        .map(this::mapToResponse)
+                        .toList(),
+                tenants.getNumber(),
+                tenants.getSize(),
+                tenants.getTotalElements(),
+                tenants.getTotalPages(),
+                tenants.isFirst(),
+                tenants.isLast()
+        );
     }
 
     public TenantResponse getTenantById(UUID id) {

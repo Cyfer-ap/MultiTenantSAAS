@@ -11,6 +11,11 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.chacha.multitenantsaas.common.PaginationUtils;
+import com.chacha.multitenantsaas.dto.PageResponse;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,10 +45,23 @@ public class AppUserController {
 
     @PreAuthorize("@tenantSecurity.isTenantAdminOrManager(#tenantId)")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<AppUserResponse>>> getUsersByTenant(
-            @PathVariable UUID tenantId
+    public ResponseEntity<ApiResponse<PageResponse<AppUserResponse>>> getUsersByTenant(
+            @PathVariable UUID tenantId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "desc") String sortDir
     ) {
-        List<AppUserResponse> users = appUserService.getUsersByTenant(tenantId);
+        Pageable pageable = PageRequest.of(
+                PaginationUtils.validatePage(page),
+                PaginationUtils.validateSize(size),
+                getSortDirection(sortDir),
+                "createdAt"
+        );
+
+        PageResponse<AppUserResponse> users = appUserService.getUsersByTenant(
+                tenantId,
+                pageable
+        );
 
         return ResponseEntity.ok(
                 ApiResponse.success("Users fetched successfully", users)
@@ -116,5 +134,17 @@ public class AppUserController {
         return ResponseEntity.ok(
                 ApiResponse.success("User deactivated successfully", user)
         );
+    }
+
+    private Sort.Direction getSortDirection(String sortDir) {
+        if ("asc".equalsIgnoreCase(sortDir)) {
+            return Sort.Direction.ASC;
+        }
+
+        if ("desc".equalsIgnoreCase(sortDir)) {
+            return Sort.Direction.DESC;
+        }
+
+        throw new IllegalArgumentException("sortDir must be either 'asc' or 'desc'");
     }
 }

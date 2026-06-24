@@ -14,6 +14,9 @@ import com.chacha.multitenantsaas.dto.AppUserStatusUpdateRequest;
 import com.chacha.multitenantsaas.dto.AppUserUpdateRequest;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.chacha.multitenantsaas.dto.PageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
@@ -60,15 +63,25 @@ public class AppUserService {
         return mapToResponse(savedUser);
     }
 
-    public List<AppUserResponse> getUsersByTenant(UUID tenantId) {
+    public PageResponse<AppUserResponse> getUsersByTenant(UUID tenantId, Pageable pageable) {
         if (!tenantRepository.existsById(tenantId)) {
             throw new ResourceNotFoundException("Tenant not found with id: " + tenantId);
         }
 
-        return appUserRepository.findByTenantId(tenantId)
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+        Page<AppUser> users = appUserRepository.findByTenantId(tenantId, pageable);
+
+        return new PageResponse<>(
+                users.getContent()
+                        .stream()
+                        .map(this::mapToResponse)
+                        .toList(),
+                users.getNumber(),
+                users.getSize(),
+                users.getTotalElements(),
+                users.getTotalPages(),
+                users.isFirst(),
+                users.isLast()
+        );
     }
 
     private AppUserResponse mapToResponse(AppUser user) {
