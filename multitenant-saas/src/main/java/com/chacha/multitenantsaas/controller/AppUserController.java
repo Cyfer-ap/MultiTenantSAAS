@@ -16,6 +16,8 @@ import com.chacha.multitenantsaas.dto.PageResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import com.chacha.multitenantsaas.entity.UserRole;
+import com.chacha.multitenantsaas.entity.UserStatus;
 
 import java.util.List;
 import java.util.UUID;
@@ -49,7 +51,9 @@ public class AppUserController {
             @PathVariable UUID tenantId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "desc") String sortDir
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) UserRole role,
+            @RequestParam(required = false) UserStatus status
     ) {
         Pageable pageable = PageRequest.of(
                 PaginationUtils.validatePage(page),
@@ -60,6 +64,8 @@ public class AppUserController {
 
         PageResponse<AppUserResponse> users = appUserService.getUsersByTenant(
                 tenantId,
+                role,
+                status,
                 pageable
         );
 

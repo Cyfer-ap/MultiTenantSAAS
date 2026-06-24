@@ -17,6 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.chacha.multitenantsaas.dto.PageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.chacha.multitenantsaas.entity.UserRole;
+import com.chacha.multitenantsaas.entity.UserStatus;
 
 import java.util.List;
 import java.util.UUID;
@@ -63,12 +65,22 @@ public class AppUserService {
         return mapToResponse(savedUser);
     }
 
-    public PageResponse<AppUserResponse> getUsersByTenant(UUID tenantId, Pageable pageable) {
+    public PageResponse<AppUserResponse> getUsersByTenant(
+            UUID tenantId,
+            UserRole role,
+            UserStatus status,
+            Pageable pageable
+    ) {
         if (!tenantRepository.existsById(tenantId)) {
             throw new ResourceNotFoundException("Tenant not found with id: " + tenantId);
         }
 
-        Page<AppUser> users = appUserRepository.findByTenantId(tenantId, pageable);
+        Page<AppUser> users = appUserRepository.findTenantUsers(
+                tenantId,
+                role,
+                status,
+                pageable
+        );
 
         return new PageResponse<>(
                 users.getContent()

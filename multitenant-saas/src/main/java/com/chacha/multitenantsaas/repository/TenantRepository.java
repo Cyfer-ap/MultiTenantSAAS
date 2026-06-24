@@ -2,7 +2,11 @@ package com.chacha.multitenantsaas.repository;
 
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.TenantStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -14,4 +18,14 @@ public interface TenantRepository extends JpaRepository<Tenant, UUID> {
     boolean existsBySlug(String slug);
 
     long countByStatus(TenantStatus status);
+
+    @Query("""
+            SELECT tenant
+            FROM Tenant tenant
+            WHERE (:status IS NULL OR tenant.status = :status)
+            """)
+    Page<Tenant> findTenants(
+            @Param("status") TenantStatus status,
+            Pageable pageable
+    );
 }

@@ -15,6 +15,7 @@ import com.chacha.multitenantsaas.dto.PageResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import com.chacha.multitenantsaas.entity.TenantStatus;
 
 import java.util.List;
 import java.util.UUID;
@@ -45,7 +46,8 @@ public class TenantController {
     public ResponseEntity<ApiResponse<PageResponse<TenantResponse>>> getAllTenants(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "desc") String sortDir
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) TenantStatus status
     ) {
         Pageable pageable = PageRequest.of(
                 PaginationUtils.validatePage(page),
@@ -54,7 +56,10 @@ public class TenantController {
                 "createdAt"
         );
 
-        PageResponse<TenantResponse> tenants = tenantService.getAllTenants(pageable);
+        PageResponse<TenantResponse> tenants = tenantService.getAllTenants(
+                status,
+                pageable
+        );
 
         return ResponseEntity.ok(
                 ApiResponse.success("Tenants fetched successfully", tenants)

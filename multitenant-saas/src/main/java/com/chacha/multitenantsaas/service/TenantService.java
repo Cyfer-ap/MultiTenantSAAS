@@ -38,8 +38,11 @@ public class TenantService {
         return mapToResponse(savedTenant);
     }
 
-    public PageResponse<TenantResponse> getAllTenants(Pageable pageable) {
-        Page<Tenant> tenants = tenantRepository.findAll(pageable);
+    public PageResponse<TenantResponse> getAllTenants(
+            TenantStatus status,
+            Pageable pageable
+    ) {
+        Page<Tenant> tenants = tenantRepository.findTenants(status, pageable);
 
         return new PageResponse<>(
                 tenants.getContent()
