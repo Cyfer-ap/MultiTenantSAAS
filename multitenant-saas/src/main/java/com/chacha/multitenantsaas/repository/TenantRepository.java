@@ -23,9 +23,15 @@ public interface TenantRepository extends JpaRepository<Tenant, UUID> {
             SELECT tenant
             FROM Tenant tenant
             WHERE (:status IS NULL OR tenant.status = :status)
+              AND (
+                    :search IS NULL
+                    OR LOWER(tenant.name) LIKE LOWER(CONCAT('%', :search, '%'))
+                    OR LOWER(tenant.slug) LIKE LOWER(CONCAT('%', :search, '%'))
+              )
             """)
     Page<Tenant> findTenants(
             @Param("status") TenantStatus status,
+            @Param("search") String search,
             Pageable pageable
     );
 }

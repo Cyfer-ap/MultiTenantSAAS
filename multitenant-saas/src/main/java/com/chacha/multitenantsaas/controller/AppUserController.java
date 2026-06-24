@@ -53,7 +53,8 @@ public class AppUserController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "desc") String sortDir,
             @RequestParam(required = false) UserRole role,
-            @RequestParam(required = false) UserStatus status
+            @RequestParam(required = false) UserStatus status,
+            @RequestParam(required = false) String search
     ) {
         Pageable pageable = PageRequest.of(
                 PaginationUtils.validatePage(page),
@@ -66,6 +67,7 @@ public class AppUserController {
                 tenantId,
                 role,
                 status,
+                search,
                 pageable
         );
 

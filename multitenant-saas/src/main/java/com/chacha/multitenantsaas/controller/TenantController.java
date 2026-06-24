@@ -47,7 +47,8 @@ public class TenantController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "desc") String sortDir,
-            @RequestParam(required = false) TenantStatus status
+            @RequestParam(required = false) TenantStatus status,
+            @RequestParam(required = false) String search
     ) {
         Pageable pageable = PageRequest.of(
                 PaginationUtils.validatePage(page),
@@ -58,6 +59,7 @@ public class TenantController {
 
         PageResponse<TenantResponse> tenants = tenantService.getAllTenants(
                 status,
+                search,
                 pageable
         );
 

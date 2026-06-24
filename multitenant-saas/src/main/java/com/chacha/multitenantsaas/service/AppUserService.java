@@ -69,16 +69,20 @@ public class AppUserService {
             UUID tenantId,
             UserRole role,
             UserStatus status,
+            String search,
             Pageable pageable
     ) {
         if (!tenantRepository.existsById(tenantId)) {
             throw new ResourceNotFoundException("Tenant not found with id: " + tenantId);
         }
 
+        String normalizedSearch = normalizeSearch(search);
+
         Page<AppUser> users = appUserRepository.findTenantUsers(
                 tenantId,
                 role,
                 status,
+                normalizedSearch,
                 pageable
         );
 
@@ -194,5 +198,12 @@ public class AppUserService {
         return mapToResponse(updatedUser);
     }
 
+    private String normalizeSearch(String search) {
+        if (search == null || search.trim().isBlank()) {
+            return null;
+        }
+
+        return search.trim();
+    }
 
 }

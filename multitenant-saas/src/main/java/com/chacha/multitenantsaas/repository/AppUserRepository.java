@@ -32,16 +32,22 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
     long countByTenantIdAndStatus(UUID tenantId, UserStatus status);
 
     @Query("""
-            SELECT user
-            FROM AppUser user
-            WHERE user.tenant.id = :tenantId
-              AND (:role IS NULL OR user.role = :role)
-              AND (:status IS NULL OR user.status = :status)
+            SELECT appUser
+            FROM AppUser appUser
+            WHERE appUser.tenant.id = :tenantId
+              AND (:role IS NULL OR appUser.role = :role)
+              AND (:status IS NULL OR appUser.status = :status)
+              AND (
+                    :search IS NULL
+                    OR LOWER(appUser.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
+                    OR LOWER(appUser.email) LIKE LOWER(CONCAT('%', :search, '%'))
+              )
             """)
     Page<AppUser> findTenantUsers(
             @Param("tenantId") UUID tenantId,
             @Param("role") UserRole role,
             @Param("status") UserStatus status,
+            @Param("search") String search,
             Pageable pageable
     );
 }

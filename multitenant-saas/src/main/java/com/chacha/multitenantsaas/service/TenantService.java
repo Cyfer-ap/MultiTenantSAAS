@@ -40,9 +40,16 @@ public class TenantService {
 
     public PageResponse<TenantResponse> getAllTenants(
             TenantStatus status,
+            String search,
             Pageable pageable
     ) {
-        Page<Tenant> tenants = tenantRepository.findTenants(status, pageable);
+        String normalizedSearch = normalizeSearch(search);
+
+        Page<Tenant> tenants = tenantRepository.findTenants(
+                status,
+                normalizedSearch,
+                pageable
+        );
 
         return new PageResponse<>(
                 tenants.getContent()
@@ -122,6 +129,14 @@ public class TenantService {
         Tenant updatedTenant = tenantRepository.save(tenant);
 
         return mapToResponse(updatedTenant);
+    }
+
+    private String normalizeSearch(String search) {
+        if (search == null || search.trim().isBlank()) {
+            return null;
+        }
+
+        return search.trim();
     }
 }
 
