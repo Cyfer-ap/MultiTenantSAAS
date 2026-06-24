@@ -18,7 +18,6 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
             WHERE auditLog.tenant.id = :tenantId
               AND (:action IS NULL OR auditLog.action = :action)
               AND (:success IS NULL OR auditLog.success = :success)
-            ORDER BY auditLog.createdAt DESC
             """)
     Page<AuditLog> findTenantAuditLogs(
             @Param("tenantId") UUID tenantId,
@@ -34,7 +33,6 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
               AND auditLog.user.id = :userId
               AND (:action IS NULL OR auditLog.action = :action)
               AND (:success IS NULL OR auditLog.success = :success)
-            ORDER BY auditLog.createdAt DESC
             """)
     Page<AuditLog> findUserAuditLogs(
             @Param("tenantId") UUID tenantId,
