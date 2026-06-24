@@ -1,16 +1,17 @@
 package com.chacha.multitenantsaas.controller;
 
 import com.chacha.multitenantsaas.common.ApiResponse;
+import com.chacha.multitenantsaas.common.PaginationUtils;
 import com.chacha.multitenantsaas.dto.AuditLogResponse;
 import com.chacha.multitenantsaas.dto.PageResponse;
 import com.chacha.multitenantsaas.entity.AuditAction;
 import com.chacha.multitenantsaas.service.AuditLogService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Sort;
 
 import java.util.UUID;
 
@@ -35,8 +36,8 @@ public class AuditLogController {
             @RequestParam(required = false) Boolean success
     ) {
         Pageable pageable = PageRequest.of(
-                page,
-                size,
+                PaginationUtils.validatePage(page),
+                PaginationUtils.validateSize(size),
                 getSortDirection(sortDir),
                 "createdAt"
         );
@@ -65,35 +66,11 @@ public class AuditLogController {
             @RequestParam(required = false) Boolean success
     ) {
         Pageable pageable = PageRequest.of(
-                page,
-                size,
+                PaginationUtils.validatePage(page),
+                PaginationUtils.validateSize(size),
                 getSortDirection(sortDir),
                 "createdAt"
         );
-
-        PageResponse<AuditLogResponse> auditLogs = auditLogService.getAuditLogsByTenantAndUser(
-                tenantId,
-                userId,
-                action,
-                success,
-                pageable
-        );
-
-        return ResponseEntity.ok(
-                ApiResponse.success("User audit logs fetched successfully", auditLogs)
-        );
-    }
-
-
-    public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getUserAuditLogs(
-            @PathVariable UUID tenantId,
-            @PathVariable UUID userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) AuditAction action,
-            @RequestParam(required = false) Boolean success
-    ) {
-        Pageable pageable = PageRequest.of(page, size);
 
         PageResponse<AuditLogResponse> auditLogs = auditLogService.getAuditLogsByTenantAndUser(
                 tenantId,
