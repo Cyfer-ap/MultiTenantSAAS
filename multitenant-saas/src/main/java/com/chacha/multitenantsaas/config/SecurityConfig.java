@@ -57,6 +57,10 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
 
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/swagger-ui.html").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+
                         .requestMatchers(HttpMethod.POST, "/api/tenants").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/tenants/{tenantId}/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/tenants/{tenantId}/auth/forgot-password").permitAll()
@@ -68,6 +72,8 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
+
+
                 )
 
                 .oauth2ResourceServer(oauth2 -> oauth2
