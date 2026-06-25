@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.chacha.multitenantsaas.common.SortingUtils;
 
 import java.util.UUID;
 
@@ -31,6 +32,7 @@ public class AuditLogController {
             @PathVariable UUID tenantId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
             @RequestParam(required = false) AuditAction action,
             @RequestParam(required = false) Boolean success
@@ -38,8 +40,14 @@ public class AuditLogController {
         Pageable pageable = PageRequest.of(
                 PaginationUtils.validatePage(page),
                 PaginationUtils.validateSize(size),
-                getSortDirection(sortDir),
-                "createdAt"
+                SortingUtils.getDirection(sortDir),
+                SortingUtils.validateSortBy(
+                        sortBy,
+                        "createdAt",
+                        "createdAt",
+                        "action",
+                        "success"
+                )
         );
 
         PageResponse<AuditLogResponse> auditLogs = auditLogService.getAuditLogsByTenant(
@@ -61,6 +69,7 @@ public class AuditLogController {
             @PathVariable UUID userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
             @RequestParam(required = false) AuditAction action,
             @RequestParam(required = false) Boolean success
@@ -68,8 +77,14 @@ public class AuditLogController {
         Pageable pageable = PageRequest.of(
                 PaginationUtils.validatePage(page),
                 PaginationUtils.validateSize(size),
-                getSortDirection(sortDir),
-                "createdAt"
+                SortingUtils.getDirection(sortDir),
+                SortingUtils.validateSortBy(
+                        sortBy,
+                        "createdAt",
+                        "createdAt",
+                        "action",
+                        "success"
+                )
         );
 
         PageResponse<AuditLogResponse> auditLogs = auditLogService.getAuditLogsByTenantAndUser(

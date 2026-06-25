@@ -14,8 +14,8 @@ import com.chacha.multitenantsaas.common.PaginationUtils;
 import com.chacha.multitenantsaas.dto.PageResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import com.chacha.multitenantsaas.entity.TenantStatus;
+import com.chacha.multitenantsaas.common.SortingUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -46,6 +46,7 @@ public class TenantController {
     public ResponseEntity<ApiResponse<PageResponse<TenantResponse>>> getAllTenants(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
             @RequestParam(required = false) TenantStatus status,
             @RequestParam(required = false) String search
@@ -53,8 +54,15 @@ public class TenantController {
         Pageable pageable = PageRequest.of(
                 PaginationUtils.validatePage(page),
                 PaginationUtils.validateSize(size),
-                getSortDirection(sortDir),
-                "createdAt"
+                SortingUtils.getDirection(sortDir),
+                SortingUtils.validateSortBy(
+                        sortBy,
+                        "createdAt",
+                        "createdAt",
+                        "name",
+                        "slug",
+                        "status"
+                )
         );
 
         PageResponse<TenantResponse> tenants = tenantService.getAllTenants(
@@ -130,15 +138,4 @@ public class TenantController {
         );
     }
 
-    private Sort.Direction getSortDirection(String sortDir) {
-        if ("asc".equalsIgnoreCase(sortDir)) {
-            return Sort.Direction.ASC;
-        }
-
-        if ("desc".equalsIgnoreCase(sortDir)) {
-            return Sort.Direction.DESC;
-        }
-
-        throw new IllegalArgumentException("sortDir must be either 'asc' or 'desc'");
-    }
 }

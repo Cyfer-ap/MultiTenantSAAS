@@ -18,8 +18,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.entity.UserStatus;
+import com.chacha.multitenantsaas.common.SortingUtils;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -51,6 +51,7 @@ public class AppUserController {
             @PathVariable UUID tenantId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
             @RequestParam(required = false) UserRole role,
             @RequestParam(required = false) UserStatus status,
@@ -59,8 +60,16 @@ public class AppUserController {
         Pageable pageable = PageRequest.of(
                 PaginationUtils.validatePage(page),
                 PaginationUtils.validateSize(size),
-                getSortDirection(sortDir),
-                "createdAt"
+                SortingUtils.getDirection(sortDir),
+                SortingUtils.validateSortBy(
+                        sortBy,
+                        "createdAt",
+                        "createdAt",
+                        "fullName",
+                        "email",
+                        "role",
+                        "status"
+                )
         );
 
         PageResponse<AppUserResponse> users = appUserService.getUsersByTenant(
@@ -144,15 +153,4 @@ public class AppUserController {
         );
     }
 
-    private Sort.Direction getSortDirection(String sortDir) {
-        if ("asc".equalsIgnoreCase(sortDir)) {
-            return Sort.Direction.ASC;
-        }
-
-        if ("desc".equalsIgnoreCase(sortDir)) {
-            return Sort.Direction.DESC;
-        }
-
-        throw new IllegalArgumentException("sortDir must be either 'asc' or 'desc'");
-    }
 }
