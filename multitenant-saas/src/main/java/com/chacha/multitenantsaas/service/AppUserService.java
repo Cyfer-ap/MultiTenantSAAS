@@ -143,9 +143,21 @@ public class AppUserService {
                         "User not found with id: " + userId + " for tenant: " + tenantId
                 ));
 
+        UserRole oldRole = user.getRole();
+
         user.setRole(request.role());
 
         AppUser updatedUser = appUserRepository.save(user);
+
+        auditLogService.record(
+                user.getTenant(),
+                updatedUser,
+                AuditAction.USER_ROLE_UPDATED,
+                true,
+                "User role updated successfully for " + updatedUser.getEmail()
+                        + " from " + oldRole
+                        + " to " + request.role()
+        );
 
         return mapToResponse(updatedUser);
     }
