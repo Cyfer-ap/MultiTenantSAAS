@@ -9,8 +9,16 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
+@Tag(
+        name = "Tenant Dashboard",
+        description = "Tenant-level dashboard summary APIs"
+)
+@SecurityRequirement(name = "bearerAuth")
 public class TenantDashboardController {
 
     private final TenantDashboardService tenantDashboardService;
@@ -19,6 +27,10 @@ public class TenantDashboardController {
         this.tenantDashboardService = tenantDashboardService;
     }
 
+    @Operation(
+            summary = "Get tenant dashboard summary",
+            description = "Returns user counts for the authenticated user's tenant."
+    )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'TENANT_MANAGER')")
     @GetMapping("/api/tenant/dashboard/summary")
     public ResponseEntity<ApiResponse<TenantDashboardSummaryResponse>> getTenantDashboardSummary(

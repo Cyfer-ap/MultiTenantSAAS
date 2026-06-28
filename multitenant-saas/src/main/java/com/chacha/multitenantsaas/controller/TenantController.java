@@ -16,11 +16,17 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import com.chacha.multitenantsaas.entity.TenantStatus;
 import com.chacha.multitenantsaas.common.SortingUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
+@Tag(
+        name = "Tenants",
+        description = "Tenant registration, listing, update, status, and soft-delete APIs"
+)
 @RequestMapping("/api/tenants")
 public class TenantController {
 
@@ -30,6 +36,10 @@ public class TenantController {
         this.tenantService = tenantService;
     }
 
+    @Operation(
+            summary = "Create tenant",
+            description = "Creates a new tenant. This endpoint is public for initial onboarding."
+    )
     @PostMapping
     public ResponseEntity<ApiResponse<TenantResponse>> createTenant(
             @Valid @RequestBody TenantCreateRequest request
@@ -41,6 +51,11 @@ public class TenantController {
         );
     }
 
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary = "List tenants",
+            description = "Returns paginated, searchable, filterable, and sortable tenant records."
+    )
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<TenantResponse>>> getAllTenants(
@@ -76,6 +91,11 @@ public class TenantController {
         );
     }
 
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary = "Get tenant by ID",
+            description = "Returns details of a tenant if the authenticated user belongs to the same tenant."
+    )
     @PreAuthorize("@tenantSecurity.isSameTenant(#id)")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> getTenantById(
@@ -88,6 +108,11 @@ public class TenantController {
         );
     }
 
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary = "Get tenant by slug",
+            description = "Returns tenant details by slug if the authenticated user belongs to that tenant."
+    )
     @PreAuthorize("@tenantSecurity.isSameTenantBySlug(#slug)")
     @GetMapping("/slug/{slug}")
     public ResponseEntity<ApiResponse<TenantResponse>> getTenantBySlug(
@@ -100,6 +125,11 @@ public class TenantController {
         );
     }
 
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary = "Update tenant",
+            description = "Updates tenant name or slug. Only tenant admins can update their own tenant."
+    )
     @PreAuthorize("@tenantSecurity.isTenantAdmin(#id)")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> updateTenant(
@@ -113,6 +143,11 @@ public class TenantController {
         );
     }
 
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary = "Update tenant status",
+            description = "Updates tenant status such as ACTIVE, INACTIVE, or SUSPENDED."
+    )
     @PreAuthorize("@tenantSecurity.isTenantAdmin(#id)")
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<TenantResponse>> updateTenantStatus(
@@ -126,6 +161,11 @@ public class TenantController {
         );
     }
 
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary = "Soft delete tenant",
+            description = "Soft deletes a tenant by setting its status to INACTIVE."
+    )
     @PreAuthorize("@tenantSecurity.isTenantAdmin(#id)")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> deactivateTenant(

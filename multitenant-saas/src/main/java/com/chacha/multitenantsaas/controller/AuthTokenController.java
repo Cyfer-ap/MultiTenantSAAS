@@ -13,9 +13,16 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import com.chacha.multitenantsaas.dto.ChangePasswordRequest;
 import com.chacha.multitenantsaas.dto.ChangePasswordResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 
 @RestController
+@Tag(
+        name = "Token Management",
+        description = "Refresh token, logout, logout-all, and password change APIs"
+)
 @RequestMapping("/api/auth")
 public class AuthTokenController {
 
@@ -25,6 +32,10 @@ public class AuthTokenController {
         this.authService = authService;
     }
 
+    @Operation(
+            summary = "Refresh access token",
+            description = "Rotates the refresh token and returns a new access token and refresh token."
+    )
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<TokenRefreshResponse>> refreshToken(
             @Valid @RequestBody RefreshTokenRequest request
@@ -36,6 +47,10 @@ public class AuthTokenController {
         );
     }
 
+    @Operation(
+            summary = "Logout user",
+            description = "Logs out the user by invalidating the refresh token."
+    )
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<LogoutResponse>> logout(
             @Valid @RequestBody LogoutRequest request
@@ -47,6 +62,11 @@ public class AuthTokenController {
         );
     }
 
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary = "Logout all devices",
+            description = "Revokes all active refresh tokens for the authenticated user."
+    )
     @PostMapping("/logout-all")
     public ResponseEntity<ApiResponse<LogoutResponse>> logoutAllDevices(
             @AuthenticationPrincipal Jwt jwt
@@ -58,6 +78,11 @@ public class AuthTokenController {
         );
     }
 
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary = "Change password",
+            description = "Changes the authenticated user's password and revokes all active refresh tokens."
+    )
     @PostMapping("/change-password")
     public ResponseEntity<ApiResponse<ChangePasswordResponse>> changePassword(
             @AuthenticationPrincipal Jwt jwt,

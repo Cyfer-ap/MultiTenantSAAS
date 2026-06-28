@@ -6,8 +6,16 @@ import com.chacha.multitenantsaas.service.DashboardService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
+@Tag(
+        name = "System Dashboard",
+        description = "System-level summary APIs"
+)
+@SecurityRequirement(name = "bearerAuth")
 public class DashboardController {
 
     private final DashboardService dashboardService;
@@ -16,6 +24,10 @@ public class DashboardController {
         this.dashboardService = dashboardService;
     }
 
+    @Operation(
+            summary = "Get system dashboard summary",
+            description = "Returns total tenant and user counts grouped by status."
+    )
     @GetMapping("/api/dashboard/summary")
     public ResponseEntity<ApiResponse<DashboardSummaryResponse>> getSummary() {
         DashboardSummaryResponse summary = dashboardService.getSummary();

@@ -9,10 +9,16 @@ import com.chacha.multitenantsaas.service.PasswordResetService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.UUID;
 
 @RestController
+@Tag(
+        name = "Password Reset",
+        description = "Forgot password and reset password APIs"
+)
 public class PasswordResetController {
 
     private final PasswordResetService passwordResetService;
@@ -21,6 +27,10 @@ public class PasswordResetController {
         this.passwordResetService = passwordResetService;
     }
 
+    @Operation(
+            summary = "Request password reset",
+            description = "Generates a password reset token for an active tenant user. In development, the token is returned in the response."
+    )
     @PostMapping("/api/tenants/{tenantId}/auth/forgot-password")
     public ResponseEntity<ApiResponse<ForgotPasswordResponse>> forgotPassword(
             @PathVariable UUID tenantId,
@@ -33,6 +43,10 @@ public class PasswordResetController {
         );
     }
 
+    @Operation(
+            summary = "Reset password",
+            description = "Uses a valid reset token to set a new password and revoke active refresh tokens."
+    )
     @PostMapping("/api/auth/reset-password")
     public ResponseEntity<ApiResponse<ResetPasswordResponse>> resetPassword(
             @Valid @RequestBody ResetPasswordRequest request

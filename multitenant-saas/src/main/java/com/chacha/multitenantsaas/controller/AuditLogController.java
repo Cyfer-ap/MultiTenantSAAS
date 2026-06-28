@@ -13,11 +13,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.chacha.multitenantsaas.common.SortingUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/tenants/{tenantId}/audit-logs")
+@Tag(
+        name = "Audit Logs",
+        description = "Tenant audit log APIs for admin activity tracking"
+)
+@SecurityRequirement(name = "bearerAuth")
 public class AuditLogController {
 
     private final AuditLogService auditLogService;
@@ -26,6 +34,10 @@ public class AuditLogController {
         this.auditLogService = auditLogService;
     }
 
+    @Operation(
+            summary = "List tenant audit logs",
+            description = "Returns paginated, filterable, and sortable audit logs for a tenant."
+    )
     @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getTenantAuditLogs(
@@ -62,6 +74,10 @@ public class AuditLogController {
         );
     }
 
+    @Operation(
+            summary = "Get user audit logs",
+            description = "Returns paginated, filterable, and sortable audit logs for a specific user within a tenant."
+    )
     @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
     @GetMapping("/users/{userId}")
     public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getUserAuditLogs(
@@ -100,15 +116,5 @@ public class AuditLogController {
         );
     }
 
-    private Sort.Direction getSortDirection(String sortDir) {
-        if ("asc".equalsIgnoreCase(sortDir)) {
-            return Sort.Direction.ASC;
-        }
 
-        if ("desc".equalsIgnoreCase(sortDir)) {
-            return Sort.Direction.DESC;
-        }
-
-        throw new IllegalArgumentException("sortDir must be either 'asc' or 'desc'");
-    }
 }

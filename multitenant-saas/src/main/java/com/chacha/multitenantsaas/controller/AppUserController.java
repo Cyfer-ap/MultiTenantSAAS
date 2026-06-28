@@ -15,14 +15,21 @@ import com.chacha.multitenantsaas.common.PaginationUtils;
 import com.chacha.multitenantsaas.dto.PageResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.common.SortingUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.UUID;
 
 @RestController
+@Tag(
+        name = "Tenant Users",
+        description = "User management APIs inside a tenant"
+)
+@SecurityRequirement(name = "bearerAuth")
 @RequestMapping("/api/tenants/{tenantId}/users")
 public class AppUserController {
 
@@ -32,6 +39,10 @@ public class AppUserController {
         this.appUserService = appUserService;
     }
 
+    @Operation(
+            summary = "Create tenant user",
+            description = "Creates a user inside a tenant. Only tenant admins are allowed."
+    )
     @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
     @PostMapping
     public ResponseEntity<ApiResponse<AppUserResponse>> createUser(
@@ -45,6 +56,10 @@ public class AppUserController {
         );
     }
 
+    @Operation(
+            summary = "List tenant users",
+            description = "Returns paginated, searchable, filterable, and sortable users inside a tenant."
+    )
     @PreAuthorize("@tenantSecurity.isTenantAdminOrManager(#tenantId)")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<AppUserResponse>>> getUsersByTenant(
@@ -85,6 +100,10 @@ public class AppUserController {
         );
     }
 
+    @Operation(
+            summary = "Get tenant user by ID",
+            description = "Returns one user from the tenant."
+    )
     @PreAuthorize("@tenantSecurity.isTenantAdminOrManager(#tenantId)")
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse<AppUserResponse>> getUserById(
@@ -98,6 +117,10 @@ public class AppUserController {
         );
     }
 
+    @Operation(
+            summary = "Update tenant user",
+            description = "Updates a user inside a tenant. Only tenant admins are allowed."
+    )
     @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
     @PutMapping("/{userId}")
     public ResponseEntity<ApiResponse<AppUserResponse>> updateUser(
@@ -112,6 +135,10 @@ public class AppUserController {
         );
     }
 
+    @Operation(
+            summary = "Update tenant user role",
+            description = "Updates the role of a user inside a tenant. Only tenant admins are allowed."
+    )
     @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
     @PatchMapping("/{userId}/role")
     public ResponseEntity<ApiResponse<AppUserResponse>> updateUserRole(
@@ -126,6 +153,10 @@ public class AppUserController {
         );
     }
 
+    @Operation(
+            summary = "Update tenant user status",
+            description = "Updates the status of a user inside a tenant. Only tenant admins are allowed."
+    )
     @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
     @PatchMapping("/{userId}/status")
     public ResponseEntity<ApiResponse<AppUserResponse>> updateUserStatus(
@@ -140,6 +171,10 @@ public class AppUserController {
         );
     }
 
+    @Operation(
+            summary = "Deactivate tenant user",
+            description = "Deactivates a user inside a tenant. Only tenant admins are allowed."
+    )
     @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
     @DeleteMapping("/{userId}")
     public ResponseEntity<ApiResponse<AppUserResponse>> deactivateUser(
