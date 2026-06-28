@@ -11,13 +11,10 @@ import com.chacha.multitenantsaas.entity.AuditAction;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.entity.UserStatus;
-import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import com.chacha.multitenantsaas.exception.DuplicateResourceException;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
-import com.chacha.multitenantsaas.security.AuthenticatedUserContext;
-import com.chacha.multitenantsaas.security.JwtContextService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,20 +30,20 @@ public class AppUserService {
     private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
-    private final JwtContextService jwtContextService;
+    private final CurrentActorService currentActorService;
 
     public AppUserService(
             AppUserRepository appUserRepository,
             TenantRepository tenantRepository,
             PasswordEncoder passwordEncoder,
             AuditLogService auditLogService,
-            JwtContextService jwtContextService
+            CurrentActorService currentActorService
     ) {
         this.appUserRepository = appUserRepository;
         this.tenantRepository = tenantRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
-        this.jwtContextService = jwtContextService;
+        this.currentActorService = currentActorService;
     }
 
     public AppUserResponse createUser(
@@ -57,7 +54,7 @@ public class AppUserService {
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
 
-        AppUser actorUser = getActorUser(tenantId, jwt);
+        AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
         String normalizedEmail = request.email().trim().toLowerCase();
 
@@ -144,7 +141,7 @@ public class AppUserService {
                         "User not found with id: " + userId + " for tenant: " + tenantId
                 ));
 
-        AppUser actorUser = getActorUser(tenantId, jwt);
+        AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
         String oldEmail = user.getEmail();
         String normalizedEmail = request.email().trim().toLowerCase();
@@ -186,7 +183,7 @@ public class AppUserService {
                         "User not found with id: " + userId + " for tenant: " + tenantId
                 ));
 
-        AppUser actorUser = getActorUser(tenantId, jwt);
+        AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
         UserRole oldRole = user.getRole();
 
         user.setRole(request.role());
@@ -218,7 +215,7 @@ public class AppUserService {
                         "User not found with id: " + userId + " for tenant: " + tenantId
                 ));
 
-        AppUser actorUser = getActorUser(tenantId, jwt);
+        AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
         UserStatus oldStatus = user.getStatus();
 
         user.setStatus(request.status());
@@ -249,7 +246,7 @@ public class AppUserService {
                         "User not found with id: " + userId + " for tenant: " + tenantId
                 ));
 
-        AppUser actorUser = getActorUser(tenantId, jwt);
+        AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
         user.setStatus(UserStatus.INACTIVE);
 
@@ -286,24 +283,5 @@ public class AppUserService {
         }
 
         return search.trim();
-    }
-
-    private AppUser getActorUser(UUID tenantId, Jwt jwt) {
-        AuthenticatedUserContext currentUser = jwtContextService.getCurrentUser(jwt);
-
-        if (!currentUser.tenantId().equals(tenantId)) {
-            throw new AuthenticationFailedException("Authenticated user does not belong to this tenant");
-        }
-
-        AppUser actorUser = appUserRepository.findByTenantIdAndId(
-                currentUser.tenantId(),
-                currentUser.userId()
-        ).orElseThrow(() -> new AuthenticationFailedException("Authenticated user not found"));
-
-        if (actorUser.getStatus() != UserStatus.ACTIVE) {
-            throw new AuthenticationFailedException("Authenticated user account is not active");
-        }
-
-        return actorUser;
     }
 }
