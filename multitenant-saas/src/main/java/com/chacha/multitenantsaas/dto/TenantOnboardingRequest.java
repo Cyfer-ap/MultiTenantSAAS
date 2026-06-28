@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Pattern;
+import com.chacha.multitenantsaas.validation.StrongPassword;
 
 public record TenantOnboardingRequest(
 
@@ -27,8 +28,7 @@ public record TenantOnboardingRequest(
         @Email(message = "Admin email must be valid")
         String adminEmail,
 
-        @NotBlank(message = "Admin password is required")
-        @Size(min = 8, max = 100, message = "Admin password must be between 8 and 100 characters")
+        @StrongPassword
         String adminPassword
 ) {
 }
