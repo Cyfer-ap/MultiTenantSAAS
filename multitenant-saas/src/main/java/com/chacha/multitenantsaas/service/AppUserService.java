@@ -18,9 +18,8 @@ import com.chacha.multitenantsaas.dto.PageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.chacha.multitenantsaas.entity.UserRole;
-import com.chacha.multitenantsaas.entity.UserStatus;
+import com.chacha.multitenantsaas.entity.AuditAction;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -29,15 +28,18 @@ public class AppUserService {
     private final AppUserRepository appUserRepository;
     private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLogService;
 
     public AppUserService(
             AppUserRepository appUserRepository,
             TenantRepository tenantRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            AuditLogService auditLogService
     ) {
         this.appUserRepository = appUserRepository;
         this.tenantRepository = tenantRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditLogService = auditLogService;
     }
 
     public AppUserResponse createUser(UUID tenantId, AppUserCreateRequest request) {
@@ -61,6 +63,15 @@ public class AppUserService {
         );
 
         AppUser savedUser = appUserRepository.save(user);
+
+        auditLogService.record(
+                tenant,
+                savedUser,
+                AuditAction.USER_CREATED,
+                true,
+                "User created successfully: " + normalizedEmail
+        );
+
 
         return mapToResponse(savedUser);
     }
