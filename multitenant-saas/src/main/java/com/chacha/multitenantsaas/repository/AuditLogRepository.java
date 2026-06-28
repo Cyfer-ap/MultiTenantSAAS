@@ -30,7 +30,10 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
             SELECT auditLog
             FROM AuditLog auditLog
             WHERE auditLog.tenant.id = :tenantId
-              AND auditLog.user.id = :userId
+              AND (
+                    auditLog.actorUser.id = :userId
+                    OR auditLog.targetUser.id = :userId
+              )
               AND (:action IS NULL OR auditLog.action = :action)
               AND (:success IS NULL OR auditLog.success = :success)
             """)

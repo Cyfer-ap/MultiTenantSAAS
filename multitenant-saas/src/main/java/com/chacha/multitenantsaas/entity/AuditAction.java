@@ -3,6 +3,7 @@ package com.chacha.multitenantsaas.entity;
 public enum AuditAction {
     TENANT_ONBOARDED,
     USER_CREATED,
+    USER_UPDATED,
     USER_ROLE_UPDATED,
     USER_STATUS_UPDATED,
     USER_DEACTIVATED,

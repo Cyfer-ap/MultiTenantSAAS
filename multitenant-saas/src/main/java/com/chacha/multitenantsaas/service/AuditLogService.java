@@ -29,9 +29,28 @@ public class AuditLogService {
             boolean success,
             String message
     ) {
-        AuditLog auditLog = new AuditLog(
+        record(
                 tenant,
                 user,
+                user,
+                action,
+                success,
+                message
+        );
+    }
+
+    public void record(
+            Tenant tenant,
+            AppUser actorUser,
+            AppUser targetUser,
+            AuditAction action,
+            boolean success,
+            String message
+    ) {
+        AuditLog auditLog = new AuditLog(
+                tenant,
+                actorUser,
+                targetUser,
                 action,
                 success,
                 message
@@ -91,13 +110,16 @@ public class AuditLogService {
     }
 
     private AuditLogResponse mapToResponse(AuditLog auditLog) {
-        AppUser user = auditLog.getUser();
+        AppUser actorUser = auditLog.getActorUser();
+        AppUser targetUser = auditLog.getTargetUser();
 
         return new AuditLogResponse(
                 auditLog.getId(),
                 auditLog.getTenant().getId(),
-                user != null ? user.getId() : null,
-                user != null ? user.getEmail() : null,
+                actorUser != null ? actorUser.getId() : null,
+                actorUser != null ? actorUser.getEmail() : null,
+                targetUser != null ? targetUser.getId() : null,
+                targetUser != null ? targetUser.getEmail() : null,
                 auditLog.getAction(),
                 auditLog.isSuccess(),
                 auditLog.getMessage(),

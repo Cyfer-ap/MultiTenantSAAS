@@ -10,7 +10,8 @@ import java.util.UUID;
         name = "audit_logs",
         indexes = {
                 @Index(name = "idx_audit_tenant", columnList = "tenant_id"),
-                @Index(name = "idx_audit_user", columnList = "user_id"),
+                @Index(name = "idx_audit_actor_user", columnList = "actor_user_id"),
+                @Index(name = "idx_audit_target_user", columnList = "target_user_id"),
                 @Index(name = "idx_audit_action", columnList = "action"),
                 @Index(name = "idx_audit_created_at", columnList = "created_at")
         }
@@ -26,8 +27,12 @@ public class AuditLog {
     private Tenant tenant;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private AppUser user;
+    @JoinColumn(name = "actor_user_id")
+    private AppUser actorUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "target_user_id")
+    private AppUser targetUser;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 60)
@@ -45,9 +50,17 @@ public class AuditLog {
     public AuditLog() {
     }
 
-    public AuditLog(Tenant tenant, AppUser user, AuditAction action, boolean success, String message) {
+    public AuditLog(
+            Tenant tenant,
+            AppUser actorUser,
+            AppUser targetUser,
+            AuditAction action,
+            boolean success,
+            String message
+    ) {
         this.tenant = tenant;
-        this.user = user;
+        this.actorUser = actorUser;
+        this.targetUser = targetUser;
         this.action = action;
         this.success = success;
         this.message = message;
@@ -66,8 +79,12 @@ public class AuditLog {
         return tenant;
     }
 
-    public AppUser getUser() {
-        return user;
+    public AppUser getActorUser() {
+        return actorUser;
+    }
+
+    public AppUser getTargetUser() {
+        return targetUser;
     }
 
     public AuditAction getAction() {
@@ -94,8 +111,12 @@ public class AuditLog {
         this.tenant = tenant;
     }
 
-    public void setUser(AppUser user) {
-        this.user = user;
+    public void setActorUser(AppUser actorUser) {
+        this.actorUser = actorUser;
+    }
+
+    public void setTargetUser(AppUser targetUser) {
+        this.targetUser = targetUser;
     }
 
     public void setAction(AuditAction action) {

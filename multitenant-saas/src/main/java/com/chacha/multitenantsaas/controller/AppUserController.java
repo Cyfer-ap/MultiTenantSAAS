@@ -21,6 +21,8 @@ import com.chacha.multitenantsaas.common.SortingUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.UUID;
 
@@ -47,9 +49,10 @@ public class AppUserController {
     @PostMapping
     public ResponseEntity<ApiResponse<AppUserResponse>> createUser(
             @PathVariable UUID tenantId,
-            @Valid @RequestBody AppUserCreateRequest request
+            @Valid @RequestBody AppUserCreateRequest request,
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        AppUserResponse user = appUserService.createUser(tenantId, request);
+        AppUserResponse user = appUserService.createUser(tenantId, request, jwt);
 
         return ResponseEntity.ok(
                 ApiResponse.success("User created successfully", user)
@@ -126,9 +129,10 @@ public class AppUserController {
     public ResponseEntity<ApiResponse<AppUserResponse>> updateUser(
             @PathVariable UUID tenantId,
             @PathVariable UUID userId,
-            @Valid @RequestBody AppUserUpdateRequest request
+            @Valid @RequestBody AppUserUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        AppUserResponse user = appUserService.updateUser(tenantId, userId, request);
+        AppUserResponse user = appUserService.updateUser(tenantId, userId, request, jwt);
 
         return ResponseEntity.ok(
                 ApiResponse.success("User updated successfully", user)
@@ -144,9 +148,10 @@ public class AppUserController {
     public ResponseEntity<ApiResponse<AppUserResponse>> updateUserRole(
             @PathVariable UUID tenantId,
             @PathVariable UUID userId,
-            @Valid @RequestBody AppUserRoleUpdateRequest request
+            @Valid @RequestBody AppUserRoleUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        AppUserResponse user = appUserService.updateUserRole(tenantId, userId, request);
+        AppUserResponse user = appUserService.updateUserRole(tenantId, userId, request, jwt);
 
         return ResponseEntity.ok(
                 ApiResponse.success("User role updated successfully", user)
@@ -162,9 +167,10 @@ public class AppUserController {
     public ResponseEntity<ApiResponse<AppUserResponse>> updateUserStatus(
             @PathVariable UUID tenantId,
             @PathVariable UUID userId,
-            @Valid @RequestBody AppUserStatusUpdateRequest request
+            @Valid @RequestBody AppUserStatusUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        AppUserResponse user = appUserService.updateUserStatus(tenantId, userId, request);
+        AppUserResponse user = appUserService.updateUserStatus(tenantId, userId, request, jwt);
 
         return ResponseEntity.ok(
                 ApiResponse.success("User status updated successfully", user)
@@ -179,9 +185,10 @@ public class AppUserController {
     @DeleteMapping("/{userId}")
     public ResponseEntity<ApiResponse<AppUserResponse>> deactivateUser(
             @PathVariable UUID tenantId,
-            @PathVariable UUID userId
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        AppUserResponse user = appUserService.deactivateUser(tenantId, userId);
+        AppUserResponse user = appUserService.deactivateUser(tenantId, userId, jwt);
 
         return ResponseEntity.ok(
                 ApiResponse.success("User deactivated successfully", user)
