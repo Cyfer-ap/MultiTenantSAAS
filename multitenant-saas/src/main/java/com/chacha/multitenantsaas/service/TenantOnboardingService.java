@@ -5,6 +5,7 @@ import com.chacha.multitenantsaas.dto.TenantOnboardingRequest;
 import com.chacha.multitenantsaas.dto.TenantOnboardingResponse;
 import com.chacha.multitenantsaas.dto.TenantResponse;
 import com.chacha.multitenantsaas.entity.AppUser;
+import com.chacha.multitenantsaas.entity.AuditAction;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.TenantStatus;
 import com.chacha.multitenantsaas.entity.UserRole;
@@ -22,15 +23,18 @@ public class TenantOnboardingService {
     private final TenantRepository tenantRepository;
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLogService;
 
     public TenantOnboardingService(
             TenantRepository tenantRepository,
             AppUserRepository appUserRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            AuditLogService auditLogService
     ) {
         this.tenantRepository = tenantRepository;
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
@@ -62,6 +66,14 @@ public class TenantOnboardingService {
         adminUser.setStatus(UserStatus.ACTIVE);
 
         AppUser savedAdminUser = appUserRepository.save(adminUser);
+
+        auditLogService.record(
+                savedTenant,
+                savedAdminUser,
+                AuditAction.TENANT_ONBOARDED,
+                true,
+                "Tenant onboarded successfully with initial tenant administrator: " + normalizedEmail
+        );
 
         return new TenantOnboardingResponse(
                 mapTenantToResponse(savedTenant),

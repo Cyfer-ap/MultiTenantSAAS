@@ -38,8 +38,9 @@ public class TenantController {
 
     @Operation(
             summary = "Create tenant",
-            description = "Creates a new tenant. This endpoint is public for initial onboarding."
+            description = "Disabled. Use POST /api/onboarding/tenants for tenant onboarding."
     )
+    @PreAuthorize("denyAll()")
     @PostMapping
     public ResponseEntity<ApiResponse<TenantResponse>> createTenant(
             @Valid @RequestBody TenantCreateRequest request

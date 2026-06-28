@@ -61,7 +61,7 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui.html").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
 
-                        .requestMatchers(HttpMethod.POST, "/api/tenants").permitAll()
+//                        .requestMatchers(HttpMethod.POST, "/api/tenants").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/tenants/{tenantId}/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/tenants/{tenantId}/auth/forgot-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
