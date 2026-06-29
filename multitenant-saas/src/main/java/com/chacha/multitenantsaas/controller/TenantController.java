@@ -98,7 +98,7 @@ public class TenantController {
             summary = "Get tenant by ID",
             description = "Returns details of a tenant if the authenticated user belongs to the same tenant."
     )
-    @PreAuthorize("@tenantSecurity.isSameTenant(#id)")
+    @PreAuthorize("@tenantSecurity.isSameTenant(#id) or @systemSecurity.isSystemAdmin()")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> getTenantById(
             @PathVariable UUID id
@@ -115,7 +115,7 @@ public class TenantController {
             summary = "Get tenant by slug",
             description = "Returns tenant details by slug if the authenticated user belongs to that tenant."
     )
-    @PreAuthorize("@tenantSecurity.isSameTenantBySlug(#slug)")
+    @PreAuthorize("@tenantSecurity.isSameTenantBySlug(#slug) or @systemSecurity.isSystemAdmin()")
     @GetMapping("/slug/{slug}")
     public ResponseEntity<ApiResponse<TenantResponse>> getTenantBySlug(
             @PathVariable String slug

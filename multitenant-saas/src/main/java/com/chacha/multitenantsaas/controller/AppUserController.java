@@ -63,7 +63,7 @@ public class AppUserController {
             summary = "List tenant users",
             description = "Returns paginated, searchable, filterable, and sortable users inside a tenant."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdminOrManager(#tenantId)")
+    @PreAuthorize("@tenantSecurity.isTenantAdminOrManager(#tenantId) or @systemSecurity.isSystemAdmin()")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<AppUserResponse>>> getUsersByTenant(
             @PathVariable UUID tenantId,
@@ -107,7 +107,7 @@ public class AppUserController {
             summary = "Get tenant user by ID",
             description = "Returns one user from the tenant."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdminOrManager(#tenantId)")
+    @PreAuthorize("@tenantSecurity.isTenantAdminOrManager(#tenantId) or @systemSecurity.isSystemAdmin()")
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse<AppUserResponse>> getUserById(
             @PathVariable UUID tenantId,
