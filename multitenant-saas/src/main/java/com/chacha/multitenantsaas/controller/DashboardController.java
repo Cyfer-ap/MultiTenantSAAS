@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @Tag(
@@ -29,6 +30,7 @@ public class DashboardController {
             description = "Returns total tenant and user counts grouped by status."
     )
     @GetMapping("/api/dashboard/summary")
+    @PreAuthorize("denyAll()")
     public ResponseEntity<ApiResponse<DashboardSummaryResponse>> getSummary() {
         DashboardSummaryResponse summary = dashboardService.getSummary();
 

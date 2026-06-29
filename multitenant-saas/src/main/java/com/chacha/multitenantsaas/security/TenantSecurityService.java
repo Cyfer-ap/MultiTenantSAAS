@@ -1,6 +1,10 @@
 package com.chacha.multitenantsaas.security;
 
+import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.Tenant;
+import com.chacha.multitenantsaas.entity.TenantStatus;
+import com.chacha.multitenantsaas.entity.UserStatus;
+import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,35 +18,24 @@ import java.util.UUID;
 public class TenantSecurityService {
 
     private final TenantRepository tenantRepository;
+    private final AppUserRepository appUserRepository;
 
-    public TenantSecurityService(TenantRepository tenantRepository) {
+    public TenantSecurityService(
+            TenantRepository tenantRepository,
+            AppUserRepository appUserRepository
+    ) {
         this.tenantRepository = tenantRepository;
+        this.appUserRepository = appUserRepository;
     }
 
     public boolean isSameTenant(UUID tenantId) {
-        Jwt jwt = getJwt();
-
-        if (jwt == null) {
-            return false;
-        }
-
-        String tokenTenantId = jwt.getClaimAsString("tenantId");
-
-        return tenantId.toString().equals(tokenTenantId);
+        return getActiveUserForTenant(tenantId) != null;
     }
 
     public boolean isSameTenantBySlug(String slug) {
-        Jwt jwt = getJwt();
-
-        if (jwt == null) {
-            return false;
-        }
-
-        String tokenTenantId = jwt.getClaimAsString("tenantId");
-
         return tenantRepository.findBySlug(slug)
                 .map(Tenant::getId)
-                .map(id -> id.toString().equals(tokenTenantId))
+                .map(this::isSameTenant)
                 .orElse(false);
     }
 
@@ -54,20 +47,88 @@ public class TenantSecurityService {
         return hasRoleForTenant(tenantId, "TENANT_ADMIN", "TENANT_MANAGER");
     }
 
-    private boolean hasRoleForTenant(UUID tenantId, String... allowedRoles) {
-        Jwt jwt = getJwt();
+    public boolean isCurrentTenantAdmin() {
+        UUID tenantId = getCurrentTenantId();
 
-        if (jwt == null) {
+        if (tenantId == null) {
             return false;
         }
 
-        String tokenTenantId = jwt.getClaimAsString("tenantId");
-        String role = jwt.getClaimAsString("role");
+        return isTenantAdmin(tenantId);
+    }
 
-        boolean sameTenant = tenantId.toString().equals(tokenTenantId);
-        boolean allowedRole = Arrays.asList(allowedRoles).contains(role);
+    public boolean isCurrentTenantAdminOrManager() {
+        UUID tenantId = getCurrentTenantId();
 
-        return sameTenant && allowedRole;
+        if (tenantId == null) {
+            return false;
+        }
+
+        return isTenantAdminOrManager(tenantId);
+    }
+
+    private boolean hasRoleForTenant(UUID tenantId, String... allowedRoles) {
+        AppUser user = getActiveUserForTenant(tenantId);
+
+        if (user == null) {
+            return false;
+        }
+
+        return Arrays.asList(allowedRoles).contains(user.getRole().name());
+    }
+
+    private AppUser getActiveUserForTenant(UUID tenantId) {
+        Jwt jwt = getJwt();
+
+        if (jwt == null) {
+            return null;
+        }
+
+        UUID tokenTenantId = parseUuid(jwt.getClaimAsString("tenantId"));
+        UUID tokenUserId = parseUuid(jwt.getSubject());
+
+        if (tokenTenantId == null || tokenUserId == null) {
+            return null;
+        }
+
+        if (!tenantId.equals(tokenTenantId)) {
+            return null;
+        }
+
+        Tenant tenant = tenantRepository.findById(tenantId).orElse(null);
+
+        if (tenant == null || tenant.getStatus() != TenantStatus.ACTIVE) {
+            return null;
+        }
+
+        AppUser user = appUserRepository.findByTenantIdAndId(
+                tenantId,
+                tokenUserId
+        ).orElse(null);
+
+        if (user == null || user.getStatus() != UserStatus.ACTIVE) {
+            return null;
+        }
+
+        return user;
+    }
+
+    private UUID getCurrentTenantId() {
+        Jwt jwt = getJwt();
+
+        if (jwt == null) {
+            return null;
+        }
+
+        return parseUuid(jwt.getClaimAsString("tenantId"));
+    }
+
+    private UUID parseUuid(String value) {
+        try {
+            return value == null ? null : UUID.fromString(value);
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
     }
 
     private Jwt getJwt() {

@@ -31,7 +31,7 @@ public class TenantDashboardController {
             summary = "Get tenant dashboard summary",
             description = "Returns user counts for the authenticated user's tenant."
     )
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'TENANT_MANAGER')")
+    @PreAuthorize("@tenantSecurity.isCurrentTenantAdminOrManager()")
     @GetMapping("/api/tenant/dashboard/summary")
     public ResponseEntity<ApiResponse<TenantDashboardSummaryResponse>> getTenantDashboardSummary(
             @AuthenticationPrincipal Jwt jwt

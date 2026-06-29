@@ -56,9 +56,9 @@ public class TenantController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "List tenants",
-            description = "Returns paginated, searchable, filterable, and sortable tenant records."
+            description = "Disabled until SYSTEM_ADMIN role is implemented."
     )
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("denyAll()")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<TenantResponse>>> getAllTenants(
             @RequestParam(defaultValue = "0") int page,

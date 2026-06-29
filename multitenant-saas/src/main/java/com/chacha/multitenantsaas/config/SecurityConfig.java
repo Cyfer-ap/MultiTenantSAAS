@@ -69,7 +69,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/onboarding/tenants").permitAll()
 
-                        .requestMatchers("/api/dashboard/**").hasAuthority("TENANT_ADMIN")
+                        .requestMatchers("/api/dashboard/**").denyAll()
 
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()

@@ -32,6 +32,7 @@ public class AppUserService {
     private final AuditLogService auditLogService;
     private final CurrentActorService currentActorService;
     private final TenantAdminGuardService tenantAdminGuardService;
+    private final RefreshTokenService refreshTokenService;
 
     public AppUserService(
             AppUserRepository appUserRepository,
@@ -39,7 +40,8 @@ public class AppUserService {
             PasswordEncoder passwordEncoder,
             AuditLogService auditLogService,
             CurrentActorService currentActorService,
-            TenantAdminGuardService tenantAdminGuardService
+            TenantAdminGuardService tenantAdminGuardService,
+            RefreshTokenService refreshTokenService
     ) {
         this.appUserRepository = appUserRepository;
         this.tenantRepository = tenantRepository;
@@ -47,6 +49,7 @@ public class AppUserService {
         this.auditLogService = auditLogService;
         this.currentActorService = currentActorService;
         this.tenantAdminGuardService = tenantAdminGuardService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     public AppUserResponse createUser(
@@ -234,6 +237,10 @@ public class AppUserService {
 
         AppUser updatedUser = appUserRepository.save(user);
 
+        if (updatedUser.getStatus() != UserStatus.ACTIVE) {
+            refreshTokenService.revokeAllActiveTokensForUser(updatedUser.getId());
+        }
+
         auditLogService.recordSuccess(
                 user.getTenant(),
                 actorUser,
@@ -267,6 +274,8 @@ public class AppUserService {
         user.setStatus(UserStatus.INACTIVE);
 
         AppUser updatedUser = appUserRepository.save(user);
+
+        refreshTokenService.revokeAllActiveTokensForUser(updatedUser.getId());
 
         auditLogService.recordSuccess(
                 user.getTenant(),
