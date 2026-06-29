@@ -98,8 +98,6 @@ public class TenantService {
     public TenantResponse updateTenant(UUID id, TenantUpdateRequest request, Jwt jwt) {
         Tenant tenant = tenantLookupService.getByIdOrThrow(id);
 
-        AppUser actorUser = currentActorService.getRequiredActiveActor(id, jwt);
-
         String oldName = tenant.getName();
         String oldSlug = tenant.getSlug();
 
@@ -115,16 +113,33 @@ public class TenantService {
 
         Tenant updatedTenant = tenantRepository.save(tenant);
 
-        auditLogService.recordSuccess(
-                updatedTenant,
-                actorUser,
-                null,
-                AuditAction.TENANT_UPDATED,
-                "Tenant updated successfully from name=" + oldName
-                        + ", slug=" + oldSlug
-                        + " to name=" + updatedTenant.getName()
-                        + ", slug=" + updatedTenant.getSlug()
-        );
+        if (currentSystemAdminService.isSystemAdminToken(jwt)) {
+            SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
+
+            auditLogService.recordSystemAdminSuccess(
+                    updatedTenant,
+                    actorSystemAdmin,
+                    null,
+                    AuditAction.TENANT_UPDATED,
+                    "Tenant updated successfully by system admin from name=" + oldName
+                            + ", slug=" + oldSlug
+                            + " to name=" + updatedTenant.getName()
+                            + ", slug=" + updatedTenant.getSlug()
+            );
+        } else {
+            AppUser actorUser = currentActorService.getRequiredActiveActor(id, jwt);
+
+            auditLogService.recordSuccess(
+                    updatedTenant,
+                    actorUser,
+                    null,
+                    AuditAction.TENANT_UPDATED,
+                    "Tenant updated successfully from name=" + oldName
+                            + ", slug=" + oldSlug
+                            + " to name=" + updatedTenant.getName()
+                            + ", slug=" + updatedTenant.getSlug()
+            );
+        }
 
         return mapToResponse(updatedTenant);
     }

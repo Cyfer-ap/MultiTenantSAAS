@@ -132,7 +132,7 @@ public class TenantController {
             summary = "Update tenant",
             description = "Updates tenant name or slug. Only tenant admins can update their own tenant."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdmin(#id)")
+    @PreAuthorize("@tenantSecurity.isTenantAdmin(#id) or @systemSecurity.isSystemAdmin()")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> updateTenant(
             @PathVariable UUID id,
