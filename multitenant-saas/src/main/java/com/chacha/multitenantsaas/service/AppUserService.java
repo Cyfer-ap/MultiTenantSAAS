@@ -31,19 +31,22 @@ public class AppUserService {
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
     private final CurrentActorService currentActorService;
+    private final TenantAdminGuardService tenantAdminGuardService;
 
     public AppUserService(
             AppUserRepository appUserRepository,
             TenantRepository tenantRepository,
             PasswordEncoder passwordEncoder,
             AuditLogService auditLogService,
-            CurrentActorService currentActorService
+            CurrentActorService currentActorService,
+            TenantAdminGuardService tenantAdminGuardService
     ) {
         this.appUserRepository = appUserRepository;
         this.tenantRepository = tenantRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
         this.currentActorService = currentActorService;
+        this.tenantAdminGuardService = tenantAdminGuardService;
     }
 
     public AppUserResponse createUser(
@@ -184,6 +187,12 @@ public class AppUserService {
         AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
         UserRole oldRole = user.getRole();
 
+        tenantAdminGuardService.ensureCanChangeRole(
+                actorUser,
+                user,
+                request.role()
+        );
+
         user.setRole(request.role());
 
         AppUser updatedUser = appUserRepository.save(user);
@@ -215,6 +224,12 @@ public class AppUserService {
         AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
         UserStatus oldStatus = user.getStatus();
 
+        tenantAdminGuardService.ensureCanChangeStatus(
+                actorUser,
+                user,
+                request.status()
+        );
+
         user.setStatus(request.status());
 
         AppUser updatedUser = appUserRepository.save(user);
@@ -243,6 +258,11 @@ public class AppUserService {
                 ));
 
         AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
+
+        tenantAdminGuardService.ensureCanDeactivate(
+                actorUser,
+                user
+        );
 
         user.setStatus(UserStatus.INACTIVE);
 

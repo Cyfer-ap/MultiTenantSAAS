@@ -31,6 +31,8 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
 
     long countByTenantIdAndStatus(UUID tenantId, UserStatus status);
 
+    long countByTenantIdAndRoleAndStatus(UUID tenantId, UserRole role, UserStatus status);
+
     @Query("""
             SELECT appUser
             FROM AppUser appUser
