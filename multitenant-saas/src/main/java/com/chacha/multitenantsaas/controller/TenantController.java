@@ -19,7 +19,8 @@ import com.chacha.multitenantsaas.common.SortingUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import java.util.UUID;
 
 @RestController
@@ -135,9 +136,10 @@ public class TenantController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> updateTenant(
             @PathVariable UUID id,
-            @Valid @RequestBody TenantUpdateRequest request
-    ) {
-        TenantResponse tenant = tenantService.updateTenant(id, request);
+            @Valid @RequestBody TenantUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        TenantResponse tenant = tenantService.updateTenant(id, request, jwt);
 
         return ResponseEntity.ok(
                 ApiResponse.success("Tenant updated successfully", tenant)
@@ -153,9 +155,10 @@ public class TenantController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<TenantResponse>> updateTenantStatus(
             @PathVariable UUID id,
-            @Valid @RequestBody TenantStatusUpdateRequest request
+            @Valid @RequestBody TenantStatusUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        TenantResponse tenant = tenantService.updateTenantStatus(id, request);
+        TenantResponse tenant = tenantService.updateTenantStatus(id, request, jwt);
 
         return ResponseEntity.ok(
                 ApiResponse.success("Tenant status updated successfully", tenant)
@@ -170,9 +173,10 @@ public class TenantController {
     @PreAuthorize("@tenantSecurity.isTenantAdmin(#id)")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> deactivateTenant(
-            @PathVariable UUID id
+            @PathVariable UUID id,
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        TenantResponse tenant = tenantService.deactivateTenant(id);
+        TenantResponse tenant = tenantService.deactivateTenant(id, jwt);
 
         return ResponseEntity.ok(
                 ApiResponse.success("Tenant deactivated successfully", tenant)

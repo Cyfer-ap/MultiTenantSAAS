@@ -59,6 +59,84 @@ public class AuditLogService {
         auditLogRepository.save(auditLog);
     }
 
+    public void recordSuccess(
+            Tenant tenant,
+            AppUser actorUser,
+            AppUser targetUser,
+            AuditAction action,
+            String message
+    ) {
+        record(
+                tenant,
+                actorUser,
+                targetUser,
+                action,
+                true,
+                message
+        );
+    }
+
+    public void recordFailure(
+            Tenant tenant,
+            AppUser actorUser,
+            AppUser targetUser,
+            AuditAction action,
+            String message
+    ) {
+        record(
+                tenant,
+                actorUser,
+                targetUser,
+                action,
+                false,
+                message
+        );
+    }
+
+    public void recordSelfSuccess(
+            Tenant tenant,
+            AppUser user,
+            AuditAction action,
+            String message
+    ) {
+        recordSuccess(
+                tenant,
+                user,
+                user,
+                action,
+                message
+        );
+    }
+
+    public void recordSelfFailure(
+            Tenant tenant,
+            AppUser user,
+            AuditAction action,
+            String message
+    ) {
+        recordFailure(
+                tenant,
+                user,
+                user,
+                action,
+                message
+        );
+    }
+
+    public void recordSystemFailure(
+            Tenant tenant,
+            AuditAction action,
+            String message
+    ) {
+        recordFailure(
+                tenant,
+                null,
+                null,
+                action,
+                message
+        );
+    }
+
     public PageResponse<AuditLogResponse> getAuditLogsByTenant(
             UUID tenantId,
             AuditAction action,

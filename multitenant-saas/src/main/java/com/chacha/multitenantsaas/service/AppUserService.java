@@ -74,12 +74,11 @@ public class AppUserService {
 
         AppUser savedUser = appUserRepository.save(user);
 
-        auditLogService.record(
+        auditLogService.recordSuccess(
                 tenant,
                 actorUser,
                 savedUser,
                 AuditAction.USER_CREATED,
-                true,
                 "User created successfully: " + normalizedEmail
         );
 
@@ -160,12 +159,11 @@ public class AppUserService {
 
         AppUser updatedUser = appUserRepository.save(user);
 
-        auditLogService.record(
+        auditLogService.recordSuccess(
                 user.getTenant(),
                 actorUser,
                 updatedUser,
                 AuditAction.USER_UPDATED,
-                true,
                 "User profile updated successfully from " + oldEmail + " to " + updatedUser.getEmail()
         );
 
@@ -190,12 +188,11 @@ public class AppUserService {
 
         AppUser updatedUser = appUserRepository.save(user);
 
-        auditLogService.record(
+        auditLogService.recordSuccess(
                 user.getTenant(),
                 actorUser,
                 updatedUser,
                 AuditAction.USER_ROLE_UPDATED,
-                true,
                 "User role updated successfully for " + updatedUser.getEmail()
                         + " from " + oldRole
                         + " to " + request.role()
@@ -222,12 +219,11 @@ public class AppUserService {
 
         AppUser updatedUser = appUserRepository.save(user);
 
-        auditLogService.record(
+        auditLogService.recordSuccess(
                 user.getTenant(),
                 actorUser,
                 updatedUser,
                 AuditAction.USER_STATUS_UPDATED,
-                true,
                 "User status updated successfully for " + updatedUser.getEmail()
                         + " from " + oldStatus
                         + " to " + request.status()
@@ -252,12 +248,11 @@ public class AppUserService {
 
         AppUser updatedUser = appUserRepository.save(user);
 
-        auditLogService.record(
+        auditLogService.recordSuccess(
                 user.getTenant(),
                 actorUser,
                 updatedUser,
                 AuditAction.USER_DEACTIVATED,
-                true,
                 "User deactivated successfully: " + updatedUser.getEmail()
         );
 

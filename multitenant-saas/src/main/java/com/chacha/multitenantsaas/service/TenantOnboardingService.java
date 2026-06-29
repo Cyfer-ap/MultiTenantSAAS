@@ -67,11 +67,10 @@ public class TenantOnboardingService {
 
         AppUser savedAdminUser = appUserRepository.save(adminUser);
 
-        auditLogService.record(
+        auditLogService.recordSelfSuccess(
                 savedTenant,
                 savedAdminUser,
                 AuditAction.TENANT_ONBOARDED,
-                true,
                 "Tenant onboarded successfully with initial tenant administrator: " + normalizedEmail
         );
 

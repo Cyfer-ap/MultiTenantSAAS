@@ -1,29 +1,41 @@
 package com.chacha.multitenantsaas.service;
 
+import com.chacha.multitenantsaas.dto.PageResponse;
 import com.chacha.multitenantsaas.dto.TenantCreateRequest;
 import com.chacha.multitenantsaas.dto.TenantResponse;
-import com.chacha.multitenantsaas.entity.Tenant;
-import com.chacha.multitenantsaas.exception.DuplicateResourceException;
-import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
-import com.chacha.multitenantsaas.repository.TenantRepository;
-import org.springframework.stereotype.Service;
-import com.chacha.multitenantsaas.dto.TenantUpdateRequest;
 import com.chacha.multitenantsaas.dto.TenantStatusUpdateRequest;
+import com.chacha.multitenantsaas.dto.TenantUpdateRequest;
+import com.chacha.multitenantsaas.entity.AppUser;
+import com.chacha.multitenantsaas.entity.AuditAction;
+import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.TenantStatus;
-import com.chacha.multitenantsaas.dto.PageResponse;
+import com.chacha.multitenantsaas.exception.DuplicateResourceException;
+import com.chacha.multitenantsaas.repository.TenantRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
 public class TenantService {
 
     private final TenantRepository tenantRepository;
+    private final AuditLogService auditLogService;
+    private final CurrentActorService currentActorService;
+    private final TenantLookupService tenantLookupService;
 
-    public TenantService(TenantRepository tenantRepository) {
+    public TenantService(
+            TenantRepository tenantRepository,
+            AuditLogService auditLogService,
+            CurrentActorService currentActorService,
+            TenantLookupService tenantLookupService
+    ) {
         this.tenantRepository = tenantRepository;
+        this.auditLogService = auditLogService;
+        this.currentActorService = currentActorService;
+        this.tenantLookupService = tenantLookupService;
     }
 
     public TenantResponse createTenant(TenantCreateRequest request) {
@@ -66,22 +78,24 @@ public class TenantService {
     }
 
     public TenantResponse getTenantById(UUID id) {
-        Tenant tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + id));
+        Tenant tenant = tenantLookupService.getByIdOrThrow(id);
 
         return mapToResponse(tenant);
     }
 
     public TenantResponse getTenantBySlug(String slug) {
-        Tenant tenant = tenantRepository.findBySlug(slug)
-                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with slug: " + slug));
+        Tenant tenant = tenantLookupService.getBySlugOrThrow(slug);
 
         return mapToResponse(tenant);
     }
 
-    public TenantResponse updateTenant(UUID id, TenantUpdateRequest request) {
-        Tenant tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + id));
+    public TenantResponse updateTenant(UUID id, TenantUpdateRequest request, Jwt jwt) {
+        Tenant tenant = tenantLookupService.getByIdOrThrow(id);
+
+        AppUser actorUser = currentActorService.getRequiredActiveActor(id, jwt);
+
+        String oldName = tenant.getName();
+        String oldSlug = tenant.getSlug();
 
         tenantRepository.findBySlug(request.slug())
                 .ifPresent(existingTenant -> {
@@ -94,6 +108,63 @@ public class TenantService {
         tenant.setSlug(request.slug());
 
         Tenant updatedTenant = tenantRepository.save(tenant);
+
+        auditLogService.recordSuccess(
+                updatedTenant,
+                actorUser,
+                null,
+                AuditAction.TENANT_UPDATED,
+                "Tenant updated successfully from name=" + oldName
+                        + ", slug=" + oldSlug
+                        + " to name=" + updatedTenant.getName()
+                        + ", slug=" + updatedTenant.getSlug()
+        );
+
+        return mapToResponse(updatedTenant);
+    }
+
+    public TenantResponse updateTenantStatus(UUID id, TenantStatusUpdateRequest request, Jwt jwt) {
+        Tenant tenant = tenantLookupService.getByIdOrThrow(id);
+
+        AppUser actorUser = currentActorService.getRequiredActiveActor(id, jwt);
+
+        TenantStatus oldStatus = tenant.getStatus();
+
+        tenant.setStatus(request.status());
+
+        Tenant updatedTenant = tenantRepository.save(tenant);
+
+        auditLogService.recordSuccess(
+                updatedTenant,
+                actorUser,
+                null,
+                AuditAction.TENANT_STATUS_UPDATED,
+                "Tenant status updated successfully from " + oldStatus
+                        + " to " + updatedTenant.getStatus()
+        );
+
+        return mapToResponse(updatedTenant);
+    }
+
+    public TenantResponse deactivateTenant(UUID id, Jwt jwt) {
+        Tenant tenant = tenantLookupService.getByIdOrThrow(id);
+
+        AppUser actorUser = currentActorService.getRequiredActiveActor(id, jwt);
+
+        TenantStatus oldStatus = tenant.getStatus();
+
+        tenant.setStatus(TenantStatus.INACTIVE);
+
+        Tenant updatedTenant = tenantRepository.save(tenant);
+
+        auditLogService.recordSuccess(
+                updatedTenant,
+                actorUser,
+                null,
+                AuditAction.TENANT_DEACTIVATED,
+                "Tenant deactivated successfully from " + oldStatus
+                        + " to " + updatedTenant.getStatus()
+        );
 
         return mapToResponse(updatedTenant);
     }
@@ -109,28 +180,6 @@ public class TenantService {
         );
     }
 
-    public TenantResponse updateTenantStatus(UUID id, TenantStatusUpdateRequest request) {
-        Tenant tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + id));
-
-        tenant.setStatus(request.status());
-
-        Tenant updatedTenant = tenantRepository.save(tenant);
-
-        return mapToResponse(updatedTenant);
-    }
-
-    public TenantResponse deactivateTenant(UUID id) {
-        Tenant tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + id));
-
-        tenant.setStatus(TenantStatus.INACTIVE);
-
-        Tenant updatedTenant = tenantRepository.save(tenant);
-
-        return mapToResponse(updatedTenant);
-    }
-
     private String normalizeSearch(String search) {
         if (search == null || search.trim().isBlank()) {
             return null;
@@ -139,4 +188,3 @@ public class TenantService {
         return search.trim();
     }
 }
-
