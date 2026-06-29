@@ -56,9 +56,9 @@ public class TenantController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "List tenants",
-            description = "Disabled until SYSTEM_ADMIN role is implemented."
+            description = "Returns a list of all tenants. Only system admins can access this endpoint."
     )
-    @PreAuthorize("denyAll()")
+    @PreAuthorize("@systemSecurity.isSystemAdmin()")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<TenantResponse>>> getAllTenants(
             @RequestParam(defaultValue = "0") int page,

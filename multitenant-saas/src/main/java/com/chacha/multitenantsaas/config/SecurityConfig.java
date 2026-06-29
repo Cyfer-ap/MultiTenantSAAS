@@ -69,7 +69,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/onboarding/tenants").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/system/auth/login").permitAll()
 
-                        .requestMatchers("/api/dashboard/**").denyAll()
+                        .requestMatchers("/api/dashboard/**").hasAuthority("SYSTEM_ADMIN")
 
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()

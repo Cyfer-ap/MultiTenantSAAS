@@ -27,10 +27,10 @@ public class DashboardController {
 
     @Operation(
             summary = "Get system dashboard summary",
-            description = "Returns total tenant and user counts grouped by status."
+            description = "Returns total tenant and user counts grouped by status. Only system admins can access this endpoint."
     )
+    @PreAuthorize("@systemSecurity.isSystemAdmin()")
     @GetMapping("/api/dashboard/summary")
-    @PreAuthorize("denyAll()")
     public ResponseEntity<ApiResponse<DashboardSummaryResponse>> getSummary() {
         DashboardSummaryResponse summary = dashboardService.getSummary();
 
