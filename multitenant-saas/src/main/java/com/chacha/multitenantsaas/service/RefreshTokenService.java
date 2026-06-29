@@ -138,6 +138,21 @@ public class RefreshTokenService {
     }
 
     @Transactional
+    public void revokeAllActiveTokensForTenant(UUID tenantId) {
+        List<RefreshToken> activeTokens =
+                refreshTokenRepository.findByUser_Tenant_IdAndRevokedFalse(tenantId);
+
+        activeTokens.forEach(refreshToken -> {
+            if (!refreshToken.isExpired()) {
+                refreshToken.setRevoked(true);
+                refreshToken.setRevokedAt(Instant.now());
+            }
+        });
+
+        refreshTokenRepository.saveAll(activeTokens);
+    }
+
+    @Transactional
     public RefreshTokenData revokeRefreshTokenAndReturnData(String rawRefreshToken) {
         String tokenHash = hashToken(rawRefreshToken);
 

@@ -9,7 +9,7 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
-
+import com.chacha.multitenantsaas.entity.SystemAdmin;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
@@ -43,6 +43,28 @@ public class JwtService {
                 .claim("email", user.getEmail())
                 .claim("fullName", user.getFullName())
                 .claim("role", user.getRole().name())
+                .build();
+
+        JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
+
+        return jwtEncoder
+                .encode(JwtEncoderParameters.from(header, claims))
+                .getTokenValue();
+    }
+
+    public String generateSystemAdminAccessToken(SystemAdmin systemAdmin) {
+        Instant now = Instant.now();
+        Instant expiresAt = now.plus(expirationMinutes, ChronoUnit.MINUTES);
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer(issuer)
+                .issuedAt(now)
+                .expiresAt(expiresAt)
+                .subject(systemAdmin.getId().toString())
+                .claim("email", systemAdmin.getEmail())
+                .claim("fullName", systemAdmin.getFullName())
+                .claim("role", "SYSTEM_ADMIN")
+                .claim("accountType", "SYSTEM_ADMIN")
                 .build();
 
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();

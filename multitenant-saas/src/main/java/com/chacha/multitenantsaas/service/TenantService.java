@@ -25,17 +25,20 @@ public class TenantService {
     private final AuditLogService auditLogService;
     private final CurrentActorService currentActorService;
     private final TenantLookupService tenantLookupService;
+    private final RefreshTokenService refreshTokenService;
 
     public TenantService(
             TenantRepository tenantRepository,
             AuditLogService auditLogService,
             CurrentActorService currentActorService,
-            TenantLookupService tenantLookupService
+            TenantLookupService tenantLookupService,
+            RefreshTokenService refreshTokenService
     ) {
         this.tenantRepository = tenantRepository;
         this.auditLogService = auditLogService;
         this.currentActorService = currentActorService;
         this.tenantLookupService = tenantLookupService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     public TenantResponse createTenant(TenantCreateRequest request) {
@@ -134,6 +137,10 @@ public class TenantService {
 
         Tenant updatedTenant = tenantRepository.save(tenant);
 
+        if (updatedTenant.getStatus() != TenantStatus.ACTIVE) {
+            refreshTokenService.revokeAllActiveTokensForTenant(updatedTenant.getId());
+        }
+
         auditLogService.recordSuccess(
                 updatedTenant,
                 actorUser,
@@ -156,6 +163,8 @@ public class TenantService {
         tenant.setStatus(TenantStatus.INACTIVE);
 
         Tenant updatedTenant = tenantRepository.save(tenant);
+
+        refreshTokenService.revokeAllActiveTokensForTenant(updatedTenant.getId());
 
         auditLogService.recordSuccess(
                 updatedTenant,
