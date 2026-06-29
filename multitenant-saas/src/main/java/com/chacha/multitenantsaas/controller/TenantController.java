@@ -151,7 +151,7 @@ public class TenantController {
             summary = "Update tenant status",
             description = "Updates tenant status such as ACTIVE, INACTIVE, or SUSPENDED."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdmin(#id)")
+    @PreAuthorize("@tenantSecurity.isTenantAdmin(#id) or @systemSecurity.isSystemAdmin()")
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<TenantResponse>> updateTenantStatus(
             @PathVariable UUID id,
@@ -170,7 +170,7 @@ public class TenantController {
             summary = "Soft delete tenant",
             description = "Soft deletes a tenant by setting its status to INACTIVE."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdmin(#id)")
+    @PreAuthorize("@tenantSecurity.isTenantAdmin(#id) or @systemSecurity.isSystemAdmin()")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> deactivateTenant(
             @PathVariable UUID id,

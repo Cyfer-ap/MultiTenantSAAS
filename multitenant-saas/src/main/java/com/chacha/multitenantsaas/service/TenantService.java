@@ -15,7 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-
+import com.chacha.multitenantsaas.entity.SystemAdmin;
 import java.util.UUID;
 
 @Service
@@ -26,19 +26,22 @@ public class TenantService {
     private final CurrentActorService currentActorService;
     private final TenantLookupService tenantLookupService;
     private final RefreshTokenService refreshTokenService;
+    private final CurrentSystemAdminService currentSystemAdminService;
 
     public TenantService(
             TenantRepository tenantRepository,
             AuditLogService auditLogService,
             CurrentActorService currentActorService,
             TenantLookupService tenantLookupService,
-            RefreshTokenService refreshTokenService
+            RefreshTokenService refreshTokenService,
+            CurrentSystemAdminService currentSystemAdminService
     ) {
         this.tenantRepository = tenantRepository;
         this.auditLogService = auditLogService;
         this.currentActorService = currentActorService;
         this.tenantLookupService = tenantLookupService;
         this.refreshTokenService = refreshTokenService;
+        this.currentSystemAdminService = currentSystemAdminService;
     }
 
     public TenantResponse createTenant(TenantCreateRequest request) {
@@ -129,8 +132,6 @@ public class TenantService {
     public TenantResponse updateTenantStatus(UUID id, TenantStatusUpdateRequest request, Jwt jwt) {
         Tenant tenant = tenantLookupService.getByIdOrThrow(id);
 
-        AppUser actorUser = currentActorService.getRequiredActiveActor(id, jwt);
-
         TenantStatus oldStatus = tenant.getStatus();
 
         tenant.setStatus(request.status());
@@ -141,22 +142,35 @@ public class TenantService {
             refreshTokenService.revokeAllActiveTokensForTenant(updatedTenant.getId());
         }
 
-        auditLogService.recordSuccess(
-                updatedTenant,
-                actorUser,
-                null,
-                AuditAction.TENANT_STATUS_UPDATED,
-                "Tenant status updated successfully from " + oldStatus
-                        + " to " + updatedTenant.getStatus()
-        );
+        if (currentSystemAdminService.isSystemAdminToken(jwt)) {
+            SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
+
+            auditLogService.recordSystemAdminSuccess(
+                    updatedTenant,
+                    actorSystemAdmin,
+                    null,
+                    AuditAction.TENANT_STATUS_UPDATED,
+                    "Tenant status updated successfully by system admin from " + oldStatus
+                            + " to " + updatedTenant.getStatus()
+            );
+        } else {
+            AppUser actorUser = currentActorService.getRequiredActiveActor(id, jwt);
+
+            auditLogService.recordSuccess(
+                    updatedTenant,
+                    actorUser,
+                    null,
+                    AuditAction.TENANT_STATUS_UPDATED,
+                    "Tenant status updated successfully from " + oldStatus
+                            + " to " + updatedTenant.getStatus()
+            );
+        }
 
         return mapToResponse(updatedTenant);
     }
 
     public TenantResponse deactivateTenant(UUID id, Jwt jwt) {
         Tenant tenant = tenantLookupService.getByIdOrThrow(id);
-
-        AppUser actorUser = currentActorService.getRequiredActiveActor(id, jwt);
 
         TenantStatus oldStatus = tenant.getStatus();
 
@@ -166,14 +180,29 @@ public class TenantService {
 
         refreshTokenService.revokeAllActiveTokensForTenant(updatedTenant.getId());
 
-        auditLogService.recordSuccess(
-                updatedTenant,
-                actorUser,
-                null,
-                AuditAction.TENANT_DEACTIVATED,
-                "Tenant deactivated successfully from " + oldStatus
-                        + " to " + updatedTenant.getStatus()
-        );
+        if (currentSystemAdminService.isSystemAdminToken(jwt)) {
+            SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
+
+            auditLogService.recordSystemAdminSuccess(
+                    updatedTenant,
+                    actorSystemAdmin,
+                    null,
+                    AuditAction.TENANT_DEACTIVATED,
+                    "Tenant deactivated successfully by system admin from " + oldStatus
+                            + " to " + updatedTenant.getStatus()
+            );
+        } else {
+            AppUser actorUser = currentActorService.getRequiredActiveActor(id, jwt);
+
+            auditLogService.recordSuccess(
+                    updatedTenant,
+                    actorUser,
+                    null,
+                    AuditAction.TENANT_DEACTIVATED,
+                    "Tenant deactivated successfully from " + oldStatus
+                            + " to " + updatedTenant.getStatus()
+            );
+        }
 
         return mapToResponse(updatedTenant);
     }

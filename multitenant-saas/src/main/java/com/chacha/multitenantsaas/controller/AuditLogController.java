@@ -8,7 +8,6 @@ import com.chacha.multitenantsaas.entity.AuditAction;
 import com.chacha.multitenantsaas.service.AuditLogService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +37,7 @@ public class AuditLogController {
             summary = "List tenant audit logs",
             description = "Returns paginated, filterable, and sortable audit logs for a tenant."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
+    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId) or @systemSecurity.isSystemAdmin()")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getTenantAuditLogs(
             @PathVariable UUID tenantId,
@@ -78,7 +77,7 @@ public class AuditLogController {
             summary = "Get user audit logs",
             description = "Returns paginated, filterable, and sortable audit logs for a specific user within a tenant."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
+    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId) or @systemSecurity.isSystemAdmin()")
     @GetMapping("/users/{userId}")
     public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getUserAuditLogs(
             @PathVariable UUID tenantId,
