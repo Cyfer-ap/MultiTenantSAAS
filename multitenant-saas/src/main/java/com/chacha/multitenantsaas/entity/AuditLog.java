@@ -11,6 +11,7 @@ import java.util.UUID;
         indexes = {
                 @Index(name = "idx_audit_tenant", columnList = "tenant_id"),
                 @Index(name = "idx_audit_actor_user", columnList = "actor_user_id"),
+                @Index(name = "idx_audit_actor_system_admin", columnList = "actor_system_admin_id"),
                 @Index(name = "idx_audit_target_user", columnList = "target_user_id"),
                 @Index(name = "idx_audit_action", columnList = "action"),
                 @Index(name = "idx_audit_created_at", columnList = "created_at")
@@ -26,9 +27,17 @@ public class AuditLog {
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "actor_type", length = 30)
+    private AuditActorType actorType;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "actor_user_id")
     private AppUser actorUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "actor_system_admin_id")
+    private SystemAdmin actorSystemAdmin;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "target_user_id")
@@ -59,7 +68,25 @@ public class AuditLog {
             String message
     ) {
         this.tenant = tenant;
+        this.actorType = actorUser == null ? AuditActorType.SYSTEM : AuditActorType.TENANT_USER;
         this.actorUser = actorUser;
+        this.targetUser = targetUser;
+        this.action = action;
+        this.success = success;
+        this.message = message;
+    }
+
+    public AuditLog(
+            Tenant tenant,
+            SystemAdmin actorSystemAdmin,
+            AppUser targetUser,
+            AuditAction action,
+            boolean success,
+            String message
+    ) {
+        this.tenant = tenant;
+        this.actorType = actorSystemAdmin == null ? AuditActorType.SYSTEM : AuditActorType.SYSTEM_ADMIN;
+        this.actorSystemAdmin = actorSystemAdmin;
         this.targetUser = targetUser;
         this.action = action;
         this.success = success;
@@ -69,6 +96,16 @@ public class AuditLog {
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
+
+        if (this.actorType == null) {
+            if (this.actorSystemAdmin != null) {
+                this.actorType = AuditActorType.SYSTEM_ADMIN;
+            } else if (this.actorUser != null) {
+                this.actorType = AuditActorType.TENANT_USER;
+            } else {
+                this.actorType = AuditActorType.SYSTEM;
+            }
+        }
     }
 
     public UUID getId() {
@@ -79,8 +116,16 @@ public class AuditLog {
         return tenant;
     }
 
+    public AuditActorType getActorType() {
+        return actorType;
+    }
+
     public AppUser getActorUser() {
         return actorUser;
+    }
+
+    public SystemAdmin getActorSystemAdmin() {
+        return actorSystemAdmin;
     }
 
     public AppUser getTargetUser() {
@@ -111,8 +156,16 @@ public class AuditLog {
         this.tenant = tenant;
     }
 
+    public void setActorType(AuditActorType actorType) {
+        this.actorType = actorType;
+    }
+
     public void setActorUser(AppUser actorUser) {
         this.actorUser = actorUser;
+    }
+
+    public void setActorSystemAdmin(SystemAdmin actorSystemAdmin) {
+        this.actorSystemAdmin = actorSystemAdmin;
     }
 
     public void setTargetUser(AppUser targetUser) {
