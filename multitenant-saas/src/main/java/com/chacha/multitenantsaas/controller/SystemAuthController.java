@@ -1,11 +1,15 @@
 package com.chacha.multitenantsaas.controller;
 
 import com.chacha.multitenantsaas.common.ApiResponse;
+import com.chacha.multitenantsaas.dto.SystemAdminCurrentResponse;
 import com.chacha.multitenantsaas.dto.SystemAdminLoginRequest;
 import com.chacha.multitenantsaas.dto.SystemAdminLoginResponse;
 import com.chacha.multitenantsaas.service.SystemAuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,6 +30,18 @@ public class SystemAuthController {
 
         return ResponseEntity.ok(
                 ApiResponse.success("System admin login successful", response)
+        );
+    }
+
+    @PreAuthorize("@systemSecurity.isSystemAdmin()")
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<SystemAdminCurrentResponse>> getCurrentSystemAdmin(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        SystemAdminCurrentResponse response = systemAuthService.getCurrentSystemAdmin(jwt);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Current system admin fetched successfully", response)
         );
     }
 }
