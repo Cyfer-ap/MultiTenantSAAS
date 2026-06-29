@@ -200,6 +200,10 @@ public class AppUserService {
 
         AppUser updatedUser = appUserRepository.save(user);
 
+        if (oldRole != updatedUser.getRole()) {
+            refreshTokenService.revokeAllActiveTokensForUser(updatedUser.getId());
+        }
+
         auditLogService.recordSuccess(
                 user.getTenant(),
                 actorUser,
