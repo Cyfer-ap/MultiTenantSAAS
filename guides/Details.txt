@@ -1,8 +1,173 @@
-H2 Console : http://localhost:8081/h2-console
+Multi-Tenant SaaS Backend — Local Reference
 
-Login:
-	JDBC URL: jdbc:h2:mem:multitenant_saas_db
-	JDBC URL (file) : jdbc:h2:file:./data/multitenant_saas_db
-    Username: sa
-    Password: empty
+BASE URL
+--------
+http://localhost:8081
 
+
+PROJECT FOLDER
+--------------
+Main local folder:
+D:\Projects\multitenant-saas\multitenant-saas
+
+The Spring Boot app is inside the inner multitenant-saas folder.
+
+
+IMPORTANT LOCAL URLS
+--------------------
+Application health:
+http://localhost:8081/api/health
+
+Actuator health:
+http://localhost:8081/actuator/health
+
+Swagger UI:
+http://localhost:8081/swagger-ui.html
+
+OpenAPI JSON:
+http://localhost:8081/v3/api-docs
+
+H2 Console:
+http://localhost:8081/h2-console
+
+
+H2 CONSOLE LOGIN
+----------------
+JDBC URL:
+jdbc:h2:file:./data/multitenant_saas_db
+
+Username:
+sa
+
+Password:
+empty
+
+
+LOCAL SYSTEM ADMIN
+------------------
+Email:
+system@saas.local
+
+Password:
+SystemAdmin@123
+
+Login URL:
+http://localhost:8081/api/system/auth/login
+
+
+COMMON HEADERS
+--------------
+For JSON requests:
+Content-Type: application/json
+
+For protected APIs:
+Authorization: Bearer <accessToken>
+
+
+CURRENT TOKEN TYPES
+-------------------
+Tenant users:
+- accessToken
+- refreshToken
+
+System admin:
+- accessToken only for now
+
+
+IMPORTANT PUBLIC ENDPOINTS
+--------------------------
+GET  http://localhost:8081/api/health
+GET  http://localhost:8081/actuator/health
+GET  http://localhost:8081/h2-console
+GET  http://localhost:8081/swagger-ui.html
+GET  http://localhost:8081/v3/api-docs
+
+POST http://localhost:8081/api/onboarding/tenants
+POST http://localhost:8081/api/tenants/{tenantId}/auth/login
+POST http://localhost:8081/api/tenants/{tenantId}/auth/forgot-password
+POST http://localhost:8081/api/auth/reset-password
+POST http://localhost:8081/api/auth/refresh
+POST http://localhost:8081/api/auth/logout
+POST http://localhost:8081/api/system/auth/login
+
+
+COMMON TEST PASSWORD
+--------------------
+Use this valid password format while testing:
+Password@123
+
+Strong password rule:
+- 8 to 100 characters
+- at least one uppercase letter
+- at least one lowercase letter
+- at least one number
+- at least one special character
+- no spaces
+
+
+USEFUL H2 QUERIES
+-----------------
+SELECT * FROM TENANTS;
+SELECT * FROM APP_USERS;
+SELECT * FROM SYSTEM_ADMINS;
+SELECT * FROM REFRESH_TOKENS;
+SELECT * FROM PASSWORD_RESET_TOKENS;
+SELECT * FROM AUDIT_LOGS;
+
+View latest audit logs:
+SELECT * FROM AUDIT_LOGS ORDER BY CREATED_AT DESC;
+
+View tenant users:
+SELECT * FROM APP_USERS WHERE TENANT_ID = '<tenant-id>';
+
+Reactivate a tenant during local testing:
+UPDATE TENANTS SET STATUS = 'ACTIVE' WHERE ID = '<tenant-id>';
+
+Reactivate a user during local testing:
+UPDATE APP_USERS SET STATUS = 'ACTIVE' WHERE ID = '<user-id>';
+
+
+WHEN TO RESET LOCAL H2 DATABASE
+-------------------------------
+For local development, reset H2 when enum values or table structure cause old schema issues.
+
+Steps:
+1. Stop the app.
+2. Delete the data/ folder.
+3. Restart the app.
+4. Re-onboard a tenant and login again.
+
+Common reason:
+H2 check constraints may still contain old enum values.
+
+
+DO NOT COMMIT LOCAL DATABASE FILES
+----------------------------------
+Keep these in .gitignore:
+
+data/
+*.mv.db
+*.trace.db
+
+
+SUGGESTED POSTMAN VARIABLES
+---------------------------
+baseUrl = http://localhost:8081
+tenantId = copied tenant UUID
+adminUserId = copied tenant admin user UUID
+managerUserId = copied manager user UUID
+tenantAccessToken = tenant user JWT access token
+tenantRefreshToken = tenant user refresh token
+systemAccessToken = system admin JWT access token
+
+
+QUICK HAPPY PATH
+----------------
+1. Login as system admin.
+2. Onboard a tenant.
+3. Login as tenant admin.
+4. Create manager/user.
+5. Test tenant dashboard.
+6. Test audit logs.
+7. Test system dashboard with system admin.
+8. Test forbidden access with wrong token type.

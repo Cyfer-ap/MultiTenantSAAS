@@ -1,25 +1,29 @@
 # Multi-Tenant SaaS Backend — Progress Notes
 
-## 1. Project Overview
+This guide explains the current state of the project in simple language. It is meant as a learning reference, not just a changelog.
 
-This project is a learning-focused **Multi-Tenant SaaS backend** built with **Spring Boot**.
+---
 
-The goal is to implement core SaaS backend concepts step by step, including:
+## 1. Project Goal
+
+The goal is to build a production-style SaaS backend step by step.
+
+The project currently focuses on:
 
 ```text
 Tenant management
-User management
-Authentication
-JWT-based access tokens
-Role-based authorization
 Tenant isolation
-Dashboard summary APIs
+Tenant-scoped users
+JWT authentication
+Refresh-token based sessions
+Role-based authorization
+System-admin platform access
 Audit logging
-Subscription and plan management
-Production database migration
+Password reset
+Clean REST API structure
 ```
 
-The project currently runs locally on:
+The backend runs locally at:
 
 ```text
 http://localhost:8081
@@ -27,370 +31,129 @@ http://localhost:8081
 
 ---
 
-# 2. Project Setup
-
-The project was created using **Spring Initializr** with Maven and Java 21.
-
-Basic structure:
+## 2. Current Tech Stack
 
 ```text
-src/main/java
-src/main/resources
-pom.xml
-```
-
-The application starts from:
-
-```java
-@SpringBootApplication
-public class MultitenantSaasApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(MultitenantSaasApplication.class, args);
-    }
-}
-```
-
-## What this does
-
-```text
-Starts the Spring Boot application
-Auto-configures required Spring components
-Scans packages for controllers, services, repositories, configs, etc.
-```
-
-Because the main class is inside:
-
-```text
-com.chacha.multitenantsaas
-```
-
-Spring Boot automatically scans subpackages such as:
-
-```text
-controller
-service
-repository
-entity
-dto
-config
-exception
-security
-tenant
-common
+Spring Boot 4
+Java 21
+Maven
+Spring Web MVC
+Spring Data JPA
+Hibernate
+H2 file database
+Spring Security
+OAuth2 Resource Server / JWT
+Springdoc OpenAPI / Swagger UI
+Validation
+Actuator
 ```
 
 ---
 
-# 3. Current Package Structure
+## 3. Main Package Structure
 
 ```text
 com.chacha.multitenantsaas
  ├── common
- │   └── ApiResponse.java
  ├── config
- │   ├── SecurityConfig.java
- │   └── JwtConfig.java
  ├── controller
- │   ├── AuthController.java
- │   ├── AppUserController.java
- │   ├── DashboardController.java
- │   ├── HealthCheckController.java
- │   └── TenantController.java
  ├── dto
- │   ├── AppUserCreateRequest.java
- │   ├── AppUserResponse.java
- │   ├── AppUserRoleUpdateRequest.java
- │   ├── AppUserStatusUpdateRequest.java
- │   ├── AppUserUpdateRequest.java
- │   ├── DashboardSummaryResponse.java
- │   ├── LoginRequest.java
- │   ├── LoginResponse.java
- │   ├── TenantCreateRequest.java
- │   ├── TenantResponse.java
- │   ├── TenantStatusUpdateRequest.java
- │   └── TenantUpdateRequest.java
  ├── entity
- │   ├── AppUser.java
- │   ├── Tenant.java
- │   ├── TenantStatus.java
- │   ├── UserRole.java
- │   └── UserStatus.java
  ├── exception
- │   ├── AuthenticationFailedException.java
- │   ├── DuplicateResourceException.java
- │   ├── GlobalExceptionHandler.java
- │   └── ResourceNotFoundException.java
  ├── repository
- │   ├── AppUserRepository.java
- │   └── TenantRepository.java
  ├── security
  ├── service
- │   ├── AppUserService.java
- │   ├── AuthService.java
- │   ├── DashboardService.java
- │   ├── JwtService.java
- │   └── TenantService.java
- ├── tenant
+ ├── validation
  └── MultitenantSaasApplication.java
 ```
 
----
-
-# 4. Dependencies Used
-
-## Initial Dependencies
+Simple meaning:
 
 ```text
-Spring Web MVC
-Spring Boot DevTools
-Validation
-Lombok
-Spring Boot Actuator
-```
-
-## Database Dependencies
-
-```text
-Spring Data JPA
-Hibernate
-H2 Database
-H2 Console
-```
-
-## Security and Authentication Dependencies
-
-```text
-Spring Security
-Spring OAuth2 Resource Server
-JWT support through Spring Security OAuth2 JWT classes
-```
-
-## Why these dependencies are used
-
-```text
-Spring Web MVC              → Build REST APIs
-Validation                  → Validate request bodies
-Spring Data JPA             → Work with database entities and repositories
-Hibernate                   → JPA implementation
-H2 Database                 → Local development database
-H2 Console                  → Browser-based database inspection
-Spring Security             → Authentication and authorization foundation
-OAuth2 Resource Server      → JWT encoding/validation support
-Actuator                    → Health and monitoring endpoints
-DevTools                    → Development restart support
-Lombok                      → Available, but mostly not used yet
+controller  -> receives HTTP requests
+service     -> contains business logic
+repository  -> talks to the database
+entity      -> database table models
+dto         -> request/response objects
+security    -> authorization helpers and JWT-related code
+config      -> Spring/security/OpenAPI configuration
+exception   -> global error handling
+common      -> shared response and utility classes
+validation  -> reusable custom validation annotations
 ```
 
 ---
 
-# 5. Local Development Configuration
+## 4. Local Development Setup
 
-The backend runs on port:
-
-```properties
-server.port=8081
-```
-
-The project originally used an in-memory H2 database:
-
-```properties
-spring.datasource.url=jdbc:h2:mem:multitenant_saas_db
-```
-
-This caused data to disappear after server restart because `mem` means the database exists only in memory.
-
-The project now uses file-based H2 for local persistence:
-
-```properties
-spring.datasource.url=jdbc:h2:file:./data/multitenant_saas_db
-spring.datasource.driver-class-name=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
-```
-
-JPA configuration:
-
-```properties
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.format_sql=true
-```
-
-H2 console configuration:
-
-```properties
-spring.h2.console.enabled=true
-spring.h2.console.path=/h2-console
-```
-
-Actuator configuration:
-
-```properties
-management.endpoints.web.exposure.include=health,info
-management.endpoint.health.show-details=always
-```
-
-JWT configuration:
-
-```properties
-app.jwt.secret=change-this-secret-key-to-a-secure-32-byte-minimum-value-for-dev
-app.jwt.expiration-minutes=60
-app.jwt.issuer=multitenant-saas
-```
-
-## H2 Console Login
+The server port is:
 
 ```text
-URL: http://localhost:8081/h2-console
-JDBC URL: jdbc:h2:file:./data/multitenant_saas_db
-Username: sa
-Password: empty
+8081
 ```
 
-Useful H2 queries:
+Local database:
 
-```sql
-SELECT * FROM TENANTS;
-SELECT * FROM APP_USERS;
-SELECT ID, EMAIL, PASSWORD_HASH FROM APP_USERS;
+```text
+H2 file-based database
+jdbc:h2:file:./data/multitenant_saas_db
 ```
 
-The `data/` folder and H2 database files should not be committed to Git.
+H2 Console:
 
-Recommended `.gitignore` entries:
+```text
+http://localhost:8081/h2-console
+```
 
-```gitignore
-data/
-*.mv.db
-*.trace.db
+Swagger UI:
+
+```text
+http://localhost:8081/swagger-ui.html
 ```
 
 ---
 
-# 6. API Response Format
+## 5. Common API Response
 
-A common response wrapper was added:
-
-```java
-ApiResponse<T>
-```
-
-All custom APIs follow this response structure:
+Most custom APIs use the same response wrapper:
 
 ```json
 {
   "success": true,
   "message": "Operation message",
   "data": {},
-  "timestamp": "2026-06-10T00:00:00Z"
-}
-```
-
-## Why this matters
-
-This keeps API responses consistent across:
-
-```text
-Tenant APIs
-User APIs
-Authentication APIs
-Dashboard APIs
-Error responses
-```
-
----
-
-# 7. Backend Request Flow
-
-The project follows this standard Spring Boot layered flow:
-
-```text
-Client
-  ↓
-Controller
-  ↓
-Service
-  ↓
-Repository
-  ↓
-Database
-```
-
-Each layer has a clear role:
-
-```text
-Controller  → Handles HTTP requests and responses
-Service     → Contains business logic
-Repository  → Handles database operations
-Entity      → Represents database tables
-DTO         → Represents request/response payloads
-Config      → Contains application configuration
-Exception   → Handles custom/global errors
-```
-
----
-
-# 8. Exception Handling
-
-The project has global exception handling through:
-
-```java
-@RestControllerAdvice
-```
-
-Files added:
-
-```text
-DuplicateResourceException.java
-ResourceNotFoundException.java
-AuthenticationFailedException.java
-GlobalExceptionHandler.java
-```
-
-## Currently handled cases
-
-```text
-Duplicate resource
-Resource not found
-Authentication failure
-Validation failure
-Invalid request body / enum value
-Illegal argument
-Generic server error
-```
-
-## Why this matters
-
-Instead of returning raw Spring Boot error pages or stack traces, the API returns clean JSON responses using `ApiResponse`.
-
-Example duplicate response:
-
-```json
-{
-  "success": false,
-  "message": "Tenant slug already exists: acme",
-  "data": null,
   "timestamp": "..."
 }
 ```
 
+This is handled by:
+
+```text
+common/ApiResponse.java
+```
+
+For paginated APIs, the project uses:
+
+```text
+common/PageResponse.java
+```
+
+This keeps list APIs consistent.
+
 ---
 
-# 9. Tenant Management
+## 6. Tenant Module
 
-## Tenant Entity
-
-The `Tenant` entity represents one organization, company, or customer using the SaaS platform.
+A tenant represents one customer, company, organization, or workspace.
 
 Example:
 
 ```text
-Tenant 1 → Acme Corporation
-Tenant 2 → Nova Labs
-Tenant 3 → Demo School
+Tenant A -> Acme Corporation
+Tenant B -> Nova Labs
 ```
 
-Current tenant fields:
+Main tenant fields:
 
 ```text
 id
@@ -409,233 +172,76 @@ INACTIVE
 SUSPENDED
 ```
 
-## Important annotations used
+Important tenant features already implemented:
 
 ```text
-@Entity          → Maps Java class to database table
-@Table           → Defines table-level settings and constraints
-@Id              → Primary key
-@GeneratedValue  → Auto-generates UUID
-@Column          → Defines column constraints
-@Enumerated      → Stores enum values
-@PrePersist      → Runs before first save
-@PreUpdate       → Runs before update
+Tenant onboarding
+Tenant lookup by ID
+Tenant lookup by slug
+Tenant update
+Tenant status update
+Tenant soft delete / deactivation
+Tenant listing for system admin
+Tenant search/filter/sort/pagination
+```
+
+Current tenant creation flow:
+
+```text
+Use POST http://localhost:8081/api/onboarding/tenants
+```
+
+The old direct tenant creation endpoint is disabled:
+
+```text
+POST http://localhost:8081/api/tenants
+```
+
+This was disabled because a real SaaS tenant should be created with its first tenant admin user.
+
+---
+
+## 7. Tenant Onboarding
+
+Tenant onboarding creates two things together:
+
+```text
+1. Tenant
+2. First TENANT_ADMIN user
+```
+
+Endpoint:
+
+```text
+POST http://localhost:8081/api/onboarding/tenants
+```
+
+Why this matters:
+
+```text
+A tenant without an admin is not useful.
+An admin without a tenant breaks tenant isolation.
+```
+
+The onboarding endpoint also writes an audit log:
+
+```text
+TENANT_ONBOARDED
 ```
 
 ---
 
-# 10. Tenant Repository, Service, Controller, and DTOs
+## 8. Tenant Users
 
-Tenant module files added:
-
-```text
-Tenant.java
-TenantStatus.java
-TenantRepository.java
-TenantService.java
-TenantController.java
-TenantCreateRequest.java
-TenantUpdateRequest.java
-TenantStatusUpdateRequest.java
-TenantResponse.java
-```
-
-Tenant module flow:
+Users are stored in:
 
 ```text
-Client
-  ↓
-TenantController
-  ↓
-TenantService
-  ↓
-TenantRepository
-  ↓
-TENANTS table
+APP_USERS
 ```
 
-## JpaRepository
+Each tenant user belongs to exactly one tenant.
 
-```java
-JpaRepository<Tenant, UUID>
-```
-
-This provides built-in methods:
-
-```text
-save()
-findAll()
-findById()
-existsById()
-deleteById()
-count()
-```
-
-Custom tenant repository methods:
-
-```java
-Optional<Tenant> findBySlug(String slug);
-boolean existsBySlug(String slug);
-long countByStatus(TenantStatus status);
-```
-
----
-
-# 11. Tenant APIs
-
-```text
-POST   /api/tenants
-GET    /api/tenants
-GET    /api/tenants/{id}
-GET    /api/tenants/slug/{slug}
-PUT    /api/tenants/{id}
-PATCH  /api/tenants/{id}/status
-DELETE /api/tenants/{id}
-```
-
-## Create Tenant
-
-```http
-POST /api/tenants
-Content-Type: application/json
-```
-
-Example body:
-
-```json
-{
-  "name": "Nova Labs",
-  "slug": "nova-labs"
-}
-```
-
-## Get Tenant by ID
-
-```http
-GET /api/tenants/{id}
-```
-
-## Get Tenant by Slug
-
-```http
-GET /api/tenants/slug/{slug}
-```
-
-This is important because future tenant resolution may happen through:
-
-```text
-Subdomain: acme.yoursaas.com
-Header: X-Tenant-Slug: acme
-```
-
-## Update Tenant
-
-```http
-PUT /api/tenants/{id}
-```
-
-Updates:
-
-```text
-name
-slug
-```
-
-Duplicate slug protection prevents two tenants from using the same slug.
-
-## Update Tenant Status
-
-```http
-PATCH /api/tenants/{id}/status
-```
-
-Allowed values:
-
-```text
-ACTIVE
-INACTIVE
-SUSPENDED
-```
-
-## Deactivate Tenant / Soft Delete
-
-```http
-DELETE /api/tenants/{id}
-```
-
-This does not physically delete the tenant.
-
-Internally it does:
-
-```java
-tenant.setStatus(TenantStatus.INACTIVE);
-```
-
-This preserves users, billing history, audit logs, and historical records.
-
----
-
-# 12. User Management Foundation
-
-The user module was added under tenants.
-
-Files added:
-
-```text
-AppUser.java
-UserRole.java
-UserStatus.java
-AppUserRepository.java
-AppUserService.java
-AppUserController.java
-AppUserCreateRequest.java
-AppUserUpdateRequest.java
-AppUserRoleUpdateRequest.java
-AppUserStatusUpdateRequest.java
-AppUserResponse.java
-```
-
-We use `AppUser` instead of `User` because `User` can conflict with Spring Security classes.
-
----
-
-# 13. Tenant and User Relationship
-
-A user belongs to a tenant.
-
-```java
-@ManyToOne(fetch = FetchType.LAZY)
-@JoinColumn(name = "tenant_id", nullable = false)
-private Tenant tenant;
-```
-
-This means:
-
-```text
-Many users can belong to one tenant.
-```
-
-Relationship:
-
-```text
-Tenant
-  └── Users
-```
-
-Example:
-
-```text
-Nova Labs
-  ├── admin@novalabs.com
-  ├── manager@novalabs.com
-  └── user@novalabs.com
-```
-
----
-
-# 14. User Roles and Statuses
-
-## User roles
+Current tenant-user roles:
 
 ```text
 TENANT_ADMIN
@@ -643,7 +249,7 @@ TENANT_MANAGER
 TENANT_USER
 ```
 
-## User statuses
+Current user statuses:
 
 ```text
 ACTIVE
@@ -651,315 +257,69 @@ INACTIVE
 SUSPENDED
 ```
 
-These are currently simple enums.
-
-Later, roles can be expanded into a full role-permission system.
-
----
-
-# 15. Email Uniqueness Inside Tenant
-
-The `AppUser` entity has this unique constraint:
-
-```java
-columnNames = {"tenant_id", "email"}
-```
-
-This means the same email cannot be repeated inside the same tenant.
-
-Blocked:
+Important user features already implemented:
 
 ```text
-Tenant A → admin@example.com
-Tenant A → admin@example.com
+Create user inside tenant
+List tenant users
+Get tenant user by ID
+Update user details
+Update user role
+Update user status
+Deactivate user
+Tenant-scoped email uniqueness
+Email normalization
+Strong password validation
+Soft delete by status
 ```
 
-Allowed by current design:
+Email uniqueness is tenant-scoped:
 
 ```text
-Tenant A → admin@example.com
-Tenant B → admin@example.com
-```
-
-This supports tenant-scoped identity.
-
----
-
-# 16. Email Normalization
-
-Before saving or checking emails, the app normalizes them:
-
-```java
-request.email().trim().toLowerCase()
-```
-
-This prevents duplicate-looking emails such as:
-
-```text
-Admin@Acme.com
-admin@acme.com
+Same email cannot repeat inside the same tenant.
+The same email may exist in different tenants.
 ```
 
 ---
 
-# 17. User APIs
+## 9. Strong Password Validation
+
+A reusable annotation was added:
 
 ```text
-POST   /api/tenants/{tenantId}/users
-GET    /api/tenants/{tenantId}/users
-GET    /api/tenants/{tenantId}/users/{userId}
-PUT    /api/tenants/{tenantId}/users/{userId}
-PATCH  /api/tenants/{tenantId}/users/{userId}/role
-PATCH  /api/tenants/{tenantId}/users/{userId}/status
-DELETE /api/tenants/{tenantId}/users/{userId}
+@StrongPassword
 ```
 
-## Create User Inside Tenant
-
-```http
-POST /api/tenants/{tenantId}/users
-Content-Type: application/json
-```
-
-Current request body includes password:
-
-```json
-{
-  "fullName": "Nova Admin",
-  "email": "admin@novalabs.com",
-  "password": "Password@123",
-  "role": "TENANT_ADMIN"
-}
-```
-
-The API accepts `password`, but the database stores only `password_hash`.
-
-## Get Users by Tenant
-
-```http
-GET /api/tenants/{tenantId}/users
-```
-
-## Get Single User by ID Inside Tenant
-
-```http
-GET /api/tenants/{tenantId}/users/{userId}
-```
-
-This is safer than:
+It is used for:
 
 ```text
-/api/users/{userId}
+Tenant onboarding admin password
+Tenant user creation password
+Change password new password
+Reset password new password
 ```
 
-because the lookup is tenant-scoped.
-
-## Update User Details
-
-```http
-PUT /api/tenants/{tenantId}/users/{userId}
-```
-
-Updates:
+Rule:
 
 ```text
-fullName
-email
+8 to 100 characters
+at least one uppercase letter
+at least one lowercase letter
+at least one number
+at least one special character
+no spaces
 ```
 
-## Update User Role
-
-```http
-PATCH /api/tenants/{tenantId}/users/{userId}/role
-```
-
-Example:
-
-```json
-{
-  "role": "TENANT_MANAGER"
-}
-```
-
-## Update User Status
-
-```http
-PATCH /api/tenants/{tenantId}/users/{userId}/status
-```
-
-Example:
-
-```json
-{
-  "status": "SUSPENDED"
-}
-```
-
-## Deactivate User / Soft Delete
-
-```http
-DELETE /api/tenants/{tenantId}/users/{userId}
-```
-
-This does not physically delete the user.
-
-Internally it does:
-
-```java
-user.setStatus(UserStatus.INACTIVE);
-```
+This avoids repeating the same password validation rules in multiple DTOs.
 
 ---
 
-# 18. Tenant-Scoped User Lookup
+## 10. Tenant Authentication
 
-Important repository method:
-
-```java
-findByTenantIdAndId(UUID tenantId, UUID userId)
-```
-
-This ensures that a user is fetched only if the user belongs to the requested tenant.
-
-This is an early foundation of tenant isolation.
-
----
-
-# 19. Dashboard Summary API
-
-Files added:
+Tenant users login through:
 
 ```text
-DashboardSummaryResponse.java
-DashboardService.java
-DashboardController.java
-```
-
-Endpoint:
-
-```http
-GET /api/dashboard/summary
-```
-
-The dashboard summary returns:
-
-```text
-Total tenants
-Active tenants
-Inactive tenants
-Suspended tenants
-Total users
-Active users
-Inactive users
-Suspended users
-```
-
-Repository count methods added:
-
-```java
-long countByStatus(TenantStatus status);
-long countByStatus(UserStatus status);
-```
-
-Spring Data JPA automatically converts these into SQL count queries filtered by status.
-
----
-
-# 20. Security Foundation
-
-Spring Security was added to the project.
-
-File added:
-
-```text
-SecurityConfig.java
-```
-
-Current security configuration:
-
-```text
-CSRF disabled for API development
-/api/** temporarily permitted
-/h2-console/** permitted
-/actuator/** permitted
-Frame options set to same-origin for H2 console
-PasswordEncoder bean configured
-```
-
-Current APIs are still open intentionally while authentication is being built.
-
-Later, `/api/**` will be protected and only login/public endpoints will remain open.
-
----
-
-# 21. Password Hashing
-
-A password field was added to the create-user request:
-
-```text
-password
-```
-
-A password hash field was added to the `AppUser` entity:
-
-```java
-@Column(name = "password_hash", length = 255)
-private String passwordHash;
-```
-
-During user creation, raw passwords are encoded:
-
-```java
-String passwordHash = passwordEncoder.encode(request.password());
-```
-
-The raw password is never stored.
-
-The database stores:
-
-```text
-password_hash
-```
-
-not:
-
-```text
-password
-```
-
-## Important note
-
-Older users created before this field was added may have `NULL` or blank `password_hash` values.
-
-Those users cannot log in unless recreated or given a password hash.
-
----
-
-# 22. Authentication: Basic Login
-
-Files added:
-
-```text
-LoginRequest.java
-LoginResponse.java
-AuthenticationFailedException.java
-AuthService.java
-AuthController.java
-```
-
-Endpoint:
-
-```http
-POST /api/tenants/{tenantId}/auth/login
-```
-
-Request body:
-
-```json
-{
-  "email": "admin@novalabs.com",
-  "password": "Password@123"
-}
+POST http://localhost:8081/api/tenants/{tenantId}/auth/login
 ```
 
 The login process checks:
@@ -969,316 +329,341 @@ Tenant exists
 Tenant is ACTIVE
 User exists inside that tenant
 User is ACTIVE
-User has password_hash
-Password matches password_hash
+Password is correct
 ```
 
-Password verification uses:
-
-```java
-passwordEncoder.matches(request.password(), user.getPasswordHash())
-```
-
-This checks the raw password against the stored hash.
-
----
-
-# 23. JWT Token Generation
-
-JWT support was added after basic login.
-
-Files added:
+Login returns:
 
 ```text
-JwtConfig.java
-JwtService.java
-```
-
-Dependency added:
-
-```text
-spring-boot-starter-oauth2-resource-server
-```
-
-JWT configuration properties:
-
-```properties
-app.jwt.secret=change-this-secret-key-to-a-secure-32-byte-minimum-value-for-dev
-app.jwt.expiration-minutes=60
-app.jwt.issuer=multitenant-saas
-```
-
-JWT tokens are generated using:
-
-```text
-JwtEncoder
-NimbusJwtEncoder
-HS256 signing
-```
-
-## JWT claims currently included
-
-```text
-issuer
-issuedAt
-expiresAt
-subject = userId
-tenantId
-email
-fullName
-role
-```
-
-## Current login response includes
-
-```text
-tenantId
-userId
-fullName
-email
-role
 accessToken
-tokenType
-expiresInSeconds
-message
+refreshToken
 ```
 
-Example response structure:
+Access tokens are JWTs. Refresh tokens are stored hashed in the database.
 
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "tenantId": "...",
-    "userId": "...",
-    "fullName": "Nova Admin",
-    "email": "admin@novalabs.com",
-    "role": "TENANT_ADMIN",
-    "accessToken": "eyJ...",
-    "tokenType": "Bearer",
-    "expiresInSeconds": 3600,
-    "message": "Login successful"
-  },
-  "timestamp": "..."
-}
+---
+
+## 11. Refresh Tokens and Logout
+
+Implemented endpoints:
+
+```text
+POST http://localhost:8081/api/auth/refresh
+POST http://localhost:8081/api/auth/logout
+POST http://localhost:8081/api/auth/logout-all
+```
+
+Important behavior:
+
+```text
+Refresh tokens are stored as SHA-256 hashes.
+Raw refresh tokens are never stored.
+Refresh-token rotation is implemented.
+Logout revokes one refresh token.
+Logout-all revokes all active refresh tokens for the current tenant user.
+```
+
+Security improvements implemented:
+
+```text
+User role change revokes that user's refresh tokens.
+User suspension/deactivation revokes that user's refresh tokens.
+Tenant suspension/deactivation revokes all refresh tokens under that tenant.
 ```
 
 ---
 
-# 24. Current API Summary
+## 12. Password Change and Reset
 
-## Health and Utility APIs
+Implemented endpoints:
 
 ```text
-GET /api/health
-GET /actuator/health
-GET /h2-console
+POST http://localhost:8081/api/auth/change-password
+POST http://localhost:8081/api/tenants/{tenantId}/auth/forgot-password
+POST http://localhost:8081/api/auth/reset-password
 ```
 
-## Tenant APIs
+Behavior:
 
 ```text
-POST   /api/tenants
-GET    /api/tenants
-GET    /api/tenants/{id}
-GET    /api/tenants/slug/{slug}
-PUT    /api/tenants/{id}
-PATCH  /api/tenants/{id}/status
-DELETE /api/tenants/{id}
+Change password requires current password.
+New password must match confirm password.
+New password must be different from old password.
+Password reset token is stored as a hash.
+Password reset token expires after configured time.
+Password reset revokes active refresh tokens.
 ```
 
-## User APIs
+In local development, the forgot-password response returns a development reset token. Later this should be sent by email instead.
+
+---
+
+## 13. Authorization and Tenant Isolation
+
+The project now protects `/api/**` by default.
+
+Public endpoints are only selected health/auth/development endpoints.
+
+Tenant authorization is DB-backed. This means the app does not blindly trust old JWT role/status claims.
+
+For tenant APIs, the app checks:
 
 ```text
-POST   /api/tenants/{tenantId}/users
-GET    /api/tenants/{tenantId}/users
-GET    /api/tenants/{tenantId}/users/{userId}
-PUT    /api/tenants/{tenantId}/users/{userId}
-PATCH  /api/tenants/{tenantId}/users/{userId}/role
-PATCH  /api/tenants/{tenantId}/users/{userId}/status
-DELETE /api/tenants/{tenantId}/users/{userId}
+JWT tenantId
+JWT userId
+Tenant exists
+Tenant is ACTIVE
+User exists in that tenant
+User is ACTIVE
+Current DB role is allowed
 ```
 
-## Authentication APIs
+Why this matters:
 
 ```text
-POST /api/tenants/{tenantId}/auth/login
-```
-
-## Dashboard APIs
-
-```text
-GET /api/dashboard/summary
+If a user's role is changed or the user is suspended,
+old access tokens stop passing authorization checks.
 ```
 
 ---
 
-# 25. Current Project Status
+## 14. Tenant Admin Safety Rules
 
-The backend currently supports:
+A reusable guard service prevents tenant lockout.
+
+Implemented rules:
 
 ```text
-Spring Boot setup
-Maven setup
-Java 21 configuration
-Port 8081 configuration
-Base package architecture
-Common API response format
-Global exception handling
-H2 database integration
-File-based H2 local persistence
-H2 browser console
-Spring Data JPA
-Hibernate table generation
-Actuator health endpoint
-Tenant creation
-Tenant listing
-Tenant lookup by ID
-Tenant lookup by slug
-Tenant update
-Tenant status update
-Tenant soft delete
-User entity under tenant
-User creation inside tenant
-User listing inside tenant
-User lookup inside tenant
-User detail update
-User role update
-User status update
-User soft delete
-Dashboard summary endpoint
-Spring Security foundation
-Temporary open security configuration
-PasswordEncoder setup
-Password hashing during user creation
-Basic login credential validation
-JWT access token generation
+A tenant admin cannot change their own role.
+A tenant admin cannot deactivate or suspend their own account.
+The last active TENANT_ADMIN in a tenant cannot be removed.
+```
+
+This protects tenants from accidentally losing all admin access.
+
+---
+
+## 15. System Admin Module
+
+System admins are separate from tenant users.
+
+System admins are stored in:
+
+```text
+SYSTEM_ADMINS
+```
+
+They are not stored in `APP_USERS`, because `APP_USERS` always belong to a tenant.
+
+Default local system admin:
+
+```text
+Email: system@saas.local
+Password: SystemAdmin@123
+```
+
+System admin login:
+
+```text
+POST http://localhost:8081/api/system/auth/login
+```
+
+Current system-admin behavior:
+
+```text
+Can login and receive access token
+Can access system dashboard
+Can list all tenants
+Can read tenant details
+Can read tenant users
+Cannot create/update tenant users yet
+```
+
+System admin currently has access token only. Refresh-token support for system admins can be added later as a separate design.
+
+---
+
+## 16. Dashboards
+
+System dashboard:
+
+```text
+GET http://localhost:8081/api/dashboard/summary
+```
+
+Access:
+
+```text
+SYSTEM_ADMIN only
+```
+
+Tenant dashboard:
+
+```text
+GET http://localhost:8081/api/tenant/dashboard/summary
+```
+
+Access:
+
+```text
+TENANT_ADMIN
+TENANT_MANAGER
 ```
 
 ---
 
-# 26. Important Concepts to Remember
+## 17. Audit Logging
 
-## Multi-Tenant SaaS
+Audit logs track important security and management actions.
 
-A multi-tenant system serves multiple organizations using the same backend.
-
-Each tenant should only access its own data.
-
-## Tenant Isolation
-
-Tenant isolation means data from one tenant should not be accessible from another tenant.
-
-Example:
+The project uses this design:
 
 ```text
-Tenant A users should not be visible to Tenant B.
+actorUser  = who performed the action
+targetUser = who was affected by the action
+tenant     = tenant context
 ```
 
-This is why we use tenant-scoped APIs like:
+Examples:
 
 ```text
-/api/tenants/{tenantId}/users/{userId}
+Tenant admin creates manager:
+actorUser  = admin@tenant.com
+targetUser = manager@tenant.com
+
+Tenant admin changes user role:
+actorUser  = admin@tenant.com
+targetUser = user being changed
+
+Tenant-level action:
+actorUser  = tenant admin
+targetUser = null
+tenant     = affected tenant
 ```
 
-## DTOs
-
-DTOs keep API request/response data separate from database entities.
-
-This improves:
+Current audit actions include:
 
 ```text
-Security
-Clean API design
-Maintainability
-Flexibility
+TENANT_ONBOARDED
+TENANT_UPDATED
+TENANT_STATUS_UPDATED
+TENANT_DEACTIVATED
+USER_CREATED
+USER_UPDATED
+USER_ROLE_UPDATED
+USER_STATUS_UPDATED
+USER_DEACTIVATED
+LOGIN_SUCCESS
+LOGIN_FAILED
+LOGOUT
+LOGOUT_ALL
+TOKEN_REFRESH
+PASSWORD_CHANGED
+PASSWORD_RESET_REQUESTED
+PASSWORD_RESET_COMPLETED
 ```
 
-## Soft Delete
-
-Soft delete means records are not physically removed from the database.
-
-Instead, status is changed.
-
-Example:
+Audit APIs:
 
 ```text
-DELETE tenant → tenant status becomes INACTIVE
-DELETE user   → user status becomes INACTIVE
+GET http://localhost:8081/api/tenants/{tenantId}/audit-logs
+GET http://localhost:8081/api/tenants/{tenantId}/audit-logs/users/{userId}
 ```
 
-## Password Hashing
-
-Passwords must not be stored as plain text.
-
-The API accepts raw password only during request processing.
-
-The database stores only the hashed value.
-
-## JWT
-
-A JWT has three parts:
+Access:
 
 ```text
-header.payload.signature
-```
-
-The payload contains claims such as:
-
-```text
-tenantId
-userId
-email
-role
-expiry time
-```
-
-The signature proves the token was generated by the backend and was not modified.
-
----
-
-# 27. Current Limitations
-
-The project is still in development.
-
-Current limitations:
-
-```text
-JWT tokens are generated but not yet validated on protected routes
-Most APIs are still temporarily open through SecurityConfig
-No role-based authorization yet
-No tenant context resolver yet
-No automatic tenant extraction from token/header/subdomain yet
-No refresh token support
-No logout/token blacklist
-No audit logging
-No subscription/plan module
-No PostgreSQL integration yet
-No Flyway/Liquibase migrations yet
-No Swagger/OpenAPI documentation yet
-No automated tests yet
-Secrets are still stored in application.properties for local development
+TENANT_ADMIN only
 ```
 
 ---
 
-# 28. Next Logical Steps
+## 18. Swagger/OpenAPI
 
-The next development steps should be:
+Swagger UI is available at:
 
 ```text
-1. Add JWT decoder configuration
-2. Validate JWT tokens on incoming requests
-3. Protect selected APIs using Spring Security
-4. Keep login and health endpoints public
-5. Extract userId, tenantId, email, and role from JWT claims
-6. Add role-based access control
-7. Add tenant context resolution
-8. Enforce tenant-level data isolation using authenticated token claims
-9. Add audit logging
-10. Move from H2 to PostgreSQL
-11. Add Flyway or Liquibase database migrations
-12. Add Swagger/OpenAPI documentation
-13. Add automated tests
+http://localhost:8081/swagger-ui.html
+```
+
+OpenAPI JSON:
+
+```text
+http://localhost:8081/v3/api-docs
+```
+
+Swagger is useful for viewing available endpoints, but Postman is currently the main testing tool.
+
+---
+
+## 19. Current Access Model
+
+```text
+SYSTEM_ADMIN
+- Platform-wide read access
+- System dashboard
+- Tenant listing
+- Tenant detail reading
+- Tenant user reading
+
+TENANT_ADMIN
+- Own tenant management
+- Own tenant users management
+- Audit logs
+- Tenant dashboard
+
+TENANT_MANAGER
+- Own tenant user reading
+- Tenant dashboard
+
+TENANT_USER
+- Basic authenticated user
+```
+
+---
+
+## 20. Important Design Decisions
+
+```text
+Tenant creation uses onboarding instead of public direct creation.
+System admins are separate from tenant users.
+Refresh tokens are stored hashed.
+Authorization checks live database state.
+Soft delete uses status instead of physical delete.
+Audit logs use actor/target model.
+Strong password rules are reusable.
+```
+
+---
+
+## 21. Current Limitations
+
+Still not implemented:
+
+```text
+System-admin refresh tokens
+System-admin CRUD management
+System-admin audit logs
+Plan/subscription module
+Tenant invitation flow
+Email sending for password reset
+Flyway migrations
+PostgreSQL migration
+Automated unit/integration tests
+```
+
+---
+
+## 22. Recommended Next Steps
+
+Suggested next implementation order:
+
+```text
+1. System-admin audit logging
+2. System-admin refresh tokens or short-session strategy
+3. Plan and subscription entities
+4. Subscription enforcement on tenant/user limits
+5. Flyway migration setup
+6. PostgreSQL migration
+7. Automated tests
 ```

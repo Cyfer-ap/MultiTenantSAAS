@@ -1,4 +1,4 @@
-# Multi-Tenant SaaS Backend — API Test Reference
+# Multi-Tenant SaaS Backend — Postman Test Guide
 
 Base URL:
 
@@ -6,295 +6,425 @@ Base URL:
 http://localhost:8081
 ```
 
-Common header for JSON requests:
+Use these Postman variables:
+
+```text
+baseUrl = http://localhost:8081
+systemAccessToken = <copy after system admin login>
+tenantId = <copy after onboarding>
+tenantAdminUserId = <copy after onboarding>
+tenantAccessToken = <copy after tenant admin login>
+tenantRefreshToken = <copy after tenant admin login>
+managerUserId = <copy after creating manager>
+managerAccessToken = <copy after manager login>
+managerRefreshToken = <copy after manager login>
+normalUserId = <copy after creating user>
+```
+
+For JSON requests:
 
 ```http
 Content-Type: application/json
 ```
 
-Current API response format:
+For protected APIs:
 
-```json
-{
-  "success": true,
-  "message": "Operation message",
-  "data": {},
-  "timestamp": "..."
-}
+```http
+Authorization: Bearer <accessToken>
 ```
 
 ---
 
-# 1. Health Check APIs
+## 1. Health Checks
 
-## 1.1 Application Health Check
+### 1.1 Application health
 
 ```http
 GET http://localhost:8081/api/health
 ```
 
-Expected response:
+Expected:
 
-```json
-{
-  "success": true,
-  "message": "Health check successful",
-  "data": "Multi-Tenant SaaS Backend is running on port 8081",
-  "timestamp": "..."
-}
+```text
+200 OK
 ```
 
-## 1.2 Actuator Health Check
+### 1.2 Actuator health
 
 ```http
 GET http://localhost:8081/actuator/health
 ```
 
-Expected response:
+Expected:
 
-```json
-{
-  "status": "UP"
-}
+```text
+200 OK
 ```
 
 ---
 
-# 2. Tenant APIs
+## 2. System Admin Login
 
-## 2.1 Create Tenant
+### 2.1 Login as system admin
+
+```http
+POST http://localhost:8081/api/system/auth/login
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "email": "system@saas.local",
+  "password": "SystemAdmin@123"
+}
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+Copy:
+
+```text
+data.accessToken -> systemAccessToken
+```
+
+### 2.2 Invalid system admin password
+
+```http
+POST http://localhost:8081/api/system/auth/login
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "email": "system@saas.local",
+  "password": "wrong"
+}
+```
+
+Expected:
+
+```text
+401 Unauthorized
+```
+
+---
+
+## 3. Tenant Onboarding
+
+### 3.1 Onboard a tenant
+
+```http
+POST http://localhost:8081/api/onboarding/tenants
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "tenantName": "Acme Corporation",
+  "tenantSlug": "acme-corp",
+  "adminFullName": "Acme Admin",
+  "adminEmail": "admin@acme.com",
+  "adminPassword": "Password@123"
+}
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+Copy:
+
+```text
+data.tenant.id -> tenantId
+data.adminUser.id -> tenantAdminUserId
+```
+
+### 3.2 Invalid onboarding password
+
+```http
+POST http://localhost:8081/api/onboarding/tenants
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "tenantName": "Bad Password Tenant",
+  "tenantSlug": "bad-password-tenant",
+  "adminFullName": "Bad Admin",
+  "adminEmail": "badadmin@example.com",
+  "adminPassword": "password123"
+}
+```
+
+Expected:
+
+```text
+400 Bad Request
+```
+
+### 3.3 Direct tenant creation is disabled
 
 ```http
 POST http://localhost:8081/api/tenants
+Authorization: Bearer <systemAccessToken>
 Content-Type: application/json
 ```
 
-Request body:
+Body:
 
 ```json
 {
-  "name": "Acme Corporation",
-  "slug": "acme"
+  "name": "Direct Tenant",
+  "slug": "direct-tenant"
 }
 ```
 
-Expected response:
+Expected:
 
-```json
-{
-  "success": true,
-  "message": "Tenant created successfully",
-  "data": {
-    "id": "...",
-    "name": "Acme Corporation",
-    "slug": "acme",
-    "status": "ACTIVE",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "timestamp": "..."
-}
+```text
+403 Forbidden
 ```
 
-Copy the returned tenant `id` for later tests.
+Use onboarding instead.
 
 ---
 
-## 2.2 Get All Tenants
+## 4. Tenant Admin Login
+
+### 4.1 Login as tenant admin
 
 ```http
-GET http://localhost:8081/api/tenants
+POST http://localhost:8081/api/tenants/{tenantId}/auth/login
+Content-Type: application/json
 ```
 
-Expected response:
+Example:
+
+```http
+POST http://localhost:8081/api/tenants/replace-with-tenant-id/auth/login
+Content-Type: application/json
+```
+
+Body:
 
 ```json
 {
-  "success": true,
-  "message": "Tenants fetched successfully",
-  "data": [
-    {
-      "id": "...",
-      "name": "Acme Corporation",
-      "slug": "acme",
-      "status": "ACTIVE",
-      "createdAt": "...",
-      "updatedAt": "..."
-    }
-  ],
-  "timestamp": "..."
+  "email": "admin@acme.com",
+  "password": "Password@123"
 }
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+Copy:
+
+```text
+data.accessToken -> tenantAccessToken
+data.refreshToken -> tenantRefreshToken
 ```
 
 ---
 
-## 2.3 Get Tenant by ID
+## 5. Current Tenant User
+
+### 5.1 Get current logged-in tenant user
+
+```http
+GET http://localhost:8081/api/auth/me
+Authorization: Bearer <tenantAccessToken>
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+---
+
+## 6. Tenant Dashboard
+
+### 6.1 Tenant admin dashboard
+
+```http
+GET http://localhost:8081/api/tenant/dashboard/summary
+Authorization: Bearer <tenantAccessToken>
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+### 6.2 System admin cannot access tenant dashboard
+
+```http
+GET http://localhost:8081/api/tenant/dashboard/summary
+Authorization: Bearer <systemAccessToken>
+```
+
+Expected:
+
+```text
+403 Forbidden
+```
+
+---
+
+## 7. System Dashboard
+
+### 7.1 System admin dashboard
+
+```http
+GET http://localhost:8081/api/dashboard/summary
+Authorization: Bearer <systemAccessToken>
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+### 7.2 Tenant admin cannot access system dashboard
+
+```http
+GET http://localhost:8081/api/dashboard/summary
+Authorization: Bearer <tenantAccessToken>
+```
+
+Expected:
+
+```text
+403 Forbidden
+```
+
+---
+
+## 8. Tenant Read APIs
+
+### 8.1 System admin list all tenants
+
+```http
+GET http://localhost:8081/api/tenants?page=0&size=10&sortBy=createdAt&sortDir=desc
+Authorization: Bearer <systemAccessToken>
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+### 8.2 Tenant admin cannot list all tenants
+
+```http
+GET http://localhost:8081/api/tenants?page=0&size=10&sortBy=createdAt&sortDir=desc
+Authorization: Bearer <tenantAccessToken>
+```
+
+Expected:
+
+```text
+403 Forbidden
+```
+
+### 8.3 Get tenant by ID as tenant admin
 
 ```http
 GET http://localhost:8081/api/tenants/{tenantId}
+Authorization: Bearer <tenantAccessToken>
 ```
 
-Example:
-
-```http
-GET http://localhost:8081/api/tenants/2a3c7f3e-1b8a-4d6c-b3f5-2e1e8f7b9a11
-```
-
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "Tenant fetched successfully",
-  "data": {
-    "id": "...",
-    "name": "Acme Corporation",
-    "slug": "acme",
-    "status": "ACTIVE",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "timestamp": "..."
-}
-```
-
----
-
-## 2.4 Get Tenant by Slug
-
-```http
-GET http://localhost:8081/api/tenants/slug/{slug}
-```
-
-Example:
-
-```http
-GET http://localhost:8081/api/tenants/slug/acme
-```
-
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "Tenant fetched successfully",
-  "data": {
-    "id": "...",
-    "name": "Acme Corporation",
-    "slug": "acme",
-    "status": "ACTIVE",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "timestamp": "..."
-}
-```
-
----
-
-## 2.5 Tenant Not Found Test
-
-```http
-GET http://localhost:8081/api/tenants/slug/unknown-company
-```
-
-Expected response:
-
-```json
-{
-  "success": false,
-  "message": "Tenant not found with slug: unknown-company",
-  "data": null,
-  "timestamp": "..."
-}
-```
-
-Expected HTTP status:
+Expected:
 
 ```text
-404 Not Found
+200 OK
+```
+
+### 8.4 Get tenant by ID as system admin
+
+```http
+GET http://localhost:8081/api/tenants/{tenantId}
+Authorization: Bearer <systemAccessToken>
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+### 8.5 Get tenant by slug
+
+```http
+GET http://localhost:8081/api/tenants/slug/acme-corp
+Authorization: Bearer <tenantAccessToken>
+```
+
+Expected:
+
+```text
+200 OK
 ```
 
 ---
 
-## 2.6 Update Tenant
+## 9. Tenant Update APIs
+
+### 9.1 Update tenant
 
 ```http
 PUT http://localhost:8081/api/tenants/{tenantId}
+Authorization: Bearer <tenantAccessToken>
 Content-Type: application/json
 ```
 
-Request body:
+Body:
 
 ```json
 {
   "name": "Acme Corporation Updated",
-  "slug": "acme-updated"
+  "slug": "acme-corp-updated"
 }
 ```
 
-Expected response:
+Expected:
 
-```json
-{
-  "success": true,
-  "message": "Tenant updated successfully",
-  "data": {
-    "id": "...",
-    "name": "Acme Corporation Updated",
-    "slug": "acme-updated",
-    "status": "ACTIVE",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "timestamp": "..."
-}
+```text
+200 OK
 ```
 
----
+If you update the slug, remember to use the new slug in slug-based tests.
 
-## 2.7 Update Tenant Status
+### 9.2 Update tenant status to ACTIVE
 
 ```http
 PATCH http://localhost:8081/api/tenants/{tenantId}/status
+Authorization: Bearer <tenantAccessToken>
 Content-Type: application/json
 ```
 
-Request body:
-
-```json
-{
-  "status": "SUSPENDED"
-}
-```
-
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "Tenant status updated successfully",
-  "data": {
-    "id": "...",
-    "name": "Acme Corporation Updated",
-    "slug": "acme-updated",
-    "status": "SUSPENDED",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "timestamp": "..."
-}
-```
-
-Allowed tenant status values:
-
-```text
-ACTIVE
-INACTIVE
-SUSPENDED
-```
-
-Another request body example:
+Body:
 
 ```json
 {
@@ -302,225 +432,40 @@ Another request body example:
 }
 ```
 
-Another request body example:
-
-```json
-{
-  "status": "INACTIVE"
-}
-```
-
----
-
-## 2.8 Invalid Tenant Status Test
-
-```http
-PATCH http://localhost:8081/api/tenants/{tenantId}/status
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{
-  "status": "BLOCKED"
-}
-```
-
-Expected response:
-
-```json
-{
-  "success": false,
-  "message": "Invalid request body. Please check the submitted values.",
-  "data": null,
-  "timestamp": "..."
-}
-```
-
-Expected HTTP status:
+Expected:
 
 ```text
-400 Bad Request
+200 OK
 ```
 
----
+### 9.3 Deactivate tenant
 
-## 2.9 Deactivate Tenant
-
-This endpoint performs a soft delete. It does not remove the tenant from the database. It changes the tenant status to `INACTIVE`.
+Run this only at the end of testing because it makes the tenant inactive.
 
 ```http
 DELETE http://localhost:8081/api/tenants/{tenantId}
+Authorization: Bearer <tenantAccessToken>
 ```
 
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "Tenant deactivated successfully",
-  "data": {
-    "id": "...",
-    "name": "Acme Corporation Updated",
-    "slug": "acme-updated",
-    "status": "INACTIVE",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "timestamp": "..."
-}
-```
-
----
-
-## 2.10 Duplicate Tenant Slug Test
-
-First create a tenant:
-
-```http
-POST http://localhost:8081/api/tenants
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{
-  "name": "Acme Corporation",
-  "slug": "acme"
-}
-```
-
-Send the same request again.
-
-Expected response:
-
-```json
-{
-  "success": false,
-  "message": "Tenant slug already exists: acme",
-  "data": null,
-  "timestamp": "..."
-}
-```
-
-Expected HTTP status:
+Expected:
 
 ```text
-409 Conflict
+200 OK
 ```
 
 ---
 
-## 2.11 Tenant Validation Error Test
+## 10. Tenant User APIs
 
-```http
-POST http://localhost:8081/api/tenants
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{
-  "name": "",
-  "slug": ""
-}
-```
-
-Expected response:
-
-```json
-{
-  "success": false,
-  "message": "Validation failed",
-  "data": {
-    "name": "Tenant name is required",
-    "slug": "Tenant slug is required"
-  },
-  "timestamp": "..."
-}
-```
-
-Expected HTTP status:
-
-```text
-400 Bad Request
-```
-
----
-
-# 3. User APIs
-
-Users are tenant-scoped. All user APIs require a valid `tenantId`.
-
-User API base path:
-
-```text
-/api/tenants/{tenantId}/users
-```
-
----
-
-## 3.1 Create User for Tenant
+### 10.1 Create manager
 
 ```http
 POST http://localhost:8081/api/tenants/{tenantId}/users
+Authorization: Bearer <tenantAccessToken>
 Content-Type: application/json
 ```
 
-Request body:
-
-```json
-{
-  "fullName": "Acme Admin",
-  "email": "admin@acme.com",
-  "password": "Password@123",
-  "role": "TENANT_ADMIN"
-}
-```
-
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "User created successfully",
-  "data": {
-    "id": "...",
-    "tenantId": "...",
-    "fullName": "Acme Admin",
-    "email": "admin@acme.com",
-    "role": "TENANT_ADMIN",
-    "status": "ACTIVE",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "timestamp": "..."
-}
-```
-
-Allowed user role values:
-
-```text
-TENANT_ADMIN
-TENANT_MANAGER
-TENANT_USER
-```
-
-Important: the API accepts `password`, but the response does not return the password.
-
----
-
-## 3.2 Create Tenant Manager User
-
-```http
-POST http://localhost:8081/api/tenants/{tenantId}/users
-Content-Type: application/json
-```
-
-Request body:
+Body:
 
 ```json
 {
@@ -531,36 +476,27 @@ Request body:
 }
 ```
 
-Expected response:
+Expected:
 
-```json
-{
-  "success": true,
-  "message": "User created successfully",
-  "data": {
-    "id": "...",
-    "tenantId": "...",
-    "fullName": "Acme Manager",
-    "email": "manager@acme.com",
-    "role": "TENANT_MANAGER",
-    "status": "ACTIVE",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "timestamp": "..."
-}
+```text
+200 OK
 ```
 
----
+Copy:
 
-## 3.3 Create Normal Tenant User
+```text
+data.id -> managerUserId
+```
+
+### 10.2 Create normal user
 
 ```http
 POST http://localhost:8081/api/tenants/{tenantId}/users
+Authorization: Bearer <tenantAccessToken>
 Content-Type: application/json
 ```
 
-Request body:
+Body:
 
 ```json
 {
@@ -571,179 +507,111 @@ Request body:
 }
 ```
 
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "User created successfully",
-  "data": {
-    "id": "...",
-    "tenantId": "...",
-    "fullName": "Acme User",
-    "email": "user@acme.com",
-    "role": "TENANT_USER",
-    "status": "ACTIVE",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "timestamp": "..."
-}
-```
-
----
-
-## 3.4 Get Users by Tenant
-
-```http
-GET http://localhost:8081/api/tenants/{tenantId}/users
-```
-
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "Users fetched successfully",
-  "data": [
-    {
-      "id": "...",
-      "tenantId": "...",
-      "fullName": "Acme Admin",
-      "email": "admin@acme.com",
-      "role": "TENANT_ADMIN",
-      "status": "ACTIVE",
-      "createdAt": "...",
-      "updatedAt": "..."
-    }
-  ],
-  "timestamp": "..."
-}
-```
-
-Copy one user `id` for later tests.
-
----
-
-## 3.5 Get Single User by ID Inside Tenant
-
-```http
-GET http://localhost:8081/api/tenants/{tenantId}/users/{userId}
-```
-
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "User fetched successfully",
-  "data": {
-    "id": "...",
-    "tenantId": "...",
-    "fullName": "Acme Admin",
-    "email": "admin@acme.com",
-    "role": "TENANT_ADMIN",
-    "status": "ACTIVE",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "timestamp": "..."
-}
-```
-
----
-
-## 3.6 Update User Details
-
-```http
-PUT http://localhost:8081/api/tenants/{tenantId}/users/{userId}
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{
-  "fullName": "Acme Admin Updated",
-  "email": "admin.updated@acme.com"
-}
-```
-
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "User updated successfully",
-  "data": {
-    "id": "...",
-    "tenantId": "...",
-    "fullName": "Acme Admin Updated",
-    "email": "admin.updated@acme.com",
-    "role": "TENANT_ADMIN",
-    "status": "ACTIVE",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "timestamp": "..."
-}
-```
-
----
-
-## 3.7 Update User Role
-
-```http
-PATCH http://localhost:8081/api/tenants/{tenantId}/users/{userId}/role
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{
-  "role": "TENANT_MANAGER"
-}
-```
-
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "User role updated successfully",
-  "data": {
-    "id": "...",
-    "tenantId": "...",
-    "fullName": "Acme Admin Updated",
-    "email": "admin.updated@acme.com",
-    "role": "TENANT_MANAGER",
-    "status": "ACTIVE",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "timestamp": "..."
-}
-```
-
-Allowed user role values:
+Expected:
 
 ```text
-TENANT_ADMIN
-TENANT_MANAGER
-TENANT_USER
+200 OK
 ```
 
----
+Copy:
 
-## 3.8 Update User Status
+```text
+data.id -> normalUserId
+```
+
+### 10.3 List tenant users as tenant admin
 
 ```http
-PATCH http://localhost:8081/api/tenants/{tenantId}/users/{userId}/status
+GET http://localhost:8081/api/tenants/{tenantId}/users?page=0&size=10&sortBy=createdAt&sortDir=desc
+Authorization: Bearer <tenantAccessToken>
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+### 10.4 List tenant users as system admin
+
+```http
+GET http://localhost:8081/api/tenants/{tenantId}/users?page=0&size=10&sortBy=createdAt&sortDir=desc
+Authorization: Bearer <systemAccessToken>
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+### 10.5 Get one tenant user
+
+```http
+GET http://localhost:8081/api/tenants/{tenantId}/users/{managerUserId}
+Authorization: Bearer <tenantAccessToken>
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+### 10.6 Update user details
+
+```http
+PUT http://localhost:8081/api/tenants/{tenantId}/users/{managerUserId}
+Authorization: Bearer <tenantAccessToken>
 Content-Type: application/json
 ```
 
-Request body:
+Body:
+
+```json
+{
+  "fullName": "Acme Manager Updated",
+  "email": "manager.updated@acme.com"
+}
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+### 10.7 Update user role
+
+```http
+PATCH http://localhost:8081/api/tenants/{tenantId}/users/{managerUserId}/role
+Authorization: Bearer <tenantAccessToken>
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "role": "TENANT_USER"
+}
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+### 10.8 Update user status
+
+```http
+PATCH http://localhost:8081/api/tenants/{tenantId}/users/{managerUserId}/status
+Authorization: Bearer <tenantAccessToken>
+Content-Type: application/json
+```
+
+Body:
 
 ```json
 {
@@ -751,35 +619,21 @@ Request body:
 }
 ```
 
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "User status updated successfully",
-  "data": {
-    "id": "...",
-    "tenantId": "...",
-    "fullName": "Acme Admin Updated",
-    "email": "admin.updated@acme.com",
-    "role": "TENANT_MANAGER",
-    "status": "SUSPENDED",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "timestamp": "..."
-}
-```
-
-Allowed user status values:
+Expected:
 
 ```text
-ACTIVE
-INACTIVE
-SUSPENDED
+200 OK
 ```
 
-Another request body example:
+### 10.9 Reactivate user
+
+```http
+PATCH http://localhost:8081/api/tenants/{tenantId}/users/{managerUserId}/status
+Authorization: Bearer <tenantAccessToken>
+Content-Type: application/json
+```
+
+Body:
 
 ```json
 {
@@ -787,138 +641,83 @@ Another request body example:
 }
 ```
 
-Another request body example:
-
-```json
-{
-  "status": "INACTIVE"
-}
-```
-
----
-
-## 3.9 Deactivate User
-
-This endpoint performs a soft delete. It does not remove the user from the database. It changes the user status to `INACTIVE`.
-
-```http
-DELETE http://localhost:8081/api/tenants/{tenantId}/users/{userId}
-```
-
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "User deactivated successfully",
-  "data": {
-    "id": "...",
-    "tenantId": "...",
-    "fullName": "Acme Admin Updated",
-    "email": "admin.updated@acme.com",
-    "role": "TENANT_MANAGER",
-    "status": "INACTIVE",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "timestamp": "..."
-}
-```
-
----
-
-## 3.10 Duplicate User Email Test
-
-First create one user:
-
-```http
-POST http://localhost:8081/api/tenants/{tenantId}/users
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{
-  "fullName": "Duplicate Test One",
-  "email": "duplicate@acme.com",
-  "password": "Password@123",
-  "role": "TENANT_USER"
-}
-```
-
-Now create another user in the same tenant with the same email:
-
-```http
-POST http://localhost:8081/api/tenants/{tenantId}/users
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{
-  "fullName": "Duplicate Test Two",
-  "email": "duplicate@acme.com",
-  "password": "Password@123",
-  "role": "TENANT_USER"
-}
-```
-
-Expected response:
-
-```json
-{
-  "success": false,
-  "message": "User email already exists for this tenant: duplicate@acme.com",
-  "data": null,
-  "timestamp": "..."
-}
-```
-
-Expected HTTP status:
+Expected:
 
 ```text
-409 Conflict
+200 OK
+```
+
+### 10.10 Deactivate user
+
+```http
+DELETE http://localhost:8081/api/tenants/{tenantId}/users/{normalUserId}
+Authorization: Bearer <tenantAccessToken>
+```
+
+Expected:
+
+```text
+200 OK
 ```
 
 ---
 
-## 3.11 User Validation Error Test
+## 11. Tenant Admin Safety Tests
+
+### 11.1 Admin cannot change own role
 
 ```http
-POST http://localhost:8081/api/tenants/{tenantId}/users
+PATCH http://localhost:8081/api/tenants/{tenantId}/users/{tenantAdminUserId}/role
+Authorization: Bearer <tenantAccessToken>
 Content-Type: application/json
 ```
 
-Request body:
+Body:
 
 ```json
 {
-  "fullName": "",
-  "email": "wrong-email",
-  "password": "short",
-  "role": null
+  "role": "TENANT_MANAGER"
 }
 ```
 
-Expected response:
+Expected:
+
+```text
+400 Bad Request
+```
+
+### 11.2 Admin cannot deactivate own account
+
+```http
+DELETE http://localhost:8081/api/tenants/{tenantId}/users/{tenantAdminUserId}
+Authorization: Bearer <tenantAccessToken>
+```
+
+Expected:
+
+```text
+400 Bad Request
+```
+
+### 11.3 Last active tenant admin cannot be removed
+
+If the tenant has only one active `TENANT_ADMIN`, try changing that admin's status to `SUSPENDED`.
+
+```http
+PATCH http://localhost:8081/api/tenants/{tenantId}/users/{tenantAdminUserId}/status
+Authorization: Bearer <tenantAccessToken>
+Content-Type: application/json
+```
+
+Body:
 
 ```json
 {
-  "success": false,
-  "message": "Validation failed",
-  "data": {
-    "fullName": "Full name is required",
-    "email": "Email must be valid",
-    "password": "Password must be between 8 and 100 characters",
-    "role": "User role is required"
-  },
-  "timestamp": "..."
+  "status": "SUSPENDED"
 }
 ```
 
-Expected HTTP status:
+Expected:
 
 ```text
 400 Bad Request
@@ -926,33 +725,208 @@ Expected HTTP status:
 
 ---
 
-## 3.12 Invalid User Role Test
+## 12. Manager Login and Authorization
+
+### 12.1 Login as manager
+
+If you changed the manager email earlier, use the updated email.
 
 ```http
-PATCH http://localhost:8081/api/tenants/{tenantId}/users/{userId}/role
+POST http://localhost:8081/api/tenants/{tenantId}/auth/login
 Content-Type: application/json
 ```
 
-Request body:
+Body:
 
 ```json
 {
-  "role": "SUPER_ADMIN"
+  "email": "manager.updated@acme.com",
+  "password": "Password@123"
 }
 ```
 
-Expected response:
+Expected:
+
+```text
+200 OK
+```
+
+Copy:
+
+```text
+data.accessToken -> managerAccessToken
+data.refreshToken -> managerRefreshToken
+```
+
+### 12.2 Manager can read tenant dashboard
+
+```http
+GET http://localhost:8081/api/tenant/dashboard/summary
+Authorization: Bearer <managerAccessToken>
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+### 12.3 Manager cannot create users
+
+```http
+POST http://localhost:8081/api/tenants/{tenantId}/users
+Authorization: Bearer <managerAccessToken>
+Content-Type: application/json
+```
+
+Body:
 
 ```json
 {
-  "success": false,
-  "message": "Invalid request body. Please check the submitted values.",
-  "data": null,
-  "timestamp": "..."
+  "fullName": "Blocked User",
+  "email": "blocked@acme.com",
+  "password": "Password@123",
+  "role": "TENANT_USER"
 }
 ```
 
-Expected HTTP status:
+Expected:
+
+```text
+403 Forbidden
+```
+
+---
+
+## 13. Refresh Token Tests
+
+### 13.1 Refresh tenant access token
+
+```http
+POST http://localhost:8081/api/auth/refresh
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "refreshToken": "<tenantRefreshToken>"
+}
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+Copy the new tokens from the response. Refresh-token rotation means the old refresh token should not be reused.
+
+### 13.2 Old refresh token should fail after rotation
+
+```http
+POST http://localhost:8081/api/auth/refresh
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "refreshToken": "<oldTenantRefreshToken>"
+}
+```
+
+Expected:
+
+```text
+401 Unauthorized
+```
+
+### 13.3 Logout one refresh token
+
+```http
+POST http://localhost:8081/api/auth/logout
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "refreshToken": "<tenantRefreshToken>"
+}
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+### 13.4 Logout all tenant user sessions
+
+```http
+POST http://localhost:8081/api/auth/logout-all
+Authorization: Bearer <tenantAccessToken>
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+---
+
+## 14. Password Change
+
+### 14.1 Change current user's password
+
+```http
+POST http://localhost:8081/api/auth/change-password
+Authorization: Bearer <tenantAccessToken>
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "currentPassword": "Password@123",
+  "newPassword": "NewPassword@123",
+  "confirmPassword": "NewPassword@123"
+}
+```
+
+Expected:
+
+```text
+200 OK
+```
+
+After this, login using the new password.
+
+### 14.2 Same password should fail
+
+```http
+POST http://localhost:8081/api/auth/change-password
+Authorization: Bearer <tenantAccessToken>
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "currentPassword": "NewPassword@123",
+  "newPassword": "NewPassword@123",
+  "confirmPassword": "NewPassword@123"
+}
+```
+
+Expected:
 
 ```text
 400 Bad Request
@@ -960,406 +934,296 @@ Expected HTTP status:
 
 ---
 
-# 4. Authentication APIs
+## 15. Forgot and Reset Password
 
-Current authentication status:
+### 15.1 Request password reset
 
-```text
-Login validates tenant, user, password, user status, and tenant status.
-Login returns JWT access token.
-JWT token validation/protected APIs are not yet implemented.
+```http
+POST http://localhost:8081/api/tenants/{tenantId}/auth/forgot-password
+Content-Type: application/json
 ```
 
-Auth API base path:
+Body:
+
+```json
+{
+  "email": "admin@acme.com"
+}
+```
+
+Expected:
 
 ```text
-/api/tenants/{tenantId}/auth
+200 OK
+```
+
+In local development, copy the returned `devResetToken`.
+
+### 15.2 Reset password
+
+```http
+POST http://localhost:8081/api/auth/reset-password
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "resetToken": "<devResetToken>",
+  "newPassword": "ResetPassword@123",
+  "confirmPassword": "ResetPassword@123"
+}
+```
+
+Expected:
+
+```text
+200 OK
 ```
 
 ---
 
-## 4.1 Login
+## 16. Audit Log APIs
+
+### 16.1 Get tenant audit logs
 
 ```http
-POST http://localhost:8081/api/tenants/{tenantId}/auth/login
-Content-Type: application/json
+GET http://localhost:8081/api/tenants/{tenantId}/audit-logs?page=0&size=10&sortBy=createdAt&sortDir=desc
+Authorization: Bearer <tenantAccessToken>
 ```
 
-Request body:
-
-```json
-{
-  "email": "admin@acme.com",
-  "password": "Password@123"
-}
-```
-
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "tenantId": "...",
-    "userId": "...",
-    "fullName": "Acme Admin",
-    "email": "admin@acme.com",
-    "role": "TENANT_ADMIN",
-    "accessToken": "eyJ...",
-    "tokenType": "Bearer",
-    "expiresInSeconds": 3600,
-    "message": "Login successful"
-  },
-  "timestamp": "..."
-}
-```
-
-Copy the `accessToken` for future protected API tests.
-
----
-
-## 4.2 Login with Wrong Password
-
-```http
-POST http://localhost:8081/api/tenants/{tenantId}/auth/login
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{
-  "email": "admin@acme.com",
-  "password": "WrongPassword123"
-}
-```
-
-Expected response:
-
-```json
-{
-  "success": false,
-  "message": "Invalid email or password",
-  "data": null,
-  "timestamp": "..."
-}
-```
-
-Expected HTTP status:
+Expected:
 
 ```text
-401 Unauthorized
+200 OK
 ```
 
----
-
-## 4.3 Login with Unknown Email
+### 16.2 Filter audit logs by action
 
 ```http
-POST http://localhost:8081/api/tenants/{tenantId}/auth/login
-Content-Type: application/json
+GET http://localhost:8081/api/tenants/{tenantId}/audit-logs?page=0&size=10&sortBy=createdAt&sortDir=desc&action=USER_CREATED&success=true
+Authorization: Bearer <tenantAccessToken>
 ```
 
-Request body:
-
-```json
-{
-  "email": "unknown@acme.com",
-  "password": "Password@123"
-}
-```
-
-Expected response:
-
-```json
-{
-  "success": false,
-  "message": "Invalid email or password",
-  "data": null,
-  "timestamp": "..."
-}
-```
-
-Expected HTTP status:
+Expected:
 
 ```text
-401 Unauthorized
+200 OK
+```
+
+### 16.3 Get audit logs for one user
+
+```http
+GET http://localhost:8081/api/tenants/{tenantId}/audit-logs/users/{managerUserId}?page=0&size=10&sortBy=createdAt&sortDir=desc
+Authorization: Bearer <tenantAccessToken>
+```
+
+Expected:
+
+```text
+200 OK
 ```
 
 ---
 
-## 4.4 Login with Inactive User
+## 17. Session Revocation Security Tests
 
-First update user status:
+### 17.1 Role downgrade revokes refresh token
+
+1. Login as manager and save `managerRefreshToken`.
+2. As tenant admin, downgrade manager role.
 
 ```http
-PATCH http://localhost:8081/api/tenants/{tenantId}/users/{userId}/status
+PATCH http://localhost:8081/api/tenants/{tenantId}/users/{managerUserId}/role
+Authorization: Bearer <tenantAccessToken>
 Content-Type: application/json
 ```
 
-Request body:
+Body:
 
 ```json
 {
-  "status": "INACTIVE"
+  "role": "TENANT_USER"
 }
 ```
 
-Now attempt login:
+Expected:
+
+```text
+200 OK
+```
+
+3. Try old manager refresh token.
 
 ```http
-POST http://localhost:8081/api/tenants/{tenantId}/auth/login
+POST http://localhost:8081/api/auth/refresh
 Content-Type: application/json
 ```
 
-Request body:
+Body:
 
 ```json
 {
-  "email": "admin@acme.com",
-  "password": "Password@123"
+  "refreshToken": "<managerRefreshToken>"
 }
 ```
 
-Expected response:
-
-```json
-{
-  "success": false,
-  "message": "User account is not active",
-  "data": null,
-  "timestamp": "..."
-}
-```
-
-Expected HTTP status:
+Expected:
 
 ```text
 401 Unauthorized
 ```
 
-Set the user back to active before continuing:
+### 17.2 User suspension revokes refresh token
 
 ```http
-PATCH http://localhost:8081/api/tenants/{tenantId}/users/{userId}/status
+PATCH http://localhost:8081/api/tenants/{tenantId}/users/{managerUserId}/status
+Authorization: Bearer <tenantAccessToken>
 Content-Type: application/json
 ```
 
-Request body:
+Body:
 
 ```json
 {
-  "status": "ACTIVE"
+  "status": "SUSPENDED"
 }
 ```
 
----
+Expected:
 
-## 4.5 Login with Inactive Tenant
+```text
+200 OK
+```
 
-First update tenant status:
+Try the old refresh token:
+
+```http
+POST http://localhost:8081/api/auth/refresh
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "refreshToken": "<managerRefreshToken>"
+}
+```
+
+Expected:
+
+```text
+401 Unauthorized
+```
+
+### 17.3 Tenant suspension revokes all tenant refresh tokens
+
+Run this near the end because it affects the whole tenant.
 
 ```http
 PATCH http://localhost:8081/api/tenants/{tenantId}/status
+Authorization: Bearer <tenantAccessToken>
 Content-Type: application/json
 ```
 
-Request body:
+Body:
 
 ```json
 {
-  "status": "INACTIVE"
+  "status": "SUSPENDED"
 }
 ```
 
-Now attempt login:
+Expected:
+
+```text
+200 OK
+```
+
+Try any old tenant refresh token:
 
 ```http
-POST http://localhost:8081/api/tenants/{tenantId}/auth/login
+POST http://localhost:8081/api/auth/refresh
 Content-Type: application/json
 ```
 
-Request body:
+Body:
 
 ```json
 {
-  "email": "admin@acme.com",
-  "password": "Password@123"
+  "refreshToken": "<oldTenantRefreshToken>"
 }
 ```
 
-Expected response:
-
-```json
-{
-  "success": false,
-  "message": "Tenant is not active",
-  "data": null,
-  "timestamp": "..."
-}
-```
-
-Expected HTTP status:
+Expected:
 
 ```text
 401 Unauthorized
 ```
 
-Set the tenant back to active before continuing:
+---
+
+## 18. Useful Final Checks
+
+### 18.1 Swagger UI
 
 ```http
-PATCH http://localhost:8081/api/tenants/{tenantId}/status
-Content-Type: application/json
+GET http://localhost:8081/swagger-ui.html
 ```
 
-Request body:
+Expected:
 
-```json
-{
-  "status": "ACTIVE"
-}
+```text
+200 OK
 ```
 
----
-
-# 5. Dashboard APIs
-
-## 5.1 Get Dashboard Summary
+### 18.2 OpenAPI JSON
 
 ```http
-GET http://localhost:8081/api/dashboard/summary
+GET http://localhost:8081/v3/api-docs
 ```
 
-Expected response:
-
-```json
-{
-  "success": true,
-  "message": "Dashboard summary fetched successfully",
-  "data": {
-    "totalTenants": 1,
-    "activeTenants": 1,
-    "inactiveTenants": 0,
-    "suspendedTenants": 0,
-    "totalUsers": 3,
-    "activeUsers": 3,
-    "inactiveUsers": 0,
-    "suspendedUsers": 0
-  },
-  "timestamp": "..."
-}
-```
-
----
-
-# 6. H2 Console Reference
-
-H2 Console URL:
+Expected:
 
 ```text
-http://localhost:8081/h2-console
+200 OK
 ```
 
-For file-based H2:
-
-```text
-JDBC URL: jdbc:h2:file:./data/multitenant_saas_db
-Username: sa
-Password: empty
-```
-
-For in-memory H2, if used:
-
-```text
-JDBC URL: jdbc:h2:mem:multitenant_saas_db
-Username: sa
-Password: empty
-```
-
-Useful tenant query:
-
-```sql
-SELECT ID, NAME, SLUG, STATUS, CREATED_AT, UPDATED_AT FROM TENANTS;
-```
-
-Useful user query:
-
-```sql
-SELECT ID, TENANT_ID, FULL_NAME, EMAIL, ROLE, STATUS, PASSWORD_HASH, CREATED_AT, UPDATED_AT FROM APP_USERS;
-```
-
-Useful dashboard verification queries:
-
-```sql
-SELECT STATUS, COUNT(*) FROM TENANTS GROUP BY STATUS;
-```
-
-```sql
-SELECT STATUS, COUNT(*) FROM APP_USERS GROUP BY STATUS;
-```
-
----
-
-# 7. Recommended Clean Test Sequence
-
-Use this order when testing from scratch:
-
-```text
-1. Create tenant
-2. Get all tenants
-3. Get tenant by ID
-4. Get tenant by slug
-5. Update tenant
-6. Update tenant status to ACTIVE
-7. Create TENANT_ADMIN user
-8. Create TENANT_MANAGER user
-9. Create TENANT_USER user
-10. Get users by tenant
-11. Get single user by ID
-12. Update user details
-13. Update user role
-14. Update user status to ACTIVE
-15. Login
-16. Copy JWT access token
-17. Check dashboard summary
-18. Test duplicate tenant slug
-19. Test duplicate user email
-20. Test not-found cases
-21. Test invalid enum cases
-```
-
----
-
-# 8. Postman Environment Variables
-
-Recommended variables:
-
-```text
-baseUrl = http://localhost:8081
-tenantId = paste-created-tenant-id
-userId = paste-created-user-id
-accessToken = paste-login-access-token
-```
-
-Example variable usage:
-
-```text
-{{baseUrl}}/api/tenants
-```
-
-```text
-{{baseUrl}}/api/tenants/{{tenantId}}/users
-```
-
-```text
-{{baseUrl}}/api/tenants/{{tenantId}}/auth/login
-```
-
-Future protected API header:
+### 18.3 H2 Console
 
 ```http
-Authorization: Bearer {{accessToken}}
+GET http://localhost:8081/h2-console
 ```
 
-Currently, APIs are still open until JWT validation and endpoint protection are implemented.
+Expected:
+
+```text
+200 OK
+```
+
+---
+
+## 19. Suggested Test Order
+
+Use this order for clean testing:
+
+```text
+1. Health check
+2. System admin login
+3. Tenant onboarding
+4. Tenant admin login
+5. Current user / me
+6. Tenant dashboard
+7. System dashboard
+8. Tenant read/update
+9. User create/list/update
+10. Manager login
+11. Authorization forbidden tests
+12. Refresh/logout tests
+13. Password change/reset tests
+14. Audit log tests
+15. Token revocation tests
+16. Tenant suspension/deactivation tests last
+```
