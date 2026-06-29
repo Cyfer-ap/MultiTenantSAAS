@@ -1,6 +1,7 @@
 package com.chacha.multitenantsaas.controller;
 
 import com.chacha.multitenantsaas.common.ApiResponse;
+import com.chacha.multitenantsaas.dto.ChangePasswordRequest;
 import com.chacha.multitenantsaas.dto.SystemAdminCurrentResponse;
 import com.chacha.multitenantsaas.dto.SystemAdminLoginRequest;
 import com.chacha.multitenantsaas.dto.SystemAdminLoginResponse;
@@ -42,6 +43,19 @@ public class SystemAuthController {
 
         return ResponseEntity.ok(
                 ApiResponse.success("Current system admin fetched successfully", response)
+        );
+    }
+
+    @PreAuthorize("@systemSecurity.isSystemAdmin()")
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<SystemAdminCurrentResponse>> changePassword(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        SystemAdminCurrentResponse response = systemAuthService.changePassword(jwt, request);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("System admin password changed successfully", response)
         );
     }
 }

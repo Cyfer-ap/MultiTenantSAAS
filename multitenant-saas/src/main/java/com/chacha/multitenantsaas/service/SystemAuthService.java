@@ -1,5 +1,6 @@
 package com.chacha.multitenantsaas.service;
 
+import com.chacha.multitenantsaas.dto.ChangePasswordRequest;
 import com.chacha.multitenantsaas.dto.SystemAdminCurrentResponse;
 import com.chacha.multitenantsaas.dto.SystemAdminLoginRequest;
 import com.chacha.multitenantsaas.dto.SystemAdminLoginResponse;
@@ -59,6 +60,37 @@ public class SystemAuthService {
     }
 
     public SystemAdminCurrentResponse getCurrentSystemAdmin(Jwt jwt) {
+        SystemAdmin systemAdmin = getRequiredActiveSystemAdmin(jwt);
+
+        return mapToCurrentResponse(systemAdmin);
+    }
+
+    public SystemAdminCurrentResponse changePassword(
+            Jwt jwt,
+            ChangePasswordRequest request
+    ) {
+        SystemAdmin systemAdmin = getRequiredActiveSystemAdmin(jwt);
+
+        if (!request.newPassword().equals(request.confirmPassword())) {
+            throw new IllegalArgumentException("New password and confirm password do not match");
+        }
+
+        if (!passwordEncoder.matches(request.currentPassword(), systemAdmin.getPasswordHash())) {
+            throw new AuthenticationFailedException("Current password is incorrect");
+        }
+
+        if (passwordEncoder.matches(request.newPassword(), systemAdmin.getPasswordHash())) {
+            throw new IllegalArgumentException("New password must be different from current password");
+        }
+
+        systemAdmin.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+
+        SystemAdmin updatedSystemAdmin = systemAdminRepository.save(systemAdmin);
+
+        return mapToCurrentResponse(updatedSystemAdmin);
+    }
+
+    private SystemAdmin getRequiredActiveSystemAdmin(Jwt jwt) {
         if (jwt == null) {
             throw new AuthenticationFailedException("Authentication token is required");
         }
@@ -83,6 +115,10 @@ public class SystemAuthService {
             throw new AuthenticationFailedException("System admin account is not active");
         }
 
+        return systemAdmin;
+    }
+
+    private SystemAdminCurrentResponse mapToCurrentResponse(SystemAdmin systemAdmin) {
         return new SystemAdminCurrentResponse(
                 systemAdmin.getId(),
                 systemAdmin.getFullName(),
@@ -99,5 +135,4 @@ public class SystemAuthService {
             return null;
         }
     }
-
 }
