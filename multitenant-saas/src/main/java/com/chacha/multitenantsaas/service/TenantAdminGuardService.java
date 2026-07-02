@@ -24,9 +24,14 @@ public class TenantAdminGuardService {
             throw new IllegalArgumentException("You cannot change your own role");
         }
 
-        if (isRemovingActiveAdminAccess(targetUser, newRole)) {
-            ensureAnotherActiveAdminExists(targetUser);
-        }
+        ensureTenantKeepsActiveAdminAfterRoleChange(targetUser, newRole);
+    }
+
+    public void ensureCanChangeRole(
+            AppUser targetUser,
+            UserRole newRole
+    ) {
+        ensureTenantKeepsActiveAdminAfterRoleChange(targetUser, newRole);
     }
 
     public void ensureCanChangeStatus(
@@ -38,9 +43,14 @@ public class TenantAdminGuardService {
             throw new IllegalArgumentException("You cannot deactivate or suspend your own account");
         }
 
-        if (isDisablingActiveAdmin(targetUser, newStatus)) {
-            ensureAnotherActiveAdminExists(targetUser);
-        }
+        ensureTenantKeepsActiveAdminAfterStatusChange(targetUser, newStatus);
+    }
+
+    public void ensureCanChangeStatus(
+            AppUser targetUser,
+            UserStatus newStatus
+    ) {
+        ensureTenantKeepsActiveAdminAfterStatusChange(targetUser, newStatus);
     }
 
     public void ensureCanDeactivate(AppUser actorUser, AppUser targetUser) {
@@ -48,6 +58,32 @@ public class TenantAdminGuardService {
             throw new IllegalArgumentException("You cannot deactivate your own account");
         }
 
+        ensureTenantKeepsActiveAdminAfterDeactivation(targetUser);
+    }
+
+    public void ensureCanDeactivate(AppUser targetUser) {
+        ensureTenantKeepsActiveAdminAfterDeactivation(targetUser);
+    }
+
+    private void ensureTenantKeepsActiveAdminAfterRoleChange(
+            AppUser targetUser,
+            UserRole newRole
+    ) {
+        if (isRemovingActiveAdminAccess(targetUser, newRole)) {
+            ensureAnotherActiveAdminExists(targetUser);
+        }
+    }
+
+    private void ensureTenantKeepsActiveAdminAfterStatusChange(
+            AppUser targetUser,
+            UserStatus newStatus
+    ) {
+        if (isDisablingActiveAdmin(targetUser, newStatus)) {
+            ensureAnotherActiveAdminExists(targetUser);
+        }
+    }
+
+    private void ensureTenantKeepsActiveAdminAfterDeactivation(AppUser targetUser) {
         if (targetUser.getRole() == UserRole.TENANT_ADMIN
                 && targetUser.getStatus() == UserStatus.ACTIVE) {
             ensureAnotherActiveAdminExists(targetUser);

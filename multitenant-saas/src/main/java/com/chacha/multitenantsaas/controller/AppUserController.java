@@ -45,7 +45,7 @@ public class AppUserController {
             summary = "Create tenant user",
             description = "Creates a user inside a tenant. Only tenant admins are allowed."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
+    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId) or @systemSecurity.isSystemAdmin()")
     @PostMapping
     public ResponseEntity<ApiResponse<AppUserResponse>> createUser(
             @PathVariable UUID tenantId,
@@ -124,7 +124,7 @@ public class AppUserController {
             summary = "Update tenant user",
             description = "Updates a user inside a tenant. Only tenant admins are allowed."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
+    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId) or @systemSecurity.isSystemAdmin()")
     @PutMapping("/{userId}")
     public ResponseEntity<ApiResponse<AppUserResponse>> updateUser(
             @PathVariable UUID tenantId,
@@ -143,7 +143,7 @@ public class AppUserController {
             summary = "Update tenant user role",
             description = "Updates the role of a user inside a tenant. Only tenant admins are allowed."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
+    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId) or @systemSecurity.isSystemAdmin()")
     @PatchMapping("/{userId}/role")
     public ResponseEntity<ApiResponse<AppUserResponse>> updateUserRole(
             @PathVariable UUID tenantId,
@@ -162,7 +162,7 @@ public class AppUserController {
             summary = "Update tenant user status",
             description = "Updates the status of a user inside a tenant. Only tenant admins are allowed."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
+    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId) or @systemSecurity.isSystemAdmin()")
     @PatchMapping("/{userId}/status")
     public ResponseEntity<ApiResponse<AppUserResponse>> updateUserStatus(
             @PathVariable UUID tenantId,
@@ -181,7 +181,7 @@ public class AppUserController {
             summary = "Deactivate tenant user",
             description = "Deactivates a user inside a tenant. Only tenant admins are allowed."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
+    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId) or @systemSecurity.isSystemAdmin()")
     @DeleteMapping("/{userId}")
     public ResponseEntity<ApiResponse<AppUserResponse>> deactivateUser(
             @PathVariable UUID tenantId,

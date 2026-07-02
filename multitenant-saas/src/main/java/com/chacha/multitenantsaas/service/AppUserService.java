@@ -20,7 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-
+import com.chacha.multitenantsaas.entity.SystemAdmin;
 import java.util.UUID;
 
 @Service
@@ -33,6 +33,7 @@ public class AppUserService {
     private final CurrentActorService currentActorService;
     private final TenantAdminGuardService tenantAdminGuardService;
     private final RefreshTokenService refreshTokenService;
+    private final CurrentSystemAdminService currentSystemAdminService;
 
     public AppUserService(
             AppUserRepository appUserRepository,
@@ -41,7 +42,8 @@ public class AppUserService {
             AuditLogService auditLogService,
             CurrentActorService currentActorService,
             TenantAdminGuardService tenantAdminGuardService,
-            RefreshTokenService refreshTokenService
+            RefreshTokenService refreshTokenService,
+            CurrentSystemAdminService currentSystemAdminService
     ) {
         this.appUserRepository = appUserRepository;
         this.tenantRepository = tenantRepository;
@@ -50,6 +52,7 @@ public class AppUserService {
         this.currentActorService = currentActorService;
         this.tenantAdminGuardService = tenantAdminGuardService;
         this.refreshTokenService = refreshTokenService;
+        this.currentSystemAdminService = currentSystemAdminService;
     }
 
     public AppUserResponse createUser(
@@ -59,8 +62,6 @@ public class AppUserService {
     ) {
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
-
-        AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
         String normalizedEmail = request.email().trim().toLowerCase();
 
@@ -80,13 +81,27 @@ public class AppUserService {
 
         AppUser savedUser = appUserRepository.save(user);
 
-        auditLogService.recordSuccess(
-                tenant,
-                actorUser,
-                savedUser,
-                AuditAction.USER_CREATED,
-                "User created successfully: " + normalizedEmail
-        );
+        if (currentSystemAdminService.isSystemAdminToken(jwt)) {
+            SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
+
+            auditLogService.recordSystemAdminSuccess(
+                    tenant,
+                    actorSystemAdmin,
+                    savedUser,
+                    AuditAction.USER_CREATED,
+                    "User created successfully by system admin: " + normalizedEmail
+            );
+        } else {
+            AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
+
+            auditLogService.recordSuccess(
+                    tenant,
+                    actorUser,
+                    savedUser,
+                    AuditAction.USER_CREATED,
+                    "User created successfully: " + normalizedEmail
+            );
+        }
 
         return mapToResponse(savedUser);
     }
@@ -146,8 +161,6 @@ public class AppUserService {
                         "User not found with id: " + userId + " for tenant: " + tenantId
                 ));
 
-        AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
-
         String oldEmail = user.getEmail();
         String normalizedEmail = request.email().trim().toLowerCase();
 
@@ -165,13 +178,29 @@ public class AppUserService {
 
         AppUser updatedUser = appUserRepository.save(user);
 
-        auditLogService.recordSuccess(
-                user.getTenant(),
-                actorUser,
-                updatedUser,
-                AuditAction.USER_UPDATED,
-                "User profile updated successfully from " + oldEmail + " to " + updatedUser.getEmail()
-        );
+        if (currentSystemAdminService.isSystemAdminToken(jwt)) {
+            SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
+
+            auditLogService.recordSystemAdminSuccess(
+                    user.getTenant(),
+                    actorSystemAdmin,
+                    updatedUser,
+                    AuditAction.USER_UPDATED,
+                    "User profile updated successfully by system admin from "
+                            + oldEmail + " to " + updatedUser.getEmail()
+            );
+        } else {
+            AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
+
+            auditLogService.recordSuccess(
+                    user.getTenant(),
+                    actorUser,
+                    updatedUser,
+                    AuditAction.USER_UPDATED,
+                    "User profile updated successfully from "
+                            + oldEmail + " to " + updatedUser.getEmail()
+            );
+        }
 
         return mapToResponse(updatedUser);
     }
@@ -187,8 +216,38 @@ public class AppUserService {
                         "User not found with id: " + userId + " for tenant: " + tenantId
                 ));
 
-        AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
         UserRole oldRole = user.getRole();
+
+        if (currentSystemAdminService.isSystemAdminToken(jwt)) {
+            SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
+
+            tenantAdminGuardService.ensureCanChangeRole(
+                    user,
+                    request.role()
+            );
+
+            user.setRole(request.role());
+
+            AppUser updatedUser = appUserRepository.save(user);
+
+            if (oldRole != updatedUser.getRole()) {
+                refreshTokenService.revokeAllActiveTokensForUser(updatedUser.getId());
+            }
+
+            auditLogService.recordSystemAdminSuccess(
+                    user.getTenant(),
+                    actorSystemAdmin,
+                    updatedUser,
+                    AuditAction.USER_ROLE_UPDATED,
+                    "User role updated successfully by system admin for " + updatedUser.getEmail()
+                            + " from " + oldRole
+                            + " to " + request.role()
+            );
+
+            return mapToResponse(updatedUser);
+        }
+
+        AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
         tenantAdminGuardService.ensureCanChangeRole(
                 actorUser,
@@ -228,8 +287,38 @@ public class AppUserService {
                         "User not found with id: " + userId + " for tenant: " + tenantId
                 ));
 
-        AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
         UserStatus oldStatus = user.getStatus();
+
+        if (currentSystemAdminService.isSystemAdminToken(jwt)) {
+            SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
+
+            tenantAdminGuardService.ensureCanChangeStatus(
+                    user,
+                    request.status()
+            );
+
+            user.setStatus(request.status());
+
+            AppUser updatedUser = appUserRepository.save(user);
+
+            if (updatedUser.getStatus() != UserStatus.ACTIVE) {
+                refreshTokenService.revokeAllActiveTokensForUser(updatedUser.getId());
+            }
+
+            auditLogService.recordSystemAdminSuccess(
+                    user.getTenant(),
+                    actorSystemAdmin,
+                    updatedUser,
+                    AuditAction.USER_STATUS_UPDATED,
+                    "User status updated successfully by system admin for " + updatedUser.getEmail()
+                            + " from " + oldStatus
+                            + " to " + request.status()
+            );
+
+            return mapToResponse(updatedUser);
+        }
+
+        AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
         tenantAdminGuardService.ensureCanChangeStatus(
                 actorUser,
@@ -267,6 +356,28 @@ public class AppUserService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with id: " + userId + " for tenant: " + tenantId
                 ));
+
+        if (currentSystemAdminService.isSystemAdminToken(jwt)) {
+            SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
+
+            tenantAdminGuardService.ensureCanDeactivate(user);
+
+            user.setStatus(UserStatus.INACTIVE);
+
+            AppUser updatedUser = appUserRepository.save(user);
+
+            refreshTokenService.revokeAllActiveTokensForUser(updatedUser.getId());
+
+            auditLogService.recordSystemAdminSuccess(
+                    user.getTenant(),
+                    actorSystemAdmin,
+                    updatedUser,
+                    AuditAction.USER_DEACTIVATED,
+                    "User deactivated successfully by system admin: " + updatedUser.getEmail()
+            );
+
+            return mapToResponse(updatedUser);
+        }
 
         AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
