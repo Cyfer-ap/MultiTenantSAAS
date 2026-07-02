@@ -34,6 +34,7 @@ public class AppUserService {
     private final TenantAdminGuardService tenantAdminGuardService;
     private final RefreshTokenService refreshTokenService;
     private final CurrentSystemAdminService currentSystemAdminService;
+    private final LoginAttemptService loginAttemptService;
 
     public AppUserService(
             AppUserRepository appUserRepository,
@@ -43,7 +44,8 @@ public class AppUserService {
             CurrentActorService currentActorService,
             TenantAdminGuardService tenantAdminGuardService,
             RefreshTokenService refreshTokenService,
-            CurrentSystemAdminService currentSystemAdminService
+            CurrentSystemAdminService currentSystemAdminService,
+            LoginAttemptService loginAttemptService
     ) {
         this.appUserRepository = appUserRepository;
         this.tenantRepository = tenantRepository;
@@ -53,6 +55,7 @@ public class AppUserService {
         this.tenantAdminGuardService = tenantAdminGuardService;
         this.refreshTokenService = refreshTokenService;
         this.currentSystemAdminService = currentSystemAdminService;
+        this.loginAttemptService = loginAttemptService;
     }
 
     public AppUserResponse createUser(
@@ -399,6 +402,48 @@ public class AppUserService {
                 AuditAction.USER_DEACTIVATED,
                 "User deactivated successfully: " + updatedUser.getEmail()
         );
+
+        return mapToResponse(updatedUser);
+    }
+
+    public AppUserResponse unlockUserLogin(
+            UUID tenantId,
+            UUID userId,
+            Jwt jwt
+    ) {
+        AppUser user = appUserRepository.findByTenantIdAndId(tenantId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "User not found with id: " + userId + " for tenant: " + tenantId
+                ));
+
+        loginAttemptService.unlockUser(user);
+
+        AppUser updatedUser = appUserRepository.findByTenantIdAndId(tenantId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "User not found with id: " + userId + " for tenant: " + tenantId
+                ));
+
+        if (currentSystemAdminService.isSystemAdminToken(jwt)) {
+            SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
+
+            auditLogService.recordSystemAdminSuccess(
+                    updatedUser.getTenant(),
+                    actorSystemAdmin,
+                    updatedUser,
+                    AuditAction.USER_LOGIN_UNLOCKED,
+                    "User login unlocked successfully by system admin: " + updatedUser.getEmail()
+            );
+        } else {
+            AppUser actorUser = currentActorService.getRequiredActiveActor(tenantId, jwt);
+
+            auditLogService.recordSuccess(
+                    updatedUser.getTenant(),
+                    actorUser,
+                    updatedUser,
+                    AuditAction.USER_LOGIN_UNLOCKED,
+                    "User login unlocked successfully: " + updatedUser.getEmail()
+            );
+        }
 
         return mapToResponse(updatedUser);
     }

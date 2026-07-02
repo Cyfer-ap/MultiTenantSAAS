@@ -195,4 +195,18 @@ public class AppUserController {
         );
     }
 
+    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId) or @systemSecurity.isSystemAdmin()")
+    @PatchMapping("/{userId}/unlock")
+    public ResponseEntity<ApiResponse<AppUserResponse>> unlockUserLogin(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        AppUserResponse user = appUserService.unlockUserLogin(tenantId, userId, jwt);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("User login unlocked successfully", user)
+        );
+    }
+
 }

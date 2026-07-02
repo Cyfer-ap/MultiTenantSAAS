@@ -104,4 +104,11 @@ public class LoginAttemptService {
 
         systemAdminRepository.save(systemAdmin);
     }
+
+    public void unlockUser(AppUser user) {
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
+
+        appUserRepository.save(user);
+    }
 }
