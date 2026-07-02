@@ -42,6 +42,11 @@ public class AppUser {
     @Column(nullable = false, length = 30)
     private UserStatus status = UserStatus.ACTIVE;
 
+    @Column(nullable = false)
+    private int failedLoginAttempts = 0;
+
+    private Instant lockedUntil;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -94,6 +99,14 @@ public class AppUser {
         return status;
     }
 
+    public int getFailedLoginAttempts() {
+        return failedLoginAttempts;
+    }
+
+    public Instant getLockedUntil() {
+        return lockedUntil;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -124,6 +137,14 @@ public class AppUser {
 
     public void setStatus(UserStatus status) {
         this.status = status;
+    }
+
+    public void setFailedLoginAttempts(int failedLoginAttempts) {
+        this.failedLoginAttempts = failedLoginAttempts;
+    }
+
+    public void setLockedUntil(Instant lockedUntil) {
+        this.lockedUntil = lockedUntil;
     }
 
     public void setCreatedAt(Instant createdAt) {

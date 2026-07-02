@@ -36,6 +36,7 @@ public class AuthService {
     private final JwtContextService jwtContextService;
     private final RefreshTokenService refreshTokenService;
     private final AuditLogService auditLogService;
+    private final LoginAttemptService loginAttemptService;
 
     public AuthService(
             TenantRepository tenantRepository,
@@ -44,7 +45,8 @@ public class AuthService {
             JwtService jwtService,
             JwtContextService jwtContextService,
             RefreshTokenService refreshTokenService,
-            AuditLogService auditLogService
+            AuditLogService auditLogService,
+            LoginAttemptService loginAttemptService
     ) {
         this.tenantRepository = tenantRepository;
         this.appUserRepository = appUserRepository;
@@ -53,6 +55,7 @@ public class AuthService {
         this.jwtContextService = jwtContextService;
         this.refreshTokenService = refreshTokenService;
         this.auditLogService = auditLogService;
+        this.loginAttemptService = loginAttemptService;
     }
 
     public LoginResponse login(UUID tenantId, LoginRequest request) {
@@ -110,12 +113,16 @@ public class AuthService {
             throw new AuthenticationFailedException("Password is not set for this user");
         }
 
+        loginAttemptService.ensureNotLocked(user);
+
         boolean passwordMatches = passwordEncoder.matches(
                 request.password(),
                 user.getPasswordHash()
         );
 
         if (!passwordMatches) {
+            loginAttemptService.recordFailedAttempt(user);
+
             auditLogService.record(
                     tenant,
                     user,
@@ -126,6 +133,8 @@ public class AuthService {
 
             throw new AuthenticationFailedException("Invalid email or password");
         }
+
+        loginAttemptService.recordSuccessfulLogin(user);
 
         String accessToken = jwtService.generateAccessToken(tenant, user);
         String refreshToken = refreshTokenService.createRefreshToken(user);

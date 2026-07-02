@@ -20,15 +20,18 @@ public class SystemAuthService {
     private final SystemAdminRepository systemAdminRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final LoginAttemptService loginAttemptService;
 
     public SystemAuthService(
             SystemAdminRepository systemAdminRepository,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService
+            JwtService jwtService,
+            LoginAttemptService loginAttemptService
     ) {
         this.systemAdminRepository = systemAdminRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.loginAttemptService = loginAttemptService;
     }
 
     public SystemAdminLoginResponse login(SystemAdminLoginRequest request) {
@@ -41,9 +44,15 @@ public class SystemAuthService {
             throw new AuthenticationFailedException("System admin account is not active");
         }
 
+        loginAttemptService.ensureNotLocked(systemAdmin);
+
         if (!passwordEncoder.matches(request.password(), systemAdmin.getPasswordHash())) {
+            loginAttemptService.recordFailedAttempt(systemAdmin);
+
             throw new AuthenticationFailedException("Invalid email or password");
         }
+
+        loginAttemptService.recordSuccessfulLogin(systemAdmin);
 
         String accessToken = jwtService.generateSystemAdminAccessToken(systemAdmin);
 
