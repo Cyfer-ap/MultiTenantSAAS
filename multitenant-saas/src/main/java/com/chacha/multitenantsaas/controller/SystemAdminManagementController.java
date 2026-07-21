@@ -6,6 +6,7 @@ import com.chacha.multitenantsaas.common.SortingUtils;
 import com.chacha.multitenantsaas.dto.PageResponse;
 import com.chacha.multitenantsaas.dto.SystemAdminCreateRequest;
 import com.chacha.multitenantsaas.dto.SystemAdminResponse;
+import com.chacha.multitenantsaas.dto.SystemAdminStatusUpdateRequest;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.service.SystemAdminManagementService;
 import jakarta.validation.Valid;
@@ -13,7 +14,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/system/admins")
@@ -69,6 +74,48 @@ public class SystemAdminManagementController {
 
         return ResponseEntity.ok(
                 ApiResponse.success("System admins fetched successfully", response)
+        );
+    }
+
+    @PreAuthorize("@systemSecurity.isSystemAdmin()")
+    @GetMapping("/{systemAdminId}")
+    public ResponseEntity<ApiResponse<SystemAdminResponse>> getSystemAdminById(
+            @PathVariable UUID systemAdminId
+    ) {
+        SystemAdminResponse response = systemAdminManagementService.getSystemAdminById(systemAdminId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("System admin fetched successfully", response)
+        );
+    }
+
+    @PreAuthorize("@systemSecurity.isSystemAdmin()")
+    @PatchMapping("/{systemAdminId}/status")
+    public ResponseEntity<ApiResponse<SystemAdminResponse>> updateSystemAdminStatus(
+            @PathVariable UUID systemAdminId,
+            @Valid @RequestBody SystemAdminStatusUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        SystemAdminResponse response = systemAdminManagementService.updateSystemAdminStatus(
+                systemAdminId,
+                request,
+                jwt
+        );
+
+        return ResponseEntity.ok(
+                ApiResponse.success("System admin status updated successfully", response)
+        );
+    }
+
+    @PreAuthorize("@systemSecurity.isSystemAdmin()")
+    @PatchMapping("/{systemAdminId}/unlock")
+    public ResponseEntity<ApiResponse<SystemAdminResponse>> unlockSystemAdminLogin(
+            @PathVariable UUID systemAdminId
+    ) {
+        SystemAdminResponse response = systemAdminManagementService.unlockSystemAdminLogin(systemAdminId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("System admin login unlocked successfully", response)
         );
     }
 }

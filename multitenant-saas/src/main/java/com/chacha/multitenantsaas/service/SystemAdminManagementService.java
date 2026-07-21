@@ -3,27 +3,41 @@ package com.chacha.multitenantsaas.service;
 import com.chacha.multitenantsaas.dto.PageResponse;
 import com.chacha.multitenantsaas.dto.SystemAdminCreateRequest;
 import com.chacha.multitenantsaas.dto.SystemAdminResponse;
+import com.chacha.multitenantsaas.dto.SystemAdminStatusUpdateRequest;
 import com.chacha.multitenantsaas.entity.SystemAdmin;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.exception.DuplicateResourceException;
+import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.SystemAdminRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 @Service
 public class SystemAdminManagementService {
 
     private final SystemAdminRepository systemAdminRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CurrentSystemAdminService currentSystemAdminService;
+    private final SystemAdminGuardService systemAdminGuardService;
+    private final LoginAttemptService loginAttemptService;
 
     public SystemAdminManagementService(
             SystemAdminRepository systemAdminRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            CurrentSystemAdminService currentSystemAdminService,
+            SystemAdminGuardService systemAdminGuardService,
+            LoginAttemptService loginAttemptService
     ) {
         this.systemAdminRepository = systemAdminRepository;
         this.passwordEncoder = passwordEncoder;
+        this.currentSystemAdminService = currentSystemAdminService;
+        this.systemAdminGuardService = systemAdminGuardService;
+        this.loginAttemptService = loginAttemptService;
     }
 
     public SystemAdminResponse createSystemAdmin(SystemAdminCreateRequest request) {
@@ -67,6 +81,50 @@ public class SystemAdminManagementService {
                 systemAdmins.isFirst(),
                 systemAdmins.isLast()
         );
+    }
+
+    public SystemAdminResponse getSystemAdminById(UUID systemAdminId) {
+        SystemAdmin systemAdmin = getSystemAdminOrThrow(systemAdminId);
+
+        return mapToResponse(systemAdmin);
+    }
+
+    public SystemAdminResponse updateSystemAdminStatus(
+            UUID systemAdminId,
+            SystemAdminStatusUpdateRequest request,
+            Jwt jwt
+    ) {
+        SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
+        SystemAdmin targetSystemAdmin = getSystemAdminOrThrow(systemAdminId);
+
+        systemAdminGuardService.ensureCanChangeStatus(
+                actorSystemAdmin,
+                targetSystemAdmin,
+                request.status()
+        );
+
+        targetSystemAdmin.setStatus(request.status());
+
+        SystemAdmin updatedSystemAdmin = systemAdminRepository.save(targetSystemAdmin);
+
+        return mapToResponse(updatedSystemAdmin);
+    }
+
+    public SystemAdminResponse unlockSystemAdminLogin(UUID systemAdminId) {
+        SystemAdmin systemAdmin = getSystemAdminOrThrow(systemAdminId);
+
+        loginAttemptService.unlockSystemAdmin(systemAdmin);
+
+        SystemAdmin updatedSystemAdmin = getSystemAdminOrThrow(systemAdminId);
+
+        return mapToResponse(updatedSystemAdmin);
+    }
+
+    private SystemAdmin getSystemAdminOrThrow(UUID systemAdminId) {
+        return systemAdminRepository.findById(systemAdminId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "System admin not found with id: " + systemAdminId
+                ));
     }
 
     private SystemAdminResponse mapToResponse(SystemAdmin systemAdmin) {

@@ -111,4 +111,13 @@ public class LoginAttemptService {
 
         appUserRepository.save(user);
     }
+
+    public void unlockSystemAdmin(SystemAdmin systemAdmin) {
+        systemAdmin.setFailedLoginAttempts(0);
+        systemAdmin.setLockedUntil(null);
+
+        systemAdminRepository.save(systemAdmin);
+    }
+
+
 }
