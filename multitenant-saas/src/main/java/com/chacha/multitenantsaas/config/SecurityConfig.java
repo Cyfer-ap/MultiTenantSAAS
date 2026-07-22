@@ -71,6 +71,8 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/dashboard/**").hasAuthority("SYSTEM_ADMIN")
 
+                        .requestMatchers(HttpMethod.POST, "/api/user-invitations/accept").permitAll()
+
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
 
