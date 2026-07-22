@@ -14,8 +14,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-
+import com.chacha.multitenantsaas.entity.PlatformAuditAction;
 import java.util.UUID;
+import com.chacha.multitenantsaas.entity.PlatformAuditAction;
 
 @Service
 public class SystemAdminManagementService {
@@ -25,26 +26,37 @@ public class SystemAdminManagementService {
     private final CurrentSystemAdminService currentSystemAdminService;
     private final SystemAdminGuardService systemAdminGuardService;
     private final LoginAttemptService loginAttemptService;
+    private final PlatformAuditLogService platformAuditLogService;
 
     public SystemAdminManagementService(
             SystemAdminRepository systemAdminRepository,
             PasswordEncoder passwordEncoder,
             CurrentSystemAdminService currentSystemAdminService,
             SystemAdminGuardService systemAdminGuardService,
-            LoginAttemptService loginAttemptService
+            LoginAttemptService loginAttemptService,
+            PlatformAuditLogService platformAuditLogService
     ) {
         this.systemAdminRepository = systemAdminRepository;
         this.passwordEncoder = passwordEncoder;
         this.currentSystemAdminService = currentSystemAdminService;
         this.systemAdminGuardService = systemAdminGuardService;
         this.loginAttemptService = loginAttemptService;
+        this.platformAuditLogService = platformAuditLogService;
     }
 
-    public SystemAdminResponse createSystemAdmin(SystemAdminCreateRequest request) {
+    public SystemAdminResponse createSystemAdmin(
+            SystemAdminCreateRequest request,
+            Jwt jwt
+    ) {
+        SystemAdmin actorSystemAdmin =
+                currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
+
         String normalizedEmail = normalizeEmail(request.email());
 
         if (systemAdminRepository.existsByEmail(normalizedEmail)) {
-            throw new DuplicateResourceException("System admin email already exists: " + normalizedEmail);
+            throw new DuplicateResourceException(
+                    "System admin email already exists: " + normalizedEmail
+            );
         }
 
         SystemAdmin systemAdmin = new SystemAdmin(
@@ -53,7 +65,15 @@ public class SystemAdminManagementService {
                 passwordEncoder.encode(request.password())
         );
 
-        SystemAdmin savedSystemAdmin = systemAdminRepository.save(systemAdmin);
+        SystemAdmin savedSystemAdmin =
+                systemAdminRepository.save(systemAdmin);
+
+        platformAuditLogService.recordSuccess(
+                actorSystemAdmin,
+                savedSystemAdmin,
+                PlatformAuditAction.SYSTEM_ADMIN_CREATED,
+                "System admin created successfully: " + normalizedEmail
+        );
 
         return mapToResponse(savedSystemAdmin);
     }
@@ -94,8 +114,13 @@ public class SystemAdminManagementService {
             SystemAdminStatusUpdateRequest request,
             Jwt jwt
     ) {
-        SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
-        SystemAdmin targetSystemAdmin = getSystemAdminOrThrow(systemAdminId);
+        SystemAdmin actorSystemAdmin =
+                currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
+
+        SystemAdmin targetSystemAdmin =
+                getSystemAdminOrThrow(systemAdminId);
+
+        UserStatus oldStatus = targetSystemAdmin.getStatus();
 
         systemAdminGuardService.ensureCanChangeStatus(
                 actorSystemAdmin,
@@ -105,19 +130,43 @@ public class SystemAdminManagementService {
 
         targetSystemAdmin.setStatus(request.status());
 
-        SystemAdmin updatedSystemAdmin = systemAdminRepository.save(targetSystemAdmin);
+        SystemAdmin updatedSystemAdmin =
+                systemAdminRepository.save(targetSystemAdmin);
+
+        platformAuditLogService.recordSuccess(
+                actorSystemAdmin,
+                updatedSystemAdmin,
+                PlatformAuditAction.SYSTEM_ADMIN_STATUS_UPDATED,
+                "System admin status updated for "
+                        + updatedSystemAdmin.getEmail()
+                        + " from " + oldStatus
+                        + " to " + updatedSystemAdmin.getStatus()
+        );
 
         return mapToResponse(updatedSystemAdmin);
     }
 
-    public SystemAdminResponse unlockSystemAdminLogin(UUID systemAdminId) {
-        SystemAdmin systemAdmin = getSystemAdminOrThrow(systemAdminId);
+    public SystemAdminResponse unlockSystemAdminLogin(
+            UUID systemAdminId,
+            Jwt jwt
+    ) {
+        SystemAdmin actorSystemAdmin =
+                currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
 
-        loginAttemptService.unlockSystemAdmin(systemAdmin);
+        SystemAdmin targetSystemAdmin =
+                getSystemAdminOrThrow(systemAdminId);
 
-        SystemAdmin updatedSystemAdmin = getSystemAdminOrThrow(systemAdminId);
+        loginAttemptService.unlockSystemAdmin(targetSystemAdmin);
 
-        return mapToResponse(updatedSystemAdmin);
+        platformAuditLogService.recordSuccess(
+                actorSystemAdmin,
+                targetSystemAdmin,
+                PlatformAuditAction.SYSTEM_ADMIN_LOGIN_UNLOCKED,
+                "System admin login unlocked successfully: "
+                        + targetSystemAdmin.getEmail()
+        );
+
+        return mapToResponse(targetSystemAdmin);
     }
 
     private SystemAdmin getSystemAdminOrThrow(UUID systemAdminId) {

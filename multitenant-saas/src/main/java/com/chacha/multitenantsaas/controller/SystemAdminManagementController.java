@@ -26,19 +26,26 @@ public class SystemAdminManagementController {
 
     private final SystemAdminManagementService systemAdminManagementService;
 
-    public SystemAdminManagementController(SystemAdminManagementService systemAdminManagementService) {
+    public SystemAdminManagementController(
+            SystemAdminManagementService systemAdminManagementService
+    ) {
         this.systemAdminManagementService = systemAdminManagementService;
     }
 
     @PreAuthorize("@systemSecurity.isSystemAdmin()")
     @PostMapping
     public ResponseEntity<ApiResponse<SystemAdminResponse>> createSystemAdmin(
-            @Valid @RequestBody SystemAdminCreateRequest request
+            @Valid @RequestBody SystemAdminCreateRequest request,
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        SystemAdminResponse response = systemAdminManagementService.createSystemAdmin(request);
+        SystemAdminResponse response =
+                systemAdminManagementService.createSystemAdmin(request, jwt);
 
         return ResponseEntity.ok(
-                ApiResponse.success("System admin created successfully", response)
+                ApiResponse.success(
+                        "System admin created successfully",
+                        response
+                )
         );
     }
 
@@ -66,14 +73,18 @@ public class SystemAdminManagementController {
                 )
         );
 
-        PageResponse<SystemAdminResponse> response = systemAdminManagementService.getSystemAdmins(
-                status,
-                search,
-                pageable
-        );
+        PageResponse<SystemAdminResponse> response =
+                systemAdminManagementService.getSystemAdmins(
+                        status,
+                        search,
+                        pageable
+                );
 
         return ResponseEntity.ok(
-                ApiResponse.success("System admins fetched successfully", response)
+                ApiResponse.success(
+                        "System admins fetched successfully",
+                        response
+                )
         );
     }
 
@@ -82,10 +93,14 @@ public class SystemAdminManagementController {
     public ResponseEntity<ApiResponse<SystemAdminResponse>> getSystemAdminById(
             @PathVariable UUID systemAdminId
     ) {
-        SystemAdminResponse response = systemAdminManagementService.getSystemAdminById(systemAdminId);
+        SystemAdminResponse response =
+                systemAdminManagementService.getSystemAdminById(systemAdminId);
 
         return ResponseEntity.ok(
-                ApiResponse.success("System admin fetched successfully", response)
+                ApiResponse.success(
+                        "System admin fetched successfully",
+                        response
+                )
         );
     }
 
@@ -96,26 +111,38 @@ public class SystemAdminManagementController {
             @Valid @RequestBody SystemAdminStatusUpdateRequest request,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        SystemAdminResponse response = systemAdminManagementService.updateSystemAdminStatus(
-                systemAdminId,
-                request,
-                jwt
-        );
+        SystemAdminResponse response =
+                systemAdminManagementService.updateSystemAdminStatus(
+                        systemAdminId,
+                        request,
+                        jwt
+                );
 
         return ResponseEntity.ok(
-                ApiResponse.success("System admin status updated successfully", response)
+                ApiResponse.success(
+                        "System admin status updated successfully",
+                        response
+                )
         );
     }
 
     @PreAuthorize("@systemSecurity.isSystemAdmin()")
     @PatchMapping("/{systemAdminId}/unlock")
     public ResponseEntity<ApiResponse<SystemAdminResponse>> unlockSystemAdminLogin(
-            @PathVariable UUID systemAdminId
+            @PathVariable UUID systemAdminId,
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        SystemAdminResponse response = systemAdminManagementService.unlockSystemAdminLogin(systemAdminId);
+        SystemAdminResponse response =
+                systemAdminManagementService.unlockSystemAdminLogin(
+                        systemAdminId,
+                        jwt
+                );
 
         return ResponseEntity.ok(
-                ApiResponse.success("System admin login unlocked successfully", response)
+                ApiResponse.success(
+                        "System admin login unlocked successfully",
+                        response
+                )
         );
     }
 }
