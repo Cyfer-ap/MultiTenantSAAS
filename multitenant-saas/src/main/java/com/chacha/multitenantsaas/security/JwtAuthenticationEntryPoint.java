@@ -1,5 +1,8 @@
 package com.chacha.multitenantsaas.security;
 
+import com.chacha.multitenantsaas.common.ApiErrorResponse;
+import com.chacha.multitenantsaas.common.ErrorCode;
+import tools.jackson.databind.json.JsonMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -8,30 +11,39 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.time.Instant;
 
 @Component
-public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
+public class JwtAuthenticationEntryPoint
+        implements AuthenticationEntryPoint {
+
+    private final JsonMapper jsonMapper;
+
+    public JwtAuthenticationEntryPoint(JsonMapper jsonMapper) {
+        this.jsonMapper = jsonMapper;
+    }
 
     @Override
     public void commence(
             HttpServletRequest request,
             HttpServletResponse response,
-            AuthenticationException authException
+            AuthenticationException authenticationException
     ) throws IOException {
+
+        ApiErrorResponse errorResponse = ApiErrorResponse.of(
+                "Unauthorized. Missing or invalid access token.",
+                ErrorCode.AUTHENTICATION_REQUIRED,
+                HttpServletResponse.SC_UNAUTHORIZED,
+                request.getRequestURI(),
+                null
+        );
 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
 
-        String jsonResponse = """
-                {
-                  "success": false,
-                  "message": "Unauthorized. Missing or invalid access token.",
-                  "data": null,
-                  "timestamp": "%s"
-                }
-                """.formatted(Instant.now());
-
-        response.getWriter().write(jsonResponse);
+        jsonMapper.writeValue(
+                response.getOutputStream(),
+                errorResponse
+        );
     }
 }
