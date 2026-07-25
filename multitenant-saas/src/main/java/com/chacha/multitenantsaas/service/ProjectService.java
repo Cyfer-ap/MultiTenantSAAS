@@ -20,15 +20,18 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final TenantRepository tenantRepository;
     private final CurrentActorService currentActorService;
+    private final ProjectMemberService projectMemberService;
 
     public ProjectService(
             ProjectRepository projectRepository,
             TenantRepository tenantRepository,
-            CurrentActorService currentActorService
+            CurrentActorService currentActorService,
+            ProjectMemberService projectMemberService
     ) {
         this.projectRepository = projectRepository;
         this.tenantRepository = tenantRepository;
         this.currentActorService = currentActorService;
+        this.projectMemberService = projectMemberService;
     }
 
     @Transactional
@@ -54,6 +57,11 @@ public class ProjectService {
 
         Project savedProject =
                 projectRepository.save(project);
+
+        projectMemberService.addCreatorAsProjectLead(
+                savedProject,
+                actor
+        );
 
         return mapToResponse(savedProject);
     }
