@@ -17,19 +17,38 @@ import java.nio.charset.StandardCharsets;
 @Configuration
 public class JwtConfig {
 
+    private static final int MINIMUM_SECRET_LENGTH_BYTES = 32;
+
     @Bean
     public SecretKey jwtSecretKey(
             @Value("${app.jwt.secret}") String jwtSecret
     ) {
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException(
+                    "JWT secret must be configured"
+            );
+        }
+
+        byte[] secretBytes =
+                jwtSecret.getBytes(StandardCharsets.UTF_8);
+
+        if (secretBytes.length < MINIMUM_SECRET_LENGTH_BYTES) {
+            throw new IllegalStateException(
+                    "JWT secret must contain at least 32 bytes"
+            );
+        }
+
         return new SecretKeySpec(
-                jwtSecret.getBytes(StandardCharsets.UTF_8),
+                secretBytes,
                 "HmacSHA256"
         );
     }
 
     @Bean
     public JwtEncoder jwtEncoder(SecretKey jwtSecretKey) {
-        return new NimbusJwtEncoder(new ImmutableSecret<>(jwtSecretKey));
+        return new NimbusJwtEncoder(
+                new ImmutableSecret<>(jwtSecretKey)
+        );
     }
 
     @Bean
