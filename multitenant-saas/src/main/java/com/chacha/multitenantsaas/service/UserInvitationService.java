@@ -12,7 +12,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -188,6 +190,86 @@ public class UserInvitationService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public PageResponse<UserInvitationDetailsResponse> getInvitationsByTenant(
+            UUID tenantId,
+            UserInvitationStatus status,
+            UserRole role,
+            String search,
+            Pageable pageable
+    ) {
+        if (!tenantRepository.existsById(tenantId)) {
+            throw new ResourceNotFoundException(
+                    "Tenant not found with id: " + tenantId
+            );
+        }
+
+        Page<UserInvitation> invitations =
+                userInvitationRepository.findTenantInvitations(
+                        tenantId,
+                        status,
+                        role,
+                        normalizeSearch(search),
+                        pageable
+                );
+
+        return new PageResponse<>(
+                invitations.getContent()
+                        .stream()
+                        .map(this::mapToDetailsResponse)
+                        .toList(),
+                invitations.getNumber(),
+                invitations.getSize(),
+                invitations.getTotalElements(),
+                invitations.getTotalPages(),
+                invitations.isFirst(),
+                invitations.isLast()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public UserInvitationDetailsResponse getInvitationById(
+            UUID tenantId,
+            UUID invitationId
+    ) {
+        UserInvitation invitation =
+                getInvitationOrThrow(tenantId, invitationId);
+
+        return mapToDetailsResponse(invitation);
+    }
+
+    @Transactional
+    public UserInvitationDetailsResponse revokeInvitation(
+            UUID tenantId,
+            UUID invitationId,
+            Jwt jwt
+    ) {
+        validateManagementActor(tenantId, jwt);
+
+        UserInvitation invitation =
+                getInvitationOrThrow(tenantId, invitationId);
+
+        if (invitation.getStatus() == UserInvitationStatus.ACCEPTED) {
+            throw new IllegalArgumentException(
+                    "Accepted invitation cannot be revoked"
+            );
+        }
+
+        if (invitation.getStatus() == UserInvitationStatus.REVOKED) {
+            throw new IllegalArgumentException(
+                    "Invitation is already revoked"
+            );
+        }
+
+        invitation.setStatus(UserInvitationStatus.REVOKED);
+        invitation.setRevokedAt(Instant.now());
+
+        UserInvitation updatedInvitation =
+                userInvitationRepository.save(invitation);
+
+        return mapToDetailsResponse(updatedInvitation);
+    }
+
     private void revokeExistingPendingInvitations(
             UUID tenantId,
             String email
@@ -245,6 +327,74 @@ public class UserInvitationService {
                 AuditAction.USER_CREATED,
                 "User created after accepting invitation"
         );
+    }
+
+    private UserInvitation getInvitationOrThrow(
+            UUID tenantId,
+            UUID invitationId
+    ) {
+        return userInvitationRepository.findByTenant_IdAndId(
+                        tenantId,
+                        invitationId
+                )
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Invitation not found with id: "
+                                + invitationId
+                                + " for tenant: "
+                                + tenantId
+                ));
+    }
+
+    private void validateManagementActor(UUID tenantId, Jwt jwt) {
+        if (currentSystemAdminService.isSystemAdminToken(jwt)) {
+            currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
+            return;
+        }
+
+        currentActorService.getRequiredActiveActor(tenantId, jwt);
+    }
+
+    private UserInvitationDetailsResponse mapToDetailsResponse(
+            UserInvitation invitation
+    ) {
+        AppUser invitedByUser = invitation.getInvitedByUser();
+        SystemAdmin invitedBySystemAdmin =
+                invitation.getInvitedBySystemAdmin();
+
+        boolean expired =
+                invitation.getStatus() == UserInvitationStatus.PENDING
+                        && invitation.isExpired();
+
+        return new UserInvitationDetailsResponse(
+                invitation.getId(),
+                invitation.getTenant().getId(),
+                invitation.getFullName(),
+                invitation.getEmail(),
+                invitation.getRole(),
+                invitation.getStatus(),
+                invitation.isActive(),
+                expired,
+                invitation.getExpiresAt(),
+                invitation.getCreatedAt(),
+                invitation.getAcceptedAt(),
+                invitation.getRevokedAt(),
+                invitedByUser != null ? invitedByUser.getId() : null,
+                invitedByUser != null ? invitedByUser.getEmail() : null,
+                invitedBySystemAdmin != null
+                        ? invitedBySystemAdmin.getId()
+                        : null,
+                invitedBySystemAdmin != null
+                        ? invitedBySystemAdmin.getEmail()
+                        : null
+        );
+    }
+
+    private String normalizeSearch(String search) {
+        if (search == null || search.trim().isBlank()) {
+            return null;
+        }
+
+        return search.trim();
     }
 
     private AppUserResponse mapToUserResponse(AppUser user) {
