@@ -31,6 +31,12 @@ public interface ProjectMemberRepository
             ProjectMemberRole role
     );
 
+    boolean existsByProject_Tenant_IdAndProject_IdAndUser_Id(
+            UUID tenantId,
+            UUID projectId,
+            UUID userId
+    );
+
     @Query("""
             SELECT membership
             FROM ProjectMember membership
