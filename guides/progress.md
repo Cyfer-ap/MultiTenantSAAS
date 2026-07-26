@@ -536,6 +536,56 @@ Soft deletion through ARCHIVED status
 Archived-project immutability
 ```
 
+Expected authorization:
+```text
+TENANT_ADMIN   -> 200 OK
+TENANT_MANAGER -> 200 OK
+TENANT_USER    -> 403 Forbidden
+Missing token  -> 401 Unauthorized
+```
+
+Response Fields:
+
+```text
+tenantId
+tenantName
+tenantSlug
+tenantStatus
+totalUsers
+activeUsers
+inactiveUsers
+suspendedUsers
+totalProjects
+planningProjects
+activeProjects
+onHoldProjects
+completedProjects
+archivedProjects
+totalProjectMemberships
+totalTasks
+todoTasks
+inProgressTasks
+blockedTasks
+completedTasks
+cancelledTasks
+overdueTasks
+taskCompletionPercentage
+```
+
+Consistency Checks:
+
+```text
+totalUsers =
+activeUsers + inactiveUsers + suspendedUsers
+
+totalProjects =
+planningProjects + activeProjects + onHoldProjects +
+completedProjects + archivedProjects
+
+totalTasks =
+todoTasks + inProgressTasks + blockedTasks +
+completedTasks + cancelledTasks
+```
 ## 16. Project membership module
 
 Migration:
@@ -681,7 +731,22 @@ GET /api/tenant/dashboard/summary
 
 The existing dashboards are implemented.
 
-Next tenant-dashboard enhancement:
+The tenant dashboard now includes:
+```text
+Tenant identity and status
+User totals by status
+Project totals by status
+Total project memberships
+Task totals by status
+Overdue task count
+Task completion percentage
+```
+Tenant dashboard permissions:
+```text
+TENANT_ADMIN   allowed
+TENANT_MANAGER allowed
+TENANT_USER    forbidden
+```
 
 ```text
 Total projects
@@ -689,20 +754,25 @@ Active projects
 Archived projects
 Total project members
 Total tasks
-TODO tasks
-IN_PROGRESS tasks
-BLOCKED tasks
-COMPLETED tasks
-CANCELLED tasks
-Overdue tasks
-Completion percentage
+```
+```text
+totalProjectMemberships counts all membership rows across tenant projects,
+including automatically created project leads.
+
+overdueTasks includes tasks whose dueAt is before the current time and whose
+status is neither COMPLETED nor CANCELLED.
+
+taskCompletionPercentage =
+completedTasks / (totalTasks - cancelledTasks) * 100
+
+The percentage is 0.0 when there are no eligible tasks.
 ```
 
 ## 19. Tenant audit logging
 
 Current core actions include tenant, user, authentication, password, and invitation/user-creation events.
 
-Business audit actions being integrated:
+Implemented business audit actions:
 
 ```text
 PROJECT_CREATED
@@ -719,7 +789,7 @@ TASK_ASSIGNEE_UPDATED
 TASK_CANCELLED
 ```
 
-Current implementation work:
+Implemented behavior:
 
 ```text
 ProjectService mutation methods record the JWT actor
@@ -744,6 +814,8 @@ V2__create_user_invitations.sql
 V3__create_projects.sql
 V4__create_project_members.sql
 V5__create_project_tasks.sql
+V6__expand_tenant_audit_actions.sql
+V7__expand_tenant_audit_actions.sql
 ```
 
 Current migration issue and recovery:
@@ -756,17 +828,14 @@ SQL was later added to V6, producing a checksum mismatch.
 Correct recovery:
 
 ```text
-Keep V6__expand_tenant_audit_actions.sql as a zero-byte file.
+V6__expand_tenant_audit_actions.sql remains a zero-byte migration because
+its checksum was already recorded.
 
-Create:
-V7__convert_audit_action_to_varchar.sql
+V7__expand_tenant_audit_actions.sql performs the actual conversion of
+AUDIT_LOGS.ACTION to VARCHAR(60).
 
-With:
-ALTER TABLE audit_logs
-    ALTER COLUMN action SET DATA TYPE VARCHAR(60);
-
-ALTER TABLE audit_logs
-    ALTER COLUMN action SET NOT NULL;
+Applied migrations must not be edited.
+The next migration must be V8.
 ```
 
 Do not repair the checksum merely to hide the edit.
@@ -813,12 +882,19 @@ Project membership lifecycle and permissions
 Project task lifecycle and permissions
 Assignment validation
 Archived/cancelled immutability
+Empty dashboard baseline
+Populated project and task metrics
+Overdue-task exclusion rules
+Task completion percentage
+Cross-tenant dashboard isolation
+TENANT_ADMIN and TENANT_MANAGER dashboard access
+TENANT_USER dashboard rejection
 ```
 
 Current test count before adding audit-specific tests:
 
 ```text
-43
+47 integration/application tests
 ```
 
 Run:
@@ -835,84 +911,75 @@ Completed:
 Backend foundation
 Standard API/error contracts
 Tenant module
-Tenant users
-JWT authentication
-Refresh sessions
-Password change/reset
+Tenant users and invitations
+JWT authentication and refresh sessions
+Password change and reset
 DB-backed tenant isolation
 System-admin module
-System-admin management
 Account lockout
-Tenant and platform audit infrastructure
-User invitations
-Flyway foundation
-Environment profiles and CORS
+Tenant and platform audit logging
 Project module
 Project membership module
 Project task module
-43 integration tests
+Business audit logging
+Expanded tenant dashboard
+Flyway migrations through V7
+Swagger/OpenAPI verification
+47 automated tests
 ```
 
-In progress:
+
+## 23. MVP API contract freeze
+
+The following are now treated as stable frontend contracts:
 
 ```text
-Business audit logging for projects, project members, and tasks
-V6/V7 Flyway recovery
+Endpoint paths and HTTP methods
+Request and response DTO fields
+Enum names and values
+HTTP status codes
+Pagination structure
+Success response wrapper
+Error response structure and error codes
+JWT claims and authorization behavior
+Dashboard metric definitions
 ```
 
-## 23. Immediate next step
+Breaking changes should not be introduced while building the frontend.
+Any required contract change must be documented and tested before the
+frontend is updated.
 
-Do not start another module until the current migration and audit work is verified.
+## 24. Immediate next step
 
-Required order:
+Begin frontend development in this order:
 
 ```text
-1. Restore V6 to a zero-byte file.
-2. Create and apply V7 audit action VARCHAR migration.
-3. Confirm ProjectService audit integration.
-4. Confirm ProjectMemberService audit integration.
-5. Confirm ProjectTaskService audit integration.
-6. Confirm corresponding controllers pass Jwt.
-7. Run .\mvnw.cmd clean test.
-8. Verify business actions through tenant audit-log APIs.
+1. Frontend project initialization
+2. App shell and routing
+3. API client and environment configuration
+4. Authentication and session handling
+5. Protected and role-aware routes
+6. Role-aware navigation
+7. System dashboard
+8. Tenant dashboard
+9. Tenant users and invitations
+10. Projects, members, and tasks
+11. Audit logs
 ```
 
-After that:
+Deferred backend work:
 
 ```text
-1. Add project/task metrics to the tenant dashboard.
-2. Add dashboard integration tests.
-3. Verify and freeze OpenAPI DTOs, status codes, enums, pagination, and errors.
-4. Start the frontend.
-```
-
-## 24. Frontend readiness
-
-The backend is close to the frontend boundary.
-
-Backend work that should be completed before frontend:
-
-```text
-Finish business audit logging
-Extend tenant dashboard metrics
-Run complete tests
-Freeze MVP API contract
-Verify OpenAPI
-```
-
-Frontend implementation order:
-
-```text
-1. App shell and routing
-2. Authentication/session handling
-3. Role-aware navigation
-4. System dashboard
-5. Tenant dashboard
-6. Tenant users and invitations
-7. Projects
-8. Project members
-9. Tasks
-10. Audit logs
+Email provider
+Redis
+Background jobs
+PostgreSQL production tuning
+Docker and deployment
+Billing
+Rate limiting
+File storage
+Advanced observability
+Custom permission sets
 ```
 
 Work that can wait until after the frontend begins:
