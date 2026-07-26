@@ -37,6 +37,7 @@ public interface ProjectMemberRepository
             UUID userId
     );
 
+    long countByProject_Tenant_Id(UUID tenantId);
     @Query("""
             SELECT membership
             FROM ProjectMember membership

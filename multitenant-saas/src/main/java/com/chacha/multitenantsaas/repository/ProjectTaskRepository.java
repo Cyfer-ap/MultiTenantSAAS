@@ -8,7 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
+import java.time.Instant;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,6 +21,19 @@ public interface ProjectTaskRepository
             UUID tenantId,
             UUID projectId,
             UUID taskId
+    );
+
+    long countByTenant_Id(UUID tenantId);
+
+    long countByTenant_IdAndStatus(
+            UUID tenantId,
+            ProjectTaskStatus status
+    );
+
+    long countByTenant_IdAndDueAtBeforeAndStatusNotIn(
+            UUID tenantId,
+            Instant currentTime,
+            Collection<ProjectTaskStatus> excludedStatuses
     );
 
     @Query("""
