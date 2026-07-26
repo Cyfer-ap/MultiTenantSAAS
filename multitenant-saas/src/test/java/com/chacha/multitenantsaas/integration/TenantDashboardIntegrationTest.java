@@ -11,6 +11,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import java.util.UUID;
 
@@ -18,6 +20,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -108,6 +112,203 @@ class TenantDashboardIntegrationTest {
                 ).value(0.0));
     }
 
+    @Test
+    void populatedTenantHasCorrectDashboardMetrics()
+            throws Exception {
+
+        TenantFixture tenant =
+                onboardUniqueTenant("dashboard-populated");
+
+        String adminToken = login(
+                tenant.tenantId(),
+                tenant.adminEmail()
+        );
+
+        UUID planningProjectId = createProject(
+                tenant.tenantId(),
+                adminToken,
+                "Planning Project"
+        );
+
+        UUID activeProjectId = createProject(
+                tenant.tenantId(),
+                adminToken,
+                "Active Project"
+        );
+
+        UUID onHoldProjectId = createProject(
+                tenant.tenantId(),
+                adminToken,
+                "On Hold Project"
+        );
+
+        UUID completedProjectId = createProject(
+                tenant.tenantId(),
+                adminToken,
+                "Completed Project"
+        );
+
+        UUID archivedProjectId = createProject(
+                tenant.tenantId(),
+                adminToken,
+                "Archived Project"
+        );
+
+        updateProjectStatus(
+                tenant.tenantId(),
+                activeProjectId,
+                adminToken,
+                "ACTIVE"
+        );
+
+        updateProjectStatus(
+                tenant.tenantId(),
+                onHoldProjectId,
+                adminToken,
+                "ON_HOLD"
+        );
+
+        updateProjectStatus(
+                tenant.tenantId(),
+                completedProjectId,
+                adminToken,
+                "COMPLETED"
+        );
+
+        archiveProject(
+                tenant.tenantId(),
+                archivedProjectId,
+                adminToken
+        );
+
+        Instant overdueDueAt =
+                Instant.now().minus(1, ChronoUnit.DAYS);
+
+        Instant futureDueAt =
+                Instant.now().plus(30, ChronoUnit.DAYS);
+
+        createTask(
+                tenant.tenantId(),
+                activeProjectId,
+                adminToken,
+                "Overdue todo task",
+                overdueDueAt
+        );
+
+        UUID inProgressTaskId = createTask(
+                tenant.tenantId(),
+                activeProjectId,
+                adminToken,
+                "Overdue in-progress task",
+                overdueDueAt
+        );
+
+        UUID blockedTaskId = createTask(
+                tenant.tenantId(),
+                activeProjectId,
+                adminToken,
+                "Future blocked task",
+                futureDueAt
+        );
+
+        UUID completedTaskId = createTask(
+                tenant.tenantId(),
+                activeProjectId,
+                adminToken,
+                "Completed overdue task",
+                overdueDueAt
+        );
+
+        UUID cancelledTaskId = createTask(
+                tenant.tenantId(),
+                activeProjectId,
+                adminToken,
+                "Cancelled overdue task",
+                overdueDueAt
+        );
+
+        updateTaskStatus(
+                tenant.tenantId(),
+                activeProjectId,
+                inProgressTaskId,
+                adminToken,
+                "IN_PROGRESS"
+        );
+
+        updateTaskStatus(
+                tenant.tenantId(),
+                activeProjectId,
+                blockedTaskId,
+                adminToken,
+                "BLOCKED"
+        );
+
+        updateTaskStatus(
+                tenant.tenantId(),
+                activeProjectId,
+                completedTaskId,
+                adminToken,
+                "COMPLETED"
+        );
+
+        cancelTask(
+                tenant.tenantId(),
+                activeProjectId,
+                cancelledTaskId,
+                adminToken
+        );
+
+        mockMvc.perform(
+                        get("/api/tenant/dashboard/summary")
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + adminToken
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success")
+                        .value(true))
+
+                .andExpect(jsonPath("$.data.totalUsers")
+                        .value(1))
+                .andExpect(jsonPath("$.data.activeUsers")
+                        .value(1))
+
+                .andExpect(jsonPath("$.data.totalProjects")
+                        .value(5))
+                .andExpect(jsonPath("$.data.planningProjects")
+                        .value(1))
+                .andExpect(jsonPath("$.data.activeProjects")
+                        .value(1))
+                .andExpect(jsonPath("$.data.onHoldProjects")
+                        .value(1))
+                .andExpect(jsonPath("$.data.completedProjects")
+                        .value(1))
+                .andExpect(jsonPath("$.data.archivedProjects")
+                        .value(1))
+
+                .andExpect(jsonPath(
+                        "$.data.totalProjectMemberships"
+                ).value(5))
+
+                .andExpect(jsonPath("$.data.totalTasks")
+                        .value(5))
+                .andExpect(jsonPath("$.data.todoTasks")
+                        .value(1))
+                .andExpect(jsonPath("$.data.inProgressTasks")
+                        .value(1))
+                .andExpect(jsonPath("$.data.blockedTasks")
+                        .value(1))
+                .andExpect(jsonPath("$.data.completedTasks")
+                        .value(1))
+                .andExpect(jsonPath("$.data.cancelledTasks")
+                        .value(1))
+                .andExpect(jsonPath("$.data.overdueTasks")
+                        .value(2))
+                .andExpect(jsonPath(
+                        "$.data.taskCompletionPercentage"
+                ).value(25.0));
+    }
     private TenantFixture onboardUniqueTenant(String prefix)
             throws Exception {
 
@@ -184,6 +385,199 @@ class TenantDashboardIntegrationTest {
         return response.at("/data/accessToken").asString();
     }
 
+    private UUID createProject(
+            UUID tenantId,
+            String accessToken,
+            String name
+    ) throws Exception {
+
+        MvcResult result = mockMvc.perform(
+                        post(
+                                "/api/tenants/{tenantId}/projects",
+                                tenantId
+                        )
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + accessToken
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                      "name": "%s",
+                                      "description": "Dashboard integration project."
+                                    }
+                                    """.formatted(name))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status")
+                        .value("PLANNING"))
+                .andReturn();
+
+        JsonNode response = jsonMapper.readTree(
+                result.getResponse().getContentAsString()
+        );
+
+        return UUID.fromString(
+                response.at("/data/id").asString()
+        );
+    }
+
+    private void updateProjectStatus(
+            UUID tenantId,
+            UUID projectId,
+            String accessToken,
+            String projectStatus
+    ) throws Exception {
+
+        mockMvc.perform(
+                        patch(
+                                "/api/tenants/{tenantId}"
+                                        + "/projects/{projectId}/status",
+                                tenantId,
+                                projectId
+                        )
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + accessToken
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                      "status": "%s"
+                                    }
+                                    """.formatted(projectStatus))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status")
+                        .value(projectStatus));
+    }
+
+    private void archiveProject(
+            UUID tenantId,
+            UUID projectId,
+            String accessToken
+    ) throws Exception {
+
+        mockMvc.perform(
+                        delete(
+                                "/api/tenants/{tenantId}"
+                                        + "/projects/{projectId}",
+                                tenantId,
+                                projectId
+                        )
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + accessToken
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status")
+                        .value("ARCHIVED"));
+    }
+
+    private UUID createTask(
+            UUID tenantId,
+            UUID projectId,
+            String accessToken,
+            String title,
+            Instant dueAt
+    ) throws Exception {
+
+        MvcResult result = mockMvc.perform(
+                        post(
+                                "/api/tenants/{tenantId}"
+                                        + "/projects/{projectId}/tasks",
+                                tenantId,
+                                projectId
+                        )
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + accessToken
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                      "title": "%s",
+                                      "description": "Dashboard integration task.",
+                                      "priority": "MEDIUM",
+                                      "dueAt": "%s",
+                                      "assigneeUserId": null
+                                    }
+                                    """.formatted(title, dueAt))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status")
+                        .value("TODO"))
+                .andReturn();
+
+        JsonNode response = jsonMapper.readTree(
+                result.getResponse().getContentAsString()
+        );
+
+        return UUID.fromString(
+                response.at("/data/id").asString()
+        );
+    }
+
+    private void updateTaskStatus(
+            UUID tenantId,
+            UUID projectId,
+            UUID taskId,
+            String accessToken,
+            String taskStatus
+    ) throws Exception {
+
+        mockMvc.perform(
+                        patch(
+                                "/api/tenants/{tenantId}"
+                                        + "/projects/{projectId}"
+                                        + "/tasks/{taskId}/status",
+                                tenantId,
+                                projectId,
+                                taskId
+                        )
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + accessToken
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                      "status": "%s"
+                                    }
+                                    """.formatted(taskStatus))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status")
+                        .value(taskStatus));
+    }
+
+    private void cancelTask(
+            UUID tenantId,
+            UUID projectId,
+            UUID taskId,
+            String accessToken
+    ) throws Exception {
+
+        mockMvc.perform(
+                        delete(
+                                "/api/tenants/{tenantId}"
+                                        + "/projects/{projectId}"
+                                        + "/tasks/{taskId}",
+                                tenantId,
+                                projectId,
+                                taskId
+                        )
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + accessToken
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status")
+                        .value("CANCELLED"));
+    }
+
     private String uniqueSuffix() {
         return UUID.randomUUID()
                 .toString()
@@ -198,4 +592,6 @@ class TenantDashboardIntegrationTest {
             String adminEmail
     ) {
     }
+
+
 }
