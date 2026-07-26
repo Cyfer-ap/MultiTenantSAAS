@@ -31,6 +31,9 @@ class TenantDashboardIntegrationTest {
     private static final String ADMIN_PASSWORD =
             "TenantAdmin@123";
 
+    private static final String INVITED_USER_PASSWORD =
+            "InvitedUser@123";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -309,6 +312,227 @@ class TenantDashboardIntegrationTest {
                         "$.data.taskCompletionPercentage"
                 ).value(25.0));
     }
+
+    @Test
+    void dashboardMetricsAreIsolatedBetweenTenants()
+            throws Exception {
+
+        TenantFixture tenantA =
+                onboardUniqueTenant("dashboard-isolation-a");
+
+        TenantFixture tenantB =
+                onboardUniqueTenant("dashboard-isolation-b");
+
+        String tenantAToken = login(
+                tenantA.tenantId(),
+                tenantA.adminEmail()
+        );
+
+        String tenantBToken = login(
+                tenantB.tenantId(),
+                tenantB.adminEmail()
+        );
+
+        UUID tenantBProjectId = createProject(
+                tenantB.tenantId(),
+                tenantBToken,
+                "Tenant B Private Project"
+        );
+
+        updateProjectStatus(
+                tenantB.tenantId(),
+                tenantBProjectId,
+                tenantBToken,
+                "ACTIVE"
+        );
+
+        createTask(
+                tenantB.tenantId(),
+                tenantBProjectId,
+                tenantBToken,
+                "Tenant B Private Task",
+                Instant.now().plus(7, ChronoUnit.DAYS)
+        );
+
+        /*
+         * Confirm that tenant B owns the created data.
+         */
+        mockMvc.perform(
+                        get("/api/tenant/dashboard/summary")
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + tenantBToken
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.tenantId")
+                        .value(tenantB.tenantId().toString()))
+                .andExpect(jsonPath("$.data.totalUsers")
+                        .value(1))
+                .andExpect(jsonPath("$.data.totalProjects")
+                        .value(1))
+                .andExpect(jsonPath("$.data.activeProjects")
+                        .value(1))
+                .andExpect(jsonPath(
+                        "$.data.totalProjectMemberships"
+                ).value(1))
+                .andExpect(jsonPath("$.data.totalTasks")
+                        .value(1))
+                .andExpect(jsonPath("$.data.todoTasks")
+                        .value(1))
+                .andExpect(jsonPath("$.data.overdueTasks")
+                        .value(0))
+                .andExpect(jsonPath(
+                        "$.data.taskCompletionPercentage"
+                ).value(0.0));
+
+        /*
+         * Tenant A's JWT must resolve only tenant A's data.
+         */
+        mockMvc.perform(
+                        get("/api/tenant/dashboard/summary")
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + tenantAToken
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.tenantId")
+                        .value(tenantA.tenantId().toString()))
+                .andExpect(jsonPath("$.data.tenantName")
+                        .value(tenantA.tenantName()))
+                .andExpect(jsonPath("$.data.tenantSlug")
+                        .value(tenantA.tenantSlug()))
+
+                .andExpect(jsonPath("$.data.totalUsers")
+                        .value(1))
+                .andExpect(jsonPath("$.data.activeUsers")
+                        .value(1))
+
+                .andExpect(jsonPath("$.data.totalProjects")
+                        .value(0))
+                .andExpect(jsonPath("$.data.activeProjects")
+                        .value(0))
+                .andExpect(jsonPath(
+                        "$.data.totalProjectMemberships"
+                ).value(0))
+
+                .andExpect(jsonPath("$.data.totalTasks")
+                        .value(0))
+                .andExpect(jsonPath("$.data.todoTasks")
+                        .value(0))
+                .andExpect(jsonPath("$.data.overdueTasks")
+                        .value(0))
+                .andExpect(jsonPath(
+                        "$.data.taskCompletionPercentage"
+                ).value(0.0));
+    }
+
+    @Test
+    void tenantManagerCanAccessDashboardButTenantUserCannot()
+            throws Exception {
+
+        TenantFixture tenant =
+                onboardUniqueTenant("dashboard-role-access");
+
+        String adminToken = login(
+                tenant.tenantId(),
+                tenant.adminEmail()
+        );
+
+        String suffix = uniqueSuffix();
+
+        String managerEmail =
+                "manager." + suffix + "@example.test";
+
+        String userEmail =
+                "user." + suffix + "@example.test";
+
+        createAndAcceptInvitedUser(
+                tenant.tenantId(),
+                adminToken,
+                "Dashboard Manager",
+                managerEmail,
+                "TENANT_MANAGER"
+        );
+
+        createAndAcceptInvitedUser(
+                tenant.tenantId(),
+                adminToken,
+                "Dashboard User",
+                userEmail,
+                "TENANT_USER"
+        );
+
+        String managerToken = login(
+                tenant.tenantId(),
+                managerEmail,
+                INVITED_USER_PASSWORD
+        );
+
+        String userToken = login(
+                tenant.tenantId(),
+                userEmail,
+                INVITED_USER_PASSWORD
+        );
+
+        /*
+         * TENANT_MANAGER is authorized to view the complete
+         * tenant-level dashboard.
+         */
+        mockMvc.perform(
+                        get("/api/tenant/dashboard/summary")
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + managerToken
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success")
+                        .value(true))
+                .andExpect(jsonPath("$.data.tenantId")
+                        .value(tenant.tenantId().toString()))
+                .andExpect(jsonPath("$.data.totalUsers")
+                        .value(3))
+                .andExpect(jsonPath("$.data.activeUsers")
+                        .value(3))
+                .andExpect(jsonPath("$.data.inactiveUsers")
+                        .value(0))
+                .andExpect(jsonPath("$.data.suspendedUsers")
+                        .value(0))
+                .andExpect(jsonPath("$.data.totalProjects")
+                        .value(0))
+                .andExpect(jsonPath(
+                        "$.data.totalProjectMemberships"
+                ).value(0))
+                .andExpect(jsonPath("$.data.totalTasks")
+                        .value(0))
+                .andExpect(jsonPath(
+                        "$.data.taskCompletionPercentage"
+                ).value(0.0));
+
+        /*
+         * TENANT_USER is authenticated but lacks permission
+         * to view tenant-wide dashboard information.
+         */
+        mockMvc.perform(
+                        get("/api/tenant/dashboard/summary")
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + userToken
+                                )
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success")
+                        .value(false))
+                .andExpect(jsonPath("$.errorCode")
+                        .value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.status")
+                        .value(403))
+                .andExpect(jsonPath("$.path")
+                        .value("/api/tenant/dashboard/summary"));
+    }
+
     private TenantFixture onboardUniqueTenant(String prefix)
             throws Exception {
 
@@ -360,12 +584,25 @@ class TenantDashboardIntegrationTest {
             String email
     ) throws Exception {
 
+        return login(
+                tenantId,
+                email,
+                ADMIN_PASSWORD
+        );
+    }
+
+    private String login(
+            UUID tenantId,
+            String email,
+            String password
+    ) throws Exception {
+
         String requestBody = """
-                {
-                  "email": "%s",
-                  "password": "%s"
-                }
-                """.formatted(email, ADMIN_PASSWORD);
+            {
+              "email": "%s",
+              "password": "%s"
+            }
+            """.formatted(email, password);
 
         MvcResult result = mockMvc.perform(
                         post(
@@ -376,6 +613,12 @@ class TenantDashboardIntegrationTest {
                                 .content(requestBody)
                 )
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success")
+                        .value(true))
+                .andExpect(jsonPath("$.data.email")
+                        .value(email))
+                .andExpect(jsonPath("$.data.accessToken")
+                        .isNotEmpty())
                 .andReturn();
 
         JsonNode response = jsonMapper.readTree(
@@ -576,6 +819,83 @@ class TenantDashboardIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status")
                         .value("CANCELLED"));
+    }
+
+    private void createAndAcceptInvitedUser(
+            UUID tenantId,
+            String adminToken,
+            String fullName,
+            String email,
+            String role
+    ) throws Exception {
+
+        MvcResult invitationResult = mockMvc.perform(
+                        post(
+                                "/api/tenants/{tenantId}/user-invitations",
+                                tenantId
+                        )
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + adminToken
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                      "fullName": "%s",
+                                      "email": "%s",
+                                      "role": "%s"
+                                    }
+                                    """.formatted(
+                                        fullName,
+                                        email,
+                                        role
+                                ))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success")
+                        .value(true))
+                .andExpect(jsonPath("$.data.email")
+                        .value(email))
+                .andExpect(jsonPath("$.data.role")
+                        .value(role))
+                .andExpect(jsonPath("$.data.status")
+                        .value("PENDING"))
+                .andExpect(jsonPath("$.data.devInvitationToken")
+                        .isNotEmpty())
+                .andReturn();
+
+        JsonNode invitationResponse = jsonMapper.readTree(
+                invitationResult.getResponse().getContentAsString()
+        );
+
+        String invitationToken = invitationResponse
+                .at("/data/devInvitationToken")
+                .asString();
+
+        mockMvc.perform(
+                        post("/api/user-invitations/accept")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                      "invitationToken": "%s",
+                                      "newPassword": "%s",
+                                      "confirmPassword": "%s"
+                                    }
+                                    """.formatted(
+                                        invitationToken,
+                                        INVITED_USER_PASSWORD,
+                                        INVITED_USER_PASSWORD
+                                ))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success")
+                        .value(true))
+                .andExpect(jsonPath("$.data.user.email")
+                        .value(email))
+                .andExpect(jsonPath("$.data.user.role")
+                        .value(role))
+                .andExpect(jsonPath("$.data.user.status")
+                        .value("ACTIVE"));
     }
 
     private String uniqueSuffix() {
