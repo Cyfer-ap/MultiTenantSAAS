@@ -586,6 +586,7 @@ totalTasks =
 todoTasks + inProgressTasks + blockedTasks +
 completedTasks + cancelledTasks
 ```
+
 ## 16. Project membership module
 
 Migration:
@@ -927,7 +928,6 @@ Flyway migrations through V7
 Swagger/OpenAPI verification
 47 automated tests
 ```
-
 
 ## 23. MVP API contract freeze
 
