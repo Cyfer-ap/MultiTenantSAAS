@@ -1,7 +1,19 @@
 package com.chacha.multitenantsaas.service;
 
-import com.chacha.multitenantsaas.dto.*;
-import com.chacha.multitenantsaas.entity.*;
+import com.chacha.multitenantsaas.dto.PageResponse;
+import com.chacha.multitenantsaas.dto.ProjectTaskAssigneeUpdateRequest;
+import com.chacha.multitenantsaas.dto.ProjectTaskCreateRequest;
+import com.chacha.multitenantsaas.dto.ProjectTaskResponse;
+import com.chacha.multitenantsaas.dto.ProjectTaskStatusUpdateRequest;
+import com.chacha.multitenantsaas.dto.ProjectTaskUpdateRequest;
+import com.chacha.multitenantsaas.entity.AppUser;
+import com.chacha.multitenantsaas.entity.AuditAction;
+import com.chacha.multitenantsaas.entity.Project;
+import com.chacha.multitenantsaas.entity.ProjectStatus;
+import com.chacha.multitenantsaas.entity.ProjectTask;
+import com.chacha.multitenantsaas.entity.ProjectTaskPriority;
+import com.chacha.multitenantsaas.entity.ProjectTaskStatus;
+import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.ProjectMemberRepository;
@@ -24,19 +36,22 @@ public class ProjectTaskService {
     private final ProjectMemberRepository projectMemberRepository;
     private final AppUserRepository appUserRepository;
     private final CurrentActorService currentActorService;
+    private final AuditLogService auditLogService;
 
     public ProjectTaskService(
             ProjectTaskRepository projectTaskRepository,
             ProjectRepository projectRepository,
             ProjectMemberRepository projectMemberRepository,
             AppUserRepository appUserRepository,
-            CurrentActorService currentActorService
+            CurrentActorService currentActorService,
+            AuditLogService auditLogService
     ) {
         this.projectTaskRepository = projectTaskRepository;
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
         this.appUserRepository = appUserRepository;
         this.currentActorService = currentActorService;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
@@ -74,9 +89,23 @@ public class ProjectTaskService {
                 request.dueAt()
         );
 
-        return mapToResponse(
-                projectTaskRepository.save(task)
+        ProjectTask savedTask =
+                projectTaskRepository.save(task);
+
+        auditLogService.recordSuccess(
+                project.getTenant(),
+                creator,
+                assignee != null ? assignee : creator,
+                AuditAction.TASK_CREATED,
+                "Task created for project "
+                        + projectId
+                        + ": "
+                        + savedTask.getId()
+                        + " - "
+                        + savedTask.getTitle()
         );
+
+        return mapToResponse(savedTask);
     }
 
     @Transactional(readOnly = true)
@@ -122,13 +151,14 @@ public class ProjectTaskService {
             UUID projectId,
             UUID taskId
     ) {
-        return mapToResponse(
+        ProjectTask task =
                 getTaskOrThrow(
                         tenantId,
                         projectId,
                         taskId
-                )
-        );
+                );
+
+        return mapToResponse(task);
     }
 
     @Transactional
@@ -136,7 +166,8 @@ public class ProjectTaskService {
             UUID tenantId,
             UUID projectId,
             UUID taskId,
-            ProjectTaskUpdateRequest request
+            ProjectTaskUpdateRequest request,
+            Jwt jwt
     ) {
         Project project =
                 getProjectOrThrow(tenantId, projectId);
@@ -151,6 +182,12 @@ public class ProjectTaskService {
                 );
 
         ensureTaskCanBeModified(task);
+
+        AppUser actor =
+                currentActorService.getRequiredActiveActor(
+                        tenantId,
+                        jwt
+                );
 
         task.setTitle(request.title().trim());
         task.setDescription(
@@ -159,9 +196,25 @@ public class ProjectTaskService {
         task.setPriority(request.priority());
         task.setDueAt(request.dueAt());
 
-        return mapToResponse(
-                projectTaskRepository.save(task)
+        ProjectTask updatedTask =
+                projectTaskRepository.save(task);
+
+        auditLogService.recordSuccess(
+                project.getTenant(),
+                actor,
+                task.getAssigneeUser() != null
+                        ? task.getAssigneeUser()
+                        : actor,
+                AuditAction.TASK_UPDATED,
+                "Task updated for project "
+                        + projectId
+                        + ": "
+                        + taskId
+                        + " - "
+                        + task.getTitle()
         );
+
+        return mapToResponse(updatedTask);
     }
 
     @Transactional
@@ -169,7 +222,8 @@ public class ProjectTaskService {
             UUID tenantId,
             UUID projectId,
             UUID taskId,
-            ProjectTaskStatusUpdateRequest request
+            ProjectTaskStatusUpdateRequest request,
+            Jwt jwt
     ) {
         Project project =
                 getProjectOrThrow(tenantId, projectId);
@@ -184,6 +238,15 @@ public class ProjectTaskService {
                 );
 
         ensureTaskCanBeModified(task);
+
+        AppUser actor =
+                currentActorService.getRequiredActiveActor(
+                        tenantId,
+                        jwt
+                );
+
+        ProjectTaskStatus previousStatus =
+                task.getStatus();
 
         if (request.status() == ProjectTaskStatus.CANCELLED) {
             throw new IllegalArgumentException(
@@ -200,9 +263,25 @@ public class ProjectTaskService {
             task.setCompletedAt(null);
         }
 
-        return mapToResponse(
-                projectTaskRepository.save(task)
+        ProjectTask updatedTask =
+                projectTaskRepository.save(task);
+
+        auditLogService.recordSuccess(
+                project.getTenant(),
+                actor,
+                task.getAssigneeUser() != null
+                        ? task.getAssigneeUser()
+                        : actor,
+                AuditAction.TASK_STATUS_UPDATED,
+                "Task status changed from "
+                        + previousStatus
+                        + " to "
+                        + request.status()
+                        + ": "
+                        + taskId
         );
+
+        return mapToResponse(updatedTask);
     }
 
     @Transactional
@@ -210,7 +289,8 @@ public class ProjectTaskService {
             UUID tenantId,
             UUID projectId,
             UUID taskId,
-            ProjectTaskAssigneeUpdateRequest request
+            ProjectTaskAssigneeUpdateRequest request,
+            Jwt jwt
     ) {
         Project project =
                 getProjectOrThrow(tenantId, projectId);
@@ -226,24 +306,61 @@ public class ProjectTaskService {
 
         ensureTaskCanBeModified(task);
 
-        AppUser assignee = resolveAssignee(
+        AppUser actor =
+                currentActorService.getRequiredActiveActor(
+                        tenantId,
+                        jwt
+                );
+
+        AppUser previousAssignee =
+                task.getAssigneeUser();
+
+        AppUser newAssignee = resolveAssignee(
                 tenantId,
                 projectId,
                 request.assigneeUserId()
         );
 
-        task.setAssigneeUser(assignee);
+        task.setAssigneeUser(newAssignee);
 
-        return mapToResponse(
-                projectTaskRepository.save(task)
+        ProjectTask updatedTask =
+                projectTaskRepository.save(task);
+
+        String auditMessage;
+
+        if (newAssignee == null) {
+            auditMessage =
+                    "Task unassigned from "
+                            + emailOrNone(previousAssignee)
+                            + ": "
+                            + taskId;
+        } else {
+            auditMessage =
+                    "Task assignee changed from "
+                            + emailOrNone(previousAssignee)
+                            + " to "
+                            + newAssignee.getEmail()
+                            + ": "
+                            + taskId;
+        }
+
+        auditLogService.recordSuccess(
+                project.getTenant(),
+                actor,
+                newAssignee != null ? newAssignee : actor,
+                AuditAction.TASK_ASSIGNEE_UPDATED,
+                auditMessage
         );
+
+        return mapToResponse(updatedTask);
     }
 
     @Transactional
     public ProjectTaskResponse cancelTask(
             UUID tenantId,
             UUID projectId,
-            UUID taskId
+            UUID taskId,
+            Jwt jwt
     ) {
         Project project =
                 getProjectOrThrow(tenantId, projectId);
@@ -259,12 +376,32 @@ public class ProjectTaskService {
 
         ensureTaskCanBeModified(task);
 
+        AppUser actor =
+                currentActorService.getRequiredActiveActor(
+                        tenantId,
+                        jwt
+                );
+
         task.setStatus(ProjectTaskStatus.CANCELLED);
         task.setCompletedAt(null);
 
-        return mapToResponse(
-                projectTaskRepository.save(task)
+        ProjectTask cancelledTask =
+                projectTaskRepository.save(task);
+
+        auditLogService.recordSuccess(
+                project.getTenant(),
+                actor,
+                task.getAssigneeUser() != null
+                        ? task.getAssigneeUser()
+                        : actor,
+                AuditAction.TASK_CANCELLED,
+                "Task cancelled: "
+                        + taskId
+                        + " - "
+                        + task.getTitle()
         );
+
+        return mapToResponse(cancelledTask);
     }
 
     private AppUser resolveAssignee(
@@ -281,10 +418,12 @@ public class ProjectTaskService {
                         tenantId,
                         assigneeUserId
                 )
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Assignee not found with id: "
-                                + assigneeUserId
-                ));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Assignee not found with id: "
+                                        + assigneeUserId
+                        )
+                );
 
         if (assignee.getStatus() != UserStatus.ACTIVE) {
             throw new IllegalArgumentException(
@@ -292,12 +431,13 @@ public class ProjectTaskService {
             );
         }
 
-        boolean projectMember = projectMemberRepository
-                .existsByProject_Tenant_IdAndProject_IdAndUser_Id(
-                        tenantId,
-                        projectId,
-                        assigneeUserId
-                );
+        boolean projectMember =
+                projectMemberRepository
+                        .existsByProject_Tenant_IdAndProject_IdAndUser_Id(
+                                tenantId,
+                                projectId,
+                                assigneeUserId
+                        );
 
         if (!projectMember) {
             throw new IllegalArgumentException(
@@ -317,12 +457,14 @@ public class ProjectTaskService {
                         tenantId,
                         projectId
                 )
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Project not found with id: "
-                                + projectId
-                                + " for tenant: "
-                                + tenantId
-                ));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Project not found with id: "
+                                        + projectId
+                                        + " for tenant: "
+                                        + tenantId
+                        )
+                );
     }
 
     private ProjectTask getTaskOrThrow(
@@ -336,18 +478,21 @@ public class ProjectTaskService {
                         projectId,
                         taskId
                 )
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Task not found with id: "
-                                + taskId
-                                + " for project: "
-                                + projectId
-                ));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Task not found with id: "
+                                        + taskId
+                                        + " for project: "
+                                        + projectId
+                        )
+                );
     }
 
     private void ensureProjectCanBeModified(
             Project project
     ) {
-        if (project.getStatus() == ProjectStatus.ARCHIVED) {
+        if (project.getStatus()
+                == ProjectStatus.ARCHIVED) {
             throw new IllegalArgumentException(
                     "Archived project tasks cannot be modified"
             );
@@ -357,7 +502,8 @@ public class ProjectTaskService {
     private void ensureTaskCanBeModified(
             ProjectTask task
     ) {
-        if (task.getStatus() == ProjectTaskStatus.CANCELLED) {
+        if (task.getStatus()
+                == ProjectTaskStatus.CANCELLED) {
             throw new IllegalArgumentException(
                     "Cancelled task cannot be modified"
             );
@@ -378,7 +524,9 @@ public class ProjectTaskService {
                 : normalized;
     }
 
-    private String normalizeSearch(String search) {
+    private String normalizeSearch(
+            String search
+    ) {
         if (search == null) {
             return null;
         }
@@ -390,11 +538,22 @@ public class ProjectTaskService {
                 : normalized;
     }
 
+    private String emailOrNone(
+            AppUser user
+    ) {
+        return user == null
+                ? "unassigned"
+                : user.getEmail();
+    }
+
     private ProjectTaskResponse mapToResponse(
             ProjectTask task
     ) {
-        AppUser creator = task.getCreatedByUser();
-        AppUser assignee = task.getAssigneeUser();
+        AppUser creator =
+                task.getCreatedByUser();
+
+        AppUser assignee =
+                task.getAssigneeUser();
 
         return new ProjectTaskResponse(
                 task.getId(),
@@ -404,9 +563,15 @@ public class ProjectTaskService {
                 task.getDescription(),
                 task.getStatus(),
                 task.getPriority(),
-                assignee == null ? null : assignee.getId(),
-                assignee == null ? null : assignee.getFullName(),
-                assignee == null ? null : assignee.getEmail(),
+                assignee == null
+                        ? null
+                        : assignee.getId(),
+                assignee == null
+                        ? null
+                        : assignee.getFullName(),
+                assignee == null
+                        ? null
+                        : assignee.getEmail(),
                 creator.getId(),
                 creator.getFullName(),
                 creator.getEmail(),

@@ -135,13 +135,15 @@ public class ProjectController {
     updateProject(
             @PathVariable UUID tenantId,
             @PathVariable UUID projectId,
-            @Valid @RequestBody ProjectUpdateRequest request
+            @Valid @RequestBody ProjectUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt
     ) {
         ProjectResponse response =
                 projectService.updateProject(
                         tenantId,
                         projectId,
-                        request
+                        request,
+                        jwt
                 );
 
         return ResponseEntity.ok(
@@ -161,13 +163,15 @@ public class ProjectController {
             @PathVariable UUID tenantId,
             @PathVariable UUID projectId,
             @Valid @RequestBody
-            ProjectStatusUpdateRequest request
+            ProjectStatusUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt
     ) {
         ProjectResponse response =
                 projectService.updateProjectStatus(
                         tenantId,
                         projectId,
-                        request
+                        request,
+                        jwt
                 );
 
         return ResponseEntity.ok(
@@ -185,12 +189,14 @@ public class ProjectController {
     public ResponseEntity<ApiResponse<ProjectResponse>>
     archiveProject(
             @PathVariable UUID tenantId,
-            @PathVariable UUID projectId
+            @PathVariable UUID projectId,
+            @AuthenticationPrincipal Jwt jwt
     ) {
         ProjectResponse response =
                 projectService.archiveProject(
                         tenantId,
-                        projectId
+                        projectId,
+                        jwt
                 );
 
         return ResponseEntity.ok(

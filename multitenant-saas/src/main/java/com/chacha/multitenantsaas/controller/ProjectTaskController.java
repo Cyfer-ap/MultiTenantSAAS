@@ -158,14 +158,16 @@ public class ProjectTaskController {
             @PathVariable UUID projectId,
             @PathVariable UUID taskId,
             @Valid @RequestBody
-            ProjectTaskUpdateRequest request
+            ProjectTaskUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt
     ) {
         ProjectTaskResponse response =
                 projectTaskService.updateTask(
                         tenantId,
                         projectId,
                         taskId,
-                        request
+                        request,
+                        jwt
                 );
 
         return ResponseEntity.ok(
@@ -187,14 +189,16 @@ public class ProjectTaskController {
             @PathVariable UUID projectId,
             @PathVariable UUID taskId,
             @Valid @RequestBody
-            ProjectTaskStatusUpdateRequest request
+            ProjectTaskStatusUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt
     ) {
         ProjectTaskResponse response =
                 projectTaskService.updateTaskStatus(
                         tenantId,
                         projectId,
                         taskId,
-                        request
+                        request,
+                        jwt
                 );
 
         return ResponseEntity.ok(
@@ -215,14 +219,16 @@ public class ProjectTaskController {
             @PathVariable UUID projectId,
             @PathVariable UUID taskId,
             @RequestBody
-            ProjectTaskAssigneeUpdateRequest request
+            ProjectTaskAssigneeUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt
     ) {
         ProjectTaskResponse response =
                 projectTaskService.updateAssignee(
                         tenantId,
                         projectId,
                         taskId,
-                        request
+                        request,
+                        jwt
                 );
 
         return ResponseEntity.ok(
@@ -241,13 +247,15 @@ public class ProjectTaskController {
     cancelTask(
             @PathVariable UUID tenantId,
             @PathVariable UUID projectId,
-            @PathVariable UUID taskId
+            @PathVariable UUID taskId,
+            @AuthenticationPrincipal Jwt jwt
     ) {
         ProjectTaskResponse response =
                 projectTaskService.cancelTask(
                         tenantId,
                         projectId,
-                        taskId
+                        taskId,
+                        jwt
                 );
 
         return ResponseEntity.ok(

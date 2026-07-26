@@ -148,14 +148,16 @@ public class ProjectMemberController {
             @PathVariable UUID projectId,
             @PathVariable UUID userId,
             @Valid @RequestBody
-            ProjectMemberRoleUpdateRequest request
+            ProjectMemberRoleUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt
     ) {
         ProjectMemberResponse response =
                 projectMemberService.updateMemberRole(
                         tenantId,
                         projectId,
                         userId,
-                        request
+                        request,
+                        jwt
                 );
 
         return ResponseEntity.ok(
@@ -166,6 +168,7 @@ public class ProjectMemberController {
         );
     }
 
+
     @PreAuthorize(
             "@tenantSecurity.isTenantAdminOrManager(#tenantId)"
     )
@@ -174,13 +177,15 @@ public class ProjectMemberController {
     removeMember(
             @PathVariable UUID tenantId,
             @PathVariable UUID projectId,
-            @PathVariable UUID userId
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal Jwt jwt
     ) {
         ProjectMemberResponse response =
                 projectMemberService.removeMember(
                         tenantId,
                         projectId,
-                        userId
+                        userId,
+                        jwt
                 );
 
         return ResponseEntity.ok(

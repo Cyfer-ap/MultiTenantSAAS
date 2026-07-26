@@ -1,0 +1,5 @@
+ALTER TABLE audit_logs
+    ALTER COLUMN action SET DATA TYPE VARCHAR(60);
+
+ALTER TABLE audit_logs
+    ALTER COLUMN action SET NOT NULL;

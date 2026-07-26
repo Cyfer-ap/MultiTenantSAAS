@@ -25,17 +25,20 @@ public class ProjectMemberService {
     private final ProjectRepository projectRepository;
     private final AppUserRepository appUserRepository;
     private final CurrentActorService currentActorService;
+    private final AuditLogService auditLogService;
 
     public ProjectMemberService(
             ProjectMemberRepository projectMemberRepository,
             ProjectRepository projectRepository,
             AppUserRepository appUserRepository,
-            CurrentActorService currentActorService
+            CurrentActorService currentActorService,
+            AuditLogService auditLogService
     ) {
         this.projectMemberRepository = projectMemberRepository;
         this.projectRepository = projectRepository;
         this.appUserRepository = appUserRepository;
         this.currentActorService = currentActorService;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
@@ -80,9 +83,23 @@ public class ProjectMemberService {
                 request.role()
         );
 
-        return mapToResponse(
-                projectMemberRepository.save(membership)
+        ProjectMember savedMembership =
+                projectMemberRepository.save(membership);
+
+        auditLogService.recordSuccess(
+                project.getTenant(),
+                assignedBy,
+                user,
+                AuditAction.PROJECT_MEMBER_ADDED,
+                "User added to project "
+                        + projectId
+                        + " as "
+                        + request.role()
+                        + ": "
+                        + user.getEmail()
         );
+
+        return mapToResponse(savedMembership);
     }
 
     @Transactional(readOnly = true)
@@ -138,14 +155,19 @@ public class ProjectMemberService {
             UUID tenantId,
             UUID projectId,
             UUID userId,
-            ProjectMemberRoleUpdateRequest request
+            ProjectMemberRoleUpdateRequest request,
+            Jwt jwt
     ) {
-        Project project = getProjectOrThrow(
-                tenantId,
-                projectId
-        );
+        Project project =
+                getProjectOrThrow(tenantId, projectId);
 
         ensureProjectCanBeModified(project);
+
+        AppUser actor =
+                currentActorService.getRequiredActiveActor(
+                        tenantId,
+                        jwt
+                );
 
         ProjectMember membership =
                 getMembershipOrThrow(
@@ -162,29 +184,52 @@ public class ProjectMemberService {
                 == ProjectMemberRole.PROJECT_LEAD
                 && request.role()
                 != ProjectMemberRole.PROJECT_LEAD) {
-
             ensureAnotherProjectLeadExists(projectId);
         }
 
+        ProjectMemberRole previousRole =
+                membership.getRole();
+
         membership.setRole(request.role());
 
-        return mapToResponse(
-                projectMemberRepository.save(membership)
+        ProjectMember updatedMembership =
+                projectMemberRepository.save(membership);
+
+        auditLogService.recordSuccess(
+                project.getTenant(),
+                actor,
+                membership.getUser(),
+                AuditAction.PROJECT_MEMBER_ROLE_UPDATED,
+                "Project member role changed from "
+                        + previousRole
+                        + " to "
+                        + request.role()
+                        + " for project "
+                        + projectId
+                        + ": "
+                        + membership.getUser().getEmail()
         );
+
+        return mapToResponse(updatedMembership);
     }
 
     @Transactional
     public ProjectMemberResponse removeMember(
             UUID tenantId,
             UUID projectId,
-            UUID userId
+            UUID userId,
+            Jwt jwt
     ) {
-        Project project = getProjectOrThrow(
-                tenantId,
-                projectId
-        );
+        Project project =
+                getProjectOrThrow(tenantId, projectId);
 
         ensureProjectCanBeModified(project);
+
+        AppUser actor =
+                currentActorService.getRequiredActiveActor(
+                        tenantId,
+                        jwt
+                );
 
         ProjectMember membership =
                 getMembershipOrThrow(
@@ -198,10 +243,23 @@ public class ProjectMemberService {
             ensureAnotherProjectLeadExists(projectId);
         }
 
+        AppUser removedUser = membership.getUser();
+
         ProjectMemberResponse response =
                 mapToResponse(membership);
 
         projectMemberRepository.delete(membership);
+
+        auditLogService.recordSuccess(
+                project.getTenant(),
+                actor,
+                removedUser,
+                AuditAction.PROJECT_MEMBER_REMOVED,
+                "User removed from project "
+                        + projectId
+                        + ": "
+                        + removedUser.getEmail()
+        );
 
         return response;
     }

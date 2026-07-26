@@ -21,17 +21,20 @@ public class ProjectService {
     private final TenantRepository tenantRepository;
     private final CurrentActorService currentActorService;
     private final ProjectMemberService projectMemberService;
+    private final AuditLogService auditLogService;
 
     public ProjectService(
             ProjectRepository projectRepository,
             TenantRepository tenantRepository,
             CurrentActorService currentActorService,
-            ProjectMemberService projectMemberService
+            ProjectMemberService projectMemberService,
+            AuditLogService auditLogService
     ) {
         this.projectRepository = projectRepository;
         this.tenantRepository = tenantRepository;
         this.currentActorService = currentActorService;
         this.projectMemberService = projectMemberService;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
@@ -61,6 +64,17 @@ public class ProjectService {
         projectMemberService.addCreatorAsProjectLead(
                 savedProject,
                 actor
+        );
+
+        auditLogService.recordSuccess(
+                tenant,
+                actor,
+                actor,
+                AuditAction.PROJECT_CREATED,
+                "Project created: "
+                        + savedProject.getId()
+                        + " - "
+                        + savedProject.getName()
         );
 
         return mapToResponse(savedProject);
@@ -111,28 +125,48 @@ public class ProjectService {
     public ProjectResponse updateProject(
             UUID tenantId,
             UUID projectId,
-            ProjectUpdateRequest request
+            ProjectUpdateRequest request,
+            Jwt jwt
     ) {
         Project project =
                 getProjectOrThrow(tenantId, projectId);
 
         ensureProjectIsNotArchived(project);
 
+        AppUser actor =
+                currentActorService.getRequiredActiveActor(
+                        tenantId,
+                        jwt
+                );
+
         project.setName(request.name().trim());
         project.setDescription(
                 normalizeDescription(request.description())
         );
 
-        return mapToResponse(
-                projectRepository.save(project)
+        Project updatedProject =
+                projectRepository.save(project);
+
+        auditLogService.recordSuccess(
+                project.getTenant(),
+                actor,
+                actor,
+                AuditAction.PROJECT_UPDATED,
+                "Project updated: "
+                        + updatedProject.getId()
+                        + " - "
+                        + updatedProject.getName()
         );
+
+        return mapToResponse(updatedProject);
     }
 
     @Transactional
     public ProjectResponse updateProjectStatus(
             UUID tenantId,
             UUID projectId,
-            ProjectStatusUpdateRequest request
+            ProjectStatusUpdateRequest request,
+            Jwt jwt
     ) {
         Project project =
                 getProjectOrThrow(tenantId, projectId);
@@ -145,17 +179,40 @@ public class ProjectService {
             );
         }
 
+        AppUser actor =
+                currentActorService.getRequiredActiveActor(
+                        tenantId,
+                        jwt
+                );
+
+        ProjectStatus previousStatus = project.getStatus();
+
         project.setStatus(request.status());
 
-        return mapToResponse(
-                projectRepository.save(project)
+        Project updatedProject =
+                projectRepository.save(project);
+
+        auditLogService.recordSuccess(
+                project.getTenant(),
+                actor,
+                actor,
+                AuditAction.PROJECT_STATUS_UPDATED,
+                "Project status changed from "
+                        + previousStatus
+                        + " to "
+                        + request.status()
+                        + ": "
+                        + project.getId()
         );
+
+        return mapToResponse(updatedProject);
     }
 
     @Transactional
     public ProjectResponse archiveProject(
             UUID tenantId,
-            UUID projectId
+            UUID projectId,
+            Jwt jwt
     ) {
         Project project =
                 getProjectOrThrow(tenantId, projectId);
@@ -166,11 +223,29 @@ public class ProjectService {
             );
         }
 
+        AppUser actor =
+                currentActorService.getRequiredActiveActor(
+                        tenantId,
+                        jwt
+                );
+
         project.setStatus(ProjectStatus.ARCHIVED);
 
-        return mapToResponse(
-                projectRepository.save(project)
+        Project archivedProject =
+                projectRepository.save(project);
+
+        auditLogService.recordSuccess(
+                project.getTenant(),
+                actor,
+                actor,
+                AuditAction.PROJECT_ARCHIVED,
+                "Project archived: "
+                        + project.getId()
+                        + " - "
+                        + project.getName()
         );
+
+        return mapToResponse(archivedProject);
     }
 
     private Tenant getRequiredActiveTenant(UUID tenantId) {
