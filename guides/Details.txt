@@ -1,16 +1,75 @@
 Multi-Tenant SaaS Backend — Local Reference
+================================================
+
+REPOSITORY
+----------
+GitHub:
+https://github.com/Cyfer-ap/MultiTenantSAAS
+
+Repository root:
+MultiTenantSAAS/
+
+Spring Boot application folder:
+MultiTenantSAAS/multitenant-saas/
+
+Main local project folder:
+D:\Projects\multitenant-saas\multitenant-saas
+
+The actual Spring Boot project is the inner multitenant-saas folder containing:
+- pom.xml
+- mvnw
+- mvnw.cmd
+- src/
+- data/ for the local H2 database
+
 
 BASE URL
 --------
 http://localhost:8081
 
 
-PROJECT FOLDER
---------------
-Main local folder:
-D:\Projects\multitenant-saas\multitenant-saas
+CURRENT STACK
+-------------
+- Java 21
+- Spring Boot 4.0.6
+- Maven
+- Spring Web MVC
+- Spring Data JPA / Hibernate
+- Spring Security
+- OAuth2 Resource Server / JWT
+- H2 file database for local development
+- Flyway migrations
+- Validation
+- Actuator
+- Springdoc OpenAPI / Swagger
+- Jackson 3 through tools.jackson.databind.json.JsonMapper
 
-The Spring Boot app is inside the inner multitenant-saas folder.
+
+LOCAL PROFILE
+-------------
+Use the local profile while running the application:
+
+PowerShell:
+$env:SPRING_PROFILES_ACTIVE="local"
+
+Run:
+.\mvnw.cmd spring-boot:run
+
+The committed application.properties contains shared configuration.
+Local secrets and local-only settings belong in:
+src/main/resources/application-local.properties
+
+A safe template can be committed as:
+src/main/resources/application-local.example.properties
+
+Do not commit:
+- application-local.properties
+- application-dev.properties
+- application-prod.properties
+- .env
+- database files
+- JWT secrets
+- bootstrap passwords
 
 
 IMPORTANT LOCAL URLS
@@ -30,6 +89,8 @@ http://localhost:8081/v3/api-docs
 H2 Console:
 http://localhost:8081/h2-console
 
+The H2 console is intended for the local profile only.
+
 
 H2 CONSOLE LOGIN
 ----------------
@@ -40,19 +101,33 @@ Username:
 sa
 
 Password:
-empty
+empty unless changed locally
 
 
 LOCAL SYSTEM ADMIN
 ------------------
-Email:
-system@saas.local
+System-admin credentials are configured locally through application-local.properties
+or environment variables.
 
-Password:
-SystemAdmin@123
+Do not store the real local password in this guide.
 
 Login URL:
 http://localhost:8081/api/system/auth/login
+
+Current system-admin endpoints:
+POST http://localhost:8081/api/system/auth/login
+GET  http://localhost:8081/api/system/auth/me
+POST http://localhost:8081/api/system/auth/change-password
+
+System-admin management:
+POST  http://localhost:8081/api/system/admins
+GET   http://localhost:8081/api/system/admins
+GET   http://localhost:8081/api/system/admins/{systemAdminId}
+PATCH http://localhost:8081/api/system/admins/{systemAdminId}/status
+PATCH http://localhost:8081/api/system/admins/{systemAdminId}/unlock
+
+Platform audit logs:
+GET http://localhost:8081/api/system/audit-logs
 
 
 COMMON HEADERS
@@ -64,18 +139,28 @@ For protected APIs:
 Authorization: Bearer <accessToken>
 
 
-CURRENT TOKEN TYPES
--------------------
+ACCOUNT TYPES
+-------------
 Tenant users:
-- accessToken
-- refreshToken
+- Stored in APP_USERS
+- Belong to exactly one tenant
+- Roles:
+  - TENANT_ADMIN
+  - TENANT_MANAGER
+  - TENANT_USER
+- Receive accessToken and refreshToken
 
-System admin:
-- accessToken only for now
+System admins:
+- Stored in SYSTEM_ADMINS
+- Do not belong to a tenant
+- Role/account type:
+  - SYSTEM_ADMIN
+- Receive an accessToken
+- System-admin refresh tokens are not implemented
 
 
-IMPORTANT PUBLIC ENDPOINTS
---------------------------
+PUBLIC ENDPOINTS
+----------------
 GET  http://localhost:8081/api/health
 GET  http://localhost:8081/actuator/health
 GET  http://localhost:8081/h2-console
@@ -85,18 +170,198 @@ GET  http://localhost:8081/v3/api-docs
 POST http://localhost:8081/api/onboarding/tenants
 POST http://localhost:8081/api/tenants/{tenantId}/auth/login
 POST http://localhost:8081/api/tenants/{tenantId}/auth/forgot-password
-POST http://localhost:8081/api/auth/reset-password
+POST http://localhost:8081/api/system/auth/login
 POST http://localhost:8081/api/auth/refresh
 POST http://localhost:8081/api/auth/logout
-POST http://localhost:8081/api/system/auth/login
+POST http://localhost:8081/api/auth/reset-password
+POST http://localhost:8081/api/user-invitations/accept
 
 
-COMMON TEST PASSWORD
+TENANT AUTHENTICATION
+---------------------
+POST http://localhost:8081/api/tenants/{tenantId}/auth/login
+GET  http://localhost:8081/api/auth/me
+
+POST http://localhost:8081/api/auth/refresh
+POST http://localhost:8081/api/auth/logout
+POST http://localhost:8081/api/auth/logout-all
+POST http://localhost:8081/api/auth/change-password
+
+POST http://localhost:8081/api/tenants/{tenantId}/auth/forgot-password
+POST http://localhost:8081/api/auth/reset-password
+
+
+TENANT ONBOARDING
+-----------------
+Public onboarding:
+POST http://localhost:8081/api/onboarding/tenants
+
+System-admin onboarding:
+POST http://localhost:8081/api/system/onboarding/tenants
+
+The old direct tenant creation endpoint is disabled:
+POST http://localhost:8081/api/tenants
+
+
+TENANT USERS
+------------
+POST   http://localhost:8081/api/tenants/{tenantId}/users
+GET    http://localhost:8081/api/tenants/{tenantId}/users
+GET    http://localhost:8081/api/tenants/{tenantId}/users/{userId}
+PUT    http://localhost:8081/api/tenants/{tenantId}/users/{userId}
+PATCH  http://localhost:8081/api/tenants/{tenantId}/users/{userId}/role
+PATCH  http://localhost:8081/api/tenants/{tenantId}/users/{userId}/status
+PATCH  http://localhost:8081/api/tenants/{tenantId}/users/{userId}/unlock
+DELETE http://localhost:8081/api/tenants/{tenantId}/users/{userId}
+
+
+USER INVITATIONS
+----------------
+POST  http://localhost:8081/api/tenants/{tenantId}/user-invitations
+GET   http://localhost:8081/api/tenants/{tenantId}/user-invitations
+GET   http://localhost:8081/api/tenants/{tenantId}/user-invitations/{invitationId}
+PATCH http://localhost:8081/api/tenants/{tenantId}/user-invitations/{invitationId}/revoke
+POST  http://localhost:8081/api/user-invitations/accept
+
+Local development returns devInvitationToken when an invitation is created.
+Production must send the raw token through email and never expose it in normal API responses.
+
+
+PROJECTS
+--------
+POST   http://localhost:8081/api/tenants/{tenantId}/projects
+GET    http://localhost:8081/api/tenants/{tenantId}/projects
+GET    http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}
+PUT    http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}
+PATCH  http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}/status
+DELETE http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}
+
+Project statuses:
+- PLANNING
+- ACTIVE
+- ON_HOLD
+- COMPLETED
+- ARCHIVED
+
+DELETE performs archival instead of physical deletion.
+
+
+PROJECT MEMBERS
+---------------
+POST   http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}/members
+GET    http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}/members
+GET    http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}/members/{userId}
+PATCH  http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}/members/{userId}/role
+DELETE http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}/members/{userId}
+
+Project member roles:
+- PROJECT_LEAD
+- MEMBER
+
+The project creator is automatically added as PROJECT_LEAD.
+A project must always have at least one PROJECT_LEAD.
+
+
+PROJECT TASKS
+-------------
+POST   http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}/tasks
+GET    http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}/tasks
+GET    http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}/tasks/{taskId}
+PUT    http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}/tasks/{taskId}
+PATCH  http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}/tasks/{taskId}/status
+PATCH  http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}/tasks/{taskId}/assignee
+DELETE http://localhost:8081/api/tenants/{tenantId}/projects/{projectId}/tasks/{taskId}
+
+Task statuses:
+- TODO
+- IN_PROGRESS
+- BLOCKED
+- COMPLETED
+- CANCELLED
+
+Task priorities:
+- LOW
+- MEDIUM
+- HIGH
+- URGENT
+
+Task assignees must:
+- belong to the same tenant
+- be ACTIVE
+- be members of the project
+
+DELETE cancels the task instead of physically deleting it.
+
+
+DASHBOARDS
+----------
+Platform dashboard:
+GET http://localhost:8081/api/dashboard/summary
+Access: SYSTEM_ADMIN
+
+Tenant dashboard:
+GET http://localhost:8081/api/tenant/dashboard/summary
+Access:
+- TENANT_ADMIN
+- TENANT_MANAGER
+
+The next dashboard enhancement is to add project and task metrics.
+
+
+AUDIT LOGS
+----------
+Tenant audit logs:
+GET http://localhost:8081/api/tenants/{tenantId}/audit-logs
+GET http://localhost:8081/api/tenants/{tenantId}/audit-logs/users/{userId}
+
+Platform audit logs:
+GET http://localhost:8081/api/system/audit-logs
+
+Business audit actions being completed:
+- PROJECT_CREATED
+- PROJECT_UPDATED
+- PROJECT_STATUS_UPDATED
+- PROJECT_ARCHIVED
+- PROJECT_MEMBER_ADDED
+- PROJECT_MEMBER_ROLE_UPDATED
+- PROJECT_MEMBER_REMOVED
+- TASK_CREATED
+- TASK_UPDATED
+- TASK_STATUS_UPDATED
+- TASK_ASSIGNEE_UPDATED
+- TASK_CANCELLED
+
+
+STANDARD API ERROR FORMAT
+-------------------------
+Errors use:
+- success
+- message
+- errorCode
+- status
+- path
+- details
+- timestamp
+
+Important error codes:
+- VALIDATION_FAILED
+- INVALID_REQUEST
+- INVALID_PARAMETER
+- MALFORMED_REQUEST
+- RESOURCE_NOT_FOUND
+- RESOURCE_ALREADY_EXISTS
+- AUTHENTICATION_REQUIRED
+- AUTHENTICATION_FAILED
+- ACCESS_DENIED
+- INTERNAL_SERVER_ERROR
+
+
+STRONG PASSWORD RULE
 --------------------
-Use this valid password format while testing:
+Use a valid password such as:
 Password@123
 
-Strong password rule:
+Requirements:
 - 8 to 100 characters
 - at least one uppercase letter
 - at least one lowercase letter
@@ -105,69 +370,154 @@ Strong password rule:
 - no spaces
 
 
+FLYWAY MIGRATIONS
+-----------------
+Directory:
+src/main/resources/db/migration
+
+Current migration sequence:
+V1__baseline_schema.sql
+V2__create_user_invitations.sql
+V3__create_projects.sql
+V4__create_project_members.sql
+V5__create_project_tasks.sql
+
+Important current recovery:
+- V6 was applied as an empty migration and has checksum 0.
+- Keep V6 as a zero-byte file.
+- Put the real audit-column conversion in V7.
+
+Expected files:
+V6__expand_tenant_audit_actions.sql
+  - zero bytes
+
+V7__convert_audit_action_to_varchar.sql
+  - contains:
+
+ALTER TABLE audit_logs
+    ALTER COLUMN action SET DATA TYPE VARCHAR(60);
+
+ALTER TABLE audit_logs
+    ALTER COLUMN action SET NOT NULL;
+
+Never edit a migration after it has been applied.
+Create the next numbered migration instead.
+
+
 USEFUL H2 QUERIES
 -----------------
 SELECT * FROM TENANTS;
 SELECT * FROM APP_USERS;
 SELECT * FROM SYSTEM_ADMINS;
+SELECT * FROM USER_INVITATIONS;
+SELECT * FROM PROJECTS;
+SELECT * FROM PROJECT_MEMBERS;
+SELECT * FROM PROJECT_TASKS;
 SELECT * FROM REFRESH_TOKENS;
 SELECT * FROM PASSWORD_RESET_TOKENS;
-SELECT * FROM AUDIT_LOGS;
-
-View latest audit logs:
 SELECT * FROM AUDIT_LOGS ORDER BY CREATED_AT DESC;
+SELECT * FROM PLATFORM_AUDIT_LOGS ORDER BY CREATED_AT DESC;
 
-View tenant users:
-SELECT * FROM APP_USERS WHERE TENANT_ID = '<tenant-id>';
+Flyway history:
+SELECT *
+FROM "flyway_schema_history"
+ORDER BY "installed_rank";
 
-Reactivate a tenant during local testing:
-UPDATE TENANTS SET STATUS = 'ACTIVE' WHERE ID = '<tenant-id>';
+Verify audit action column:
+SELECT
+    COLUMN_NAME,
+    DATA_TYPE,
+    CHARACTER_MAXIMUM_LENGTH
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'AUDIT_LOGS'
+  AND COLUMN_NAME = 'ACTION';
 
-Reactivate a user during local testing:
-UPDATE APP_USERS SET STATUS = 'ACTIVE' WHERE ID = '<user-id>';
 
+DATABASE SAFETY
+---------------
+Do not delete the data/ directory as a normal migration fix.
 
-WHEN TO RESET LOCAL H2 DATABASE
--------------------------------
-For local development, reset H2 when enum values or table structure cause old schema issues.
+For a persistent local database:
+1. Stop the application.
+2. Back up the data/ directory before manual recovery.
+3. Preserve applied migrations.
+4. Add a new migration for schema changes.
+5. Use Flyway history to diagnose checksum or ordering issues.
 
-Steps:
-1. Stop the app.
-2. Delete the data/ folder.
-3. Restart the app.
-4. Re-onboard a tenant and login again.
-
-Common reason:
-H2 check constraints may still contain old enum values.
+Deleting data/ is only acceptable for an intentionally disposable local database after accepting complete data loss.
 
 
 DO NOT COMMIT LOCAL DATABASE FILES
 ----------------------------------
-Keep these in .gitignore:
-
+Keep these ignored:
 data/
 *.mv.db
 *.trace.db
+*.lock.db
 
 
 SUGGESTED POSTMAN VARIABLES
 ---------------------------
 baseUrl = http://localhost:8081
-tenantId = copied tenant UUID
-adminUserId = copied tenant admin user UUID
-managerUserId = copied manager user UUID
-tenantAccessToken = tenant user JWT access token
-tenantRefreshToken = tenant user refresh token
-systemAccessToken = system admin JWT access token
+
+systemAccessToken
+systemAdminId
+
+tenantId
+tenantAdminUserId
+tenantAccessToken
+tenantRefreshToken
+
+managerUserId
+managerAccessToken
+managerRefreshToken
+
+normalUserId
+normalUserAccessToken
+
+invitationId
+invitationToken
+
+projectId
+projectLeadUserId
+projectMemberUserId
+
+taskId
 
 
-QUICK HAPPY PATH
-----------------
-1. Login as system admin.
-2. Onboard a tenant.
-3. Login as tenant admin.
-4. Create manager/user.
-5. Test tenant dashboard.
-6. Test audit logs.
-7. Test system dashboard with system admin.
-8. Test forbidden access with wrong token type.
+TEST COMMANDS
+-------------
+Run all tests:
+.\mvnw.cmd clean test
+
+Run the application:
+.\mvnw.cmd spring-boot:run
+
+Current integration coverage includes:
+- system auth
+- tenant onboarding and isolation
+- refresh/logout/password lifecycle
+- invitation lifecycle
+- projects
+- project members
+- project tasks
+
+Current suite size before adding business-audit-specific tests:
+43 tests
+
+
+CURRENT WORKING POINT
+---------------------
+The project/task business vertical and its integration tests are complete.
+
+Business audit logging is currently being finished.
+The immediate sequence is:
+
+1. Keep V6 empty so its existing checksum remains 0.
+2. Create V7 to convert AUDIT_LOGS.ACTION to VARCHAR(60).
+3. Finish JWT actor propagation in project/member/task controllers and services.
+4. Run the full test suite.
+5. Verify new audit actions through Postman.
+6. Extend the tenant dashboard with project/task metrics.
+7. Freeze the MVP API contract.
+8. Start the frontend.

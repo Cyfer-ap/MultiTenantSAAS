@@ -1,168 +1,169 @@
 # Multi-Tenant SaaS Backend — Progress Notes
 
-This guide explains the current state of the project in simple language. It is meant as a learning reference, not just a changelog.
+This document describes the current implementation state of the Spring Boot backend.
 
----
+## 1. Project identity
 
-## 1. Project Goal
-
-The goal is to build a production-style SaaS backend step by step.
-
-The project currently focuses on:
+Repository:
 
 ```text
-Tenant management
-Tenant isolation
-Tenant-scoped users
-JWT authentication
-Refresh-token based sessions
-Role-based authorization
-System-admin platform access
-Audit logging
-Password reset
-Clean REST API structure
+https://github.com/Cyfer-ap/MultiTenantSAAS
 ```
 
-The backend runs locally at:
+Local application folder:
+
+```text
+D:\Projects\multitenant-saas\multitenant-saas
+```
+
+Repository layout:
+
+```text
+MultiTenantSAAS/
+├── guides/
+├── readme.md
+└── multitenant-saas/
+    ├── pom.xml
+    ├── mvnw
+    ├── mvnw.cmd
+    └── src/
+```
+
+Local base URL:
 
 ```text
 http://localhost:8081
 ```
 
----
-
-## 2. Current Tech Stack
+## 2. Current technology stack
 
 ```text
-Spring Boot 4
 Java 21
+Spring Boot 4.0.6
 Maven
 Spring Web MVC
 Spring Data JPA
 Hibernate
-H2 file database
 Spring Security
 OAuth2 Resource Server / JWT
-Springdoc OpenAPI / Swagger UI
+H2 file database for local development
+Flyway
 Validation
 Actuator
+Springdoc OpenAPI / Swagger
+Jackson 3
+JUnit 5
+MockMvc
 ```
 
----
+Spring Boot 4 uses Jackson 3 in this project:
 
-## 3. Main Package Structure
+```java
+tools.jackson.databind.json.JsonMapper
+```
+
+Do not add Jackson 2 imports such as:
+
+```java
+com.fasterxml.jackson.databind.ObjectMapper
+```
+
+## 3. Main source structure
 
 ```text
-com.chacha.multitenantsaas
- ├── common
- ├── config
- ├── controller
- ├── dto
- ├── entity
- ├── exception
- ├── repository
- ├── security
- ├── service
- ├── validation
- └── MultitenantSaasApplication.java
+multitenant-saas/src/main/java/com/chacha/multitenantsaas/
+├── common/
+├── config/
+├── controller/
+├── dto/
+├── entity/
+├── exception/
+├── repository/
+├── security/
+├── service/
+├── validation/
+└── MultitenantSaasApplication.java
 ```
 
-Simple meaning:
+Supporting folders:
 
 ```text
-controller  -> receives HTTP requests
-service     -> contains business logic
-repository  -> talks to the database
-entity      -> database table models
-dto         -> request/response objects
-security    -> authorization helpers and JWT-related code
-config      -> Spring/security/OpenAPI configuration
-exception   -> global error handling
-common      -> shared response and utility classes
-validation  -> reusable custom validation annotations
+multitenant-saas/src/main/resources/
+├── application.properties
+└── db/migration/
+
+multitenant-saas/src/test/
+├── java/com/chacha/multitenantsaas/
+└── resources/application-test.properties
 ```
 
----
+## 4. Shared API infrastructure
 
-## 4. Local Development Setup
-
-The server port is:
+Implemented:
 
 ```text
-8081
+common/ApiResponse.java
+common/ApiErrorResponse.java
+common/ErrorCode.java
+common/PaginationUtils.java
+common/SortingUtils.java
+dto/PageResponse.java
+exception/GlobalExceptionHandler.java
 ```
 
-Local database:
+Success responses use a shared wrapper.
 
-```text
-H2 file-based database
-jdbc:h2:file:./data/multitenant_saas_db
-```
-
-H2 Console:
-
-```text
-http://localhost:8081/h2-console
-```
-
-Swagger UI:
-
-```text
-http://localhost:8081/swagger-ui.html
-```
-
----
-
-## 5. Common API Response
-
-Most custom APIs use the same response wrapper:
+Errors use a stable contract:
 
 ```json
 {
-  "success": true,
-  "message": "Operation message",
-  "data": {},
+  "success": false,
+  "message": "Readable error message",
+  "errorCode": "ACCESS_DENIED",
+  "status": 403,
+  "path": "/api/example",
+  "details": null,
   "timestamp": "..."
 }
 ```
 
-This is handled by:
+Security-level 401 and 403 responses also use the same contract through:
 
 ```text
-common/ApiResponse.java
+security/JwtAuthenticationEntryPoint.java
+security/JwtAccessDeniedHandler.java
 ```
 
-For paginated APIs, the project uses:
+## 5. Configuration and local environment
+
+Completed:
 
 ```text
-common/PageResponse.java
+Centralized CORS configuration
+Environment-based JWT secret
+Externalized bootstrap credentials
+Local/test profiles
+JWT secret validation
+H2 console restricted to local development
+Ignored local properties and environment files
 ```
 
-This keeps list APIs consistent.
-
----
-
-## 6. Tenant Module
-
-A tenant represents one customer, company, organization, or workspace.
-
-Example:
+Important classes:
 
 ```text
-Tenant A -> Acme Corporation
-Tenant B -> Nova Labs
+config/CorsProperties.java
+config/CorsConfig.java
+config/SecurityConfig.java
+security/JwtConfig.java
 ```
 
-Main tenant fields:
+Local-only configuration belongs in:
 
 ```text
-id
-name
-slug
-status
-createdAt
-updatedAt
+src/main/resources/application-local.properties
 ```
+
+## 6. Tenant module
 
 Tenant statuses:
 
@@ -172,76 +173,62 @@ INACTIVE
 SUSPENDED
 ```
 
-Important tenant features already implemented:
+Implemented tenant endpoints:
 
 ```text
-Tenant onboarding
-Tenant lookup by ID
-Tenant lookup by slug
-Tenant update
-Tenant status update
-Tenant soft delete / deactivation
-Tenant listing for system admin
-Tenant search/filter/sort/pagination
+GET    /api/tenants
+GET    /api/tenants/{id}
+GET    /api/tenants/slug/{slug}
+PUT    /api/tenants/{id}
+PATCH  /api/tenants/{id}/status
+DELETE /api/tenants/{id}
 ```
 
-Current tenant creation flow:
+The old endpoint is disabled:
 
 ```text
-Use POST http://localhost:8081/api/onboarding/tenants
+POST /api/tenants
 ```
 
-The old direct tenant creation endpoint is disabled:
+Tenant creation is performed through onboarding so the tenant and initial administrator are created atomically.
+
+Implemented:
 
 ```text
-POST http://localhost:8081/api/tenants
+Tenant search
+Status filtering
+Sorting
+Pagination
+Soft deletion through INACTIVE status
+Cross-tenant authorization
+Refresh-token revocation when tenant status blocks access
 ```
 
-This was disabled because a real SaaS tenant should be created with its first tenant admin user.
+## 7. Tenant onboarding
 
----
-
-## 7. Tenant Onboarding
-
-Tenant onboarding creates two things together:
+Public onboarding:
 
 ```text
-1. Tenant
-2. First TENANT_ADMIN user
+POST /api/onboarding/tenants
 ```
 
-Endpoint:
+System-admin onboarding:
 
 ```text
-POST http://localhost:8081/api/onboarding/tenants
+POST /api/system/onboarding/tenants
 ```
 
-Why this matters:
+Onboarding creates:
 
 ```text
-A tenant without an admin is not useful.
-An admin without a tenant breaks tenant isolation.
+Tenant
+Initial TENANT_ADMIN
+Tenant onboarding audit log
 ```
 
-The onboarding endpoint also writes an audit log:
+## 8. Tenant users
 
-```text
-TENANT_ONBOARDED
-```
-
----
-
-## 8. Tenant Users
-
-Users are stored in:
-
-```text
-APP_USERS
-```
-
-Each tenant user belongs to exactly one tenant.
-
-Current tenant-user roles:
+Tenant roles:
 
 ```text
 TENANT_ADMIN
@@ -249,7 +236,7 @@ TENANT_MANAGER
 TENANT_USER
 ```
 
-Current user statuses:
+User statuses:
 
 ```text
 ACTIVE
@@ -257,413 +244,688 @@ INACTIVE
 SUSPENDED
 ```
 
-Important user features already implemented:
+Implemented endpoints:
 
 ```text
-Create user inside tenant
-List tenant users
-Get tenant user by ID
-Update user details
-Update user role
-Update user status
-Deactivate user
+POST   /api/tenants/{tenantId}/users
+GET    /api/tenants/{tenantId}/users
+GET    /api/tenants/{tenantId}/users/{userId}
+PUT    /api/tenants/{tenantId}/users/{userId}
+PATCH  /api/tenants/{tenantId}/users/{userId}/role
+PATCH  /api/tenants/{tenantId}/users/{userId}/status
+PATCH  /api/tenants/{tenantId}/users/{userId}/unlock
+DELETE /api/tenants/{tenantId}/users/{userId}
+```
+
+Implemented behavior:
+
+```text
 Tenant-scoped email uniqueness
 Email normalization
-Strong password validation
-Soft delete by status
+Search/filter/sort/pagination
+Strong passwords
+Soft deletion
+Role/status changes revoke refresh tokens
+User lockout/unlock
+DB-backed authorization
+Self-management protection
+Last-active-admin protection
 ```
 
-Email uniqueness is tenant-scoped:
+## 9. Tenant authentication and sessions
+
+Tenant login:
 
 ```text
-Same email cannot repeat inside the same tenant.
-The same email may exist in different tenants.
+POST /api/tenants/{tenantId}/auth/login
 ```
 
----
-
-## 9. Strong Password Validation
-
-A reusable annotation was added:
+Current user:
 
 ```text
-@StrongPassword
+GET /api/auth/me
 ```
 
-It is used for:
+Session endpoints:
 
 ```text
-Tenant onboarding admin password
-Tenant user creation password
-Change password new password
-Reset password new password
+POST /api/auth/refresh
+POST /api/auth/logout
+POST /api/auth/logout-all
+POST /api/auth/change-password
 ```
 
-Rule:
+Password recovery:
 
 ```text
-8 to 100 characters
-at least one uppercase letter
-at least one lowercase letter
-at least one number
-at least one special character
-no spaces
+POST /api/tenants/{tenantId}/auth/forgot-password
+POST /api/auth/reset-password
 ```
 
-This avoids repeating the same password validation rules in multiple DTOs.
-
----
-
-## 10. Tenant Authentication
-
-Tenant users login through:
+Implemented security properties:
 
 ```text
-POST http://localhost:8081/api/tenants/{tenantId}/auth/login
+Access tokens are JWTs
+Refresh tokens are secure random tokens
+Refresh tokens are stored only as SHA-256 hashes
+Refresh-token rotation is implemented
+Logout revokes one refresh token
+Logout-all revokes every active refresh token for the user
+Password changes and resets revoke refresh tokens
 ```
 
-The login process checks:
+Access-token note:
 
 ```text
-Tenant exists
-Tenant is ACTIVE
-User exists inside that tenant
-User is ACTIVE
-Password is correct
+Logout revokes refresh tokens.
+An already-issued access JWT remains valid until expiration unless live DB authorization
+rejects the user or tenant because of a role/status change.
 ```
 
-Login returns:
+## 10. Strong password validation
+
+Reusable annotation:
 
 ```text
-accessToken
-refreshToken
+validation/StrongPassword.java
 ```
 
-Access tokens are JWTs. Refresh tokens are stored hashed in the database.
-
----
-
-## 11. Refresh Tokens and Logout
-
-Implemented endpoints:
+Rules:
 
 ```text
-POST http://localhost:8081/api/auth/refresh
-POST http://localhost:8081/api/auth/logout
-POST http://localhost:8081/api/auth/logout-all
+8–100 characters
+At least one uppercase letter
+At least one lowercase letter
+At least one number
+At least one special character
+No spaces
 ```
 
-Important behavior:
+Applied to onboarding, user creation, invitation acceptance, password change, and password reset new passwords.
+
+## 11. Account lockout
+
+Configured behavior:
 
 ```text
-Refresh tokens are stored as SHA-256 hashes.
-Raw refresh tokens are never stored.
-Refresh-token rotation is implemented.
-Logout revokes one refresh token.
-Logout-all revokes all active refresh tokens for the current tenant user.
+Maximum failed attempts: 5
+Default lock duration: 15 minutes
 ```
 
-Security improvements implemented:
+Implemented for:
 
 ```text
-User role change revokes that user's refresh tokens.
-User suspension/deactivation revokes that user's refresh tokens.
-Tenant suspension/deactivation revokes all refresh tokens under that tenant.
+Tenant users
+System admins
 ```
 
----
-
-## 12. Password Change and Reset
-
-Implemented endpoints:
+Fields:
 
 ```text
-POST http://localhost:8081/api/auth/change-password
-POST http://localhost:8081/api/tenants/{tenantId}/auth/forgot-password
-POST http://localhost:8081/api/auth/reset-password
+failedLoginAttempts
+lockedUntil
 ```
 
-Behavior:
+Unlock endpoints exist for tenant users and system admins.
 
-```text
-Change password requires current password.
-New password must match confirm password.
-New password must be different from old password.
-Password reset token is stored as a hash.
-Password reset token expires after configured time.
-Password reset revokes active refresh tokens.
-```
-
-In local development, the forgot-password response returns a development reset token. Later this should be sent by email instead.
-
----
-
-## 13. Authorization and Tenant Isolation
-
-The project now protects `/api/**` by default.
-
-Public endpoints are only selected health/auth/development endpoints.
-
-Tenant authorization is DB-backed. This means the app does not blindly trust old JWT role/status claims.
-
-For tenant APIs, the app checks:
-
-```text
-JWT tenantId
-JWT userId
-Tenant exists
-Tenant is ACTIVE
-User exists in that tenant
-User is ACTIVE
-Current DB role is allowed
-```
-
-Why this matters:
-
-```text
-If a user's role is changed or the user is suspended,
-old access tokens stop passing authorization checks.
-```
-
----
-
-## 14. Tenant Admin Safety Rules
-
-A reusable guard service prevents tenant lockout.
-
-Implemented rules:
-
-```text
-A tenant admin cannot change their own role.
-A tenant admin cannot deactivate or suspend their own account.
-The last active TENANT_ADMIN in a tenant cannot be removed.
-```
-
-This protects tenants from accidentally losing all admin access.
-
----
-
-## 15. System Admin Module
+## 12. System-admin module
 
 System admins are separate from tenant users.
 
-System admins are stored in:
+Stored in:
 
 ```text
 SYSTEM_ADMINS
 ```
 
-They are not stored in `APP_USERS`, because `APP_USERS` always belong to a tenant.
-
-Default local system admin:
+System-admin auth:
 
 ```text
-Email: system@saas.local
-Password: SystemAdmin@123
+POST /api/system/auth/login
+GET  /api/system/auth/me
+POST /api/system/auth/change-password
 ```
 
-System admin login:
+System-admin management:
 
 ```text
-POST http://localhost:8081/api/system/auth/login
+POST  /api/system/admins
+GET   /api/system/admins
+GET   /api/system/admins/{systemAdminId}
+PATCH /api/system/admins/{systemAdminId}/status
+PATCH /api/system/admins/{systemAdminId}/unlock
 ```
 
-Current system-admin behavior:
+Safety rules:
 
 ```text
-Can login and receive access token
-Can access system dashboard
-Can list all tenants
-Can read tenant details
-Can read tenant users
-Cannot create/update tenant users yet
+A system admin cannot suspend/deactivate themselves
+At least one active system admin must remain
+One active system admin can unlock another
 ```
 
-System admin currently has access token only. Refresh-token support for system admins can be added later as a separate design.
-
----
-
-## 16. Dashboards
-
-System dashboard:
+Current system-admin access includes:
 
 ```text
-GET http://localhost:8081/api/dashboard/summary
+Platform dashboard
+Tenant listing and tenant details
+Tenant updates/status operations
+System-admin tenant onboarding
+Tenant-user read/write management
+Tenant audit-log access
+System-admin management
+Platform audit logs
 ```
 
-Access:
+System-admin refresh tokens are not implemented.
+
+## 13. Platform audit logging
+
+Separate table:
 
 ```text
-SYSTEM_ADMIN only
+PLATFORM_AUDIT_LOGS
+```
+
+Current actions:
+
+```text
+SYSTEM_ADMIN_CREATED
+SYSTEM_ADMIN_STATUS_UPDATED
+SYSTEM_ADMIN_LOGIN_UNLOCKED
+```
+
+Endpoint:
+
+```text
+GET /api/system/audit-logs
+```
+
+Supports action/success filters, actor/target search, sorting, and pagination.
+
+## 14. User invitation flow
+
+Migration:
+
+```text
+V2__create_user_invitations.sql
+```
+
+Endpoints:
+
+```text
+POST  /api/tenants/{tenantId}/user-invitations
+GET   /api/tenants/{tenantId}/user-invitations
+GET   /api/tenants/{tenantId}/user-invitations/{invitationId}
+PATCH /api/tenants/{tenantId}/user-invitations/{invitationId}/revoke
+POST  /api/user-invitations/accept
+```
+
+Implemented behavior:
+
+```text
+Raw invitation token is generated securely
+Only the token hash is stored
+Invitation expiration is configurable
+Pending invitation can be revoked
+Creating a replacement invitation revokes the previous pending invitation
+User account is created only after acceptance
+Acceptance chooses a strong password
+Invitation token is one-time use
+Inviter identity is preserved for audit logging
+```
+
+The raw token is returned only as `devInvitationToken` in local development.
+
+## 15. Project module
+
+Migration:
+
+```text
+V3__create_projects.sql
+```
+
+Main files:
+
+```text
+entity/Project.java
+entity/ProjectStatus.java
+repository/ProjectRepository.java
+service/ProjectService.java
+controller/ProjectController.java
+```
+
+Endpoints:
+
+```text
+POST   /api/tenants/{tenantId}/projects
+GET    /api/tenants/{tenantId}/projects
+GET    /api/tenants/{tenantId}/projects/{projectId}
+PUT    /api/tenants/{tenantId}/projects/{projectId}
+PATCH  /api/tenants/{tenantId}/projects/{projectId}/status
+DELETE /api/tenants/{tenantId}/projects/{projectId}
+```
+
+Statuses:
+
+```text
+PLANNING
+ACTIVE
+ON_HOLD
+COMPLETED
+ARCHIVED
+```
+
+Permissions:
+
+```text
+TENANT_ADMIN   create/read/update/archive
+TENANT_MANAGER create/read/update/archive
+TENANT_USER    read only
+```
+
+Features:
+
+```text
+Tenant-scoped repository access
+Search
+Status filter
+Sorting
+Pagination
+Soft deletion through ARCHIVED status
+Archived-project immutability
+```
+
+## 16. Project membership module
+
+Migration:
+
+```text
+V4__create_project_members.sql
+```
+
+Main files:
+
+```text
+entity/ProjectMember.java
+entity/ProjectMemberRole.java
+repository/ProjectMemberRepository.java
+service/ProjectMemberService.java
+controller/ProjectMemberController.java
+```
+
+Roles:
+
+```text
+PROJECT_LEAD
+MEMBER
+```
+
+Endpoints:
+
+```text
+POST   /api/tenants/{tenantId}/projects/{projectId}/members
+GET    /api/tenants/{tenantId}/projects/{projectId}/members
+GET    /api/tenants/{tenantId}/projects/{projectId}/members/{userId}
+PATCH  /api/tenants/{tenantId}/projects/{projectId}/members/{userId}/role
+DELETE /api/tenants/{tenantId}/projects/{projectId}/members/{userId}
+```
+
+Implemented behavior:
+
+```text
+Project creator becomes the initial PROJECT_LEAD
+Only active users from the same tenant can be assigned
+Duplicate membership is rejected
+At least one project lead must remain
+Archived project memberships are immutable
+Search, role filtering, sorting, and pagination
+```
+
+## 17. Project task module
+
+Migration:
+
+```text
+V5__create_project_tasks.sql
+```
+
+Main files:
+
+```text
+entity/ProjectTask.java
+entity/ProjectTaskStatus.java
+entity/ProjectTaskPriority.java
+repository/ProjectTaskRepository.java
+service/ProjectTaskService.java
+controller/ProjectTaskController.java
+security/ProjectSecurityService.java
+```
+
+Task statuses:
+
+```text
+TODO
+IN_PROGRESS
+BLOCKED
+COMPLETED
+CANCELLED
+```
+
+Priorities:
+
+```text
+LOW
+MEDIUM
+HIGH
+URGENT
+```
+
+Endpoints:
+
+```text
+POST   /api/tenants/{tenantId}/projects/{projectId}/tasks
+GET    /api/tenants/{tenantId}/projects/{projectId}/tasks
+GET    /api/tenants/{tenantId}/projects/{projectId}/tasks/{taskId}
+PUT    /api/tenants/{tenantId}/projects/{projectId}/tasks/{taskId}
+PATCH  /api/tenants/{tenantId}/projects/{projectId}/tasks/{taskId}/status
+PATCH  /api/tenants/{tenantId}/projects/{projectId}/tasks/{taskId}/assignee
+DELETE /api/tenants/{tenantId}/projects/{projectId}/tasks/{taskId}
+```
+
+Task authorization:
+
+```text
+TENANT_ADMIN / TENANT_MANAGER:
+- full task management
+
+PROJECT_LEAD:
+- full task management for their project
+
+Assigned project member:
+- read task
+- update task status
+
+Other project member:
+- read tasks only
+
+Same-tenant user who is not a project member:
+- cannot read project tasks
+```
+
+Task behavior:
+
+```text
+Assignee must be an active project member
+Completing a task sets completedAt
+Reopening a task clears completedAt
+DELETE changes status to CANCELLED
+Cancelled tasks are immutable
+Archived-project tasks remain readable but cannot be modified
+Search/filter/sort/pagination are supported
+```
+
+## 18. Dashboards
+
+Platform dashboard:
+
+```text
+GET /api/dashboard/summary
 ```
 
 Tenant dashboard:
 
 ```text
-GET http://localhost:8081/api/tenant/dashboard/summary
+GET /api/tenant/dashboard/summary
 ```
 
-Access:
+The existing dashboards are implemented.
+
+Next tenant-dashboard enhancement:
 
 ```text
-TENANT_ADMIN
-TENANT_MANAGER
+Total projects
+Active projects
+Archived projects
+Total project members
+Total tasks
+TODO tasks
+IN_PROGRESS tasks
+BLOCKED tasks
+COMPLETED tasks
+CANCELLED tasks
+Overdue tasks
+Completion percentage
 ```
 
----
+## 19. Tenant audit logging
 
-## 17. Audit Logging
+Current core actions include tenant, user, authentication, password, and invitation/user-creation events.
 
-Audit logs track important security and management actions.
-
-The project uses this design:
+Business audit actions being integrated:
 
 ```text
-actorUser  = who performed the action
-targetUser = who was affected by the action
-tenant     = tenant context
+PROJECT_CREATED
+PROJECT_UPDATED
+PROJECT_STATUS_UPDATED
+PROJECT_ARCHIVED
+PROJECT_MEMBER_ADDED
+PROJECT_MEMBER_ROLE_UPDATED
+PROJECT_MEMBER_REMOVED
+TASK_CREATED
+TASK_UPDATED
+TASK_STATUS_UPDATED
+TASK_ASSIGNEE_UPDATED
+TASK_CANCELLED
 ```
 
-Examples:
+Current implementation work:
 
 ```text
-Tenant admin creates manager:
-actorUser  = admin@tenant.com
-targetUser = manager@tenant.com
-
-Tenant admin changes user role:
-actorUser  = admin@tenant.com
-targetUser = user being changed
-
-Tenant-level action:
-actorUser  = tenant admin
-targetUser = null
-tenant     = affected tenant
+ProjectService mutation methods record the JWT actor
+ProjectMemberService mutation methods record actor and affected user
+ProjectTaskService mutation methods record actor and assignee/affected user
+Controllers pass @AuthenticationPrincipal Jwt to mutation methods
 ```
 
-Current audit actions include:
+## 20. Flyway migration state
+
+Migration directory:
 
 ```text
-TENANT_ONBOARDED
-TENANT_UPDATED
-TENANT_STATUS_UPDATED
-TENANT_DEACTIVATED
-USER_CREATED
-USER_UPDATED
-USER_ROLE_UPDATED
-USER_STATUS_UPDATED
-USER_DEACTIVATED
-LOGIN_SUCCESS
-LOGIN_FAILED
-LOGOUT
-LOGOUT_ALL
-TOKEN_REFRESH
-PASSWORD_CHANGED
-PASSWORD_RESET_REQUESTED
-PASSWORD_RESET_COMPLETED
+src/main/resources/db/migration
 ```
 
-Audit APIs:
+Current stable migrations:
 
 ```text
-GET http://localhost:8081/api/tenants/{tenantId}/audit-logs
-GET http://localhost:8081/api/tenants/{tenantId}/audit-logs/users/{userId}
+V1__baseline_schema.sql
+V2__create_user_invitations.sql
+V3__create_projects.sql
+V4__create_project_members.sql
+V5__create_project_tasks.sql
 ```
 
-Access:
+Current migration issue and recovery:
 
 ```text
-TENANT_ADMIN only
+V6 was applied while empty, so the database stored checksum 0.
+SQL was later added to V6, producing a checksum mismatch.
 ```
 
----
-
-## 18. Swagger/OpenAPI
-
-Swagger UI is available at:
+Correct recovery:
 
 ```text
-http://localhost:8081/swagger-ui.html
+Keep V6__expand_tenant_audit_actions.sql as a zero-byte file.
+
+Create:
+V7__convert_audit_action_to_varchar.sql
+
+With:
+ALTER TABLE audit_logs
+    ALTER COLUMN action SET DATA TYPE VARCHAR(60);
+
+ALTER TABLE audit_logs
+    ALTER COLUMN action SET NOT NULL;
 ```
 
-OpenAPI JSON:
+Do not repair the checksum merely to hide the edit.
+Do not edit applied migrations.
+Do not delete the persistent database as the first response.
+
+## 21. Automated integration tests
+
+Test profile:
 
 ```text
-http://localhost:8081/v3/api-docs
+src/test/resources/application-test.properties
 ```
 
-Swagger is useful for viewing available endpoints, but Postman is currently the main testing tool.
-
----
-
-## 19. Current Access Model
+Test classes:
 
 ```text
-SYSTEM_ADMIN
-- Platform-wide read access
-- System dashboard
-- Tenant listing
-- Tenant detail reading
-- Tenant user reading
-
-TENANT_ADMIN
-- Own tenant management
-- Own tenant users management
-- Audit logs
-- Tenant dashboard
-
-TENANT_MANAGER
-- Own tenant user reading
-- Tenant dashboard
-
-TENANT_USER
-- Basic authenticated user
+MultitenantSaasApplicationTests.java
+integration/SystemAuthIntegrationTest.java
+integration/TenantOnboardingAndIsolationIntegrationTest.java
+integration/TokenLifecycleIntegrationTest.java
+integration/UserInvitationIntegrationTest.java
+integration/ProjectIntegrationTest.java
+integration/ProjectMemberIntegrationTest.java
+integration/ProjectTaskIntegrationTest.java
 ```
 
----
-
-## 20. Important Design Decisions
+Current coverage includes:
 
 ```text
-Tenant creation uses onboarding instead of public direct creation.
-System admins are separate from tenant users.
-Refresh tokens are stored hashed.
-Authorization checks live database state.
-Soft delete uses status instead of physical delete.
-Audit logs use actor/target model.
-Strong password rules are reusable.
+Standardized authentication errors
+System-admin login
+Tenant onboarding
+Duplicate tenant protection
+Cross-tenant isolation
+Tenant login
+Refresh-token rotation
+Logout and logout-all
+Password change
+Invitation create/list/read/revoke/accept
+One-time invitation tokens
+Project lifecycle and permissions
+Project membership lifecycle and permissions
+Project task lifecycle and permissions
+Assignment validation
+Archived/cancelled immutability
 ```
 
----
-
-## 21. Current Limitations
-
-Still not implemented:
+Current test count before adding audit-specific tests:
 
 ```text
-System-admin refresh tokens
-System-admin CRUD management
-System-admin audit logs
-Plan/subscription module
-Tenant invitation flow
-Email sending for password reset
-Flyway migrations
-PostgreSQL migration
-Automated unit/integration tests
+43
 ```
 
----
+Run:
 
-## 22. Recommended Next Steps
+```powershell
+.\mvnw.cmd clean test
+```
 
-Suggested next implementation order:
+## 22. Current status
+
+Completed:
 
 ```text
-1. System-admin audit logging
-2. System-admin refresh tokens or short-session strategy
-3. Plan and subscription entities
-4. Subscription enforcement on tenant/user limits
-5. Flyway migration setup
-6. PostgreSQL migration
-7. Automated tests
+Backend foundation
+Standard API/error contracts
+Tenant module
+Tenant users
+JWT authentication
+Refresh sessions
+Password change/reset
+DB-backed tenant isolation
+System-admin module
+System-admin management
+Account lockout
+Tenant and platform audit infrastructure
+User invitations
+Flyway foundation
+Environment profiles and CORS
+Project module
+Project membership module
+Project task module
+43 integration tests
+```
+
+In progress:
+
+```text
+Business audit logging for projects, project members, and tasks
+V6/V7 Flyway recovery
+```
+
+## 23. Immediate next step
+
+Do not start another module until the current migration and audit work is verified.
+
+Required order:
+
+```text
+1. Restore V6 to a zero-byte file.
+2. Create and apply V7 audit action VARCHAR migration.
+3. Confirm ProjectService audit integration.
+4. Confirm ProjectMemberService audit integration.
+5. Confirm ProjectTaskService audit integration.
+6. Confirm corresponding controllers pass Jwt.
+7. Run .\mvnw.cmd clean test.
+8. Verify business actions through tenant audit-log APIs.
+```
+
+After that:
+
+```text
+1. Add project/task metrics to the tenant dashboard.
+2. Add dashboard integration tests.
+3. Verify and freeze OpenAPI DTOs, status codes, enums, pagination, and errors.
+4. Start the frontend.
+```
+
+## 24. Frontend readiness
+
+The backend is close to the frontend boundary.
+
+Backend work that should be completed before frontend:
+
+```text
+Finish business audit logging
+Extend tenant dashboard metrics
+Run complete tests
+Freeze MVP API contract
+Verify OpenAPI
+```
+
+Frontend implementation order:
+
+```text
+1. App shell and routing
+2. Authentication/session handling
+3. Role-aware navigation
+4. System dashboard
+5. Tenant dashboard
+6. Tenant users and invitations
+7. Projects
+8. Project members
+9. Tasks
+10. Audit logs
+```
+
+Work that can wait until after the frontend begins:
+
+```text
+Email provider
+Redis
+Background jobs
+PostgreSQL production tuning
+Docker/deployment
+Billing
+Rate limiting
+File storage
+Advanced observability
+Custom permission sets
 ```
