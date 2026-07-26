@@ -29,7 +29,11 @@ public class TenantDashboardController {
 
     @Operation(
             summary = "Get tenant dashboard summary",
-            description = "Returns user counts for the authenticated user's tenant."
+            description = """
+                Returns tenant identity, user counts, project counts,
+                project membership totals, task counts, overdue tasks,
+                and task completion percentage for the authenticated tenant.
+                """
     )
     @PreAuthorize("@tenantSecurity.isCurrentTenantAdminOrManager()")
     @GetMapping("/api/tenant/dashboard/summary")
