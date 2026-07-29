@@ -7,6 +7,7 @@ import {
     act,
     render,
     screen,
+    within,
 } from '@testing-library/react'
 import {
     beforeEach,
@@ -24,6 +25,7 @@ import { authStorage } from './features/auth/storage/authStorage'
 import type {
     AuthSession,
     CurrentUserResponse,
+    TenantRole,
 } from './features/auth/types/auth'
 import { appTheme } from './theme/appTheme'
 
@@ -61,6 +63,40 @@ const currentUser: CurrentUserResponse = {
     email: 'admin@example.com',
     role: 'TENANT_ADMIN',
     status: 'ACTIVE',
+}
+
+function renderAuthenticatedRoute(
+    role: TenantRole,
+    initialPath: string,
+): void {
+    const queryClient = createTestQueryClient()
+
+    authStorage.write({
+        ...storedSession,
+        role,
+    })
+
+    vi.spyOn(
+        authApi,
+        'getCurrentUser',
+    ).mockResolvedValue({
+        ...currentUser,
+        role,
+    })
+
+    render(
+        <ThemeProvider theme={appTheme}>
+            <QueryClientProvider client={queryClient}>
+                <MemoryRouter
+                    initialEntries={[initialPath]}
+                >
+                    <AuthProvider>
+                        <App />
+                    </AuthProvider>
+                </MemoryRouter>
+            </QueryClientProvider>
+        </ThemeProvider>,
+    )
 }
 
 describe('App authentication routes', () => {
@@ -147,6 +183,90 @@ describe('App authentication routes', () => {
                     name: /sign in/i,
                 }),
             ).toBeInTheDocument()
+        },
+    )
+
+    it(
+        'prevents a tenant manager from opening admin-only audit logs',
+        async () => {
+            renderAuthenticatedRoute(
+                'TENANT_MANAGER',
+                '/audit-logs',
+            )
+
+            expect(
+                await screen.findByRole('heading', {
+                    name: /dashboard/i,
+                }),
+            ).toBeInTheDocument()
+
+            const navigation = screen.getByRole(
+                'navigation',
+                {
+                    name: /primary navigation/i,
+                },
+            )
+
+            expect(
+                within(navigation).getByText('Dashboard'),
+            ).toBeInTheDocument()
+
+            expect(
+                within(navigation).getByText('Users'),
+            ).toBeInTheDocument()
+
+            expect(
+                within(navigation).getByText('Projects'),
+            ).toBeInTheDocument()
+
+            expect(
+                within(navigation).queryByText(
+                    'Audit Logs',
+                ),
+            ).not.toBeInTheDocument()
+        },
+    )
+
+    it(
+        'redirects a tenant user to projects and hides restricted navigation',
+        async () => {
+            renderAuthenticatedRoute(
+                'TENANT_USER',
+                '/dashboard',
+            )
+
+            expect(
+                await screen.findByRole('heading', {
+                    name: /projects/i,
+                }),
+            ).toBeInTheDocument()
+
+            const navigation = screen.getByRole(
+                'navigation',
+                {
+                    name: /primary navigation/i,
+                },
+            )
+
+            expect(
+                within(navigation).getByText('Projects'),
+            ).toBeInTheDocument()
+
+            expect(
+                within(navigation).queryByText(
+                    'Dashboard',
+                ),
+            ).not.toBeInTheDocument()
+
+            expect(
+                within(navigation).queryByText('Users'),
+            ).not.toBeInTheDocument()
+
+            expect(
+                within(navigation).queryByText(
+                    'Audit Logs',
+                ),
+            ).not.toBeInTheDocument()
         },
     )
 })

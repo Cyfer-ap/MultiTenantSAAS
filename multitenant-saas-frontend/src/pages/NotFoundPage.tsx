@@ -1,8 +1,16 @@
 import { Button, Stack, Typography } from '@mui/material'
 import { useNavigate } from 'react-router'
 
+import { getDefaultAuthenticatedPath } from '../features/auth/access/roleAccess'
+import { useAuth } from '../features/auth/hooks/useAuth'
+
 export function NotFoundPage() {
+    const { session } = useAuth()
     const navigate = useNavigate()
+
+    const defaultPath = session
+        ? getDefaultAuthenticatedPath(session.role)
+        : '/login'
 
     return (
         <Stack
@@ -21,9 +29,9 @@ export function NotFoundPage() {
 
             <Button
                 variant="contained"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate(defaultPath)}
             >
-                Return to dashboard
+                Return to workspace
             </Button>
         </Stack>
     )

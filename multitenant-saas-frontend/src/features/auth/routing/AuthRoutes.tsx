@@ -8,7 +8,12 @@ import {
     useLocation,
 } from 'react-router'
 
+import {
+    getDefaultAuthenticatedPath,
+    hasAllowedTenantRole,
+} from '../access/roleAccess'
 import { useAuth } from '../hooks/useAuth'
+import type { TenantRole } from '../types/auth'
 
 function AuthenticationLoadingScreen() {
     return (
@@ -25,14 +30,17 @@ function AuthenticationLoadingScreen() {
 }
 
 export function ProtectedRoute() {
-    const { status } = useAuth()
+    const { session, status } = useAuth()
     const location = useLocation()
 
     if (status === 'loading') {
         return <AuthenticationLoadingScreen />
     }
 
-    if (status === 'unauthenticated') {
+    if (
+        status === 'unauthenticated' ||
+        !session
+    ) {
         const redirectPath = [
             location.pathname,
             location.search,
@@ -53,17 +61,95 @@ export function ProtectedRoute() {
     return <Outlet />
 }
 
-export function PublicOnlyRoute() {
-    const { status } = useAuth()
+interface RoleProtectedRouteProps {
+    allowedRoles: readonly TenantRole[]
+}
+
+export function RoleProtectedRoute({
+    allowedRoles,
+}: RoleProtectedRouteProps) {
+    const { session, status } = useAuth()
 
     if (status === 'loading') {
         return <AuthenticationLoadingScreen />
     }
 
-    if (status === 'authenticated') {
+    if (
+        status === 'unauthenticated' ||
+        !session
+    ) {
         return (
             <Navigate
-                to="/dashboard"
+                to="/login"
+                replace
+            />
+        )
+    }
+
+    if (
+        !hasAllowedTenantRole(
+            session.role,
+            allowedRoles,
+        )
+    ) {
+        return (
+            <Navigate
+                to={getDefaultAuthenticatedPath(
+                    session.role,
+                )}
+                replace
+            />
+        )
+    }
+
+    return <Outlet />
+}
+
+export function AuthenticatedHomeRedirect() {
+    const { session, status } = useAuth()
+
+    if (status === 'loading') {
+        return <AuthenticationLoadingScreen />
+    }
+
+    if (
+        status === 'unauthenticated' ||
+        !session
+    ) {
+        return (
+            <Navigate
+                to="/login"
+                replace
+            />
+        )
+    }
+
+    return (
+        <Navigate
+            to={getDefaultAuthenticatedPath(
+                session.role,
+            )}
+            replace
+        />
+    )
+}
+
+export function PublicOnlyRoute() {
+    const { session, status } = useAuth()
+
+    if (status === 'loading') {
+        return <AuthenticationLoadingScreen />
+    }
+
+    if (
+        status === 'authenticated' &&
+        session
+    ) {
+        return (
+            <Navigate
+                to={getDefaultAuthenticatedPath(
+                    session.role,
+                )}
                 replace
             />
         )

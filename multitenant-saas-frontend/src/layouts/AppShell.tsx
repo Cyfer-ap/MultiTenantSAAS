@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import {
+    type ReactNode,
+    useState,
+} from 'react'
 import {
     AppBar,
     Box,
@@ -19,7 +22,15 @@ import FolderRoundedIcon from '@mui/icons-material/FolderRounded'
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
+import {
+    allTenantRoles,
+    hasAllowedTenantRole,
+    tenantAdminRoles,
+    tenantManagementRoles,
+} from '../features/auth/access/roleAccess'
 import { UserMenu } from '../features/auth/components/UserMenu'
+import { useAuth } from '../features/auth/hooks/useAuth'
+import type { TenantRole } from '../features/auth/types/auth'
 import {
     Outlet,
     useLocation,
@@ -28,30 +39,42 @@ import {
 
 const drawerWidth = 248
 
-const navigationItems = [
+interface NavigationItem {
+    label: string
+    path: string
+    icon: ReactNode
+    allowedRoles: readonly TenantRole[]
+}
+
+const navigationItems: readonly NavigationItem[] = [
     {
         label: 'Dashboard',
         path: '/dashboard',
         icon: <DashboardRoundedIcon />,
+        allowedRoles: tenantManagementRoles,
     },
     {
         label: 'Users',
         path: '/users',
         icon: <GroupsRoundedIcon />,
+        allowedRoles: tenantManagementRoles,
     },
     {
         label: 'Projects',
         path: '/projects',
         icon: <FolderRoundedIcon />,
+        allowedRoles: allTenantRoles,
     },
     {
         label: 'Audit Logs',
         path: '/audit-logs',
         icon: <HistoryRoundedIcon />,
+        allowedRoles: tenantAdminRoles,
     },
 ]
 
 export function AppShell() {
+    const { session } = useAuth()
     const theme = useTheme()
     const isDesktop = useMediaQuery(
         theme.breakpoints.up('md'),
@@ -62,6 +85,16 @@ export function AppShell() {
 
     const [mobileDrawerOpen, setMobileDrawerOpen] =
         useState(false)
+
+    const availableNavigationItems =
+        navigationItems.filter(
+            (item) =>
+                session &&
+                hasAllowedTenantRole(
+                    session.role,
+                    item.allowedRoles,
+                ),
+        )
 
     function navigateTo(path: string) {
         navigate(path)
@@ -101,7 +134,7 @@ export function AppShell() {
             <Divider />
 
             <List sx={{ paddingX: 1.5, paddingY: 2 }}>
-                {navigationItems.map((item) => (
+                {availableNavigationItems.map((item) => (
                     <ListItemButton
                         key={item.path}
                         selected={isSelected(item.path)}
