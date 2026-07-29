@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import type { PropsWithChildren } from 'react'
 import {
     useCallback,
@@ -84,6 +85,8 @@ function applyCurrentUser(
 export function AuthProvider({
                                  children,
                              }: PropsWithChildren) {
+    const queryClient = useQueryClient()
+
     const [status, setStatus] =
         useState<AuthStatus>('loading')
 
@@ -103,9 +106,14 @@ export function AuthProvider({
 
     const clearSession = useCallback(() => {
         authStorage.clear()
+
+        // Prevent cached data belonging to one tenant
+        // from being visible after another tenant logs in.
+        queryClient.clear()
+
         setSession(null)
         setStatus('unauthenticated')
-    }, [])
+    }, [queryClient])
 
     const refreshSession = useCallback(
         async (
@@ -199,8 +207,8 @@ export function AuthProvider({
                     return
                 }
 
-                // Preserve the local session during temporary
-                // network or server failures.
+                // Retain the locally stored session during a
+                // temporary network or backend failure.
                 commitSession(storedSession)
             }
         }
@@ -217,7 +225,7 @@ export function AuthProvider({
                    tenantId,
                    email,
                    password,
-               }: LoginInput) => {
+               }: LoginInput): Promise<void> => {
             const response = await authApi.login(
                 tenantId,
                 {
@@ -231,20 +239,23 @@ export function AuthProvider({
         [commitSession],
     )
 
-    const logout = useCallback(async () => {
-        const currentSession = authStorage.read()
+    const logout = useCallback(
+        async (): Promise<void> => {
+            const currentSession = authStorage.read()
 
-        try {
-            if (currentSession) {
-                await authApi.logout(
-                    currentSession.refreshToken,
-                )
+            try {
+                if (currentSession) {
+                    await authApi.logout(
+                        currentSession.refreshToken,
+                    )
+                }
             }
-        }
-        finally {
-            clearSession()
-        }
-    }, [clearSession])
+            finally {
+                clearSession()
+            }
+        },
+        [clearSession],
+    )
 
     const contextValue =
         useMemo<AuthContextValue>(
@@ -254,7 +265,12 @@ export function AuthProvider({
                 login,
                 logout,
             }),
-            [status, session, login, logout],
+            [
+                status,
+                session,
+                login,
+                logout,
+            ],
         )
 
     return (

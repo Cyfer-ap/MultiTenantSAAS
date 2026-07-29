@@ -19,6 +19,7 @@ import FolderRoundedIcon from '@mui/icons-material/FolderRounded'
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
+import { UserMenu } from '../features/auth/components/UserMenu'
 import {
     Outlet,
     useLocation,
@@ -95,6 +96,13 @@ export function AppShell() {
                 >
                     Multi-Tenant SaaS
                 </Typography>
+
+                <Box
+                    sx={{
+                        flexGrow: 1,
+                    }}
+                />
+                <UserMenu />
             </Toolbar>
 
             <Divider />
