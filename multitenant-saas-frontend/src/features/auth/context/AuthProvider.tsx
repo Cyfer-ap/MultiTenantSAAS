@@ -10,77 +10,21 @@ import {
 
 import { normalizeApiError } from '../../../api/apiError'
 import { authApi } from '../api/authApi'
+import {
+    applyCurrentUser,
+    createAuthSession,
+} from '../session/authSession'
 import { authStorage } from '../storage/authStorage'
 import type {
     AuthSession,
     CurrentUserResponse,
     LoginInput,
-    LoginResponse,
-    TokenRefreshResponse,
 } from '../types/auth'
 import {
     AuthContext,
     type AuthContextValue,
     type AuthStatus,
 } from './AuthContext'
-
-function calculateExpirationTime(
-    expiresInSeconds: number,
-): number {
-    return (
-        Date.now() +
-        Math.max(expiresInSeconds, 0) * 1_000
-    )
-}
-
-function createSession(
-    response: LoginResponse,
-): AuthSession {
-    return {
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        tokenType: response.tokenType,
-        accessTokenExpiresAt:
-            calculateExpirationTime(
-                response.expiresInSeconds,
-            ),
-        tenantId: response.tenantId,
-        userId: response.userId,
-        fullName: response.fullName,
-        email: response.email,
-        role: response.role,
-    }
-}
-
-function applyTokenRefresh(
-    session: AuthSession,
-    response: TokenRefreshResponse,
-): AuthSession {
-    return {
-        ...session,
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        tokenType: response.tokenType,
-        accessTokenExpiresAt:
-            calculateExpirationTime(
-                response.expiresInSeconds,
-            ),
-    }
-}
-
-function applyCurrentUser(
-    session: AuthSession,
-    user: CurrentUserResponse,
-): AuthSession {
-    return {
-        ...session,
-        tenantId: user.tenantId,
-        userId: user.userId,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-    }
-}
 
 export function AuthProvider({
                                  children,
@@ -98,38 +42,32 @@ export function AuthProvider({
     const commitSession = useCallback(
         (nextSession: AuthSession) => {
             authStorage.write(nextSession)
-            setSession(nextSession)
-            setStatus('authenticated')
         },
         [],
     )
 
     const clearSession = useCallback(() => {
         authStorage.clear()
+    }, [])
 
-        // Prevent cached data belonging to one tenant
-        // from being visible after another tenant logs in.
-        queryClient.clear()
+    useEffect(
+        () =>
+            authStorage.subscribe(
+                (storedSession) => {
+                    if (storedSession) {
+                        setSession(storedSession)
+                        setStatus('authenticated')
+                        return
+                    }
 
-        setSession(null)
-        setStatus('unauthenticated')
-    }, [queryClient])
-
-    const refreshSession = useCallback(
-        async (
-            currentSession: AuthSession,
-        ): Promise<AuthSession> => {
-            const response =
-                await authApi.refreshToken(
-                    currentSession.refreshToken,
-                )
-
-            return applyTokenRefresh(
-                currentSession,
-                response,
-            )
-        },
-        [],
+                    // Prevent cached data belonging to one
+                    // tenant from surviving sign-out.
+                    queryClient.clear()
+                    setSession(null)
+                    setStatus('unauthenticated')
+                },
+            ),
+        [queryClient],
     )
 
     useEffect(() => {
@@ -148,49 +86,20 @@ export function AuthProvider({
             }
 
             try {
-                let candidateSession = storedSession
-                let tokenWasRefreshed = false
+                const currentUser: CurrentUserResponse =
+                    await authApi.getCurrentUser()
 
-                if (
-                    candidateSession.accessTokenExpiresAt <=
-                    Date.now()
-                ) {
-                    candidateSession =
-                        await refreshSession(candidateSession)
+                const validatedSession =
+                    authStorage.read()
 
-                    authStorage.write(candidateSession)
-                    tokenWasRefreshed = true
-                }
-
-                let currentUser: CurrentUserResponse
-
-                try {
-                    currentUser =
-                        await authApi.getCurrentUser()
-                }
-                catch (error: unknown) {
-                    const normalizedError =
-                        normalizeApiError(error)
-
-                    if (
-                        normalizedError.status !== 401 ||
-                        tokenWasRefreshed
-                    ) {
-                        throw normalizedError
-                    }
-
-                    candidateSession =
-                        await refreshSession(candidateSession)
-
-                    authStorage.write(candidateSession)
-
-                    currentUser =
-                        await authApi.getCurrentUser()
+                if (!validatedSession) {
+                    clearSession()
+                    return
                 }
 
                 commitSession(
                     applyCurrentUser(
-                        candidateSession,
+                        validatedSession,
                         currentUser,
                     ),
                 )
@@ -217,7 +126,6 @@ export function AuthProvider({
     }, [
         clearSession,
         commitSession,
-        refreshSession,
     ])
 
     const login = useCallback(
@@ -234,7 +142,9 @@ export function AuthProvider({
                 },
             )
 
-            commitSession(createSession(response))
+            commitSession(
+                createAuthSession(response),
+            )
         },
         [commitSession],
     )

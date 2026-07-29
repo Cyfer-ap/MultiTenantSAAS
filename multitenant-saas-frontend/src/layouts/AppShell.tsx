@@ -96,13 +96,6 @@ export function AppShell() {
                 >
                     Multi-Tenant SaaS
                 </Typography>
-
-                <Box
-                    sx={{
-                        flexGrow: 1,
-                    }}
-                />
-                <UserMenu />
             </Toolbar>
 
             <Divider />
@@ -170,9 +163,17 @@ export function AppShell() {
                         <MenuRoundedIcon />
                     </IconButton>
 
-                    <Typography variant="h6" component="div">
+                    <Typography
+                        variant="h6"
+                        component="div"
+                        sx={{
+                            flexGrow: 1,
+                        }}
+                    >
                         Workspace
                     </Typography>
+
+                    <UserMenu />
                 </Toolbar>
             </AppBar>
 

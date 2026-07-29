@@ -6,6 +6,12 @@ import type {
 const AUTH_STORAGE_KEY =
     'multitenant-saas.auth-session'
 
+type AuthStorageListener = (
+    session: AuthSession | null,
+) => void
+
+const listeners = new Set<AuthStorageListener>()
+
 const tenantRoles: TenantRole[] = [
     'TENANT_ADMIN',
     'TENANT_MANAGER',
@@ -62,6 +68,7 @@ function read(): AuthSession | null {
 
         if (!isAuthSession(parsedValue)) {
             localStorage.removeItem(AUTH_STORAGE_KEY)
+            notify(null)
             return null
         }
 
@@ -69,6 +76,7 @@ function read(): AuthSession | null {
     }
     catch {
         localStorage.removeItem(AUTH_STORAGE_KEY)
+        notify(null)
         return null
     }
 }
@@ -78,14 +86,36 @@ function write(session: AuthSession): void {
         AUTH_STORAGE_KEY,
         JSON.stringify(session),
     )
+
+    notify(session)
 }
 
 function clear(): void {
     localStorage.removeItem(AUTH_STORAGE_KEY)
+    notify(null)
+}
+
+function notify(
+    session: AuthSession | null,
+): void {
+    listeners.forEach((listener) => {
+        listener(session)
+    })
+}
+
+function subscribe(
+    listener: AuthStorageListener,
+): () => void {
+    listeners.add(listener)
+
+    return () => {
+        listeners.delete(listener)
+    }
 }
 
 export const authStorage = {
     read,
     write,
     clear,
+    subscribe,
 }
