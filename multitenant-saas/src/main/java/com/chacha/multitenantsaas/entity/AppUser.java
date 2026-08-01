@@ -47,6 +47,9 @@ public class AppUser {
 
     private Instant lockedUntil;
 
+    @Column(name = "session_version", nullable = false)
+    private long sessionVersion = 0L;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -105,6 +108,14 @@ public class AppUser {
 
     public Instant getLockedUntil() {
         return lockedUntil;
+    }
+
+    public long getSessionVersion() {
+        return sessionVersion;
+    }
+
+    public void incrementSessionVersion() {
+        this.sessionVersion++;
     }
 
     public Instant getCreatedAt() {

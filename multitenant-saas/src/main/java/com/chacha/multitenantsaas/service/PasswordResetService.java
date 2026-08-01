@@ -135,6 +135,7 @@ public class PasswordResetService {
         }
 
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        user.incrementSessionVersion();
         appUserRepository.save(user);
 
         resetToken.setUsed(true);

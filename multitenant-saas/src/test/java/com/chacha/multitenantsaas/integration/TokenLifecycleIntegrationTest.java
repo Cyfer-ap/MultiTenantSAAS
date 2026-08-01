@@ -150,6 +150,9 @@ class TokenLifecycleIntegrationTest {
 
         assertRefreshRejected(firstDevice.refreshToken());
         assertRefreshRejected(secondDevice.refreshToken());
+
+        assertAccessTokenRejected(firstDevice.accessToken());
+        assertAccessTokenRejected(secondDevice.accessToken());
     }
 
     @Test
@@ -201,6 +204,9 @@ class TokenLifecycleIntegrationTest {
          */
         assertRefreshRejected(firstDevice.refreshToken());
         assertRefreshRejected(secondDevice.refreshToken());
+
+        assertAccessTokenRejected(firstDevice.accessToken());
+        assertAccessTokenRejected(secondDevice.accessToken());
 
         /*
          * The previous password must no longer authenticate.
@@ -420,6 +426,25 @@ class TokenLifecycleIntegrationTest {
                 .toString()
                 .replace("-", "")
                 .substring(0, 12);
+    }
+
+    private void assertAccessTokenRejected(
+            String accessToken
+    ) throws Exception {
+        mockMvc.perform(
+                        get("/api/auth/me")
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + accessToken
+                                )
+                )
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errorCode")
+                        .value("AUTHENTICATION_REQUIRED"))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.path")
+                        .value("/api/auth/me"));
     }
 
     private record TenantFixture(

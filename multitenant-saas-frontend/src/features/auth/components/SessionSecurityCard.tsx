@@ -133,7 +133,7 @@ export function SessionSecurityCard({
                     </DialogContentText>
 
                     <Alert severity="warning" sx={{ mt: 2 }}>
-                        Access tokens already issued to other devices can remain usable until they expire, but those devices will not be able to refresh their sessions.
+                        This invalidates existing tenant access and refresh sessions. Other browsers will return to sign in on their next server request.
                     </Alert>
 
                     {mutation.isError && (

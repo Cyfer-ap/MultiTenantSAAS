@@ -148,7 +148,7 @@ describe('SessionSecurityCard', () => {
 
         const { dialog, user } = await openConfirmation()
         expect(within(dialog).getByText(
-            /access tokens already issued to other devices can remain usable until they expire/i,
+            /other browsers will return to sign in on their next server request/i,
         )).toBeInTheDocument()
 
         await user.click(within(dialog).getByRole('button', {

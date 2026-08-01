@@ -23,6 +23,7 @@ import com.chacha.multitenantsaas.dto.LogoutResponse;
 import com.chacha.multitenantsaas.dto.ChangePasswordRequest;
 import com.chacha.multitenantsaas.dto.ChangePasswordResponse;
 import com.chacha.multitenantsaas.entity.AuditAction;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -233,6 +234,7 @@ public class AuthService {
         return new LogoutResponse("Logout successful");
     }
 
+    @Transactional
     public LogoutResponse logoutAllDevices(Jwt jwt) {
         AuthenticatedUserContext currentUser = jwtContextService.getCurrentUser(jwt);
 
@@ -243,6 +245,9 @@ public class AuthService {
                 currentUser.tenantId(),
                 currentUser.userId()
         ).orElseThrow(() -> new AuthenticationFailedException("User not found"));
+
+        user.incrementSessionVersion();
+        appUserRepository.save(user);
 
         refreshTokenService.revokeAllActiveTokensForUser(currentUser.userId());
 
@@ -257,6 +262,7 @@ public class AuthService {
         return new LogoutResponse("Logged out from all devices successfully");
     }
 
+    @Transactional
     public ChangePasswordResponse changePassword(Jwt jwt, ChangePasswordRequest request) {
         AuthenticatedUserContext currentUser = jwtContextService.getCurrentUser(jwt);
 
@@ -293,6 +299,7 @@ public class AuthService {
         String newPasswordHash = passwordEncoder.encode(request.newPassword());
 
         user.setPasswordHash(newPasswordHash);
+        user.incrementSessionVersion();
         appUserRepository.save(user);
 
         refreshTokenService.revokeAllActiveTokensForUser(user.getId());

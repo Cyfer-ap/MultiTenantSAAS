@@ -1,5 +1,11 @@
 package com.chacha.multitenantsaas.config;
 
+
+import com.chacha.multitenantsaas.security.TenantSessionJwtValidator;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -52,10 +58,23 @@ public class JwtConfig {
     }
 
     @Bean
-    public JwtDecoder jwtDecoder(SecretKey jwtSecretKey) {
-        return NimbusJwtDecoder
+    public JwtDecoder jwtDecoder(
+            SecretKey jwtSecretKey,
+            TenantSessionJwtValidator tenantSessionJwtValidator
+    ) {
+        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder
                 .withSecretKey(jwtSecretKey)
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
+
+        OAuth2TokenValidator<Jwt> validator =
+                new DelegatingOAuth2TokenValidator<>(
+                        JwtValidators.createDefault(),
+                        tenantSessionJwtValidator
+                );
+
+        jwtDecoder.setJwtValidator(validator);
+
+        return jwtDecoder;
     }
 }
