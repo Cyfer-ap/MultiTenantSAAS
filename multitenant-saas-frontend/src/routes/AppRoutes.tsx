@@ -22,6 +22,7 @@ import {
 import { AppShell } from '../layouts/AppShell'
 import { SystemAdminShell } from '../layouts/SystemAdminShell'
 import { AcceptInvitationPage } from '../pages/AcceptInvitationPage'
+import { AccountSettingsPage } from '../pages/AccountSettingsPage'
 import { AuditLogsPage } from '../pages/AuditLogsPage'
 import { DashboardPage } from '../pages/DashboardPage'
 import { ForgotPasswordPage } from '../pages/ForgotPasswordPage'
@@ -31,6 +32,7 @@ import { ProjectsPage } from '../pages/ProjectsPage'
 import { ProjectDetailsPage } from '../pages/ProjectDetailsPage'
 import { ResetPasswordPage } from '../pages/ResetPasswordPage'
 import { TenantOnboardingPage } from '../pages/TenantOnboardingPage'
+import { TenantChangePasswordPage } from '../pages/TenantChangePasswordPage'
 import { SystemDashboardPage } from '../pages/SystemDashboardPage'
 import { SystemChangePasswordPage } from '../pages/SystemChangePasswordPage'
 import { SystemLoginPage } from '../pages/SystemLoginPage'
@@ -167,6 +169,16 @@ export function AppRoutes() {
                     <Route
                         path="projects/:projectId"
                         element={<ProjectDetailsPage />}
+                    />
+
+                    <Route
+                        path="account"
+                        element={<AccountSettingsPage />}
+                    />
+
+                    <Route
+                        path="account/change-password"
+                        element={<TenantChangePasswordPage />}
                     />
 
                     <Route

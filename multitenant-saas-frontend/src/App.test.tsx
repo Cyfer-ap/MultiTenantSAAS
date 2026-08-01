@@ -415,4 +415,24 @@ describe('App authentication routes', () => {
             ).toBeInTheDocument()
         },
     )
+
+    it(
+        'allows a regular tenant user to open account settings',
+        async () => {
+            renderAuthenticatedRoute(
+                'TENANT_USER',
+                '/account',
+            )
+
+            expect(
+                await screen.findByRole('heading', {
+                    name: /account settings/i,
+                }),
+            ).toBeInTheDocument()
+
+            expect(
+                await screen.findByText('Example Tenant'),
+            ).toBeInTheDocument()
+        },
+    )
 })

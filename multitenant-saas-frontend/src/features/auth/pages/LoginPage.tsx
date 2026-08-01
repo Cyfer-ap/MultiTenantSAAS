@@ -24,6 +24,7 @@ interface LoginRouteState {
     from?: unknown
     tenantId?: unknown
     email?: unknown
+    passwordChanged?: unknown
 }
 
 function resolvePrefillValue(value: unknown): string {
@@ -182,6 +183,12 @@ export function LoginPage() {
                                 {errors.root?.message && (
                                     <Alert severity="error">
                                         {errors.root.message}
+                                    </Alert>
+                                )}
+
+                                {routeState.passwordChanged === true && (
+                                    <Alert severity="success">
+                                        Password changed successfully. Sign in with your new password.
                                     </Alert>
                                 )}
 

@@ -45,6 +45,16 @@ export interface LogoutRequest {
     refreshToken: string
 }
 
+export interface ChangePasswordInput {
+    currentPassword: string
+    newPassword: string
+    confirmPassword: string
+}
+
+export interface ChangePasswordResponse {
+    message: string
+}
+
 export interface CurrentUserResponse {
     tenantId: string
     tenantName: string

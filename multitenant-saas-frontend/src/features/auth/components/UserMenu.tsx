@@ -1,4 +1,5 @@
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined'
+import ManageAccountsRoundedIcon from '@mui/icons-material/ManageAccountsRounded'
 import {
     Avatar,
     Box,
@@ -11,6 +12,7 @@ import {
 } from '@mui/material'
 import type { MouseEvent } from 'react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 
 import { useAuth } from '../hooks/useAuth'
 import type { TenantRole } from '../types/auth'
@@ -34,6 +36,7 @@ function getInitials(fullName: string): string {
 
 export function UserMenu() {
     const { session, logout } = useAuth()
+    const navigate = useNavigate()
 
     const [menuAnchor, setMenuAnchor] =
         useState<HTMLElement | null>(null)
@@ -184,6 +187,21 @@ export function UserMenu() {
                             {session.email}
                         </Typography>
                     </Box>
+                </MenuItem>
+
+                <Divider />
+
+                <MenuItem
+                    onClick={() => {
+                        closeMenu()
+                        navigate('/account')
+                    }}
+                >
+                    <ListItemIcon>
+                        <ManageAccountsRoundedIcon fontSize="small" />
+                    </ListItemIcon>
+
+                    Account settings
                 </MenuItem>
 
                 <Divider />

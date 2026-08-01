@@ -4,6 +4,8 @@ import {
 } from '../../../api/httpClient'
 import type { ApiResponse } from '../../../types/api'
 import type {
+    ChangePasswordInput,
+    ChangePasswordResponse,
     CurrentUserResponse,
     LoginRequest,
     LoginResponse,
@@ -66,9 +68,21 @@ async function logout(
     )
 }
 
+async function changePassword(
+    request: ChangePasswordInput,
+): Promise<ChangePasswordResponse> {
+    const response =
+        await httpClient.post<
+            ApiResponse<ChangePasswordResponse>
+        >('/api/auth/change-password', request)
+
+    return response.data.data
+}
+
 export const authApi = {
     login,
     refreshToken,
     getCurrentUser,
     logout,
+    changePassword,
 }
