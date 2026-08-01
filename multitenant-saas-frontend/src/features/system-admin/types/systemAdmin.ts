@@ -21,6 +21,12 @@ export interface SystemAdminLoginResponse {
     message: string
 }
 
+export interface ChangeSystemAdminPasswordInput {
+    currentPassword: string
+    newPassword: string
+    confirmPassword: string
+}
+
 export interface CurrentSystemAdmin {
     systemAdminId: string
     fullName: string

@@ -4,6 +4,7 @@ import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
+import PasswordRoundedIcon from '@mui/icons-material/PasswordRounded'
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded'
 import {
     AppBar,
@@ -98,6 +99,11 @@ export function SystemAdminShell() {
         navigate('/system/login', { replace: true })
     }
 
+    const openPasswordPage = (): void => {
+        setMenuAnchor(null)
+        navigate('/system/change-password')
+    }
+
     const drawer = (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <Toolbar sx={{ gap: 1.5 }}>
@@ -185,6 +191,10 @@ export function SystemAdminShell() {
                             </Typography>
                         </Box>
                         <Divider />
+                        <MenuItem onClick={openPasswordPage}>
+                            <ListItemIcon><PasswordRoundedIcon fontSize="small" /></ListItemIcon>
+                            Change password
+                        </MenuItem>
                         <MenuItem onClick={signOut}>
                             <ListItemIcon><LogoutRoundedIcon fontSize="small" /></ListItemIcon>
                             Sign out

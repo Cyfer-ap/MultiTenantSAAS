@@ -5,6 +5,7 @@ import type {
     PageResponse,
 } from '../../../types/api'
 import type {
+    ChangeSystemAdminPasswordInput,
     CurrentSystemAdmin,
     CreateSystemAdminInput,
     PlatformAuditLog,
@@ -36,6 +37,16 @@ async function getCurrentAdmin(): Promise<CurrentSystemAdmin> {
     const response = await systemHttpClient.get<
         ApiResponse<CurrentSystemAdmin>
     >('/api/system/auth/me')
+
+    return response.data.data
+}
+
+async function changePassword(
+    input: ChangeSystemAdminPasswordInput,
+): Promise<CurrentSystemAdmin> {
+    const response = await systemHttpClient.post<
+        ApiResponse<CurrentSystemAdmin>
+    >('/api/system/auth/change-password', input)
 
     return response.data.data
 }
@@ -133,6 +144,7 @@ async function getPlatformAuditLogs(
 export const systemAdminApi = {
     login,
     getCurrentAdmin,
+    changePassword,
     getDashboardSummary,
     getTenants,
     updateTenantStatus,

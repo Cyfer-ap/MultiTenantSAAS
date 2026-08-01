@@ -71,6 +71,31 @@ describe('systemAdminApi', () => {
         expect(protectedGet).toHaveBeenCalledWith('/api/system/auth/me')
     })
 
+    it('changes the current system administrator password through the protected endpoint', async () => {
+        const currentAdmin = {
+            systemAdminId: 'admin-1',
+            fullName: 'Platform Owner',
+            email: 'owner@example.com',
+            role: 'SYSTEM_ADMIN' as const,
+            status: 'ACTIVE' as const,
+        }
+        const post = vi.spyOn(systemHttpClient, 'post')
+            .mockResolvedValue(successfulResponse(currentAdmin))
+        const input = {
+            currentPassword: 'Current@123',
+            newPassword: 'Stronger@456',
+            confirmPassword: 'Stronger@456',
+        }
+
+        await expect(systemAdminApi.changePassword(input))
+            .resolves.toEqual(currentAdmin)
+
+        expect(post).toHaveBeenCalledWith(
+            '/api/system/auth/change-password',
+            input,
+        )
+    })
+
     it('loads the global dashboard and filtered tenant directory', async () => {
         const dashboard = {
             totalTenants: 3,

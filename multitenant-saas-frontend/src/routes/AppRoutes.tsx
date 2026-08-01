@@ -32,6 +32,7 @@ import { ProjectDetailsPage } from '../pages/ProjectDetailsPage'
 import { ResetPasswordPage } from '../pages/ResetPasswordPage'
 import { TenantOnboardingPage } from '../pages/TenantOnboardingPage'
 import { SystemDashboardPage } from '../pages/SystemDashboardPage'
+import { SystemChangePasswordPage } from '../pages/SystemChangePasswordPage'
 import { SystemLoginPage } from '../pages/SystemLoginPage'
 import { SystemTenantsPage } from '../pages/SystemTenantsPage'
 import { SystemAdminsPage } from '../pages/SystemAdminsPage'
@@ -72,6 +73,10 @@ export function AppRoutes() {
                     <Route
                         path="audit-logs"
                         element={<PlatformAuditLogsPage />}
+                    />
+                    <Route
+                        path="change-password"
+                        element={<SystemChangePasswordPage />}
                     />
                     <Route
                         path="*"
