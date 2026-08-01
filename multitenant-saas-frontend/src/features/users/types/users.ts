@@ -32,3 +32,23 @@ export interface TenantUsersQueryParams {
     status?: UserStatus
     search?: string
 }
+
+export interface CreateTenantUserInput {
+    fullName: string
+    email: string
+    password: string
+    role: TenantRole
+}
+
+export interface UpdateTenantUserInput {
+    fullName: string
+    email: string
+}
+
+export interface UpdateTenantUserRoleInput {
+    role: TenantRole
+}
+
+export interface UpdateTenantUserStatusInput {
+    status: UserStatus
+}

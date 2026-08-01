@@ -8,12 +8,15 @@ import type { TenantUsersQueryParams } from '../types/users'
 
 export const tenantUsersQueryKeys = {
     all: ['tenant-users'] as const,
+    tenant: (tenantId: string) => [
+        ...tenantUsersQueryKeys.all,
+        tenantId,
+    ] as const,
     list: (
         tenantId: string,
         params: TenantUsersQueryParams,
     ) => [
-        ...tenantUsersQueryKeys.all,
-        tenantId,
+        ...tenantUsersQueryKeys.tenant(tenantId),
         params,
     ] as const,
 }

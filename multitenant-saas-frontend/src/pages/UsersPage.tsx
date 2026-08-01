@@ -1,5 +1,11 @@
+import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import LockResetOutlinedIcon from '@mui/icons-material/LockResetOutlined'
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded'
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
+import ToggleOnOutlinedIcon from '@mui/icons-material/ToggleOnOutlined'
 import {
     Alert,
     Box,
@@ -7,13 +13,17 @@ import {
     Chip,
     CircularProgress,
     FormControl,
+    IconButton,
     InputAdornment,
     InputLabel,
     LinearProgress,
+    ListItemIcon,
+    Menu,
     MenuItem,
     Paper,
     Select,
     Skeleton,
+    Snackbar,
     Stack,
     Table,
     TableBody,
@@ -26,7 +36,10 @@ import {
     TextField,
     Typography,
 } from '@mui/material'
-import type { FormEvent } from 'react'
+import type {
+    FormEvent,
+    MouseEvent,
+} from 'react'
 import { useState } from 'react'
 
 import { useAuth } from '../features/auth/hooks/useAuth'
@@ -34,15 +47,29 @@ import type {
     TenantRole,
     UserStatus,
 } from '../features/auth/types/auth'
+import {
+    ChangeUserRoleDialog,
+    ChangeUserStatusDialog,
+    CreateUserDialog,
+    EditUserDialog,
+    UnlockUserDialog,
+} from '../features/users/components/UserManagementDialogs'
 import { useTenantUsers } from '../features/users/hooks/useTenantUsers'
 import type {
     SortDirection,
+    TenantUser,
     TenantUsersQueryParams,
     UserSortField,
 } from '../features/users/types/users'
 
 type RoleFilter = TenantRole | 'ALL'
 type StatusFilter = UserStatus | 'ALL'
+type UserDialog =
+    | 'edit'
+    | 'role'
+    | 'status'
+    | 'unlock'
+    | null
 
 const roleLabels: Record<TenantRole, string> = {
     TENANT_ADMIN: 'Administrator',
@@ -122,6 +149,20 @@ export function UsersPage() {
         useState<UserSortField>('createdAt')
     const [sortDir, setSortDir] =
         useState<SortDirection>('desc')
+    const [createDialogOpen, setCreateDialogOpen] =
+        useState(false)
+    const [menuAnchor, setMenuAnchor] =
+        useState<HTMLElement | null>(null)
+    const [selectedUser, setSelectedUser] =
+        useState<TenantUser | null>(null)
+    const [activeDialog, setActiveDialog] =
+        useState<UserDialog>(null)
+    const [feedback, setFeedback] =
+        useState<string | null>(null)
+
+    const tenantId = session?.tenantId ?? ''
+    const isTenantAdmin =
+        session?.role === 'TENANT_ADMIN'
 
     const queryParams: TenantUsersQueryParams = {
         page,
@@ -134,7 +175,7 @@ export function UsersPage() {
     }
 
     const usersQuery = useTenantUsers(
-        session?.tenantId ?? '',
+        tenantId,
         queryParams,
     )
 
@@ -175,6 +216,34 @@ export function UsersPage() {
         setSortDir('asc')
     }
 
+    const openUserMenu = (
+        event: MouseEvent<HTMLButtonElement>,
+        user: TenantUser,
+    ): void => {
+        setSelectedUser(user)
+        setMenuAnchor(event.currentTarget)
+    }
+
+    const closeUserMenu = (): void => {
+        setMenuAnchor(null)
+    }
+
+    const openUserDialog = (
+        dialog: Exclude<UserDialog, null>,
+    ): void => {
+        setActiveDialog(dialog)
+        closeUserMenu()
+    }
+
+    const closeUserDialog = (): void => {
+        setActiveDialog(null)
+        setSelectedUser(null)
+    }
+
+    const showSuccess = (message: string): void => {
+        setFeedback(message)
+    }
+
     return (
         <Box>
             <Stack
@@ -201,26 +270,40 @@ export function UsersPage() {
                     </Typography>
                 </Box>
 
-                <Button
-                    startIcon={
-                        usersQuery.isFetching
-                            ? (
-                                <CircularProgress
-                                    color="inherit"
-                                    size={16}
-                                />
-                            )
-                            : <RefreshRoundedIcon />
-                    }
-                    disabled={usersQuery.isFetching}
-                    onClick={() => {
-                        void usersQuery.refetch()
-                    }}
-                    size="small"
-                    variant="outlined"
-                >
-                    Refresh
-                </Button>
+                <Stack direction="row" spacing={1}>
+                    {isTenantAdmin && (
+                        <Button
+                            onClick={() => {
+                                setCreateDialogOpen(true)
+                            }}
+                            startIcon={<AddRoundedIcon />}
+                            variant="contained"
+                        >
+                            Add user
+                        </Button>
+                    )}
+
+                    <Button
+                        startIcon={
+                            usersQuery.isFetching
+                                ? (
+                                    <CircularProgress
+                                        color="inherit"
+                                        size={16}
+                                    />
+                                )
+                                : <RefreshRoundedIcon />
+                        }
+                        disabled={usersQuery.isFetching}
+                        onClick={() => {
+                            void usersQuery.refetch()
+                        }}
+                        size="small"
+                        variant="outlined"
+                    >
+                        Refresh
+                    </Button>
+                </Stack>
             </Stack>
 
             <Paper
@@ -440,6 +523,11 @@ export function UsersPage() {
                                                 Created
                                             </TableSortLabel>
                                         </TableCell>
+                                        {isTenantAdmin && (
+                                            <TableCell align="right">
+                                                Actions
+                                            </TableCell>
+                                        )}
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -482,6 +570,22 @@ export function UsersPage() {
                                                         user.createdAt,
                                                     )}
                                                 </TableCell>
+                                                {isTenantAdmin && (
+                                                    <TableCell align="right">
+                                                        <IconButton
+                                                            aria-label={`Manage ${user.fullName}`}
+                                                            onClick={(event) => {
+                                                                openUserMenu(
+                                                                    event,
+                                                                    user,
+                                                                )
+                                                            }}
+                                                            size="small"
+                                                        >
+                                                            <MoreVertRoundedIcon />
+                                                        </IconButton>
+                                                    </TableCell>
+                                                )}
                                             </TableRow>
                                         ),
                                     )}
@@ -528,6 +632,128 @@ export function UsersPage() {
                     </>
                 )}
             </Paper>
+
+            {isTenantAdmin && (
+                <>
+                    <Menu
+                        anchorEl={menuAnchor}
+                        onClose={closeUserMenu}
+                        open={Boolean(menuAnchor)}
+                    >
+                        <MenuItem
+                            onClick={() => {
+                                openUserDialog('edit')
+                            }}
+                        >
+                            <ListItemIcon>
+                                <EditOutlinedIcon fontSize="small" />
+                            </ListItemIcon>
+                            Edit profile
+                        </MenuItem>
+                        <MenuItem
+                            disabled={
+                                selectedUser?.id === session?.userId
+                            }
+                            onClick={() => {
+                                openUserDialog('role')
+                            }}
+                        >
+                            <ListItemIcon>
+                                <AdminPanelSettingsOutlinedIcon fontSize="small" />
+                            </ListItemIcon>
+                            Change role
+                        </MenuItem>
+                        <MenuItem
+                            disabled={
+                                selectedUser?.id === session?.userId
+                            }
+                            onClick={() => {
+                                openUserDialog('status')
+                            }}
+                        >
+                            <ListItemIcon>
+                                <ToggleOnOutlinedIcon fontSize="small" />
+                            </ListItemIcon>
+                            Change status
+                        </MenuItem>
+                        <MenuItem
+                            onClick={() => {
+                                openUserDialog('unlock')
+                            }}
+                        >
+                            <ListItemIcon>
+                                <LockResetOutlinedIcon fontSize="small" />
+                            </ListItemIcon>
+                            Unlock login
+                        </MenuItem>
+                    </Menu>
+
+                    {createDialogOpen && (
+                        <CreateUserDialog
+                            onClose={() => {
+                                setCreateDialogOpen(false)
+                            }}
+                            onSuccess={showSuccess}
+                            open
+                            tenantId={tenantId}
+                        />
+                    )}
+                    {activeDialog === 'edit' && (
+                        <EditUserDialog
+                            onClose={closeUserDialog}
+                            onSuccess={showSuccess}
+                            open
+                            tenantId={tenantId}
+                            user={selectedUser}
+                        />
+                    )}
+                    {activeDialog === 'role' && (
+                        <ChangeUserRoleDialog
+                            onClose={closeUserDialog}
+                            onSuccess={showSuccess}
+                            open
+                            tenantId={tenantId}
+                            user={selectedUser}
+                        />
+                    )}
+                    {activeDialog === 'status' && (
+                        <ChangeUserStatusDialog
+                            onClose={closeUserDialog}
+                            onSuccess={showSuccess}
+                            open
+                            tenantId={tenantId}
+                            user={selectedUser}
+                        />
+                    )}
+                    {activeDialog === 'unlock' && (
+                        <UnlockUserDialog
+                            onClose={closeUserDialog}
+                            onSuccess={showSuccess}
+                            open
+                            tenantId={tenantId}
+                            user={selectedUser}
+                        />
+                    )}
+                </>
+            )}
+
+            <Snackbar
+                autoHideDuration={6_000}
+                onClose={() => {
+                    setFeedback(null)
+                }}
+                open={Boolean(feedback)}
+            >
+                <Alert
+                    onClose={() => {
+                        setFeedback(null)
+                    }}
+                    severity="success"
+                    variant="filled"
+                >
+                    {feedback}
+                </Alert>
+            </Snackbar>
         </Box>
     )
 }
