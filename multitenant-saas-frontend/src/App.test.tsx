@@ -29,6 +29,7 @@ import type {
     CurrentUserResponse,
     TenantRole,
 } from './features/auth/types/auth'
+import { invitationsApi } from './features/invitations/api/invitationsApi'
 import { appTheme } from './theme/appTheme'
 
 function createTestQueryClient(): QueryClient {
@@ -220,6 +221,36 @@ describe('App authentication routes', () => {
     )
 
     it(
+        'exposes the public forgot-password route',
+        async () => {
+            const queryClient =
+                createTestQueryClient()
+
+            render(
+                <ThemeProvider theme={appTheme}>
+                    <QueryClientProvider
+                        client={queryClient}
+                    >
+                        <MemoryRouter
+                            initialEntries={['/forgot-password']}
+                        >
+                            <AuthProvider>
+                                <App />
+                            </AuthProvider>
+                        </MemoryRouter>
+                    </QueryClientProvider>
+                </ThemeProvider>,
+            )
+
+            expect(
+                await screen.findByRole('heading', {
+                    name: /forgot password/i,
+                }),
+            ).toBeInTheDocument()
+        },
+    )
+
+    it(
         'prevents a tenant manager from opening admin-only audit logs',
         async () => {
             renderAuthenticatedRoute(
@@ -251,6 +282,12 @@ describe('App authentication routes', () => {
             expect(
                 within(navigation).getByText('Projects'),
             ).toBeInTheDocument()
+
+            expect(
+                within(navigation).queryByText(
+                    'Invitations',
+                ),
+            ).not.toBeInTheDocument()
 
             expect(
                 within(navigation).queryByText(
@@ -297,9 +334,55 @@ describe('App authentication routes', () => {
 
             expect(
                 within(navigation).queryByText(
+                    'Invitations',
+                ),
+            ).not.toBeInTheDocument()
+
+            expect(
+                within(navigation).queryByText(
                     'Audit Logs',
                 ),
             ).not.toBeInTheDocument()
+        },
+    )
+
+    it(
+        'allows a tenant administrator to open invitations',
+        async () => {
+            vi.spyOn(
+                invitationsApi,
+                'getInvitations',
+            ).mockResolvedValue({
+                content: [],
+                page: 0,
+                size: 10,
+                totalElements: 0,
+                totalPages: 0,
+                first: true,
+                last: true,
+            })
+
+            renderAuthenticatedRoute(
+                'TENANT_ADMIN',
+                '/invitations',
+            )
+
+            expect(
+                await screen.findByRole('heading', {
+                    name: /invitations/i,
+                }),
+            ).toBeInTheDocument()
+
+            const navigation = screen.getByRole(
+                'navigation',
+                {
+                    name: /primary navigation/i,
+                },
+            )
+
+            expect(
+                within(navigation).getByText('Invitations'),
+            ).toBeInTheDocument()
         },
     )
 })

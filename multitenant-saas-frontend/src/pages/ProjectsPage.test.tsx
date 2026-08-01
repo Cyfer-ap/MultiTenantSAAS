@@ -4,6 +4,7 @@ import {
     QueryClientProvider,
 } from '@tanstack/react-query'
 import {
+    fireEvent,
     render,
     screen,
     waitFor,
@@ -264,15 +265,24 @@ describe('ProjectsPage', () => {
             name: /create project/i,
         })
 
-        await user.type(
+        fireEvent.change(
             within(dialog).getByLabelText(/project name/i),
-            '  Research workspace  ',
+            {
+                target: {
+                    value: '  Research workspace  ',
+                },
+            },
         )
-        await user.type(
+        fireEvent.change(
             within(dialog).getByLabelText(/description/i),
-            '  Coordinate the research programme.  ',
+            {
+                target: {
+                    value:
+                        '  Coordinate the research programme.  ',
+                },
+            },
         )
-        await user.click(
+        fireEvent.click(
             within(dialog).getByRole('button', {
                 name: /create project/i,
             }),
@@ -330,9 +340,10 @@ describe('ProjectsPage', () => {
             /project name/i,
         )
 
-        await user.clear(nameInput)
-        await user.type(nameInput, 'Research platform')
-        await user.click(
+        fireEvent.change(nameInput, {
+            target: { value: 'Research platform' },
+        })
+        fireEvent.click(
             within(dialog).getByRole('button', {
                 name: /save project/i,
             }),

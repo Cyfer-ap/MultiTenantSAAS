@@ -235,6 +235,17 @@ export function LoginPage() {
                                         ? 'Signing in...'
                                         : 'Sign in'}
                                 </Button>
+
+                                <Button
+                                    disabled={isSubmitting}
+                                    fullWidth
+                                    onClick={() => {
+                                        navigate('/forgot-password')
+                                    }}
+                                    type="button"
+                                >
+                                    Forgot password?
+                                </Button>
                             </Stack>
                         </Box>
                     </Stack>

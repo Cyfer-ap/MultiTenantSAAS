@@ -22,6 +22,7 @@ import FolderRoundedIcon from '@mui/icons-material/FolderRounded'
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
+import PersonAddAltRoundedIcon from '@mui/icons-material/PersonAddAltRounded'
 import {
     allTenantRoles,
     hasAllowedTenantRole,
@@ -64,6 +65,12 @@ const navigationItems: readonly NavigationItem[] = [
         path: '/projects',
         icon: <FolderRoundedIcon />,
         allowedRoles: allTenantRoles,
+    },
+    {
+        label: 'Invitations',
+        path: '/invitations',
+        icon: <PersonAddAltRoundedIcon />,
+        allowedRoles: tenantAdminRoles,
     },
     {
         label: 'Audit Logs',

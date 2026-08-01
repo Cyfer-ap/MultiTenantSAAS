@@ -15,11 +15,15 @@ import {
     RoleProtectedRoute,
 } from '../features/auth/routing/AuthRoutes'
 import { AppShell } from '../layouts/AppShell'
+import { AcceptInvitationPage } from '../pages/AcceptInvitationPage'
 import { AuditLogsPage } from '../pages/AuditLogsPage'
 import { DashboardPage } from '../pages/DashboardPage'
+import { ForgotPasswordPage } from '../pages/ForgotPasswordPage'
+import { InvitationsPage } from '../pages/InvitationsPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { ProjectsPage } from '../pages/ProjectsPage'
 import { ProjectDetailsPage } from '../pages/ProjectDetailsPage'
+import { ResetPasswordPage } from '../pages/ResetPasswordPage'
 import { UsersPage } from '../pages/UsersPage'
 
 export function AppRoutes() {
@@ -29,6 +33,21 @@ export function AppRoutes() {
                 <Route
                     path="login"
                     element={<LoginPage />}
+                />
+
+                <Route
+                    path="accept-invitation"
+                    element={<AcceptInvitationPage />}
+                />
+
+                <Route
+                    path="forgot-password"
+                    element={<ForgotPasswordPage />}
+                />
+
+                <Route
+                    path="reset-password"
+                    element={<ResetPasswordPage />}
                 />
             </Route>
 
@@ -68,6 +87,11 @@ export function AppRoutes() {
                             />
                         }
                     >
+                        <Route
+                            path="invitations"
+                            element={<InvitationsPage />}
+                        />
+
                         <Route
                             path="audit-logs"
                             element={<AuditLogsPage />}

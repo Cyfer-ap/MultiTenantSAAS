@@ -4,6 +4,7 @@ import {
     QueryClientProvider,
 } from '@tanstack/react-query'
 import {
+    fireEvent,
     render,
     screen,
     waitFor,
@@ -190,7 +191,6 @@ describe('ProjectDetailsPage', () => {
     })
 
     it('submits server-side member search and role filters', async () => {
-        const user = userEvent.setup()
         const getMembers = vi
             .spyOn(projectMembersApi, 'getMembers')
             .mockResolvedValue(membersPage)
@@ -198,14 +198,14 @@ describe('ProjectDetailsPage', () => {
         renderProjectDetailsPage()
         await screen.findByText('Grace User')
 
-        await user.type(
+        fireEvent.change(
             screen.getByLabelText(/search project members/i),
-            '  grace  ',
+            { target: { value: '  grace  ' } },
         )
-        await user.click(
+        fireEvent.mouseDown(
             screen.getByLabelText(/^project role$/i),
         )
-        await user.click(
+        fireEvent.click(
             screen.getByRole('option', { name: 'Member' }),
         )
         const memberSearchForm = screen
@@ -213,7 +213,7 @@ describe('ProjectDetailsPage', () => {
             .closest('form')
 
         expect(memberSearchForm).not.toBeNull()
-        await user.click(
+        fireEvent.click(
             within(memberSearchForm!).getByRole('button', {
                 name: /^search$/i,
             }),

@@ -4,6 +4,7 @@ import {
     QueryClientProvider,
 } from '@tanstack/react-query'
 import {
+    fireEvent,
     render,
     screen,
     waitFor,
@@ -158,7 +159,6 @@ describe('ProjectTasksSection', () => {
     })
 
     it('submits server-side search, status, priority, and assignee filters', async () => {
-        const user = userEvent.setup()
         const getTasks = vi
             .spyOn(projectTasksApi, 'getTasks')
             .mockResolvedValue(tasksPage)
@@ -166,20 +166,20 @@ describe('ProjectTasksSection', () => {
         renderTasksSection()
         await screen.findByText('Review access controls')
 
-        await user.type(
+        fireEvent.change(
             screen.getByLabelText(/search project tasks/i),
-            '  access  ',
+            { target: { value: '  access  ' } },
         )
-        await user.click(screen.getByLabelText(/^status$/i))
-        await user.click(
+        fireEvent.mouseDown(screen.getByLabelText(/^status$/i))
+        fireEvent.click(
             screen.getByRole('option', { name: 'To do' }),
         )
-        await user.click(screen.getByLabelText(/^priority$/i))
-        await user.click(
+        fireEvent.mouseDown(screen.getByLabelText(/^priority$/i))
+        fireEvent.click(
             screen.getByRole('option', { name: 'High' }),
         )
-        await user.click(screen.getByLabelText(/^assignee$/i))
-        await user.click(
+        fireEvent.mouseDown(screen.getByLabelText(/^assignee$/i))
+        fireEvent.click(
             screen.getByRole('option', { name: 'Grace User' }),
         )
 
@@ -187,7 +187,7 @@ describe('ProjectTasksSection', () => {
             .getByLabelText(/search project tasks/i)
             .closest('form')
 
-        await user.click(
+        fireEvent.click(
             within(searchForm!).getByRole('button', {
                 name: /^search$/i,
             }),
@@ -221,23 +221,31 @@ describe('ProjectTasksSection', () => {
         const dialog = screen.getByRole('dialog', {
             name: /create task/i,
         })
-        await user.type(
+        fireEvent.change(
             within(dialog).getByLabelText(/task title/i),
-            '  Audit refresh flow  ',
+            {
+                target: {
+                    value: '  Audit refresh flow  ',
+                },
+            },
         )
-        await user.type(
+        fireEvent.change(
             within(dialog).getByLabelText(/description/i),
-            '  Validate token rotation.  ',
+            {
+                target: {
+                    value: '  Validate token rotation.  ',
+                },
+            },
         )
-        await user.click(
+        fireEvent.mouseDown(
             within(dialog).getByLabelText(/^assignee$/i),
         )
-        await user.click(
+        fireEvent.click(
             screen.getByRole('option', {
                 name: /grace user.*grace@example.com/i,
             }),
         )
-        await user.click(
+        fireEvent.click(
             within(dialog).getByRole('button', {
                 name: /^create task$/i,
             }),
