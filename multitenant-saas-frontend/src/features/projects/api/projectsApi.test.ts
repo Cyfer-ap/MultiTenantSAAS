@@ -39,6 +39,20 @@ describe('projectsApi management operations', () => {
         vi.restoreAllMocks()
     })
 
+    it('loads one tenant project by id', async () => {
+        const get = vi
+            .spyOn(httpClient, 'get')
+            .mockResolvedValue(successfulResponse(tenantProject))
+
+        await expect(
+            projectsApi.getProject('tenant-1', 'project-1'),
+        ).resolves.toEqual(tenantProject)
+
+        expect(get).toHaveBeenCalledWith(
+            '/api/tenants/tenant-1/projects/project-1',
+        )
+    })
+
     it('creates and updates a project in the selected tenant', async () => {
         const post = vi
             .spyOn(httpClient, 'post')

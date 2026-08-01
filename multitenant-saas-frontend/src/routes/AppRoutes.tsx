@@ -19,6 +19,7 @@ import { AuditLogsPage } from '../pages/AuditLogsPage'
 import { DashboardPage } from '../pages/DashboardPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { ProjectsPage } from '../pages/ProjectsPage'
+import { ProjectDetailsPage } from '../pages/ProjectDetailsPage'
 import { UsersPage } from '../pages/UsersPage'
 
 export function AppRoutes() {
@@ -76,6 +77,11 @@ export function AppRoutes() {
                     <Route
                         path="projects"
                         element={<ProjectsPage />}
+                    />
+
+                    <Route
+                        path="projects/:projectId"
+                        element={<ProjectDetailsPage />}
                     />
 
                     <Route

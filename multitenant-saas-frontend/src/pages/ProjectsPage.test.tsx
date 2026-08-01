@@ -11,6 +11,7 @@ import {
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
+import { MemoryRouter } from 'react-router'
 import {
     beforeEach,
     describe,
@@ -94,9 +95,11 @@ function renderProjectsPage(
         return (
             <ThemeProvider theme={appTheme}>
                 <QueryClientProvider client={queryClient}>
-                    <AuthContext.Provider value={contextValue}>
-                        {children}
-                    </AuthContext.Provider>
+                    <MemoryRouter>
+                        <AuthContext.Provider value={contextValue}>
+                            {children}
+                        </AuthContext.Provider>
+                    </MemoryRouter>
                 </QueryClientProvider>
             </ThemeProvider>
         )

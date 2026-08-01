@@ -40,6 +40,7 @@ import type {
     MouseEvent,
 } from 'react'
 import { useState } from 'react'
+import { Link } from 'react-router'
 
 import { useAuth } from '../features/auth/hooks/useAuth'
 import {
@@ -483,14 +484,20 @@ export function ProjectsPage() {
                                         (project) => (
                                             <TableRow key={project.id}>
                                                 <TableCell>
-                                                    <Typography
-                                                        variant="body2"
+                                                    <Button
+                                                        component={Link}
+                                                        size="small"
+                                                        to={`/projects/${project.id}`}
                                                         sx={{
                                                             fontWeight: 600,
+                                                            justifyContent: 'flex-start',
+                                                            minWidth: 0,
+                                                            padding: 0,
+                                                            textTransform: 'none',
                                                         }}
                                                     >
                                                         {project.name}
-                                                    </Typography>
+                                                    </Button>
                                                     <Typography
                                                         color="text.secondary"
                                                         variant="caption"

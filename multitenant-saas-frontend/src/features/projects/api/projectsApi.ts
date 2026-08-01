@@ -23,6 +23,17 @@ async function getProjects(
     return response.data.data
 }
 
+async function getProject(
+    tenantId: string,
+    projectId: string,
+): Promise<TenantProject> {
+    const response = await httpClient.get<
+        ApiResponse<TenantProject>
+    >(`/api/tenants/${tenantId}/projects/${projectId}`)
+
+    return response.data.data
+}
+
 async function createProject(
     tenantId: string,
     input: ProjectDetailsInput,
@@ -79,6 +90,7 @@ async function archiveProject(
 
 export const projectsApi = {
     getProjects,
+    getProject,
     createProject,
     updateProject,
     updateProjectStatus,

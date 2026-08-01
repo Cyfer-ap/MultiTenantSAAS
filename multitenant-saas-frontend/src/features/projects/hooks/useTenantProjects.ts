@@ -12,6 +12,11 @@ export const tenantProjectsQueryKeys = {
         ...tenantProjectsQueryKeys.all,
         tenantId,
     ] as const,
+    detail: (tenantId: string, projectId: string) => [
+        ...tenantProjectsQueryKeys.tenant(tenantId),
+        'detail',
+        projectId,
+    ] as const,
     list: (
         tenantId: string,
         params: TenantProjectsQueryParams,
