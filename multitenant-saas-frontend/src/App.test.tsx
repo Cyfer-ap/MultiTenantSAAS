@@ -19,6 +19,8 @@ import {
 import { MemoryRouter } from 'react-router'
 
 import App from './App'
+import { dashboardApi } from './features/dashboard/api/dashboardApi'
+import type { TenantDashboardSummary } from './features/dashboard/types/dashboard'
 import { authApi } from './features/auth/api/authApi'
 import { AuthProvider } from './features/auth/context/AuthProvider'
 import { authStorage } from './features/auth/storage/authStorage'
@@ -65,6 +67,32 @@ const currentUser: CurrentUserResponse = {
     status: 'ACTIVE',
 }
 
+const dashboardSummary: TenantDashboardSummary = {
+    tenantId: 'tenant-id',
+    tenantName: 'Example Tenant',
+    tenantSlug: 'example-tenant',
+    tenantStatus: 'ACTIVE',
+    totalUsers: 1,
+    activeUsers: 1,
+    inactiveUsers: 0,
+    suspendedUsers: 0,
+    totalProjects: 0,
+    planningProjects: 0,
+    activeProjects: 0,
+    onHoldProjects: 0,
+    completedProjects: 0,
+    archivedProjects: 0,
+    totalProjectMemberships: 0,
+    totalTasks: 0,
+    todoTasks: 0,
+    inProgressTasks: 0,
+    blockedTasks: 0,
+    completedTasks: 0,
+    cancelledTasks: 0,
+    overdueTasks: 0,
+    taskCompletionPercentage: 0,
+}
+
 function renderAuthenticatedRoute(
     role: TenantRole,
     initialPath: string,
@@ -103,6 +131,11 @@ describe('App authentication routes', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
         localStorage.clear()
+
+        vi.spyOn(
+            dashboardApi,
+            'getSummary',
+        ).mockResolvedValue(dashboardSummary)
     })
 
     it(
@@ -170,7 +203,7 @@ describe('App authentication routes', () => {
 
             expect(
                 await screen.findByRole('heading', {
-                    name: /dashboard/i,
+                    name: /example tenant/i,
                 }),
             ).toBeInTheDocument()
 
@@ -196,7 +229,7 @@ describe('App authentication routes', () => {
 
             expect(
                 await screen.findByRole('heading', {
-                    name: /dashboard/i,
+                    name: /example tenant/i,
                 }),
             ).toBeInTheDocument()
 
