@@ -1,6 +1,7 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import FolderOpenRoundedIcon from '@mui/icons-material/FolderOpenRounded'
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded'
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
@@ -482,29 +483,83 @@ export function ProjectsPage() {
                                 <TableBody>
                                     {projectsQuery.data.content.map(
                                         (project) => (
-                                            <TableRow key={project.id}>
-                                                <TableCell>
-                                                    <Button
-                                                        component={Link}
-                                                        size="small"
-                                                        to={`/projects/${project.id}`}
+                                            <TableRow
+                                                hover
+                                                key={project.id}
+                                                sx={{
+                                                    '&:last-child td': {
+                                                        borderBottom: 0,
+                                                    },
+                                                }}
+                                            >
+                                                <TableCell
+                                                    sx={{
+                                                        minWidth: 340,
+                                                        width: '46%',
+                                                    }}
+                                                >
+                                                    <Stack
+                                                        direction="row"
+                                                        spacing={1.5}
                                                         sx={{
-                                                            fontWeight: 600,
-                                                            justifyContent: 'flex-start',
-                                                            minWidth: 0,
-                                                            padding: 0,
-                                                            textTransform: 'none',
+                                                            alignItems: 'center',
+                                                            minHeight: 52,
                                                         }}
                                                     >
-                                                        {project.name}
-                                                    </Button>
-                                                    <Typography
-                                                        color="text.secondary"
-                                                        variant="caption"
-                                                    >
-                                                        {project.description ||
-                                                            'No description'}
-                                                    </Typography>
+                                                        <Box
+                                                            sx={{
+                                                                alignItems: 'center',
+                                                                backgroundColor: 'action.hover',
+                                                                borderRadius: 2,
+                                                                color: 'primary.main',
+                                                                display: 'flex',
+                                                                flexShrink: 0,
+                                                                height: 42,
+                                                                justifyContent: 'center',
+                                                                width: 42,
+                                                            }}
+                                                        >
+                                                            <FolderOpenRoundedIcon
+                                                                fontSize="small"
+                                                            />
+                                                        </Box>
+
+                                                        <Box sx={{ minWidth: 0 }}>
+                                                            <Button
+                                                                component={Link}
+                                                                size="small"
+                                                                to={`/projects/${project.id}`}
+                                                                sx={{
+                                                                    display: 'block',
+                                                                    fontWeight: 700,
+                                                                    maxWidth: '100%',
+                                                                    overflow: 'hidden',
+                                                                    padding: 0,
+                                                                    textAlign: 'left',
+                                                                    textOverflow: 'ellipsis',
+                                                                    textTransform: 'none',
+                                                                    whiteSpace: 'nowrap',
+                                                                }}
+                                                            >
+                                                                {project.name}
+                                                            </Button>
+                                                            <Typography
+                                                                color="text.secondary"
+                                                                sx={{
+                                                                    display: 'block',
+                                                                    marginTop: 0.5,
+                                                                    maxWidth: 520,
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap',
+                                                                }}
+                                                                variant="body2"
+                                                            >
+                                                                {project.description ||
+                                                                    'No description provided'}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Stack>
                                                 </TableCell>
                                                 <TableCell>
                                                     <Chip
@@ -521,13 +576,20 @@ export function ProjectsPage() {
                                                     />
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Typography variant="body2">
+                                                    <Typography
+                                                        sx={{ fontWeight: 500 }}
+                                                        variant="body2"
+                                                    >
                                                         {
                                                             project.createdByUserName
                                                         }
                                                     </Typography>
                                                     <Typography
                                                         color="text.secondary"
+                                                        sx={{
+                                                            display: 'block',
+                                                            marginTop: 0.25,
+                                                        }}
                                                         variant="caption"
                                                     >
                                                         {
@@ -536,9 +598,11 @@ export function ProjectsPage() {
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell>
-                                                    {formatDate(
-                                                        project.updatedAt,
-                                                    )}
+                                                    <Typography variant="body2">
+                                                        {formatDate(
+                                                            project.updatedAt,
+                                                        )}
+                                                    </Typography>
                                                 </TableCell>
                                                 {canManageProjects && (
                                                     <TableCell align="right">
