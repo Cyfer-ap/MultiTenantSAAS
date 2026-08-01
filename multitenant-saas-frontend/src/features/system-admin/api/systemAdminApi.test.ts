@@ -150,4 +150,95 @@ describe('systemAdminApi', () => {
             input,
         )
     })
+
+    it('manages system-administrator accounts through protected endpoints', async () => {
+        const admin = {
+            id: 'admin-2',
+            fullName: 'Security Operator',
+            email: 'security@example.com',
+            status: 'ACTIVE' as const,
+            failedLoginAttempts: 0,
+            lockedUntil: null,
+            createdAt: '2026-08-02T10:00:00Z',
+            updatedAt: '2026-08-02T10:00:00Z',
+        }
+        const page = {
+            content: [admin],
+            page: 0,
+            size: 10,
+            totalElements: 1,
+            totalPages: 1,
+            first: true,
+            last: true,
+        }
+        const get = vi.spyOn(systemHttpClient, 'get')
+            .mockResolvedValue(successfulResponse(page))
+        const post = vi.spyOn(systemHttpClient, 'post')
+            .mockResolvedValue(successfulResponse(admin))
+        const patch = vi.spyOn(systemHttpClient, 'patch')
+            .mockResolvedValue(successfulResponse(admin))
+        const params = {
+            page: 0,
+            size: 10,
+            sortBy: 'email' as const,
+            sortDir: 'asc' as const,
+            status: 'ACTIVE' as const,
+            search: 'security',
+        }
+        const input = {
+            fullName: admin.fullName,
+            email: admin.email,
+            password: 'Strong@123',
+        }
+
+        await systemAdminApi.getSystemAdmins(params)
+        await systemAdminApi.createSystemAdmin(input)
+        await systemAdminApi.updateSystemAdminStatus(admin.id, {
+            status: 'SUSPENDED',
+        })
+        await systemAdminApi.unlockSystemAdminLogin(admin.id)
+
+        expect(get).toHaveBeenCalledWith('/api/system/admins', { params })
+        expect(post).toHaveBeenCalledWith('/api/system/admins', input)
+        expect(patch).toHaveBeenNthCalledWith(
+            1,
+            '/api/system/admins/admin-2/status',
+            { status: 'SUSPENDED' },
+        )
+        expect(patch).toHaveBeenNthCalledWith(
+            2,
+            '/api/system/admins/admin-2/unlock',
+        )
+    })
+
+    it('loads filtered platform audit logs from the system endpoint', async () => {
+        const page = {
+            content: [],
+            page: 0,
+            size: 25,
+            totalElements: 0,
+            totalPages: 0,
+            first: true,
+            last: true,
+        }
+        const get = vi.spyOn(systemHttpClient, 'get')
+            .mockResolvedValue(successfulResponse(page))
+        const params = {
+            page: 0,
+            size: 25,
+            sortBy: 'action' as const,
+            sortDir: 'asc' as const,
+            action: 'SYSTEM_ADMIN_STATUS_UPDATED' as const,
+            success: true,
+            search: 'owner@example.com',
+        }
+
+        await expect(systemAdminApi.getPlatformAuditLogs(params))
+            .resolves.toEqual(page)
+
+        expect(get).toHaveBeenCalledWith(
+            '/api/system/audit-logs',
+            { params },
+        )
+    })
 })

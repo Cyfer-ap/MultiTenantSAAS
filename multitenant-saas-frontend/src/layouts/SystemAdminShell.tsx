@@ -2,7 +2,9 @@ import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSetting
 import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded'
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
+import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
+import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded'
 import {
     AppBar,
     Avatar,
@@ -51,6 +53,16 @@ const navigationItems: readonly NavigationItem[] = [
         label: 'Tenants',
         path: '/system/tenants',
         icon: <BusinessRoundedIcon />,
+    },
+    {
+        label: 'System admins',
+        path: '/system/admins',
+        icon: <PeopleRoundedIcon />,
+    },
+    {
+        label: 'Platform audit',
+        path: '/system/audit-logs',
+        icon: <HistoryRoundedIcon />,
     },
 ]
 

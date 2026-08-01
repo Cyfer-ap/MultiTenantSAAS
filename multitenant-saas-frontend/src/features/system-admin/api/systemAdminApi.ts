@@ -6,6 +6,11 @@ import type {
 } from '../../../types/api'
 import type {
     CurrentSystemAdmin,
+    CreateSystemAdminInput,
+    PlatformAuditLog,
+    PlatformAuditLogsQueryParams,
+    SystemAdminRecord,
+    SystemAdminsQueryParams,
     SystemAdminLoginInput,
     SystemAdminLoginResponse,
     SystemDashboardSummary,
@@ -14,6 +19,7 @@ import type {
     SystemTenantOnboardingResponse,
     SystemTenantsQueryParams,
     UpdateSystemTenantStatusInput,
+    UpdateSystemAdminStatusInput,
 } from '../types/systemAdmin'
 
 async function login(
@@ -73,6 +79,57 @@ async function onboardTenant(
     return response.data.data
 }
 
+async function getSystemAdmins(
+    params: SystemAdminsQueryParams,
+): Promise<PageResponse<SystemAdminRecord>> {
+    const response = await systemHttpClient.get<
+        ApiResponse<PageResponse<SystemAdminRecord>>
+    >('/api/system/admins', { params })
+
+    return response.data.data
+}
+
+async function createSystemAdmin(
+    input: CreateSystemAdminInput,
+): Promise<SystemAdminRecord> {
+    const response = await systemHttpClient.post<
+        ApiResponse<SystemAdminRecord>
+    >('/api/system/admins', input)
+
+    return response.data.data
+}
+
+async function updateSystemAdminStatus(
+    systemAdminId: string,
+    input: UpdateSystemAdminStatusInput,
+): Promise<SystemAdminRecord> {
+    const response = await systemHttpClient.patch<
+        ApiResponse<SystemAdminRecord>
+    >(`/api/system/admins/${systemAdminId}/status`, input)
+
+    return response.data.data
+}
+
+async function unlockSystemAdminLogin(
+    systemAdminId: string,
+): Promise<SystemAdminRecord> {
+    const response = await systemHttpClient.patch<
+        ApiResponse<SystemAdminRecord>
+    >(`/api/system/admins/${systemAdminId}/unlock`)
+
+    return response.data.data
+}
+
+async function getPlatformAuditLogs(
+    params: PlatformAuditLogsQueryParams,
+): Promise<PageResponse<PlatformAuditLog>> {
+    const response = await systemHttpClient.get<
+        ApiResponse<PageResponse<PlatformAuditLog>>
+    >('/api/system/audit-logs', { params })
+
+    return response.data.data
+}
+
 export const systemAdminApi = {
     login,
     getCurrentAdmin,
@@ -80,4 +137,9 @@ export const systemAdminApi = {
     getTenants,
     updateTenantStatus,
     onboardTenant,
+    getSystemAdmins,
+    createSystemAdmin,
+    updateSystemAdminStatus,
+    unlockSystemAdminLogin,
+    getPlatformAuditLogs,
 }

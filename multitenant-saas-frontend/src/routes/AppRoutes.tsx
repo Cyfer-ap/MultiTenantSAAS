@@ -34,6 +34,8 @@ import { TenantOnboardingPage } from '../pages/TenantOnboardingPage'
 import { SystemDashboardPage } from '../pages/SystemDashboardPage'
 import { SystemLoginPage } from '../pages/SystemLoginPage'
 import { SystemTenantsPage } from '../pages/SystemTenantsPage'
+import { SystemAdminsPage } from '../pages/SystemAdminsPage'
+import { PlatformAuditLogsPage } from '../pages/PlatformAuditLogsPage'
 import { UsersPage } from '../pages/UsersPage'
 
 export function AppRoutes() {
@@ -62,6 +64,14 @@ export function AppRoutes() {
                     <Route
                         path="tenants"
                         element={<SystemTenantsPage />}
+                    />
+                    <Route
+                        path="admins"
+                        element={<SystemAdminsPage />}
+                    />
+                    <Route
+                        path="audit-logs"
+                        element={<PlatformAuditLogsPage />}
                     />
                     <Route
                         path="*"
