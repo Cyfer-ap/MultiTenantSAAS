@@ -9,12 +9,18 @@ import {
 } from '../features/auth/access/roleAccess'
 import { LoginPage } from '../features/auth/pages/LoginPage'
 import {
+    SystemHomeRedirect,
+    SystemProtectedRoute,
+    SystemPublicOnlyRoute,
+} from '../features/system-admin/routing/SystemAdminRoutes'
+import {
     AuthenticatedHomeRedirect,
     ProtectedRoute,
     PublicOnlyRoute,
     RoleProtectedRoute,
 } from '../features/auth/routing/AuthRoutes'
 import { AppShell } from '../layouts/AppShell'
+import { SystemAdminShell } from '../layouts/SystemAdminShell'
 import { AcceptInvitationPage } from '../pages/AcceptInvitationPage'
 import { AuditLogsPage } from '../pages/AuditLogsPage'
 import { DashboardPage } from '../pages/DashboardPage'
@@ -25,11 +31,45 @@ import { ProjectsPage } from '../pages/ProjectsPage'
 import { ProjectDetailsPage } from '../pages/ProjectDetailsPage'
 import { ResetPasswordPage } from '../pages/ResetPasswordPage'
 import { TenantOnboardingPage } from '../pages/TenantOnboardingPage'
+import { SystemDashboardPage } from '../pages/SystemDashboardPage'
+import { SystemLoginPage } from '../pages/SystemLoginPage'
+import { SystemTenantsPage } from '../pages/SystemTenantsPage'
 import { UsersPage } from '../pages/UsersPage'
 
 export function AppRoutes() {
     return (
         <Routes>
+            <Route element={<SystemPublicOnlyRoute />}>
+                <Route
+                    path="system/login"
+                    element={<SystemLoginPage />}
+                />
+            </Route>
+
+            <Route element={<SystemProtectedRoute />}>
+                <Route
+                    path="system"
+                    element={<SystemAdminShell />}
+                >
+                    <Route
+                        index
+                        element={<SystemHomeRedirect />}
+                    />
+                    <Route
+                        path="dashboard"
+                        element={<SystemDashboardPage />}
+                    />
+                    <Route
+                        path="tenants"
+                        element={<SystemTenantsPage />}
+                    />
+                    <Route
+                        path="*"
+                        element={<NotFoundPage />}
+                    />
+                </Route>
+            </Route>
+
             <Route element={<PublicOnlyRoute />}>
                 <Route
                     path="login"
