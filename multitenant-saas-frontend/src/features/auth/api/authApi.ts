@@ -10,6 +10,7 @@ import type {
     LoginRequest,
     LoginResponse,
     LogoutRequest,
+    LogoutResponse,
     RefreshTokenRequest,
     TokenRefreshResponse,
 } from '../types/auth'
@@ -68,6 +69,15 @@ async function logout(
     )
 }
 
+async function logoutAllDevices(): Promise<LogoutResponse> {
+    const response =
+        await httpClient.post<
+            ApiResponse<LogoutResponse>
+        >('/api/auth/logout-all')
+
+    return response.data.data
+}
+
 async function changePassword(
     request: ChangePasswordInput,
 ): Promise<ChangePasswordResponse> {
@@ -84,5 +94,6 @@ export const authApi = {
     refreshToken,
     getCurrentUser,
     logout,
+    logoutAllDevices,
     changePassword,
 }

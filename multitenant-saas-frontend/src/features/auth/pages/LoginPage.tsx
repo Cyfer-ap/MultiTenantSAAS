@@ -25,6 +25,7 @@ interface LoginRouteState {
     tenantId?: unknown
     email?: unknown
     passwordChanged?: unknown
+    allDevicesSignedOut?: unknown
 }
 
 function resolvePrefillValue(value: unknown): string {
@@ -189,6 +190,12 @@ export function LoginPage() {
                                 {routeState.passwordChanged === true && (
                                     <Alert severity="success">
                                         Password changed successfully. Sign in with your new password.
+                                    </Alert>
+                                )}
+
+                                {routeState.allDevicesSignedOut === true && (
+                                    <Alert severity="success">
+                                        All device refresh sessions were revoked. Sign in again to continue.
                                     </Alert>
                                 )}
 

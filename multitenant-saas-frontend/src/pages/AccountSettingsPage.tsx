@@ -18,6 +18,7 @@ import {
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 
+import { SessionSecurityCard } from '../features/auth/components/SessionSecurityCard'
 import { useCurrentUser } from '../features/auth/hooks/useAccount'
 import type {
     TenantRole,
@@ -368,6 +369,11 @@ export function AccountSettingsPage() {
                                 </Stack>
                             </CardContent>
                         </Card>
+
+                        <SessionSecurityCard
+                            email={currentUser.email}
+                            tenantId={currentUser.tenantId}
+                        />
                     </Stack>
                 </Box>
             )}

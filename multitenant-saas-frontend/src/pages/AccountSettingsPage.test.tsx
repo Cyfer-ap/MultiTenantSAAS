@@ -83,6 +83,12 @@ describe('AccountSettingsPage', () => {
         expect(screen.getByText('research-lab')).toBeInTheDocument()
         expect(screen.getByText('tenant-1')).toBeInTheDocument()
         expect(screen.getByText('user-1')).toBeInTheDocument()
+        expect(screen.getByRole('heading', {
+            name: /device sessions/i,
+        })).toBeInTheDocument()
+        expect(screen.getByRole('button', {
+            name: /sign out all devices/i,
+        })).toBeInTheDocument()
     })
 
     it('opens the tenant password-change route', async () => {

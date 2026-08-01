@@ -45,6 +45,10 @@ export interface LogoutRequest {
     refreshToken: string
 }
 
+export interface LogoutResponse {
+    message: string
+}
+
 export interface ChangePasswordInput {
     currentPassword: string
     newPassword: string

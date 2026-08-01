@@ -24,3 +24,9 @@ export function useChangePassword() {
             authApi.changePassword(input),
     })
 }
+
+export function useLogoutAllDevices() {
+    return useMutation({
+        mutationFn: authApi.logoutAllDevices,
+    })
+}

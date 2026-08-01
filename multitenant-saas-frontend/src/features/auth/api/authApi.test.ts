@@ -63,4 +63,18 @@ describe('authApi account operations', () => {
             input,
         )
     })
+
+    it('revokes every device refresh session through the protected tenant endpoint', async () => {
+        const response = {
+            message: 'Logged out from all devices successfully',
+        }
+        const post = vi.spyOn(httpClient, 'post')
+            .mockResolvedValue(successfulResponse(response))
+
+        await expect(authApi.logoutAllDevices())
+            .resolves.toEqual(response)
+        expect(post).toHaveBeenCalledWith(
+            '/api/auth/logout-all',
+        )
+    })
 })
