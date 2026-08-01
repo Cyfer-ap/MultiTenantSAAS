@@ -30,6 +30,15 @@ export const projectMembersQueryKeys = {
         ),
         params,
     ] as const,
+    member: (
+        tenantId: string,
+        projectId: string,
+        userId: string,
+    ) => [
+        ...projectMembersQueryKeys.project(tenantId, projectId),
+        'member',
+        userId,
+    ] as const,
 }
 
 export function useProjectMembers(
@@ -55,6 +64,32 @@ export function useProjectMembers(
             tenantId.length > 0 &&
             projectId.length > 0,
         placeholderData: keepPreviousData,
+    })
+}
+
+export function useProjectMember(
+    tenantId: string,
+    projectId: string,
+    userId: string,
+    enabled = true,
+) {
+    return useQuery({
+        queryKey: projectMembersQueryKeys.member(
+            tenantId,
+            projectId,
+            userId,
+        ),
+        queryFn: () =>
+            projectMembersApi.getMember(
+                tenantId,
+                projectId,
+                userId,
+            ),
+        enabled:
+            enabled &&
+            tenantId.length > 0 &&
+            projectId.length > 0 &&
+            userId.length > 0,
     })
 }
 

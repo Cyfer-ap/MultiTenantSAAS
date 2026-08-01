@@ -27,6 +27,7 @@ import {
 import { AuthContext } from '../features/auth/context/AuthContext'
 import type { AuthContextValue } from '../features/auth/context/AuthContext'
 import { projectMembersApi } from '../features/projects/api/projectMembersApi'
+import { projectTasksApi } from '../features/projects/api/projectTasksApi'
 import { projectsApi } from '../features/projects/api/projectsApi'
 import type {
     ProjectMember,
@@ -71,6 +72,16 @@ const membersPage: PageResponse<ProjectMember> = {
     size: 10,
     totalElements: 1,
     totalPages: 1,
+    first: true,
+    last: true,
+}
+
+const tasksPage = {
+    content: [],
+    page: 0,
+    size: 10,
+    totalElements: 0,
+    totalPages: 0,
     first: true,
     last: true,
 }
@@ -142,6 +153,14 @@ describe('ProjectDetailsPage', () => {
             projectMembersApi,
             'getMembers',
         ).mockResolvedValue(membersPage)
+        vi.spyOn(
+            projectMembersApi,
+            'getMember',
+        ).mockResolvedValue(projectMember)
+        vi.spyOn(
+            projectTasksApi,
+            'getTasks',
+        ).mockResolvedValue(tasksPage)
     })
 
     it('renders project metadata and its member directory', async () => {
@@ -189,8 +208,15 @@ describe('ProjectDetailsPage', () => {
         await user.click(
             screen.getByRole('option', { name: 'Member' }),
         )
+        const memberSearchForm = screen
+            .getByLabelText(/search project members/i)
+            .closest('form')
+
+        expect(memberSearchForm).not.toBeNull()
         await user.click(
-            screen.getByRole('button', { name: /^search$/i }),
+            within(memberSearchForm!).getByRole('button', {
+                name: /^search$/i,
+            }),
         )
 
         expect(getMembers).toHaveBeenLastCalledWith(
@@ -287,7 +313,7 @@ describe('ProjectDetailsPage', () => {
         await screen.findByText('Grace User')
 
         expect(
-            screen.getByText(/memberships remain visible/i),
+            screen.getByText(/memberships and tasks remain visible/i),
         ).toBeInTheDocument()
         expect(
             screen.getByRole('button', {

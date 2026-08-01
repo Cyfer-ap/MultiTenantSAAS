@@ -52,6 +52,7 @@ import {
     ChangeProjectMemberRoleDialog,
     RemoveProjectMemberDialog,
 } from '../features/projects/components/ProjectMemberDialogs'
+import { ProjectTasksSection } from '../features/projects/components/ProjectTasksSection'
 import { useProjectDetails } from '../features/projects/hooks/useProjectDetails'
 import { useProjectMembers } from '../features/projects/hooks/useProjectMembers'
 import type {
@@ -353,7 +354,7 @@ export function ProjectDetailsPage() {
 
             {projectArchived && (
                 <Alert severity="info" sx={{ marginTop: 2 }}>
-                    This project is archived. Memberships remain visible but cannot be changed.
+                    This project is archived. Memberships and tasks remain visible but cannot be changed.
                 </Alert>
             )}
 
@@ -675,6 +676,15 @@ export function ProjectDetailsPage() {
                     </>
                 )}
             </Paper>
+
+            <ProjectTasksSection
+                onFeedback={setFeedback}
+                projectArchived={projectArchived}
+                projectId={projectId}
+                tenantId={tenantId}
+                tenantRole={session?.role ?? 'TENANT_USER'}
+                userId={session?.userId ?? ''}
+            />
 
             {canManageMembers && (
                 <>

@@ -79,6 +79,11 @@ describe('projectMembersApi', () => {
     })
 
     it('uses the dedicated add, role, and remove endpoints', async () => {
+        const get = vi
+            .spyOn(httpClient, 'get')
+            .mockResolvedValue(
+                successfulResponse(projectMember),
+            )
         const post = vi
             .spyOn(httpClient, 'post')
             .mockResolvedValue(
@@ -115,6 +120,13 @@ describe('projectMembersApi', () => {
         const basePath =
             '/api/tenants/tenant-1/projects/project-1/members'
 
+        await projectMembersApi.getMember(
+            'tenant-1',
+            'project-1',
+            'user-2',
+        )
+
+        expect(get).toHaveBeenCalledWith(`${basePath}/user-2`)
         expect(post).toHaveBeenCalledWith(basePath, {
             userId: 'user-2',
             role: 'MEMBER',

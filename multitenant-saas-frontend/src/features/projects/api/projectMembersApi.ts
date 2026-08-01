@@ -29,6 +29,18 @@ async function getMembers(
     return response.data.data
 }
 
+async function getMember(
+    tenantId: string,
+    projectId: string,
+    userId: string,
+): Promise<ProjectMember> {
+    const response = await httpClient.get<
+        ApiResponse<ProjectMember>
+    >(`${membersPath(tenantId, projectId)}/${userId}`)
+
+    return response.data.data
+}
+
 async function addMember(
     tenantId: string,
     projectId: string,
@@ -71,6 +83,7 @@ async function removeMember(
 
 export const projectMembersApi = {
     getMembers,
+    getMember,
     addMember,
     updateMemberRole,
     removeMember,
