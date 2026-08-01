@@ -24,6 +24,7 @@ import { NotFoundPage } from '../pages/NotFoundPage'
 import { ProjectsPage } from '../pages/ProjectsPage'
 import { ProjectDetailsPage } from '../pages/ProjectDetailsPage'
 import { ResetPasswordPage } from '../pages/ResetPasswordPage'
+import { TenantOnboardingPage } from '../pages/TenantOnboardingPage'
 import { UsersPage } from '../pages/UsersPage'
 
 export function AppRoutes() {
@@ -48,6 +49,11 @@ export function AppRoutes() {
                 <Route
                     path="reset-password"
                     element={<ResetPasswordPage />}
+                />
+
+                <Route
+                    path="register"
+                    element={<TenantOnboardingPage />}
                 />
             </Route>
 

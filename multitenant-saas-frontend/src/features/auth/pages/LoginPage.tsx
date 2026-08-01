@@ -22,6 +22,14 @@ import type { LoginInput } from '../types/auth'
 
 interface LoginRouteState {
     from?: unknown
+    tenantId?: unknown
+    email?: unknown
+}
+
+function resolvePrefillValue(value: unknown): string {
+    return typeof value === 'string'
+        ? value
+        : ''
 }
 
 function resolveRedirectPath(
@@ -51,6 +59,11 @@ export function LoginPage() {
     const { login } = useAuth()
     const navigate = useNavigate()
     const location = useLocation()
+    const routeState =
+        typeof location.state === 'object' &&
+        location.state !== null
+            ? location.state as LoginRouteState
+            : {}
 
     const {
         register,
@@ -63,8 +76,8 @@ export function LoginPage() {
         },
     } = useForm<LoginInput>({
         defaultValues: {
-            tenantId: '',
-            email: '',
+            tenantId: resolvePrefillValue(routeState.tenantId),
+            email: resolvePrefillValue(routeState.email),
             password: '',
         },
     })
@@ -245,6 +258,18 @@ export function LoginPage() {
                                     type="button"
                                 >
                                     Forgot password?
+                                </Button>
+
+                                <Button
+                                    disabled={isSubmitting}
+                                    fullWidth
+                                    onClick={() => {
+                                        navigate('/register')
+                                    }}
+                                    type="button"
+                                    variant="outlined"
+                                >
+                                    Create a workspace
                                 </Button>
                             </Stack>
                         </Box>

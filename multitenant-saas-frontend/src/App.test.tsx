@@ -251,6 +251,36 @@ describe('App authentication routes', () => {
     )
 
     it(
+        'exposes the public tenant-onboarding route',
+        async () => {
+            const queryClient =
+                createTestQueryClient()
+
+            render(
+                <ThemeProvider theme={appTheme}>
+                    <QueryClientProvider
+                        client={queryClient}
+                    >
+                        <MemoryRouter
+                            initialEntries={['/register']}
+                        >
+                            <AuthProvider>
+                                <App />
+                            </AuthProvider>
+                        </MemoryRouter>
+                    </QueryClientProvider>
+                </ThemeProvider>,
+            )
+
+            expect(
+                await screen.findByRole('heading', {
+                    name: /create workspace/i,
+                }),
+            ).toBeInTheDocument()
+        },
+    )
+
+    it(
         'prevents a tenant manager from opening admin-only audit logs',
         async () => {
             renderAuthenticatedRoute(
