@@ -29,6 +29,13 @@ import java.util.UUID;
                                 "tenant_id",
                                 "code"
                         }
+                ),
+                @UniqueConstraint(
+                        name = "uk_org_unit_tenant_id",
+                        columnNames = {
+                                "tenant_id",
+                                "id"
+                        }
                 )
         },
         indexes = {
