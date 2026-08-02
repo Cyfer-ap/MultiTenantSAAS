@@ -8,10 +8,13 @@ import com.chacha.multitenantsaas.dto.OrganizationalUnitResponse;
 import com.chacha.multitenantsaas.dto.OrganizationalUnitStatusUpdateRequest;
 import com.chacha.multitenantsaas.dto.OrganizationalUnitTreeResponse;
 import com.chacha.multitenantsaas.dto.OrganizationalUnitUpdateRequest;
+import com.chacha.multitenantsaas.service.OrganizationHierarchyCommandService;
 import com.chacha.multitenantsaas.service.OrganizationHierarchyService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,12 +36,20 @@ public class OrganizationHierarchyController {
     private final OrganizationHierarchyService
             organizationHierarchyService;
 
+    private final OrganizationHierarchyCommandService
+            organizationHierarchyCommandService;
+
     public OrganizationHierarchyController(
             OrganizationHierarchyService
-                    organizationHierarchyService
+                    organizationHierarchyService,
+            OrganizationHierarchyCommandService
+                    organizationHierarchyCommandService
     ) {
         this.organizationHierarchyService =
                 organizationHierarchyService;
+
+        this.organizationHierarchyCommandService =
+                organizationHierarchyCommandService;
     }
 
     @PreAuthorize(
@@ -54,13 +65,17 @@ public class OrganizationHierarchyController {
 
             @Valid
             @RequestBody
-            OrganizationalUnitCreateRequest request
+            OrganizationalUnitCreateRequest request,
+
+            @AuthenticationPrincipal
+            Jwt jwt
     ) {
         OrganizationalUnitResponse response =
-                organizationHierarchyService
+                organizationHierarchyCommandService
                         .createUnit(
                                 tenantId,
-                                request
+                                request,
+                                jwt
                         );
 
         return ResponseEntity.ok(
@@ -296,14 +311,18 @@ public class OrganizationHierarchyController {
 
             @Valid
             @RequestBody
-            OrganizationalUnitUpdateRequest request
+            OrganizationalUnitUpdateRequest request,
+
+            @AuthenticationPrincipal
+            Jwt jwt
     ) {
         OrganizationalUnitResponse response =
-                organizationHierarchyService
+                organizationHierarchyCommandService
                         .updateUnit(
                                 tenantId,
                                 unitId,
-                                request
+                                request,
+                                jwt
                         );
 
         return ResponseEntity.ok(
@@ -331,14 +350,18 @@ public class OrganizationHierarchyController {
 
             @Valid
             @RequestBody
-            OrganizationalUnitStatusUpdateRequest request
+            OrganizationalUnitStatusUpdateRequest request,
+
+            @AuthenticationPrincipal
+            Jwt jwt
     ) {
         OrganizationalUnitResponse response =
-                organizationHierarchyService
+                organizationHierarchyCommandService
                         .updateUnitStatus(
                                 tenantId,
                                 unitId,
-                                request
+                                request,
+                                jwt
                         );
 
         return ResponseEntity.ok(
@@ -365,14 +388,18 @@ public class OrganizationHierarchyController {
             UUID unitId,
 
             @RequestBody
-            OrganizationalUnitMoveRequest request
+            OrganizationalUnitMoveRequest request,
+
+            @AuthenticationPrincipal
+            Jwt jwt
     ) {
         OrganizationalUnitResponse response =
-                organizationHierarchyService
+                organizationHierarchyCommandService
                         .moveUnit(
                                 tenantId,
                                 unitId,
-                                request
+                                request,
+                                jwt
                         );
 
         return ResponseEntity.ok(
