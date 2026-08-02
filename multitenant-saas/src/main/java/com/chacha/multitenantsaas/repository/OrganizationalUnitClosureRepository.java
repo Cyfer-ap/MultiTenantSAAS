@@ -3,6 +3,7 @@ package com.chacha.multitenantsaas.repository;
 import com.chacha.multitenantsaas.entity.OrganizationalUnitClosure;
 import com.chacha.multitenantsaas.entity.OrganizationalUnitClosureId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -41,8 +42,11 @@ public interface OrganizationalUnitClosureRepository
                 descendant.name ASC
             """)
     List<OrganizationalUnitClosure> findDescendantPaths(
-            @Param("tenantId") UUID tenantId,
-            @Param("ancestorUnitId") UUID ancestorUnitId
+            @Param("tenantId")
+            UUID tenantId,
+
+            @Param("ancestorUnitId")
+            UUID ancestorUnitId
     );
 
     @Query("""
@@ -50,13 +54,40 @@ public interface OrganizationalUnitClosureRepository
             FROM OrganizationalUnitClosure closure
             JOIN FETCH closure.ancestorUnit ancestor
             WHERE closure.tenant.id = :tenantId
-              AND closure.descendantUnit.id = :descendantUnitId
+              AND closure.descendantUnit.id =
+                    :descendantUnitId
             ORDER BY
                 closure.depth ASC,
                 ancestor.name ASC
             """)
     List<OrganizationalUnitClosure> findAncestorPaths(
-            @Param("tenantId") UUID tenantId,
-            @Param("descendantUnitId") UUID descendantUnitId
+            @Param("tenantId")
+            UUID tenantId,
+
+            @Param("descendantUnitId")
+            UUID descendantUnitId
+    );
+
+    @Modifying(
+            flushAutomatically = true,
+            clearAutomatically = true
+    )
+    @Query("""
+            DELETE FROM OrganizationalUnitClosure closure
+            WHERE closure.tenant.id = :tenantId
+              AND closure.ancestorUnit.id
+                    IN :ancestorUnitIds
+              AND closure.descendantUnit.id
+                    IN :descendantUnitIds
+            """)
+    int deletePaths(
+            @Param("tenantId")
+            UUID tenantId,
+
+            @Param("ancestorUnitIds")
+            List<UUID> ancestorUnitIds,
+
+            @Param("descendantUnitIds")
+            List<UUID> descendantUnitIds
     );
 }
