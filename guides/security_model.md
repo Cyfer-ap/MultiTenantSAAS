@@ -1,31 +1,35 @@
-# Multi-Tenant SaaS Backend — Security Model
+# Multi-Tenant SaaS Platform — Security Model
 
-This guide describes the current authentication, authorization, tenant isolation, project access, session security, and audit model.
+This document describes the currently implemented authentication, session, authorization, tenant-isolation, and audit model.
 
-## 1. Account types
+```text
+Repository baseline reviewed:
+ae1fa4cbb5133ae0b3bcd2596379e1ab64f36be1
+```
 
-The platform has two separate account types:
+## 1. Security boundaries
+
+The platform separates:
+
+```text
+Platform scope
+Tenant scope
+Project scope
+Task/assignee relationships
+```
+
+Two account families exist:
 
 ```text
 Tenant users
-System admins
+System administrators
 ```
 
-Tenant users are stored in:
+Tenant users are stored in `APP_USERS`; system administrators are stored separately in `SYSTEM_ADMINS`.
 
-```text
-APP_USERS
-```
+## 2. Current roles
 
-System admins are stored in:
-
-```text
-SYSTEM_ADMINS
-```
-
-They are intentionally separate because tenant users belong to one tenant while system admins operate at platform scope.
-
-## 2. Tenant-user roles
+Tenant roles:
 
 ```text
 TENANT_ADMIN
@@ -33,103 +37,65 @@ TENANT_MANAGER
 TENANT_USER
 ```
 
-### TENANT_ADMIN
-
-Can manage their own tenant, users, invitations, projects, project memberships, and tasks.
-
-Main abilities:
-
-```text
-Read/update own tenant
-Change own tenant status under safety rules
-Create and manage tenant users
-Invite users
-Read tenant audit logs
-Read tenant dashboard
-Create and manage projects
-Manage project members
-Manage project tasks
-Unlock tenant users
-```
-
-Safety restrictions:
-
-```text
-Cannot change their own tenant role
-Cannot suspend/deactivate their own user account
-Cannot remove the last active tenant admin
-```
-
-### TENANT_MANAGER
-
-Operational management role.
-
-Main abilities:
-
-```text
-Read tenant users
-Read tenant dashboard
-Create/update/archive projects
-Manage project members
-Create/update/assign/cancel tasks
-Read project and task data
-```
-
-A tenant manager does not receive tenant-admin user-management authority.
-
-### TENANT_USER
-
-Basic tenant user.
-
-Main abilities:
-
-```text
-Authenticate
-Read same-tenant projects
-Read project-member lists
-Read tasks only for projects where they are a member
-Update status only for tasks assigned to them
-Receive PROJECT_LEAD authority when promoted inside a project
-```
-
-## 3. Project-level roles
+Project roles:
 
 ```text
 PROJECT_LEAD
 MEMBER
 ```
 
-These roles are separate from tenant roles.
+Project roles are independent from tenant roles. A `TENANT_USER` may be a `PROJECT_LEAD` without becoming a tenant manager.
 
-A TENANT_USER can be a PROJECT_LEAD for one project without becoming TENANT_MANAGER.
+### Tenant administrator
 
-### PROJECT_LEAD
-
-For that project:
+Current authority includes:
 
 ```text
-Read tasks
-Create tasks
-Update tasks
-Assign/unassign tasks
-Update task statuses
-Cancel tasks
+Tenant management under safety constraints
+Tenant-user management
+Invitations
+Tenant dashboard
+Tenant audit logs
+Project, membership, and task management
+Account and session security
 ```
 
-### MEMBER
-
-For that project:
+Safety constraints:
 
 ```text
-Read tasks
-Update status of a task only when assigned to that member
+Cannot remove the last active tenant admin
+Cannot change own role through the ordinary administrative flow
+Cannot suspend/deactivate own account through the ordinary flow
 ```
 
-The project creator is automatically assigned as PROJECT_LEAD.
+### Tenant manager
 
-At least one PROJECT_LEAD must always remain.
+Current authority includes:
 
-## 4. System admin
+```text
+Tenant dashboard
+Tenant-user operational access
+Project, membership, and task management
+Account and session security
+```
+
+Tenant managers do not receive tenant-admin invitation or audit-log authority.
+
+### Tenant user
+
+Current authority includes:
+
+```text
+Authentication
+Projects and project details
+Project-member visibility
+Task visibility when project membership permits
+Assigned-task status updates
+Project-lead authority where assigned
+Account and session security
+```
+
+## 3. System administrators
 
 System-admin authority:
 
@@ -137,178 +103,272 @@ System-admin authority:
 SYSTEM_ADMIN
 ```
 
-System admins are DB-backed accounts, not tenant users.
-
-Current abilities:
+Implemented authority includes:
 
 ```text
-Login and read current system-admin identity
-Change own password
-Read platform dashboard
-List/read/update tenants
-Create a tenant through system onboarding
-Read and manage tenant users
-Read tenant audit logs
-Create/list/read/status-update/unlock system admins
-Read platform audit logs
+Platform login and current-admin lookup
+Own password change
+Platform dashboard
+Tenant administration and onboarding
+Tenant-user administration
+System-admin administration
+Tenant audit-log access
+Platform audit logs
 ```
 
-Safety restrictions:
+Safety constraints:
 
 ```text
-Cannot suspend/deactivate themselves
-At least one active system admin must remain
-Only active system admins pass authorization
+A system admin cannot deactivate themselves.
+At least one active system admin must remain.
+Authorization rechecks the active database record.
 ```
 
-System-admin refresh tokens are not implemented.
+System-admin refresh tokens are not currently implemented.
 
-## 5. Authentication flows
+## 4. Tenant authentication
 
-### Tenant login
+Tenant login:
 
 ```text
-POST http://localhost:8081/api/tenants/{tenantId}/auth/login
+POST /api/tenants/{tenantId}/auth/login
 ```
 
 Checks:
 
 ```text
-Tenant exists
-Tenant is ACTIVE
-User exists inside that tenant
-User is ACTIVE
-Account is not currently locked
-Password is correct
+Tenant exists and is ACTIVE
+User exists in that tenant and is ACTIVE
+Account is not locked
+Password hash matches
 ```
 
-Returns:
+Successful login returns an access JWT, a refresh token, identity data, role data, and expiration metadata.
+
+## 5. System-admin authentication
+
+System-admin login:
 
 ```text
-accessToken
-refreshToken
-```
-
-### System-admin login
-
-```text
-POST http://localhost:8081/api/system/auth/login
+POST /api/system/auth/login
 ```
 
 Checks:
 
 ```text
-System admin exists
-System admin is ACTIVE
-Account is not currently locked
-Password is correct
+System admin exists and is ACTIVE
+Account is not locked
+Password hash matches
 ```
 
-Returns:
-
-```text
-accessToken
-```
+Successful login returns an access JWT.
 
 ## 6. JWT claims
 
-Tenant-user JWT:
+Tenant JWT claims include:
 
 ```text
-subject = userId
+sub = userId
 tenantId
 email
 fullName
 role
+sessionVersion
+iss
+iat
+exp
 ```
 
-System-admin JWT:
+System-admin JWT claims include:
 
 ```text
-subject = systemAdminId
+sub = systemAdminId
 email
 fullName
 role = SYSTEM_ADMIN
 accountType = SYSTEM_ADMIN
+iss
+iat
+exp
 ```
 
-## 7. DB-backed authorization
+## 7. JWT validation
 
-JWT identity is not accepted blindly.
+Cryptographic validation uses HMAC SHA-256 with a secret of at least 32 bytes.
+
+Tenant tokens receive an additional database-backed validation step through:
+
+```text
+TenantSessionJwtValidator
+```
+
+The validator:
+
+```text
+Parses tenantId and userId
+Reads the token sessionVersion
+Loads the user within the token tenant
+Compares the token version with APP_USERS.session_version
+Rejects missing users and revoked session versions
+```
+
+Tokens created before migration V8 are interpreted as version zero so existing sessions remain compatible until a revocation increments the stored version.
+
+System-admin tokens bypass tenant session-version validation.
+
+## 8. Tenant session lifecycle
+
+### Refresh
+
+```text
+POST /api/auth/refresh
+```
+
+Refresh tokens:
+
+```text
+Use secure randomness
+Are stored only as SHA-256 hashes
+Rotate after successful refresh
+Cannot be reused after rotation
+Expire according to configuration
+```
+
+### Single-session logout
+
+```text
+POST /api/auth/logout
+```
+
+This revokes the submitted refresh token. It does not increment the global user session version, so the related access JWT may remain valid until expiry unless another live authorization rule rejects it.
+
+### Logout all devices
+
+```text
+POST /api/auth/logout-all
+```
+
+This operation:
+
+```text
+Increments APP_USERS.session_version
+Revokes every active refresh token for the user
+Audits the event
+```
+
+All previously issued tenant access tokens become invalid on their next protected request.
+
+### Password change and reset
+
+Password change and password reset:
+
+```text
+Replace the password hash
+Increment session_version
+Revoke all active refresh tokens
+Audit the event
+```
+
+Every previously issued tenant access and refresh token is invalidated.
+
+## 9. Frontend session behavior
+
+The tenant frontend:
+
+```text
+Stores the tenant session in localStorage
+Restores it through GET /api/auth/me
+Adds the access token to protected requests
+Refreshes after an access-token 401
+Deduplicates concurrent refresh attempts
+Clears the session if refresh returns 401 or 403
+Clears tenant query data after sign-out
+Preserves the stored session during temporary network/backend failures
+```
+
+After logout-all from another browser:
+
+```text
+The old access JWT receives 401.
+The refresh token also receives 401.
+The frontend clears local authentication.
+The user returns to sign-in.
+```
+
+System-admin sessions use separate storage and API clients.
+
+## 10. DB-backed authorization
+
+JWT role claims are not the sole source of truth.
 
 Tenant authorization rechecks:
 
 ```text
-JWT tenantId
-JWT subject/userId
-Tenant exists
-Tenant is ACTIVE
-User exists in that tenant
-User is ACTIVE
+Token tenant ID and user ID
+Tenant database record and ACTIVE status
+User database record and ACTIVE status
 Current database role
-Requested tenant matches the token tenant
+Requested tenant ownership
+```
+
+Project/task checks additionally evaluate:
+
+```text
+Project tenant ownership
+Project membership
+Project role
+Task assignee relationship
+Resource status
 ```
 
 System-admin authorization rechecks:
 
 ```text
-JWT role
-JWT accountType
+SYSTEM_ADMIN claim
+accountType claim
 System-admin database record
-System-admin ACTIVE status
+ACTIVE status
 ```
 
-Project/task authorization additionally rechecks:
+## 11. Tenant isolation
+
+Tenant isolation is enforced through:
 
 ```text
-Project belongs to requested tenant
-Current tenant user exists and is active
-Project membership when required
-Project role when required
-Task assignee when status-only authority is used
-```
-
-This means an old access token stops passing protected operations after a live role/status change even though the JWT itself has not expired.
-
-## 8. Tenant isolation
-
-Tenant isolation is enforced through several layers:
-
-```text
-Tenant ID in route
-Tenant ID in JWT
-Live user lookup
-Live tenant lookup
-Method-security checks
+Tenant IDs in routes
+Tenant IDs in JWTs
 Tenant-scoped repository methods
+Live tenant/user lookup
+Method security
+Service ownership checks
 Cross-tenant integration tests
 ```
 
-Important repository patterns:
+Required pattern:
 
 ```text
-findByTenantIdAndId(tenantId, userId)
-findByTenant_IdAndId(tenantId, projectId)
-findByProject_Tenant_IdAndProject_IdAndId(tenantId, projectId, taskId)
+Load a business record using tenant identity and record identity together.
 ```
 
-Business records must never be fetched by an unscoped ID and returned before ownership is verified.
+Unsafe pattern:
 
-## 9. Project access model
+```text
+Load by an unscoped record ID, expose data, and verify ownership later.
+```
 
-| Operation | SYSTEM_ADMIN | TENANT_ADMIN | TENANT_MANAGER | TENANT_USER |
-|---|---:|---:|---:|---:|
-| List/read same-tenant projects | No by project API | Yes | Yes | Yes |
-| Create project | No | Yes | Yes | No |
-| Update/status/archive project | No | Yes | Yes | No |
-| Read project members | No | Yes | Yes | Yes |
-| Add/change/remove project members | No | Yes | Yes | No |
+## 12. Project access matrix
 
-System administrators manage tenants through platform/tenant management APIs, not through tenant business APIs.
+| Operation | Tenant admin | Tenant manager | Tenant user |
+|---|---:|---:|---:|
+| List/read tenant projects | Yes | Yes | Yes |
+| Create project | Yes | Yes | No |
+| Update/status/archive project | Yes | Yes | No |
+| Read project members | Yes | Yes | Yes |
+| Add/change/remove members | Yes | Yes | No |
 
-## 10. Task access model
+## 13. Task access matrix
 
-| Operation | Tenant admin/manager | Project lead | Assigned member | Other project member | Non-member tenant user |
+| Operation | Tenant admin/manager | Project lead | Assigned member | Other member | Non-member |
 |---|---:|---:|---:|---:|---:|
 | List/read tasks | Yes | Yes | Yes | Yes | No |
 | Create task | Yes | Yes | No | No | No |
@@ -317,57 +377,35 @@ System administrators manage tenants through platform/tenant management APIs, no
 | Cancel task | Yes | Yes | No | No | No |
 | Update task status | Yes | Yes | Yes | No | No |
 
-Task assignees must be active members of the project.
+Assignees must be active members of the same project.
 
-## 11. Refresh-token security
+## 14. Password and token security
 
-Tenant refresh tokens:
-
-```text
-Are generated using secure randomness
-Are stored only as SHA-256 hashes
-Rotate on refresh
-Become invalid after rotation
-Can be revoked individually
-Can be revoked for all user sessions
-```
-
-Automatic revocation:
-
-```text
-Password change
-Password reset
-User role change
-User suspension/deactivation
-Tenant suspension/deactivation
-```
-
-Logout note:
-
-```text
-Logout revokes refresh tokens.
-Already-issued access JWTs remain cryptographically valid until expiry.
-Live DB authorization may still block them immediately after role/status changes.
-```
-
-## 12. Password security
-
-Passwords are stored using Spring Security password encoding.
-
-New passwords use the shared strong-password validator:
+Strong-password policy:
 
 ```text
 8–100 characters
-Uppercase
-Lowercase
+Uppercase and lowercase
 Number
 Special character
 No spaces
 ```
 
-Raw passwords are never stored.
+Passwords are stored only as encoded hashes.
 
-## 13. Login lockout
+Invitation and password-reset tokens:
+
+```text
+Use secure random raw values
+Are stored only as hashes
+Expire
+Are one-time use
+Can be revoked or consumed
+```
+
+Development profiles may expose raw tokens for testing. Production delivery must use an external communication channel.
+
+## 15. Account lockout
 
 Tenant users and system admins track:
 
@@ -376,140 +414,20 @@ failedLoginAttempts
 lockedUntil
 ```
 
-Current default policy:
+Default policy:
 
 ```text
 5 failed attempts
 15-minute lock
 ```
 
-Administrators can unlock accounts through authorized endpoints.
+Authorized administrators can unlock accounts.
 
-## 14. Invitation-token security
+## 16. Security error contract
 
-Invitation tokens:
+Security failures use the shared JSON error contract.
 
-```text
-Are generated securely
-Are stored only as hashes
-Expire
-Can be revoked
-Are one-time use
-Create the user only after acceptance
-```
-
-A replacement pending invitation revokes the previous pending invitation for the same tenant/email.
-
-The local development response may expose:
-
-```text
-devInvitationToken
-```
-
-Production must send the raw token through email and omit it from ordinary API responses.
-
-## 15. Password-reset-token security
-
-Password-reset tokens:
-
-```text
-Are generated securely
-Are stored only as hashes
-Expire
-Are one-time use
-Revoke active refresh tokens after password reset
-```
-
-The local development response may expose a development reset token.
-
-## 16. Audit model
-
-Tenant audit logs contain:
-
-```text
-tenant
-actorType
-actorUser or actorSystemAdmin
-targetUser
-action
-success
-message
-createdAt
-```
-
-Actor types:
-
-```text
-TENANT_USER
-SYSTEM_ADMIN
-SYSTEM
-```
-
-Platform audit logs are separate and track system-admin management.
-
-Business audit actions being completed:
-
-```text
-PROJECT_CREATED
-PROJECT_UPDATED
-PROJECT_STATUS_UPDATED
-PROJECT_ARCHIVED
-PROJECT_MEMBER_ADDED
-PROJECT_MEMBER_ROLE_UPDATED
-PROJECT_MEMBER_REMOVED
-TASK_CREATED
-TASK_UPDATED
-TASK_STATUS_UPDATED
-TASK_ASSIGNEE_UPDATED
-TASK_CANCELLED
-```
-
-The audit action database column is being converted from an H2 enum to `VARCHAR(60)` through Flyway V7 so future action additions do not require H2 enum reconstruction.
-
-## 17. Public endpoints
-
-Public development/support endpoints:
-
-```text
-GET  http://localhost:8081/api/health
-GET  http://localhost:8081/actuator/health
-GET  http://localhost:8081/h2-console
-GET  http://localhost:8081/swagger-ui.html
-GET  http://localhost:8081/v3/api-docs
-```
-
-Public authentication/onboarding endpoints:
-
-```text
-POST http://localhost:8081/api/onboarding/tenants
-POST http://localhost:8081/api/tenants/{tenantId}/auth/login
-POST http://localhost:8081/api/tenants/{tenantId}/auth/forgot-password
-POST http://localhost:8081/api/system/auth/login
-POST http://localhost:8081/api/auth/refresh
-POST http://localhost:8081/api/auth/logout
-POST http://localhost:8081/api/auth/reset-password
-POST http://localhost:8081/api/user-invitations/accept
-```
-
-Everything else under `/api/**` is authenticated unless explicitly configured otherwise.
-
-## 18. CORS and secrets
-
-CORS is configured centrally.
-
-Allowed origins are environment/profile controlled.
-
-Secrets are externalized:
-
-```text
-JWT secret
-System-admin bootstrap password
-Environment-specific datasource values
-```
-
-Do not commit local secrets.
-
-## 19. Standard security errors
+Primary error codes:
 
 ```text
 401 AUTHENTICATION_REQUIRED
@@ -517,29 +435,77 @@ Do not commit local secrets.
 403 ACCESS_DENIED
 ```
 
-These use the same structured API error body as controller/service errors.
+The OAuth2 resource-server authentication entry point and access-denied handler are explicitly configured so invalid bearer tokens return the same contract as service/controller failures.
 
-## 20. Security tests
+## 17. Audit model
 
-Integration coverage includes:
+Tenant audit records contain:
+
+```text
+Tenant
+Actor type
+Tenant-user actor or system-admin actor
+Target user
+Action
+Success
+Message
+Created timestamp
+```
+
+Platform audit records are stored separately.
+
+Sensitive events include login/session, password, tenant, user, invitation, project, membership, task, and system-admin operations.
+
+## 18. Current verification
+
+The backend suite covers:
 
 ```text
 Missing/invalid authentication
-Cross-tenant user access
-Cross-tenant invitation access
-Cross-tenant project access
-Cross-tenant project membership access
-Cross-tenant task access
-Tenant-role restrictions
-Project-role restrictions
-Assigned-member status authority
-Refresh-token rotation and revocation
+Stable 401/403 JSON responses
+Tenant isolation and cross-tenant denial
+Refresh-token rotation and reuse denial
+Single logout
+Logout-all access/refresh invalidation
+Password-change access/refresh invalidation
 Invitation one-time use
+Project-role restrictions
+Task-assignee restrictions
 Archived/cancelled immutability
 ```
 
-Current suite size before adding audit-specific tests:
+Current verified suite:
 
 ```text
-43 tests
+47 tests
 ```
+
+## 19. Authorization-v2 direction
+
+The next server-side authorization model will add:
+
+```text
+Permission catalogue
+Protected and tenant-defined roles
+Organizational units
+Arbitrary organizational depth
+Reporting relationships
+Scoped role assignments
+Direct-report scope
+Organizational-subtree scope
+Project scope
+Temporary delegation
+Effective-access explanation
+```
+
+Planned decision model:
+
+```text
+same tenant
+AND required permission exists
+AND assignment scope contains the target
+AND required relationship is satisfied
+AND contextual safety constraints pass
+```
+
+See `guides/authorization_v2_plan.md`.

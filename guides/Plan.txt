@@ -1,532 +1,425 @@
-# Multi-Tenant SaaS Platform — Current Implementation Plan
-
-This file is the active implementation roadmap for the Spring Boot project.
-
-## 1. Project goal
-
-Build a production-style multi-tenant SaaS backend where:
+# Multi-Tenant SaaS Platform — Active Roadmap
 
 ```text
-Multiple organizations use one application
-Every organization is a tenant
-Tenant-owned data is isolated
-Tenant users have controlled roles
-Platform administrators are separate from tenant users
-Authentication and authorization are DB-backed
-Business operations are auditable
-The backend exposes a stable API for a future frontend
+Repository baseline reviewed:
+ae1fa4cbb5133ae0b3bcd2596379e1ab64f36be1
+
+Current state:
+Fixed-role full-stack MVP complete
+
+Immediate next phase:
+Hierarchical and scoped authorization
 ```
 
-The current business vertical is project management:
+## 1. Project objective
 
-```text
-Tenants
-Users
-Invitations
-Projects
-Project members
-Tasks
-Dashboards
-Audit logs
-```
-
-## 2. Repository and application
-
-Repository:
-
-```text
-https://github.com/Cyfer-ap/MultiTenantSAAS
-```
-
-Application folder:
-
-```text
-multitenant-saas/
-```
-
-Local path:
-
-```text
-D:\Projects\multitenant-saas\multitenant-saas
-```
-
-Base URL:
-
-```text
-http://localhost:8081
-```
-
-## 3. Selected architecture
-
-Backend:
-
-```text
-Spring Boot 4.0.6
-Java 21
-Maven
-Spring Web MVC
-Spring Data JPA
-Spring Security
-JWT
-Flyway
-```
-
-Local database:
-
-```text
-H2 file database
-```
-
-Planned production database:
-
-```text
-PostgreSQL
-```
-
-Tenant model:
-
-```text
-Shared application
-Shared database
-Shared schema
-Tenant-aware relationships and queries
-```
-
-Tenant isolation is enforced in service, security, repository, and integration-test layers.
-
-## 4. Main implementation decisions
-
-```text
-Tenant onboarding creates tenant + initial admin
-Direct tenant creation endpoint is disabled
-System admins are separate from APP_USERS
-Tenant roles are fixed for the MVP
-Project roles are separate from tenant roles
-Refresh tokens are stored as hashes
-Invitation/reset tokens are stored as hashes
-Soft deletion is represented by status
-Authorization rechecks live database state
-Errors use stable machine-readable error codes
-Environment secrets are externalized
-Schema changes use Flyway
-```
-
-## 5. Completed phase: backend foundation
-
-Completed:
-
-```text
-Project setup
-Layered package structure
-Shared API response
-Shared API error response
-Validation
-Pagination and sorting utilities
-Global exception handling
-JWT 401/403 handlers
-CORS configuration
-Local/test profiles
-Secret externalization
-OpenAPI/Swagger
-Actuator
-H2 local database
-Flyway baseline
-```
-
-## 6. Completed phase: identity and tenant core
-
-Completed:
-
-```text
-Tenant onboarding
-Tenant CRUD/status/listing
-Tenant users
-Strong password validation
-Tenant JWT login
-Current-user endpoint
-Refresh-token rotation
-Logout/logout-all
-Password change
-Forgot/reset password
-DB-backed authorization
-Tenant isolation
-Tenant-admin safety rules
-Account lockout/unlock
-```
-
-## 7. Completed phase: platform administration
-
-Completed:
-
-```text
-Separate SYSTEM_ADMINS table
-System-admin login/current-user/password change
-System-admin create/list/read/status/unlock
-System-admin safety guards
-Platform dashboard
-Platform audit logs
-System-admin tenant onboarding
-Platform-level tenant/user management
-```
-
-Deferred:
-
-```text
-System-admin refresh tokens
-```
-
-## 8. Completed phase: invitations
-
-Completed:
-
-```text
-Create invitation
-List/filter invitation
-Read invitation
-Revoke invitation
-Accept invitation
-One-time token
-Token hashing
-Configurable expiry
-Replacement invitation revocation
-User creation on acceptance
-```
-
-## 9. Completed phase: project business vertical
-
-### Projects
-
-Completed:
-
-```text
-Create
-List
-Search
-Filter
-Sort
-Read
-Update
-Status change
-Archive
-Tenant isolation
-Role-based write access
-```
-
-### Project members
-
-Completed:
-
-```text
-Automatic creator PROJECT_LEAD
-Add member
-List/search/filter members
-Read membership
-Change project role
-Remove member
-Duplicate protection
-Last-lead protection
-Archived-project lock
-```
-
-### Tasks
-
-Completed:
-
-```text
-Create
-List/search/filter
-Read
-Update
-Status transitions
-Assignment/unassignment
-Assigned-member status authority
-Project-lead management authority
-Completion timestamp
-Cancellation
-Cancelled-task immutability
-Archived-project task history
-```
-
-## 10. Completed phase: integration testing
-
-Current suite covers:
-
-```text
-System authentication
-Tenant onboarding
-Tenant isolation
-Token lifecycle
-Invitation lifecycle
-Project lifecycle
-Project membership
-Task lifecycle
-Role restrictions
-Cross-tenant restrictions
-Error contract
-```
-
-Current count before business-audit-specific tests:
-
-```text
-43 tests
-```
-
-## 11. Current phase: business audit logging
-
-Goal:
-
-```text
-Record project, membership, and task mutations in tenant audit logs.
-```
-
-Actions:
-
-```text
-PROJECT_CREATED
-PROJECT_UPDATED
-PROJECT_STATUS_UPDATED
-PROJECT_ARCHIVED
-
-PROJECT_MEMBER_ADDED
-PROJECT_MEMBER_ROLE_UPDATED
-PROJECT_MEMBER_REMOVED
-
-TASK_CREATED
-TASK_UPDATED
-TASK_STATUS_UPDATED
-TASK_ASSIGNEE_UPDATED
-TASK_CANCELLED
-```
-
-Required code areas:
-
-```text
-entity/AuditAction.java
-service/ProjectService.java
-controller/ProjectController.java
-service/ProjectMemberService.java
-controller/ProjectMemberController.java
-service/ProjectTaskService.java
-controller/ProjectTaskController.java
-```
-
-Mutation services must receive the authenticated `Jwt` when actor identity is required.
-
-## 12. Current Flyway recovery
-
-Problem:
-
-```text
-V6 was applied when the file was empty.
-The database stored checksum 0.
-SQL was then added to V6.
-Flyway rejected the changed checksum.
-```
-
-Required recovery:
-
-```text
-V6__expand_tenant_audit_actions.sql
-- keep as a zero-byte file
-
-V7__convert_audit_action_to_varchar.sql
-- contains the real schema change
-```
-
-V7 SQL:
-
-```sql
-ALTER TABLE audit_logs
-    ALTER COLUMN action SET DATA TYPE VARCHAR(60);
-
-ALTER TABLE audit_logs
-    ALTER COLUMN action SET NOT NULL;
-```
-
-After the recovery:
-
-```text
-Start application
-Verify Flyway history
-Run all tests
-Verify audit filters through Postman
-```
-
-## 13. Next phase: tenant dashboard metrics
-
-Add to tenant dashboard:
-
-```text
-Total projects
-Planning projects
-Active projects
-On-hold projects
-Completed projects
-Archived projects
-
-Total project members
-
-Total tasks
-TODO tasks
-IN_PROGRESS tasks
-BLOCKED tasks
-COMPLETED tasks
-CANCELLED tasks
-
-Overdue tasks
-Task completion percentage
-```
-
-Add repository count queries and integration tests.
-
-## 14. Next phase: MVP API contract freeze
-
-Before frontend development:
-
-```text
-Verify endpoint paths
-Verify request/response DTOs
-Verify HTTP status codes
-Verify error codes
-Verify enum values
-Verify pagination fields
-Verify date formats
-Verify authorization matrix
-Verify OpenAPI output
-Remove accidental dev-only API exposure
-Document the contract
-```
-
-Do not rename endpoints casually after this phase.
-
-## 15. Frontend phase
-
-Recommended frontend:
-
-```text
-Next.js
-TypeScript
-React Query
-Central API client
-Central authentication/session layer
-Role-aware navigation
-```
-
-Implementation order:
-
-```text
-1. App shell and routing
-2. Tenant/system-admin login
-3. Token refresh handling
-4. Role-aware navigation
-5. System dashboard
-6. Tenant dashboard
-7. Tenant users
-8. Invitations
-9. Projects
-10. Project members
-11. Tasks
-12. Audit logs
-```
-
-## 16. Production-hardening phase
-
-After the frontend starts:
-
-```text
-PostgreSQL migration
-Docker
-Email provider
-Invitation/reset email templates
-Redis where justified
-Background jobs
-Rate limiting
-Structured logging
-Metrics/tracing
-Database backups
-Object storage
-CI pipeline
-Deployment profiles
-Production CORS
-HTTPS
-```
-
-## 17. SaaS monetization phase
-
-Deferred until the core product flow is stable:
-
-```text
-Subscription plans
-Tenant subscription
-Plan limits
-User limits
-Project/task limits
-Feature flags
-Billing provider
-Payment webhooks
-Invoices
-Usage tracking
-```
-
-## 18. Advanced authorization phase
-
-The MVP uses fixed roles.
-
-Later:
-
-```text
-Permission entity
-Configurable roles
-Role-permission mapping
-Tenant-defined permission sets
-Feature-level authorization
-```
-
-Do not add this before the current fixed-role product is stable.
-
-## 19. Non-goals before frontend
-
-Do not block frontend work on:
-
-```text
-Billing
-Redis
-Advanced caching
-Separate database per tenant
-Custom domains
-White labeling
-Complex permission sets
-AI features
-File storage
-Complete production observability
-```
-
-## 20. Immediate execution order
-
-```text
-1. Finish V6/V7 migration recovery.
-2. Finish business audit wiring.
-3. Run the full integration suite.
-4. Verify audit actions in Postman.
-5. Add tenant dashboard business metrics.
-6. Add dashboard tests.
-7. Freeze the MVP API contract.
-8. Start the frontend.
-```
-
-## 21. Long-term target
-
-The finished platform should demonstrate:
+Build a serious multi-tenant SaaS platform that demonstrates:
 
 ```text
 Secure tenant isolation
 Platform and tenant administration
 Session security
-Invitation onboarding
-Real tenant-scoped business resources
-Role-based business operations
-Auditability
-Stable REST contracts
-Production migration discipline
-Frontend integration readiness
+Auditable business operations
+Complex organizational structures
+Permission-based authorization
+Scoped authority
+Relationship-aware access
+Frontend and backend enforcement
+Migration discipline
+Automated testing
+```
+
+The project-management vertical remains the working business domain used to exercise the authorization model.
+
+## 2. Completed MVP
+
+### Backend
+
+```text
+Tenant onboarding and management
+Tenant users and fixed tenant roles
+System administrators
+Tenant and system authentication
+Refresh-token lifecycle
+Immediate tenant session invalidation
+Password lifecycle
+Account lockout
+Invitations
+Projects
+Project memberships
+Tasks
+Dashboards
+Tenant and platform audit logs
+Flyway migrations
+Integration tests
+```
+
+### Frontend
+
+```text
+Tenant and system-admin application shells
+Public onboarding
+Authentication and session restoration
+Automatic tenant token refresh
+Role-protected routes
+Dashboard pages
+User and invitation management
+Project, membership, and task management
+Audit-log pages
+Account settings and password flows
+Logout and logout-all
+System-admin management
+Frontend tests and production build
+```
+
+## 3. Current role model
+
+Tenant roles:
+
+```text
+TENANT_ADMIN
+TENANT_MANAGER
+TENANT_USER
+```
+
+Project roles:
+
+```text
+PROJECT_LEAD
+MEMBER
+```
+
+The model is stable but fixed. It cannot represent arbitrary management depth, departments, direct reports, subtree authority, or tenant-defined roles.
+
+## 4. Authorization-v2 objective
+
+Introduce a hybrid authorization system:
+
+```text
+Permission-based RBAC
++
+Organizational hierarchy
++
+Scoped role assignments
++
+Relationship-based access
++
+Limited contextual rules
+```
+
+The system must answer:
+
+```text
+What action may this user perform?
+Within which organizational or resource scope?
+Because of which role, relationship, or delegation?
+```
+
+## 5. Target organizational model
+
+A tenant may contain arbitrary depth:
+
+```text
+Tenant
+└── Division
+    └── Department
+        └── Team
+            └── Subteam
+                └── Additional nested units
+```
+
+Users may have reporting chains such as:
+
+```text
+Manager
+└── Assistant manager
+    └── Manager
+        └── Team lead
+            └── Member
+```
+
+No fixed manager-level columns may be introduced.
+
+## 6. Phase A — Domain design and compatibility
+
+Before implementation:
+
+```text
+Finalize entity boundaries
+Finalize permission naming
+Finalize scope types
+Define protected system roles
+Define custom-role lifecycle
+Define assignment and delegation rules
+Define authority and protected-target rules
+Define cycle-prevention rules
+Define compatibility migration
+Define audit actions
+Define authorization test matrix
+```
+
+Compatibility requirement:
+
+```text
+Existing TENANT_ADMIN, TENANT_MANAGER, and TENANT_USER
+behavior must continue working during migration.
+```
+
+## 7. Phase B — Organizational hierarchy
+
+Implement:
+
+```text
+OrganizationalUnit
+OrganizationalUnitClosure
+UserOrganizationAssignment
+Reporting relationships
+Primary assignment
+Unit status
+Hierarchy traversal
+Unit movement
+Cycle prevention
+Cross-tenant protection
+```
+
+Persistence strategy:
+
+```text
+Adjacency list as canonical parent relationship
+Closure table for ancestor/descendant queries
+```
+
+Initial APIs:
+
+```text
+Create/list/read/update organizational units
+Move organizational unit
+Deactivate organizational unit
+Assign/remove users
+Set/change reporting manager
+Read tree and subtree
+Read user chain of command
+```
+
+Initial frontend:
+
+```text
+Organization tree
+Unit details
+Unit membership
+Reporting-line editor
+Hierarchy validation messages
+```
+
+## 8. Phase C — Permission catalogue and roles
+
+Implement:
+
+```text
+Permission
+AuthorizationRole
+RolePermission
+Protected platform-defined tenant roles
+Tenant-defined custom roles
+Role activation/deactivation
+Role cloning
+Permission matrix
+```
+
+Permission categories:
+
+```text
+Tenant
+Organization
+Users
+Roles
+Invitations
+Projects
+Project members
+Tasks
+Audit logs
+Security
+```
+
+## 9. Phase D — Scoped role assignments
+
+Implement:
+
+```text
+UserRoleAssignment
+Scope type and scope resource
+Validity period
+Assignment actor
+Revocation
+```
+
+Initial scope types:
+
+```text
+TENANT
+ORGANIZATIONAL_UNIT
+ORGANIZATIONAL_SUBTREE
+DIRECT_REPORTS
+PROJECT
+SELF
+```
+
+## 10. Phase E — Central authorization engine
+
+Introduce centralized services:
+
+```text
+AuthorizationService
+PermissionEvaluationService
+ScopeResolutionService
+OrganizationHierarchyService
+EffectiveAccessService
+```
+
+Controllers must not manually traverse reporting chains.
+
+## 11. Phase F — Incremental module migration
+
+Migrate one vertical slice at a time:
+
+```text
+1. Organization management
+2. User read/manage operations
+3. Invitations
+4. Project operations
+5. Project memberships
+6. Tasks
+7. Tenant audit-log access
+8. Account/security administration
+```
+
+During migration:
+
+```text
+Legacy fixed-role rules remain available.
+New permission checks use a compatibility mapping.
+Each migrated module receives cross-scope tests.
+```
+
+Do not convert every endpoint in one change.
+
+## 12. Phase G — Delegation
+
+After scoped roles are stable:
+
+```text
+Temporary delegated role or permission
+Start/end timestamps
+Revocation
+No privilege escalation
+No broader delegated scope
+Optional redelegation control
+Delegation audit trail
+Acting-manager use case
+```
+
+## 13. Phase H — Explain access
+
+Add an administrative inspection capability:
+
+```text
+Why can user A perform action X on resource Y?
+Why was access denied?
+Which role assignment supplied the permission?
+Which organizational path placed the resource in scope?
+Was access delegated?
+When does access expire?
+```
+
+## 14. Required invariants
+
+```text
+No organizational cycles
+No unit may become its own descendant
+No cross-tenant parent relation
+No cross-tenant role assignment or delegation
+No user may assign authority they do not possess
+No delegation may exceed the delegator's scope
+No lower-authority user may modify a protected higher-authority assignment
+At least one tenant administrative safety path must remain
+Deactivated or expired assignments cannot grant access
+```
+
+## 15. Testing strategy
+
+Every phase must include:
+
+```text
+Service tests
+Integration tests
+Cross-tenant tests
+Ancestor/descendant tests
+Direct-report versus subtree tests
+Cycle-prevention tests
+Privilege-escalation tests
+Expired-assignment tests
+Frontend route/UI tests
+Backend-denial contract tests
+```
+
+The existing 47 backend tests remain regression tests.
+
+## 16. Deferred product modules
+
+Do not mix these into the first authorization-v2 phases:
+
+```text
+Subscriptions and billing
+Notifications and email delivery
+File attachments
+Webhooks and API keys
+Analytics
+PostgreSQL migration
+Docker deployment
+```
+
+## 17. Production-aware rules during expansion
+
+```text
+Use Flyway for every schema change.
+Avoid H2-only schema design.
+Keep secrets externalized.
+Use tenant-scoped repositories.
+Centralize authorization.
+Audit sensitive changes.
+Paginate collection APIs.
+Preserve stable error contracts.
+Add tests before migrating the next module.
+Never trust frontend guards as authorization.
+```
+
+## 18. Immediate execution order
+
+```text
+1. Finalize authorization-v2 terminology and permission catalogue.
+2. Design organizational-unit and closure-table schema.
+3. Define user assignment and reporting-line schema.
+4. Define scope types and effective-access algorithm.
+5. Define compatibility mapping from fixed roles.
+6. Define audit actions and test matrix.
+7. Implement the organizational hierarchy backend.
+8. Add organization-management frontend.
+9. Implement roles and permissions.
+10. Implement scoped assignments.
+11. Migrate existing modules incrementally.
+12. Add delegation and explain-access capabilities.
+```
+
+## 19. Success criteria
+
+```text
+A tenant can model an arbitrary organization tree.
+Managers can receive authority over direct reports or full subtrees.
+Users with the same role can have different scopes.
+Tenant-defined roles contain explicit permissions.
+Projects can be controlled by tenant, unit, membership, or project scope.
+Delegation cannot escalate authority.
+Every decision is tenant isolated and auditable.
+Administrators can understand why access was allowed or denied.
+The original MVP behavior remains covered by regression tests.
 ```

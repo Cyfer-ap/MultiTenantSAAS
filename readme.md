@@ -1,154 +1,294 @@
-# Multi-Tenant SaaS Backend
+# Multi-Tenant SaaS Platform
 
-A learning-focused **Multi-Tenant SaaS backend** built with **Spring Boot**, Java 21, Spring Security, JWT, Spring Data JPA, and H2.
+A full-stack learning project for building a secure, auditable, multi-tenant SaaS platform.
 
-The project demonstrates core SaaS backend concepts such as tenant onboarding, tenant isolation, role-based access control, authentication, refresh tokens, password reset, audit logging, and system-admin level platform access.
+The current product vertical is project and workforce management. It includes tenant onboarding, tenant-scoped users, invitations, projects, project memberships, tasks, dashboards, audit logs, platform administration, password recovery, and multi-device session revocation.
 
----
-
-## Current Status
-
-Implemented so far:
+Documentation snapshot:
 
 ```text
-Tenant onboarding
-Tenant management
-Tenant-scoped user management
-Tenant roles and statuses
-System admin bootstrap and login
-JWT access-token authentication
-Refresh-token rotation and revocation
-Logout and logout-all
+Repository: Cyfer-ap/MultiTenantSAAS
+Baseline commit reviewed: ae1fa4cbb5133ae0b3bcd2596379e1ab64f36be1
+Status: Feature-complete fixed-role MVP
+Next major phase: Hierarchical and scoped authorization
+```
+
+## Repository structure
+
+```text
+MultiTenantSAAS/
+├── guides/
+├── multitenant-saas/             Spring Boot backend
+├── multitenant-saas-frontend/    React frontend
+└── readme.md
+```
+
+## Current capabilities
+
+### Tenant application
+
+```text
+Public tenant onboarding
+Tenant login and session restoration
+Refresh-token rotation
+Single-session logout
+Sign out all tenant devices
 Change password
 Forgot/reset password
-Reusable strong password validation
-DB-backed authorization checks
-Tenant isolation
-Tenant and system dashboards
-Audit logging with actor/target user model
-Swagger/OpenAPI UI
-H2 file-based development database
+Account lockout and administrative unlock
+
+Tenant dashboard
+Tenant user management
+Invitation lifecycle
+Projects
+Project memberships
+Project tasks
+Tenant audit logs
+Account settings
+Role-aware navigation and protected routes
 ```
 
----
-
-## Tech Stack
+### Platform administration
 
 ```text
-Backend: Spring Boot 4
-Language: Java 21
-Build: Maven
-Database: H2 for local development
-ORM: Spring Data JPA / Hibernate
-Security: Spring Security
-Auth: JWT access tokens + refresh tokens
-API Docs: Springdoc OpenAPI / Swagger UI
+System-admin login
+System-admin password change
+Platform dashboard
+Tenant listing and management
+System-admin tenant onboarding
+Tenant-user management
+System-admin management
+Platform audit logs
 ```
 
----
-
-## Local URLs
+### Security
 
 ```text
-Backend:      http://localhost:8081
+Shared-database, shared-schema tenancy
+Tenant-scoped repository access
+DB-backed authorization
+Structured 401/403 responses
+Hashed refresh, invitation, and reset tokens
+Refresh-token rotation and revocation
+Per-user tenant session version
+Immediate tenant access-token rejection after logout-all,
+password change, or password reset
+Last-active-admin protections
+Cross-tenant integration tests
+```
+
+## Technology stack
+
+### Backend
+
+```text
+Java 21
+Spring Boot 4.0.6
+Spring Web MVC
+Spring Data JPA
+Spring Security
+OAuth2 Resource Server / JWT
+Flyway
+H2 file database for local development
+Maven
+JUnit 5 and MockMvc
+Springdoc OpenAPI
+Actuator
+```
+
+### Frontend
+
+```text
+React 19
+TypeScript 6
+Vite 8
+Material UI 9
+TanStack Query 5
+Axios
+React Router 7
+React Hook Form
+Zod
+Vitest
+Testing Library
+```
+
+## Local development
+
+### Backend configuration
+
+From:
+
+```text
+multitenant-saas/src/main/resources/
+```
+
+copy:
+
+```text
+application-local.example.properties
+```
+
+to:
+
+```text
+application-local.properties
+```
+
+Set a local JWT secret of at least 32 bytes and choose strong local bootstrap credentials. The local properties file must remain uncommitted.
+
+### Start the backend
+
+From `multitenant-saas/`:
+
+```powershell
+$env:SPRING_PROFILES_ACTIVE="local"
+.\mvnw.cmd spring-boot:run
+```
+
+Backend URLs:
+
+```text
+API:          http://localhost:8081
 Health:       http://localhost:8081/api/health
-Swagger UI:   http://localhost:8081/swagger-ui.html
+Swagger:      http://localhost:8081/swagger-ui.html
 OpenAPI JSON: http://localhost:8081/v3/api-docs
-H2 Console:   http://localhost:8081/h2-console
+H2 console:   http://localhost:8081/h2-console
 ```
 
-H2 login:
+### Frontend configuration
+
+Create `multitenant-saas-frontend/.env.local`:
+
+```dotenv
+VITE_API_BASE_URL=http://localhost:8081
+```
+
+### Start the frontend
+
+From `multitenant-saas-frontend/`:
+
+```powershell
+npm install
+npm run dev
+```
+
+Default Vite URL:
 
 ```text
-JDBC URL: jdbc:h2:file:./data/multitenant_saas_db
-Username: sa
-Password: empty
+http://localhost:5173
 ```
 
----
+## Verification commands
 
-## Quick Start
+### Backend
 
-From the inner Spring Boot project folder:
+```powershell
+cd multitenant-saas
+.\mvnw.cmd clean test
+```
+
+Current verified backend suite:
 
 ```text
-D:\Projects\multitenant-saas\multitenant-saas
+47 tests
 ```
 
-Run:
+### Frontend
 
-```bash
-mvnw.cmd spring-boot:run
+```powershell
+cd multitenant-saas-frontend
+npm run lint
+npm run test
+npm run build
 ```
 
-or on Linux/macOS:
-
-```bash
-./mvnw spring-boot:run
-```
-
----
-
-## Default Local System Admin
-
-The local bootstrap system admin is configured in `application.properties`:
-
-```text
-Email: system@saas.local
-Password: SystemAdmin@123
-```
-
-System admin login:
-
-```text
-POST http://localhost:8081/api/system/auth/login
-```
-
----
+Vitest is configured with bounded worker concurrency and extended test/hook timeouts to reduce jsdom and Material UI suite contention.
 
 ## Documentation
 
-The detailed learning/reference material is inside the `guides` folder:
-
 ```text
-guides/Details.txt
 guides/progress.md
-guides/postman_tests.md
+    Current implemented state and technical inventory.
+
+guides/Plan.txt
+    Active roadmap and execution order.
+
 guides/security_model.md
+    Existing authentication, tenant isolation, authorization,
+    and session-revocation model.
+
+guides/authorization_v2_plan.md
+    Design specification for hierarchical, scoped RBAC.
+
+guides/frontend_architecture.md
+    Frontend structure, session handling, routing, API access,
+    state management, and conventions.
+
+guides/frontend_testing.md
+    Frontend testing strategy and regression checklist.
+
+guides/postman_tests.md
+    Manual backend API testing guide.
 ```
 
-Recommended reading order:
+## Current authorization model
+
+The MVP currently uses fixed tenant roles:
 
 ```text
-1. Details.txt
-2. progress.md
-3. security_model.md
-4. postman_tests.md
+TENANT_ADMIN
+TENANT_MANAGER
+TENANT_USER
 ```
 
----
-
-## Main Roles
+and project roles:
 
 ```text
-SYSTEM_ADMIN    Platform-level admin, not tied to a tenant
-TENANT_ADMIN    Full admin inside one tenant
-TENANT_MANAGER  Read/management-level access inside one tenant
-TENANT_USER     Basic tenant user
+PROJECT_LEAD
+MEMBER
 ```
 
----
-
-## Next Possible Work
+The next phase will extend this into an enterprise authorization model with:
 
 ```text
-System-admin refresh tokens
-System-admin audit logs
-System-admin CRUD management
-Plan/subscription module
-Flyway database migrations
-PostgreSQL migration
-Automated tests
-Email service for password reset
-Invitation-based user onboarding
+Arbitrary organizational depth
+Organizational units
+Reporting relationships
+Permission-based roles
+Tenant-defined roles
+Scoped role assignments
+Direct-report and subtree scopes
+Project/resource scopes
+Temporary delegation
+Effective-access explanation
+```
+
+The fixed roles must remain operational during migration so the existing MVP does not break.
+
+## Development principles
+
+```text
+Every schema change uses Flyway.
+Every business query is tenant scoped.
+Sensitive mutations are audited.
+Authorization is centralized and DB backed.
+Collection APIs support pagination.
+Secrets are environment controlled.
+Frontend API errors use the shared backend contract.
+New features include backend and frontend tests.
+Complex architecture is introduced only when justified.
+```
+
+## Near-term direction
+
+```text
+1. Freeze and document the current MVP.
+2. Design the authorization-v2 domain.
+3. Implement organizational hierarchy.
+4. Add permission catalogue and custom roles.
+5. Add scoped role assignments.
+6. Migrate existing modules incrementally.
+7. Add delegation and effective-access inspection.
+8. Revisit subscriptions, PostgreSQL, containers, and deployment
+   after the authorization platform is stable.
 ```
