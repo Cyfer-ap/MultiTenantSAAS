@@ -18,6 +18,7 @@ import com.chacha.multitenantsaas.repository.OrganizationalUnitClosureRepository
 import com.chacha.multitenantsaas.repository.OrganizationalUnitRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.chacha.multitenantsaas.dto.OrganizationalUnitCreateRequest;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -70,6 +71,30 @@ public class OrganizationHierarchyService {
 
         this.organizationalUnitClosureRepository =
                 organizationalUnitClosureRepository;
+    }
+
+    @Transactional
+    public OrganizationalUnitResponse createUnit(
+            UUID tenantId,
+            OrganizationalUnitCreateRequest request
+    ) {
+        if (request == null) {
+            throw new IllegalArgumentException(
+                    "Organizational unit create request "
+                            + "is required."
+            );
+        }
+
+        OrganizationalUnit createdUnit =
+                createUnit(
+                        tenantId,
+                        request.parentUnitId(),
+                        request.name(),
+                        request.code(),
+                        request.type()
+                );
+
+        return mapToResponse(createdUnit);
     }
 
     @Transactional
