@@ -30,6 +30,46 @@ public interface UserOrganizationAssignmentRepository
             OrganizationAssignmentStatus status
     );
 
+    long
+    countByTenant_IdAndReportsToAssignment_IdAndStatus(
+            UUID tenantId,
+            UUID reportsToAssignmentId,
+            OrganizationAssignmentStatus status
+    );
+
+    @Query("""
+            SELECT COUNT(assignment)
+            FROM UserOrganizationAssignment assignment
+            WHERE assignment.tenant.id = :tenantId
+              AND assignment.user.id = :userId
+              AND assignment.primaryAssignment = true
+              AND assignment.status = :activeStatus
+              AND (
+                    :validUntil IS NULL
+                    OR assignment.validFrom < :validUntil
+              )
+              AND (
+                    assignment.validUntil IS NULL
+                    OR assignment.validUntil > :validFrom
+              )
+            """)
+    long countOverlappingActivePrimaryAssignments(
+            @Param("tenantId")
+            UUID tenantId,
+
+            @Param("userId")
+            UUID userId,
+
+            @Param("activeStatus")
+            OrganizationAssignmentStatus activeStatus,
+
+            @Param("validFrom")
+            Instant validFrom,
+
+            @Param("validUntil")
+            Instant validUntil
+    );
+
     @Query("""
             SELECT assignment
             FROM UserOrganizationAssignment assignment
@@ -37,7 +77,8 @@ public interface UserOrganizationAssignmentRepository
             JOIN FETCH assignment.organizationalUnit unit
             JOIN FETCH assignment.createdByUser createdBy
             LEFT JOIN FETCH
-                assignment.reportsToAssignment managerAssignment
+                assignment.reportsToAssignment
+                    managerAssignment
             WHERE assignment.tenant.id = :tenantId
               AND assignment.user.id = :userId
             ORDER BY
@@ -62,7 +103,8 @@ public interface UserOrganizationAssignmentRepository
             JOIN FETCH assignment.organizationalUnit unit
             JOIN FETCH assignment.createdByUser createdBy
             LEFT JOIN FETCH
-                assignment.reportsToAssignment managerAssignment
+                assignment.reportsToAssignment
+                    managerAssignment
             WHERE assignment.tenant.id = :tenantId
               AND assignment.organizationalUnit.id =
                     :organizationalUnitId
@@ -88,7 +130,8 @@ public interface UserOrganizationAssignmentRepository
             JOIN FETCH assignment.organizationalUnit unit
             JOIN FETCH assignment.createdByUser createdBy
             LEFT JOIN FETCH
-                assignment.reportsToAssignment managerAssignment
+                assignment.reportsToAssignment
+                    managerAssignment
             WHERE assignment.tenant.id = :tenantId
               AND assignment.reportsToAssignment.id =
                     :managerAssignmentId
@@ -112,11 +155,11 @@ public interface UserOrganizationAssignmentRepository
             JOIN FETCH assignment.organizationalUnit unit
             JOIN FETCH assignment.createdByUser createdBy
             LEFT JOIN FETCH
-                assignment.reportsToAssignment managerAssignment
+                assignment.reportsToAssignment
+                    managerAssignment
             WHERE assignment.tenant.id = :tenantId
               AND assignment.user.id = :userId
-              AND assignment.status =
-                    :activeStatus
+              AND assignment.status = :activeStatus
               AND assignment.validFrom <= :effectiveAt
               AND (
                     assignment.validUntil IS NULL
