@@ -285,6 +285,9 @@ class OrganizationAssignmentServiceIntegrationTest {
                         .plus(
                                 5,
                                 ChronoUnit.DAYS
+                        )
+                        .truncatedTo(
+                                ChronoUnit.MICROS
                         );
 
         organizationAssignmentService

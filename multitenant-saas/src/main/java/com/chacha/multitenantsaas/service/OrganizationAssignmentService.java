@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class OrganizationAssignmentService {
@@ -114,12 +115,16 @@ public class OrganizationAssignmentService {
                 );
 
         Instant validFrom =
-                request.validFrom() == null
-                        ? Instant.now()
-                        : request.validFrom();
+                normalizeDatabaseInstant(
+                        request.validFrom() == null
+                                ? Instant.now()
+                                : request.validFrom()
+                );
 
         Instant validUntil =
-                request.validUntil();
+                normalizeDatabaseInstant(
+                        request.validUntil()
+                );
 
         validateValidityRange(
                 validFrom,
@@ -629,6 +634,18 @@ public class OrganizationAssignmentService {
                                                 + assignmentId
                                 )
                 );
+    }
+
+    private Instant normalizeDatabaseInstant(
+            Instant value
+    ) {
+        if (value == null) {
+            return null;
+        }
+
+        return value.truncatedTo(
+                ChronoUnit.MICROS
+        );
     }
 
     private OrganizationAssignmentResponse
