@@ -279,6 +279,7 @@ public class AuthorizationUserRoleAssignmentService {
                         tenantId,
                         userId,
                         AuthorizationUserRoleAssignmentStatus.ACTIVE,
+                        AuthorizationRoleStatus.ACTIVE,
                         resolvedEffectiveAt
                 )
                 .stream()

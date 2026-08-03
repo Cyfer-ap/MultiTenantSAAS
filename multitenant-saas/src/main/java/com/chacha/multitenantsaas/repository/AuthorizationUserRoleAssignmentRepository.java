@@ -1,5 +1,8 @@
 package com.chacha.multitenantsaas.repository;
 
+import com.chacha.multitenantsaas.entity.AuthorizationPermissionSource;
+import com.chacha.multitenantsaas.entity.AuthorizationPermissionStatus;
+import com.chacha.multitenantsaas.entity.AuthorizationRoleStatus;
 import com.chacha.multitenantsaas.entity.AuthorizationScopeType;
 import com.chacha.multitenantsaas.entity.AuthorizationUserRoleAssignment;
 import com.chacha.multitenantsaas.entity.AuthorizationUserRoleAssignmentStatus;
@@ -80,8 +83,7 @@ public interface AuthorizationUserRoleAssignmentRepository
             WHERE assignment.tenant.id = :tenantId
               AND assignedUser.id = :userId
               AND assignment.status = :activeStatus
-              AND role.status =
-                    com.chacha.multitenantsaas.entity.AuthorizationRoleStatus.ACTIVE
+              AND role.status = :activeRoleStatus
               AND assignment.validFrom <= :effectiveAt
               AND (
                     assignment.validUntil IS NULL
@@ -102,6 +104,75 @@ public interface AuthorizationUserRoleAssignmentRepository
 
             @Param("activeStatus")
             AuthorizationUserRoleAssignmentStatus activeStatus,
+
+            @Param("activeRoleStatus")
+            AuthorizationRoleStatus activeRoleStatus,
+
+            @Param("effectiveAt")
+            Instant effectiveAt
+    );
+
+    @Query("""
+            SELECT assignment
+            FROM AuthorizationUserRoleAssignment assignment
+            JOIN FETCH assignment.user assignedUser
+            JOIN FETCH assignment.role role
+            JOIN FETCH assignment.createdByUser createdBy
+            WHERE assignment.tenant.id = :tenantId
+              AND assignedUser.id = :userId
+              AND assignment.status = :activeAssignmentStatus
+              AND role.status = :activeRoleStatus
+              AND assignment.validFrom <= :effectiveAt
+              AND (
+                    assignment.validUntil IS NULL
+                    OR assignment.validUntil > :effectiveAt
+              )
+              AND EXISTS (
+                    SELECT mapping.id
+                    FROM AuthorizationRolePermission mapping
+                    JOIN mapping.permission permission
+                    WHERE mapping.tenant.id = :tenantId
+                      AND mapping.role.id = role.id
+                      AND permission.code = :permissionCode
+                      AND permission.status =
+                            :activePermissionStatus
+                      AND (
+                            permission.source =
+                                :platformPermissionSource
+                            OR permission.tenant.id =
+                                :tenantId
+                      )
+              )
+            ORDER BY
+                role.code ASC,
+                assignment.scopeType ASC,
+                assignment.id ASC
+            """)
+    List<AuthorizationUserRoleAssignment>
+    findEffectiveAssignmentsGrantingPermission(
+            @Param("tenantId")
+            UUID tenantId,
+
+            @Param("userId")
+            UUID userId,
+
+            @Param("permissionCode")
+            String permissionCode,
+
+            @Param("activeAssignmentStatus")
+            AuthorizationUserRoleAssignmentStatus
+                    activeAssignmentStatus,
+
+            @Param("activeRoleStatus")
+            AuthorizationRoleStatus activeRoleStatus,
+
+            @Param("activePermissionStatus")
+            AuthorizationPermissionStatus
+                    activePermissionStatus,
+
+            @Param("platformPermissionSource")
+            AuthorizationPermissionSource
+                    platformPermissionSource,
 
             @Param("effectiveAt")
             Instant effectiveAt
@@ -142,7 +213,8 @@ public interface AuthorizationUserRoleAssignmentRepository
             String scopeKey,
 
             @Param("activeStatus")
-            AuthorizationUserRoleAssignmentStatus activeStatus,
+            AuthorizationUserRoleAssignmentStatus
+                    activeStatus,
 
             @Param("validFrom")
             Instant validFrom,
