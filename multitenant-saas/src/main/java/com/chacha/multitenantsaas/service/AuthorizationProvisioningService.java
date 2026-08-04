@@ -17,6 +17,8 @@ import com.chacha.multitenantsaas.repository.AuthorizationUserRoleAssignmentRepo
 import com.chacha.multitenantsaas.security.SystemRoleCodes;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.chacha.multitenantsaas.dto.AuthorizationProvisioningIssueResponse;
+import com.chacha.multitenantsaas.dto.AuthorizationProvisioningReadinessResponse;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -26,6 +28,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Comparator;
 
 @Service
 public class AuthorizationProvisioningService {
@@ -232,6 +236,211 @@ public class AuthorizationProvisioningService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public AuthorizationProvisioningReadinessResponse
+    getTenantReadiness(
+            UUID tenantId
+    ) {
+        if (tenantId == null) {
+            throw new IllegalArgumentException(
+                    "Tenant id is required."
+            );
+        }
+
+        List<AuthorizationRoleResponse>
+                activeSystemRoles =
+                authorizationRoleService
+                        .getRoles(tenantId)
+                        .stream()
+                        .filter(
+                                role ->
+                                        role.source()
+                                                == AuthorizationRoleSource.SYSTEM
+                        )
+                        .filter(
+                                role ->
+                                        role.status()
+                                                == AuthorizationRoleStatus.ACTIVE
+                        )
+                        .filter(
+                                role ->
+                                        REQUIRED_SYSTEM_ROLES
+                                                .contains(
+                                                        role.code()
+                                                )
+                        )
+                        .toList();
+
+        Set<String> availableRoleCodes =
+                activeSystemRoles
+                        .stream()
+                        .map(
+                                AuthorizationRoleResponse::code
+                        )
+                        .collect(Collectors.toSet());
+
+        List<String> missingSystemRoleCodes =
+                REQUIRED_SYSTEM_ROLES
+                        .stream()
+                        .filter(
+                                roleCode ->
+                                        !availableRoleCodes
+                                                .contains(
+                                                        roleCode
+                                                )
+                        )
+                        .sorted()
+                        .toList();
+
+        List<AppUser> tenantUsers =
+                appUserRepository.findByTenantId(
+                        tenantId
+                );
+
+        List<AuthorizationProvisioningIssueResponse>
+                issues =
+                new ArrayList<>();
+
+        int activeUsers = 0;
+        int inactiveUsers = 0;
+        int compliantUsers = 0;
+
+        for (AppUser user : tenantUsers) {
+            List<AuthorizationUserRoleAssignmentResponse>
+                    managedAssignments =
+                    getActiveManagedSystemAssignments(
+                            tenantId,
+                            user.getId()
+                    );
+
+            List<String> activeRoleCodes =
+                    managedAssignments
+                            .stream()
+                            .map(
+                                    AuthorizationUserRoleAssignmentResponse
+                                            ::roleCode
+                            )
+                            .sorted()
+                            .toList();
+
+            String expectedRoleCode =
+                    mapLegacyRoleToSystemRoleCode(
+                            user.getRole()
+                    );
+
+            if (user.getStatus() == UserStatus.ACTIVE) {
+                activeUsers++;
+
+                boolean exactlyOneCorrectRole =
+                        managedAssignments.size() == 1
+                                && expectedRoleCode.equals(
+                                managedAssignments
+                                        .getFirst()
+                                        .roleCode()
+                        );
+
+                if (exactlyOneCorrectRole) {
+                    compliantUsers++;
+                    continue;
+                }
+
+                issues.add(
+                        new AuthorizationProvisioningIssueResponse(
+                                user.getId(),
+                                user.getEmail(),
+                                user.getRole(),
+                                user.getStatus(),
+                                expectedRoleCode,
+                                activeRoleCodes,
+                                buildActiveUserIssueReason(
+                                        expectedRoleCode,
+                                        activeRoleCodes
+                                )
+                        )
+                );
+
+                continue;
+            }
+
+            inactiveUsers++;
+
+            if (managedAssignments.isEmpty()) {
+                compliantUsers++;
+                continue;
+            }
+
+            issues.add(
+                    new AuthorizationProvisioningIssueResponse(
+                            user.getId(),
+                            user.getEmail(),
+                            user.getRole(),
+                            user.getStatus(),
+                            expectedRoleCode,
+                            activeRoleCodes,
+                            "Inactive user has active generated "
+                                    + "system-role assignments."
+                    )
+            );
+        }
+
+        boolean ready =
+                missingSystemRoleCodes.isEmpty()
+                        && issues.isEmpty();
+
+        return new AuthorizationProvisioningReadinessResponse(
+                tenantId,
+                ready,
+                activeSystemRoles.size(),
+                missingSystemRoleCodes,
+                tenantUsers.size(),
+                activeUsers,
+                inactiveUsers,
+                compliantUsers,
+                issues.size(),
+                List.copyOf(issues)
+        );
+    }
+
+    private List<AuthorizationUserRoleAssignmentResponse>
+    getActiveManagedSystemAssignments(
+            UUID tenantId,
+            UUID userId
+    ) {
+        return authorizationUserRoleAssignmentService
+                .getUserAssignments(
+                        tenantId,
+                        userId
+                )
+                .stream()
+                .filter(
+                        assignment ->
+                                assignment.roleSource()
+                                        == AuthorizationRoleSource.SYSTEM
+                )
+                .filter(
+                        assignment ->
+                                assignment.scopeType()
+                                        == AuthorizationScopeType.TENANT
+                )
+                .filter(
+                        assignment ->
+                                assignment.status()
+                                        == AuthorizationUserRoleAssignmentStatus.ACTIVE
+                )
+                .sorted(
+                        Comparator
+                                .comparing(
+                                        AuthorizationUserRoleAssignmentResponse
+                                                ::roleCode
+                                )
+                                .thenComparing(
+                                        AuthorizationUserRoleAssignmentResponse
+                                                ::id
+                                )
+                )
+                .toList();
+    }
+
     private boolean synchronizeActiveUser(
             UUID tenantId,
             AppUser user,
@@ -282,9 +491,12 @@ public class AuthorizationProvisioningService {
                                 userId
                         );
 
-        for (AuthorizationUserRoleAssignmentResponse
-                assignment : assignments) {
+        boolean requiredRoleAlreadyKept = false;
 
+        for (
+                AuthorizationUserRoleAssignmentResponse
+                        assignment : assignments
+        ) {
             boolean managedSystemAssignment =
                     assignment.roleSource()
                             == AuthorizationRoleSource.SYSTEM
@@ -297,13 +509,17 @@ public class AuthorizationProvisioningService {
                 continue;
             }
 
-            boolean shouldRemainActive =
+            boolean matchesRequiredRole =
                     roleCodeToKeep != null
                             && roleCodeToKeep.equals(
                             assignment.roleCode()
                     );
 
-            if (shouldRemainActive) {
+            if (
+                    matchesRequiredRole
+                            && !requiredRoleAlreadyKept
+            ) {
+                requiredRoleAlreadyKept = true;
                 continue;
             }
 
@@ -490,5 +706,39 @@ public class AuthorizationProvisioningService {
         return value.truncatedTo(
                 ChronoUnit.MICROS
         );
+    }
+
+    private String buildActiveUserIssueReason(
+            String expectedRoleCode,
+            List<String> activeRoleCodes
+    ) {
+        if (activeRoleCodes.isEmpty()) {
+            return "Active user is missing generated "
+                    + "system role "
+                    + expectedRoleCode
+                    + ".";
+        }
+
+        long matchingRoleCount =
+                activeRoleCodes
+                        .stream()
+                        .filter(expectedRoleCode::equals)
+                        .count();
+
+        if (matchingRoleCount == 0) {
+            return "Active user has incorrect generated "
+                    + "system role. Expected "
+                    + expectedRoleCode
+                    + ".";
+        }
+
+        if (matchingRoleCount > 1) {
+            return "Active user has duplicate generated "
+                    + expectedRoleCode
+                    + " assignments.";
+        }
+
+        return "Active user has additional generated "
+                + "system-role assignments.";
     }
 }
