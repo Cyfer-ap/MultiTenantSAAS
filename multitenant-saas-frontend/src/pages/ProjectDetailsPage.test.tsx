@@ -27,6 +27,12 @@ import {
 
 import { AuthContext } from '../features/auth/context/AuthContext'
 import type { AuthContextValue } from '../features/auth/context/AuthContext'
+import { currentAuthorizationQueryKeys } from '../features/authorization/hooks/useCurrentAuthorization'
+import { createProjectAuthorizationContext } from '../features/authorization/test/authorizationTestData'
+import {
+    authorizationPermissionCodes,
+    type CurrentAuthorizationContext,
+} from '../features/authorization/types/authorization'
 import { projectMembersApi } from '../features/projects/api/projectMembersApi'
 import { projectTasksApi } from '../features/projects/api/projectTasksApi'
 import { projectsApi } from '../features/projects/api/projectsApi'
@@ -104,6 +110,17 @@ const authContextValue: AuthContextValue = {
     logout: vi.fn(),
 }
 
+const projectManagerAuthorization =
+    createProjectAuthorizationContext({
+        projectId: 'project-1',
+        permissionCodes: [
+            authorizationPermissionCodes.PROJECT_READ,
+            authorizationPermissionCodes.PROJECT_MEMBER_MANAGE,
+            authorizationPermissionCodes.PROJECT_TASK_READ,
+            authorizationPermissionCodes.PROJECT_TASK_MANAGE,
+        ],
+    })
+
 function createTestQueryClient(): QueryClient {
     return new QueryClient({
         defaultOptions: {
@@ -115,8 +132,20 @@ function createTestQueryClient(): QueryClient {
 
 function renderProjectDetailsPage(
     contextValue: AuthContextValue = authContextValue,
+    authorizationContext: CurrentAuthorizationContext =
+        projectManagerAuthorization,
 ) {
     const queryClient = createTestQueryClient()
+    const tenantId = contextValue.session?.tenantId ?? ''
+    const userId = contextValue.session?.userId ?? ''
+
+    queryClient.setQueryData(
+        currentAuthorizationQueryKeys.current(
+            tenantId,
+            userId,
+        ),
+        authorizationContext,
+    )
 
     function Wrapper({ children }: PropsWithChildren) {
         return (
@@ -279,15 +308,24 @@ describe('ProjectDetailsPage', () => {
         })
     })
 
-    it('keeps membership controls hidden from tenant users', async () => {
-        renderProjectDetailsPage({
-            ...authContextValue,
-            session: {
-                ...authContextValue.session!,
-                userId: 'user-2',
-                role: 'TENANT_USER',
+    it('keeps membership controls hidden without the project grant', async () => {
+        renderProjectDetailsPage(
+            {
+                ...authContextValue,
+                session: {
+                    ...authContextValue.session!,
+                    userId: 'user-2',
+                    role: 'TENANT_USER',
+                },
             },
-        })
+            createProjectAuthorizationContext({
+                userId: 'user-2',
+                projectId: 'project-2',
+                permissionCodes: [
+                    authorizationPermissionCodes.PROJECT_MEMBER_MANAGE,
+                ],
+            }),
+        )
 
         await screen.findByText('Grace User')
 

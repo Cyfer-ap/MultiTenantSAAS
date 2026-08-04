@@ -135,6 +135,15 @@ export function getDefaultAuthorizedPath(
     if (
         hasTenantPermission(
             context,
+            authorizationPermissionCodes.AUTHORIZATION_MANAGE,
+        )
+    ) {
+        return '/authorization'
+    }
+
+    if (
+        hasTenantPermission(
+            context,
             authorizationPermissionCodes.AUDIT_READ,
         )
     ) {

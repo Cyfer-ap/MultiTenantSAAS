@@ -47,6 +47,9 @@ import {
 } from 'react-router'
 
 import { useAuth } from '../features/auth/hooks/useAuth'
+import { hasProjectPermission } from '../features/authorization/access/authorizationAccess'
+import { useCurrentAuthorization } from '../features/authorization/hooks/useCurrentAuthorization'
+import { authorizationPermissionCodes } from '../features/authorization/types/authorization'
 import {
     AddProjectMemberDialog,
     ChangeProjectMemberRoleDialog,
@@ -152,9 +155,23 @@ export function ProjectDetailsPage() {
         useState<string | null>(null)
 
     const tenantId = session?.tenantId ?? ''
-    const canManageMembers =
-        session?.role === 'TENANT_ADMIN' ||
-        session?.role === 'TENANT_MANAGER'
+    const authorizationQuery = useCurrentAuthorization()
+    const authorization = authorizationQuery.data
+    const canManageMembers = hasProjectPermission(
+        authorization,
+        authorizationPermissionCodes.PROJECT_MEMBER_MANAGE,
+        projectId,
+    )
+    const canReadTasksByPermission = hasProjectPermission(
+        authorization,
+        authorizationPermissionCodes.PROJECT_TASK_READ,
+        projectId,
+    )
+    const canManageTasksByPermission = hasProjectPermission(
+        authorization,
+        authorizationPermissionCodes.PROJECT_TASK_MANAGE,
+        projectId,
+    )
 
     const projectQuery = useProjectDetails(
         tenantId,
@@ -678,11 +695,16 @@ export function ProjectDetailsPage() {
             </Paper>
 
             <ProjectTasksSection
+                canManageTasksByPermission={
+                    canManageTasksByPermission
+                }
+                canReadTasksByPermission={
+                    canReadTasksByPermission
+                }
                 onFeedback={setFeedback}
                 projectArchived={projectArchived}
                 projectId={projectId}
                 tenantId={tenantId}
-                tenantRole={session?.role ?? 'TENANT_USER'}
                 userId={session?.userId ?? ''}
             />
 

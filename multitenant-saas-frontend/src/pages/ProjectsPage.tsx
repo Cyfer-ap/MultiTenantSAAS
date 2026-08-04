@@ -45,6 +45,12 @@ import { Link } from 'react-router'
 
 import { useAuth } from '../features/auth/hooks/useAuth'
 import {
+    hasProjectPermission,
+    hasTenantPermission,
+} from '../features/authorization/access/authorizationAccess'
+import { useCurrentAuthorization } from '../features/authorization/hooks/useCurrentAuthorization'
+import { authorizationPermissionCodes } from '../features/authorization/types/authorization'
+import {
     ArchiveProjectDialog,
     ChangeProjectStatusDialog,
     CreateProjectDialog,
@@ -154,9 +160,44 @@ export function ProjectsPage() {
         useState<string | null>(null)
 
     const tenantId = session?.tenantId ?? ''
-    const canManageProjects =
-        session?.role === 'TENANT_ADMIN' ||
-        session?.role === 'TENANT_MANAGER'
+    const authorizationQuery = useCurrentAuthorization()
+    const authorization = authorizationQuery.data
+
+    const canCreateProjects = hasTenantPermission(
+        authorization,
+        authorizationPermissionCodes.PROJECT_CREATE,
+    )
+
+    const canUpdateProject = (projectId: string): boolean =>
+        hasProjectPermission(
+            authorization,
+            authorizationPermissionCodes.PROJECT_UPDATE,
+            projectId,
+        )
+
+    const canArchiveProject = (projectId: string): boolean =>
+        hasProjectPermission(
+            authorization,
+            authorizationPermissionCodes.PROJECT_ARCHIVE,
+            projectId,
+        )
+
+    const canManageProject = (projectId: string): boolean =>
+        canUpdateProject(projectId) ||
+        canArchiveProject(projectId)
+
+    const selectedProjectCanUpdate = Boolean(
+        selectedProject &&
+        canUpdateProject(selectedProject.id),
+    )
+    const selectedProjectCanArchive = Boolean(
+        selectedProject &&
+        canArchiveProject(selectedProject.id),
+    )
+    const showProjectActionControls =
+        canCreateProjects ||
+        selectedProjectCanUpdate ||
+        selectedProjectCanArchive
 
     const queryParams: TenantProjectsQueryParams = {
         page,
@@ -257,7 +298,7 @@ export function ProjectsPage() {
                 </Box>
 
                 <Stack direction="row" spacing={1}>
-                    {canManageProjects && (
+                    {canCreateProjects && (
                         <Button
                             onClick={() => {
                                 setCreateDialogOpen(true)
@@ -473,7 +514,10 @@ export function ProjectsPage() {
                                                 Updated
                                             </TableSortLabel>
                                         </TableCell>
-                                        {canManageProjects && (
+                                        {projectsQuery.data.content.some(
+                                            (project) =>
+                                                canManageProject(project.id),
+                                        ) && (
                                             <TableCell align="right">
                                                 Actions
                                             </TableCell>
@@ -604,20 +648,29 @@ export function ProjectsPage() {
                                                         )}
                                                     </Typography>
                                                 </TableCell>
-                                                {canManageProjects && (
+                                                {projectsQuery.data.content.some(
+                                                    (listedProject) =>
+                                                        canManageProject(
+                                                            listedProject.id,
+                                                        ),
+                                                ) && (
                                                     <TableCell align="right">
-                                                        <IconButton
-                                                            aria-label={`Manage ${project.name}`}
-                                                            onClick={(event) => {
-                                                                openProjectMenu(
-                                                                    event,
-                                                                    project,
-                                                                )
-                                                            }}
-                                                            size="small"
-                                                        >
-                                                            <MoreVertRoundedIcon />
-                                                        </IconButton>
+                                                        {canManageProject(
+                                                            project.id,
+                                                        ) && (
+                                                            <IconButton
+                                                                aria-label={`Manage ${project.name}`}
+                                                                onClick={(event) => {
+                                                                    openProjectMenu(
+                                                                        event,
+                                                                        project,
+                                                                    )
+                                                                }}
+                                                                size="small"
+                                                            >
+                                                                <MoreVertRoundedIcon />
+                                                            </IconButton>
+                                                        )}
                                                     </TableCell>
                                                 )}
                                             </TableRow>
@@ -669,55 +722,61 @@ export function ProjectsPage() {
                 )}
             </Paper>
 
-            {canManageProjects && (
+            {showProjectActionControls && (
                 <>
                     <Menu
                         anchorEl={menuAnchor}
                         onClose={closeProjectMenu}
                         open={Boolean(menuAnchor)}
                     >
-                        <MenuItem
-                            disabled={
-                                selectedProject?.status === 'ARCHIVED'
-                            }
-                            onClick={() => {
-                                openProjectDialog('edit')
-                            }}
-                        >
-                            <ListItemIcon>
-                                <EditOutlinedIcon fontSize="small" />
-                            </ListItemIcon>
-                            Edit project
-                        </MenuItem>
-                        <MenuItem
-                            disabled={
-                                selectedProject?.status === 'ARCHIVED'
-                            }
-                            onClick={() => {
-                                openProjectDialog('status')
-                            }}
-                        >
-                            <ListItemIcon>
-                                <SyncAltOutlinedIcon fontSize="small" />
-                            </ListItemIcon>
-                            Change status
-                        </MenuItem>
-                        <MenuItem
-                            disabled={
-                                selectedProject?.status === 'ARCHIVED'
-                            }
-                            onClick={() => {
-                                openProjectDialog('archive')
-                            }}
-                        >
-                            <ListItemIcon>
-                                <ArchiveOutlinedIcon fontSize="small" />
-                            </ListItemIcon>
-                            Archive project
-                        </MenuItem>
+                        {selectedProjectCanUpdate && (
+                            <MenuItem
+                                disabled={
+                                    selectedProject?.status === 'ARCHIVED'
+                                }
+                                onClick={() => {
+                                    openProjectDialog('edit')
+                                }}
+                            >
+                                <ListItemIcon>
+                                    <EditOutlinedIcon fontSize="small" />
+                                </ListItemIcon>
+                                Edit project
+                            </MenuItem>
+                        )}
+                        {selectedProjectCanUpdate && (
+                            <MenuItem
+                                disabled={
+                                    selectedProject?.status === 'ARCHIVED'
+                                }
+                                onClick={() => {
+                                    openProjectDialog('status')
+                                }}
+                            >
+                                <ListItemIcon>
+                                    <SyncAltOutlinedIcon fontSize="small" />
+                                </ListItemIcon>
+                                Change status
+                            </MenuItem>
+                        )}
+                        {selectedProjectCanArchive && (
+                            <MenuItem
+                                disabled={
+                                    selectedProject?.status === 'ARCHIVED'
+                                }
+                                onClick={() => {
+                                    openProjectDialog('archive')
+                                }}
+                            >
+                                <ListItemIcon>
+                                    <ArchiveOutlinedIcon fontSize="small" />
+                                </ListItemIcon>
+                                Archive project
+                            </MenuItem>
+                        )}
                     </Menu>
 
-                    {createDialogOpen && (
+                    {createDialogOpen && canCreateProjects && (
                         <CreateProjectDialog
                             onClose={() => {
                                 setCreateDialogOpen(false)
@@ -726,30 +785,33 @@ export function ProjectsPage() {
                             tenantId={tenantId}
                         />
                     )}
-                    {activeDialog === 'edit' && (
-                        <EditProjectDialog
-                            onClose={closeProjectDialog}
-                            onSuccess={setFeedback}
-                            project={selectedProject}
-                            tenantId={tenantId}
-                        />
-                    )}
-                    {activeDialog === 'status' && (
-                        <ChangeProjectStatusDialog
-                            onClose={closeProjectDialog}
-                            onSuccess={setFeedback}
-                            project={selectedProject}
-                            tenantId={tenantId}
-                        />
-                    )}
-                    {activeDialog === 'archive' && (
-                        <ArchiveProjectDialog
-                            onClose={closeProjectDialog}
-                            onSuccess={setFeedback}
-                            project={selectedProject}
-                            tenantId={tenantId}
-                        />
-                    )}
+                    {activeDialog === 'edit' &&
+                        selectedProjectCanUpdate && (
+                            <EditProjectDialog
+                                onClose={closeProjectDialog}
+                                onSuccess={setFeedback}
+                                project={selectedProject}
+                                tenantId={tenantId}
+                            />
+                        )}
+                    {activeDialog === 'status' &&
+                        selectedProjectCanUpdate && (
+                            <ChangeProjectStatusDialog
+                                onClose={closeProjectDialog}
+                                onSuccess={setFeedback}
+                                project={selectedProject}
+                                tenantId={tenantId}
+                            />
+                        )}
+                    {activeDialog === 'archive' &&
+                        selectedProjectCanArchive && (
+                            <ArchiveProjectDialog
+                                onClose={closeProjectDialog}
+                                onSuccess={setFeedback}
+                                project={selectedProject}
+                                tenantId={tenantId}
+                            />
+                        )}
                 </>
             )}
 

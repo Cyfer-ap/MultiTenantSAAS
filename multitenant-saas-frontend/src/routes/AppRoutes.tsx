@@ -29,6 +29,7 @@ import { SystemAdminShell } from '../layouts/SystemAdminShell'
 import { AcceptInvitationPage } from '../pages/AcceptInvitationPage'
 import { AccountSettingsPage } from '../pages/AccountSettingsPage'
 import { AuditLogsPage } from '../pages/AuditLogsPage'
+import { AuthorizationManagementPage } from '../pages/AuthorizationManagementPage'
 import { DashboardPage } from '../pages/DashboardPage'
 import { ForgotPasswordPage } from '../pages/ForgotPasswordPage'
 import { InvitationsPage } from '../pages/InvitationsPage'
@@ -170,6 +171,22 @@ export function AppRoutes() {
                         <Route
                             path="invitations"
                             element={<InvitationsPage />}
+                        />
+                    </Route>
+
+                    <Route
+                        element={
+                            <TenantPermissionProtectedRoute
+                                requiredPermissions={[
+                                    authorizationPermissionCodes
+                                        .AUTHORIZATION_MANAGE,
+                                ]}
+                            />
+                        }
+                    >
+                        <Route
+                            path="authorization"
+                            element={<AuthorizationManagementPage />}
                         />
                     </Route>
 

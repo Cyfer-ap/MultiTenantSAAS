@@ -23,6 +23,15 @@ import {
 
 import { AuthContext } from '../features/auth/context/AuthContext'
 import type { AuthContextValue } from '../features/auth/context/AuthContext'
+import { currentAuthorizationQueryKeys } from '../features/authorization/hooks/useCurrentAuthorization'
+import {
+    createProjectAuthorizationContext,
+    createTenantAuthorizationContext,
+} from '../features/authorization/test/authorizationTestData'
+import {
+    authorizationPermissionCodes,
+    type CurrentAuthorizationContext,
+} from '../features/authorization/types/authorization'
 import { projectsApi } from '../features/projects/api/projectsApi'
 import type { TenantProject } from '../features/projects/types/projects'
 import { appTheme } from '../theme/appTheme'
@@ -77,6 +86,16 @@ const authContextValue: AuthContextValue = {
     logout: vi.fn(),
 }
 
+const projectManagerAuthorization =
+    createTenantAuthorizationContext({
+        permissionCodes: [
+            authorizationPermissionCodes.PROJECT_READ,
+            authorizationPermissionCodes.PROJECT_CREATE,
+            authorizationPermissionCodes.PROJECT_UPDATE,
+            authorizationPermissionCodes.PROJECT_ARCHIVE,
+        ],
+    })
+
 function createTestQueryClient(): QueryClient {
     return new QueryClient({
         defaultOptions: {
@@ -89,8 +108,20 @@ function createTestQueryClient(): QueryClient {
 
 function renderProjectsPage(
     contextValue: AuthContextValue = authContextValue,
+    authorizationContext: CurrentAuthorizationContext =
+        projectManagerAuthorization,
 ) {
     const queryClient = createTestQueryClient()
+    const tenantId = contextValue.session?.tenantId ?? ''
+    const userId = contextValue.session?.userId ?? ''
+
+    queryClient.setQueryData(
+        currentAuthorizationQueryKeys.current(
+            tenantId,
+            userId,
+        ),
+        authorizationContext,
+    )
 
     function Wrapper({ children }: PropsWithChildren) {
         return (
@@ -216,19 +247,27 @@ describe('ProjectsPage', () => {
         ).toBeInTheDocument()
     })
 
-    it('keeps lifecycle controls hidden from tenant users', async () => {
+    it('keeps lifecycle controls hidden without V2 permissions', async () => {
         vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(
             projectsPage,
         )
 
-        renderProjectsPage({
-            ...authContextValue,
-            session: {
-                ...authContextValue.session!,
-                userId: 'user-2',
-                role: 'TENANT_USER',
+        renderProjectsPage(
+            {
+                ...authContextValue,
+                session: {
+                    ...authContextValue.session!,
+                    userId: 'user-2',
+                    role: 'TENANT_USER',
+                },
             },
-        })
+            createTenantAuthorizationContext({
+                userId: 'user-2',
+                permissionCodes: [
+                    authorizationPermissionCodes.PROJECT_READ,
+                ],
+            }),
+        )
 
         await screen.findByText('Research workspace')
 
@@ -240,6 +279,38 @@ describe('ProjectsPage', () => {
         expect(
             screen.queryByRole('button', {
                 name: /manage research workspace/i,
+            }),
+        ).not.toBeInTheDocument()
+    })
+
+    it('does not leak a scoped project action to another project', async () => {
+        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(
+            projectsPage,
+        )
+
+        renderProjectsPage(
+            authContextValue,
+            createProjectAuthorizationContext({
+                projectId: 'project-1',
+                tenantPermissionCodes: [
+                    authorizationPermissionCodes.PROJECT_READ,
+                ],
+                permissionCodes: [
+                    authorizationPermissionCodes.PROJECT_UPDATE,
+                ],
+            }),
+        )
+
+        await screen.findByText('Research workspace')
+
+        expect(
+            screen.getByRole('button', {
+                name: /manage research workspace/i,
+            }),
+        ).toBeInTheDocument()
+        expect(
+            screen.queryByRole('button', {
+                name: /manage archived workspace/i,
             }),
         ).not.toBeInTheDocument()
     })

@@ -42,7 +42,6 @@ import type {
 } from 'react'
 import { useState } from 'react'
 
-import type { TenantRole } from '../../auth/types/auth'
 import {
     useProjectMember,
     useProjectMembers,
@@ -80,7 +79,8 @@ interface ProjectTasksSectionProps {
     tenantId: string
     projectId: string
     userId: string
-    tenantRole: TenantRole
+    canReadTasksByPermission: boolean
+    canManageTasksByPermission: boolean
     projectArchived: boolean
     onFeedback: (message: string) => void
 }
@@ -173,7 +173,8 @@ export function ProjectTasksSection({
     tenantId,
     projectId,
     userId,
-    tenantRole,
+    canReadTasksByPermission,
+    canManageTasksByPermission,
     projectArchived,
     onFeedback,
 }: ProjectTasksSectionProps) {
@@ -199,20 +200,31 @@ export function ProjectTasksSection({
     const [activeDialog, setActiveDialog] =
         useState<TaskDialog>(null)
 
-    const tenantCanManage =
-        tenantRole === 'TENANT_ADMIN' ||
-        tenantRole === 'TENANT_MANAGER'
+    const needsMembershipLookup =
+        !canReadTasksByPermission ||
+        !canManageTasksByPermission
 
     const currentMemberQuery = useProjectMember(
         tenantId,
         projectId,
         userId,
-        !tenantCanManage,
+        needsMembershipLookup,
     )
 
-    const canManageTasks =
-        tenantCanManage ||
+    const isCurrentUserProjectMember =
+        currentMemberQuery.isSuccess
+    const isCurrentUserProjectLead =
         currentMemberQuery.data?.projectRole === 'PROJECT_LEAD'
+    const canReadTasks =
+        canReadTasksByPermission ||
+        isCurrentUserProjectMember
+    const canManageTasks =
+        canManageTasksByPermission ||
+        isCurrentUserProjectLead
+    const taskAccessResolved =
+        canReadTasksByPermission ||
+        currentMemberQuery.isSuccess ||
+        currentMemberQuery.isError
 
     const memberOptionsParams: ProjectMembersQueryParams = {
         page: 0,
@@ -225,6 +237,7 @@ export function ProjectTasksSection({
         tenantId,
         projectId,
         memberOptionsParams,
+        canReadTasks,
     )
 
     const queryParams: ProjectTasksQueryParams = {
@@ -244,6 +257,7 @@ export function ProjectTasksSection({
         tenantId,
         projectId,
         queryParams,
+        canReadTasks,
     )
 
     const members = memberOptionsQuery.data?.content ?? []
@@ -314,6 +328,14 @@ export function ProjectTasksSection({
         selectedTask &&
         (canManageTasks || selectedTask.assigneeUserId === userId),
     )
+
+    if (!canReadTasks && taskAccessResolved) {
+        return (
+            <Alert severity="info" sx={{ marginTop: 4 }}>
+                Project tasks are not available for your current access scope.
+            </Alert>
+        )
+    }
 
     return (
         <Box sx={{ marginTop: 4 }}>

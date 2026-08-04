@@ -71,3 +71,74 @@ export interface CurrentAuthorizationContext {
     allPermissionCodes: string[]
     grants: CurrentAuthorizationGrant[]
 }
+
+export type AuthorizationEntityStatus =
+    | 'ACTIVE'
+    | 'INACTIVE'
+
+export interface AuthorizationPermission {
+    id: string
+    tenantId: string | null
+    code: string
+    name: string
+    description: string | null
+    category: string
+    source: AuthorizationRoleSource
+    status: AuthorizationEntityStatus
+    createdAt: string
+    updatedAt: string
+}
+
+export interface AuthorizationRole {
+    id: string
+    tenantId: string
+    code: string
+    name: string
+    description: string | null
+    source: AuthorizationRoleSource
+    status: AuthorizationEntityStatus
+    permissions: AuthorizationPermission[]
+    createdAt: string
+    updatedAt: string
+}
+
+export interface AuthorizationUserRoleAssignment {
+    id: string
+    tenantId: string
+    userId: string
+    userFullName: string
+    userEmail: string
+    roleId: string
+    roleCode: string
+    roleName: string
+    roleSource: AuthorizationRoleSource
+    scopeType: AuthorizationScopeType
+    scopeTargetId: string | null
+    status: AuthorizationEntityStatus
+    validFrom: string
+    validUntil: string | null
+    createdByUserId: string | null
+    createdByUserEmail: string | null
+    createdAt: string
+    updatedAt: string
+}
+
+export interface CreateAuthorizationRoleInput {
+    code: string
+    name: string
+    description: string | null
+    permissionIds: string[]
+}
+
+export interface ReplaceAuthorizationRolePermissionsInput {
+    permissionIds: string[]
+}
+
+export interface CreateAuthorizationUserRoleAssignmentInput {
+    userId: string
+    roleId: string
+    scopeType: AuthorizationScopeType
+    scopeTargetId: string | null
+    validFrom: string | null
+    validUntil: string | null
+}

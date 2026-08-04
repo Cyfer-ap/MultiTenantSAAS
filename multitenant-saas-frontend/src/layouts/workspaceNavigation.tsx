@@ -1,3 +1,4 @@
+import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded'
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
 import FolderRoundedIcon from '@mui/icons-material/FolderRounded'
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
@@ -55,6 +56,15 @@ export const workspaceNavigationItems:
             icon: <PersonAddAltRoundedIcon />,
             requiredTenantPermissions: [
                 authorizationPermissionCodes.USER_READ,
+            ],
+        },
+        {
+            label: 'Authorization',
+            path: '/authorization',
+            icon: <AdminPanelSettingsRoundedIcon />,
+            requiredTenantPermissions: [
+                authorizationPermissionCodes
+                    .AUTHORIZATION_MANAGE,
             ],
         },
         {
