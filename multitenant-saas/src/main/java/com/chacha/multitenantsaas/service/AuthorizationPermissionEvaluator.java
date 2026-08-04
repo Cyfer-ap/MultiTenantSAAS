@@ -411,19 +411,4 @@ public class AuthorizationPermissionEvaluator {
         return normalized;
     }
 
-    @Transactional(readOnly = true)
-    public boolean hasAnyAuthorizationAssignment(
-            UUID tenantId,
-            UUID userId
-    ) {
-        if (tenantId == null || userId == null) {
-            return false;
-        }
-
-        return assignmentRepository
-                .existsByTenant_IdAndUser_Id(
-                        tenantId,
-                        userId
-                );
-    }
 }

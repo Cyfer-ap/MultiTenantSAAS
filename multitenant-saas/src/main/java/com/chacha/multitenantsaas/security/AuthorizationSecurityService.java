@@ -496,4 +496,20 @@ public class AuthorizationSecurityService {
             UUID userId
     ) {
     }
+
+    public boolean isCurrentTenant(UUID tenantId) {
+        try {
+            CurrentAuthorizationIdentity identity =
+                    getCurrentIdentity();
+
+            return identity != null
+                    && tenantId != null
+                    && tenantId.equals(
+                    identity.tenantId()
+            );
+
+        } catch (RuntimeException exception) {
+            return false;
+        }
+    }
 }

@@ -27,10 +27,6 @@ public interface AuthorizationUserRoleAssignmentRepository
             UUID assignmentId
     );
 
-    boolean existsByTenant_IdAndUser_Id(
-            UUID tenantId,
-            UUID userId
-    );
 
     @Query("""
             SELECT assignment
