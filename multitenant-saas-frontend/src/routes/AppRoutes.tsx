@@ -3,22 +3,27 @@ import {
     Routes,
 } from 'react-router'
 
-import {
-    tenantAdminRoles,
-    tenantManagementRoles,
-} from '../features/auth/access/roleAccess'
 import { LoginPage } from '../features/auth/pages/LoginPage'
+import {
+    ProtectedRoute,
+    PublicOnlyRoute,
+} from '../features/auth/routing/AuthRoutes'
+import {
+    dashboardRequiredTenantPermissions,
+} from '../features/authorization/access/authorizationAccess'
+import {
+    AuthorizationHomeRedirect,
+    ProjectPermissionProtectedRoute,
+    TenantPermissionProtectedRoute,
+} from '../features/authorization/routing/AuthorizationRoutes'
+import {
+    authorizationPermissionCodes,
+} from '../features/authorization/types/authorization'
 import {
     SystemHomeRedirect,
     SystemProtectedRoute,
     SystemPublicOnlyRoute,
 } from '../features/system-admin/routing/SystemAdminRoutes'
-import {
-    AuthenticatedHomeRedirect,
-    ProtectedRoute,
-    PublicOnlyRoute,
-    RoleProtectedRoute,
-} from '../features/auth/routing/AuthRoutes'
 import { AppShell } from '../layouts/AppShell'
 import { SystemAdminShell } from '../layouts/SystemAdminShell'
 import { AcceptInvitationPage } from '../pages/AcceptInvitationPage'
@@ -28,17 +33,17 @@ import { DashboardPage } from '../pages/DashboardPage'
 import { ForgotPasswordPage } from '../pages/ForgotPasswordPage'
 import { InvitationsPage } from '../pages/InvitationsPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
-import { ProjectsPage } from '../pages/ProjectsPage'
+import { PlatformAuditLogsPage } from '../pages/PlatformAuditLogsPage'
 import { ProjectDetailsPage } from '../pages/ProjectDetailsPage'
+import { ProjectsPage } from '../pages/ProjectsPage'
 import { ResetPasswordPage } from '../pages/ResetPasswordPage'
-import { TenantOnboardingPage } from '../pages/TenantOnboardingPage'
-import { TenantChangePasswordPage } from '../pages/TenantChangePasswordPage'
-import { SystemDashboardPage } from '../pages/SystemDashboardPage'
+import { SystemAdminsPage } from '../pages/SystemAdminsPage'
 import { SystemChangePasswordPage } from '../pages/SystemChangePasswordPage'
+import { SystemDashboardPage } from '../pages/SystemDashboardPage'
 import { SystemLoginPage } from '../pages/SystemLoginPage'
 import { SystemTenantsPage } from '../pages/SystemTenantsPage'
-import { SystemAdminsPage } from '../pages/SystemAdminsPage'
-import { PlatformAuditLogsPage } from '../pages/PlatformAuditLogsPage'
+import { TenantChangePasswordPage } from '../pages/TenantChangePasswordPage'
+import { TenantOnboardingPage } from '../pages/TenantOnboardingPage'
 import { UsersPage } from '../pages/UsersPage'
 
 export function AppRoutes() {
@@ -118,14 +123,14 @@ export function AppRoutes() {
                 <Route element={<AppShell />}>
                     <Route
                         index
-                        element={<AuthenticatedHomeRedirect />}
+                        element={<AuthorizationHomeRedirect />}
                     />
 
                     <Route
                         element={
-                            <RoleProtectedRoute
-                                allowedRoles={
-                                    tenantManagementRoles
+                            <TenantPermissionProtectedRoute
+                                requiredPermissions={
+                                    dashboardRequiredTenantPermissions
                                 }
                             />
                         }
@@ -134,7 +139,18 @@ export function AppRoutes() {
                             path="dashboard"
                             element={<DashboardPage />}
                         />
+                    </Route>
 
+                    <Route
+                        element={
+                            <TenantPermissionProtectedRoute
+                                requiredPermissions={[
+                                    authorizationPermissionCodes
+                                        .USER_READ,
+                                ]}
+                            />
+                        }
+                    >
                         <Route
                             path="users"
                             element={<UsersPage />}
@@ -143,10 +159,13 @@ export function AppRoutes() {
 
                     <Route
                         element={
-                            <RoleProtectedRoute
-                                allowedRoles={
-                                    tenantAdminRoles
-                                }
+                            <TenantPermissionProtectedRoute
+                                requiredPermissions={[
+                                    authorizationPermissionCodes
+                                        .USER_READ,
+                                    authorizationPermissionCodes
+                                        .USER_CREATE,
+                                ]}
                             />
                         }
                     >
@@ -154,7 +173,18 @@ export function AppRoutes() {
                             path="invitations"
                             element={<InvitationsPage />}
                         />
+                    </Route>
 
+                    <Route
+                        element={
+                            <TenantPermissionProtectedRoute
+                                requiredPermissions={[
+                                    authorizationPermissionCodes
+                                        .AUDIT_READ,
+                                ]}
+                            />
+                        }
+                    >
                         <Route
                             path="audit-logs"
                             element={<AuditLogsPage />}
@@ -162,14 +192,36 @@ export function AppRoutes() {
                     </Route>
 
                     <Route
-                        path="projects"
-                        element={<ProjectsPage />}
-                    />
+                        element={
+                            <TenantPermissionProtectedRoute
+                                requiredPermissions={[
+                                    authorizationPermissionCodes
+                                        .PROJECT_READ,
+                                ]}
+                            />
+                        }
+                    >
+                        <Route
+                            path="projects"
+                            element={<ProjectsPage />}
+                        />
+                    </Route>
 
                     <Route
-                        path="projects/:projectId"
-                        element={<ProjectDetailsPage />}
-                    />
+                        element={
+                            <ProjectPermissionProtectedRoute
+                                permissionCode={
+                                    authorizationPermissionCodes
+                                        .PROJECT_READ
+                                }
+                            />
+                        }
+                    >
+                        <Route
+                            path="projects/:projectId"
+                            element={<ProjectDetailsPage />}
+                        />
+                    </Route>
 
                     <Route
                         path="account"

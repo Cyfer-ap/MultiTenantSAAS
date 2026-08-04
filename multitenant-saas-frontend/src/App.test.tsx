@@ -29,6 +29,11 @@ import type {
     CurrentUserResponse,
     TenantRole,
 } from './features/auth/types/auth'
+import { authorizationApi } from './features/authorization/api/authorizationApi'
+import {
+    authorizationPermissionCodes,
+    type CurrentAuthorizationContext,
+} from './features/authorization/types/authorization'
 import { invitationsApi } from './features/invitations/api/invitationsApi'
 import { appTheme } from './theme/appTheme'
 
@@ -94,9 +99,94 @@ const dashboardSummary: TenantDashboardSummary = {
     taskCompletionPercentage: 0,
 }
 
+function createAuthorizationContext(
+    role: TenantRole,
+): CurrentAuthorizationContext {
+    const permissionCodes =
+        role === 'TENANT_ADMIN'
+            ? Object.values(
+                authorizationPermissionCodes,
+            )
+            : role === 'TENANT_MANAGER'
+                ? [
+                    authorizationPermissionCodes
+                        .TENANT_READ,
+                    authorizationPermissionCodes
+                        .USER_READ,
+                    authorizationPermissionCodes
+                        .ORGANIZATION_UNIT_READ,
+                    authorizationPermissionCodes
+                        .ORGANIZATION_ASSIGNMENT_READ,
+                    authorizationPermissionCodes
+                        .PROJECT_READ,
+                    authorizationPermissionCodes
+                        .PROJECT_CREATE,
+                    authorizationPermissionCodes
+                        .PROJECT_UPDATE,
+                    authorizationPermissionCodes
+                        .PROJECT_ARCHIVE,
+                    authorizationPermissionCodes
+                        .PROJECT_MEMBER_MANAGE,
+                    authorizationPermissionCodes
+                        .PROJECT_TASK_READ,
+                    authorizationPermissionCodes
+                        .PROJECT_TASK_MANAGE,
+                ]
+                : [
+                    authorizationPermissionCodes
+                        .TENANT_READ,
+                    authorizationPermissionCodes
+                        .USER_READ,
+                    authorizationPermissionCodes
+                        .ORGANIZATION_UNIT_READ,
+                    authorizationPermissionCodes
+                        .ORGANIZATION_ASSIGNMENT_READ,
+                    authorizationPermissionCodes
+                        .PROJECT_READ,
+                ]
+
+    const roleCode =
+        role === 'TENANT_ADMIN'
+            ? 'ADMIN'
+            : role === 'TENANT_MANAGER'
+                ? 'MANAGER'
+                : 'MEMBER'
+
+    return {
+        tenantId: 'tenant-id',
+        userId: 'user-id',
+        fullName: 'Tenant User',
+        email: 'user@example.com',
+        evaluatedAt:
+            '2026-08-04T12:00:00Z',
+        tenantPermissionCodes:
+            permissionCodes,
+        allPermissionCodes:
+            permissionCodes,
+        grants: [
+            {
+                assignmentId:
+                    `assignment-${roleCode}`,
+                roleId: `role-${roleCode}`,
+                roleCode,
+                roleName: roleCode,
+                roleSource: 'SYSTEM',
+                scopeType: 'TENANT',
+                scopeTargetId: null,
+                validFrom:
+                    '2026-08-01T00:00:00Z',
+                validUntil: null,
+                permissionCodes,
+            },
+        ],
+    }
+}
+
 function renderAuthenticatedRoute(
     role: TenantRole,
     initialPath: string,
+    authorizationContext =
+        createAuthorizationContext(role),
 ): void {
     const queryClient = createTestQueryClient()
 
@@ -112,6 +202,13 @@ function renderAuthenticatedRoute(
         ...currentUser,
         role,
     })
+
+    vi.mocked(
+        authorizationApi
+            .getCurrentAuthorizationContext,
+    ).mockResolvedValue(
+        authorizationContext,
+    )
 
     render(
         <ThemeProvider theme={appTheme}>
@@ -137,6 +234,15 @@ describe('App authentication routes', () => {
             dashboardApi,
             'getSummary',
         ).mockResolvedValue(dashboardSummary)
+
+        vi.spyOn(
+            authorizationApi,
+            'getCurrentAuthorizationContext',
+        ).mockResolvedValue(
+            createAuthorizationContext(
+                'TENANT_ADMIN',
+            ),
+        )
     })
 
     it(
@@ -328,7 +434,7 @@ describe('App authentication routes', () => {
     )
 
     it(
-        'redirects a tenant user to projects and hides restricted navigation',
+        'redirects a tenant member to projects and shows permitted navigation',
         async () => {
             renderAuthenticatedRoute(
                 'TENANT_USER',
@@ -359,8 +465,8 @@ describe('App authentication routes', () => {
             ).not.toBeInTheDocument()
 
             expect(
-                within(navigation).queryByText('Users'),
-            ).not.toBeInTheDocument()
+                within(navigation).getByText('Users'),
+            ).toBeInTheDocument()
 
             expect(
                 within(navigation).queryByText(
@@ -412,6 +518,83 @@ describe('App authentication routes', () => {
 
             expect(
                 within(navigation).getByText('Invitations'),
+            ).toBeInTheDocument()
+        },
+    )
+
+    it(
+        'uses V2 permissions rather than the legacy role for navigation',
+        async () => {
+            const context =
+                createAuthorizationContext(
+                    'TENANT_USER',
+                )
+
+            const authorizationContext:
+                CurrentAuthorizationContext = {
+                    ...context,
+                    tenantPermissionCodes: [
+                        ...context
+                            .tenantPermissionCodes,
+                        authorizationPermissionCodes
+                            .AUDIT_READ,
+                    ],
+                    allPermissionCodes: [
+                        ...context
+                            .allPermissionCodes,
+                        authorizationPermissionCodes
+                            .AUDIT_READ,
+                    ],
+                    grants: [
+                        ...context.grants,
+                        {
+                            assignmentId:
+                                'assignment-auditor',
+                            roleId: 'role-auditor',
+                            roleCode:
+                                'TENANT_AUDITOR',
+                            roleName:
+                                'Tenant Auditor',
+                            roleSource: 'TENANT',
+                            scopeType: 'TENANT',
+                            scopeTargetId: null,
+                            validFrom:
+                                '2026-08-01T00:00:00Z',
+                            validUntil: null,
+                            permissionCodes: [
+                                authorizationPermissionCodes
+                                    .AUDIT_READ,
+                            ],
+                        },
+                    ],
+                }
+
+            renderAuthenticatedRoute(
+                'TENANT_USER',
+                '/account',
+                authorizationContext,
+            )
+
+            expect(
+                await screen.findByRole(
+                    'heading',
+                    {
+                        name: /account settings/i,
+                    },
+                ),
+            ).toBeInTheDocument()
+
+            const navigation =
+                screen.getByRole(
+                    'navigation',
+                    {
+                        name: /primary navigation/i,
+                    },
+                )
+
+            expect(
+                await within(navigation)
+                    .findByText('Audit Logs'),
             ).toBeInTheDocument()
         },
     )

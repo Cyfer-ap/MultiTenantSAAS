@@ -1,7 +1,10 @@
-import { Button, Stack, Typography } from '@mui/material'
+import {
+    Button,
+    Stack,
+    Typography,
+} from '@mui/material'
 import { useNavigate } from 'react-router'
 
-import { getDefaultAuthenticatedPath } from '../features/auth/access/roleAccess'
 import { useAuth } from '../features/auth/hooks/useAuth'
 
 export function NotFoundPage() {
@@ -9,7 +12,7 @@ export function NotFoundPage() {
     const navigate = useNavigate()
 
     const defaultPath = session
-        ? getDefaultAuthenticatedPath(session.role)
+        ? '/'
         : '/login'
 
     return (
@@ -19,7 +22,10 @@ export function NotFoundPage() {
                 alignItems: 'flex-start',
             }}
         >
-            <Typography component="h1" variant="h4">
+            <Typography
+                component="h1"
+                variant="h4"
+            >
                 Page not found
             </Typography>
 
@@ -29,7 +35,9 @@ export function NotFoundPage() {
 
             <Button
                 variant="contained"
-                onClick={() => navigate(defaultPath)}
+                onClick={() =>
+                    navigate(defaultPath)
+                }
             >
                 Return to workspace
             </Button>

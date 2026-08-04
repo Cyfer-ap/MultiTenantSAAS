@@ -1,7 +1,4 @@
-import {
-    type ReactNode,
-    useState,
-} from 'react'
+import { useState } from 'react'
 import {
     AppBar,
     Box,
@@ -17,71 +14,23 @@ import {
     useMediaQuery,
     useTheme,
 } from '@mui/material'
-import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
-import FolderRoundedIcon from '@mui/icons-material/FolderRounded'
-import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
-import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
-import PersonAddAltRoundedIcon from '@mui/icons-material/PersonAddAltRounded'
-import {
-    allTenantRoles,
-    hasAllowedTenantRole,
-    tenantAdminRoles,
-    tenantManagementRoles,
-} from '../features/auth/access/roleAccess'
-import { UserMenu } from '../features/auth/components/UserMenu'
-import { useAuth } from '../features/auth/hooks/useAuth'
-import type { TenantRole } from '../features/auth/types/auth'
 import {
     Outlet,
     useLocation,
     useNavigate,
 } from 'react-router'
 
+import { UserMenu } from '../features/auth/components/UserMenu'
+import { useCurrentAuthorization } from '../features/authorization/hooks/useCurrentAuthorization'
+import { getAvailableWorkspaceNavigationItems } from './workspaceNavigation'
+
 const drawerWidth = 248
 
-interface NavigationItem {
-    label: string
-    path: string
-    icon: ReactNode
-    allowedRoles: readonly TenantRole[]
-}
-
-const navigationItems: readonly NavigationItem[] = [
-    {
-        label: 'Dashboard',
-        path: '/dashboard',
-        icon: <DashboardRoundedIcon />,
-        allowedRoles: tenantManagementRoles,
-    },
-    {
-        label: 'Users',
-        path: '/users',
-        icon: <GroupsRoundedIcon />,
-        allowedRoles: tenantManagementRoles,
-    },
-    {
-        label: 'Projects',
-        path: '/projects',
-        icon: <FolderRoundedIcon />,
-        allowedRoles: allTenantRoles,
-    },
-    {
-        label: 'Invitations',
-        path: '/invitations',
-        icon: <PersonAddAltRoundedIcon />,
-        allowedRoles: tenantAdminRoles,
-    },
-    {
-        label: 'Audit Logs',
-        path: '/audit-logs',
-        icon: <HistoryRoundedIcon />,
-        allowedRoles: tenantAdminRoles,
-    },
-]
-
 export function AppShell() {
-    const { session } = useAuth()
+    const authorization =
+        useCurrentAuthorization()
+
     const theme = useTheme()
     const isDesktop = useMediaQuery(
         theme.breakpoints.up('md'),
@@ -94,14 +43,11 @@ export function AppShell() {
         useState(false)
 
     const availableNavigationItems =
-        navigationItems.filter(
-            (item) =>
-                session &&
-                hasAllowedTenantRole(
-                    session.role,
-                    item.allowedRoles,
-                ),
-        )
+        authorization.data
+            ? getAvailableWorkspaceNavigationItems(
+                authorization.data,
+            )
+            : []
 
     function navigateTo(path: string) {
         navigate(path)
