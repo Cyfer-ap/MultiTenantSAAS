@@ -1,3 +1,4 @@
+import AccountTreeRoundedIcon from '@mui/icons-material/AccountTreeRounded'
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded'
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
 import FolderRoundedIcon from '@mui/icons-material/FolderRounded'
@@ -40,6 +41,15 @@ export const workspaceNavigationItems:
             icon: <GroupsRoundedIcon />,
             requiredTenantPermissions: [
                 authorizationPermissionCodes.USER_READ,
+            ],
+        },
+        {
+            label: 'Organization',
+            path: '/organization',
+            icon: <AccountTreeRoundedIcon />,
+            requiredTenantPermissions: [
+                authorizationPermissionCodes
+                    .ORGANIZATION_UNIT_READ,
             ],
         },
         {

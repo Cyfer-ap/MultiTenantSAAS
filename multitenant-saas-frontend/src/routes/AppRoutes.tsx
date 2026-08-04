@@ -34,6 +34,7 @@ import { DashboardPage } from '../pages/DashboardPage'
 import { ForgotPasswordPage } from '../pages/ForgotPasswordPage'
 import { InvitationsPage } from '../pages/InvitationsPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { OrganizationPage } from '../pages/OrganizationPage'
 import { PlatformAuditLogsPage } from '../pages/PlatformAuditLogsPage'
 import { ProjectDetailsPage } from '../pages/ProjectDetailsPage'
 import { ProjectsPage } from '../pages/ProjectsPage'
@@ -171,6 +172,22 @@ export function AppRoutes() {
                         <Route
                             path="invitations"
                             element={<InvitationsPage />}
+                        />
+                    </Route>
+
+                    <Route
+                        element={
+                            <TenantPermissionProtectedRoute
+                                requiredPermissions={[
+                                    authorizationPermissionCodes
+                                        .ORGANIZATION_UNIT_READ,
+                                ]}
+                            />
+                        }
+                    >
+                        <Route
+                            path="organization"
+                            element={<OrganizationPage />}
                         />
                     </Route>
 
