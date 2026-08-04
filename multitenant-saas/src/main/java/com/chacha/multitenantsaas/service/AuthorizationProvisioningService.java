@@ -3,7 +3,10 @@ package com.chacha.multitenantsaas.service;
 import com.chacha.multitenantsaas.dto.AuthorizationProvisioningSummary;
 import com.chacha.multitenantsaas.dto.AuthorizationRoleResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationUserRoleAssignmentCreateRequest;
+import com.chacha.multitenantsaas.dto.AuthorizationUserRoleAssignmentResponse;
 import com.chacha.multitenantsaas.entity.AppUser;
+import com.chacha.multitenantsaas.entity.AuthorizationRoleSource;
+import com.chacha.multitenantsaas.entity.AuthorizationRoleStatus;
 import com.chacha.multitenantsaas.entity.AuthorizationScopeType;
 import com.chacha.multitenantsaas.entity.AuthorizationUserRoleAssignmentStatus;
 import com.chacha.multitenantsaas.entity.UserRole;
@@ -19,6 +22,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,6 +32,13 @@ public class AuthorizationProvisioningService {
 
     private static final String TENANT_SCOPE_KEY =
             "TENANT";
+
+    private static final Set<String> REQUIRED_SYSTEM_ROLES =
+            Set.of(
+                    SystemRoleCodes.ADMIN,
+                    SystemRoleCodes.MANAGER,
+                    SystemRoleCodes.MEMBER
+            );
 
     private final AppUserRepository appUserRepository;
 
@@ -62,12 +73,6 @@ public class AuthorizationProvisioningService {
                 authorizationUserRoleAssignmentRepository;
     }
 
-    /**
-     * Used during new tenant onboarding.
-     *
-     * Initializes all system roles and gives the initial legacy
-     * TENANT_ADMIN user a tenant-wide V2 ADMIN assignment.
-     */
     @Transactional
     public AuthorizationProvisioningSummary
     provisionInitialTenantAdministrator(
@@ -107,17 +112,11 @@ public class AuthorizationProvisioningService {
                 rolesByCode =
                 indexRolesByCode(systemRoles);
 
-        AuthorizationRoleResponse adminRole =
-                requireRole(
-                        rolesByCode,
-                        SystemRoleCodes.ADMIN
-                );
-
         boolean created =
-                ensureTenantRoleAssignment(
+                synchronizeActiveUser(
                         tenantId,
                         administrator,
-                        adminRole
+                        rolesByCode
                 );
 
         return new AuthorizationProvisioningSummary(
@@ -131,11 +130,47 @@ public class AuthorizationProvisioningService {
     }
 
     /**
-     * Safely provisions an existing tenant from legacy UserRole values.
+     * Synchronizes one user after creation, a legacy-role
+     * change, activation, suspension, or deactivation.
      *
-     * This method is idempotent:
-     * rerunning it does not create overlapping assignments.
+     * Only tenant-wide SYSTEM role assignments are managed.
+     * Tenant-custom roles and narrower scoped assignments are
+     * intentionally preserved.
      */
+    @Transactional
+    public void synchronizeUserFromLegacyState(
+            UUID tenantId,
+            UUID userId
+    ) {
+        AppUser user =
+                getRequiredUser(
+                        tenantId,
+                        userId
+                );
+
+        Map<String, AuthorizationRoleResponse>
+                rolesByCode =
+                getOrInitializeSystemRoles(
+                        tenantId
+                );
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            deactivateManagedSystemAssignments(
+                    tenantId,
+                    user.getId(),
+                    null
+            );
+
+            return;
+        }
+
+        synchronizeActiveUser(
+                tenantId,
+                user,
+                rolesByCode
+        );
+    }
+
     @Transactional
     public AuthorizationProvisioningSummary
     provisionTenantFromLegacyRoles(
@@ -163,26 +198,21 @@ public class AuthorizationProvisioningService {
 
         for (AppUser user : tenantUsers) {
             if (user.getStatus() != UserStatus.ACTIVE) {
+                deactivateManagedSystemAssignments(
+                        tenantId,
+                        user.getId(),
+                        null
+                );
+
                 inactiveUsersSkipped++;
                 continue;
             }
 
-            String systemRoleCode =
-                    mapLegacyRoleToSystemRoleCode(
-                            user.getRole()
-                    );
-
-            AuthorizationRoleResponse role =
-                    requireRole(
-                            rolesByCode,
-                            systemRoleCode
-                    );
-
             boolean created =
-                    ensureTenantRoleAssignment(
+                    synchronizeActiveUser(
                             tenantId,
                             user,
-                            role
+                            rolesByCode
                     );
 
             if (created) {
@@ -200,6 +230,89 @@ public class AuthorizationProvisioningService {
                 assignmentsAlreadyPresent,
                 inactiveUsersSkipped
         );
+    }
+
+    private boolean synchronizeActiveUser(
+            UUID tenantId,
+            AppUser user,
+            Map<String, AuthorizationRoleResponse>
+                    rolesByCode
+    ) {
+        String requiredRoleCode =
+                mapLegacyRoleToSystemRoleCode(
+                        user.getRole()
+                );
+
+        AuthorizationRoleResponse requiredRole =
+                requireRole(
+                        rolesByCode,
+                        requiredRoleCode
+                );
+
+        deactivateManagedSystemAssignments(
+                tenantId,
+                user.getId(),
+                requiredRoleCode
+        );
+
+        return ensureTenantRoleAssignment(
+                tenantId,
+                user,
+                requiredRole
+        );
+    }
+
+    /**
+     * Deactivates generated tenant-wide system grants except
+     * the role code that should remain active.
+     *
+     * When roleCodeToKeep is null, all generated system grants
+     * are deactivated.
+     */
+    private void deactivateManagedSystemAssignments(
+            UUID tenantId,
+            UUID userId,
+            String roleCodeToKeep
+    ) {
+        List<AuthorizationUserRoleAssignmentResponse>
+                assignments =
+                authorizationUserRoleAssignmentService
+                        .getUserAssignments(
+                                tenantId,
+                                userId
+                        );
+
+        for (AuthorizationUserRoleAssignmentResponse
+                assignment : assignments) {
+
+            boolean managedSystemAssignment =
+                    assignment.roleSource()
+                            == AuthorizationRoleSource.SYSTEM
+                            && assignment.scopeType()
+                            == AuthorizationScopeType.TENANT
+                            && assignment.status()
+                            == AuthorizationUserRoleAssignmentStatus.ACTIVE;
+
+            if (!managedSystemAssignment) {
+                continue;
+            }
+
+            boolean shouldRemainActive =
+                    roleCodeToKeep != null
+                            && roleCodeToKeep.equals(
+                            assignment.roleCode()
+                    );
+
+            if (shouldRemainActive) {
+                continue;
+            }
+
+            authorizationUserRoleAssignmentService
+                    .deactivateAssignment(
+                            tenantId,
+                            assignment.id()
+                    );
+        }
     }
 
     private boolean ensureTenantRoleAssignment(
@@ -244,6 +357,46 @@ public class AuthorizationProvisioningService {
                 );
 
         return true;
+    }
+
+    private Map<String, AuthorizationRoleResponse>
+    getOrInitializeSystemRoles(UUID tenantId) {
+        List<AuthorizationRoleResponse> existingRoles =
+                authorizationRoleService
+                        .getRoles(tenantId)
+                        .stream()
+                        .filter(
+                                role ->
+                                        role.source()
+                                                == AuthorizationRoleSource.SYSTEM
+                        )
+                        .filter(
+                                role ->
+                                        role.status()
+                                                == AuthorizationRoleStatus.ACTIVE
+                        )
+                        .toList();
+
+        Set<String> existingCodes =
+                existingRoles
+                        .stream()
+                        .map(
+                                AuthorizationRoleResponse::code
+                        )
+                        .collect(Collectors.toSet());
+
+        if (existingCodes.containsAll(
+                REQUIRED_SYSTEM_ROLES
+        )) {
+            return indexRolesByCode(existingRoles);
+        }
+
+        return indexRolesByCode(
+                authorizationRoleService
+                        .initializeDefaultRoles(
+                                tenantId
+                        )
+        );
     }
 
     private String mapLegacyRoleToSystemRoleCode(

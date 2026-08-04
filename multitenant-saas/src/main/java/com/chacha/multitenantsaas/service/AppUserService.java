@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.chacha.multitenantsaas.entity.SystemAdmin;
 import java.util.UUID;
 
@@ -35,6 +36,7 @@ public class AppUserService {
     private final RefreshTokenService refreshTokenService;
     private final CurrentSystemAdminService currentSystemAdminService;
     private final LoginAttemptService loginAttemptService;
+    private final AuthorizationProvisioningService authorizationProvisioningService;
 
     public AppUserService(
             AppUserRepository appUserRepository,
@@ -45,7 +47,8 @@ public class AppUserService {
             TenantAdminGuardService tenantAdminGuardService,
             RefreshTokenService refreshTokenService,
             CurrentSystemAdminService currentSystemAdminService,
-            LoginAttemptService loginAttemptService
+            LoginAttemptService loginAttemptService,
+            AuthorizationProvisioningService authorizationProvisioningService
     ) {
         this.appUserRepository = appUserRepository;
         this.tenantRepository = tenantRepository;
@@ -56,8 +59,10 @@ public class AppUserService {
         this.refreshTokenService = refreshTokenService;
         this.currentSystemAdminService = currentSystemAdminService;
         this.loginAttemptService = loginAttemptService;
+        this.authorizationProvisioningService = authorizationProvisioningService;
     }
 
+    @Transactional
     public AppUserResponse createUser(
             UUID tenantId,
             AppUserCreateRequest request,
@@ -82,7 +87,8 @@ public class AppUserService {
                 request.role()
         );
 
-        AppUser savedUser = appUserRepository.save(user);
+        AppUser savedUser =
+                saveAndSynchronizeAuthorization(user);
 
         if (currentSystemAdminService.isSystemAdminToken(jwt)) {
             SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
@@ -208,6 +214,7 @@ public class AppUserService {
         return mapToResponse(updatedUser);
     }
 
+    @Transactional
     public AppUserResponse updateUserRole(
             UUID tenantId,
             UUID userId,
@@ -231,7 +238,8 @@ public class AppUserService {
 
             user.setRole(request.role());
 
-            AppUser updatedUser = appUserRepository.save(user);
+            AppUser updatedUser =
+                    saveAndSynchronizeAuthorization(user);
 
             if (oldRole != updatedUser.getRole()) {
                 refreshTokenService.revokeAllActiveTokensForUser(updatedUser.getId());
@@ -260,7 +268,8 @@ public class AppUserService {
 
         user.setRole(request.role());
 
-        AppUser updatedUser = appUserRepository.save(user);
+        AppUser updatedUser =
+                saveAndSynchronizeAuthorization(user);
 
         if (oldRole != updatedUser.getRole()) {
             refreshTokenService.revokeAllActiveTokensForUser(updatedUser.getId());
@@ -279,6 +288,7 @@ public class AppUserService {
         return mapToResponse(updatedUser);
     }
 
+    @Transactional
     public AppUserResponse updateUserStatus(
             UUID tenantId,
             UUID userId,
@@ -302,7 +312,8 @@ public class AppUserService {
 
             user.setStatus(request.status());
 
-            AppUser updatedUser = appUserRepository.save(user);
+            AppUser updatedUser =
+                    saveAndSynchronizeAuthorization(user);
 
             if (updatedUser.getStatus() != UserStatus.ACTIVE) {
                 refreshTokenService.revokeAllActiveTokensForUser(updatedUser.getId());
@@ -331,7 +342,8 @@ public class AppUserService {
 
         user.setStatus(request.status());
 
-        AppUser updatedUser = appUserRepository.save(user);
+        AppUser updatedUser =
+                saveAndSynchronizeAuthorization(user);
 
         if (updatedUser.getStatus() != UserStatus.ACTIVE) {
             refreshTokenService.revokeAllActiveTokensForUser(updatedUser.getId());
@@ -350,6 +362,7 @@ public class AppUserService {
         return mapToResponse(updatedUser);
     }
 
+    @Transactional
     public AppUserResponse deactivateUser(
             UUID tenantId,
             UUID userId,
@@ -367,7 +380,8 @@ public class AppUserService {
 
             user.setStatus(UserStatus.INACTIVE);
 
-            AppUser updatedUser = appUserRepository.save(user);
+            AppUser updatedUser =
+                    saveAndSynchronizeAuthorization(user);
 
             refreshTokenService.revokeAllActiveTokensForUser(updatedUser.getId());
 
@@ -391,7 +405,8 @@ public class AppUserService {
 
         user.setStatus(UserStatus.INACTIVE);
 
-        AppUser updatedUser = appUserRepository.save(user);
+        AppUser updatedUser =
+                saveAndSynchronizeAuthorization(user);
 
         refreshTokenService.revokeAllActiveTokensForUser(updatedUser.getId());
 
@@ -446,6 +461,24 @@ public class AppUserService {
         }
 
         return mapToResponse(updatedUser);
+    }
+
+    private AppUser saveAndSynchronizeAuthorization(
+            AppUser user
+    ) {
+        AppUser savedUser =
+                appUserRepository
+                        .saveAndFlush(user);
+
+        authorizationProvisioningService
+                .synchronizeUserFromLegacyState(
+                        savedUser
+                                .getTenant()
+                                .getId(),
+                        savedUser.getId()
+                );
+
+        return savedUser;
     }
 
     private AppUserResponse mapToResponse(AppUser user) {

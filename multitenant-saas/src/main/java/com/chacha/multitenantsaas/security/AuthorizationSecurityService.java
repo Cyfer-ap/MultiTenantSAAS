@@ -14,12 +14,19 @@ public class AuthorizationSecurityService {
     private final AuthorizationPermissionEvaluator
             authorizationPermissionEvaluator;
 
+    private final TenantSecurityService
+            tenantSecurityService;
+
     public AuthorizationSecurityService(
             AuthorizationPermissionEvaluator
-                    authorizationPermissionEvaluator
+                    authorizationPermissionEvaluator,
+            TenantSecurityService tenantSecurityService
     ) {
         this.authorizationPermissionEvaluator =
                 authorizationPermissionEvaluator;
+
+        this.tenantSecurityService =
+                tenantSecurityService;
     }
 
     public boolean hasTenantPermission(
@@ -74,6 +81,69 @@ public class AuthorizationSecurityService {
                         projectId
                 )
         );
+    }
+
+    /*
+     * Transitional compatibility helpers.
+     *
+     * These allow old tenant records and tests that have not
+     * yet been backfilled to continue using legacy roles.
+     * They will be removed after all tenant data and
+     * controllers have migrated to Authorization V2.
+     */
+
+    public boolean hasTenantPermissionOrLegacyAdmin(
+            UUID tenantId,
+            String permissionCode
+    ) {
+        return hasTenantPermission(
+                tenantId,
+                permissionCode
+        )
+                || tenantSecurityService
+                .isTenantAdmin(tenantId);
+    }
+
+    public boolean
+    hasTenantPermissionOrLegacyAdminOrManager(
+            UUID tenantId,
+            String permissionCode
+    ) {
+        return hasTenantPermission(
+                tenantId,
+                permissionCode
+        )
+                || tenantSecurityService
+                .isTenantAdminOrManager(tenantId);
+    }
+
+    public boolean hasUserPermissionOrLegacyAdmin(
+            UUID tenantId,
+            UUID targetUserId,
+            String permissionCode
+    ) {
+        return hasUserPermission(
+                tenantId,
+                targetUserId,
+                permissionCode
+        )
+                || tenantSecurityService
+                .isTenantAdmin(tenantId);
+    }
+
+    public boolean
+    hasUserPermissionOrLegacyAdminOrManager(
+            UUID tenantId,
+            UUID targetUserId,
+            String permissionCode
+    ) {
+        return hasUserPermission(
+                tenantId,
+                targetUserId,
+                permissionCode
+        )
+                || tenantSecurityService
+                .isTenantAdminOrManager(tenantId);
     }
 
     private boolean evaluate(
