@@ -32,6 +32,8 @@ public class UserInvitationService {
     private final CurrentSystemAdminService currentSystemAdminService;
     private final AuditLogService auditLogService;
     private final long expirationHours;
+    private final AuthorizationProvisioningService
+            authorizationProvisioningService;
 
     public UserInvitationService(
             TenantRepository tenantRepository,
@@ -42,16 +44,25 @@ public class UserInvitationService {
             CurrentActorService currentActorService,
             CurrentSystemAdminService currentSystemAdminService,
             AuditLogService auditLogService,
-            @Value("${app.user-invitation.expiration-hours:48}") long expirationHours
+            AuthorizationProvisioningService
+                    authorizationProvisioningService,
+            @Value(
+                    "${app.user-invitation.expiration-hours:48}"
+            )
+            long expirationHours
     ) {
         this.tenantRepository = tenantRepository;
         this.appUserRepository = appUserRepository;
-        this.userInvitationRepository = userInvitationRepository;
+        this.userInvitationRepository =
+                userInvitationRepository;
         this.passwordEncoder = passwordEncoder;
         this.secureTokenService = secureTokenService;
         this.currentActorService = currentActorService;
-        this.currentSystemAdminService = currentSystemAdminService;
+        this.currentSystemAdminService =
+                currentSystemAdminService;
         this.auditLogService = auditLogService;
+        this.authorizationProvisioningService =
+                authorizationProvisioningService;
         this.expirationHours = expirationHours;
     }
 
@@ -176,7 +187,14 @@ public class UserInvitationService {
                 invitation.getRole()
         );
 
-        AppUser savedUser = appUserRepository.save(user);
+        AppUser savedUser =
+                appUserRepository.saveAndFlush(user);
+
+        authorizationProvisioningService
+                .synchronizeUserFromLegacyState(
+                        tenant.getId(),
+                        savedUser.getId()
+                );
 
         invitation.setStatus(UserInvitationStatus.ACCEPTED);
         invitation.setAcceptedAt(Instant.now());

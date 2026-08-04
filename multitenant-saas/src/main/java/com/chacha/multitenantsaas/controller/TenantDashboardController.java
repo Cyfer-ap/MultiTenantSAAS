@@ -35,7 +35,10 @@ public class TenantDashboardController {
                 and task completion percentage for the authenticated tenant.
                 """
     )
-    @PreAuthorize("@tenantSecurity.isCurrentTenantAdminOrManager()")
+    @PreAuthorize(
+            "@authorizationSecurity"
+                    + ".canReadCurrentTenantDashboard()"
+    )
     @GetMapping("/api/tenant/dashboard/summary")
     public ResponseEntity<ApiResponse<TenantDashboardSummaryResponse>> getTenantDashboardSummary(
             @AuthenticationPrincipal Jwt jwt

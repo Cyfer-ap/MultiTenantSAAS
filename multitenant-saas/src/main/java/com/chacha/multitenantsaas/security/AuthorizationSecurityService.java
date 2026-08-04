@@ -7,7 +7,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 import com.chacha.multitenantsaas.entity.UserOrganizationAssignment;
 import com.chacha.multitenantsaas.repository.UserOrganizationAssignmentRepository;
-
+import com.chacha.multitenantsaas.entity.Tenant;
+import com.chacha.multitenantsaas.repository.TenantRepository;
 import java.util.UUID;
 
 @Component("authorizationSecurity")
@@ -24,6 +25,7 @@ public class AuthorizationSecurityService {
 
     private final UserOrganizationAssignmentRepository
             userOrganizationAssignmentRepository;
+    private final TenantRepository tenantRepository;
 
     public AuthorizationSecurityService(
             AuthorizationPermissionEvaluator
@@ -31,7 +33,8 @@ public class AuthorizationSecurityService {
             TenantSecurityService tenantSecurityService,
             ProjectSecurityService projectSecurityService,
             UserOrganizationAssignmentRepository
-                    userOrganizationAssignmentRepository
+                    userOrganizationAssignmentRepository,
+            TenantRepository tenantRepository
     ) {
         this.authorizationPermissionEvaluator =
                 authorizationPermissionEvaluator;
@@ -44,6 +47,8 @@ public class AuthorizationSecurityService {
 
         this.userOrganizationAssignmentRepository =
                 userOrganizationAssignmentRepository;
+
+        this.tenantRepository = tenantRepository;
     }
 
     /*
@@ -141,6 +146,33 @@ public class AuthorizationSecurityService {
      * never received an Authorization V2 assignment.
      */
 
+    public boolean
+    hasTenantPermissionBySlugOrLegacySameTenant(
+            String tenantSlug,
+            String permissionCode
+    ) {
+        if (tenantSlug == null
+                || tenantSlug.trim().isEmpty()) {
+            return false;
+        }
+
+        Tenant tenant =
+                tenantRepository
+                        .findBySlug(
+                                tenantSlug.trim()
+                        )
+                        .orElse(null);
+
+        if (tenant == null) {
+            return false;
+        }
+
+        return hasTenantPermissionOrLegacySameTenant(
+                tenant.getId(),
+                permissionCode
+        );
+    }
+
     public boolean hasTenantPermissionOrLegacySameTenant(
             UUID tenantId,
             String permissionCode
@@ -225,6 +257,45 @@ public class AuthorizationSecurityService {
         return isLegacyFallbackAllowed(tenantId)
                 && tenantSecurityService
                 .isTenantAdminOrManager(tenantId);
+    }
+
+    public boolean canReadCurrentTenantDashboard() {
+        CurrentAuthorizationIdentity identity =
+                getCurrentIdentity();
+
+        if (identity == null) {
+            return false;
+        }
+
+        UUID tenantId =
+                identity.tenantId();
+
+        boolean hasV2DashboardAccess =
+                hasTenantPermission(
+                        tenantId,
+                        PlatformPermissionCodes.TENANT_READ
+                )
+                        && hasTenantPermission(
+                        tenantId,
+                        PlatformPermissionCodes.USER_READ
+                )
+                        && hasTenantPermission(
+                        tenantId,
+                        PlatformPermissionCodes.PROJECT_READ
+                )
+                        && hasTenantPermission(
+                        tenantId,
+                        PlatformPermissionCodes
+                                .PROJECT_TASK_READ
+                );
+
+        if (hasV2DashboardAccess) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
+                .isCurrentTenantAdminOrManager();
     }
 
     /*

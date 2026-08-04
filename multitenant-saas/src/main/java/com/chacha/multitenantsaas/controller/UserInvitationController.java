@@ -36,8 +36,13 @@ public class UserInvitationController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId) " +
-                    "or @systemSecurity.isSystemAdmin()"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'user.create'"
+                    + ")"
+                    + " or "
+                    + "@systemSecurity.isSystemAdmin()"
     )
     @PostMapping("/tenants/{tenantId}/user-invitations")
     public ResponseEntity<ApiResponse<UserInvitationResponse>> createInvitation(
@@ -61,8 +66,13 @@ public class UserInvitationController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId) " +
-                    "or @systemSecurity.isSystemAdmin()"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'user.read'"
+                    + ")"
+                    + " or "
+                    + "@systemSecurity.isSystemAdmin()"
     )
     @GetMapping("/tenants/{tenantId}/user-invitations")
     public ResponseEntity<
@@ -114,8 +124,13 @@ public class UserInvitationController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId) " +
-                    "or @systemSecurity.isSystemAdmin()"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'user.read'"
+                    + ")"
+                    + " or "
+                    + "@systemSecurity.isSystemAdmin()"
     )
     @GetMapping(
             "/tenants/{tenantId}/user-invitations/{invitationId}"
@@ -140,8 +155,13 @@ public class UserInvitationController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId) " +
-                    "or @systemSecurity.isSystemAdmin()"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'user.create'"
+                    + ")"
+                    + " or "
+                    + "@systemSecurity.isSystemAdmin()"
     )
     @PatchMapping(
             "/tenants/{tenantId}/user-invitations/{invitationId}/revoke"

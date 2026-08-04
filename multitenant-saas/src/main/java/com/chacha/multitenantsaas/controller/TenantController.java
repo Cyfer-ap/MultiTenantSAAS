@@ -98,7 +98,15 @@ public class TenantController {
             summary = "Get tenant by ID",
             description = "Returns details of a tenant if the authenticated user belongs to the same tenant."
     )
-    @PreAuthorize("@tenantSecurity.isSameTenant(#id) or @systemSecurity.isSystemAdmin()")
+    @PreAuthorize(
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacySameTenant("
+                    + "#id,"
+                    + "'tenant.read'"
+                    + ")"
+                    + " or "
+                    + "@systemSecurity.isSystemAdmin()"
+    )
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> getTenantById(
             @PathVariable UUID id
@@ -115,7 +123,15 @@ public class TenantController {
             summary = "Get tenant by slug",
             description = "Returns tenant details by slug if the authenticated user belongs to that tenant."
     )
-    @PreAuthorize("@tenantSecurity.isSameTenantBySlug(#slug) or @systemSecurity.isSystemAdmin()")
+    @PreAuthorize(
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionBySlugOrLegacySameTenant("
+                    + "#slug,"
+                    + "'tenant.read'"
+                    + ")"
+                    + " or "
+                    + "@systemSecurity.isSystemAdmin()"
+    )
     @GetMapping("/slug/{slug}")
     public ResponseEntity<ApiResponse<TenantResponse>> getTenantBySlug(
             @PathVariable String slug
@@ -132,7 +148,15 @@ public class TenantController {
             summary = "Update tenant",
             description = "Updates tenant name or slug. Only tenant admins can update their own tenant."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdmin(#id) or @systemSecurity.isSystemAdmin()")
+    @PreAuthorize(
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#id,"
+                    + "'tenant.update'"
+                    + ")"
+                    + " or "
+                    + "@systemSecurity.isSystemAdmin()"
+    )
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> updateTenant(
             @PathVariable UUID id,
@@ -151,7 +175,15 @@ public class TenantController {
             summary = "Update tenant status",
             description = "Updates tenant status such as ACTIVE, INACTIVE, or SUSPENDED."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdmin(#id) or @systemSecurity.isSystemAdmin()")
+    @PreAuthorize(
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#id,"
+                    + "'tenant.update'"
+                    + ")"
+                    + " or "
+                    + "@systemSecurity.isSystemAdmin()"
+    )
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<TenantResponse>> updateTenantStatus(
             @PathVariable UUID id,
@@ -170,7 +202,15 @@ public class TenantController {
             summary = "Soft delete tenant",
             description = "Soft deletes a tenant by setting its status to INACTIVE."
     )
-    @PreAuthorize("@tenantSecurity.isTenantAdmin(#id) or @systemSecurity.isSystemAdmin()")
+    @PreAuthorize(
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#id,"
+                    + "'tenant.update'"
+                    + ")"
+                    + " or "
+                    + "@systemSecurity.isSystemAdmin()"
+    )
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> deactivateTenant(
             @PathVariable UUID id,
