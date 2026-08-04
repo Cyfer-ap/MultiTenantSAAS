@@ -51,6 +51,7 @@ public class AuthorizationRoleService {
                     PlatformPermissionCodes.PROJECT_READ,
                     PlatformPermissionCodes.PROJECT_CREATE,
                     PlatformPermissionCodes.PROJECT_UPDATE,
+                    PlatformPermissionCodes.PROJECT_ARCHIVE,
                     PlatformPermissionCodes
                             .PROJECT_MEMBER_MANAGE,
                     PlatformPermissionCodes
@@ -68,11 +69,7 @@ public class AuthorizationRoleService {
                             .ORGANIZATION_UNIT_READ,
                     PlatformPermissionCodes
                             .ORGANIZATION_ASSIGNMENT_READ,
-                    PlatformPermissionCodes.PROJECT_READ,
-                    PlatformPermissionCodes
-                            .PROJECT_TASK_READ,
-                    PlatformPermissionCodes
-                            .PROJECT_TASK_MANAGE
+                    PlatformPermissionCodes.PROJECT_READ
             );
 
     private final TenantLookupService tenantLookupService;

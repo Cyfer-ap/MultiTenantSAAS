@@ -124,6 +124,88 @@ public class ProjectSecurityService {
                 .isPresent();
     }
 
+    public boolean isCurrentUserProjectMember(
+            UUID tenantId,
+            UUID projectId
+    ) {
+        AppUser user =
+                getActiveUserForTenant(tenantId);
+
+        if (user == null
+                || !projectExists(
+                tenantId,
+                projectId
+        )) {
+            return false;
+        }
+
+        return projectMemberRepository
+                .existsByProject_Tenant_IdAndProject_IdAndUser_Id(
+                        tenantId,
+                        projectId,
+                        user.getId()
+                );
+    }
+
+    public boolean isCurrentUserProjectLead(
+            UUID tenantId,
+            UUID projectId
+    ) {
+        AppUser user =
+                getActiveUserForTenant(tenantId);
+
+        if (user == null
+                || !projectExists(
+                tenantId,
+                projectId
+        )) {
+            return false;
+        }
+
+        return projectMemberRepository
+                .findByProject_Tenant_IdAndProject_IdAndUser_Id(
+                        tenantId,
+                        projectId,
+                        user.getId()
+                )
+                .map(ProjectMember::getRole)
+                .filter(
+                        role ->
+                                role
+                                        == ProjectMemberRole
+                                        .PROJECT_LEAD
+                )
+                .isPresent();
+    }
+
+    public boolean isCurrentUserTaskAssignee(
+            UUID tenantId,
+            UUID projectId,
+            UUID taskId
+    ) {
+        AppUser user =
+                getActiveUserForTenant(tenantId);
+
+        if (user == null
+                || !projectExists(
+                tenantId,
+                projectId
+        )) {
+            return false;
+        }
+
+        return projectTaskRepository
+                .findByProject_Tenant_IdAndProject_IdAndId(
+                        tenantId,
+                        projectId,
+                        taskId
+                )
+                .map(ProjectTask::getAssigneeUser)
+                .map(AppUser::getId)
+                .filter(user.getId()::equals)
+                .isPresent();
+    }
+
     private boolean projectExists(
             UUID tenantId,
             UUID projectId

@@ -17,17 +17,28 @@ public class AuthorizationSecurityService {
     private final TenantSecurityService
             tenantSecurityService;
 
+    private final ProjectSecurityService
+            projectSecurityService;
+
     public AuthorizationSecurityService(
             AuthorizationPermissionEvaluator
                     authorizationPermissionEvaluator,
-            TenantSecurityService tenantSecurityService
+            TenantSecurityService tenantSecurityService,
+            ProjectSecurityService projectSecurityService
     ) {
         this.authorizationPermissionEvaluator =
                 authorizationPermissionEvaluator;
 
         this.tenantSecurityService =
                 tenantSecurityService;
+
+        this.projectSecurityService =
+                projectSecurityService;
     }
+
+    /*
+     * Pure Authorization V2 checks
+     */
 
     public boolean hasTenantPermission(
             UUID tenantId,
@@ -84,23 +95,41 @@ public class AuthorizationSecurityService {
     }
 
     /*
-     * Transitional compatibility helpers.
+     * Generic transitional fallback.
      *
-     * These allow old tenant records and tests that have not
-     * yet been backfilled to continue using legacy roles.
-     * They will be removed after all tenant data and
-     * controllers have migrated to Authorization V2.
+     * Legacy access is used only when the current user has
+     * never received an Authorization V2 assignment.
      */
+
+    public boolean hasTenantPermissionOrLegacySameTenant(
+            UUID tenantId,
+            String permissionCode
+    ) {
+        if (hasTenantPermission(
+                tenantId,
+                permissionCode
+        )) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
+                .isSameTenant(tenantId);
+    }
 
     public boolean hasTenantPermissionOrLegacyAdmin(
             UUID tenantId,
             String permissionCode
     ) {
-        return hasTenantPermission(
+        if (hasTenantPermission(
                 tenantId,
                 permissionCode
-        )
-                || tenantSecurityService
+        )) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
                 .isTenantAdmin(tenantId);
     }
 
@@ -109,11 +138,15 @@ public class AuthorizationSecurityService {
             UUID tenantId,
             String permissionCode
     ) {
-        return hasTenantPermission(
+        if (hasTenantPermission(
                 tenantId,
                 permissionCode
-        )
-                || tenantSecurityService
+        )) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
                 .isTenantAdminOrManager(tenantId);
     }
 
@@ -122,12 +155,16 @@ public class AuthorizationSecurityService {
             UUID targetUserId,
             String permissionCode
     ) {
-        return hasUserPermission(
+        if (hasUserPermission(
                 tenantId,
                 targetUserId,
                 permissionCode
-        )
-                || tenantSecurityService
+        )) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
                 .isTenantAdmin(tenantId);
     }
 
@@ -137,13 +174,185 @@ public class AuthorizationSecurityService {
             UUID targetUserId,
             String permissionCode
     ) {
-        return hasUserPermission(
+        if (hasUserPermission(
                 tenantId,
                 targetUserId,
                 permissionCode
-        )
-                || tenantSecurityService
+        )) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
                 .isTenantAdminOrManager(tenantId);
+    }
+
+    /*
+     * Project endpoint compatibility
+     */
+
+    public boolean hasProjectPermissionOrLegacySameTenant(
+            UUID tenantId,
+            UUID projectId,
+            String permissionCode
+    ) {
+        if (hasProjectPermission(
+                tenantId,
+                projectId,
+                permissionCode
+        )) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
+                .isSameTenant(tenantId);
+    }
+
+    public boolean
+    hasProjectPermissionOrLegacyAdminOrManager(
+            UUID tenantId,
+            UUID projectId,
+            String permissionCode
+    ) {
+        if (hasProjectPermission(
+                tenantId,
+                projectId,
+                permissionCode
+        )) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
+                .isTenantAdminOrManager(tenantId);
+    }
+
+    /*
+     * Project task compatibility.
+     *
+     * Project membership, project-lead status and task
+     * assignee status are themselves resource-scoped, so
+     * they remain valid alongside V2 assignments.
+     */
+
+    public boolean hasProjectTaskPermissionOrLegacyRead(
+            UUID tenantId,
+            UUID projectId,
+            String permissionCode
+    ) {
+        if (hasProjectPermission(
+                tenantId,
+                projectId,
+                permissionCode
+        )) {
+            return true;
+        }
+
+        if (isLegacyFallbackAllowed(tenantId)) {
+            return projectSecurityService
+                    .canReadTasks(
+                            tenantId,
+                            projectId
+                    );
+        }
+
+        return projectSecurityService
+                .isCurrentUserProjectMember(
+                        tenantId,
+                        projectId
+                );
+    }
+
+    public boolean hasProjectTaskPermissionOrLegacyManage(
+            UUID tenantId,
+            UUID projectId,
+            String permissionCode
+    ) {
+        if (hasProjectPermission(
+                tenantId,
+                projectId,
+                permissionCode
+        )) {
+            return true;
+        }
+
+        if (isLegacyFallbackAllowed(tenantId)) {
+            return projectSecurityService
+                    .canManageTasks(
+                            tenantId,
+                            projectId
+                    );
+        }
+
+        return projectSecurityService
+                .isCurrentUserProjectLead(
+                        tenantId,
+                        projectId
+                );
+    }
+
+    public boolean
+    hasProjectTaskStatusPermissionOrLegacy(
+            UUID tenantId,
+            UUID projectId,
+            UUID taskId,
+            String permissionCode
+    ) {
+        if (hasProjectPermission(
+                tenantId,
+                projectId,
+                permissionCode
+        )) {
+            return true;
+        }
+
+        if (isLegacyFallbackAllowed(tenantId)) {
+            return projectSecurityService
+                    .canUpdateTaskStatus(
+                            tenantId,
+                            projectId,
+                            taskId
+                    );
+        }
+
+        return projectSecurityService
+                .isCurrentUserProjectLead(
+                        tenantId,
+                        projectId
+                )
+                || projectSecurityService
+                .isCurrentUserTaskAssignee(
+                        tenantId,
+                        projectId,
+                        taskId
+                );
+    }
+
+    private boolean isLegacyFallbackAllowed(
+            UUID routeTenantId
+    ) {
+        try {
+            CurrentAuthorizationIdentity identity =
+                    getCurrentIdentity();
+
+            if (identity == null
+                    || routeTenantId == null
+                    || !routeTenantId.equals(
+                    identity.tenantId()
+            )) {
+                return false;
+            }
+
+            return !authorizationPermissionEvaluator
+                    .hasAnyAuthorizationAssignment(
+                            routeTenantId,
+                            identity.userId()
+                    );
+
+        } catch (RuntimeException exception) {
+            return false;
+        }
     }
 
     private boolean evaluate(

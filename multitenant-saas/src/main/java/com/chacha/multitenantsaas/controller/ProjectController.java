@@ -30,7 +30,11 @@ public class ProjectController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdminOrManager(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdminOrManager("
+                    + "#tenantId,"
+                    + "'project.create'"
+                    + ")"
     )
     @PostMapping
     public ResponseEntity<ApiResponse<ProjectResponse>>
@@ -55,7 +59,11 @@ public class ProjectController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isSameTenant(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacySameTenant("
+                    + "#tenantId,"
+                    + "'project.read'"
+                    + ")"
     )
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ProjectResponse>>>
@@ -105,7 +113,12 @@ public class ProjectController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isSameTenant(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasProjectPermissionOrLegacySameTenant("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.read'"
+                    + ")"
     )
     @GetMapping("/{projectId}")
     public ResponseEntity<ApiResponse<ProjectResponse>>
@@ -128,7 +141,12 @@ public class ProjectController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdminOrManager(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasProjectPermissionOrLegacyAdminOrManager("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.update'"
+                    + ")"
     )
     @PutMapping("/{projectId}")
     public ResponseEntity<ApiResponse<ProjectResponse>>
@@ -155,7 +173,12 @@ public class ProjectController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdminOrManager(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasProjectPermissionOrLegacyAdminOrManager("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.update'"
+                    + ")"
     )
     @PatchMapping("/{projectId}/status")
     public ResponseEntity<ApiResponse<ProjectResponse>>
@@ -183,7 +206,12 @@ public class ProjectController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdminOrManager(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasProjectPermissionOrLegacyAdminOrManager("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.archive'"
+                    + ")"
     )
     @DeleteMapping("/{projectId}")
     public ResponseEntity<ApiResponse<ProjectResponse>>

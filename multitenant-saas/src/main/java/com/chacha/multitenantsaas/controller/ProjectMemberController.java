@@ -33,7 +33,12 @@ public class ProjectMemberController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdminOrManager(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasProjectPermissionOrLegacyAdminOrManager("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.member.manage'"
+                    + ")"
     )
     @PostMapping
     public ResponseEntity<ApiResponse<ProjectMemberResponse>>
@@ -61,7 +66,12 @@ public class ProjectMemberController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isSameTenant(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasProjectPermissionOrLegacySameTenant("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.read'"
+                    + ")"
     )
     @GetMapping
     public ResponseEntity<
@@ -114,7 +124,12 @@ public class ProjectMemberController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isSameTenant(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasProjectPermissionOrLegacySameTenant("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.read'"
+                    + ")"
     )
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse<ProjectMemberResponse>>
@@ -139,7 +154,12 @@ public class ProjectMemberController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdminOrManager(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasProjectPermissionOrLegacyAdminOrManager("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.member.manage'"
+                    + ")"
     )
     @PatchMapping("/{userId}/role")
     public ResponseEntity<ApiResponse<ProjectMemberResponse>>
@@ -170,7 +190,12 @@ public class ProjectMemberController {
 
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdminOrManager(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasProjectPermissionOrLegacyAdminOrManager("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.member.manage'"
+                    + ")"
     )
     @DeleteMapping("/{userId}")
     public ResponseEntity<ApiResponse<ProjectMemberResponse>>

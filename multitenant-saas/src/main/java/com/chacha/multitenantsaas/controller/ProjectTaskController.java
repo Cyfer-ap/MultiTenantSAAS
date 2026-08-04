@@ -34,7 +34,12 @@ public class ProjectTaskController {
     }
 
     @PreAuthorize(
-            "@projectSecurity.canManageTasks(#tenantId, #projectId)"
+            "@authorizationSecurity"
+                    + ".hasProjectTaskPermissionOrLegacyManage("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.task.manage'"
+                    + ")"
     )
     @PostMapping
     public ResponseEntity<ApiResponse<ProjectTaskResponse>>
@@ -62,7 +67,12 @@ public class ProjectTaskController {
     }
 
     @PreAuthorize(
-            "@projectSecurity.canReadTasks(#tenantId, #projectId)"
+            "@authorizationSecurity"
+                    + ".hasProjectTaskPermissionOrLegacyRead("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.task.read'"
+                    + ")"
     )
     @GetMapping
     public ResponseEntity<
@@ -124,7 +134,12 @@ public class ProjectTaskController {
     }
 
     @PreAuthorize(
-            "@projectSecurity.canReadTasks(#tenantId, #projectId)"
+            "@authorizationSecurity"
+                    + ".hasProjectTaskPermissionOrLegacyRead("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.task.read'"
+                    + ")"
     )
     @GetMapping("/{taskId}")
     public ResponseEntity<ApiResponse<ProjectTaskResponse>>
@@ -149,7 +164,12 @@ public class ProjectTaskController {
     }
 
     @PreAuthorize(
-            "@projectSecurity.canManageTasks(#tenantId, #projectId)"
+            "@authorizationSecurity"
+                    + ".hasProjectTaskPermissionOrLegacyManage("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.task.manage'"
+                    + ")"
     )
     @PutMapping("/{taskId}")
     public ResponseEntity<ApiResponse<ProjectTaskResponse>>
@@ -179,8 +199,13 @@ public class ProjectTaskController {
     }
 
     @PreAuthorize(
-            "@projectSecurity.canUpdateTaskStatus("
-                    + "#tenantId, #projectId, #taskId)"
+            "@authorizationSecurity"
+                    + ".hasProjectTaskStatusPermissionOrLegacy("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "#taskId,"
+                    + "'project.task.manage'"
+                    + ")"
     )
     @PatchMapping("/{taskId}/status")
     public ResponseEntity<ApiResponse<ProjectTaskResponse>>
@@ -210,7 +235,12 @@ public class ProjectTaskController {
     }
 
     @PreAuthorize(
-            "@projectSecurity.canManageTasks(#tenantId, #projectId)"
+            "@authorizationSecurity"
+                    + ".hasProjectTaskPermissionOrLegacyManage("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.task.manage'"
+                    + ")"
     )
     @PatchMapping("/{taskId}/assignee")
     public ResponseEntity<ApiResponse<ProjectTaskResponse>>
@@ -240,7 +270,12 @@ public class ProjectTaskController {
     }
 
     @PreAuthorize(
-            "@projectSecurity.canManageTasks(#tenantId, #projectId)"
+            "@authorizationSecurity"
+                    + ".hasProjectTaskPermissionOrLegacyManage("
+                    + "#tenantId,"
+                    + "#projectId,"
+                    + "'project.task.manage'"
+                    + ")"
     )
     @DeleteMapping("/{taskId}")
     public ResponseEntity<ApiResponse<ProjectTaskResponse>>
