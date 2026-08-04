@@ -66,6 +66,82 @@ public class AuthorizationScopeQueryService {
     }
 
     @Transactional(readOnly = true)
+    public boolean isDirectReportsAnchor(
+            UUID tenantId,
+            UUID managerUserId,
+            UUID managerAssignmentId,
+            Instant effectiveAt
+    ) {
+        if (tenantId == null
+                || managerUserId == null
+                || managerAssignmentId == null
+                || effectiveAt == null) {
+            return false;
+        }
+
+        Long matchingAssignmentCount =
+                entityManager.createQuery(
+                                """
+                                SELECT COUNT(assignment)
+                                FROM UserOrganizationAssignment
+                                    assignment
+                                WHERE assignment.tenant.id =
+                                        :tenantId
+                                  AND assignment.id =
+                                        :managerAssignmentId
+                                  AND assignment.user.id =
+                                        :managerUserId
+                                  AND assignment.status =
+                                        :activeAssignmentStatus
+                                  AND assignment.validFrom <=
+                                        :effectiveAt
+                                  AND (
+                                        assignment.validUntil IS NULL
+                                        OR assignment.validUntil >
+                                            :effectiveAt
+                                  )
+                                  AND assignment.user.status =
+                                        :activeUserStatus
+                                  AND assignment
+                                        .organizationalUnit.status =
+                                        :activeUnitStatus
+                                """,
+                                Long.class
+                        )
+                        .setParameter(
+                                "tenantId",
+                                tenantId
+                        )
+                        .setParameter(
+                                "managerUserId",
+                                managerUserId
+                        )
+                        .setParameter(
+                                "managerAssignmentId",
+                                managerAssignmentId
+                        )
+                        .setParameter(
+                                "effectiveAt",
+                                effectiveAt
+                        )
+                        .setParameter(
+                                "activeAssignmentStatus",
+                                OrganizationAssignmentStatus.ACTIVE
+                        )
+                        .setParameter(
+                                "activeUserStatus",
+                                UserStatus.ACTIVE
+                        )
+                        .setParameter(
+                                "activeUnitStatus",
+                                OrganizationalUnitStatus.ACTIVE
+                        )
+                        .getSingleResult();
+
+        return matchingAssignmentCount > 0;
+    }
+
+    @Transactional(readOnly = true)
     public boolean isDirectReport(
             UUID tenantId,
             UUID managerUserId,

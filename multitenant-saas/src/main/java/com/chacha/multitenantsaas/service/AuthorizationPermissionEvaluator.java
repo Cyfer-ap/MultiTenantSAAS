@@ -215,7 +215,8 @@ public class AuthorizationPermissionEvaluator {
                     );
 
             case ORGANIZATIONAL_UNIT ->
-                    matchesExactUnitScope(
+                    !context.requireSubtreeScope()
+                            && matchesExactUnitScope(
                             tenantId,
                             grant.getScopeTargetId(),
                             context.organizationalUnitId()
@@ -233,7 +234,7 @@ public class AuthorizationPermissionEvaluator {
                             tenantId,
                             userId,
                             grant.getScopeTargetId(),
-                            context.targetUserId(),
+                            context,
                             effectiveAt
                     );
         };
@@ -319,12 +320,38 @@ public class AuthorizationPermissionEvaluator {
     private boolean matchesDirectReportsScope(
             UUID tenantId,
             UUID managerUserId,
-            UUID managerAssignmentId,
-            UUID targetUserId,
+            UUID grantedManagerAssignmentId,
+            AuthorizationEvaluationContext context,
             Instant effectiveAt
     ) {
-        if (managerAssignmentId == null
-                || targetUserId == null) {
+        if (grantedManagerAssignmentId == null) {
+            return false;
+        }
+
+        UUID requestedManagerAssignmentId =
+                context
+                        .directReportsManagerAssignmentId();
+
+        if (requestedManagerAssignmentId != null) {
+            if (!grantedManagerAssignmentId.equals(
+                    requestedManagerAssignmentId
+            )) {
+                return false;
+            }
+
+            return authorizationScopeQueryService
+                    .isDirectReportsAnchor(
+                            tenantId,
+                            managerUserId,
+                            grantedManagerAssignmentId,
+                            effectiveAt
+                    );
+        }
+
+        UUID targetUserId =
+                context.targetUserId();
+
+        if (targetUserId == null) {
             return false;
         }
 
@@ -346,7 +373,7 @@ public class AuthorizationPermissionEvaluator {
                 .isDirectReport(
                         tenantId,
                         managerUserId,
-                        managerAssignmentId,
+                        grantedManagerAssignmentId,
                         targetUserId,
                         effectiveAt
                 );

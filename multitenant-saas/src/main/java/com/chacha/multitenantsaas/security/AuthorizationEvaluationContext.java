@@ -8,14 +8,20 @@ public record AuthorizationEvaluationContext(
 
         UUID organizationalUnitId,
 
-        UUID projectId
+        UUID projectId,
+
+        UUID directReportsManagerAssignmentId,
+
+        boolean requireSubtreeScope
 ) {
 
     public static AuthorizationEvaluationContext tenant() {
         return new AuthorizationEvaluationContext(
                 null,
                 null,
-                null
+                null,
+                null,
+                false
         );
     }
 
@@ -25,7 +31,9 @@ public record AuthorizationEvaluationContext(
         return new AuthorizationEvaluationContext(
                 targetUserId,
                 null,
-                null
+                null,
+                null,
+                false
         );
     }
 
@@ -36,7 +44,22 @@ public record AuthorizationEvaluationContext(
         return new AuthorizationEvaluationContext(
                 null,
                 organizationalUnitId,
-                null
+                null,
+                null,
+                false
+        );
+    }
+
+    public static AuthorizationEvaluationContext
+    organizationalSubtree(
+            UUID organizationalUnitId
+    ) {
+        return new AuthorizationEvaluationContext(
+                null,
+                organizationalUnitId,
+                null,
+                null,
+                true
         );
     }
 
@@ -46,7 +69,22 @@ public record AuthorizationEvaluationContext(
         return new AuthorizationEvaluationContext(
                 null,
                 null,
-                projectId
+                projectId,
+                null,
+                false
+        );
+    }
+
+    public static AuthorizationEvaluationContext
+    directReports(
+            UUID managerAssignmentId
+    ) {
+        return new AuthorizationEvaluationContext(
+                null,
+                null,
+                null,
+                managerAssignmentId,
+                false
         );
     }
 }

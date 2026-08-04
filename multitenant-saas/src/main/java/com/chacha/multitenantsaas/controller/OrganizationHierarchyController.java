@@ -53,7 +53,12 @@ public class OrganizationHierarchyController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasCreateOrganizationalUnitPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#request.parentUnitId(),"
+                    + "'organization.unit.manage'"
+                    + ")"
     )
     @PostMapping
     public ResponseEntity<
@@ -88,7 +93,11 @@ public class OrganizationHierarchyController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'organization.unit.read'"
+                    + ")"
     )
     @GetMapping("/roots")
     public ResponseEntity<
@@ -114,7 +123,11 @@ public class OrganizationHierarchyController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'organization.unit.read'"
+                    + ")"
     )
     @GetMapping("/tree")
     public ResponseEntity<
@@ -140,7 +153,12 @@ public class OrganizationHierarchyController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasOrganizationalUnitPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#unitId,"
+                    + "'organization.unit.read'"
+                    + ")"
     )
     @GetMapping("/{unitId}")
     public ResponseEntity<
@@ -170,7 +188,12 @@ public class OrganizationHierarchyController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasOrganizationalSubtreePermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#unitId,"
+                    + "'organization.unit.read'"
+                    + ")"
     )
     @GetMapping("/{unitId}/children")
     public ResponseEntity<
@@ -202,7 +225,12 @@ public class OrganizationHierarchyController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasOrganizationalSubtreePermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#unitId,"
+                    + "'organization.unit.read'"
+                    + ")"
     )
     @GetMapping("/{unitId}/subtree")
     public ResponseEntity<
@@ -232,7 +260,12 @@ public class OrganizationHierarchyController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasOrganizationalUnitPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#unitId,"
+                    + "'organization.unit.read'"
+                    + ")"
     )
     @GetMapping("/{unitId}/ancestors")
     public ResponseEntity<
@@ -264,7 +297,12 @@ public class OrganizationHierarchyController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasOrganizationalSubtreePermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#unitId,"
+                    + "'organization.unit.read'"
+                    + ")"
     )
     @GetMapping("/{unitId}/descendants")
     public ResponseEntity<
@@ -296,7 +334,12 @@ public class OrganizationHierarchyController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasOrganizationalUnitPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#unitId,"
+                    + "'organization.unit.manage'"
+                    + ")"
     )
     @PutMapping("/{unitId}")
     public ResponseEntity<
@@ -335,7 +378,12 @@ public class OrganizationHierarchyController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasOrganizationalUnitPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#unitId,"
+                    + "'organization.unit.manage'"
+                    + ")"
     )
     @PatchMapping("/{unitId}/status")
     public ResponseEntity<
@@ -374,7 +422,13 @@ public class OrganizationHierarchyController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasMoveOrganizationalUnitPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#unitId,"
+                    + "#request.parentUnitId(),"
+                    + "'organization.unit.manage'"
+                    + ")"
     )
     @PatchMapping("/{unitId}/move")
     public ResponseEntity<

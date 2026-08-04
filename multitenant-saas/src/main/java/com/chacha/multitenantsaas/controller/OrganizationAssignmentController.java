@@ -51,7 +51,12 @@ public class OrganizationAssignmentController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasCreateOrganizationAssignmentPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#request.organizationalUnitId(),"
+                    + "'organization.assignment.manage'"
+                    + ")"
     )
     @PostMapping
     public ResponseEntity<
@@ -81,7 +86,12 @@ public class OrganizationAssignmentController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasOrganizationAssignmentPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#assignmentId,"
+                    + "'organization.assignment.read'"
+                    + ")"
     )
     @GetMapping("/{assignmentId}")
     public ResponseEntity<
@@ -108,7 +118,12 @@ public class OrganizationAssignmentController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasUserOrganizationAssignmentPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#userId,"
+                    + "'organization.assignment.read'"
+                    + ")"
     )
     @GetMapping("/users/{userId}")
     public ResponseEntity<
@@ -137,7 +152,12 @@ public class OrganizationAssignmentController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasUserOrganizationAssignmentPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#userId,"
+                    + "'organization.assignment.read'"
+                    + ")"
     )
     @GetMapping("/users/{userId}/effective")
     public ResponseEntity<
@@ -173,7 +193,12 @@ public class OrganizationAssignmentController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasOrganizationalUnitPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#organizationalUnitId,"
+                    + "'organization.assignment.read'"
+                    + ")"
     )
     @GetMapping("/units/{organizationalUnitId}")
     public ResponseEntity<
@@ -202,7 +227,12 @@ public class OrganizationAssignmentController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasDirectReportsOrganizationAssignmentPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#managerAssignmentId,"
+                    + "'organization.assignment.read'"
+                    + ")"
     )
     @GetMapping(
             "/{managerAssignmentId}/direct-reports"
@@ -233,7 +263,12 @@ public class OrganizationAssignmentController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasOrganizationAssignmentPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "#assignmentId,"
+                    + "'organization.assignment.manage'"
+                    + ")"
     )
     @PatchMapping("/{assignmentId}/deactivate")
     public ResponseEntity<

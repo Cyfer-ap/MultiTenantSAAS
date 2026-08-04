@@ -5,6 +5,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
+import com.chacha.multitenantsaas.entity.UserOrganizationAssignment;
+import com.chacha.multitenantsaas.repository.UserOrganizationAssignmentRepository;
 
 import java.util.UUID;
 
@@ -20,11 +22,16 @@ public class AuthorizationSecurityService {
     private final ProjectSecurityService
             projectSecurityService;
 
+    private final UserOrganizationAssignmentRepository
+            userOrganizationAssignmentRepository;
+
     public AuthorizationSecurityService(
             AuthorizationPermissionEvaluator
                     authorizationPermissionEvaluator,
             TenantSecurityService tenantSecurityService,
-            ProjectSecurityService projectSecurityService
+            ProjectSecurityService projectSecurityService,
+            UserOrganizationAssignmentRepository
+                    userOrganizationAssignmentRepository
     ) {
         this.authorizationPermissionEvaluator =
                 authorizationPermissionEvaluator;
@@ -34,6 +41,9 @@ public class AuthorizationSecurityService {
 
         this.projectSecurityService =
                 projectSecurityService;
+
+        this.userOrganizationAssignmentRepository =
+                userOrganizationAssignmentRepository;
     }
 
     /*
@@ -76,6 +86,36 @@ public class AuthorizationSecurityService {
                 AuthorizationEvaluationContext
                         .organizationalUnit(
                                 organizationalUnitId
+                        )
+        );
+    }
+
+    public boolean hasOrganizationalSubtreePermission(
+            UUID tenantId,
+            UUID organizationalUnitId,
+            String permissionCode
+    ) {
+        return evaluate(
+                tenantId,
+                permissionCode,
+                AuthorizationEvaluationContext
+                        .organizationalSubtree(
+                                organizationalUnitId
+                        )
+        );
+    }
+
+    public boolean hasDirectReportsPermission(
+            UUID tenantId,
+            UUID managerAssignmentId,
+            String permissionCode
+    ) {
+        return evaluate(
+                tenantId,
+                permissionCode,
+                AuthorizationEvaluationContext
+                        .directReports(
+                                managerAssignmentId
                         )
         );
     }
@@ -327,6 +367,239 @@ public class AuthorizationSecurityService {
                         projectId,
                         taskId
                 );
+    }
+
+    public boolean
+    hasOrganizationalUnitPermissionOrLegacyAdmin(
+            UUID tenantId,
+            UUID organizationalUnitId,
+            String permissionCode
+    ) {
+        if (hasOrganizationalUnitPermission(
+                tenantId,
+                organizationalUnitId,
+                permissionCode
+        )) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
+                .isTenantAdmin(tenantId);
+    }
+
+    public boolean
+    hasOrganizationalSubtreePermissionOrLegacyAdmin(
+            UUID tenantId,
+            UUID organizationalUnitId,
+            String permissionCode
+    ) {
+        if (hasOrganizationalSubtreePermission(
+                tenantId,
+                organizationalUnitId,
+                permissionCode
+        )) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
+                .isTenantAdmin(tenantId);
+    }
+
+    public boolean
+    hasCreateOrganizationalUnitPermissionOrLegacyAdmin(
+            UUID tenantId,
+            UUID parentUnitId,
+            String permissionCode
+    ) {
+        boolean authorized =
+                parentUnitId == null
+                        ? hasTenantPermission(
+                        tenantId,
+                        permissionCode
+                )
+                        : hasOrganizationalUnitPermission(
+                        tenantId,
+                        parentUnitId,
+                        permissionCode
+                );
+
+        if (authorized) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
+                .isTenantAdmin(tenantId);
+    }
+
+    public boolean
+    hasMoveOrganizationalUnitPermissionOrLegacyAdmin(
+            UUID tenantId,
+            UUID sourceUnitId,
+            UUID destinationParentUnitId,
+            String permissionCode
+    ) {
+        boolean canManageSource =
+                hasOrganizationalUnitPermission(
+                        tenantId,
+                        sourceUnitId,
+                        permissionCode
+                );
+
+        boolean canManageDestination =
+                destinationParentUnitId == null
+                        ? hasTenantPermission(
+                        tenantId,
+                        permissionCode
+                )
+                        : hasOrganizationalUnitPermission(
+                        tenantId,
+                        destinationParentUnitId,
+                        permissionCode
+                );
+
+        if (canManageSource && canManageDestination) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
+                .isTenantAdmin(tenantId);
+    }
+
+    public boolean
+    hasCreateOrganizationAssignmentPermissionOrLegacyAdmin(
+            UUID tenantId,
+            UUID organizationalUnitId,
+            String permissionCode
+    ) {
+        if (hasOrganizationalUnitPermission(
+                tenantId,
+                organizationalUnitId,
+                permissionCode
+        )) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
+                .isTenantAdmin(tenantId);
+    }
+
+    public boolean
+    hasUserOrganizationAssignmentPermissionOrLegacyAdmin(
+            UUID tenantId,
+            UUID targetUserId,
+            String permissionCode
+    ) {
+        if (hasUserPermission(
+                tenantId,
+                targetUserId,
+                permissionCode
+        )) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
+                .isTenantAdmin(tenantId);
+    }
+
+    public boolean
+    hasOrganizationAssignmentPermissionOrLegacyAdmin(
+            UUID tenantId,
+            UUID assignmentId,
+            String permissionCode
+    ) {
+        UserOrganizationAssignment assignment =
+                getOrganizationAssignment(
+                        tenantId,
+                        assignmentId
+                );
+
+        if (assignment == null) {
+            return false;
+        }
+
+        boolean authorized =
+                hasUserPermission(
+                        tenantId,
+                        assignment.getUser().getId(),
+                        permissionCode
+                )
+                        || hasOrganizationalUnitPermission(
+                        tenantId,
+                        assignment
+                                .getOrganizationalUnit()
+                                .getId(),
+                        permissionCode
+                );
+
+        if (authorized) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
+                .isTenantAdmin(tenantId);
+    }
+
+    public boolean
+    hasDirectReportsOrganizationAssignmentPermissionOrLegacyAdmin(
+            UUID tenantId,
+            UUID managerAssignmentId,
+            String permissionCode
+    ) {
+        UserOrganizationAssignment managerAssignment =
+                getOrganizationAssignment(
+                        tenantId,
+                        managerAssignmentId
+                );
+
+        if (managerAssignment == null) {
+            return false;
+        }
+
+        boolean authorized =
+                hasDirectReportsPermission(
+                        tenantId,
+                        managerAssignmentId,
+                        permissionCode
+                )
+                        || hasOrganizationalUnitPermission(
+                        tenantId,
+                        managerAssignment
+                                .getOrganizationalUnit()
+                                .getId(),
+                        permissionCode
+                );
+
+        if (authorized) {
+            return true;
+        }
+
+        return isLegacyFallbackAllowed(tenantId)
+                && tenantSecurityService
+                .isTenantAdmin(tenantId);
+    }
+
+    private UserOrganizationAssignment
+    getOrganizationAssignment(
+            UUID tenantId,
+            UUID assignmentId
+    ) {
+        if (tenantId == null || assignmentId == null) {
+            return null;
+        }
+
+        return userOrganizationAssignmentRepository
+                .findByTenant_IdAndId(
+                        tenantId,
+                        assignmentId
+                )
+                .orElse(null);
     }
 
     private boolean isLegacyFallbackAllowed(
