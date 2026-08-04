@@ -79,7 +79,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -110,7 +110,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -141,7 +141,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -172,7 +172,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -203,7 +203,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -237,7 +237,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -277,7 +277,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -310,7 +310,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -346,7 +346,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -377,7 +377,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -408,7 +408,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -442,7 +442,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -478,7 +478,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -515,7 +515,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -552,7 +552,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -585,7 +585,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -622,7 +622,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -667,7 +667,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -703,7 +703,7 @@ public class AuthorizationManagementController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"

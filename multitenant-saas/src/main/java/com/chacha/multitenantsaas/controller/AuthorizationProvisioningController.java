@@ -35,7 +35,7 @@ public class AuthorizationProvisioningController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -72,7 +72,7 @@ public class AuthorizationProvisioningController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"

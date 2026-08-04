@@ -100,7 +100,7 @@ public class TenantController {
     )
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacySameTenant("
+                    + ".hasTenantPermission("
                     + "#id,"
                     + "'tenant.read'"
                     + ")"
@@ -125,7 +125,7 @@ public class TenantController {
     )
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionBySlugOrLegacySameTenant("
+                    + ".hasTenantPermissionBySlug("
                     + "#slug,"
                     + "'tenant.read'"
                     + ")"
@@ -150,7 +150,7 @@ public class TenantController {
     )
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#id,"
                     + "'tenant.update'"
                     + ")"
@@ -177,7 +177,7 @@ public class TenantController {
     )
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#id,"
                     + "'tenant.update'"
                     + ")"
@@ -204,7 +204,7 @@ public class TenantController {
     )
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#id,"
                     + "'tenant.update'"
                     + ")"

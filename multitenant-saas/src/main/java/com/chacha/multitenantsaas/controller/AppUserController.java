@@ -61,7 +61,7 @@ public class AppUserController {
     )
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'user.create'"
                     + ")"
@@ -100,7 +100,7 @@ public class AppUserController {
     )
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdminOrManager("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'user.read'"
                     + ")"
@@ -168,7 +168,7 @@ public class AppUserController {
     )
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasUserPermissionOrLegacyAdminOrManager("
+                    + ".hasUserPermission("
                     + "#tenantId,"
                     + "#userId,"
                     + "'user.read'"
@@ -205,7 +205,7 @@ public class AppUserController {
     )
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasUserPermissionOrLegacyAdmin("
+                    + ".hasUserPermission("
                     + "#tenantId,"
                     + "#userId,"
                     + "'user.update'"
@@ -248,7 +248,7 @@ public class AppUserController {
     )
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'authorization.manage'"
                     + ")"
@@ -287,7 +287,7 @@ public class AppUserController {
     )
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasUserPermissionOrLegacyAdmin("
+                    + ".hasUserPermission("
                     + "#tenantId,"
                     + "#userId,"
                     + "'user.status.update'"
@@ -326,7 +326,7 @@ public class AppUserController {
     )
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasUserPermissionOrLegacyAdmin("
+                    + ".hasUserPermission("
                     + "#tenantId,"
                     + "#userId,"
                     + "'user.status.update'"
@@ -358,7 +358,7 @@ public class AppUserController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasUserPermissionOrLegacyAdmin("
+                    + ".hasUserPermission("
                     + "#tenantId,"
                     + "#userId,"
                     + "'user.status.update'"

@@ -52,7 +52,7 @@ public class OrganizationAssignmentController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasCreateOrganizationAssignmentPermissionOrLegacyAdmin("
+                    + ".canCreateOrganizationAssignment("
                     + "#tenantId,"
                     + "#request.organizationalUnitId(),"
                     + "'organization.assignment.manage'"
@@ -87,7 +87,7 @@ public class OrganizationAssignmentController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasOrganizationAssignmentPermissionOrLegacyAdmin("
+                    + ".canAccessOrganizationAssignment("
                     + "#tenantId,"
                     + "#assignmentId,"
                     + "'organization.assignment.read'"
@@ -119,7 +119,7 @@ public class OrganizationAssignmentController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasUserOrganizationAssignmentPermissionOrLegacyAdmin("
+                    + ".hasUserPermission("
                     + "#tenantId,"
                     + "#userId,"
                     + "'organization.assignment.read'"
@@ -153,7 +153,7 @@ public class OrganizationAssignmentController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasUserOrganizationAssignmentPermissionOrLegacyAdmin("
+                    + ".hasUserPermission("
                     + "#tenantId,"
                     + "#userId,"
                     + "'organization.assignment.read'"
@@ -194,7 +194,7 @@ public class OrganizationAssignmentController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasOrganizationalUnitPermissionOrLegacyAdmin("
+                    + ".hasOrganizationalUnitPermission("
                     + "#tenantId,"
                     + "#organizationalUnitId,"
                     + "'organization.assignment.read'"
@@ -228,7 +228,7 @@ public class OrganizationAssignmentController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasDirectReportsOrganizationAssignmentPermissionOrLegacyAdmin("
+                    + ".canReadDirectReportsAssignments("
                     + "#tenantId,"
                     + "#managerAssignmentId,"
                     + "'organization.assignment.read'"
@@ -264,7 +264,7 @@ public class OrganizationAssignmentController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasOrganizationAssignmentPermissionOrLegacyAdmin("
+                    + ".canAccessOrganizationAssignment("
                     + "#tenantId,"
                     + "#assignmentId,"
                     + "'organization.assignment.manage'"

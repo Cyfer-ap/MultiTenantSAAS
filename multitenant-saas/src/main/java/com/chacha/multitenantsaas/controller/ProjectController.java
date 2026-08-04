@@ -31,7 +31,7 @@ public class ProjectController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdminOrManager("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'project.create'"
                     + ")"
@@ -60,7 +60,7 @@ public class ProjectController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacySameTenant("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'project.read'"
                     + ")"
@@ -114,7 +114,7 @@ public class ProjectController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectPermissionOrLegacySameTenant("
+                    + ".hasProjectPermission("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.read'"
@@ -142,7 +142,7 @@ public class ProjectController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectPermissionOrLegacyAdminOrManager("
+                    + ".hasProjectPermission("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.update'"
@@ -174,7 +174,7 @@ public class ProjectController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectPermissionOrLegacyAdminOrManager("
+                    + ".hasProjectPermission("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.update'"
@@ -207,7 +207,7 @@ public class ProjectController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectPermissionOrLegacyAdminOrManager("
+                    + ".hasProjectPermission("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.archive'"

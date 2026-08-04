@@ -5,6 +5,7 @@ import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
+import com.chacha.multitenantsaas.service.AuthorizationProvisioningService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -57,6 +58,10 @@ class OrganizationHierarchyApiIntegrationTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AuthorizationProvisioningService
+            authorizationProvisioningService;
 
     @Test
     void tenantAdminCanManageOrganizationHierarchy()
@@ -426,7 +431,7 @@ class OrganizationHierarchyApiIntegrationTest {
     }
 
     @Test
-    void managerAndRegularUserCannotAccessOrganizationApis()
+    void managerAndRegularUserCanReadButCannotManageOrganizationApis()
             throws Exception {
 
         Tenant tenant = createTenant(
@@ -486,10 +491,10 @@ class OrganizationHierarchyApiIntegrationTest {
                                         bearer(managerToken)
                                 )
                 )
-                .andExpect(status().isForbidden())
+                .andExpect(status().isOk())
                 .andExpect(
-                        jsonPath("$.errorCode")
-                                .value("ACCESS_DENIED")
+                        jsonPath("$.success")
+                                .value(true)
                 );
 
         mockMvc.perform(
@@ -504,10 +509,10 @@ class OrganizationHierarchyApiIntegrationTest {
                                         bearer(userToken)
                                 )
                 )
-                .andExpect(status().isForbidden())
+                .andExpect(status().isOk())
                 .andExpect(
-                        jsonPath("$.errorCode")
-                                .value("ACCESS_DENIED")
+                        jsonPath("$.data.id")
+                                .value(unitId.toString())
                 );
 
         mockMvc.perform(
@@ -848,8 +853,16 @@ class OrganizationHierarchyApiIntegrationTest {
                 role
         );
 
-        return appUserRepository
-                .saveAndFlush(user);
+        AppUser savedUser =
+                appUserRepository.saveAndFlush(user);
+
+        authorizationProvisioningService
+                .synchronizeUserFromLegacyState(
+                        tenant.getId(),
+                        savedUser.getId()
+                );
+
+        return savedUser;
     }
 
     private Tenant createTenant(String prefix) {

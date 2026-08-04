@@ -54,7 +54,7 @@ public class OrganizationHierarchyController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasCreateOrganizationalUnitPermissionOrLegacyAdmin("
+                    + ".canCreateOrganizationalUnit("
                     + "#tenantId,"
                     + "#request.parentUnitId(),"
                     + "'organization.unit.manage'"
@@ -94,7 +94,7 @@ public class OrganizationHierarchyController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'organization.unit.read'"
                     + ")"
@@ -124,7 +124,7 @@ public class OrganizationHierarchyController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'organization.unit.read'"
                     + ")"
@@ -154,7 +154,7 @@ public class OrganizationHierarchyController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasOrganizationalUnitPermissionOrLegacyAdmin("
+                    + ".hasOrganizationalUnitPermission("
                     + "#tenantId,"
                     + "#unitId,"
                     + "'organization.unit.read'"
@@ -189,7 +189,7 @@ public class OrganizationHierarchyController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasOrganizationalSubtreePermissionOrLegacyAdmin("
+                    + ".hasOrganizationalSubtreePermission("
                     + "#tenantId,"
                     + "#unitId,"
                     + "'organization.unit.read'"
@@ -226,7 +226,7 @@ public class OrganizationHierarchyController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasOrganizationalSubtreePermissionOrLegacyAdmin("
+                    + ".hasOrganizationalSubtreePermission("
                     + "#tenantId,"
                     + "#unitId,"
                     + "'organization.unit.read'"
@@ -261,7 +261,7 @@ public class OrganizationHierarchyController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasOrganizationalUnitPermissionOrLegacyAdmin("
+                    + ".hasOrganizationalUnitPermission("
                     + "#tenantId,"
                     + "#unitId,"
                     + "'organization.unit.read'"
@@ -298,7 +298,7 @@ public class OrganizationHierarchyController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasOrganizationalSubtreePermissionOrLegacyAdmin("
+                    + ".hasOrganizationalSubtreePermission("
                     + "#tenantId,"
                     + "#unitId,"
                     + "'organization.unit.read'"
@@ -335,7 +335,7 @@ public class OrganizationHierarchyController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasOrganizationalUnitPermissionOrLegacyAdmin("
+                    + ".hasOrganizationalUnitPermission("
                     + "#tenantId,"
                     + "#unitId,"
                     + "'organization.unit.manage'"
@@ -379,7 +379,7 @@ public class OrganizationHierarchyController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasOrganizationalUnitPermissionOrLegacyAdmin("
+                    + ".hasOrganizationalUnitPermission("
                     + "#tenantId,"
                     + "#unitId,"
                     + "'organization.unit.manage'"
@@ -423,7 +423,7 @@ public class OrganizationHierarchyController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasMoveOrganizationalUnitPermissionOrLegacyAdmin("
+                    + ".canMoveOrganizationalUnit("
                     + "#tenantId,"
                     + "#unitId,"
                     + "#request.parentUnitId(),"

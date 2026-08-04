@@ -8,6 +8,7 @@ import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import com.chacha.multitenantsaas.service.OrganizationHierarchyService;
+import com.chacha.multitenantsaas.service.AuthorizationProvisioningService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -64,6 +65,10 @@ class OrganizationAssignmentApiIntegrationTest {
     @Autowired
     private OrganizationHierarchyService
             organizationHierarchyService;
+
+    @Autowired
+    private AuthorizationProvisioningService
+            authorizationProvisioningService;
 
     @Test
     void assignmentEndpointsCreateReadDeactivateAndAudit()
@@ -624,7 +629,10 @@ class OrganizationAssignmentApiIntegrationTest {
                                         bearer(regularUserToken)
                                 )
                 )
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.data", hasSize(0))
+                );
 
         mockMvc.perform(
                         get(
@@ -816,8 +824,16 @@ class OrganizationAssignmentApiIntegrationTest {
                 role
         );
 
-        return appUserRepository
-                .saveAndFlush(user);
+        AppUser savedUser =
+                appUserRepository.saveAndFlush(user);
+
+        authorizationProvisioningService
+                .synchronizeUserFromLegacyState(
+                        tenant.getId(),
+                        savedUser.getId()
+                );
+
+        return savedUser;
     }
 
     private Tenant createTenant(String prefix) {

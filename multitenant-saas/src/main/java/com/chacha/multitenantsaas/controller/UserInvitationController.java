@@ -37,7 +37,7 @@ public class UserInvitationController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'user.create'"
                     + ")"
@@ -67,7 +67,7 @@ public class UserInvitationController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'user.read'"
                     + ")"
@@ -125,7 +125,7 @@ public class UserInvitationController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'user.read'"
                     + ")"
@@ -156,7 +156,7 @@ public class UserInvitationController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'user.create'"
                     + ")"

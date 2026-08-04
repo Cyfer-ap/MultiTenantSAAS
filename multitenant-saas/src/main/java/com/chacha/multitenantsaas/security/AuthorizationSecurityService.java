@@ -1,14 +1,15 @@
 package com.chacha.multitenantsaas.security;
 
+import com.chacha.multitenantsaas.entity.Tenant;
+import com.chacha.multitenantsaas.entity.UserOrganizationAssignment;
+import com.chacha.multitenantsaas.repository.TenantRepository;
+import com.chacha.multitenantsaas.repository.UserOrganizationAssignmentRepository;
 import com.chacha.multitenantsaas.service.AuthorizationPermissionEvaluator;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
-import com.chacha.multitenantsaas.entity.UserOrganizationAssignment;
-import com.chacha.multitenantsaas.repository.UserOrganizationAssignmentRepository;
-import com.chacha.multitenantsaas.entity.Tenant;
-import com.chacha.multitenantsaas.repository.TenantRepository;
+
 import java.util.UUID;
 
 @Component("authorizationSecurity")
@@ -17,20 +18,27 @@ public class AuthorizationSecurityService {
     private final AuthorizationPermissionEvaluator
             authorizationPermissionEvaluator;
 
-    private final TenantSecurityService
-            tenantSecurityService;
-
+    /*
+     * ProjectSecurityService is retained only for exact
+     * resource relationships:
+     *
+     * - project membership
+     * - project-lead membership
+     * - task assignment
+     *
+     * It is no longer used for legacy tenant-role fallback.
+     */
     private final ProjectSecurityService
             projectSecurityService;
 
     private final UserOrganizationAssignmentRepository
             userOrganizationAssignmentRepository;
+
     private final TenantRepository tenantRepository;
 
     public AuthorizationSecurityService(
             AuthorizationPermissionEvaluator
                     authorizationPermissionEvaluator,
-            TenantSecurityService tenantSecurityService,
             ProjectSecurityService projectSecurityService,
             UserOrganizationAssignmentRepository
                     userOrganizationAssignmentRepository,
@@ -39,20 +47,18 @@ public class AuthorizationSecurityService {
         this.authorizationPermissionEvaluator =
                 authorizationPermissionEvaluator;
 
-        this.tenantSecurityService =
-                tenantSecurityService;
-
         this.projectSecurityService =
                 projectSecurityService;
 
         this.userOrganizationAssignmentRepository =
                 userOrganizationAssignmentRepository;
 
-        this.tenantRepository = tenantRepository;
+        this.tenantRepository =
+                tenantRepository;
     }
 
     /*
-     * Pure Authorization V2 checks
+     * Core Authorization V2 evaluations
      */
 
     public boolean hasTenantPermission(
@@ -139,15 +145,7 @@ public class AuthorizationSecurityService {
         );
     }
 
-    /*
-     * Generic transitional fallback.
-     *
-     * Legacy access is used only when the current user has
-     * never received an Authorization V2 assignment.
-     */
-
-    public boolean
-    hasTenantPermissionBySlugOrLegacySameTenant(
+    public boolean hasTenantPermissionBySlug(
             String tenantSlug,
             String permissionCode
     ) {
@@ -167,97 +165,15 @@ public class AuthorizationSecurityService {
             return false;
         }
 
-        return hasTenantPermissionOrLegacySameTenant(
+        return hasTenantPermission(
                 tenant.getId(),
                 permissionCode
         );
     }
 
-    public boolean hasTenantPermissionOrLegacySameTenant(
-            UUID tenantId,
-            String permissionCode
-    ) {
-        if (hasTenantPermission(
-                tenantId,
-                permissionCode
-        )) {
-            return true;
-        }
-
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isSameTenant(tenantId);
-    }
-
-    public boolean hasTenantPermissionOrLegacyAdmin(
-            UUID tenantId,
-            String permissionCode
-    ) {
-        if (hasTenantPermission(
-                tenantId,
-                permissionCode
-        )) {
-            return true;
-        }
-
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isTenantAdmin(tenantId);
-    }
-
-    public boolean
-    hasTenantPermissionOrLegacyAdminOrManager(
-            UUID tenantId,
-            String permissionCode
-    ) {
-        if (hasTenantPermission(
-                tenantId,
-                permissionCode
-        )) {
-            return true;
-        }
-
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isTenantAdminOrManager(tenantId);
-    }
-
-    public boolean hasUserPermissionOrLegacyAdmin(
-            UUID tenantId,
-            UUID targetUserId,
-            String permissionCode
-    ) {
-        if (hasUserPermission(
-                tenantId,
-                targetUserId,
-                permissionCode
-        )) {
-            return true;
-        }
-
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isTenantAdmin(tenantId);
-    }
-
-    public boolean
-    hasUserPermissionOrLegacyAdminOrManager(
-            UUID tenantId,
-            UUID targetUserId,
-            String permissionCode
-    ) {
-        if (hasUserPermission(
-                tenantId,
-                targetUserId,
-                permissionCode
-        )) {
-            return true;
-        }
-
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isTenantAdminOrManager(tenantId);
-    }
+    /*
+     * Tenant dashboard
+     */
 
     public boolean canReadCurrentTenantDashboard() {
         CurrentAuthorizationIdentity identity =
@@ -267,167 +183,81 @@ public class AuthorizationSecurityService {
             return false;
         }
 
-        UUID tenantId =
-                identity.tenantId();
+        UUID tenantId = identity.tenantId();
 
-        boolean hasV2DashboardAccess =
-                hasTenantPermission(
-                        tenantId,
-                        PlatformPermissionCodes.TENANT_READ
-                )
-                        && hasTenantPermission(
-                        tenantId,
-                        PlatformPermissionCodes.USER_READ
-                )
-                        && hasTenantPermission(
-                        tenantId,
-                        PlatformPermissionCodes.PROJECT_READ
-                )
-                        && hasTenantPermission(
-                        tenantId,
-                        PlatformPermissionCodes
-                                .PROJECT_TASK_READ
-                );
-
-        if (hasV2DashboardAccess) {
-            return true;
-        }
-
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isCurrentTenantAdminOrManager();
+        return hasTenantPermission(
+                tenantId,
+                PlatformPermissionCodes.TENANT_READ
+        )
+                && hasTenantPermission(
+                tenantId,
+                PlatformPermissionCodes.USER_READ
+        )
+                && hasTenantPermission(
+                tenantId,
+                PlatformPermissionCodes.PROJECT_READ
+        )
+                && hasTenantPermission(
+                tenantId,
+                PlatformPermissionCodes
+                        .PROJECT_TASK_READ
+        );
     }
 
     /*
-     * Project endpoint compatibility
-     */
-
-    public boolean hasProjectPermissionOrLegacySameTenant(
-            UUID tenantId,
-            UUID projectId,
-            String permissionCode
-    ) {
-        if (hasProjectPermission(
-                tenantId,
-                projectId,
-                permissionCode
-        )) {
-            return true;
-        }
-
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isSameTenant(tenantId);
-    }
-
-    public boolean
-    hasProjectPermissionOrLegacyAdminOrManager(
-            UUID tenantId,
-            UUID projectId,
-            String permissionCode
-    ) {
-        if (hasProjectPermission(
-                tenantId,
-                projectId,
-                permissionCode
-        )) {
-            return true;
-        }
-
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isTenantAdminOrManager(tenantId);
-    }
-
-    /*
-     * Project task compatibility.
+     * Project task authorization
      *
-     * Project membership, project-lead status and task
-     * assignee status are themselves resource-scoped, so
-     * they remain valid alongside V2 assignments.
+     * A V2 permission can authorize the operation directly.
+     * Exact project relationships remain valid independent
+     * resource-level rules.
      */
 
-    public boolean hasProjectTaskPermissionOrLegacyRead(
+    public boolean canReadProjectTasks(
             UUID tenantId,
             UUID projectId,
             String permissionCode
     ) {
-        if (hasProjectPermission(
+        return hasProjectPermission(
                 tenantId,
                 projectId,
                 permissionCode
-        )) {
-            return true;
-        }
-
-        if (isLegacyFallbackAllowed(tenantId)) {
-            return projectSecurityService
-                    .canReadTasks(
-                            tenantId,
-                            projectId
-                    );
-        }
-
-        return projectSecurityService
+        )
+                || projectSecurityService
                 .isCurrentUserProjectMember(
                         tenantId,
                         projectId
                 );
     }
 
-    public boolean hasProjectTaskPermissionOrLegacyManage(
+    public boolean canManageProjectTasks(
             UUID tenantId,
             UUID projectId,
             String permissionCode
     ) {
-        if (hasProjectPermission(
+        return hasProjectPermission(
                 tenantId,
                 projectId,
                 permissionCode
-        )) {
-            return true;
-        }
-
-        if (isLegacyFallbackAllowed(tenantId)) {
-            return projectSecurityService
-                    .canManageTasks(
-                            tenantId,
-                            projectId
-                    );
-        }
-
-        return projectSecurityService
+        )
+                || projectSecurityService
                 .isCurrentUserProjectLead(
                         tenantId,
                         projectId
                 );
     }
 
-    public boolean
-    hasProjectTaskStatusPermissionOrLegacy(
+    public boolean canUpdateProjectTaskStatus(
             UUID tenantId,
             UUID projectId,
             UUID taskId,
             String permissionCode
     ) {
-        if (hasProjectPermission(
+        return hasProjectPermission(
                 tenantId,
                 projectId,
                 permissionCode
-        )) {
-            return true;
-        }
-
-        if (isLegacyFallbackAllowed(tenantId)) {
-            return projectSecurityService
-                    .canUpdateTaskStatus(
-                            tenantId,
-                            projectId,
-                            taskId
-                    );
-        }
-
-        return projectSecurityService
+        )
+                || projectSecurityService
                 .isCurrentUserProjectLead(
                         tenantId,
                         projectId
@@ -440,73 +270,30 @@ public class AuthorizationSecurityService {
                 );
     }
 
-    public boolean
-    hasOrganizationalUnitPermissionOrLegacyAdmin(
-            UUID tenantId,
-            UUID organizationalUnitId,
-            String permissionCode
-    ) {
-        if (hasOrganizationalUnitPermission(
-                tenantId,
-                organizationalUnitId,
-                permissionCode
-        )) {
-            return true;
-        }
+    /*
+     * Organizational hierarchy authorization
+     */
 
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isTenantAdmin(tenantId);
-    }
-
-    public boolean
-    hasOrganizationalSubtreePermissionOrLegacyAdmin(
-            UUID tenantId,
-            UUID organizationalUnitId,
-            String permissionCode
-    ) {
-        if (hasOrganizationalSubtreePermission(
-                tenantId,
-                organizationalUnitId,
-                permissionCode
-        )) {
-            return true;
-        }
-
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isTenantAdmin(tenantId);
-    }
-
-    public boolean
-    hasCreateOrganizationalUnitPermissionOrLegacyAdmin(
+    public boolean canCreateOrganizationalUnit(
             UUID tenantId,
             UUID parentUnitId,
             String permissionCode
     ) {
-        boolean authorized =
-                parentUnitId == null
-                        ? hasTenantPermission(
-                        tenantId,
-                        permissionCode
-                )
-                        : hasOrganizationalUnitPermission(
-                        tenantId,
-                        parentUnitId,
-                        permissionCode
-                );
-
-        if (authorized) {
-            return true;
+        if (parentUnitId == null) {
+            return hasTenantPermission(
+                    tenantId,
+                    permissionCode
+            );
         }
 
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isTenantAdmin(tenantId);
+        return hasOrganizationalUnitPermission(
+                tenantId,
+                parentUnitId,
+                permissionCode
+        );
     }
 
-    public boolean
-    hasMoveOrganizationalUnitPermissionOrLegacyAdmin(
+    public boolean canMoveOrganizationalUnit(
             UUID tenantId,
             UUID sourceUnitId,
             UUID destinationParentUnitId,
@@ -519,67 +306,41 @@ public class AuthorizationSecurityService {
                         permissionCode
                 );
 
-        boolean canManageDestination =
-                destinationParentUnitId == null
-                        ? hasTenantPermission(
-                        tenantId,
-                        permissionCode
-                )
-                        : hasOrganizationalUnitPermission(
-                        tenantId,
-                        destinationParentUnitId,
-                        permissionCode
-                );
-
-        if (canManageSource && canManageDestination) {
-            return true;
+        if (!canManageSource) {
+            return false;
         }
 
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isTenantAdmin(tenantId);
+        if (destinationParentUnitId == null) {
+            return hasTenantPermission(
+                    tenantId,
+                    permissionCode
+            );
+        }
+
+        return hasOrganizationalUnitPermission(
+                tenantId,
+                destinationParentUnitId,
+                permissionCode
+        );
     }
 
-    public boolean
-    hasCreateOrganizationAssignmentPermissionOrLegacyAdmin(
+    /*
+     * Organizational assignment authorization
+     */
+
+    public boolean canCreateOrganizationAssignment(
             UUID tenantId,
             UUID organizationalUnitId,
             String permissionCode
     ) {
-        if (hasOrganizationalUnitPermission(
+        return hasOrganizationalUnitPermission(
                 tenantId,
                 organizationalUnitId,
                 permissionCode
-        )) {
-            return true;
-        }
-
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isTenantAdmin(tenantId);
+        );
     }
 
-    public boolean
-    hasUserOrganizationAssignmentPermissionOrLegacyAdmin(
-            UUID tenantId,
-            UUID targetUserId,
-            String permissionCode
-    ) {
-        if (hasUserPermission(
-                tenantId,
-                targetUserId,
-                permissionCode
-        )) {
-            return true;
-        }
-
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isTenantAdmin(tenantId);
-    }
-
-    public boolean
-    hasOrganizationAssignmentPermissionOrLegacyAdmin(
+    public boolean canAccessOrganizationAssignment(
             UUID tenantId,
             UUID assignmentId,
             String permissionCode
@@ -594,31 +355,21 @@ public class AuthorizationSecurityService {
             return false;
         }
 
-        boolean authorized =
-                hasUserPermission(
-                        tenantId,
-                        assignment.getUser().getId(),
-                        permissionCode
-                )
-                        || hasOrganizationalUnitPermission(
-                        tenantId,
-                        assignment
-                                .getOrganizationalUnit()
-                                .getId(),
-                        permissionCode
-                );
-
-        if (authorized) {
-            return true;
-        }
-
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isTenantAdmin(tenantId);
+        return hasUserPermission(
+                tenantId,
+                assignment.getUser().getId(),
+                permissionCode
+        )
+                || hasOrganizationalUnitPermission(
+                tenantId,
+                assignment
+                        .getOrganizationalUnit()
+                        .getId(),
+                permissionCode
+        );
     }
 
-    public boolean
-    hasDirectReportsOrganizationAssignmentPermissionOrLegacyAdmin(
+    public boolean canReadDirectReportsAssignments(
             UUID tenantId,
             UUID managerAssignmentId,
             String permissionCode
@@ -633,27 +384,18 @@ public class AuthorizationSecurityService {
             return false;
         }
 
-        boolean authorized =
-                hasDirectReportsPermission(
-                        tenantId,
-                        managerAssignmentId,
-                        permissionCode
-                )
-                        || hasOrganizationalUnitPermission(
-                        tenantId,
-                        managerAssignment
-                                .getOrganizationalUnit()
-                                .getId(),
-                        permissionCode
-                );
-
-        if (authorized) {
-            return true;
-        }
-
-        return isLegacyFallbackAllowed(tenantId)
-                && tenantSecurityService
-                .isTenantAdmin(tenantId);
+        return hasDirectReportsPermission(
+                tenantId,
+                managerAssignmentId,
+                permissionCode
+        )
+                || hasOrganizationalUnitPermission(
+                tenantId,
+                managerAssignment
+                        .getOrganizationalUnit()
+                        .getId(),
+                permissionCode
+        );
     }
 
     private UserOrganizationAssignment
@@ -671,32 +413,6 @@ public class AuthorizationSecurityService {
                         assignmentId
                 )
                 .orElse(null);
-    }
-
-    private boolean isLegacyFallbackAllowed(
-            UUID routeTenantId
-    ) {
-        try {
-            CurrentAuthorizationIdentity identity =
-                    getCurrentIdentity();
-
-            if (identity == null
-                    || routeTenantId == null
-                    || !routeTenantId.equals(
-                    identity.tenantId()
-            )) {
-                return false;
-            }
-
-            return !authorizationPermissionEvaluator
-                    .hasAnyAuthorizationAssignment(
-                            routeTenantId,
-                            identity.userId()
-                    );
-
-        } catch (RuntimeException exception) {
-            return false;
-        }
     }
 
     private boolean evaluate(

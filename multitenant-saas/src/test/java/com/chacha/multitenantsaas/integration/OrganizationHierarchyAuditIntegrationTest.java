@@ -5,6 +5,7 @@ import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
+import com.chacha.multitenantsaas.service.AuthorizationProvisioningService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -56,6 +57,10 @@ class OrganizationHierarchyAuditIntegrationTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AuthorizationProvisioningService
+            authorizationProvisioningService;
 
     @Test
     void hierarchyMutationsCreateTenantAuditEntries()
@@ -461,8 +466,16 @@ class OrganizationHierarchyAuditIntegrationTest {
                 UserRole.TENANT_ADMIN
         );
 
-        return appUserRepository
-                .saveAndFlush(admin);
+        AppUser savedAdmin =
+                appUserRepository.saveAndFlush(admin);
+
+        authorizationProvisioningService
+                .synchronizeUserFromLegacyState(
+                        tenant.getId(),
+                        savedAdmin.getId()
+                );
+
+        return savedAdmin;
     }
 
     private String bearer(String accessToken) {

@@ -35,7 +35,7 @@ public class ProjectTaskController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectTaskPermissionOrLegacyManage("
+                    + ".canManageProjectTasks("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.task.manage'"
@@ -68,7 +68,7 @@ public class ProjectTaskController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectTaskPermissionOrLegacyRead("
+                    + ".canReadProjectTasks("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.task.read'"
@@ -135,7 +135,7 @@ public class ProjectTaskController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectTaskPermissionOrLegacyRead("
+                    + ".canReadProjectTasks("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.task.read'"
@@ -165,7 +165,7 @@ public class ProjectTaskController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectTaskPermissionOrLegacyManage("
+                    + ".canManageProjectTasks("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.task.manage'"
@@ -200,7 +200,7 @@ public class ProjectTaskController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectTaskStatusPermissionOrLegacy("
+                    + ".canUpdateProjectTaskStatus("
                     + "#tenantId,"
                     + "#projectId,"
                     + "#taskId,"
@@ -236,7 +236,7 @@ public class ProjectTaskController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectTaskPermissionOrLegacyManage("
+                    + ".canManageProjectTasks("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.task.manage'"
@@ -271,7 +271,7 @@ public class ProjectTaskController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectTaskPermissionOrLegacyManage("
+                    + ".canManageProjectTasks("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.task.manage'"

@@ -34,7 +34,7 @@ public class ProjectMemberController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectPermissionOrLegacyAdminOrManager("
+                    + ".hasProjectPermission("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.member.manage'"
@@ -67,7 +67,7 @@ public class ProjectMemberController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectPermissionOrLegacySameTenant("
+                    + ".hasProjectPermission("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.read'"
@@ -125,7 +125,7 @@ public class ProjectMemberController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectPermissionOrLegacySameTenant("
+                    + ".hasProjectPermission("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.read'"
@@ -155,7 +155,7 @@ public class ProjectMemberController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectPermissionOrLegacyAdminOrManager("
+                    + ".hasProjectPermission("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.member.manage'"
@@ -191,7 +191,7 @@ public class ProjectMemberController {
 
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasProjectPermissionOrLegacyAdminOrManager("
+                    + ".hasProjectPermission("
                     + "#tenantId,"
                     + "#projectId,"
                     + "'project.member.manage'"

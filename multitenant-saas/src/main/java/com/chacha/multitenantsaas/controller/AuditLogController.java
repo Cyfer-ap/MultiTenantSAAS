@@ -53,7 +53,7 @@ public class AuditLogController {
     )
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'audit.read'"
                     + ")"
@@ -113,7 +113,7 @@ public class AuditLogController {
     )
     @PreAuthorize(
             "@authorizationSecurity"
-                    + ".hasUserPermissionOrLegacyAdmin("
+                    + ".hasUserPermission("
                     + "#tenantId,"
                     + "#userId,"
                     + "'audit.read'"

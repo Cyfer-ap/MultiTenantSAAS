@@ -28,7 +28,8 @@ class LegacyControllerAuthorizationGuardTest {
             FORBIDDEN_SECURITY_REFERENCES =
             List.of(
                     "@tenantSecurity",
-                    "@projectSecurity"
+                    "@projectSecurity",
+                    "OrLegacy"
             );
 
     @Test

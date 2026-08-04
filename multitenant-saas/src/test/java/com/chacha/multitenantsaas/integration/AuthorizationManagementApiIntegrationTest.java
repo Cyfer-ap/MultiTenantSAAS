@@ -9,6 +9,7 @@ import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.AuthorizationPermissionRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import com.chacha.multitenantsaas.security.PlatformPermissionCodes;
+import com.chacha.multitenantsaas.service.AuthorizationProvisioningService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,6 +41,10 @@ import static org.springframework.test.web.servlet
         .result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet
         .result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -67,6 +72,10 @@ class AuthorizationManagementApiIntegrationTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AuthorizationProvisioningService
+            authorizationProvisioningService;
 
     @Test
     void adminCanManageAuthorizationLifecycleAndAudit()
@@ -229,21 +238,30 @@ class AuthorizationManagementApiIntegrationTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(
-                        jsonPath("$.data", hasSize(1))
+                        jsonPath("$.data", hasSize(2))
                 )
                 .andExpect(
-                        jsonPath("$.data[0].id")
-                                .value(
+                        jsonPath(
+                                "$.data[*].id",
+                                hasItem(
                                         assignmentId.toString()
                                 )
+                        )
                 )
                 .andExpect(
-                        jsonPath("$.data[0].roleCode")
-                                .value("INVOICE_APPROVER")
+                        jsonPath(
+                                "$.data[*].roleCode",
+                                containsInAnyOrder(
+                                        "MEMBER",
+                                        "INVOICE_APPROVER"
+                                )
+                        )
                 )
                 .andExpect(
-                        jsonPath("$.data[0].scopeType")
-                                .value("TENANT")
+                        jsonPath(
+                                "$.data[*].scopeType",
+                                everyItem(is("TENANT"))
+                        )
                 );
 
         mockMvc.perform(
@@ -869,8 +887,16 @@ class AuthorizationManagementApiIntegrationTest {
                 role
         );
 
-        return appUserRepository
-                .saveAndFlush(user);
+        AppUser savedUser =
+                appUserRepository.saveAndFlush(user);
+
+        authorizationProvisioningService
+                .synchronizeUserFromLegacyState(
+                        tenant.getId(),
+                        savedUser.getId()
+                );
+
+        return savedUser;
     }
 
     private Tenant createTenant(String prefix) {
