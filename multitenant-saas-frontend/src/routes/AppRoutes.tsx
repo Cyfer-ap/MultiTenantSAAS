@@ -163,8 +163,6 @@ export function AppRoutes() {
                                 requiredPermissions={[
                                     authorizationPermissionCodes
                                         .USER_READ,
-                                    authorizationPermissionCodes
-                                        .USER_CREATE,
                                 ]}
                             />
                         }

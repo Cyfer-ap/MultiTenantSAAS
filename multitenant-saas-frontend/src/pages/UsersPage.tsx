@@ -48,6 +48,13 @@ import type {
     UserStatus,
 } from '../features/auth/types/auth'
 import {
+    hasTenantPermission,
+} from '../features/authorization/access/authorizationAccess'
+import { useCurrentAuthorization } from '../features/authorization/hooks/useCurrentAuthorization'
+import {
+    authorizationPermissionCodes,
+} from '../features/authorization/types/authorization'
+import {
     ChangeUserRoleDialog,
     ChangeUserStatusDialog,
     CreateUserDialog,
@@ -137,6 +144,7 @@ function UsersTableSkeleton() {
 
 export function UsersPage() {
     const { session } = useAuth()
+    const authorization = useCurrentAuthorization()
     const [page, setPage] = useState(0)
     const [size, setSize] = useState(10)
     const [searchDraft, setSearchDraft] = useState('')
@@ -161,8 +169,40 @@ export function UsersPage() {
         useState<string | null>(null)
 
     const tenantId = session?.tenantId ?? ''
-    const isTenantAdmin =
-        session?.role === 'TENANT_ADMIN'
+    const authorizationContext = authorization.data
+
+    const canCreateUser = hasTenantPermission(
+        authorizationContext,
+        authorizationPermissionCodes.USER_CREATE,
+    )
+
+    const canUpdateUsers = hasTenantPermission(
+        authorizationContext,
+        authorizationPermissionCodes.USER_UPDATE,
+    )
+
+    const canManageUserRoles = hasTenantPermission(
+        authorizationContext,
+        authorizationPermissionCodes.AUTHORIZATION_MANAGE,
+    )
+
+    const canUpdateUserStatus = hasTenantPermission(
+        authorizationContext,
+        authorizationPermissionCodes.USER_STATUS_UPDATE,
+    )
+
+    const canManageAnyUser =
+        canUpdateUsers ||
+        canManageUserRoles ||
+        canUpdateUserStatus
+
+    const canManageUser = (userId: string): boolean =>
+        canUpdateUsers ||
+        canUpdateUserStatus ||
+        (
+            canManageUserRoles &&
+            userId !== session?.userId
+        )
 
     const queryParams: TenantUsersQueryParams = {
         page,
@@ -271,7 +311,7 @@ export function UsersPage() {
                 </Box>
 
                 <Stack direction="row" spacing={1}>
-                    {isTenantAdmin && (
+                    {canCreateUser && (
                         <Button
                             onClick={() => {
                                 setCreateDialogOpen(true)
@@ -523,7 +563,7 @@ export function UsersPage() {
                                                 Created
                                             </TableSortLabel>
                                         </TableCell>
-                                        {isTenantAdmin && (
+                                        {canManageAnyUser && (
                                             <TableCell align="right">
                                                 Actions
                                             </TableCell>
@@ -570,7 +610,7 @@ export function UsersPage() {
                                                         user.createdAt,
                                                     )}
                                                 </TableCell>
-                                                {isTenantAdmin && (
+                                                {canManageUser(user.id) && (
                                                     <TableCell align="right">
                                                         <IconButton
                                                             aria-label={`Manage ${user.fullName}`}
@@ -633,62 +673,72 @@ export function UsersPage() {
                 )}
             </Paper>
 
-            {isTenantAdmin && (
+            {(canCreateUser || canManageAnyUser) && (
                 <>
-                    <Menu
-                        anchorEl={menuAnchor}
-                        onClose={closeUserMenu}
-                        open={Boolean(menuAnchor)}
-                    >
-                        <MenuItem
-                            onClick={() => {
-                                openUserDialog('edit')
-                            }}
+                    {canManageAnyUser && (
+                        <Menu
+                            anchorEl={menuAnchor}
+                            onClose={closeUserMenu}
+                            open={Boolean(menuAnchor)}
                         >
-                            <ListItemIcon>
-                                <EditOutlinedIcon fontSize="small" />
-                            </ListItemIcon>
-                            Edit profile
-                        </MenuItem>
-                        <MenuItem
-                            disabled={
-                                selectedUser?.id === session?.userId
-                            }
-                            onClick={() => {
-                                openUserDialog('role')
-                            }}
-                        >
-                            <ListItemIcon>
-                                <AdminPanelSettingsOutlinedIcon fontSize="small" />
-                            </ListItemIcon>
-                            Change role
-                        </MenuItem>
-                        <MenuItem
-                            disabled={
-                                selectedUser?.id === session?.userId
-                            }
-                            onClick={() => {
-                                openUserDialog('status')
-                            }}
-                        >
-                            <ListItemIcon>
-                                <ToggleOnOutlinedIcon fontSize="small" />
-                            </ListItemIcon>
-                            Change status
-                        </MenuItem>
-                        <MenuItem
-                            onClick={() => {
-                                openUserDialog('unlock')
-                            }}
-                        >
-                            <ListItemIcon>
-                                <LockResetOutlinedIcon fontSize="small" />
-                            </ListItemIcon>
-                            Unlock login
-                        </MenuItem>
-                    </Menu>
+                            {canUpdateUsers && (
+                                <MenuItem
+                                    onClick={() => {
+                                        openUserDialog('edit')
+                                    }}
+                                >
+                                    <ListItemIcon>
+                                        <EditOutlinedIcon fontSize="small" />
+                                    </ListItemIcon>
+                                    Edit profile
+                                </MenuItem>
+                            )}
+                            {canManageUserRoles && (
+                                <MenuItem
+                                    disabled={
+                                        selectedUser?.id === session?.userId
+                                    }
+                                    onClick={() => {
+                                        openUserDialog('role')
+                                    }}
+                                >
+                                    <ListItemIcon>
+                                        <AdminPanelSettingsOutlinedIcon fontSize="small" />
+                                    </ListItemIcon>
+                                    Change role
+                                </MenuItem>
+                            )}
+                            {canUpdateUserStatus && (
+                                <MenuItem
+                                    disabled={
+                                        selectedUser?.id === session?.userId
+                                    }
+                                    onClick={() => {
+                                        openUserDialog('status')
+                                    }}
+                                >
+                                    <ListItemIcon>
+                                        <ToggleOnOutlinedIcon fontSize="small" />
+                                    </ListItemIcon>
+                                    Change status
+                                </MenuItem>
+                            )}
+                            {canUpdateUserStatus && (
+                                <MenuItem
+                                    onClick={() => {
+                                        openUserDialog('unlock')
+                                    }}
+                                >
+                                    <ListItemIcon>
+                                        <LockResetOutlinedIcon fontSize="small" />
+                                    </ListItemIcon>
+                                    Unlock login
+                                </MenuItem>
+                            )}
+                        </Menu>
+                    )}
 
-                    {createDialogOpen && (
+                    {canCreateUser && createDialogOpen && (
                         <CreateUserDialog
                             onClose={() => {
                                 setCreateDialogOpen(false)
@@ -698,7 +748,8 @@ export function UsersPage() {
                             tenantId={tenantId}
                         />
                     )}
-                    {activeDialog === 'edit' && (
+                    {canUpdateUsers &&
+                        activeDialog === 'edit' && (
                         <EditUserDialog
                             onClose={closeUserDialog}
                             onSuccess={showSuccess}
@@ -707,7 +758,8 @@ export function UsersPage() {
                             user={selectedUser}
                         />
                     )}
-                    {activeDialog === 'role' && (
+                    {canManageUserRoles &&
+                        activeDialog === 'role' && (
                         <ChangeUserRoleDialog
                             onClose={closeUserDialog}
                             onSuccess={showSuccess}
@@ -716,7 +768,8 @@ export function UsersPage() {
                             user={selectedUser}
                         />
                     )}
-                    {activeDialog === 'status' && (
+                    {canUpdateUserStatus &&
+                        activeDialog === 'status' && (
                         <ChangeUserStatusDialog
                             onClose={closeUserDialog}
                             onSuccess={showSuccess}
@@ -725,7 +778,8 @@ export function UsersPage() {
                             user={selectedUser}
                         />
                     )}
-                    {activeDialog === 'unlock' && (
+                    {canUpdateUserStatus &&
+                        activeDialog === 'unlock' && (
                         <UnlockUserDialog
                             onClose={closeUserDialog}
                             onSuccess={showSuccess}

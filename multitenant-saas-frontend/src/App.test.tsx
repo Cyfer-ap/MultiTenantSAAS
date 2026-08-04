@@ -420,10 +420,10 @@ describe('App authentication routes', () => {
             ).toBeInTheDocument()
 
             expect(
-                within(navigation).queryByText(
+                within(navigation).getByText(
                     'Invitations',
                 ),
-            ).not.toBeInTheDocument()
+            ).toBeInTheDocument()
 
             expect(
                 within(navigation).queryByText(
@@ -469,10 +469,10 @@ describe('App authentication routes', () => {
             ).toBeInTheDocument()
 
             expect(
-                within(navigation).queryByText(
+                within(navigation).getByText(
                     'Invitations',
                 ),
-            ).not.toBeInTheDocument()
+            ).toBeInTheDocument()
 
             expect(
                 within(navigation).queryByText(

@@ -55,7 +55,6 @@ export const workspaceNavigationItems:
             icon: <PersonAddAltRoundedIcon />,
             requiredTenantPermissions: [
                 authorizationPermissionCodes.USER_READ,
-                authorizationPermissionCodes.USER_CREATE,
             ],
         },
         {

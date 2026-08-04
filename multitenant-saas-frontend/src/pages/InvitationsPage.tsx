@@ -38,6 +38,13 @@ import { useState } from 'react'
 import { useAuth } from '../features/auth/hooks/useAuth'
 import type { TenantRole } from '../features/auth/types/auth'
 import {
+    hasTenantPermission,
+} from '../features/authorization/access/authorizationAccess'
+import { useCurrentAuthorization } from '../features/authorization/hooks/useCurrentAuthorization'
+import {
+    authorizationPermissionCodes,
+} from '../features/authorization/types/authorization'
+import {
     CreateInvitationDialog,
     RevokeInvitationDialog,
 } from '../features/invitations/components/InvitationDialogs'
@@ -139,6 +146,7 @@ function InvitationsTableSkeleton() {
 
 export function InvitationsPage() {
     const { session } = useAuth()
+    const authorization = useCurrentAuthorization()
     const [page, setPage] = useState(0)
     const [size, setSize] = useState(10)
     const [searchDraft, setSearchDraft] = useState('')
@@ -159,6 +167,12 @@ export function InvitationsPage() {
         useState<string | null>(null)
 
     const tenantId = session?.tenantId ?? ''
+    const canManageInvitations =
+        hasTenantPermission(
+            authorization.data,
+            authorizationPermissionCodes.USER_CREATE,
+        )
+
     const queryParams: TenantInvitationsQueryParams = {
         page,
         size,
@@ -236,15 +250,17 @@ export function InvitationsPage() {
                 </Box>
 
                 <Stack direction="row" spacing={1}>
-                    <Button
-                        onClick={() => {
-                            setCreateDialogOpen(true)
-                        }}
-                        startIcon={<AddRoundedIcon />}
-                        variant="contained"
-                    >
-                        Invite user
-                    </Button>
+                    {canManageInvitations && (
+                        <Button
+                            onClick={() => {
+                                setCreateDialogOpen(true)
+                            }}
+                            startIcon={<AddRoundedIcon />}
+                            variant="contained"
+                        >
+                            Invite user
+                        </Button>
+                    )}
 
                     <Button
                         disabled={invitationsQuery.isFetching}
@@ -495,9 +511,11 @@ export function InvitationsPage() {
                                                 Expires
                                             </TableSortLabel>
                                         </TableCell>
-                                        <TableCell align="right">
-                                            Actions
-                                        </TableCell>
+                                        {canManageInvitations && (
+                                            <TableCell align="right">
+                                                Actions
+                                            </TableCell>
+                                        )}
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -566,25 +584,27 @@ export function InvitationsPage() {
                                                         invitation.expiresAt,
                                                     )}
                                                 </TableCell>
-                                                <TableCell align="right">
-                                                    {invitation.status ===
-                                                        'PENDING' && (
-                                                        <Tooltip title="Revoke invitation">
-                                                            <IconButton
-                                                                aria-label={`Revoke invitation for ${invitation.fullName}`}
-                                                                color="error"
-                                                                onClick={() => {
-                                                                    setRevokeTarget(
-                                                                        invitation,
-                                                                    )
-                                                                }}
-                                                                size="small"
-                                                            >
-                                                                <BlockRoundedIcon />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    )}
-                                                </TableCell>
+                                                {canManageInvitations && (
+                                                    <TableCell align="right">
+                                                        {invitation.status ===
+                                                            'PENDING' && (
+                                                            <Tooltip title="Revoke invitation">
+                                                                <IconButton
+                                                                    aria-label={`Revoke invitation for ${invitation.fullName}`}
+                                                                    color="error"
+                                                                    onClick={() => {
+                                                                        setRevokeTarget(
+                                                                            invitation,
+                                                                        )
+                                                                    }}
+                                                                    size="small"
+                                                                >
+                                                                    <BlockRoundedIcon />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        )}
+                                                    </TableCell>
+                                                )}
                                             </TableRow>
                                         ),
                                     )}
@@ -635,7 +655,8 @@ export function InvitationsPage() {
                 )}
             </Paper>
 
-            {createDialogOpen && (
+            {canManageInvitations &&
+                createDialogOpen && (
                 <CreateInvitationDialog
                     onClose={() => {
                         setCreateDialogOpen(false)
@@ -645,7 +666,8 @@ export function InvitationsPage() {
                 />
             )}
 
-            {revokeTarget && (
+            {canManageInvitations &&
+                revokeTarget && (
                 <RevokeInvitationDialog
                     invitation={revokeTarget}
                     onClose={() => {

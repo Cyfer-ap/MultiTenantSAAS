@@ -22,6 +22,11 @@ import {
 
 import { AuthContext } from '../features/auth/context/AuthContext'
 import type { AuthContextValue } from '../features/auth/context/AuthContext'
+import { authorizationApi } from '../features/authorization/api/authorizationApi'
+import { createTenantAuthorizationContext } from '../features/authorization/test/authorizationTestData'
+import {
+    authorizationPermissionCodes,
+} from '../features/authorization/types/authorization'
 import { invitationsApi } from '../features/invitations/api/invitationsApi'
 import type {
     CreatedInvitation,
@@ -60,6 +65,21 @@ const invitationsPage: PageResponse<TenantInvitation> = {
     last: true,
 }
 
+const invitationManagementAuthorization =
+    createTenantAuthorizationContext({
+        permissionCodes: [
+            authorizationPermissionCodes.USER_READ,
+            authorizationPermissionCodes.USER_CREATE,
+        ],
+    })
+
+const invitationReadOnlyAuthorization =
+    createTenantAuthorizationContext({
+        permissionCodes: [
+            authorizationPermissionCodes.USER_READ,
+        ],
+    })
+
 const authContextValue: AuthContextValue = {
     status: 'authenticated',
     session: {
@@ -90,14 +110,16 @@ function createTestQueryClient(): QueryClient {
     })
 }
 
-function renderInvitationsPage() {
+function renderInvitationsPage(
+    contextValue: AuthContextValue = authContextValue,
+) {
     const queryClient = createTestQueryClient()
 
     function Wrapper({ children }: PropsWithChildren) {
         return (
             <ThemeProvider theme={appTheme}>
                 <QueryClientProvider client={queryClient}>
-                    <AuthContext.Provider value={authContextValue}>
+                    <AuthContext.Provider value={contextValue}>
                         {children}
                     </AuthContext.Provider>
                 </QueryClientProvider>
@@ -113,6 +135,13 @@ function renderInvitationsPage() {
 describe('InvitationsPage', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
+
+        vi.spyOn(
+            authorizationApi,
+            'getCurrentAuthorizationContext',
+        ).mockResolvedValue(
+            invitationManagementAuthorization,
+        )
     })
 
     it('shows a loading state while invitations are pending', () => {
@@ -202,6 +231,62 @@ describe('InvitationsPage', () => {
         })
     }, 10_000)
 
+    it('hides invitation mutations without user.create permission', async () => {
+        vi.spyOn(
+            invitationsApi,
+            'getInvitations',
+        ).mockResolvedValue(invitationsPage)
+        vi.mocked(
+            authorizationApi
+                .getCurrentAuthorizationContext,
+        ).mockResolvedValue(
+            invitationReadOnlyAuthorization,
+        )
+
+        renderInvitationsPage()
+
+        await screen.findByText('Grace User')
+
+        expect(
+            screen.queryByRole('button', {
+                name: /invite user/i,
+            }),
+        ).not.toBeInTheDocument()
+
+        expect(
+            screen.queryByRole('button', {
+                name: /revoke invitation for grace user/i,
+            }),
+        ).not.toBeInTheDocument()
+    })
+
+    it('uses V2 invitation permission rather than the legacy role', async () => {
+        vi.spyOn(
+            invitationsApi,
+            'getInvitations',
+        ).mockResolvedValue(invitationsPage)
+
+        renderInvitationsPage({
+            ...authContextValue,
+            session: {
+                ...authContextValue.session!,
+                role: 'TENANT_USER',
+            },
+        })
+
+        expect(
+            await screen.findByRole('button', {
+                name: /invite user/i,
+            }),
+        ).toBeInTheDocument()
+
+        expect(
+            await screen.findByRole('button', {
+                name: /revoke invitation for grace user/i,
+            }),
+        ).toBeInTheDocument()
+    })
+
     it('creates a normalized invitation and exposes its acceptance link', async () => {
         const user = userEvent.setup()
         const createdInvitation: CreatedInvitation = {
@@ -227,7 +312,7 @@ describe('InvitationsPage', () => {
         renderInvitationsPage()
         await screen.findByText('Grace User')
         await user.click(
-            screen.getByRole('button', {
+            await screen.findByRole('button', {
                 name: /invite user/i,
             }),
         )
@@ -292,7 +377,7 @@ describe('InvitationsPage', () => {
         renderInvitationsPage()
         await screen.findByText('Grace User')
         await user.click(
-            screen.getByRole('button', {
+            await screen.findByRole('button', {
                 name: /revoke invitation for grace user/i,
             }),
         )

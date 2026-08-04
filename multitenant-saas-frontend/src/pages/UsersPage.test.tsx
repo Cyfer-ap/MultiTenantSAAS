@@ -21,6 +21,11 @@ import {
 
 import { AuthContext } from '../features/auth/context/AuthContext'
 import type { AuthContextValue } from '../features/auth/context/AuthContext'
+import { authorizationApi } from '../features/authorization/api/authorizationApi'
+import { createTenantAuthorizationContext } from '../features/authorization/test/authorizationTestData'
+import {
+    authorizationPermissionCodes,
+} from '../features/authorization/types/authorization'
 import { usersApi } from '../features/users/api/usersApi'
 import type { TenantUser } from '../features/users/types/users'
 import { appTheme } from '../theme/appTheme'
@@ -58,6 +63,24 @@ const usersPage: PageResponse<TenantUser> = {
     first: true,
     last: true,
 }
+
+const fullUserManagementAuthorization =
+    createTenantAuthorizationContext({
+        permissionCodes: [
+            authorizationPermissionCodes.USER_READ,
+            authorizationPermissionCodes.USER_CREATE,
+            authorizationPermissionCodes.USER_UPDATE,
+            authorizationPermissionCodes.USER_STATUS_UPDATE,
+            authorizationPermissionCodes.AUTHORIZATION_MANAGE,
+        ],
+    })
+
+const readOnlyUserAuthorization =
+    createTenantAuthorizationContext({
+        permissionCodes: [
+            authorizationPermissionCodes.USER_READ,
+        ],
+    })
 
 const authContextValue: AuthContextValue = {
     status: 'authenticated',
@@ -111,11 +134,29 @@ function renderUsersPage(
 describe('UsersPage', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
+
+        vi.spyOn(
+            authorizationApi,
+            'getCurrentAuthorizationContext',
+        ).mockResolvedValue(
+            fullUserManagementAuthorization,
+        )
     })
 
     it('shows a loading state while users are pending', () => {
         vi.spyOn(usersApi, 'getUsers').mockReturnValue(
             new Promise(() => undefined),
+        )
+        vi.mocked(
+            authorizationApi
+                .getCurrentAuthorizationContext,
+        ).mockResolvedValue(
+            createTenantAuthorizationContext({
+                permissionCodes: [
+                    authorizationPermissionCodes.USER_READ,
+                    authorizationPermissionCodes.USER_CREATE,
+                ],
+            }),
         )
 
         renderUsersPage()
@@ -234,19 +275,18 @@ describe('UsersPage', () => {
         ).toBeInTheDocument()
     })
 
-    it('keeps user management controls hidden from managers', async () => {
+    it('keeps user management controls hidden without V2 permissions', async () => {
         vi.spyOn(usersApi, 'getUsers').mockResolvedValue(
             usersPage,
         )
+        vi.mocked(
+            authorizationApi
+                .getCurrentAuthorizationContext,
+        ).mockResolvedValue(
+            readOnlyUserAuthorization,
+        )
 
-        renderUsersPage({
-            ...authContextValue,
-            session: {
-                ...authContextValue.session!,
-                userId: 'manager-1',
-                role: 'TENANT_MANAGER',
-            },
-        })
+        renderUsersPage()
 
         await screen.findByText('Ada Admin')
 
@@ -261,6 +301,29 @@ describe('UsersPage', () => {
                 name: /manage grace user/i,
             }),
         ).not.toBeInTheDocument()
+    })
+
+    it('uses V2 create permission rather than the legacy role', async () => {
+        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(
+            usersPage,
+        )
+
+        renderUsersPage({
+            ...authContextValue,
+            session: {
+                ...authContextValue.session!,
+                role: 'TENANT_USER',
+            },
+        })
+
+        await screen.findByText('Ada Admin')
+
+        expect(
+            await screen.findByRole('button', {
+                name: /add user/i,
+            }),
+        ).toBeInTheDocument()
+
     })
 
     it('creates a tenant user with normalized input', async () => {
@@ -283,7 +346,7 @@ describe('UsersPage', () => {
 
         await screen.findByText('Ada Admin')
         await user.click(
-            screen.getByRole('button', {
+            await screen.findByRole('button', {
                 name: /add user/i,
             }),
         )
@@ -347,7 +410,7 @@ describe('UsersPage', () => {
 
         await screen.findByText('Grace User')
         await user.click(
-            screen.getByRole('button', {
+            await screen.findByRole('button', {
                 name: /manage grace user/i,
             }),
         )
@@ -407,7 +470,7 @@ describe('UsersPage', () => {
 
         await screen.findByText('Grace User')
         await user.click(
-            screen.getByRole('button', {
+            await screen.findByRole('button', {
                 name: /manage grace user/i,
             }),
         )
@@ -445,7 +508,7 @@ describe('UsersPage', () => {
         })
 
         await user.click(
-            screen.getByRole('button', {
+            await screen.findByRole('button', {
                 name: /manage grace user/i,
             }),
         )
@@ -497,7 +560,7 @@ describe('UsersPage', () => {
 
         await screen.findByText('Grace User')
         await user.click(
-            screen.getByRole('button', {
+            await screen.findByRole('button', {
                 name: /manage grace user/i,
             }),
         )
