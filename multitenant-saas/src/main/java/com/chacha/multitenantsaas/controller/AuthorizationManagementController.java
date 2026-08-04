@@ -78,7 +78,11 @@ public class AuthorizationManagementController {
      */
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @GetMapping("/permissions")
     public ResponseEntity<
@@ -105,7 +109,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @GetMapping("/permissions/custom")
     public ResponseEntity<
@@ -132,7 +140,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @GetMapping("/permissions/{permissionId}")
     public ResponseEntity<
@@ -159,7 +171,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @GetMapping("/permissions/by-code")
     public ResponseEntity<
@@ -186,7 +202,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @PostMapping("/permissions/custom")
     public ResponseEntity<
@@ -216,7 +236,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @PatchMapping(
             "/permissions/custom/{permissionId}"
@@ -252,7 +276,11 @@ public class AuthorizationManagementController {
      */
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @PostMapping("/roles/defaults/initialize")
     public ResponseEntity<
@@ -281,7 +309,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @GetMapping("/roles")
     public ResponseEntity<
@@ -313,7 +345,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @GetMapping("/roles/{roleId}")
     public ResponseEntity<
@@ -340,7 +376,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @GetMapping("/roles/by-code")
     public ResponseEntity<
@@ -367,7 +407,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @PostMapping("/roles")
     public ResponseEntity<
@@ -397,7 +441,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @PutMapping("/roles/{roleId}/permissions")
     public ResponseEntity<
@@ -429,7 +477,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @PatchMapping("/roles/{roleId}/deactivate")
     public ResponseEntity<
@@ -462,7 +514,11 @@ public class AuthorizationManagementController {
      */
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @PostMapping("/assignments")
     public ResponseEntity<
@@ -495,7 +551,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @GetMapping("/assignments/{assignmentId}")
     public ResponseEntity<
@@ -524,7 +584,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @GetMapping("/assignments/users/{userId}")
     public ResponseEntity<
@@ -557,7 +621,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @GetMapping(
             "/assignments/users/{userId}/effective"
@@ -598,7 +666,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @GetMapping("/assignments/roles/{roleId}")
     public ResponseEntity<
@@ -630,7 +702,11 @@ public class AuthorizationManagementController {
     }
 
     @PreAuthorize(
-            "@tenantSecurity.isTenantAdmin(#tenantId)"
+            "@authorizationSecurity"
+                    + ".hasTenantPermissionOrLegacyAdmin("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
     )
     @PatchMapping(
             "/assignments/{assignmentId}/deactivate"
