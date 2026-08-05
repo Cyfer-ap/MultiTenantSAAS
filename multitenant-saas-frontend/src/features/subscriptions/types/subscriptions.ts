@@ -1,0 +1,82 @@
+export type BillingInterval = 'MONTHLY' | 'YEARLY'
+export type SubscriptionPlanStatus = 'ACTIVE' | 'INACTIVE'
+export type TenantSubscriptionStatus =
+    | 'TRIALING'
+    | 'ACTIVE'
+    | 'PAST_DUE'
+    | 'CANCELLED'
+    | 'EXPIRED'
+
+export interface SubscriptionPlan {
+    id: string
+    code: string
+    name: string
+    description: string | null
+    billingInterval: BillingInterval
+    price: number
+    currency: string
+    maxUsers: number | null
+    maxProjects: number | null
+    maxStorageMb: number | null
+    status: SubscriptionPlanStatus
+    createdAt: string
+    updatedAt: string
+}
+
+export interface TenantSubscription {
+    id: string
+    tenantId: string
+    tenantName: string
+    plan: SubscriptionPlan
+    status: TenantSubscriptionStatus
+    startedAt: string
+    currentPeriodStart: string
+    currentPeriodEnd: string
+    trialEndsAt: string | null
+    cancelAtPeriodEnd: boolean
+    cancelledAt: string | null
+    createdAt: string
+    updatedAt: string
+}
+
+export interface CreateSubscriptionPlanInput {
+    code: string
+    name: string
+    description: string | null
+    billingInterval: BillingInterval
+    price: number
+    currency: string
+    maxUsers: number | null
+    maxProjects: number | null
+    maxStorageMb: number | null
+}
+
+export type UpdateSubscriptionPlanInput =
+    Omit<CreateSubscriptionPlanInput, 'code'>
+
+export interface UpdateSubscriptionPlanStatusInput {
+    status: SubscriptionPlanStatus
+}
+
+export interface StartTenantSubscriptionInput {
+    planId: string
+    status: 'TRIALING' | 'ACTIVE'
+    startedAt: string | null
+    currentPeriodStart: string | null
+    currentPeriodEnd: string
+    trialEndsAt: string | null
+    cancelAtPeriodEnd: boolean
+}
+
+export interface ChangeTenantSubscriptionPlanInput {
+    planId: string
+    currentPeriodStart: string
+    currentPeriodEnd: string
+}
+
+export interface UpdateTenantSubscriptionLifecycleInput {
+    status: TenantSubscriptionStatus
+    cancelAtPeriodEnd: boolean
+    currentPeriodEnd: string | null
+    trialEndsAt: string | null
+}

@@ -43,6 +43,7 @@ import { SystemAdminsPage } from '../pages/SystemAdminsPage'
 import { SystemChangePasswordPage } from '../pages/SystemChangePasswordPage'
 import { SystemDashboardPage } from '../pages/SystemDashboardPage'
 import { SystemLoginPage } from '../pages/SystemLoginPage'
+import { SystemSubscriptionsPage } from '../pages/SystemSubscriptionsPage'
 import { SystemTenantsPage } from '../pages/SystemTenantsPage'
 import { TenantChangePasswordPage } from '../pages/TenantChangePasswordPage'
 import { TenantOnboardingPage } from '../pages/TenantOnboardingPage'
@@ -74,6 +75,10 @@ export function AppRoutes() {
                     <Route
                         path="tenants"
                         element={<SystemTenantsPage />}
+                    />
+                    <Route
+                        path="subscriptions"
+                        element={<SystemSubscriptionsPage />}
                     />
                     <Route
                         path="admins"

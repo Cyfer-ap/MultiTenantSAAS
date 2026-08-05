@@ -5,6 +5,7 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
 import PasswordRoundedIcon from '@mui/icons-material/PasswordRounded'
+import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded'
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded'
 import {
     AppBar,
@@ -54,6 +55,11 @@ const navigationItems: readonly NavigationItem[] = [
         label: 'Tenants',
         path: '/system/tenants',
         icon: <BusinessRoundedIcon />,
+    },
+    {
+        label: 'Subscriptions',
+        path: '/system/subscriptions',
+        icon: <PaymentsRoundedIcon />,
     },
     {
         label: 'System admins',
