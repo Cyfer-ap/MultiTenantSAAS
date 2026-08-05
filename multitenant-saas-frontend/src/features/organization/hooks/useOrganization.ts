@@ -34,6 +34,14 @@ export const organizationQueryKeys = {
         'unit-assignments',
         unitId,
     ] as const,
+    assignmentUserOptions: (
+        tenantId: string,
+        unitId: string,
+    ) => [
+        ...organizationQueryKeys.tenant(tenantId),
+        'assignment-user-options',
+        unitId,
+    ] as const,
 }
 
 export function useOrganizationTree(
@@ -66,6 +74,27 @@ export function useOrganizationUnitAssignments(
             ),
         enabled:
             enabled &&
+            tenantId.length > 0 &&
+            unitId.length > 0,
+    })
+}
+
+export function useOrganizationAssignmentUserOptions(
+    tenantId: string,
+    unitId: string,
+) {
+    return useQuery({
+        queryKey:
+            organizationQueryKeys.assignmentUserOptions(
+                tenantId,
+                unitId,
+            ),
+        queryFn: () =>
+            organizationApi.getAssignmentUserOptions(
+                tenantId,
+                unitId,
+            ),
+        enabled:
             tenantId.length > 0 &&
             unitId.length > 0,
     })

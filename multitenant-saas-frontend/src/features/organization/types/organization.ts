@@ -61,6 +61,12 @@ export interface UpdateOrganizationalUnitStatusInput {
     status: OrganizationalUnitStatus
 }
 
+export interface OrganizationAssignmentUserOption {
+    id: string
+    fullName: string
+    email: string
+}
+
 export interface OrganizationAssignment {
     id: string
     tenantId: string

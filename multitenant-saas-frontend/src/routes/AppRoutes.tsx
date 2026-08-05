@@ -47,6 +47,7 @@ import { SystemSubscriptionsPage } from '../pages/SystemSubscriptionsPage'
 import { SystemTenantsPage } from '../pages/SystemTenantsPage'
 import { TenantChangePasswordPage } from '../pages/TenantChangePasswordPage'
 import { TenantOnboardingPage } from '../pages/TenantOnboardingPage'
+import { TenantSubscriptionPage } from '../pages/TenantSubscriptionPage'
 import { UsersPage } from '../pages/UsersPage'
 
 export function AppRoutes() {
@@ -257,6 +258,24 @@ export function AppRoutes() {
                         <Route
                             path="projects/:projectId"
                             element={<ProjectDetailsPage />}
+                        />
+                    </Route>
+
+                    <Route
+                        element={
+                            <TenantPermissionProtectedRoute
+                                requiredPermissions={[
+                                    authorizationPermissionCodes
+                                        .SUBSCRIPTION_READ,
+                                ]}
+                            />
+                        }
+                    >
+                        <Route
+                            path="subscription"
+                            element={
+                                <TenantSubscriptionPage />
+                            }
                         />
                     </Route>
 

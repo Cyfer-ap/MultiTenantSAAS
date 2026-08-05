@@ -2,6 +2,7 @@ package com.chacha.multitenantsaas.service;
 
 import com.chacha.multitenantsaas.dto.OrganizationAssignmentCreateRequest;
 import com.chacha.multitenantsaas.dto.OrganizationAssignmentResponse;
+import com.chacha.multitenantsaas.dto.OrganizationAssignmentUserOptionResponse;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.OrganizationAssignmentStatus;
 import com.chacha.multitenantsaas.entity.OrganizationalUnit;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.time.temporal.ChronoUnit;
@@ -54,6 +56,48 @@ public class OrganizationAssignmentService {
 
         this.assignmentRepository =
                 assignmentRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrganizationAssignmentUserOptionResponse>
+    getAssignableUsers(
+            UUID tenantId,
+            UUID organizationalUnitId
+    ) {
+        tenantLookupService
+                .getActiveByIdOrThrow(tenantId);
+
+        getRequiredActiveUnit(
+                tenantId,
+                organizationalUnitId
+        );
+
+        return appUserRepository
+                .findByTenantId(tenantId)
+                .stream()
+                .filter(
+                        user -> user.getStatus()
+                                == UserStatus.ACTIVE
+                )
+                .sorted(
+                        Comparator.comparing(
+                                        AppUser::getFullName,
+                                        String.CASE_INSENSITIVE_ORDER
+                                )
+                                .thenComparing(
+                                        AppUser::getEmail,
+                                        String.CASE_INSENSITIVE_ORDER
+                                )
+                )
+                .map(
+                        user ->
+                                new OrganizationAssignmentUserOptionResponse(
+                                        user.getId(),
+                                        user.getFullName(),
+                                        user.getEmail()
+                                )
+                )
+                .toList();
     }
 
     @Transactional

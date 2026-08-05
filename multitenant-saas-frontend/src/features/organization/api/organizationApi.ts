@@ -5,6 +5,7 @@ import type {
     CreateOrganizationAssignmentInput,
     MoveOrganizationalUnitInput,
     OrganizationAssignment,
+    OrganizationAssignmentUserOption,
     OrganizationalUnit,
     OrganizationalUnitTree,
     UpdateOrganizationalUnitInput,
@@ -95,6 +96,19 @@ async function getUnitAssignments(
     return response.data.data
 }
 
+async function getAssignmentUserOptions(
+    tenantId: string,
+    unitId: string,
+): Promise<OrganizationAssignmentUserOption[]> {
+    const response = await httpClient.get<
+        ApiResponse<OrganizationAssignmentUserOption[]>
+    >(
+        `/api/tenants/${tenantId}/organization/assignments/units/${unitId}/user-options`,
+    )
+
+    return response.data.data
+}
+
 async function createAssignment(
     tenantId: string,
     input: CreateOrganizationAssignmentInput,
@@ -129,6 +143,7 @@ export const organizationApi = {
     moveUnit,
     updateUnitStatus,
     getUnitAssignments,
+    getAssignmentUserOptions,
     createAssignment,
     deactivateAssignment,
 }

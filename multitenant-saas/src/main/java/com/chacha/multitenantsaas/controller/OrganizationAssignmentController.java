@@ -3,6 +3,7 @@ package com.chacha.multitenantsaas.controller;
 import com.chacha.multitenantsaas.common.ApiResponse;
 import com.chacha.multitenantsaas.dto.OrganizationAssignmentCreateRequest;
 import com.chacha.multitenantsaas.dto.OrganizationAssignmentResponse;
+import com.chacha.multitenantsaas.dto.OrganizationAssignmentUserOptionResponse;
 import com.chacha.multitenantsaas.service.OrganizationAssignmentCommandService;
 import com.chacha.multitenantsaas.service.OrganizationAssignmentService;
 import jakarta.validation.Valid;
@@ -80,6 +81,43 @@ public class OrganizationAssignmentController {
                 ApiResponse.success(
                         "Organizational assignment "
                                 + "created successfully",
+                        response
+                )
+        );
+    }
+
+    @PreAuthorize(
+            "@authorizationSecurity"
+                    + ".canCreateOrganizationAssignment("
+                    + "#tenantId,"
+                    + "#organizationalUnitId,"
+                    + "'organization.assignment.manage'"
+                    + ")"
+    )
+    @GetMapping(
+            "/units/{organizationalUnitId}/user-options"
+    )
+    public ResponseEntity<
+            ApiResponse<
+                    List<OrganizationAssignmentUserOptionResponse>
+                    >
+            >
+    getAssignableUsers(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID organizationalUnitId
+    ) {
+        List<OrganizationAssignmentUserOptionResponse>
+                response =
+                organizationAssignmentService
+                        .getAssignableUsers(
+                                tenantId,
+                                organizationalUnitId
+                        );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Assignable organization users "
+                                + "fetched successfully",
                         response
                 )
         );

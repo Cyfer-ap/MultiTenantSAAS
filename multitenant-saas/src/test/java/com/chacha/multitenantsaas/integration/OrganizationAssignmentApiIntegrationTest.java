@@ -122,6 +122,43 @@ class OrganizationAssignmentApiIntegrationTest {
                         administrator.getEmail()
                 );
 
+        mockMvc.perform(
+                        get(
+                                "/api/tenants/{tenantId}"
+                                        + "/organization/assignments"
+                                        + "/units/{unitId}"
+                                        + "/user-options",
+                                tenant.getId(),
+                                backend.getId()
+                        )
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        bearer(accessToken)
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.data", hasSize(3))
+                )
+                .andExpect(
+                        jsonPath("$.data[0].fullName")
+                                .value(
+                                        "Assignment API Administrator"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.data[1].fullName")
+                                .value(
+                                        "Assignment API Manager"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.data[2].fullName")
+                                .value(
+                                        "Assignment API Member"
+                                )
+                );
+
         Instant validFrom =
                 Instant.now()
                         .minus(

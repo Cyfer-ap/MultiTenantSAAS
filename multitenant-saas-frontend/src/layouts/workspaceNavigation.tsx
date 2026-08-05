@@ -4,6 +4,7 @@ import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
 import FolderRoundedIcon from '@mui/icons-material/FolderRounded'
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
+import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded'
 import PersonAddAltRoundedIcon from '@mui/icons-material/PersonAddAltRounded'
 import type { ReactNode } from 'react'
 
@@ -75,6 +76,15 @@ export const workspaceNavigationItems:
             requiredTenantPermissions: [
                 authorizationPermissionCodes
                     .AUTHORIZATION_MANAGE,
+            ],
+        },
+        {
+            label: 'Subscription',
+            path: '/subscription',
+            icon: <PaymentsRoundedIcon />,
+            requiredTenantPermissions: [
+                authorizationPermissionCodes
+                    .SUBSCRIPTION_READ,
             ],
         },
         {

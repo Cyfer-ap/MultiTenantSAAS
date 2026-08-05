@@ -1,5 +1,6 @@
 import {
     Alert,
+    Autocomplete,
     Button,
     Checkbox,
     Dialog,
@@ -21,6 +22,7 @@ import {
     useCreateOrganizationAssignment,
     useCreateOrganizationUnit,
     useDeactivateOrganizationAssignment,
+    useOrganizationAssignmentUserOptions,
     useMoveOrganizationUnit,
     useUpdateOrganizationUnit,
     useUpdateOrganizationUnitStatus,
@@ -28,6 +30,7 @@ import {
 import type {
     FlatOrganizationalUnit,
     OrganizationAssignment,
+    OrganizationAssignmentUserOption,
     OrganizationalUnitStatus,
     OrganizationalUnitType,
 } from '../types/organization'
@@ -532,7 +535,10 @@ export function CreateAssignmentDialog({
     onClose,
     onSuccess,
 }: CreateAssignmentDialogProps) {
-    const [userId, setUserId] = useState('')
+    const [selectedUser, setSelectedUser] =
+        useState<OrganizationAssignmentUserOption | null>(
+            null,
+        )
     const [
         reportsToAssignmentId,
         setReportsToAssignmentId,
@@ -545,6 +551,11 @@ export function CreateAssignmentDialog({
     const [validUntil, setValidUntil] = useState('')
     const [validationError, setValidationError] =
         useState<string | null>(null)
+    const userOptionsQuery =
+        useOrganizationAssignmentUserOptions(
+            tenantId,
+            unitId,
+        )
     const mutation =
         useCreateOrganizationAssignment(
             tenantId,
@@ -555,13 +566,12 @@ export function CreateAssignmentDialog({
         event: FormEvent<HTMLFormElement>,
     ): void => {
         event.preventDefault()
-        const normalizedUserId = userId.trim()
         const from = toIsoOrNull(validFrom)
         const until = toIsoOrNull(validUntil)
 
-        if (!normalizedUserId) {
+        if (!selectedUser) {
             setValidationError(
-                'User UUID is required.',
+                'Select a user.',
             )
             return
         }
@@ -581,7 +591,7 @@ export function CreateAssignmentDialog({
         setValidationError(null)
         mutation.mutate(
             {
-                userId: normalizedUserId,
+                userId: selectedUser.id,
                 organizationalUnitId: unitId,
                 reportsToAssignmentId:
                     reportsToAssignmentId || null,
@@ -621,23 +631,56 @@ export function CreateAssignmentDialog({
                     sx={{ paddingTop: 1 }}
                 >
                     {(validationError ||
+                        userOptionsQuery.isError ||
                         mutation.isError) && (
                         <Alert severity="error">
                             {validationError ??
-                                getErrorMessage(
-                                    mutation.error,
-                                    'The assignment could not be created.',
-                                )}
+                                (userOptionsQuery.isError
+                                    ? getErrorMessage(
+                                        userOptionsQuery.error,
+                                        'Assignable users could not be loaded.',
+                                    )
+                                    : getErrorMessage(
+                                        mutation.error,
+                                        'The assignment could not be created.',
+                                    ))}
                         </Alert>
                     )}
 
-                    <TextField
-                        label="User UUID"
-                        onChange={(event) => {
-                            setUserId(event.target.value)
+                    <Autocomplete
+                        autoHighlight
+                        disabled={
+                            userOptionsQuery.isError ||
+                            mutation.isPending
+                        }
+                        getOptionLabel={(option) =>
+                            `${option.fullName} — ${option.email}`
+                        }
+                        isOptionEqualToValue={(
+                            option,
+                            value,
+                        ) => option.id === value.id}
+                        loading={
+                            userOptionsQuery.isFetching
+                        }
+                        loadingText="Loading users..."
+                        noOptionsText="No active users found."
+                        onChange={(_event, option) => {
+                            setSelectedUser(option)
+                            setValidationError(null)
                         }}
-                        required
-                        value={userId}
+                        options={
+                            userOptionsQuery.data ?? []
+                        }
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                helperText="Search active users by name or email."
+                                label="User"
+                                required
+                            />
+                        )}
+                        value={selectedUser}
                     />
 
                     <TextField
@@ -738,7 +781,11 @@ export function CreateAssignmentDialog({
                     Cancel
                 </Button>
                 <Button
-                    disabled={mutation.isPending}
+                    disabled={
+                        mutation.isPending ||
+                        userOptionsQuery.isPending ||
+                        !selectedUser
+                    }
                     form="organization-assignment-form"
                     type="submit"
                     variant="contained"

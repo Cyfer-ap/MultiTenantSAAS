@@ -153,6 +153,15 @@ export function getDefaultAuthorizedPath(
     if (
         hasTenantPermission(
             context,
+            authorizationPermissionCodes.SUBSCRIPTION_READ,
+        )
+    ) {
+        return '/subscription'
+    }
+
+    if (
+        hasTenantPermission(
+            context,
             authorizationPermissionCodes.AUDIT_READ,
         )
     ) {
