@@ -122,8 +122,19 @@ class TenantAuthorizationProvisioningIntegrationTest {
                         );
 
         assertEquals(
-                19,
+                20,
                 adminRole.permissions().size()
+        );
+
+        assertTrue(
+                adminRole.permissions()
+                        .stream()
+                        .anyMatch(
+                                permission ->
+                                        PlatformPermissionCodes
+                                                .SUBSCRIPTION_READ
+                                                .equals(permission.code())
+                        )
         );
 
         assertFalse(

@@ -55,8 +55,18 @@ class AuthorizationPermissionCatalogIntegrationTest {
                         );
 
         assertEquals(
-                19,
+                20,
                 platformPermissions.size()
+        );
+
+        assertTrue(
+                platformPermissions.stream()
+                        .anyMatch(
+                                permission ->
+                                        PlatformPermissionCodes
+                                                .SUBSCRIPTION_READ
+                                                .equals(permission.getCode())
+                        )
         );
 
         AuthorizationPermission assignmentPermission =

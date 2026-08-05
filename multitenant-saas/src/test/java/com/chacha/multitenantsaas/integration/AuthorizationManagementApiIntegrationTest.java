@@ -28,6 +28,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet
         .request.MockMvcRequestBuilders.get;
@@ -121,7 +122,15 @@ class AuthorizationManagementApiIntegrationTest {
                                 .value(true)
                 )
                 .andExpect(
-                        jsonPath("$.data", hasSize(19))
+                        jsonPath("$.data", hasSize(20))
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.data[*].code",
+                                hasItem(
+                                        PlatformPermissionCodes.SUBSCRIPTION_READ
+                                )
+                        )
                 );
 
         UUID customPermissionId =

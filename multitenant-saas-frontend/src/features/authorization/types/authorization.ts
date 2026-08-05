@@ -29,6 +29,9 @@ export const authorizationPermissionCodes = {
     AUDIT_READ: 'audit.read',
     AUTHORIZATION_MANAGE:
         'authorization.manage',
+
+    SUBSCRIPTION_READ:
+        'subscription.read',
 } as const
 
 export type AuthorizationPermissionCode =

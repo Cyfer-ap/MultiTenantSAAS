@@ -119,8 +119,15 @@ class AuthorizationRoleIntegrationTest {
         );
 
         assertEquals(
-                19,
+                20,
                 adminRole.permissions().size()
+        );
+
+        assertTrue(
+                containsPermissionCode(
+                        adminRole,
+                        PlatformPermissionCodes.SUBSCRIPTION_READ
+                )
         );
 
         assertTrue(
