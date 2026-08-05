@@ -15,7 +15,7 @@ import {
     TextField,
 } from '@mui/material'
 import type { FormEvent } from 'react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import {
     useCreateOrganizationAssignment,
@@ -79,10 +79,22 @@ export function UnitEditorDialog({
     onClose,
     onSuccess,
 }: UnitEditorDialogProps) {
-    const [name, setName] = useState('')
-    const [code, setCode] = useState('')
+    const [name, setName] = useState(
+        mode === 'edit' && unit
+            ? unit.name
+            : '',
+    )
+    const [code, setCode] = useState(
+        mode === 'edit' && unit
+            ? unit.code ?? ''
+            : '',
+    )
     const [type, setType] =
-        useState<OrganizationalUnitType>('TEAM')
+        useState<OrganizationalUnitType>(
+            mode === 'edit' && unit
+                ? unit.type
+                : 'TEAM',
+        )
     const [validationError, setValidationError] =
         useState<string | null>(null)
 
@@ -94,14 +106,6 @@ export function UnitEditorDialog({
         mode === 'create'
             ? createMutation
             : updateMutation
-
-    useEffect(() => {
-        if (mode === 'edit' && unit) {
-            setName(unit.name)
-            setCode(unit.code ?? '')
-            setType(unit.type)
-        }
-    }, [mode, unit])
 
     const submit = (
         event: FormEvent<HTMLFormElement>,

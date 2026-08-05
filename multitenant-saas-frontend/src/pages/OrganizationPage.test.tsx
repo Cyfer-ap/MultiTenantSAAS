@@ -6,6 +6,7 @@ import {
 import {
     render,
     screen,
+    within,
 } from '@testing-library/react'
 import type { PropsWithChildren } from 'react'
 import {
@@ -170,13 +171,22 @@ describe('OrganizationPage', () => {
 
         renderPage()
 
+        const hierarchy = await screen.findByRole(
+            'list',
+            {
+                name: /organizational units/i,
+            },
+        )
+
         expect(
-            await screen.findByText(
+            within(hierarchy).getByText(
                 'Example Company',
             ),
         ).toBeInTheDocument()
         expect(
-            screen.getByText('Engineering'),
+            within(hierarchy).getByText(
+                'Engineering',
+            ),
         ).toBeInTheDocument()
         expect(
             await screen.findByText('Grace User'),
@@ -203,8 +213,15 @@ describe('OrganizationPage', () => {
 
         renderPage()
 
+        const hierarchy = await screen.findByRole(
+            'list',
+            {
+                name: /organizational units/i,
+            },
+        )
+
         expect(
-            await screen.findByText(
+            within(hierarchy).getByText(
                 'Example Company',
             ),
         ).toBeInTheDocument()

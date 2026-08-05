@@ -31,7 +31,7 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { useAuth } from '../features/auth/hooks/useAuth'
 import {
@@ -126,23 +126,15 @@ export function OrganizationPage() {
         [treeQuery.data],
     )
 
-    useEffect(() => {
-        if (
-            units.length > 0 &&
-            !units.some(
-                (unit) =>
-                    unit.id === selectedUnitId,
-            )
-        ) {
-            setSelectedUnitId(units[0].id)
-        }
-    }, [selectedUnitId, units])
-
     const selectedUnit =
         units.find(
             (unit) =>
                 unit.id === selectedUnitId,
-        ) ?? null
+        ) ??
+        units[0] ??
+        null
+    const resolvedSelectedUnitId =
+        selectedUnit?.id ?? ''
     const authorization =
         authorizationQuery.data
 
@@ -414,7 +406,7 @@ export function OrganizationPage() {
                                             )
                                         }}
                                         selected={
-                                            selectedUnitId ===
+                                            resolvedSelectedUnitId ===
                                             unit.id
                                         }
                                         sx={{

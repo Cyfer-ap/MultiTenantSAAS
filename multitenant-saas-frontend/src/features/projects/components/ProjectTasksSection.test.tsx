@@ -112,11 +112,12 @@ function renderTasksSection(
 
     return render(
         <ProjectTasksSection
+            canManageTasksByPermission
+            canReadTasksByPermission
             onFeedback={vi.fn()}
             projectArchived={false}
             projectId="project-1"
             tenantId="tenant-1"
-            tenantRole="TENANT_ADMIN"
             userId="user-1"
             {...props}
         />,
@@ -276,7 +277,8 @@ describe('ProjectTasksSection', () => {
             })
 
         renderTasksSection({
-            tenantRole: 'TENANT_USER',
+            canManageTasksByPermission: false,
+            canReadTasksByPermission: false,
             userId: 'user-2',
         })
         await screen.findByText('Review access controls')
@@ -333,7 +335,8 @@ describe('ProjectTasksSection', () => {
         })
 
         renderTasksSection({
-            tenantRole: 'TENANT_USER',
+            canManageTasksByPermission: false,
+            canReadTasksByPermission: false,
             userId: 'user-2',
         })
 

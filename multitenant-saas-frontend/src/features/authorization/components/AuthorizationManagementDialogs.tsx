@@ -218,12 +218,16 @@ export function CreateAuthorizationRoleDialog({
             maxWidth="md"
             onClose={onClose}
             open
-            component="form"
-            onSubmit={submit}
         >
             <DialogTitle>Create authorization role</DialogTitle>
             <DialogContent>
-                <Stack spacing={2} sx={{ paddingTop: 1 }}>
+                <Stack
+                    component="form"
+                    id="create-authorization-role-form"
+                    onSubmit={submit}
+                    spacing={2}
+                    sx={{ paddingTop: 1 }}
+                >
                     {(validationError || mutation.isError) && (
                         <Alert severity="error">
                             {validationError ??
@@ -286,6 +290,7 @@ export function CreateAuthorizationRoleDialog({
                 </Button>
                 <Button
                     disabled={mutation.isPending}
+                    form="create-authorization-role-form"
                     type="submit"
                     variant="contained"
                 >
@@ -352,14 +357,18 @@ export function EditAuthorizationRolePermissionsDialog({
             maxWidth="md"
             onClose={onClose}
             open
-            component="form"
-            onSubmit={submit}
         >
             <DialogTitle>
                 Edit permissions for {role.name}
             </DialogTitle>
             <DialogContent>
-                <Stack spacing={2} sx={{ paddingTop: 1 }}>
+                <Stack
+                    component="form"
+                    id="edit-authorization-role-permissions-form"
+                    onSubmit={submit}
+                    spacing={2}
+                    sx={{ paddingTop: 1 }}
+                >
                     {mutation.isError && (
                         <Alert severity="error">
                             {getErrorMessage(
@@ -384,6 +393,7 @@ export function EditAuthorizationRolePermissionsDialog({
                 </Button>
                 <Button
                     disabled={mutation.isPending}
+                    form="edit-authorization-role-permissions-form"
                     type="submit"
                     variant="contained"
                 >
@@ -510,14 +520,18 @@ export function CreateAuthorizationAssignmentDialog({
             maxWidth="sm"
             onClose={onClose}
             open
-            component="form"
-            onSubmit={submit}
         >
             <DialogTitle>
                 Assign authorization role
             </DialogTitle>
             <DialogContent>
-                <Stack spacing={2} sx={{ paddingTop: 1 }}>
+                <Stack
+                    component="form"
+                    id="create-authorization-assignment-form"
+                    onSubmit={submit}
+                    spacing={2}
+                    sx={{ paddingTop: 1 }}
+                >
                     {(validationError || mutation.isError) && (
                         <Alert severity="error">
                             {validationError ??
@@ -628,6 +642,7 @@ export function CreateAuthorizationAssignmentDialog({
                 </Button>
                 <Button
                     disabled={mutation.isPending}
+                    form="create-authorization-assignment-form"
                     type="submit"
                     variant="contained"
                 >
