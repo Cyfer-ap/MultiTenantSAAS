@@ -184,4 +184,26 @@ public interface UserOrganizationAssignmentRepository
             @Param("effectiveAt")
             Instant effectiveAt
     );
+
+    @Query("""
+            SELECT assignment
+            FROM UserOrganizationAssignment assignment
+            JOIN FETCH assignment.user assignedUser
+            JOIN FETCH assignment.organizationalUnit unit
+            WHERE assignment.tenant.id = :tenantId
+              AND assignment.status = :status
+            ORDER BY
+                assignedUser.fullName ASC,
+                assignment.primaryAssignment DESC,
+                unit.name ASC,
+                assignment.id ASC
+            """)
+    List<UserOrganizationAssignment>
+    findTenantAssignmentsByStatus(
+            @Param("tenantId")
+            UUID tenantId,
+
+            @Param("status")
+            OrganizationAssignmentStatus status
+    );
 }

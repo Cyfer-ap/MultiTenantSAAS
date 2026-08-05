@@ -5,6 +5,7 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded'
 import {
     Alert,
+    Autocomplete,
     Box,
     Button,
     Chip,
@@ -26,7 +27,6 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material'
-import type { FormEvent } from 'react'
 import { useState } from 'react'
 
 import { useAuth } from '../features/auth/hooks/useAuth'
@@ -38,12 +38,15 @@ import {
     EditAuthorizationRolePermissionsDialog,
 } from '../features/authorization/components/AuthorizationManagementDialogs'
 import {
+    useAuthorizationAssignmentReferenceData,
     useAuthorizationPermissions,
     useAuthorizationRoles,
     useInitializeDefaultRoles,
     useUserAuthorizationAssignments,
 } from '../features/authorization/hooks/useAuthorizationManagement'
 import type {
+    AuthorizationAssignmentReferenceData,
+    AuthorizationAssignmentUserOption,
     AuthorizationRole,
     AuthorizationScopeType,
     AuthorizationUserRoleAssignment,
@@ -93,6 +96,29 @@ function getErrorMessage(
     return error instanceof Error ? error.message : fallback
 }
 
+function getScopeTargetOption(
+    assignment: AuthorizationUserRoleAssignment,
+    referenceData: AuthorizationAssignmentReferenceData | undefined,
+) {
+    if (!assignment.scopeTargetId || !referenceData) {
+        return null
+    }
+
+    const options =
+        assignment.scopeType === 'PROJECT'
+            ? referenceData.projects
+            : assignment.scopeType === 'DIRECT_REPORTS'
+                ? referenceData.directReportsAnchors
+                : assignment.scopeType === 'ORGANIZATIONAL_UNIT' ||
+                    assignment.scopeType === 'ORGANIZATIONAL_SUBTREE'
+                    ? referenceData.organizationalUnits
+                    : []
+
+    return options.find(
+        (option) => option.id === assignment.scopeTargetId,
+    ) ?? null
+}
+
 export function AuthorizationManagementPage() {
     const { session } = useAuth()
     const tenantId = session?.tenantId ?? ''
@@ -102,9 +128,8 @@ export function AuthorizationManagementPage() {
         useState<RoleDialog>(null)
     const [selectedRole, setSelectedRole] =
         useState<AuthorizationRole | null>(null)
-    const [userIdDraft, setUserIdDraft] = useState('')
-    const [selectedUserId, setSelectedUserId] =
-        useState('')
+    const [selectedUser, setSelectedUser] =
+        useState<AuthorizationAssignmentUserOption | null>(null)
     const [assignmentDialogOpen, setAssignmentDialogOpen] =
         useState(false)
     const [deactivateAssignment, setDeactivateAssignment] =
@@ -115,6 +140,9 @@ export function AuthorizationManagementPage() {
     const permissionsQuery =
         useAuthorizationPermissions(tenantId)
     const rolesQuery = useAuthorizationRoles(tenantId)
+    const assignmentReferenceDataQuery =
+        useAuthorizationAssignmentReferenceData(tenantId)
+    const selectedUserId = selectedUser?.id ?? ''
     const assignmentsQuery =
         useUserAuthorizationAssignments(
             tenantId,
@@ -130,7 +158,7 @@ export function AuthorizationManagementPage() {
     )
     const assignments = assignmentsQuery.data ?? []
     const selectedUserLabel =
-        assignments[0]?.userFullName ?? selectedUserId
+        assignments[0]?.userFullName ?? selectedUser?.fullName ?? ''
 
     const openRoleDialog = (
         dialog: Exclude<RoleDialog, null>,
@@ -145,17 +173,11 @@ export function AuthorizationManagementPage() {
         setRoleDialog(null)
     }
 
-    const loadUserAssignments = (
-        event: FormEvent<HTMLFormElement>,
-    ): void => {
-        event.preventDefault()
-        setSelectedUserId(userIdDraft.trim())
-    }
-
     const refresh = async (): Promise<void> => {
         const requests: Promise<unknown>[] = [
             permissionsQuery.refetch(),
             rolesQuery.refetch(),
+            assignmentReferenceDataQuery.refetch(),
         ]
 
         if (selectedUserId) {
@@ -168,8 +190,8 @@ export function AuthorizationManagementPage() {
     const isRefreshing =
         permissionsQuery.isFetching ||
         rolesQuery.isFetching ||
-        assignmentsQuery.isFetching
-
+        assignmentsQuery.isFetching ||
+        assignmentReferenceDataQuery.isFetching
     const roleDataError =
         permissionsQuery.isError || rolesQuery.isError
 
@@ -458,34 +480,48 @@ export function AuthorizationManagementPage() {
             {tab === 'assignments' && (
                 <Box sx={{ marginTop: 2 }}>
                     <Paper
-                        component="form"
-                        onSubmit={loadUserAssignments}
                         sx={{ padding: 2 }}
                         variant="outlined"
                     >
-                        <Stack
-                            direction={{ xs: 'column', sm: 'row' }}
-                            spacing={2}
-                            sx={{ alignItems: { sm: 'flex-start' } }}
-                        >
-                            <TextField
-                                fullWidth
-                                helperText="Enter the exact tenant user UUID. This lookup requires authorization.manage but does not require user.read."
-                                label="User ID"
-                                onChange={(event) => {
-                                    setUserIdDraft(event.target.value)
-                                }}
-                                value={userIdDraft}
-                            />
-                            <Button
-                                disabled={!userIdDraft.trim()}
-                                type="submit"
-                                variant="contained"
-                            >
-                                Load assignments
-                            </Button>
-                        </Stack>
+                        <Autocomplete
+                            autoHighlight
+                            getOptionLabel={(option) =>
+                                `${option.fullName} (${option.email})`
+                            }
+                            isOptionEqualToValue={(option, value) =>
+                                option.id === value.id
+                            }
+                            loading={
+                                assignmentReferenceDataQuery.isFetching
+                            }
+                            onChange={(_event, option) => {
+                                setSelectedUser(option)
+                                setAssignmentDialogOpen(false)
+                            }}
+                            options={
+                                assignmentReferenceDataQuery
+                                    .data?.users ?? []
+                            }
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    helperText="Search active tenant users by name or email."
+                                    label="User"
+                                    placeholder="Start typing a name or email"
+                                />
+                            )}
+                            value={selectedUser}
+                        />
                     </Paper>
+
+                    {assignmentReferenceDataQuery.isError && (
+                        <Alert severity="error" sx={{ marginTop: 2 }}>
+                            {getErrorMessage(
+                                assignmentReferenceDataQuery.error,
+                                'Assignment selector data could not be loaded.',
+                            )}
+                        </Alert>
+                    )}
 
                     {selectedUserId && (
                         <Stack
@@ -505,7 +541,7 @@ export function AuthorizationManagementPage() {
                                     color="text.secondary"
                                     variant="caption"
                                 >
-                                    {selectedUserId}
+                                    {selectedUser?.email}
                                 </Typography>
                             </Box>
                             <Button
@@ -585,16 +621,29 @@ export function AuthorizationManagementPage() {
                                                             ]
                                                         }
                                                     </Typography>
-                                                    {assignment.scopeTargetId && (
-                                                        <Typography
-                                                            color="text.secondary"
-                                                            variant="caption"
-                                                        >
-                                                            {
-                                                                assignment
-                                                                    .scopeTargetId
-                                                            }
-                                                        </Typography>
+                                                                                                        {assignment.scopeTargetId && (
+                                                        <Box>
+                                                            <Typography variant="body2">
+                                                                {getScopeTargetOption(
+                                                                    assignment,
+                                                                    assignmentReferenceDataQuery.data,
+                                                                )?.label ?? 'Unavailable target'}
+                                                            </Typography>
+                                                            {getScopeTargetOption(
+                                                                assignment,
+                                                                assignmentReferenceDataQuery.data,
+                                                            )?.description && (
+                                                                <Typography
+                                                                    color="text.secondary"
+                                                                    variant="caption"
+                                                                >
+                                                                    {getScopeTargetOption(
+                                                                        assignment,
+                                                                        assignmentReferenceDataQuery.data,
+                                                                    )?.description}
+                                                                </Typography>
+                                                            )}
+                                                        </Box>
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
@@ -807,7 +856,8 @@ export function AuthorizationManagementPage() {
                 />
             )}
 
-            {assignmentDialogOpen && selectedUserId && (
+            {assignmentDialogOpen && selectedUserId &&
+                assignmentReferenceDataQuery.data && (
                 <CreateAuthorizationAssignmentDialog
                     onClose={() => {
                         setAssignmentDialogOpen(false)
@@ -817,6 +867,9 @@ export function AuthorizationManagementPage() {
                     tenantId={tenantId}
                     userDisplayName={selectedUserLabel}
                     userId={selectedUserId}
+                    referenceData={
+                        assignmentReferenceDataQuery.data
+                    }
                 />
             )}
 

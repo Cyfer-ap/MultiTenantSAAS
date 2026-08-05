@@ -51,6 +51,28 @@ export type AuthorizationScopeType =
     | 'PROJECT'
     | 'SELF'
 
+export interface AuthorizationAssignmentUserOption {
+    id: string
+    fullName: string
+    email: string
+}
+
+export interface AuthorizationAssignmentScopeTargetOption {
+    id: string
+    label: string
+    description: string
+    ownerUserId: string | null
+}
+
+export interface AuthorizationAssignmentReferenceData {
+    users: AuthorizationAssignmentUserOption[]
+    organizationalUnits:
+        AuthorizationAssignmentScopeTargetOption[]
+    projects: AuthorizationAssignmentScopeTargetOption[]
+    directReportsAnchors:
+        AuthorizationAssignmentScopeTargetOption[]
+}
+
 export interface CurrentAuthorizationGrant {
     assignmentId: string
     roleId: string

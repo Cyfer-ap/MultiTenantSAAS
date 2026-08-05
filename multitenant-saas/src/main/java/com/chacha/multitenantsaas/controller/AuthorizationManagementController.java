@@ -1,6 +1,7 @@
 package com.chacha.multitenantsaas.controller;
 
 import com.chacha.multitenantsaas.common.ApiResponse;
+import com.chacha.multitenantsaas.dto.AuthorizationAssignmentReferenceDataResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationPermissionResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationRoleCreateRequest;
 import com.chacha.multitenantsaas.dto.AuthorizationRolePermissionUpdateRequest;
@@ -8,6 +9,7 @@ import com.chacha.multitenantsaas.dto.AuthorizationRoleResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationUserRoleAssignmentCreateRequest;
 import com.chacha.multitenantsaas.dto.AuthorizationUserRoleAssignmentResponse;
 import com.chacha.multitenantsaas.dto.TenantPermissionCreateRequest;
+import com.chacha.multitenantsaas.service.AuthorizationAssignmentReferenceDataService;
 import com.chacha.multitenantsaas.service.AuthorizationManagementCommandService;
 import com.chacha.multitenantsaas.service.AuthorizationPermissionService;
 import com.chacha.multitenantsaas.service.AuthorizationRoleService;
@@ -50,6 +52,9 @@ public class AuthorizationManagementController {
     private final AuthorizationManagementCommandService
             authorizationManagementCommandService;
 
+    private final AuthorizationAssignmentReferenceDataService
+            authorizationAssignmentReferenceDataService;
+
     public AuthorizationManagementController(
             AuthorizationPermissionService
                     authorizationPermissionService,
@@ -58,7 +63,9 @@ public class AuthorizationManagementController {
             AuthorizationUserRoleAssignmentService
                     authorizationUserRoleAssignmentService,
             AuthorizationManagementCommandService
-                    authorizationManagementCommandService
+                    authorizationManagementCommandService,
+            AuthorizationAssignmentReferenceDataService
+                    authorizationAssignmentReferenceDataService
     ) {
         this.authorizationPermissionService =
                 authorizationPermissionService;
@@ -71,6 +78,9 @@ public class AuthorizationManagementController {
 
         this.authorizationManagementCommandService =
                 authorizationManagementCommandService;
+
+        this.authorizationAssignmentReferenceDataService =
+                authorizationAssignmentReferenceDataService;
     }
 
     /*
@@ -512,6 +522,35 @@ public class AuthorizationManagementController {
     /*
      * Scoped user-role assignments
      */
+
+    @PreAuthorize(
+            "@authorizationSecurity"
+                    + ".hasTenantPermission("
+                    + "#tenantId,"
+                    + "'authorization.manage'"
+                    + ")"
+    )
+    @GetMapping("/assignment-reference-data")
+    public ResponseEntity<
+            ApiResponse<
+                    AuthorizationAssignmentReferenceDataResponse
+                    >
+            >
+    getAssignmentReferenceData(
+            @PathVariable UUID tenantId
+    ) {
+        AuthorizationAssignmentReferenceDataResponse response =
+                authorizationAssignmentReferenceDataService
+                        .getReferenceData(tenantId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Authorization assignment reference data "
+                                + "fetched successfully",
+                        response
+                )
+        );
+    }
 
     @PreAuthorize(
             "@authorizationSecurity"

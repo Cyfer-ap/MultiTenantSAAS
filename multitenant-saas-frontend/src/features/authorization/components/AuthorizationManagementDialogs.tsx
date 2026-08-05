@@ -1,5 +1,6 @@
 import {
     Alert,
+    Autocomplete,
     Box,
     Button,
     Checkbox,
@@ -29,6 +30,8 @@ import {
     useReplaceAuthorizationRolePermissions,
 } from '../hooks/useAuthorizationManagement'
 import type {
+    AuthorizationAssignmentReferenceData,
+    AuthorizationAssignmentScopeTargetOption,
     AuthorizationPermission,
     AuthorizationRole,
     AuthorizationScopeType,
@@ -418,6 +421,7 @@ interface CreateAuthorizationAssignmentDialogProps {
     userId: string
     userDisplayName: string
     roles: readonly AuthorizationRole[]
+    referenceData: AuthorizationAssignmentReferenceData
     onClose: () => void
     onSuccess: (message: string) => void
 }
@@ -427,6 +431,7 @@ export function CreateAuthorizationAssignmentDialog({
     userId,
     userDisplayName,
     roles,
+    referenceData,
     onClose,
     onSuccess,
 }: CreateAuthorizationAssignmentDialogProps) {
@@ -445,10 +450,42 @@ export function CreateAuthorizationAssignmentDialog({
         useState<string | null>(null)
     const mutation =
         useCreateAuthorizationAssignment(tenantId)
-
     const scopeRequiresTarget =
         scopeType !== 'TENANT' && scopeType !== 'SELF'
 
+    const scopeTargets:
+        readonly AuthorizationAssignmentScopeTargetOption[] =
+        scopeType === 'ORGANIZATIONAL_UNIT' ||
+        scopeType === 'ORGANIZATIONAL_SUBTREE'
+            ? referenceData.organizationalUnits
+            : scopeType === 'PROJECT'
+                ? referenceData.projects
+                : scopeType === 'DIRECT_REPORTS'
+                    ? referenceData.directReportsAnchors
+                        .filter(
+                            (target) =>
+                                target.ownerUserId === userId,
+                        )
+                    : []
+
+    const selectedScopeTarget =
+        scopeTargets.find(
+            (target) => target.id === scopeTargetId,
+        ) ?? null
+
+    const scopeTargetLabel =
+        scopeType === 'PROJECT'
+            ? 'Project'
+            : scopeType === 'DIRECT_REPORTS'
+                ? 'Manager assignment'
+                : 'Organizational unit'
+
+    const scopeTargetHelp =
+        scopeType === 'PROJECT'
+            ? 'Search non-archived projects by name.'
+            : scopeType === 'DIRECT_REPORTS'
+                ? 'Choose one of this userâ€™s active organizational assignments.'
+                : 'Search active organizational units by name or code.'
     const submit = (
         event: FormEvent<HTMLFormElement>,
     ): void => {
@@ -461,7 +498,7 @@ export function CreateAuthorizationAssignmentDialog({
 
         if (scopeRequiresTarget && !scopeTargetId.trim()) {
             setValidationError(
-                'A scope target ID is required for this scope.',
+                'Select a scope target.',
             )
             return
         }
@@ -542,7 +579,7 @@ export function CreateAuthorizationAssignmentDialog({
                         </Alert>
                     )}
                     <Alert severity="info">
-                        Assigning a role to {userDisplayName} ({userId}).
+                        Assigning a role to {userDisplayName}.
                     </Alert>
                     <FormControl fullWidth>
                         <InputLabel id="authorization-role-label">
@@ -588,18 +625,39 @@ export function CreateAuthorizationAssignmentDialog({
                             )}
                         </Select>
                         <FormHelperText>
-                            Tenant and self scopes do not require a target ID.
+                            Tenant and self scopes do not require a target.
                         </FormHelperText>
                     </FormControl>
-                    {scopeRequiresTarget && (
-                        <TextField
+                                        {scopeRequiresTarget && (
+                        <Autocomplete
+                            autoHighlight
                             fullWidth
-                            helperText="Enter the project, organizational unit, manager assignment, or other target UUID represented by the selected scope."
-                            label="Scope target ID"
-                            onChange={(event) => {
-                                setScopeTargetId(event.target.value)
+                            getOptionLabel={(option) =>
+                                option.description
+                                    ? `${option.label} â€” ${option.description}`
+                                    : option.label
+                            }
+                            isOptionEqualToValue={(option, value) =>
+                                option.id === value.id
+                            }
+                            noOptionsText={
+                                scopeType === 'DIRECT_REPORTS'
+                                    ? 'This user has no active organizational assignment.'
+                                    : 'No matching scope targets.'
+                            }
+                            onChange={(_event, option) => {
+                                setScopeTargetId(option?.id ?? '')
+                                setValidationError(null)
                             }}
-                            value={scopeTargetId}
+                            options={scopeTargets}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    helperText={scopeTargetHelp}
+                                    label={scopeTargetLabel}
+                                />
+                            )}
+                            value={selectedScopeTarget}
                         />
                     )}
                     <Stack

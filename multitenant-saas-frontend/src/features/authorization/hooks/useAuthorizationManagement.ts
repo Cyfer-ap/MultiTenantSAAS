@@ -30,6 +30,12 @@ export const authorizationManagementQueryKeys = {
         ),
         'roles',
     ] as const,
+    assignmentReferenceData: (tenantId: string) => [
+        ...authorizationManagementQueryKeys.tenant(
+            tenantId,
+        ),
+        'assignment-reference-data',
+    ] as const,
     userAssignments: (
         tenantId: string,
         userId: string,
@@ -66,6 +72,21 @@ export function useAuthorizationRoles(
             ),
         queryFn: () =>
             authorizationApi.getRoles(tenantId),
+        enabled: tenantId.length > 0,
+    })
+}
+
+export function useAuthorizationAssignmentReferenceData(
+    tenantId: string,
+) {
+    return useQuery({
+        queryKey:
+            authorizationManagementQueryKeys
+                .assignmentReferenceData(tenantId),
+        queryFn: () =>
+            authorizationApi.getAssignmentReferenceData(
+                tenantId,
+            ),
         enabled: tenantId.length > 0,
     })
 }

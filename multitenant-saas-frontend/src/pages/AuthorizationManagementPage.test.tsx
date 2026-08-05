@@ -23,6 +23,7 @@ import { AuthContext } from '../features/auth/context/AuthContext'
 import type { AuthContextValue } from '../features/auth/context/AuthContext'
 import { authorizationApi } from '../features/authorization/api/authorizationApi'
 import type {
+    AuthorizationAssignmentReferenceData,
     AuthorizationPermission,
     AuthorizationRole,
     AuthorizationUserRoleAssignment,
@@ -90,6 +91,32 @@ const assignment: AuthorizationUserRoleAssignment = {
     updatedAt: '2026-08-05T00:00:00Z',
 }
 
+const referenceData: AuthorizationAssignmentReferenceData = {
+    users: [{
+        id: 'user-2',
+        fullName: 'Grace User',
+        email: 'grace@example.com',
+    }],
+    organizationalUnits: [{
+        id: 'unit-1',
+        label: 'Engineering',
+        description: 'DEPARTMENT • ENG',
+        ownerUserId: null,
+    }],
+    projects: [{
+        id: 'project-1',
+        label: 'Apollo',
+        description: 'ACTIVE',
+        ownerUserId: null,
+    }],
+    directReportsAnchors: [{
+        id: 'org-assignment-1',
+        label: 'Engineering — Team Lead',
+        description: 'Primary organizational assignment',
+        ownerUserId: 'user-2',
+    }],
+}
+
 const authContextValue: AuthContextValue = {
     status: 'authenticated',
     session: {
@@ -151,6 +178,10 @@ describe('AuthorizationManagementPage', () => {
             authorizationApi,
             'getUserAssignments',
         ).mockResolvedValue([])
+        vi.spyOn(
+            authorizationApi,
+            'getAssignmentReferenceData',
+        ).mockResolvedValue(referenceData)
         vi.spyOn(
             authorizationApi,
             'initializeDefaultRoles',
@@ -232,7 +263,7 @@ describe('AuthorizationManagementPage', () => {
         })
     })
 
-    it('creates a tenant-scoped assignment for an exact user ID', async () => {
+    it('creates a project-scoped assignment through readable selectors', async () => {
         const user = userEvent.setup()
         const createAssignment = vi
             .spyOn(authorizationApi, 'createAssignment')
@@ -246,13 +277,15 @@ describe('AuthorizationManagementPage', () => {
                 name: /assignments/i,
             }),
         )
-        await user.type(
-            screen.getByLabelText(/user id/i),
-            'user-2',
+
+        const userSelector = screen.getByRole(
+            'combobox',
+            { name: /^user$/i },
         )
+        await user.type(userSelector, 'Grace')
         await user.click(
-            screen.getByRole('button', {
-                name: /load assignments/i,
+            screen.getByRole('option', {
+                name: /grace user.*grace@example.com/i,
             }),
         )
 
@@ -278,6 +311,25 @@ describe('AuthorizationManagementPage', () => {
             }),
         )
         await user.click(
+            within(dialog).getByLabelText(/^scope$/i),
+        )
+        await user.click(
+            screen.getByRole('option', {
+                name: /^project$/i,
+            }),
+        )
+
+        const projectSelector = within(dialog).getByRole(
+            'combobox',
+            { name: /^project$/i },
+        )
+        await user.type(projectSelector, 'Apollo')
+        await user.click(
+            screen.getByRole('option', {
+                name: /apollo.*active/i,
+            }),
+        )
+        await user.click(
             within(dialog).getByRole('button', {
                 name: /^assign role$/i,
             }),
@@ -289,8 +341,8 @@ describe('AuthorizationManagementPage', () => {
                 {
                     userId: 'user-2',
                     roleId: 'role-tenant',
-                    scopeType: 'TENANT',
-                    scopeTargetId: null,
+                    scopeType: 'PROJECT',
+                    scopeTargetId: 'project-1',
                     validFrom: null,
                     validUntil: null,
                 },

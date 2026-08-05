@@ -58,6 +58,27 @@ const assignment: AuthorizationUserRoleAssignment = {
     updatedAt: '2026-08-05T00:00:00Z',
 }
 
+const referenceData = {
+    users: [{
+        id: 'user-1',
+        fullName: 'Grace User',
+        email: 'grace@example.com',
+    }],
+    organizationalUnits: [{
+        id: 'unit-1',
+        label: 'Engineering',
+        description: 'DEPARTMENT • ENG',
+        ownerUserId: null,
+    }],
+    projects: [{
+        id: 'project-1',
+        label: 'Apollo',
+        description: 'ACTIVE',
+        ownerUserId: null,
+    }],
+    directReportsAnchors: [],
+}
+
 describe('authorization management API', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
@@ -74,6 +95,21 @@ describe('authorization management API', () => {
         expect(get).toHaveBeenCalledWith(
             '/api/tenants/tenant-1/authorization/roles',
             { params: { activeOnly: false } },
+        )
+    })
+
+    it('loads human-readable assignment selector data', async () => {
+        const get = vi.spyOn(httpClient, 'get')
+            .mockResolvedValue(successfulResponse(referenceData))
+
+        await expect(
+            authorizationApi.getAssignmentReferenceData(
+                'tenant-1',
+            ),
+        ).resolves.toEqual(referenceData)
+
+        expect(get).toHaveBeenCalledWith(
+            '/api/tenants/tenant-1/authorization/assignment-reference-data',
         )
     })
 

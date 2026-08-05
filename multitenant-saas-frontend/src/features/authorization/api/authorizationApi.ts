@@ -1,6 +1,7 @@
 import { httpClient } from '../../../api/httpClient'
 import type { ApiResponse } from '../../../types/api'
 import type {
+    AuthorizationAssignmentReferenceData,
     AuthorizationPermission,
     AuthorizationRole,
     AuthorizationUserRoleAssignment,
@@ -114,6 +115,20 @@ async function deactivateRole(
     return response.data.data
 }
 
+async function getAssignmentReferenceData(
+    tenantId: string,
+): Promise<AuthorizationAssignmentReferenceData> {
+    const response = await httpClient.get<
+        ApiResponse<AuthorizationAssignmentReferenceData>
+    >(
+        `${authorizationBasePath(
+            tenantId,
+        )}/assignment-reference-data`,
+    )
+
+    return response.data.data
+}
+
 async function getUserAssignments(
     tenantId: string,
     userId: string,
@@ -172,6 +187,7 @@ export const authorizationApi = {
     createRole,
     replaceRolePermissions,
     deactivateRole,
+    getAssignmentReferenceData,
     getUserAssignments,
     createAssignment,
     deactivateAssignment,
