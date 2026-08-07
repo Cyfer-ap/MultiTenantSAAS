@@ -22,19 +22,25 @@ public class ProjectService {
     private final CurrentActorService currentActorService;
     private final ProjectMemberService projectMemberService;
     private final AuditLogService auditLogService;
+    private final SubscriptionQuotaGuardService
+            subscriptionQuotaGuardService;
 
     public ProjectService(
             ProjectRepository projectRepository,
             TenantRepository tenantRepository,
             CurrentActorService currentActorService,
             ProjectMemberService projectMemberService,
-            AuditLogService auditLogService
+            AuditLogService auditLogService,
+            SubscriptionQuotaGuardService
+                    subscriptionQuotaGuardService
     ) {
         this.projectRepository = projectRepository;
         this.tenantRepository = tenantRepository;
         this.currentActorService = currentActorService;
         this.projectMemberService = projectMemberService;
         this.auditLogService = auditLogService;
+        this.subscriptionQuotaGuardService =
+                subscriptionQuotaGuardService;
     }
 
     @Transactional
@@ -44,6 +50,10 @@ public class ProjectService {
             Jwt jwt
     ) {
         Tenant tenant = getRequiredActiveTenant(tenantId);
+
+        subscriptionQuotaGuardService.requireProjectSlot(
+                tenantId
+        );
 
         AppUser actor =
                 currentActorService.getRequiredActiveActor(

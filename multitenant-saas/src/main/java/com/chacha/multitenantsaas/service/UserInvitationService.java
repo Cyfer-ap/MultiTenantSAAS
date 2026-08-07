@@ -34,6 +34,8 @@ public class UserInvitationService {
     private final long expirationHours;
     private final AuthorizationProvisioningService
             authorizationProvisioningService;
+    private final SubscriptionQuotaGuardService
+            subscriptionQuotaGuardService;
 
     public UserInvitationService(
             TenantRepository tenantRepository,
@@ -46,6 +48,8 @@ public class UserInvitationService {
             AuditLogService auditLogService,
             AuthorizationProvisioningService
                     authorizationProvisioningService,
+            SubscriptionQuotaGuardService
+                    subscriptionQuotaGuardService,
             @Value(
                     "${app.user-invitation.expiration-hours:48}"
             )
@@ -63,6 +67,8 @@ public class UserInvitationService {
         this.auditLogService = auditLogService;
         this.authorizationProvisioningService =
                 authorizationProvisioningService;
+        this.subscriptionQuotaGuardService =
+                subscriptionQuotaGuardService;
         this.expirationHours = expirationHours;
     }
 
@@ -178,6 +184,10 @@ public class UserInvitationService {
                     "User already exists for this tenant"
             );
         }
+
+        subscriptionQuotaGuardService.requireUserSlot(
+                tenant.getId()
+        );
 
         AppUser user = new AppUser(
                 tenant,

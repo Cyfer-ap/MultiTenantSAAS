@@ -37,6 +37,8 @@ public class AppUserService {
     private final CurrentSystemAdminService currentSystemAdminService;
     private final LoginAttemptService loginAttemptService;
     private final AuthorizationProvisioningService authorizationProvisioningService;
+    private final SubscriptionQuotaGuardService
+            subscriptionQuotaGuardService;
 
     public AppUserService(
             AppUserRepository appUserRepository,
@@ -48,7 +50,9 @@ public class AppUserService {
             RefreshTokenService refreshTokenService,
             CurrentSystemAdminService currentSystemAdminService,
             LoginAttemptService loginAttemptService,
-            AuthorizationProvisioningService authorizationProvisioningService
+            AuthorizationProvisioningService authorizationProvisioningService,
+            SubscriptionQuotaGuardService
+                    subscriptionQuotaGuardService
     ) {
         this.appUserRepository = appUserRepository;
         this.tenantRepository = tenantRepository;
@@ -60,6 +64,8 @@ public class AppUserService {
         this.currentSystemAdminService = currentSystemAdminService;
         this.loginAttemptService = loginAttemptService;
         this.authorizationProvisioningService = authorizationProvisioningService;
+        this.subscriptionQuotaGuardService =
+                subscriptionQuotaGuardService;
     }
 
     @Transactional
@@ -76,6 +82,8 @@ public class AppUserService {
         if (appUserRepository.existsByTenantIdAndEmail(tenantId, normalizedEmail)) {
             throw new DuplicateResourceException("User email already exists for this tenant: " + normalizedEmail);
         }
+
+        subscriptionQuotaGuardService.requireUserSlot(tenantId);
 
         String passwordHash = passwordEncoder.encode(request.password());
 
@@ -301,6 +309,15 @@ public class AppUserService {
                 ));
 
         UserStatus oldStatus = user.getStatus();
+
+        if (
+                oldStatus != UserStatus.ACTIVE
+                        && request.status() == UserStatus.ACTIVE
+        ) {
+            subscriptionQuotaGuardService.requireUserSlot(
+                    tenantId
+            );
+        }
 
         if (currentSystemAdminService.isSystemAdminToken(jwt)) {
             SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);

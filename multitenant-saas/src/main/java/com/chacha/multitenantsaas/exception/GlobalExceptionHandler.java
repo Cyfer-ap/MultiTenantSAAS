@@ -51,6 +51,52 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(SubscriptionRestrictionException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleSubscriptionRestrictionException(
+            SubscriptionRestrictionException exception,
+            HttpServletRequest request
+    ) {
+        Map<String, String> details = new LinkedHashMap<>();
+        details.put(
+                "restriction",
+                exception.getRestrictionType().name()
+        );
+
+        if (exception.getAccessReason() != null) {
+            details.put(
+                    "accessReason",
+                    exception.getAccessReason().name()
+            );
+        }
+
+        if (exception.getResource() != null) {
+            details.put("resource", exception.getResource());
+        }
+
+        if (exception.getUsed() != null) {
+            details.put(
+                    "used",
+                    exception.getUsed().toString()
+            );
+        }
+
+        if (exception.getLimit() != null) {
+            details.put(
+                    "limit",
+                    exception.getLimit().toString()
+            );
+        }
+
+        return buildResponse(
+                HttpStatus.CONFLICT,
+                ErrorCode.INVALID_REQUEST,
+                exception.getMessage(),
+                request,
+                details
+        );
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleValidationException(
             MethodArgumentNotValidException exception,
