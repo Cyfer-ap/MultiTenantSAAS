@@ -35,6 +35,19 @@ public class TenantLookupService {
         return tenant;
     }
 
+    public Tenant getActiveByIdForUpdateOrThrow(UUID tenantId) {
+        Tenant tenant = tenantRepository.findByIdForUpdate(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Tenant not found with id: " + tenantId
+                ));
+
+        if (tenant.getStatus() != TenantStatus.ACTIVE) {
+            throw new AuthenticationFailedException("Tenant is not active");
+        }
+
+        return tenant;
+    }
+
     public Tenant getBySlugOrThrow(String slug) {
         return tenantRepository.findBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException(

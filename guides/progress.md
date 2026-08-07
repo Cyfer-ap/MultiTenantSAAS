@@ -1,6 +1,9 @@
 # Multi-Tenant SaaS Platform — Current Progress
 
-This document is the authoritative implementation snapshot for the backend and frontend.
+> Historical snapshot: this file predates authorization v2, subscriptions,
+> central subscription read-only enforcement, and PostgreSQL Step 39.
+> It is no longer authoritative. Use `guides/README.md` and the focused
+> current guides listed there for the current implementation state.
 
 ```text
 Repository: Cyfer-ap/MultiTenantSAAS

@@ -21,6 +21,7 @@ Do not edit an already-applied migration to make a guide match it.
 - `subscription_billing.md` - plans, subscriptions, access evaluation, quotas, and read-only behavior
 - `postgresql_and_migrations.md` - H2/PostgreSQL profiles, Flyway layout, Testcontainers, and migration rules
 - `step39_closeout.md` - Step 39 verification, fixes, and hand-off to Step 40
+- `step40_transaction_concurrency.md` - transaction/concurrency hardening scope and completed slices
 
 ## Older guides
 
@@ -47,8 +48,8 @@ Never copy old V1-V17 migrations into `db/common`, and never rewrite an already-
 
 Step 39 establishes the PostgreSQL production-readiness foundation and migration parity rules. It does not mean the application is production-complete.
 
-The next development step is:
+The current development step is:
 
 **Step 40 - Transaction & Concurrency Hardening**
 
-That step should focus on transactional boundaries, race conditions, locking/idempotency where required, and consistency of quota/subscription-sensitive writes.
+Slice 40.1 begins by serializing subscription creation and mutable subscription state transitions. Later slices cover invitations, login/session state, duplicate races, and PostgreSQL-specific concurrency verification.

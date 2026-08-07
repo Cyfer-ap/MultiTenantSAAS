@@ -53,7 +53,8 @@ public class TenantSubscriptionService {
         }
 
         Tenant tenant =
-                tenantLookupService.getActiveByIdOrThrow(tenantId);
+                tenantLookupService
+                        .getActiveByIdForUpdateOrThrow(tenantId);
 
         if (tenantSubscriptionRepository
                 .existsByTenant_Id(tenantId)) {
@@ -136,7 +137,7 @@ public class TenantSubscriptionService {
         }
 
         TenantSubscription subscription =
-                getSubscriptionEntity(tenantId);
+                getSubscriptionEntityForUpdate(tenantId);
 
         if (
                 subscription.getStatus()
@@ -188,7 +189,7 @@ public class TenantSubscriptionService {
         }
 
         TenantSubscription subscription =
-                getSubscriptionEntity(tenantId);
+                getSubscriptionEntityForUpdate(tenantId);
 
         TenantSubscriptionStatus status =
                 requireValue(
@@ -241,6 +242,25 @@ public class TenantSubscriptionService {
 
         return tenantSubscriptionRepository
                 .findByTenantIdWithPlan(tenantId)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(
+                                "Tenant subscription not found for tenant: "
+                                        + tenantId
+                        )
+                );
+    }
+
+    private TenantSubscription getSubscriptionEntityForUpdate(
+            UUID tenantId
+    ) {
+        if (tenantId == null) {
+            throw new IllegalArgumentException(
+                    "Tenant id is required."
+            );
+        }
+
+        return tenantSubscriptionRepository
+                .findByTenantIdWithPlanForUpdate(tenantId)
                 .orElseThrow(
                         () -> new ResourceNotFoundException(
                                 "Tenant subscription not found for tenant: "
