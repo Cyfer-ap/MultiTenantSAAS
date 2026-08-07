@@ -18,6 +18,7 @@ import type {
 } from '../features/auth/context/AuthContext'
 import {
     useWorkspaceSubscription,
+    useWorkspaceSubscriptionEntitlements,
 } from '../features/subscriptions/hooks/useWorkspaceSubscription'
 import { appTheme } from '../theme/appTheme'
 import { TenantSubscriptionPage } from './TenantSubscriptionPage'
@@ -26,6 +27,7 @@ vi.mock(
     '../features/subscriptions/hooks/useWorkspaceSubscription',
     () => ({
         useWorkspaceSubscription: vi.fn(),
+        useWorkspaceSubscriptionEntitlements: vi.fn(),
     }),
 )
 
@@ -80,6 +82,42 @@ const subscription = {
     updatedAt: '2026-08-05T12:00:00Z',
 }
 
+
+const entitlements = {
+    tenantId: 'tenant-1',
+    subscriptionId: 'subscription-1',
+    planId: 'plan-1',
+    planCode: 'GROWTH',
+    planName: 'Growth',
+    subscriptionStatus: 'ACTIVE' as const,
+    accessLevel: 'FULL_ACCESS' as const,
+    accessReason: 'ACTIVE' as const,
+    serviceAvailable: true,
+    mutationsAllowed: true,
+    cancelAtPeriodEnd: false,
+    currentPeriodEnd: '2026-09-05T12:00:00Z',
+    trialEndsAt: null,
+    evaluatedAt: '2026-08-07T12:00:00Z',
+    users: {
+        used: 2,
+        limit: 25,
+        remaining: 23,
+        unlimited: false,
+        limitReached: false,
+        overLimit: false,
+        creationAllowed: true,
+    },
+    projects: {
+        used: 7,
+        limit: 100,
+        remaining: 93,
+        unlimited: false,
+        limitReached: false,
+        overLimit: false,
+        creationAllowed: true,
+    },
+}
+
 function renderPage() {
     return render(
         <ThemeProvider theme={appTheme}>
@@ -104,6 +142,16 @@ describe('TenantSubscriptionPage', () => {
             isPending: false,
             refetch: vi.fn(),
         } as never)
+        vi.mocked(
+            useWorkspaceSubscriptionEntitlements,
+        ).mockReturnValue({
+            data: entitlements,
+            error: null,
+            isError: false,
+            isFetching: false,
+            isPending: false,
+            refetch: vi.fn(),
+        } as never)
     })
 
     it('renders readable plan, billing, period, and limit details', () => {
@@ -118,10 +166,10 @@ describe('TenantSubscriptionPage', () => {
             screen.getByText('GROWTH'),
         ).toBeInTheDocument()
         expect(
-            screen.getByText('25'),
+            screen.getByText('2 / 25'),
         ).toBeInTheDocument()
         expect(
-            screen.getByText('100'),
+            screen.getByText('7 / 100'),
         ).toBeInTheDocument()
         expect(
             screen.queryByText(

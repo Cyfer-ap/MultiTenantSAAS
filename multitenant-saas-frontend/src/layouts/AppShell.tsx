@@ -22,14 +22,24 @@ import {
 } from 'react-router'
 
 import { UserMenu } from '../features/auth/components/UserMenu'
+import { useAuth } from '../features/auth/hooks/useAuth'
 import { useCurrentAuthorization } from '../features/authorization/hooks/useCurrentAuthorization'
+import { WorkspaceSubscriptionBanner } from '../features/subscriptions/components/WorkspaceSubscriptionBanner'
+import { WorkspaceSubscriptionAccessProvider } from '../features/subscriptions/context/WorkspaceSubscriptionAccessContext'
+import { useWorkspaceSubscriptionAccess } from '../features/subscriptions/hooks/useWorkspaceSubscription'
 import { getAvailableWorkspaceNavigationItems } from './workspaceNavigation'
 
 const drawerWidth = 248
 
 export function AppShell() {
+    const { session } = useAuth()
     const authorization =
         useCurrentAuthorization()
+    const tenantId = session?.tenantId ?? ''
+    const subscriptionAccessQuery =
+        useWorkspaceSubscriptionAccess(tenantId)
+    const subscriptionAccess =
+        subscriptionAccessQuery.data ?? null
 
     const theme = useTheme()
     const isDesktop = useMediaQuery(
@@ -230,7 +240,14 @@ export function AppShell() {
                     },
                 }}
             >
-                <Outlet />
+                <WorkspaceSubscriptionAccessProvider
+                    access={subscriptionAccess}
+                >
+                    <WorkspaceSubscriptionBanner
+                        access={subscriptionAccess}
+                    />
+                    <Outlet />
+                </WorkspaceSubscriptionAccessProvider>
             </Box>
         </Box>
     )

@@ -54,6 +54,7 @@ import { useCurrentAuthorization } from '../features/authorization/hooks/useCurr
 import {
     authorizationPermissionCodes,
 } from '../features/authorization/types/authorization'
+import { useWorkspaceSubscriptionAccessContext } from '../features/subscriptions/context/WorkspaceSubscriptionAccessContext'
 import {
     ChangeUserRoleDialog,
     ChangeUserStatusDialog,
@@ -170,6 +171,14 @@ export function UsersPage() {
 
     const tenantId = session?.tenantId ?? ''
     const authorizationContext = authorization.data
+    const subscriptionAccess =
+        useWorkspaceSubscriptionAccessContext()
+    const userCreationAllowed =
+        subscriptionAccess?.userCreationAllowed ?? true
+    const userCreationRestrictionMessage =
+        subscriptionAccess?.mutationsAllowed === false
+            ? 'The current subscription does not allow creating or reactivating users.'
+            : 'The active-user limit has been reached for the current plan. Deactivate a user or change the plan before adding or reactivating another user.'
 
     const canCreateUser = hasTenantPermission(
         authorizationContext,
@@ -313,6 +322,7 @@ export function UsersPage() {
                 <Stack direction="row" spacing={1}>
                     {canCreateUser && (
                         <Button
+                            disabled={!userCreationAllowed}
                             onClick={() => {
                                 setCreateDialogOpen(true)
                             }}
@@ -345,6 +355,15 @@ export function UsersPage() {
                     </Button>
                 </Stack>
             </Stack>
+
+            {canCreateUser && !userCreationAllowed && (
+                <Alert
+                    severity="warning"
+                    sx={{ marginTop: 2 }}
+                >
+                    {userCreationRestrictionMessage}
+                </Alert>
+            )}
 
             <Paper
                 component="form"
@@ -771,6 +790,12 @@ export function UsersPage() {
                     {canUpdateUserStatus &&
                         activeDialog === 'status' && (
                         <ChangeUserStatusDialog
+                            activationAllowed={
+                                userCreationAllowed
+                            }
+                            activationRestrictionMessage={
+                                userCreationRestrictionMessage
+                            }
                             onClose={closeUserDialog}
                             onSuccess={showSuccess}
                             open

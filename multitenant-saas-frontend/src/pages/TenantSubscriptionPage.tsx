@@ -9,6 +9,7 @@ import {
     Chip,
     CircularProgress,
     Divider,
+    LinearProgress,
     Paper,
     Stack,
     Typography,
@@ -18,8 +19,10 @@ import { ApiClientError } from '../api/apiError'
 import { useAuth } from '../features/auth/hooks/useAuth'
 import {
     useWorkspaceSubscription,
+    useWorkspaceSubscriptionEntitlements,
 } from '../features/subscriptions/hooks/useWorkspaceSubscription'
 import type {
+    SubscriptionResourceEntitlement,
     TenantSubscriptionStatus,
 } from '../features/subscriptions/types/subscriptions'
 
@@ -113,16 +116,113 @@ function statusMessage(
     return null
 }
 
+
+interface ResourceUsageCardProps {
+    title: string
+    configuredLimit: number | null
+    entitlement?: SubscriptionResourceEntitlement
+    loading: boolean
+}
+
+function ResourceUsageCard({
+    title,
+    configuredLimit,
+    entitlement,
+    loading,
+}: ResourceUsageCardProps) {
+    const limit = entitlement
+        ? entitlement.limit
+        : configuredLimit
+    const unlimited = entitlement?.unlimited ?? limit === null
+    const used = entitlement?.used
+    const progress =
+        used === undefined || unlimited
+            ? 0
+            : limit === null || limit <= 0
+                ? 100
+                : Math.min(100, (used / limit) * 100)
+
+    let detail = 'Current usage is unavailable.'
+
+    if (loading) {
+        detail = 'Loading current usage…'
+    } else if (entitlement) {
+        if (entitlement.overLimit) {
+            detail = 'Usage is above the current plan limit.'
+        } else if (entitlement.limitReached) {
+            detail = 'Plan limit reached.'
+        } else if (!entitlement.creationAllowed) {
+            detail = 'New resource creation is restricted.'
+        } else if (entitlement.unlimited) {
+            detail = 'Unlimited plan capacity.'
+        } else {
+            detail = `${entitlement.remaining ?? 0} slot${
+                entitlement.remaining === 1 ? '' : 's'
+            } remaining.`
+        }
+    }
+
+    const usageLabel = used === undefined
+        ? formatLimit(limit)
+        : unlimited
+            ? `${used.toLocaleString()} in use`
+            : `${used.toLocaleString()} / ${
+                (limit ?? 0).toLocaleString()
+            }`
+
+    return (
+        <Paper sx={{ padding: 3 }} variant="outlined">
+            <Typography variant="h6">
+                {title}
+            </Typography>
+            <Typography
+                sx={{
+                    fontWeight: 700,
+                    marginTop: 2,
+                }}
+                variant="h5"
+            >
+                {usageLabel}
+            </Typography>
+
+            {used !== undefined && !unlimited && (
+                <LinearProgress
+                    aria-label={`${title} usage`}
+                    sx={{ marginTop: 2 }}
+                    value={progress}
+                    variant="determinate"
+                />
+            )}
+
+            <Typography
+                color="text.secondary"
+                sx={{ marginTop: 1 }}
+                variant="body2"
+            >
+                {detail}
+            </Typography>
+        </Paper>
+    )
+}
+
 export function TenantSubscriptionPage() {
     const { session } = useAuth()
     const tenantId = session?.tenantId ?? ''
     const subscriptionQuery =
         useWorkspaceSubscription(tenantId)
+    const entitlementQuery =
+        useWorkspaceSubscriptionEntitlements(
+            tenantId,
+        )
     const noSubscription =
         subscriptionQuery.error instanceof
             ApiClientError &&
         subscriptionQuery.error.status === 404
     const subscription = subscriptionQuery.data
+    const entitlements = entitlementQuery.data
+    const refreshing =
+        subscriptionQuery.isFetching ||
+        entitlementQuery.isFetching
     const lifecycleMessage = subscription
         ? statusMessage(subscription.status)
         : null
@@ -160,14 +260,15 @@ export function TenantSubscriptionPage() {
                 </Box>
 
                 <Button
-                    disabled={
-                        subscriptionQuery.isFetching
-                    }
+                    disabled={refreshing}
                     onClick={() => {
-                        void subscriptionQuery.refetch()
+                        void Promise.all([
+                            subscriptionQuery.refetch(),
+                            entitlementQuery.refetch(),
+                        ])
                     }}
                     startIcon={
-                        subscriptionQuery.isFetching
+                        refreshing
                             ? (
                                 <CircularProgress
                                     color="inherit"
@@ -424,7 +525,8 @@ export function TenantSubscriptionPage() {
                             gap: 2,
                             gridTemplateColumns: {
                                 xs: '1fr',
-                                md: 'repeat(3, 1fr)',
+                                md: 'repeat(2, 1fr)',
+                                lg: 'repeat(4, 1fr)',
                             },
                         }}
                     >
@@ -493,63 +595,23 @@ export function TenantSubscriptionPage() {
                             )}
                         </Paper>
 
-                        <Paper
-                            sx={{ padding: 3 }}
-                            variant="outlined"
-                        >
-                            <Typography variant="h6">
-                                Workspace limits
-                            </Typography>
-                            <Stack
-                                spacing={1.5}
-                                sx={{ marginTop: 2 }}
-                            >
-                                <Stack
-                                    direction="row"
-                                    sx={{
-                                        justifyContent:
-                                            'space-between',
-                                    }}
-                                >
-                                    <Typography color="text.secondary">
-                                        Users
-                                    </Typography>
-                                    <Typography
-                                        sx={{
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        {formatLimit(
-                                            subscription
-                                                .plan
-                                                .maxUsers,
-                                        )}
-                                    </Typography>
-                                </Stack>
-                                <Stack
-                                    direction="row"
-                                    sx={{
-                                        justifyContent:
-                                            'space-between',
-                                    }}
-                                >
-                                    <Typography color="text.secondary">
-                                        Projects
-                                    </Typography>
-                                    <Typography
-                                        sx={{
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        {formatLimit(
-                                            subscription
-                                                .plan
-                                                .maxProjects,
-                                        )}
-                                    </Typography>
-                                </Stack>
-                            </Stack>
-                        </Paper>
+                        <ResourceUsageCard
+                            configuredLimit={
+                                subscription.plan.maxUsers
+                            }
+                            entitlement={entitlements?.users}
+                            loading={entitlementQuery.isPending}
+                            title="Active users"
+                        />
+
+                        <ResourceUsageCard
+                            configuredLimit={
+                                subscription.plan.maxProjects
+                            }
+                            entitlement={entitlements?.projects}
+                            loading={entitlementQuery.isPending}
+                            title="Projects"
+                        />
 
                         <Paper
                             sx={{ padding: 3 }}

@@ -1,6 +1,7 @@
 package com.chacha.multitenantsaas.controller;
 
 import com.chacha.multitenantsaas.common.ApiResponse;
+import com.chacha.multitenantsaas.dto.TenantSubscriptionAccessResponse;
 import com.chacha.multitenantsaas.dto.TenantSubscriptionEntitlementResponse;
 import com.chacha.multitenantsaas.dto.TenantSubscriptionResponse;
 import com.chacha.multitenantsaas.service.SubscriptionEntitlementService;
@@ -56,6 +57,33 @@ public class TenantSubscriptionController {
                         "Tenant subscription fetched successfully",
                         tenantSubscriptionService
                                 .getSubscription(tenantId)
+                )
+        );
+    }
+
+    @PreAuthorize(
+            "@authorizationSecurity"
+                    + ".isCurrentTenant(#tenantId)"
+                    + " or "
+                    + "@systemSecurity.isSystemAdmin()"
+    )
+    @GetMapping("/access")
+    public ResponseEntity<
+            ApiResponse<TenantSubscriptionAccessResponse>
+            >
+    getAccess(
+            @PathVariable UUID tenantId
+    ) {
+        TenantSubscriptionEntitlementResponse entitlements =
+                subscriptionEntitlementService
+                        .evaluate(tenantId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Tenant subscription access "
+                                + "evaluated successfully",
+                        TenantSubscriptionAccessResponse
+                                .from(entitlements)
                 )
         );
     }

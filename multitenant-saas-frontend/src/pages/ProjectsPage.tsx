@@ -50,6 +50,7 @@ import {
 } from '../features/authorization/access/authorizationAccess'
 import { useCurrentAuthorization } from '../features/authorization/hooks/useCurrentAuthorization'
 import { authorizationPermissionCodes } from '../features/authorization/types/authorization'
+import { useWorkspaceSubscriptionAccessContext } from '../features/subscriptions/context/WorkspaceSubscriptionAccessContext'
 import {
     ArchiveProjectDialog,
     ChangeProjectStatusDialog,
@@ -162,6 +163,14 @@ export function ProjectsPage() {
     const tenantId = session?.tenantId ?? ''
     const authorizationQuery = useCurrentAuthorization()
     const authorization = authorizationQuery.data
+    const subscriptionAccess =
+        useWorkspaceSubscriptionAccessContext()
+    const projectCreationAllowed =
+        subscriptionAccess?.projectCreationAllowed ?? true
+    const projectCreationRestrictionMessage =
+        subscriptionAccess?.mutationsAllowed === false
+            ? 'The current subscription does not allow creating projects.'
+            : 'The project limit has been reached for the current plan. Archive a project or change the plan before creating another.'
 
     const canCreateProjects = hasTenantPermission(
         authorization,
@@ -300,6 +309,7 @@ export function ProjectsPage() {
                 <Stack direction="row" spacing={1}>
                     {canCreateProjects && (
                         <Button
+                            disabled={!projectCreationAllowed}
                             onClick={() => {
                                 setCreateDialogOpen(true)
                             }}
@@ -332,6 +342,15 @@ export function ProjectsPage() {
                     </Button>
                 </Stack>
             </Stack>
+
+            {canCreateProjects && !projectCreationAllowed && (
+                <Alert
+                    severity="warning"
+                    sx={{ marginTop: 2 }}
+                >
+                    {projectCreationRestrictionMessage}
+                </Alert>
+            )}
 
             <Paper
                 component="form"

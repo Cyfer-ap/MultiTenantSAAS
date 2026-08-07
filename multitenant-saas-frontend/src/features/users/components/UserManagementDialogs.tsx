@@ -44,6 +44,12 @@ interface UserDialogProps extends DialogBaseProps {
     user: TenantUser | null
 }
 
+interface ChangeUserStatusDialogProps
+    extends UserDialogProps {
+    activationAllowed?: boolean
+    activationRestrictionMessage?: string
+}
+
 const roleLabels: Record<TenantRole, string> = {
     TENANT_ADMIN: 'Administrator',
     TENANT_MANAGER: 'Manager',
@@ -558,11 +564,19 @@ export function ChangeUserStatusDialog({
     user,
     onClose,
     onSuccess,
-}: UserDialogProps) {
+    activationAllowed = true,
+    activationRestrictionMessage =
+        'The current subscription does not allow reactivating this user.',
+}: ChangeUserStatusDialogProps) {
     const [status, setStatus] = useState<UserStatus>(
         user?.status ?? 'ACTIVE',
     )
     const mutation = useUpdateTenantUserStatus(tenantId)
+    const activationRestricted = Boolean(
+        user?.status !== 'ACTIVE' &&
+        status === 'ACTIVE' &&
+        !activationAllowed,
+    )
 
     const closeDialog = (): void => {
         if (!mutation.isPending) {
@@ -617,6 +631,16 @@ export function ChangeUserStatusDialog({
                         </Alert>
                     )}
 
+                    {user?.status !== 'ACTIVE' &&
+                        !activationAllowed && (
+                        <Alert
+                            severity="warning"
+                            sx={{ marginBottom: 2 }}
+                        >
+                            {activationRestrictionMessage}
+                        </Alert>
+                    )}
+
                     <FormControl fullWidth>
                         <InputLabel id="change-user-status-label">
                             Status
@@ -633,7 +657,15 @@ export function ChangeUserStatusDialog({
                         >
                             {Object.entries(statusLabels).map(
                                 ([value, label]) => (
-                                    <MenuItem key={value} value={value}>
+                                    <MenuItem
+                                        disabled={
+                                            value === 'ACTIVE' &&
+                                            user?.status !== 'ACTIVE' &&
+                                            !activationAllowed
+                                        }
+                                        key={value}
+                                        value={value}
+                                    >
                                         {label}
                                     </MenuItem>
                                 ),
@@ -650,7 +682,9 @@ export function ChangeUserStatusDialog({
                     </Button>
                     <Button
                         disabled={
-                            mutation.isPending || status === user?.status
+                            mutation.isPending ||
+                            status === user?.status ||
+                            activationRestricted
                         }
                         type="submit"
                         variant="contained"

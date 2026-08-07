@@ -3,6 +3,7 @@ import {
     useQueryClient,
 } from '@tanstack/react-query'
 
+import { workspaceSubscriptionQueryKeys } from '../../subscriptions/hooks/useWorkspaceSubscription'
 import { usersApi } from '../api/usersApi'
 import type {
     CreateTenantUserInput,
@@ -26,10 +27,18 @@ export function useCreateTenantUser(
         mutationFn: (input: CreateTenantUserInput) =>
             usersApi.createUser(tenantId, input),
         onSuccess: async () => {
-            await queryClient.invalidateQueries({
-                queryKey:
-                    tenantUsersQueryKeys.tenant(tenantId),
-            })
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey:
+                        tenantUsersQueryKeys.tenant(tenantId),
+                }),
+                queryClient.invalidateQueries({
+                    queryKey:
+                        workspaceSubscriptionQueryKeys.tenant(
+                            tenantId,
+                        ),
+                }),
+            ])
         },
     })
 }
@@ -94,10 +103,18 @@ export function useUpdateTenantUserStatus(
                 input,
             ),
         onSuccess: async () => {
-            await queryClient.invalidateQueries({
-                queryKey:
-                    tenantUsersQueryKeys.tenant(tenantId),
-            })
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey:
+                        tenantUsersQueryKeys.tenant(tenantId),
+                }),
+                queryClient.invalidateQueries({
+                    queryKey:
+                        workspaceSubscriptionQueryKeys.tenant(
+                            tenantId,
+                        ),
+                }),
+            ])
         },
     })
 }

@@ -7,6 +7,22 @@ export type TenantSubscriptionStatus =
     | 'CANCELLED'
     | 'EXPIRED'
 
+export type SubscriptionAccessLevel =
+    | 'FULL_ACCESS'
+    | 'GRACE_ACCESS'
+    | 'BLOCKED'
+
+export type SubscriptionAccessReason =
+    | 'ACTIVE'
+    | 'TRIAL_ACTIVE'
+    | 'PAST_DUE_GRACE'
+    | 'NO_SUBSCRIPTION'
+    | 'PLAN_INACTIVE'
+    | 'CANCELLED'
+    | 'EXPIRED'
+    | 'PERIOD_EXPIRED'
+    | 'TRIAL_EXPIRED'
+
 export interface SubscriptionPlan {
     id: string
     code: string
@@ -37,6 +53,53 @@ export interface TenantSubscription {
     cancelledAt: string | null
     createdAt: string
     updatedAt: string
+}
+
+
+export interface SubscriptionResourceEntitlement {
+    used: number
+    limit: number | null
+    remaining: number | null
+    unlimited: boolean
+    limitReached: boolean
+    overLimit: boolean
+    creationAllowed: boolean
+}
+
+export interface TenantSubscriptionEntitlements {
+    tenantId: string
+    subscriptionId: string | null
+    planId: string | null
+    planCode: string | null
+    planName: string | null
+    subscriptionStatus: TenantSubscriptionStatus | null
+    accessLevel: SubscriptionAccessLevel
+    accessReason: SubscriptionAccessReason
+    serviceAvailable: boolean
+    mutationsAllowed: boolean
+    cancelAtPeriodEnd: boolean
+    currentPeriodEnd: string | null
+    trialEndsAt: string | null
+    evaluatedAt: string
+    users: SubscriptionResourceEntitlement
+    projects: SubscriptionResourceEntitlement
+}
+
+export interface WorkspaceSubscriptionAccess {
+    tenantId: string
+    subscriptionStatus: TenantSubscriptionStatus | null
+    accessLevel: SubscriptionAccessLevel
+    accessReason: SubscriptionAccessReason
+    serviceAvailable: boolean
+    mutationsAllowed: boolean
+    userCreationAllowed: boolean
+    projectCreationAllowed: boolean
+    userLimitReached: boolean
+    projectLimitReached: boolean
+    cancelAtPeriodEnd: boolean
+    currentPeriodEnd: string | null
+    trialEndsAt: string | null
+    evaluatedAt: string
 }
 
 export interface CreateSubscriptionPlanInput {

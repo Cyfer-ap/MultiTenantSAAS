@@ -3,6 +3,7 @@ import {
     useQueryClient,
 } from '@tanstack/react-query'
 
+import { workspaceSubscriptionQueryKeys } from '../../subscriptions/hooks/useWorkspaceSubscription'
 import { projectsApi } from '../api/projectsApi'
 import type {
     ProjectDetailsInput,
@@ -24,10 +25,18 @@ export function useCreateTenantProject(
         mutationFn: (input: ProjectDetailsInput) =>
             projectsApi.createProject(tenantId, input),
         onSuccess: async () => {
-            await queryClient.invalidateQueries({
-                queryKey:
-                    tenantProjectsQueryKeys.tenant(tenantId),
-            })
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey:
+                        tenantProjectsQueryKeys.tenant(tenantId),
+                }),
+                queryClient.invalidateQueries({
+                    queryKey:
+                        workspaceSubscriptionQueryKeys.tenant(
+                            tenantId,
+                        ),
+                }),
+            ])
         },
     })
 }
@@ -92,10 +101,18 @@ export function useArchiveTenantProject(
                 projectId,
             ),
         onSuccess: async () => {
-            await queryClient.invalidateQueries({
-                queryKey:
-                    tenantProjectsQueryKeys.tenant(tenantId),
-            })
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey:
+                        tenantProjectsQueryKeys.tenant(tenantId),
+                }),
+                queryClient.invalidateQueries({
+                    queryKey:
+                        workspaceSubscriptionQueryKeys.tenant(
+                            tenantId,
+                        ),
+                }),
+            ])
         },
     })
 }
