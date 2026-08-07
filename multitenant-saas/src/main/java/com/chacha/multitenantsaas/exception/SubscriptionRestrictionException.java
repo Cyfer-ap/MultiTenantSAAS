@@ -8,7 +8,8 @@ public class SubscriptionRestrictionException
     public enum RestrictionType {
         SERVICE_UNAVAILABLE,
         USER_LIMIT_REACHED,
-        PROJECT_LIMIT_REACHED
+        PROJECT_LIMIT_REACHED,
+        WORKSPACE_READ_ONLY
     }
 
     private final RestrictionType restrictionType;

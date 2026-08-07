@@ -12,6 +12,7 @@ import com.chacha.multitenantsaas.dto.PageResponse;
 import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.service.AppUserService;
+import com.chacha.multitenantsaas.web.SubscriptionReadOnlyAllowed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -295,6 +296,7 @@ public class AppUserController {
                     + " or "
                     + "@systemSecurity.isSystemAdmin()"
     )
+    @SubscriptionReadOnlyAllowed
     @PatchMapping("/{userId}/status")
     public ResponseEntity<ApiResponse<AppUserResponse>>
     updateUserStatus(
@@ -334,6 +336,7 @@ public class AppUserController {
                     + " or "
                     + "@systemSecurity.isSystemAdmin()"
     )
+    @SubscriptionReadOnlyAllowed
     @DeleteMapping("/{userId}")
     public ResponseEntity<ApiResponse<AppUserResponse>>
     deactivateUser(
@@ -366,6 +369,7 @@ public class AppUserController {
                     + " or "
                     + "@systemSecurity.isSystemAdmin()"
     )
+    @SubscriptionReadOnlyAllowed
     @PatchMapping("/{userId}/unlock")
     public ResponseEntity<ApiResponse<AppUserResponse>>
     unlockUserLogin(

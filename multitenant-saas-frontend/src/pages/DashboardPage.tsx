@@ -19,6 +19,7 @@ import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import type { ReactNode } from 'react'
 
 import { useDashboardSummary } from '../features/dashboard/hooks/useDashboardSummary'
+import { SubscriptionEndingSoonAlert } from '../features/subscriptions/components/SubscriptionEndingSoonAlert'
 import type { TenantDashboardSummary } from '../features/dashboard/types/dashboard'
 
 interface MetricCardProps {
@@ -457,6 +458,8 @@ export function DashboardPage() {
                     Refresh
                 </Button>
             </Stack>
+
+            <SubscriptionEndingSoonAlert />
 
             <DashboardContent summary={dashboardQuery.data} />
         </Box>

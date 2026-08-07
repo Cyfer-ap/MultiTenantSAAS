@@ -12,6 +12,7 @@ import com.chacha.multitenantsaas.dto.UserInvitationResponse;
 import com.chacha.multitenantsaas.entity.UserInvitationStatus;
 import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.service.UserInvitationService;
+import com.chacha.multitenantsaas.web.SubscriptionReadOnlyAllowed;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -163,6 +164,7 @@ public class UserInvitationController {
                     + " or "
                     + "@systemSecurity.isSystemAdmin()"
     )
+    @SubscriptionReadOnlyAllowed
     @PatchMapping(
             "/tenants/{tenantId}/user-invitations/{invitationId}/revoke"
     )

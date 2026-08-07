@@ -6,6 +6,7 @@ import com.chacha.multitenantsaas.common.SortingUtils;
 import com.chacha.multitenantsaas.dto.*;
 import com.chacha.multitenantsaas.entity.ProjectStatus;
 import com.chacha.multitenantsaas.service.ProjectService;
+import com.chacha.multitenantsaas.web.SubscriptionReadOnlyAllowed;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -213,6 +214,7 @@ public class ProjectController {
                     + "'project.archive'"
                     + ")"
     )
+    @SubscriptionReadOnlyAllowed
     @DeleteMapping("/{projectId}")
     public ResponseEntity<ApiResponse<ProjectResponse>>
     archiveProject(
