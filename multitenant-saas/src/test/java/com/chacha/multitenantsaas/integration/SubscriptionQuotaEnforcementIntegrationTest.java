@@ -204,7 +204,7 @@ class SubscriptionQuotaEnforcementIntegrationTest {
                 tenant.tenantId(),
                 adminToken,
                 "Cancelled User",
-                "SERVICE_UNAVAILABLE",
+                "WORKSPACE_READ_ONLY",
                 "CANCELLED"
         );
 
@@ -212,7 +212,7 @@ class SubscriptionQuotaEnforcementIntegrationTest {
                 tenant.tenantId(),
                 adminToken,
                 "Cancelled Project",
-                "SERVICE_UNAVAILABLE",
+                "WORKSPACE_READ_ONLY",
                 "CANCELLED"
         );
 
@@ -381,7 +381,9 @@ class SubscriptionQuotaEnforcementIntegrationTest {
                 .andExpect(jsonPath("$.details.restriction")
                         .value(restriction))
                 .andExpect(jsonPath("$.details.resource")
-                        .value("users"));
+                        .value(
+                                "WORKSPACE_READ_ONLY".equals(restriction)
+                                        ? "workspace" : "users"));
 
         if (accessReason != null) {
             action.andExpect(jsonPath("$.details.accessReason")
@@ -497,7 +499,9 @@ class SubscriptionQuotaEnforcementIntegrationTest {
                 .andExpect(jsonPath("$.details.restriction")
                         .value(restriction))
                 .andExpect(jsonPath("$.details.resource")
-                        .value("projects"));
+                        .value(
+                                "WORKSPACE_READ_ONLY".equals(restriction)
+                                        ? "workspace" : "projects"));
 
         if (accessReason != null) {
             action.andExpect(jsonPath("$.details.accessReason")
