@@ -50,7 +50,7 @@ import {
 } from '../features/authorization/access/authorizationAccess'
 import { useCurrentAuthorization } from '../features/authorization/hooks/useCurrentAuthorization'
 import { authorizationPermissionCodes } from '../features/authorization/types/authorization'
-import { useWorkspaceSubscriptionAccessContext } from '../features/subscriptions/context/WorkspaceSubscriptionAccessContext'
+import { useWorkspaceSubscriptionAccessContext } from '../features/subscriptions/context/workspaceSubscriptionAccessContextValue'
 import {
     ArchiveProjectDialog,
     ChangeProjectStatusDialog,

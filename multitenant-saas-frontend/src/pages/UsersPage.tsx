@@ -54,7 +54,7 @@ import { useCurrentAuthorization } from '../features/authorization/hooks/useCurr
 import {
     authorizationPermissionCodes,
 } from '../features/authorization/types/authorization'
-import { useWorkspaceSubscriptionAccessContext } from '../features/subscriptions/context/WorkspaceSubscriptionAccessContext'
+import { useWorkspaceSubscriptionAccessContext } from '../features/subscriptions/context/workspaceSubscriptionAccessContextValue'
 import {
     ChangeUserRoleDialog,
     ChangeUserStatusDialog,

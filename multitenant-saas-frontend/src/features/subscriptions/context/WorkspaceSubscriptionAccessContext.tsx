@@ -1,17 +1,11 @@
-import {
-    createContext,
-    useContext,
-} from 'react'
 import type { PropsWithChildren } from 'react'
 
+import {
+    WorkspaceSubscriptionAccessContext,
+} from './workspaceSubscriptionAccessContextValue'
 import type {
     WorkspaceSubscriptionAccess,
 } from '../types/subscriptions'
-
-const WorkspaceSubscriptionAccessContext =
-    createContext<WorkspaceSubscriptionAccess | null>(
-        null,
-    )
 
 interface WorkspaceSubscriptionAccessProviderProps
     extends PropsWithChildren {
@@ -28,11 +22,5 @@ export function WorkspaceSubscriptionAccessProvider({
         >
             {children}
         </WorkspaceSubscriptionAccessContext.Provider>
-    )
-}
-
-export function useWorkspaceSubscriptionAccessContext() {
-    return useContext(
-        WorkspaceSubscriptionAccessContext,
     )
 }
