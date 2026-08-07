@@ -1,7 +1,9 @@
 package com.chacha.multitenantsaas.controller;
 
 import com.chacha.multitenantsaas.common.ApiResponse;
+import com.chacha.multitenantsaas.dto.TenantSubscriptionEntitlementResponse;
 import com.chacha.multitenantsaas.dto.TenantSubscriptionResponse;
+import com.chacha.multitenantsaas.service.SubscriptionEntitlementService;
 import com.chacha.multitenantsaas.service.TenantSubscriptionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,11 +21,18 @@ public class TenantSubscriptionController {
     private final TenantSubscriptionService
             tenantSubscriptionService;
 
+    private final SubscriptionEntitlementService
+            subscriptionEntitlementService;
+
     public TenantSubscriptionController(
-            TenantSubscriptionService tenantSubscriptionService
+            TenantSubscriptionService tenantSubscriptionService,
+            SubscriptionEntitlementService
+                    subscriptionEntitlementService
     ) {
         this.tenantSubscriptionService =
                 tenantSubscriptionService;
+        this.subscriptionEntitlementService =
+                subscriptionEntitlementService;
     }
 
     @PreAuthorize(
@@ -47,6 +56,34 @@ public class TenantSubscriptionController {
                         "Tenant subscription fetched successfully",
                         tenantSubscriptionService
                                 .getSubscription(tenantId)
+                )
+        );
+    }
+
+    @PreAuthorize(
+            "@authorizationSecurity"
+                    + ".hasTenantPermission("
+                    + "#tenantId,"
+                    + "'subscription.read'"
+                    + ")"
+                    + " or "
+                    + "@systemSecurity.isSystemAdmin()"
+    )
+    @GetMapping("/entitlements")
+    public ResponseEntity<
+            ApiResponse<
+                    TenantSubscriptionEntitlementResponse
+                    >
+            >
+    getEntitlements(
+            @PathVariable UUID tenantId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Tenant subscription entitlements "
+                                + "evaluated successfully",
+                        subscriptionEntitlementService
+                                .evaluate(tenantId)
                 )
         );
     }
