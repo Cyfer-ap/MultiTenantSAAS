@@ -78,7 +78,7 @@ public class UserInvitationService {
             UserInvitationCreateRequest request,
             Jwt jwt
     ) {
-        Tenant tenant = tenantRepository.findById(tenantId)
+        Tenant tenant = tenantRepository.findByIdForUpdate(tenantId)
                 .orElseThrow(() -> new AuthenticationFailedException(
                         "Tenant not found"
                 ));
@@ -157,7 +157,7 @@ public class UserInvitationService {
                 secureTokenService.hashToken(request.invitationToken());
 
         UserInvitation invitation =
-                userInvitationRepository.findByTokenHash(tokenHash)
+                userInvitationRepository.findByTokenHashForUpdate(tokenHash)
                         .orElseThrow(() -> new AuthenticationFailedException(
                                 "Invalid invitation token"
                         ));
@@ -275,7 +275,7 @@ public class UserInvitationService {
         validateManagementActor(tenantId, jwt);
 
         UserInvitation invitation =
-                getInvitationOrThrow(tenantId, invitationId);
+                getInvitationForUpdateOrThrow(tenantId, invitationId);
 
         if (invitation.getStatus() == UserInvitationStatus.ACCEPTED) {
             throw new IllegalArgumentException(
@@ -303,7 +303,7 @@ public class UserInvitationService {
             String email
     ) {
         List<UserInvitation> pendingInvitations =
-                userInvitationRepository.findByTenant_IdAndEmailAndStatus(
+                userInvitationRepository.findByTenantIdAndEmailAndStatusForUpdate(
                         tenantId,
                         email,
                         UserInvitationStatus.PENDING
@@ -362,6 +362,23 @@ public class UserInvitationService {
             UUID invitationId
     ) {
         return userInvitationRepository.findByTenant_IdAndId(
+                        tenantId,
+                        invitationId
+                )
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Invitation not found with id: "
+                                + invitationId
+                                + " for tenant: "
+                                + tenantId
+                ));
+    }
+
+    private UserInvitation getInvitationForUpdateOrThrow(
+            UUID tenantId,
+            UUID invitationId
+    ) {
+        return userInvitationRepository
+                .findByTenantIdAndIdForUpdate(
                         tenantId,
                         invitationId
                 )
