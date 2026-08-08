@@ -21,6 +21,16 @@ public interface SystemAdminRepository extends JpaRepository<SystemAdmin, UUID> 
     @Query("""
             SELECT systemAdmin
             FROM SystemAdmin systemAdmin
+            WHERE systemAdmin.id = :systemAdminId
+            """)
+    Optional<SystemAdmin> findByIdForUpdate(
+            @Param("systemAdminId") UUID systemAdminId
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT systemAdmin
+            FROM SystemAdmin systemAdmin
             WHERE systemAdmin.email = :email
             """)
     Optional<SystemAdmin> findByEmailForUpdate(

@@ -80,11 +80,13 @@ public class SystemAuthService {
         return mapToCurrentResponse(systemAdmin);
     }
 
+    @Transactional
     public SystemAdminCurrentResponse changePassword(
             Jwt jwt,
             ChangePasswordRequest request
     ) {
-        SystemAdmin systemAdmin = getRequiredActiveSystemAdmin(jwt);
+        SystemAdmin systemAdmin =
+                getRequiredActiveSystemAdminForUpdate(jwt);
 
         if (!request.newPassword().equals(request.confirmPassword())) {
             throw new IllegalArgumentException("New password and confirm password do not match");
@@ -103,6 +105,50 @@ public class SystemAuthService {
         SystemAdmin updatedSystemAdmin = systemAdminRepository.save(systemAdmin);
 
         return mapToCurrentResponse(updatedSystemAdmin);
+    }
+
+    private SystemAdmin getRequiredActiveSystemAdminForUpdate(
+            Jwt jwt
+    ) {
+        if (jwt == null) {
+            throw new AuthenticationFailedException(
+                    "Authentication token is required"
+            );
+        }
+
+        String role = jwt.getClaimAsString("role");
+        String accountType = jwt.getClaimAsString("accountType");
+
+        if (!"SYSTEM_ADMIN".equals(role)
+                || !"SYSTEM_ADMIN".equals(accountType)) {
+            throw new AuthenticationFailedException(
+                    "Invalid system admin token"
+            );
+        }
+
+        UUID systemAdminId = parseUuid(jwt.getSubject());
+
+        if (systemAdminId == null) {
+            throw new AuthenticationFailedException(
+                    "Invalid system admin token subject"
+            );
+        }
+
+        SystemAdmin systemAdmin =
+                systemAdminRepository.findByIdForUpdate(systemAdminId)
+                        .orElseThrow(() ->
+                                new AuthenticationFailedException(
+                                        "System admin not found"
+                                )
+                        );
+
+        if (systemAdmin.getStatus() != UserStatus.ACTIVE) {
+            throw new AuthenticationFailedException(
+                    "System admin account is not active"
+            );
+        }
+
+        return systemAdmin;
     }
 
     private SystemAdmin getRequiredActiveSystemAdmin(Jwt jwt) {

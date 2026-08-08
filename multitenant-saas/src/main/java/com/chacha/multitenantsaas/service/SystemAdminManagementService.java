@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.chacha.multitenantsaas.entity.PlatformAuditAction;
 import java.util.UUID;
 import com.chacha.multitenantsaas.entity.PlatformAuditAction;
@@ -109,6 +110,7 @@ public class SystemAdminManagementService {
         return mapToResponse(systemAdmin);
     }
 
+    @Transactional
     public SystemAdminResponse updateSystemAdminStatus(
             UUID systemAdminId,
             SystemAdminStatusUpdateRequest request,
@@ -118,7 +120,7 @@ public class SystemAdminManagementService {
                 currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
 
         SystemAdmin targetSystemAdmin =
-                getSystemAdminOrThrow(systemAdminId);
+                getSystemAdminForUpdateOrThrow(systemAdminId);
 
         UserStatus oldStatus = targetSystemAdmin.getStatus();
 
@@ -146,6 +148,7 @@ public class SystemAdminManagementService {
         return mapToResponse(updatedSystemAdmin);
     }
 
+    @Transactional
     public SystemAdminResponse unlockSystemAdminLogin(
             UUID systemAdminId,
             Jwt jwt
@@ -154,7 +157,7 @@ public class SystemAdminManagementService {
                 currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
 
         SystemAdmin targetSystemAdmin =
-                getSystemAdminOrThrow(systemAdminId);
+                getSystemAdminForUpdateOrThrow(systemAdminId);
 
         loginAttemptService.unlockSystemAdmin(targetSystemAdmin);
 
@@ -167,6 +170,15 @@ public class SystemAdminManagementService {
         );
 
         return mapToResponse(targetSystemAdmin);
+    }
+
+    private SystemAdmin getSystemAdminForUpdateOrThrow(
+            UUID systemAdminId
+    ) {
+        return systemAdminRepository.findByIdForUpdate(systemAdminId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "System admin not found with id: " + systemAdminId
+                ));
     }
 
     private SystemAdmin getSystemAdminOrThrow(UUID systemAdminId) {

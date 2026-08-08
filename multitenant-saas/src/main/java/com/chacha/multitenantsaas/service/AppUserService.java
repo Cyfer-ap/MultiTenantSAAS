@@ -229,7 +229,7 @@ public class AppUserService {
             AppUserRoleUpdateRequest request,
             Jwt jwt
     ) {
-        AppUser user = appUserRepository.findByTenantIdAndId(tenantId, userId)
+        AppUser user = appUserRepository.findByTenantIdAndIdForUpdate(tenantId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with id: " + userId + " for tenant: " + tenantId
                 ));
@@ -243,6 +243,13 @@ public class AppUserService {
                     user,
                     request.role()
             );
+
+            if (oldRole != request.role()) {
+
+                user.incrementSessionVersion();
+
+            }
+
 
             user.setRole(request.role());
 
@@ -274,6 +281,13 @@ public class AppUserService {
                 request.role()
         );
 
+        if (oldRole != request.role()) {
+
+            user.incrementSessionVersion();
+
+        }
+
+
         user.setRole(request.role());
 
         AppUser updatedUser =
@@ -303,7 +317,7 @@ public class AppUserService {
             AppUserStatusUpdateRequest request,
             Jwt jwt
     ) {
-        AppUser user = appUserRepository.findByTenantIdAndId(tenantId, userId)
+        AppUser user = appUserRepository.findByTenantIdAndIdForUpdate(tenantId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with id: " + userId + " for tenant: " + tenantId
                 ));
@@ -326,6 +340,13 @@ public class AppUserService {
                     user,
                     request.status()
             );
+
+            if (oldStatus != request.status()) {
+
+                user.incrementSessionVersion();
+
+            }
+
 
             user.setStatus(request.status());
 
@@ -357,6 +378,13 @@ public class AppUserService {
                 request.status()
         );
 
+        if (oldStatus != request.status()) {
+
+            user.incrementSessionVersion();
+
+        }
+
+
         user.setStatus(request.status());
 
         AppUser updatedUser =
@@ -385,15 +413,24 @@ public class AppUserService {
             UUID userId,
             Jwt jwt
     ) {
-        AppUser user = appUserRepository.findByTenantIdAndId(tenantId, userId)
+        AppUser user = appUserRepository.findByTenantIdAndIdForUpdate(tenantId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with id: " + userId + " for tenant: " + tenantId
                 ));
+
+        UserStatus oldStatus = user.getStatus();
 
         if (currentSystemAdminService.isSystemAdminToken(jwt)) {
             SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
 
             tenantAdminGuardService.ensureCanDeactivate(user);
+
+            if (oldStatus != UserStatus.INACTIVE) {
+
+                user.incrementSessionVersion();
+
+            }
+
 
             user.setStatus(UserStatus.INACTIVE);
 
@@ -420,6 +457,13 @@ public class AppUserService {
                 user
         );
 
+        if (oldStatus != UserStatus.INACTIVE) {
+
+            user.incrementSessionVersion();
+
+        }
+
+
         user.setStatus(UserStatus.INACTIVE);
 
         AppUser updatedUser =
@@ -438,22 +482,20 @@ public class AppUserService {
         return mapToResponse(updatedUser);
     }
 
+    @Transactional
     public AppUserResponse unlockUserLogin(
             UUID tenantId,
             UUID userId,
             Jwt jwt
     ) {
-        AppUser user = appUserRepository.findByTenantIdAndId(tenantId, userId)
+        AppUser user = appUserRepository.findByTenantIdAndIdForUpdate(tenantId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found with id: " + userId + " for tenant: " + tenantId
                 ));
 
         loginAttemptService.unlockUser(user);
 
-        AppUser updatedUser = appUserRepository.findByTenantIdAndId(tenantId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "User not found with id: " + userId + " for tenant: " + tenantId
-                ));
+        AppUser updatedUser = user;
 
         if (currentSystemAdminService.isSystemAdminToken(jwt)) {
             SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
