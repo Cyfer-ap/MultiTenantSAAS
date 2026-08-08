@@ -11,6 +11,7 @@ import com.chacha.multitenantsaas.repository.SystemAdminRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -34,10 +35,15 @@ public class SystemAuthService {
         this.loginAttemptService = loginAttemptService;
     }
 
+    @Transactional(
+            noRollbackFor = AuthenticationFailedException.class
+    )
     public SystemAdminLoginResponse login(SystemAdminLoginRequest request) {
         String normalizedEmail = request.email().trim().toLowerCase();
 
-        SystemAdmin systemAdmin = systemAdminRepository.findByEmail(normalizedEmail)
+        SystemAdmin systemAdmin = systemAdminRepository.findByEmailForUpdate(
+                normalizedEmail
+        )
                 .orElseThrow(() -> new AuthenticationFailedException("Invalid email or password"));
 
         if (systemAdmin.getStatus() != UserStatus.ACTIVE) {

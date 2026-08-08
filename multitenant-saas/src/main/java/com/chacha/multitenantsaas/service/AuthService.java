@@ -59,6 +59,9 @@ public class AuthService {
         this.loginAttemptService = loginAttemptService;
     }
 
+    @Transactional(
+            noRollbackFor = AuthenticationFailedException.class
+    )
     public LoginResponse login(UUID tenantId, LoginRequest request) {
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
@@ -77,7 +80,10 @@ public class AuthService {
 
         String normalizedEmail = request.email().trim().toLowerCase();
 
-        AppUser user = appUserRepository.findByTenantIdAndEmail(tenantId, normalizedEmail)
+        AppUser user = appUserRepository.findByTenantIdAndEmailForUpdate(
+                tenantId,
+                normalizedEmail
+        )
                 .orElseThrow(() -> {
                     auditLogService.record(
                             tenant,

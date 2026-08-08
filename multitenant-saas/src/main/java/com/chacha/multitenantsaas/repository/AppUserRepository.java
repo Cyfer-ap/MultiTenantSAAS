@@ -3,9 +3,11 @@ package com.chacha.multitenantsaas.repository;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.entity.UserStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -22,6 +24,18 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
     Optional<AppUser> findByTenantIdAndId(UUID tenantId, UUID userId);
 
     Optional<AppUser> findByTenantIdAndEmail(UUID tenantId, String email);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT appUser
+            FROM AppUser appUser
+            WHERE appUser.tenant.id = :tenantId
+              AND appUser.email = :email
+            """)
+    Optional<AppUser> findByTenantIdAndEmailForUpdate(
+            @Param("tenantId") UUID tenantId,
+            @Param("email") String email
+    );
 
     boolean existsByTenantIdAndEmail(UUID tenantId, String email);
 
