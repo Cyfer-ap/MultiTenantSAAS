@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -22,6 +24,16 @@ public class GlobalExceptionHandler {
 
     private static final Logger log =
             LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    private static final Map<String, String>
+            KNOWN_UNIQUE_CONSTRAINT_MESSAGES = Map.of(
+                    "uk_tenant_slug",
+                    "Tenant slug already exists.",
+                    "uk_user_email_per_tenant",
+                    "User email already exists for this tenant.",
+                    "uk_system_admin_email",
+                    "System admin email already exists."
+            );
 
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ApiErrorResponse> handleDuplicateResourceException(
@@ -94,6 +106,41 @@ public class GlobalExceptionHandler {
                 exception.getMessage(),
                 request,
                 details
+        );
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handleDataIntegrityViolationException(
+            DataIntegrityViolationException exception,
+            HttpServletRequest request
+    ) {
+        String duplicateMessage =
+                findKnownUniqueConstraintMessage(exception);
+
+        if (duplicateMessage != null) {
+            return buildResponse(
+                    HttpStatus.CONFLICT,
+                    ErrorCode.RESOURCE_ALREADY_EXISTS,
+                    duplicateMessage,
+                    request,
+                    null
+            );
+        }
+
+        log.error(
+                "Unhandled data-integrity violation while processing {} {}",
+                request.getMethod(),
+                request.getRequestURI(),
+                exception
+        );
+
+        return buildResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred.",
+                request,
+                null
         );
     }
 
@@ -213,6 +260,34 @@ public class GlobalExceptionHandler {
                 request,
                 null
         );
+    }
+
+    private String findKnownUniqueConstraintMessage(
+            Throwable exception
+    ) {
+        Throwable current = exception;
+
+        while (current != null) {
+            String message = current.getMessage();
+
+            if (message != null) {
+                String normalizedMessage =
+                        message.toLowerCase(Locale.ROOT);
+
+                for (
+                        Map.Entry<String, String> entry
+                        : KNOWN_UNIQUE_CONSTRAINT_MESSAGES.entrySet()
+                ) {
+                    if (normalizedMessage.contains(entry.getKey())) {
+                        return entry.getValue();
+                    }
+                }
+            }
+
+            current = current.getCause();
+        }
+
+        return null;
     }
 
     private ResponseEntity<ApiErrorResponse> buildResponse(
