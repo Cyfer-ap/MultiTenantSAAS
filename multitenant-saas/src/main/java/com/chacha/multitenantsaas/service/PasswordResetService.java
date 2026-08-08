@@ -70,8 +70,12 @@ public class PasswordResetService {
 
         String normalizedEmail = request.email().trim().toLowerCase();
 
-        AppUser user = appUserRepository.findByTenantIdAndEmail(tenantId, normalizedEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + normalizedEmail));
+        AppUser user = appUserRepository.findByTenantIdAndEmailForUpdate(
+                tenantId,
+                normalizedEmail
+        ).orElseThrow(() -> new ResourceNotFoundException(
+                "User not found with email: " + normalizedEmail
+        ));
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AuthenticationFailedException("User account is not active");
@@ -112,14 +116,39 @@ public class PasswordResetService {
 
         String tokenHash = hashToken(request.resetToken());
 
-        PasswordResetToken resetToken = passwordResetTokenRepository.findByTokenHash(tokenHash)
-                .orElseThrow(() -> new AuthenticationFailedException("Invalid reset token"));
+        UUID userId =
+                passwordResetTokenRepository
+                        .findUserIdByTokenHash(tokenHash)
+                        .orElseThrow(() ->
+                                new AuthenticationFailedException(
+                                        "Invalid reset token"
+                                )
+                        );
 
-        if (!resetToken.isActive()) {
-            throw new AuthenticationFailedException("Reset token is expired or already used");
+        AppUser user = appUserRepository.findByIdForUpdate(userId)
+                .orElseThrow(() -> new AuthenticationFailedException(
+                        "Invalid reset token"
+                ));
+
+        PasswordResetToken resetToken =
+                passwordResetTokenRepository
+                        .findByTokenHashForUpdate(tokenHash)
+                        .orElseThrow(() ->
+                                new AuthenticationFailedException(
+                                        "Invalid reset token"
+                                )
+                        );
+
+        if (!resetToken.getUser().getId().equals(user.getId())) {
+            throw new AuthenticationFailedException("Invalid reset token");
         }
 
-        AppUser user = resetToken.getUser();
+        if (!resetToken.isActive()) {
+            throw new AuthenticationFailedException(
+                    "Reset token is expired or already used"
+            );
+        }
+
         Tenant tenant = user.getTenant();
 
         if (tenant.getStatus() != TenantStatus.ACTIVE) {
@@ -142,6 +171,8 @@ public class PasswordResetService {
         resetToken.setUsedAt(Instant.now());
         passwordResetTokenRepository.save(resetToken);
 
+        revokeExistingUnusedResetTokens(user.getId());
+
         refreshTokenService.revokeAllActiveTokensForUser(user.getId());
 
         auditLogService.record(
@@ -159,7 +190,7 @@ public class PasswordResetService {
 
     private void revokeExistingUnusedResetTokens(UUID userId) {
         List<PasswordResetToken> existingTokens =
-                passwordResetTokenRepository.findByUserIdAndUsedFalse(userId);
+                passwordResetTokenRepository.findByUserIdAndUsedFalseForUpdate(userId);
 
         existingTokens.forEach(token -> {
             token.setUsed(true);

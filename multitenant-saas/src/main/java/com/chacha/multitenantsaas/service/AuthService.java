@@ -247,7 +247,7 @@ public class AuthService {
         Tenant tenant = tenantRepository.findById(currentUser.tenantId())
                 .orElseThrow(() -> new AuthenticationFailedException("Tenant not found"));
 
-        AppUser user = appUserRepository.findByTenantIdAndId(
+        AppUser user = appUserRepository.findByTenantIdAndIdForUpdate(
                 currentUser.tenantId(),
                 currentUser.userId()
         ).orElseThrow(() -> new AuthenticationFailedException("User not found"));
@@ -272,7 +272,7 @@ public class AuthService {
     public ChangePasswordResponse changePassword(Jwt jwt, ChangePasswordRequest request) {
         AuthenticatedUserContext currentUser = jwtContextService.getCurrentUser(jwt);
 
-        AppUser user = appUserRepository.findByTenantIdAndId(
+        AppUser user = appUserRepository.findByTenantIdAndIdForUpdate(
                 currentUser.tenantId(),
                 currentUser.userId()
         ).orElseThrow(() -> new AuthenticationFailedException("User not found"));
