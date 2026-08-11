@@ -5,6 +5,7 @@ import com.chacha.multitenantsaas.common.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -166,6 +167,34 @@ public class GlobalExceptionHandler {
                 request,
                 Map.of("retryable", true)
         );
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiErrorResponse> handleRateLimitExceededException(
+            RateLimitExceededException exception,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse response = ApiErrorResponse.of(
+                exception.getMessage(),
+                ErrorCode.RATE_LIMITED,
+                HttpStatus.TOO_MANY_REQUESTS.value(),
+                request.getRequestURI(),
+                Map.of(
+                        "scope", exception.getScope(),
+                        "retryAfterSeconds",
+                        exception.getRetryAfterSeconds()
+                )
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(
+                        HttpHeaders.RETRY_AFTER,
+                        Long.toString(
+                                exception.getRetryAfterSeconds()
+                        )
+                )
+                .body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -5,8 +5,11 @@ import com.chacha.multitenantsaas.dto.ForgotPasswordRequest;
 import com.chacha.multitenantsaas.dto.ForgotPasswordResponse;
 import com.chacha.multitenantsaas.dto.ResetPasswordRequest;
 import com.chacha.multitenantsaas.dto.ResetPasswordResponse;
+import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
+import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.service.PasswordResetService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,25 +24,63 @@ import java.util.UUID;
 )
 public class PasswordResetController {
 
-    private final PasswordResetService passwordResetService;
+    private static final String FORGOT_PASSWORD_RESPONSE_MESSAGE =
+            "If an active account matches those details, password reset "
+                    + "instructions will be sent.";
 
-    public PasswordResetController(PasswordResetService passwordResetService) {
+    private final PasswordResetService passwordResetService;
+    private final boolean exposeResetToken;
+
+    public PasswordResetController(
+            PasswordResetService passwordResetService,
+            @Value("${app.password-reset.expose-token:false}")
+            boolean exposeResetToken
+    ) {
         this.passwordResetService = passwordResetService;
+        this.exposeResetToken = exposeResetToken;
     }
 
     @Operation(
             summary = "Request password reset",
-            description = "Generates a password reset token for an active tenant user. In development, the token is returned in the response."
+            description = "Returns the same response whether or not the account "
+                    + "exists. A raw token is included only when the explicit "
+                    + "development exposure setting is enabled."
     )
     @PostMapping("/api/tenants/{tenantId}/auth/forgot-password")
     public ResponseEntity<ApiResponse<ForgotPasswordResponse>> forgotPassword(
             @PathVariable UUID tenantId,
             @Valid @RequestBody ForgotPasswordRequest request
     ) {
-        ForgotPasswordResponse response = passwordResetService.forgotPassword(tenantId, request);
+        ForgotPasswordResponse internalResponse;
+
+        try {
+            internalResponse = passwordResetService
+                    .forgotPassword(tenantId, request);
+        } catch (
+                ResourceNotFoundException
+                        | AuthenticationFailedException exception
+        ) {
+            internalResponse = new ForgotPasswordResponse(
+                    FORGOT_PASSWORD_RESPONSE_MESSAGE,
+                    null
+            );
+        }
+
+        String devResetToken = exposeResetToken
+                ? internalResponse.devResetToken()
+                : null;
+
+        ForgotPasswordResponse response =
+                new ForgotPasswordResponse(
+                        FORGOT_PASSWORD_RESPONSE_MESSAGE,
+                        devResetToken
+                );
 
         return ResponseEntity.ok(
-                ApiResponse.success("Password reset token generated successfully", response)
+                ApiResponse.success(
+                        FORGOT_PASSWORD_RESPONSE_MESSAGE,
+                        response
+                )
         );
     }
 
