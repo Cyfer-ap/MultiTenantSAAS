@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -141,6 +142,29 @@ public class GlobalExceptionHandler {
                 "An unexpected error occurred.",
                 request,
                 null
+        );
+    }
+
+    @ExceptionHandler(PessimisticLockingFailureException.class)
+    public ResponseEntity<ApiErrorResponse>
+    handlePessimisticLockingFailureException(
+            PessimisticLockingFailureException exception,
+            HttpServletRequest request
+    ) {
+        log.warn(
+                "Transient database concurrency conflict while processing {} {}",
+                request.getMethod(),
+                request.getRequestURI(),
+                exception
+        );
+
+        return buildResponse(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                ErrorCode.TEMPORARY_DATABASE_CONFLICT,
+                "A temporary database conflict prevented the request "
+                        + "from completing. Please retry.",
+                request,
+                Map.of("retryable", true)
         );
     }
 
