@@ -12,6 +12,8 @@ type AuthStorageListener = (
 
 const listeners = new Set<AuthStorageListener>()
 
+let storageListenerAttached = false
+
 const tenantRoles: TenantRole[] = [
     'TENANT_ADMIN',
     'TENANT_MANAGER',
@@ -103,13 +105,76 @@ function notify(
     })
 }
 
+function parseStoredSession(
+    storedValue: string | null,
+): AuthSession | null {
+    if (!storedValue) {
+        return null
+    }
+
+    try {
+        const parsedValue: unknown =
+            JSON.parse(storedValue)
+
+        return isAuthSession(parsedValue)
+            ? parsedValue
+            : null
+    }
+    catch {
+        return null
+    }
+}
+
+function handleStorageEvent(event: StorageEvent): void {
+    if (event.key !== AUTH_STORAGE_KEY) {
+        return
+    }
+
+    notify(parseStoredSession(event.newValue))
+}
+
+function attachStorageListener(): void {
+    if (
+        storageListenerAttached ||
+        typeof window === 'undefined'
+    ) {
+        return
+    }
+
+    window.addEventListener(
+        'storage',
+        handleStorageEvent,
+    )
+    storageListenerAttached = true
+}
+
+function detachStorageListener(): void {
+    if (
+        !storageListenerAttached ||
+        typeof window === 'undefined'
+    ) {
+        return
+    }
+
+    window.removeEventListener(
+        'storage',
+        handleStorageEvent,
+    )
+    storageListenerAttached = false
+}
+
 function subscribe(
     listener: AuthStorageListener,
 ): () => void {
     listeners.add(listener)
+    attachStorageListener()
 
     return () => {
         listeners.delete(listener)
+
+        if (listeners.size === 0) {
+            detachStorageListener()
+        }
     }
 }
 

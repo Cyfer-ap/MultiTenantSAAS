@@ -25,6 +25,7 @@ export type ErrorCode =
     | 'AUTHENTICATION_REQUIRED'
     | 'AUTHENTICATION_FAILED'
     | 'ACCESS_DENIED'
+    | 'TEMPORARY_DATABASE_CONFLICT'
     | 'INTERNAL_SERVER_ERROR'
 
 export interface ApiErrorResponse {
@@ -33,6 +34,6 @@ export interface ApiErrorResponse {
     errorCode: ErrorCode
     status: number
     path: string
-    details: Record<string, string> | null
+    details: Record<string, unknown> | null
     timestamp: string
 }

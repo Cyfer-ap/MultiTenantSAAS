@@ -1,6 +1,8 @@
 package com.chacha.multitenantsaas.security;
 
 import com.chacha.multitenantsaas.entity.AppUser;
+import com.chacha.multitenantsaas.entity.TenantStatus;
+import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
@@ -56,7 +58,7 @@ public class TenantSessionJwtValidator
             }
 
             Optional<AppUser> user =
-                    appUserRepository.findByTenantIdAndId(
+                    appUserRepository.findSessionUserByTenantIdAndId(
                             tenantId,
                             userId
                     );
@@ -64,6 +66,19 @@ public class TenantSessionJwtValidator
             if (user.isEmpty()) {
                 return failure(
                         "The tenant access-token account no longer exists."
+                );
+            }
+
+            if (user.get().getTenant().getStatus()
+                    != TenantStatus.ACTIVE) {
+                return failure(
+                        "The tenant access-token workspace is not active."
+                );
+            }
+
+            if (user.get().getStatus() != UserStatus.ACTIVE) {
+                return failure(
+                        "The tenant access-token account is not active."
                 );
             }
 

@@ -23,6 +23,18 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
 
     Optional<AppUser> findByTenantIdAndId(UUID tenantId, UUID userId);
 
+    @Query("""
+            SELECT appUser
+            FROM AppUser appUser
+            JOIN FETCH appUser.tenant tenant
+            WHERE tenant.id = :tenantId
+              AND appUser.id = :userId
+            """)
+    Optional<AppUser> findSessionUserByTenantIdAndId(
+            @Param("tenantId") UUID tenantId,
+            @Param("userId") UUID userId
+    );
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT appUser

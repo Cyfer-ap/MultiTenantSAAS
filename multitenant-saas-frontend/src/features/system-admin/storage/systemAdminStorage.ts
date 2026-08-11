@@ -9,6 +9,8 @@ type SystemAdminStorageListener = (
 
 const listeners = new Set<SystemAdminStorageListener>()
 
+let storageListenerAttached = false
+
 function isSystemAdminSession(
     value: unknown,
 ): value is SystemAdminSession {
@@ -86,13 +88,76 @@ function clear(): void {
     notify(null)
 }
 
+function parseStoredSession(
+    storedValue: string | null,
+): SystemAdminSession | null {
+    if (!storedValue) {
+        return null
+    }
+
+    try {
+        const parsedValue: unknown =
+            JSON.parse(storedValue)
+
+        return isSystemAdminSession(parsedValue)
+            ? parsedValue
+            : null
+    }
+    catch {
+        return null
+    }
+}
+
+function handleStorageEvent(event: StorageEvent): void {
+    if (event.key !== SYSTEM_ADMIN_STORAGE_KEY) {
+        return
+    }
+
+    notify(parseStoredSession(event.newValue))
+}
+
+function attachStorageListener(): void {
+    if (
+        storageListenerAttached ||
+        typeof window === 'undefined'
+    ) {
+        return
+    }
+
+    window.addEventListener(
+        'storage',
+        handleStorageEvent,
+    )
+    storageListenerAttached = true
+}
+
+function detachStorageListener(): void {
+    if (
+        !storageListenerAttached ||
+        typeof window === 'undefined'
+    ) {
+        return
+    }
+
+    window.removeEventListener(
+        'storage',
+        handleStorageEvent,
+    )
+    storageListenerAttached = false
+}
+
 function subscribe(
     listener: SystemAdminStorageListener,
 ): () => void {
     listeners.add(listener)
+    attachStorageListener()
 
     return () => {
         listeners.delete(listener)
+
+        if (listeners.size === 0) {
+            detachStorageListener()
+        }
     }
 }
 

@@ -10,7 +10,7 @@ interface ApiClientErrorOptions {
     errorCode?: ErrorCode
     status?: number
     path?: string
-    details?: Record<string, string> | null
+    details?: Record<string, unknown> | null
     timestamp?: string
     networkError?: boolean
 }
@@ -19,7 +19,7 @@ export class ApiClientError extends Error {
     readonly errorCode?: ErrorCode
     readonly status?: number
     readonly path?: string
-    readonly details: Record<string, string> | null
+    readonly details: Record<string, unknown> | null
     readonly timestamp?: string
     readonly networkError: boolean
 
