@@ -5,9 +5,8 @@ import com.chacha.multitenantsaas.entity.TenantStatus;
 import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.TenantRepository;
-import org.springframework.stereotype.Service;
-
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 public class TenantLookupService {
@@ -19,10 +18,12 @@ public class TenantLookupService {
     }
 
     public Tenant getByIdOrThrow(UUID tenantId) {
-        return tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Tenant not found with id: " + tenantId
-                ));
+        return tenantRepository
+                .findById(tenantId)
+                .orElseThrow(
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Tenant not found with id: " + tenantId));
     }
 
     public Tenant getActiveByIdOrThrow(UUID tenantId) {
@@ -36,10 +37,13 @@ public class TenantLookupService {
     }
 
     public Tenant getActiveByIdForUpdateOrThrow(UUID tenantId) {
-        Tenant tenant = tenantRepository.findByIdForUpdate(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Tenant not found with id: " + tenantId
-                ));
+        Tenant tenant =
+                tenantRepository
+                        .findByIdForUpdate(tenantId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Tenant not found with id: " + tenantId));
 
         if (tenant.getStatus() != TenantStatus.ACTIVE) {
             throw new AuthenticationFailedException("Tenant is not active");
@@ -49,10 +53,10 @@ public class TenantLookupService {
     }
 
     public Tenant getBySlugOrThrow(String slug) {
-        return tenantRepository.findBySlug(slug)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Tenant not found with slug: " + slug
-                ));
+        return tenantRepository
+                .findBySlug(slug)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Tenant not found with slug: " + slug));
     }
 
     public void ensureExists(UUID tenantId) {

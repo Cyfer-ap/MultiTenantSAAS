@@ -1,19 +1,9 @@
 package com.chacha.multitenantsaas.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.Pattern;
 import com.chacha.multitenantsaas.validation.StrongPassword;
+import jakarta.validation.constraints.NotBlank;
 
 public record ChangePasswordRequest(
-
-        @NotBlank(message = "Current password is required")
-        String currentPassword,
-
-        @StrongPassword
-        String newPassword,
-
-        @NotBlank(message = "Confirm password is required")
-        String confirmPassword
-) {
-}
+        @NotBlank(message = "Current password is required") String currentPassword,
+        @StrongPassword String newPassword,
+        @NotBlank(message = "Confirm password is required") String confirmPassword) {}

@@ -5,6 +5,7 @@ import com.chacha.multitenantsaas.dto.ForgotPasswordResponse;
 import com.chacha.multitenantsaas.dto.ResetPasswordRequest;
 import com.chacha.multitenantsaas.dto.ResetPasswordResponse;
 import com.chacha.multitenantsaas.entity.AppUser;
+import com.chacha.multitenantsaas.entity.AuditAction;
 import com.chacha.multitenantsaas.entity.PasswordResetToken;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.TenantStatus;
@@ -14,11 +15,6 @@ import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.PasswordResetTokenRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import com.chacha.multitenantsaas.entity.AuditAction;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -27,6 +23,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PasswordResetService {
@@ -40,7 +40,6 @@ public class PasswordResetService {
     private final SecureRandom secureRandom = new SecureRandom();
     private final AuditLogService auditLogService;
 
-
     public PasswordResetService(
             TenantRepository tenantRepository,
             AppUserRepository appUserRepository,
@@ -48,8 +47,7 @@ public class PasswordResetService {
             PasswordEncoder passwordEncoder,
             RefreshTokenService refreshTokenService,
             AuditLogService auditLogService,
-            @Value("${app.password-reset.expiration-minutes}") long expirationMinutes
-    ) {
+            @Value("${app.password-reset.expiration-minutes}") long expirationMinutes) {
         this.tenantRepository = tenantRepository;
         this.appUserRepository = appUserRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
@@ -61,8 +59,13 @@ public class PasswordResetService {
 
     @Transactional
     public ForgotPasswordResponse forgotPassword(UUID tenantId, ForgotPasswordRequest request) {
-        Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+        Tenant tenant =
+                tenantRepository
+                        .findById(tenantId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Tenant not found with id: " + tenantId));
 
         if (tenant.getStatus() != TenantStatus.ACTIVE) {
             throw new AuthenticationFailedException("Tenant is not active");
@@ -70,12 +73,13 @@ public class PasswordResetService {
 
         String normalizedEmail = request.email().trim().toLowerCase();
 
-        AppUser user = appUserRepository.findByTenantIdAndEmailForUpdate(
-                tenantId,
-                normalizedEmail
-        ).orElseThrow(() -> new ResourceNotFoundException(
-                "User not found with email: " + normalizedEmail
-        ));
+        AppUser user =
+                appUserRepository
+                        .findByTenantIdAndEmailForUpdate(tenantId, normalizedEmail)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "User not found with email: " + normalizedEmail));
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AuthenticationFailedException("User account is not active");
@@ -86,11 +90,9 @@ public class PasswordResetService {
         String rawToken = generateSecureToken();
         String tokenHash = hashToken(rawToken);
 
-        PasswordResetToken resetToken = new PasswordResetToken(
-                user,
-                tokenHash,
-                Instant.now().plus(expirationMinutes, ChronoUnit.MINUTES)
-        );
+        PasswordResetToken resetToken =
+                new PasswordResetToken(
+                        user, tokenHash, Instant.now().plus(expirationMinutes, ChronoUnit.MINUTES));
 
         passwordResetTokenRepository.save(resetToken);
 
@@ -99,13 +101,11 @@ public class PasswordResetService {
                 user,
                 AuditAction.PASSWORD_RESET_REQUESTED,
                 true,
-                "Password reset token requested"
-        );
+                "Password reset token requested");
 
         return new ForgotPasswordResponse(
                 "Password reset token generated successfully. In production, this should be sent by email.",
-                rawToken
-        );
+                rawToken);
     }
 
     @Transactional
@@ -119,34 +119,27 @@ public class PasswordResetService {
         UUID userId =
                 passwordResetTokenRepository
                         .findUserIdByTokenHash(tokenHash)
-                        .orElseThrow(() ->
-                                new AuthenticationFailedException(
-                                        "Invalid reset token"
-                                )
-                        );
+                        .orElseThrow(
+                                () -> new AuthenticationFailedException("Invalid reset token"));
 
-        AppUser user = appUserRepository.findByIdForUpdate(userId)
-                .orElseThrow(() -> new AuthenticationFailedException(
-                        "Invalid reset token"
-                ));
+        AppUser user =
+                appUserRepository
+                        .findByIdForUpdate(userId)
+                        .orElseThrow(
+                                () -> new AuthenticationFailedException("Invalid reset token"));
 
         PasswordResetToken resetToken =
                 passwordResetTokenRepository
                         .findByTokenHashForUpdate(tokenHash)
-                        .orElseThrow(() ->
-                                new AuthenticationFailedException(
-                                        "Invalid reset token"
-                                )
-                        );
+                        .orElseThrow(
+                                () -> new AuthenticationFailedException("Invalid reset token"));
 
         if (!resetToken.getUser().getId().equals(user.getId())) {
             throw new AuthenticationFailedException("Invalid reset token");
         }
 
         if (!resetToken.isActive()) {
-            throw new AuthenticationFailedException(
-                    "Reset token is expired or already used"
-            );
+            throw new AuthenticationFailedException("Reset token is expired or already used");
         }
 
         Tenant tenant = user.getTenant();
@@ -160,7 +153,8 @@ public class PasswordResetService {
         }
 
         if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("New password must be different from current password");
+            throw new IllegalArgumentException(
+                    "New password must be different from current password");
         }
 
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
@@ -180,22 +174,20 @@ public class PasswordResetService {
                 user,
                 AuditAction.PASSWORD_RESET_COMPLETED,
                 true,
-                "Password reset completed successfully"
-        );
+                "Password reset completed successfully");
 
-        return new ResetPasswordResponse(
-                "Password reset successfully. Please login again."
-        );
+        return new ResetPasswordResponse("Password reset successfully. Please login again.");
     }
 
     private void revokeExistingUnusedResetTokens(UUID userId) {
         List<PasswordResetToken> existingTokens =
                 passwordResetTokenRepository.findByUserIdAndUsedFalseForUpdate(userId);
 
-        existingTokens.forEach(token -> {
-            token.setUsed(true);
-            token.setUsedAt(Instant.now());
-        });
+        existingTokens.forEach(
+                token -> {
+                    token.setUsed(true);
+                    token.setUsedAt(Instant.now());
+                });
 
         passwordResetTokenRepository.saveAll(existingTokens);
     }
@@ -204,9 +196,7 @@ public class PasswordResetService {
         byte[] tokenBytes = new byte[64];
         secureRandom.nextBytes(tokenBytes);
 
-        return Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(tokenBytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
     }
 
     private String hashToken(String rawToken) {
@@ -226,5 +216,4 @@ public class PasswordResetService {
             throw new IllegalStateException("Could not hash reset token", exception);
         }
     }
-
 }

@@ -7,10 +7,7 @@ import java.util.UUID;
 @Entity
 @Table(
         name = "tenants",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_tenant_slug", columnNames = "slug")
-        }
-)
+        uniqueConstraints = {@UniqueConstraint(name = "uk_tenant_slug", columnNames = "slug")})
 public class Tenant {
 
     @Id
@@ -32,8 +29,7 @@ public class Tenant {
 
     private Instant updatedAt;
 
-    public Tenant() {
-    }
+    public Tenant() {}
 
     public Tenant(String name, String slug) {
         this.name = name;

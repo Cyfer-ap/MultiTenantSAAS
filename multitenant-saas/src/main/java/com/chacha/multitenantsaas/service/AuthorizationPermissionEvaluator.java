@@ -20,14 +20,13 @@ import com.chacha.multitenantsaas.repository.OrganizationalUnitRepository;
 import com.chacha.multitenantsaas.repository.ProjectRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import com.chacha.multitenantsaas.security.AuthorizationEvaluationContext;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthorizationPermissionEvaluator {
@@ -36,45 +35,32 @@ public class AuthorizationPermissionEvaluator {
 
     private final AppUserRepository appUserRepository;
 
-    private final AuthorizationUserRoleAssignmentRepository
-            assignmentRepository;
+    private final AuthorizationUserRoleAssignmentRepository assignmentRepository;
 
-    private final OrganizationalUnitRepository
-            organizationalUnitRepository;
+    private final OrganizationalUnitRepository organizationalUnitRepository;
 
     private final ProjectRepository projectRepository;
 
-    private final AuthorizationScopeQueryService
-            authorizationScopeQueryService;
+    private final AuthorizationScopeQueryService authorizationScopeQueryService;
 
     public AuthorizationPermissionEvaluator(
             TenantRepository tenantRepository,
             AppUserRepository appUserRepository,
-            AuthorizationUserRoleAssignmentRepository
-                    assignmentRepository,
-            OrganizationalUnitRepository
-                    organizationalUnitRepository,
+            AuthorizationUserRoleAssignmentRepository assignmentRepository,
+            OrganizationalUnitRepository organizationalUnitRepository,
             ProjectRepository projectRepository,
-            AuthorizationScopeQueryService
-                    authorizationScopeQueryService
-    ) {
-        this.tenantRepository =
-                tenantRepository;
+            AuthorizationScopeQueryService authorizationScopeQueryService) {
+        this.tenantRepository = tenantRepository;
 
-        this.appUserRepository =
-                appUserRepository;
+        this.appUserRepository = appUserRepository;
 
-        this.assignmentRepository =
-                assignmentRepository;
+        this.assignmentRepository = assignmentRepository;
 
-        this.organizationalUnitRepository =
-                organizationalUnitRepository;
+        this.organizationalUnitRepository = organizationalUnitRepository;
 
-        this.projectRepository =
-                projectRepository;
+        this.projectRepository = projectRepository;
 
-        this.authorizationScopeQueryService =
-                authorizationScopeQueryService;
+        this.authorizationScopeQueryService = authorizationScopeQueryService;
     }
 
     @Transactional(readOnly = true)
@@ -82,15 +68,8 @@ public class AuthorizationPermissionEvaluator {
             UUID tenantId,
             UUID userId,
             String permissionCode,
-            AuthorizationEvaluationContext context
-    ) {
-        return hasPermission(
-                tenantId,
-                userId,
-                permissionCode,
-                context,
-                Instant.now()
-        );
+            AuthorizationEvaluationContext context) {
+        return hasPermission(tenantId, userId, permissionCode, context, Instant.now());
     }
 
     @Transactional(readOnly = true)
@@ -99,84 +78,47 @@ public class AuthorizationPermissionEvaluator {
             UUID userId,
             String permissionCode,
             AuthorizationEvaluationContext context,
-            Instant effectiveAt
-    ) {
-        if (tenantId == null
-                || userId == null
-                || permissionCode == null
-                || effectiveAt == null) {
+            Instant effectiveAt) {
+        if (tenantId == null || userId == null || permissionCode == null || effectiveAt == null) {
             return false;
         }
 
-        String normalizedPermissionCode =
-                normalizePermissionCode(
-                        permissionCode
-                );
+        String normalizedPermissionCode = normalizePermissionCode(permissionCode);
 
         if (normalizedPermissionCode == null) {
             return false;
         }
 
-        Tenant tenant =
-                tenantRepository
-                        .findById(tenantId)
-                        .orElse(null);
+        Tenant tenant = tenantRepository.findById(tenantId).orElse(null);
 
-        if (tenant == null
-                || tenant.getStatus()
-                != TenantStatus.ACTIVE) {
+        if (tenant == null || tenant.getStatus() != TenantStatus.ACTIVE) {
             return false;
         }
 
-        AppUser user =
-                appUserRepository
-                        .findByTenantIdAndId(
-                                tenantId,
-                                userId
-                        )
-                        .orElse(null);
+        AppUser user = appUserRepository.findByTenantIdAndId(tenantId, userId).orElse(null);
 
-        if (user == null
-                || user.getStatus()
-                != UserStatus.ACTIVE) {
+        if (user == null || user.getStatus() != UserStatus.ACTIVE) {
             return false;
         }
 
-        Instant normalizedEffectiveAt =
-                effectiveAt.truncatedTo(
-                        ChronoUnit.MICROS
-                );
+        Instant normalizedEffectiveAt = effectiveAt.truncatedTo(ChronoUnit.MICROS);
 
-        AuthorizationEvaluationContext
-                resolvedContext =
-                context == null
-                        ? AuthorizationEvaluationContext
-                        .tenant()
-                        : context;
+        AuthorizationEvaluationContext resolvedContext =
+                context == null ? AuthorizationEvaluationContext.tenant() : context;
 
-        List<AuthorizationUserRoleAssignment>
-                effectiveGrants =
-                assignmentRepository
-                        .findEffectiveAssignmentsGrantingPermission(
-                                tenantId,
-                                userId,
-                                normalizedPermissionCode,
-                                AuthorizationUserRoleAssignmentStatus.ACTIVE,
-                                AuthorizationRoleStatus.ACTIVE,
-                                AuthorizationPermissionStatus.ACTIVE,
-                                AuthorizationPermissionSource.PLATFORM,
-                                normalizedEffectiveAt
-                        );
+        List<AuthorizationUserRoleAssignment> effectiveGrants =
+                assignmentRepository.findEffectiveAssignmentsGrantingPermission(
+                        tenantId,
+                        userId,
+                        normalizedPermissionCode,
+                        AuthorizationUserRoleAssignmentStatus.ACTIVE,
+                        AuthorizationRoleStatus.ACTIVE,
+                        AuthorizationPermissionStatus.ACTIVE,
+                        AuthorizationPermissionSource.PLATFORM,
+                        normalizedEffectiveAt);
 
-        for (AuthorizationUserRoleAssignment grant
-                : effectiveGrants) {
-            if (matchesScope(
-                    tenantId,
-                    userId,
-                    grant,
-                    resolvedContext,
-                    normalizedEffectiveAt
-            )) {
+        for (AuthorizationUserRoleAssignment grant : effectiveGrants) {
+            if (matchesScope(tenantId, userId, grant, resolvedContext, normalizedEffectiveAt)) {
                 return true;
             }
         }
@@ -189,10 +131,8 @@ public class AuthorizationPermissionEvaluator {
             UUID userId,
             AuthorizationUserRoleAssignment grant,
             AuthorizationEvaluationContext context,
-            Instant effectiveAt
-    ) {
-        AuthorizationScopeType scopeType =
-                grant.getScopeType();
+            Instant effectiveAt) {
+        AuthorizationScopeType scopeType = grant.getScopeType();
 
         if (scopeType == null) {
             return false;
@@ -201,120 +141,68 @@ public class AuthorizationPermissionEvaluator {
         return switch (scopeType) {
             case TENANT -> true;
 
-            case SELF ->
-                    context.targetUserId() != null
-                            && context
-                            .targetUserId()
-                            .equals(userId);
+            case SELF -> context.targetUserId() != null && context.targetUserId().equals(userId);
 
             case PROJECT ->
-                    matchesProjectScope(
-                            tenantId,
-                            grant.getScopeTargetId(),
-                            context.projectId()
-                    );
+                    matchesProjectScope(tenantId, grant.getScopeTargetId(), context.projectId());
 
             case ORGANIZATIONAL_UNIT ->
                     !context.requireSubtreeScope()
                             && matchesExactUnitScope(
-                            tenantId,
-                            grant.getScopeTargetId(),
-                            context.organizationalUnitId()
-                    );
+                                    tenantId,
+                                    grant.getScopeTargetId(),
+                                    context.organizationalUnitId());
 
             case ORGANIZATIONAL_SUBTREE ->
                     matchesSubtreeScope(
-                            tenantId,
-                            grant.getScopeTargetId(),
-                            context.organizationalUnitId()
-                    );
+                            tenantId, grant.getScopeTargetId(), context.organizationalUnitId());
 
             case DIRECT_REPORTS ->
                     matchesDirectReportsScope(
-                            tenantId,
-                            userId,
-                            grant.getScopeTargetId(),
-                            context,
-                            effectiveAt
-                    );
+                            tenantId, userId, grant.getScopeTargetId(), context, effectiveAt);
         };
     }
 
     private boolean matchesProjectScope(
-            UUID tenantId,
-            UUID grantedProjectId,
-            UUID requestedProjectId
-    ) {
+            UUID tenantId, UUID grantedProjectId, UUID requestedProjectId) {
         if (grantedProjectId == null
                 || requestedProjectId == null
-                || !grantedProjectId.equals(
-                requestedProjectId
-        )) {
+                || !grantedProjectId.equals(requestedProjectId)) {
             return false;
         }
 
         Project project =
-                projectRepository
-                        .findByTenant_IdAndId(
-                                tenantId,
-                                requestedProjectId
-                        )
-                        .orElse(null);
+                projectRepository.findByTenant_IdAndId(tenantId, requestedProjectId).orElse(null);
 
-        return project != null
-                && project.getStatus()
-                != ProjectStatus.ARCHIVED;
+        return project != null && project.getStatus() != ProjectStatus.ARCHIVED;
     }
 
-    private boolean matchesExactUnitScope(
-            UUID tenantId,
-            UUID grantedUnitId,
-            UUID requestedUnitId
-    ) {
+    private boolean matchesExactUnitScope(UUID tenantId, UUID grantedUnitId, UUID requestedUnitId) {
         if (grantedUnitId == null
                 || requestedUnitId == null
-                || !grantedUnitId.equals(
-                requestedUnitId
-        )) {
+                || !grantedUnitId.equals(requestedUnitId)) {
             return false;
         }
 
-        return isActiveUnit(
-                tenantId,
-                requestedUnitId
-        );
+        return isActiveUnit(tenantId, requestedUnitId);
     }
 
     private boolean matchesSubtreeScope(
-            UUID tenantId,
-            UUID grantedRootUnitId,
-            UUID requestedUnitId
-    ) {
-        if (grantedRootUnitId == null
-                || requestedUnitId == null) {
+            UUID tenantId, UUID grantedRootUnitId, UUID requestedUnitId) {
+        if (grantedRootUnitId == null || requestedUnitId == null) {
             return false;
         }
 
-        if (!isActiveUnit(
-                tenantId,
-                grantedRootUnitId
-        )) {
+        if (!isActiveUnit(tenantId, grantedRootUnitId)) {
             return false;
         }
 
-        if (!isActiveUnit(
-                tenantId,
-                requestedUnitId
-        )) {
+        if (!isActiveUnit(tenantId, requestedUnitId)) {
             return false;
         }
 
-        return authorizationScopeQueryService
-                .isUnitInSubtree(
-                        tenantId,
-                        grantedRootUnitId,
-                        requestedUnitId
-                );
+        return authorizationScopeQueryService.isUnitInSubtree(
+                tenantId, grantedRootUnitId, requestedUnitId);
     }
 
     private boolean matchesDirectReportsScope(
@@ -322,93 +210,55 @@ public class AuthorizationPermissionEvaluator {
             UUID managerUserId,
             UUID grantedManagerAssignmentId,
             AuthorizationEvaluationContext context,
-            Instant effectiveAt
-    ) {
+            Instant effectiveAt) {
         if (grantedManagerAssignmentId == null) {
             return false;
         }
 
-        UUID requestedManagerAssignmentId =
-                context
-                        .directReportsManagerAssignmentId();
+        UUID requestedManagerAssignmentId = context.directReportsManagerAssignmentId();
 
         if (requestedManagerAssignmentId != null) {
-            if (!grantedManagerAssignmentId.equals(
-                    requestedManagerAssignmentId
-            )) {
+            if (!grantedManagerAssignmentId.equals(requestedManagerAssignmentId)) {
                 return false;
             }
 
-            return authorizationScopeQueryService
-                    .isDirectReportsAnchor(
-                            tenantId,
-                            managerUserId,
-                            grantedManagerAssignmentId,
-                            effectiveAt
-                    );
+            return authorizationScopeQueryService.isDirectReportsAnchor(
+                    tenantId, managerUserId, grantedManagerAssignmentId, effectiveAt);
         }
 
-        UUID targetUserId =
-                context.targetUserId();
+        UUID targetUserId = context.targetUserId();
 
         if (targetUserId == null) {
             return false;
         }
 
         AppUser targetUser =
-                appUserRepository
-                        .findByTenantIdAndId(
-                                tenantId,
-                                targetUserId
-                        )
-                        .orElse(null);
+                appUserRepository.findByTenantIdAndId(tenantId, targetUserId).orElse(null);
 
-        if (targetUser == null
-                || targetUser.getStatus()
-                != UserStatus.ACTIVE) {
+        if (targetUser == null || targetUser.getStatus() != UserStatus.ACTIVE) {
             return false;
         }
 
-        return authorizationScopeQueryService
-                .isDirectReport(
-                        tenantId,
-                        managerUserId,
-                        grantedManagerAssignmentId,
-                        targetUserId,
-                        effectiveAt
-                );
+        return authorizationScopeQueryService.isDirectReport(
+                tenantId, managerUserId, grantedManagerAssignmentId, targetUserId, effectiveAt);
     }
 
-    private boolean isActiveUnit(
-            UUID tenantId,
-            UUID organizationalUnitId
-    ) {
+    private boolean isActiveUnit(UUID tenantId, UUID organizationalUnitId) {
         OrganizationalUnit unit =
                 organizationalUnitRepository
-                        .findByTenant_IdAndId(
-                                tenantId,
-                                organizationalUnitId
-                        )
+                        .findByTenant_IdAndId(tenantId, organizationalUnitId)
                         .orElse(null);
 
-        return unit != null
-                && unit.getStatus()
-                == OrganizationalUnitStatus.ACTIVE;
+        return unit != null && unit.getStatus() == OrganizationalUnitStatus.ACTIVE;
     }
 
-    private String normalizePermissionCode(
-            String value
-    ) {
-        String normalized =
-                value.trim()
-                        .toLowerCase(Locale.ROOT);
+    private String normalizePermissionCode(String value) {
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
 
-        if (normalized.isEmpty()
-                || normalized.length() > 120) {
+        if (normalized.isEmpty() || normalized.length() > 120) {
             return null;
         }
 
         return normalized;
     }
-
 }

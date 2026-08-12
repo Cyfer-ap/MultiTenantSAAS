@@ -8,12 +8,11 @@ import com.chacha.multitenantsaas.entity.SystemAdmin;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import com.chacha.multitenantsaas.repository.SystemAdminRepository;
+import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 public class SystemAuthService {
@@ -27,24 +26,24 @@ public class SystemAuthService {
             SystemAdminRepository systemAdminRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            LoginAttemptService loginAttemptService
-    ) {
+            LoginAttemptService loginAttemptService) {
         this.systemAdminRepository = systemAdminRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.loginAttemptService = loginAttemptService;
     }
 
-    @Transactional(
-            noRollbackFor = AuthenticationFailedException.class
-    )
+    @Transactional(noRollbackFor = AuthenticationFailedException.class)
     public SystemAdminLoginResponse login(SystemAdminLoginRequest request) {
         String normalizedEmail = request.email().trim().toLowerCase();
 
-        SystemAdmin systemAdmin = systemAdminRepository.findByEmailForUpdate(
-                normalizedEmail
-        )
-                .orElseThrow(() -> new AuthenticationFailedException("Invalid email or password"));
+        SystemAdmin systemAdmin =
+                systemAdminRepository
+                        .findByEmailForUpdate(normalizedEmail)
+                        .orElseThrow(
+                                () ->
+                                        new AuthenticationFailedException(
+                                                "Invalid email or password"));
 
         if (systemAdmin.getStatus() != UserStatus.ACTIVE) {
             throw new AuthenticationFailedException("System admin account is not active");
@@ -70,8 +69,7 @@ public class SystemAuthService {
                 accessToken,
                 "Bearer",
                 jwtService.getExpirationSeconds(),
-                "System admin login successful"
-        );
+                "System admin login successful");
     }
 
     public SystemAdminCurrentResponse getCurrentSystemAdmin(Jwt jwt) {
@@ -81,12 +79,8 @@ public class SystemAuthService {
     }
 
     @Transactional
-    public SystemAdminCurrentResponse changePassword(
-            Jwt jwt,
-            ChangePasswordRequest request
-    ) {
-        SystemAdmin systemAdmin =
-                getRequiredActiveSystemAdminForUpdate(jwt);
+    public SystemAdminCurrentResponse changePassword(Jwt jwt, ChangePasswordRequest request) {
+        SystemAdmin systemAdmin = getRequiredActiveSystemAdminForUpdate(jwt);
 
         if (!request.newPassword().equals(request.confirmPassword())) {
             throw new IllegalArgumentException("New password and confirm password do not match");
@@ -97,7 +91,8 @@ public class SystemAuthService {
         }
 
         if (passwordEncoder.matches(request.newPassword(), systemAdmin.getPasswordHash())) {
-            throw new IllegalArgumentException("New password must be different from current password");
+            throw new IllegalArgumentException(
+                    "New password must be different from current password");
         }
 
         systemAdmin.setPasswordHash(passwordEncoder.encode(request.newPassword()));
@@ -107,45 +102,32 @@ public class SystemAuthService {
         return mapToCurrentResponse(updatedSystemAdmin);
     }
 
-    private SystemAdmin getRequiredActiveSystemAdminForUpdate(
-            Jwt jwt
-    ) {
+    private SystemAdmin getRequiredActiveSystemAdminForUpdate(Jwt jwt) {
         if (jwt == null) {
-            throw new AuthenticationFailedException(
-                    "Authentication token is required"
-            );
+            throw new AuthenticationFailedException("Authentication token is required");
         }
 
         String role = jwt.getClaimAsString("role");
         String accountType = jwt.getClaimAsString("accountType");
 
-        if (!"SYSTEM_ADMIN".equals(role)
-                || !"SYSTEM_ADMIN".equals(accountType)) {
-            throw new AuthenticationFailedException(
-                    "Invalid system admin token"
-            );
+        if (!"SYSTEM_ADMIN".equals(role) || !"SYSTEM_ADMIN".equals(accountType)) {
+            throw new AuthenticationFailedException("Invalid system admin token");
         }
 
         UUID systemAdminId = parseUuid(jwt.getSubject());
 
         if (systemAdminId == null) {
-            throw new AuthenticationFailedException(
-                    "Invalid system admin token subject"
-            );
+            throw new AuthenticationFailedException("Invalid system admin token subject");
         }
 
         SystemAdmin systemAdmin =
-                systemAdminRepository.findByIdForUpdate(systemAdminId)
-                        .orElseThrow(() ->
-                                new AuthenticationFailedException(
-                                        "System admin not found"
-                                )
-                        );
+                systemAdminRepository
+                        .findByIdForUpdate(systemAdminId)
+                        .orElseThrow(
+                                () -> new AuthenticationFailedException("System admin not found"));
 
         if (systemAdmin.getStatus() != UserStatus.ACTIVE) {
-            throw new AuthenticationFailedException(
-                    "System admin account is not active"
-            );
+            throw new AuthenticationFailedException("System admin account is not active");
         }
 
         return systemAdmin;
@@ -169,8 +151,11 @@ public class SystemAuthService {
             throw new AuthenticationFailedException("Invalid system admin token subject");
         }
 
-        SystemAdmin systemAdmin = systemAdminRepository.findById(systemAdminId)
-                .orElseThrow(() -> new AuthenticationFailedException("System admin not found"));
+        SystemAdmin systemAdmin =
+                systemAdminRepository
+                        .findById(systemAdminId)
+                        .orElseThrow(
+                                () -> new AuthenticationFailedException("System admin not found"));
 
         if (systemAdmin.getStatus() != UserStatus.ACTIVE) {
             throw new AuthenticationFailedException("System admin account is not active");
@@ -185,8 +170,7 @@ public class SystemAuthService {
                 systemAdmin.getFullName(),
                 systemAdmin.getEmail(),
                 "SYSTEM_ADMIN",
-                systemAdmin.getStatus()
-        );
+                systemAdmin.getStatus());
     }
 
     private UUID parseUuid(String value) {

@@ -14,7 +14,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -22,28 +21,19 @@ import java.util.UUID;
 @Table(
         name = "authorization_user_role_assignments",
         indexes = {
-                @Index(
-                        name = "idx_auth_user_role_assignment_user",
-                        columnList =
-                                "tenant_id,user_id,status"
-                ),
-                @Index(
-                        name = "idx_auth_user_role_assignment_role",
-                        columnList =
-                                "tenant_id,role_id,status"
-                ),
-                @Index(
-                        name = "idx_auth_user_role_assignment_scope",
-                        columnList =
-                                "tenant_id,scope_type,scope_key,status"
-                ),
-                @Index(
-                        name = "idx_auth_user_role_assignment_validity",
-                        columnList =
-                                "tenant_id,valid_from,valid_until"
-                )
-        }
-)
+            @Index(
+                    name = "idx_auth_user_role_assignment_user",
+                    columnList = "tenant_id,user_id,status"),
+            @Index(
+                    name = "idx_auth_user_role_assignment_role",
+                    columnList = "tenant_id,role_id,status"),
+            @Index(
+                    name = "idx_auth_user_role_assignment_scope",
+                    columnList = "tenant_id,scope_type,scope_key,status"),
+            @Index(
+                    name = "idx_auth_user_role_assignment_validity",
+                    columnList = "tenant_id,valid_from,valid_until")
+        })
 public class AuthorizationUserRoleAssignment {
 
     @Id
@@ -51,92 +41,49 @@ public class AuthorizationUserRoleAssignment {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "tenant_id",
-            nullable = false,
-            updatable = false
-    )
+    @JoinColumn(name = "tenant_id", nullable = false, updatable = false)
     private Tenant tenant;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "user_id",
-            nullable = false,
-            updatable = false
-    )
+    @JoinColumn(name = "user_id", nullable = false, updatable = false)
     private AppUser user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "role_id",
-            nullable = false,
-            updatable = false
-    )
+    @JoinColumn(name = "role_id", nullable = false, updatable = false)
     private AuthorizationRole role;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            name = "scope_type",
-            nullable = false,
-            length = 40,
-            updatable = false
-    )
+    @Column(name = "scope_type", nullable = false, length = 40, updatable = false)
     private AuthorizationScopeType scopeType;
 
-    @Column(
-            name = "scope_target_id",
-            updatable = false
-    )
+    @Column(name = "scope_target_id", updatable = false)
     private UUID scopeTargetId;
 
-    @Column(
-            name = "scope_key",
-            nullable = false,
-            length = 100,
-            updatable = false
-    )
+    @Column(name = "scope_key", nullable = false, length = 100, updatable = false)
     private String scopeKey;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            nullable = false,
-            length = 30
-    )
+    @Column(nullable = false, length = 30)
     private AuthorizationUserRoleAssignmentStatus status =
             AuthorizationUserRoleAssignmentStatus.ACTIVE;
 
-    @Column(
-            name = "valid_from",
-            nullable = false
-    )
+    @Column(name = "valid_from", nullable = false)
     private Instant validFrom;
 
     @Column(name = "valid_until")
     private Instant validUntil;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "created_by_user_id",
-            nullable = false,
-            updatable = false
-    )
+    @JoinColumn(name = "created_by_user_id", nullable = false, updatable = false)
     private AppUser createdByUser;
 
-    @Column(
-            name = "created_at",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(
-            name = "updated_at",
-            nullable = false
-    )
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    public AuthorizationUserRoleAssignment() {
-    }
+    public AuthorizationUserRoleAssignment() {}
 
     public AuthorizationUserRoleAssignment(
             Tenant tenant,
@@ -147,8 +94,7 @@ public class AuthorizationUserRoleAssignment {
             String scopeKey,
             Instant validFrom,
             Instant validUntil,
-            AppUser createdByUser
-    ) {
+            AppUser createdByUser) {
         this.tenant = tenant;
         this.user = user;
         this.role = role;
@@ -158,8 +104,7 @@ public class AuthorizationUserRoleAssignment {
         this.validFrom = validFrom;
         this.validUntil = validUntil;
         this.createdByUser = createdByUser;
-        this.status =
-                AuthorizationUserRoleAssignmentStatus.ACTIVE;
+        this.status = AuthorizationUserRoleAssignmentStatus.ACTIVE;
     }
 
     @PrePersist
@@ -170,8 +115,7 @@ public class AuthorizationUserRoleAssignment {
         this.updatedAt = now;
 
         if (this.status == null) {
-            this.status =
-                    AuthorizationUserRoleAssignmentStatus.ACTIVE;
+            this.status = AuthorizationUserRoleAssignmentStatus.ACTIVE;
         }
     }
 
@@ -208,8 +152,7 @@ public class AuthorizationUserRoleAssignment {
         return scopeKey;
     }
 
-    public AuthorizationUserRoleAssignmentStatus
-    getStatus() {
+    public AuthorizationUserRoleAssignmentStatus getStatus() {
         return status;
     }
 
@@ -237,9 +180,7 @@ public class AuthorizationUserRoleAssignment {
         this.id = id;
     }
 
-    public void setStatus(
-            AuthorizationUserRoleAssignmentStatus status
-    ) {
+    public void setStatus(AuthorizationUserRoleAssignmentStatus status) {
         this.status = status;
     }
 

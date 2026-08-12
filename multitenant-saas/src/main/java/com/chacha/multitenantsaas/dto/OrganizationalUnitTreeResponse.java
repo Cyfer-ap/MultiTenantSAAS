@@ -2,7 +2,6 @@ package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.OrganizationalUnitStatus;
 import com.chacha.multitenantsaas.entity.OrganizationalUnitType;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -14,6 +13,4 @@ public record OrganizationalUnitTreeResponse(
         String code,
         OrganizationalUnitType type,
         OrganizationalUnitStatus status,
-        List<OrganizationalUnitTreeResponse> children
-) {
-}
+        List<OrganizationalUnitTreeResponse> children) {}

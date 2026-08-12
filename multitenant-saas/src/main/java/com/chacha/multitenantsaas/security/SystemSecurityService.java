@@ -3,12 +3,11 @@ package com.chacha.multitenantsaas.security;
 import com.chacha.multitenantsaas.entity.SystemAdmin;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.repository.SystemAdminRepository;
+import java.util.UUID;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
-
-import java.util.UUID;
 
 @Component("systemSecurity")
 public class SystemSecurityService {
@@ -42,11 +41,9 @@ public class SystemSecurityService {
             return false;
         }
 
-        SystemAdmin systemAdmin = systemAdminRepository.findById(systemAdminId)
-                .orElse(null);
+        SystemAdmin systemAdmin = systemAdminRepository.findById(systemAdminId).orElse(null);
 
-        return systemAdmin != null
-                && systemAdmin.getStatus() == UserStatus.ACTIVE;
+        return systemAdmin != null && systemAdmin.getStatus() == UserStatus.ACTIVE;
     }
 
     private UUID parseUuid(String value) {

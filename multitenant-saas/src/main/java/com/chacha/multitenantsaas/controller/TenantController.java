@@ -1,33 +1,32 @@
 package com.chacha.multitenantsaas.controller;
 
 import com.chacha.multitenantsaas.common.ApiResponse;
+import com.chacha.multitenantsaas.common.PaginationUtils;
+import com.chacha.multitenantsaas.common.SortingUtils;
+import com.chacha.multitenantsaas.dto.PageResponse;
 import com.chacha.multitenantsaas.dto.TenantCreateRequest;
 import com.chacha.multitenantsaas.dto.TenantResponse;
-import com.chacha.multitenantsaas.service.TenantService;
-import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import com.chacha.multitenantsaas.dto.TenantUpdateRequest;
 import com.chacha.multitenantsaas.dto.TenantStatusUpdateRequest;
-import org.springframework.security.access.prepost.PreAuthorize;
-import com.chacha.multitenantsaas.common.PaginationUtils;
-import com.chacha.multitenantsaas.dto.PageResponse;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import com.chacha.multitenantsaas.dto.TenantUpdateRequest;
 import com.chacha.multitenantsaas.entity.TenantStatus;
-import com.chacha.multitenantsaas.common.SortingUtils;
+import com.chacha.multitenantsaas.service.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import java.util.UUID;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Tag(
         name = "Tenants",
-        description = "Tenant registration, listing, update, status, and soft-delete APIs"
-)
+        description = "Tenant registration, listing, update, status, and soft-delete APIs")
 @RequestMapping("/api/tenants")
 public class TenantController {
 
@@ -39,25 +38,21 @@ public class TenantController {
 
     @Operation(
             summary = "Create tenant",
-            description = "Disabled. Use POST /api/onboarding/tenants for tenant onboarding."
-    )
+            description = "Disabled. Use POST /api/onboarding/tenants for tenant onboarding.")
     @PreAuthorize("denyAll()")
     @PostMapping
     public ResponseEntity<ApiResponse<TenantResponse>> createTenant(
-            @Valid @RequestBody TenantCreateRequest request
-    ) {
+            @Valid @RequestBody TenantCreateRequest request) {
         TenantResponse tenant = tenantService.createTenant(request);
 
-        return ResponseEntity.ok(
-                ApiResponse.success("Tenant created successfully", tenant)
-        );
+        return ResponseEntity.ok(ApiResponse.success("Tenant created successfully", tenant));
     }
 
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "List tenants",
-            description = "Returns a list of all tenants. Only system admins can access this endpoint."
-    )
+            description =
+                    "Returns a list of all tenants. Only system admins can access this endpoint.")
     @PreAuthorize("@systemSecurity.isSystemAdmin()")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<TenantResponse>>> getAllTenants(
@@ -66,38 +61,26 @@ public class TenantController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
             @RequestParam(required = false) TenantStatus status,
-            @RequestParam(required = false) String search
-    ) {
-        Pageable pageable = PageRequest.of(
-                PaginationUtils.validatePage(page),
-                PaginationUtils.validateSize(size),
-                SortingUtils.getDirection(sortDir),
-                SortingUtils.validateSortBy(
-                        sortBy,
-                        "createdAt",
-                        "createdAt",
-                        "name",
-                        "slug",
-                        "status"
-                )
-        );
+            @RequestParam(required = false) String search) {
+        Pageable pageable =
+                PageRequest.of(
+                        PaginationUtils.validatePage(page),
+                        PaginationUtils.validateSize(size),
+                        SortingUtils.getDirection(sortDir),
+                        SortingUtils.validateSortBy(
+                                sortBy, "createdAt", "createdAt", "name", "slug", "status"));
 
-        PageResponse<TenantResponse> tenants = tenantService.getAllTenants(
-                status,
-                search,
-                pageable
-        );
+        PageResponse<TenantResponse> tenants =
+                tenantService.getAllTenants(status, search, pageable);
 
-        return ResponseEntity.ok(
-                ApiResponse.success("Tenants fetched successfully", tenants)
-        );
+        return ResponseEntity.ok(ApiResponse.success("Tenants fetched successfully", tenants));
     }
 
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "Get tenant by ID",
-            description = "Returns details of a tenant if the authenticated user belongs to the same tenant."
-    )
+            description =
+                    "Returns details of a tenant if the authenticated user belongs to the same tenant.")
     @PreAuthorize(
             "@authorizationSecurity"
                     + ".hasTenantPermission("
@@ -105,24 +88,19 @@ public class TenantController {
                     + "'tenant.read'"
                     + ")"
                     + " or "
-                    + "@systemSecurity.isSystemAdmin()"
-    )
+                    + "@systemSecurity.isSystemAdmin()")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<TenantResponse>> getTenantById(
-            @PathVariable UUID id
-    ) {
+    public ResponseEntity<ApiResponse<TenantResponse>> getTenantById(@PathVariable UUID id) {
         TenantResponse tenant = tenantService.getTenantById(id);
 
-        return ResponseEntity.ok(
-                ApiResponse.success("Tenant fetched successfully", tenant)
-        );
+        return ResponseEntity.ok(ApiResponse.success("Tenant fetched successfully", tenant));
     }
 
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "Get tenant by slug",
-            description = "Returns tenant details by slug if the authenticated user belongs to that tenant."
-    )
+            description =
+                    "Returns tenant details by slug if the authenticated user belongs to that tenant.")
     @PreAuthorize(
             "@authorizationSecurity"
                     + ".hasTenantPermissionBySlug("
@@ -130,24 +108,19 @@ public class TenantController {
                     + "'tenant.read'"
                     + ")"
                     + " or "
-                    + "@systemSecurity.isSystemAdmin()"
-    )
+                    + "@systemSecurity.isSystemAdmin()")
     @GetMapping("/slug/{slug}")
-    public ResponseEntity<ApiResponse<TenantResponse>> getTenantBySlug(
-            @PathVariable String slug
-    ) {
+    public ResponseEntity<ApiResponse<TenantResponse>> getTenantBySlug(@PathVariable String slug) {
         TenantResponse tenant = tenantService.getTenantBySlug(slug);
 
-        return ResponseEntity.ok(
-                ApiResponse.success("Tenant fetched successfully", tenant)
-        );
+        return ResponseEntity.ok(ApiResponse.success("Tenant fetched successfully", tenant));
     }
 
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "Update tenant",
-            description = "Updates tenant name or slug. Only tenant admins can update their own tenant."
-    )
+            description =
+                    "Updates tenant name or slug. Only tenant admins can update their own tenant.")
     @PreAuthorize(
             "@authorizationSecurity"
                     + ".hasTenantPermission("
@@ -155,26 +128,21 @@ public class TenantController {
                     + "'tenant.update'"
                     + ")"
                     + " or "
-                    + "@systemSecurity.isSystemAdmin()"
-    )
+                    + "@systemSecurity.isSystemAdmin()")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> updateTenant(
             @PathVariable UUID id,
             @Valid @RequestBody TenantUpdateRequest request,
-            @AuthenticationPrincipal Jwt jwt
-    ){
+            @AuthenticationPrincipal Jwt jwt) {
         TenantResponse tenant = tenantService.updateTenant(id, request, jwt);
 
-        return ResponseEntity.ok(
-                ApiResponse.success("Tenant updated successfully", tenant)
-        );
+        return ResponseEntity.ok(ApiResponse.success("Tenant updated successfully", tenant));
     }
 
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "Update tenant status",
-            description = "Updates tenant status such as ACTIVE, INACTIVE, or SUSPENDED."
-    )
+            description = "Updates tenant status such as ACTIVE, INACTIVE, or SUSPENDED.")
     @PreAuthorize(
             "@authorizationSecurity"
                     + ".hasTenantPermission("
@@ -182,26 +150,21 @@ public class TenantController {
                     + "'tenant.update'"
                     + ")"
                     + " or "
-                    + "@systemSecurity.isSystemAdmin()"
-    )
+                    + "@systemSecurity.isSystemAdmin()")
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<TenantResponse>> updateTenantStatus(
             @PathVariable UUID id,
             @Valid @RequestBody TenantStatusUpdateRequest request,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
+            @AuthenticationPrincipal Jwt jwt) {
         TenantResponse tenant = tenantService.updateTenantStatus(id, request, jwt);
 
-        return ResponseEntity.ok(
-                ApiResponse.success("Tenant status updated successfully", tenant)
-        );
+        return ResponseEntity.ok(ApiResponse.success("Tenant status updated successfully", tenant));
     }
 
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "Soft delete tenant",
-            description = "Soft deletes a tenant by setting its status to INACTIVE."
-    )
+            description = "Soft deletes a tenant by setting its status to INACTIVE.")
     @PreAuthorize(
             "@authorizationSecurity"
                     + ".hasTenantPermission("
@@ -209,18 +172,12 @@ public class TenantController {
                     + "'tenant.update'"
                     + ")"
                     + " or "
-                    + "@systemSecurity.isSystemAdmin()"
-    )
+                    + "@systemSecurity.isSystemAdmin()")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<TenantResponse>> deactivateTenant(
-            @PathVariable UUID id,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
+            @PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
         TenantResponse tenant = tenantService.deactivateTenant(id, jwt);
 
-        return ResponseEntity.ok(
-                ApiResponse.success("Tenant deactivated successfully", tenant)
-        );
+        return ResponseEntity.ok(ApiResponse.success("Tenant deactivated successfully", tenant));
     }
-
 }

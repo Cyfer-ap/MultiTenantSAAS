@@ -8,19 +8,17 @@ import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.RefreshTokenRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
-
 import java.util.List;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RefreshTokenService {
@@ -33,8 +31,7 @@ public class RefreshTokenService {
     public RefreshTokenService(
             RefreshTokenRepository refreshTokenRepository,
             AppUserRepository appUserRepository,
-            @Value("${app.refresh-token.expiration-days}") long expirationDays
-    ) {
+            @Value("${app.refresh-token.expiration-days}") long expirationDays) {
         this.refreshTokenRepository = refreshTokenRepository;
         this.appUserRepository = appUserRepository;
         this.expirationDays = expirationDays;
@@ -45,11 +42,9 @@ public class RefreshTokenService {
         String rawToken = generateSecureToken();
         String tokenHash = hashToken(rawToken);
 
-        RefreshToken refreshToken = new RefreshToken(
-                user,
-                tokenHash,
-                Instant.now().plus(expirationDays, ChronoUnit.DAYS)
-        );
+        RefreshToken refreshToken =
+                new RefreshToken(
+                        user, tokenHash, Instant.now().plus(expirationDays, ChronoUnit.DAYS));
 
         refreshTokenRepository.save(refreshToken);
 
@@ -63,36 +58,29 @@ public class RefreshTokenService {
         UUID userId =
                 refreshTokenRepository
                         .findUserIdByTokenHash(tokenHash)
-                        .orElseThrow(() ->
-                                new AuthenticationFailedException(
-                                        "Invalid refresh token"
-                                )
-                        );
+                        .orElseThrow(
+                                () -> new AuthenticationFailedException("Invalid refresh token"));
 
-        AppUser user = appUserRepository.findByIdForUpdate(userId)
-                .orElseThrow(() ->
-                        new AuthenticationFailedException(
-                                "Refresh-token user not found"
-                        )
-                );
+        AppUser user =
+                appUserRepository
+                        .findByIdForUpdate(userId)
+                        .orElseThrow(
+                                () ->
+                                        new AuthenticationFailedException(
+                                                "Refresh-token user not found"));
 
         RefreshToken existingToken =
                 refreshTokenRepository
                         .findByTokenHashForUpdate(tokenHash)
-                        .orElseThrow(() ->
-                                new AuthenticationFailedException(
-                                        "Invalid refresh token"
-                                )
-                        );
+                        .orElseThrow(
+                                () -> new AuthenticationFailedException("Invalid refresh token"));
 
         if (!existingToken.getUser().getId().equals(user.getId())) {
             throw new AuthenticationFailedException("Invalid refresh token");
         }
 
         if (!existingToken.isActive()) {
-            throw new AuthenticationFailedException(
-                    "Refresh token is expired or revoked"
-            );
+            throw new AuthenticationFailedException("Refresh token is expired or revoked");
         }
 
         Tenant tenant = user.getTenant();
@@ -118,9 +106,7 @@ public class RefreshTokenService {
         byte[] tokenBytes = new byte[64];
         secureRandom.nextBytes(tokenBytes);
 
-        return Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(tokenBytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
     }
 
     private String hashToken(String rawToken) {
@@ -141,37 +127,30 @@ public class RefreshTokenService {
         }
     }
 
-    public record RefreshTokenData(
-            Tenant tenant,
-            AppUser user,
-            String refreshToken
-    ) {
-    }
+    public record RefreshTokenData(Tenant tenant, AppUser user, String refreshToken) {}
 
     @Transactional
     public void revokeRefreshToken(String rawRefreshToken) {
         revokeRefreshTokenAndReturnData(rawRefreshToken);
     }
 
-
     @Transactional
     public void revokeAllActiveTokensForUser(UUID userId) {
-        appUserRepository.findByIdForUpdate(userId)
-                .orElseThrow(() ->
-                        new AuthenticationFailedException(
-                                "Refresh-token user not found"
-                        )
-                );
+        appUserRepository
+                .findByIdForUpdate(userId)
+                .orElseThrow(
+                        () -> new AuthenticationFailedException("Refresh-token user not found"));
 
         List<RefreshToken> activeTokens =
                 refreshTokenRepository.findByUserIdAndRevokedFalse(userId);
 
-        activeTokens.forEach(refreshToken -> {
-            if (!refreshToken.isExpired()) {
-                refreshToken.setRevoked(true);
-                refreshToken.setRevokedAt(Instant.now());
-            }
-        });
+        activeTokens.forEach(
+                refreshToken -> {
+                    if (!refreshToken.isExpired()) {
+                        refreshToken.setRevoked(true);
+                        refreshToken.setRevokedAt(Instant.now());
+                    }
+                });
 
         refreshTokenRepository.saveAll(activeTokens);
     }
@@ -181,12 +160,13 @@ public class RefreshTokenService {
         List<RefreshToken> activeTokens =
                 refreshTokenRepository.findByUser_Tenant_IdAndRevokedFalse(tenantId);
 
-        activeTokens.forEach(refreshToken -> {
-            if (!refreshToken.isExpired()) {
-                refreshToken.setRevoked(true);
-                refreshToken.setRevokedAt(Instant.now());
-            }
-        });
+        activeTokens.forEach(
+                refreshToken -> {
+                    if (!refreshToken.isExpired()) {
+                        refreshToken.setRevoked(true);
+                        refreshToken.setRevokedAt(Instant.now());
+                    }
+                });
 
         refreshTokenRepository.saveAll(activeTokens);
     }
@@ -198,27 +178,22 @@ public class RefreshTokenService {
         UUID userId =
                 refreshTokenRepository
                         .findUserIdByTokenHash(tokenHash)
-                        .orElseThrow(() ->
-                                new AuthenticationFailedException(
-                                        "Invalid refresh token"
-                                )
-                        );
+                        .orElseThrow(
+                                () -> new AuthenticationFailedException("Invalid refresh token"));
 
-        AppUser user = appUserRepository.findByIdForUpdate(userId)
-                .orElseThrow(() ->
-                        new AuthenticationFailedException(
-                                "Refresh-token user not found"
-                        )
-                );
+        AppUser user =
+                appUserRepository
+                        .findByIdForUpdate(userId)
+                        .orElseThrow(
+                                () ->
+                                        new AuthenticationFailedException(
+                                                "Refresh-token user not found"));
 
         RefreshToken refreshToken =
                 refreshTokenRepository
                         .findByTokenHashForUpdate(tokenHash)
-                        .orElseThrow(() ->
-                                new AuthenticationFailedException(
-                                        "Invalid refresh token"
-                                )
-                        );
+                        .orElseThrow(
+                                () -> new AuthenticationFailedException("Invalid refresh token"));
 
         if (!refreshToken.getUser().getId().equals(user.getId())) {
             throw new AuthenticationFailedException("Invalid refresh token");
@@ -232,10 +207,6 @@ public class RefreshTokenService {
             refreshTokenRepository.save(refreshToken);
         }
 
-        return new RefreshTokenData(
-                tenant,
-                user,
-                rawRefreshToken
-        );
+        return new RefreshTokenData(tenant, user, rawRefreshToken);
     }
 }

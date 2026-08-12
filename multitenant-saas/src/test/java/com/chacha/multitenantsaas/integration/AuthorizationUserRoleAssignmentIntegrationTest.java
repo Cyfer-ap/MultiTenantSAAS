@@ -1,5 +1,11 @@
 package com.chacha.multitenantsaas.integration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.chacha.multitenantsaas.dto.AuthorizationRoleResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationUserRoleAssignmentCreateRequest;
 import com.chacha.multitenantsaas.dto.AuthorizationUserRoleAssignmentResponse;
@@ -22,104 +28,52 @@ import com.chacha.multitenantsaas.service.AuthorizationRoleService;
 import com.chacha.multitenantsaas.service.AuthorizationUserRoleAssignmentService;
 import com.chacha.multitenantsaas.service.OrganizationAssignmentService;
 import com.chacha.multitenantsaas.service.OrganizationHierarchyService;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
 class AuthorizationUserRoleAssignmentIntegrationTest {
 
-    @Autowired
-    private AuthorizationUserRoleAssignmentService
-            assignmentService;
+    @Autowired private AuthorizationUserRoleAssignmentService assignmentService;
 
-    @Autowired
-    private AuthorizationRoleService
-            authorizationRoleService;
+    @Autowired private AuthorizationRoleService authorizationRoleService;
 
-    @Autowired
-    private OrganizationHierarchyService
-            organizationHierarchyService;
+    @Autowired private OrganizationHierarchyService organizationHierarchyService;
 
-    @Autowired
-    private OrganizationAssignmentService
-            organizationAssignmentService;
+    @Autowired private OrganizationAssignmentService organizationAssignmentService;
 
-    @Autowired
-    private TenantRepository tenantRepository;
+    @Autowired private TenantRepository tenantRepository;
 
-    @Autowired
-    private AppUserRepository appUserRepository;
+    @Autowired private AppUserRepository appUserRepository;
 
-    @Autowired
-    private ProjectRepository projectRepository;
+    @Autowired private ProjectRepository projectRepository;
 
     @Test
     void createsTenantSelfOrganizationAndProjectScopes() {
-        Tenant tenant =
-                createTenant("role-scope-create");
+        Tenant tenant = createTenant("role-scope-create");
 
-        AppUser administrator =
-                createUser(
-                        tenant,
-                        "Scope Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+        AppUser administrator = createUser(tenant, "Scope Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Scope Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Scope Member", UserRole.TENANT_USER);
 
-        AuthorizationRoleResponse memberRole =
-                initializeAndGetRole(
-                        tenant,
-                        SystemRoleCodes.MEMBER
-                );
+        AuthorizationRoleResponse memberRole = initializeAndGetRole(tenant, SystemRoleCodes.MEMBER);
 
-        OrganizationalUnit unit =
-                createUnit(
-                        tenant,
-                        "Engineering",
-                        "ENGINEERING"
-                );
+        OrganizationalUnit unit = createUnit(tenant, "Engineering", "ENGINEERING");
 
-        Project project =
-                createProject(
-                        tenant,
-                        administrator,
-                        "Authorization Project"
-                );
+        Project project = createProject(tenant, administrator, "Authorization Project");
 
-        Instant validFrom =
-                Instant.now()
-                        .minus(
-                                1,
-                                ChronoUnit.DAYS
-                        )
-                        .truncatedTo(
-                                ChronoUnit.MICROS
-                        );
+        Instant validFrom = Instant.now().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MICROS);
 
-        AuthorizationUserRoleAssignmentResponse
-                tenantScope =
+        AuthorizationUserRoleAssignmentResponse tenantScope =
                 createAssignment(
                         tenant,
                         administrator,
@@ -128,11 +82,9 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                         AuthorizationScopeType.TENANT,
                         null,
                         validFrom,
-                        null
-                );
+                        null);
 
-        AuthorizationUserRoleAssignmentResponse
-                selfScope =
+        AuthorizationUserRoleAssignmentResponse selfScope =
                 createAssignment(
                         tenant,
                         administrator,
@@ -141,39 +93,31 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                         AuthorizationScopeType.SELF,
                         null,
                         validFrom,
-                        null
-                );
+                        null);
 
-        AuthorizationUserRoleAssignmentResponse
-                unitScope =
+        AuthorizationUserRoleAssignmentResponse unitScope =
                 createAssignment(
                         tenant,
                         administrator,
                         member,
                         memberRole,
-                        AuthorizationScopeType
-                                .ORGANIZATIONAL_UNIT,
+                        AuthorizationScopeType.ORGANIZATIONAL_UNIT,
                         unit.getId(),
                         validFrom,
-                        null
-                );
+                        null);
 
-        AuthorizationUserRoleAssignmentResponse
-                subtreeScope =
+        AuthorizationUserRoleAssignmentResponse subtreeScope =
                 createAssignment(
                         tenant,
                         administrator,
                         member,
                         memberRole,
-                        AuthorizationScopeType
-                                .ORGANIZATIONAL_SUBTREE,
+                        AuthorizationScopeType.ORGANIZATIONAL_SUBTREE,
                         unit.getId(),
                         validFrom,
-                        null
-                );
+                        null);
 
-        AuthorizationUserRoleAssignmentResponse
-                projectScope =
+        AuthorizationUserRoleAssignmentResponse projectScope =
                 createAssignment(
                         tenant,
                         administrator,
@@ -182,85 +126,36 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                         AuthorizationScopeType.PROJECT,
                         project.getId(),
                         validFrom,
-                        null
-                );
+                        null);
 
         assertNotNull(tenantScope.id());
         assertNotNull(selfScope.id());
 
-        assertEquals(
-                unit.getId(),
-                unitScope.scopeTargetId()
-        );
+        assertEquals(unit.getId(), unitScope.scopeTargetId());
 
-        assertEquals(
-                unit.getId(),
-                subtreeScope.scopeTargetId()
-        );
+        assertEquals(unit.getId(), subtreeScope.scopeTargetId());
 
-        assertEquals(
-                project.getId(),
-                projectScope.scopeTargetId()
-        );
+        assertEquals(project.getId(), projectScope.scopeTargetId());
 
-        List<AuthorizationUserRoleAssignmentResponse>
-                assignments =
-                assignmentService
-                        .getUserAssignments(
-                                tenant.getId(),
-                                member.getId()
-                        );
+        List<AuthorizationUserRoleAssignmentResponse> assignments =
+                assignmentService.getUserAssignments(tenant.getId(), member.getId());
 
-        assertEquals(
-                5,
-                assignments.size()
-        );
+        assertEquals(5, assignments.size());
     }
 
     @Test
     void rejectsOverlappingAndAllowsSequentialAssignment() {
-        Tenant tenant =
-                createTenant("role-scope-overlap");
+        Tenant tenant = createTenant("role-scope-overlap");
 
-        AppUser administrator =
-                createUser(
-                        tenant,
-                        "Overlap Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+        AppUser administrator = createUser(tenant, "Overlap Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Overlap Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Overlap Member", UserRole.TENANT_USER);
 
-        AuthorizationRoleResponse memberRole =
-                initializeAndGetRole(
-                        tenant,
-                        SystemRoleCodes.MEMBER
-                );
+        AuthorizationRoleResponse memberRole = initializeAndGetRole(tenant, SystemRoleCodes.MEMBER);
 
-        Instant validFrom =
-                Instant.now()
-                        .minus(
-                                1,
-                                ChronoUnit.DAYS
-                        )
-                        .truncatedTo(
-                                ChronoUnit.MICROS
-                        );
+        Instant validFrom = Instant.now().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MICROS);
 
-        Instant validUntil =
-                Instant.now()
-                        .plus(
-                                5,
-                                ChronoUnit.DAYS
-                        )
-                        .truncatedTo(
-                                ChronoUnit.MICROS
-                        );
+        Instant validUntil = Instant.now().plus(5, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MICROS);
 
         createAssignment(
                 tenant,
@@ -270,8 +165,7 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                 AuthorizationScopeType.TENANT,
                 null,
                 validFrom,
-                validUntil
-        );
+                validUntil);
 
         assertThrows(
                 DuplicateResourceException.class,
@@ -284,9 +178,7 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                                 AuthorizationScopeType.TENANT,
                                 null,
                                 Instant.now(),
-                                null
-                        )
-        );
+                                null));
 
         AuthorizationUserRoleAssignmentResponse sequential =
                 createAssignment(
@@ -297,63 +189,27 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                         AuthorizationScopeType.TENANT,
                         null,
                         validUntil,
-                        null
-                );
+                        null);
 
-        assertEquals(
-                validUntil,
-                sequential.validFrom()
-        );
+        assertEquals(validUntil, sequential.validFrom());
     }
 
     @Test
     void directReportsScopeRequiresUsersOwnAssignment() {
-        Tenant tenant =
-                createTenant("role-scope-reports");
+        Tenant tenant = createTenant("role-scope-reports");
 
-        AppUser administrator =
-                createUser(
-                        tenant,
-                        "Reports Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+        AppUser administrator = createUser(tenant, "Reports Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser manager =
-                createUser(
-                        tenant,
-                        "Reports Manager",
-                        UserRole.TENANT_MANAGER
-                );
+        AppUser manager = createUser(tenant, "Reports Manager", UserRole.TENANT_MANAGER);
 
-        AppUser otherManager =
-                createUser(
-                        tenant,
-                        "Other Manager",
-                        UserRole.TENANT_MANAGER
-                );
+        AppUser otherManager = createUser(tenant, "Other Manager", UserRole.TENANT_MANAGER);
 
         AuthorizationRoleResponse managerRole =
-                initializeAndGetRole(
-                        tenant,
-                        SystemRoleCodes.MANAGER
-                );
+                initializeAndGetRole(tenant, SystemRoleCodes.MANAGER);
 
-        OrganizationalUnit unit =
-                createUnit(
-                        tenant,
-                        "Operations",
-                        "OPERATIONS"
-                );
+        OrganizationalUnit unit = createUnit(tenant, "Operations", "OPERATIONS");
 
-        Instant validFrom =
-                Instant.now()
-                        .minus(
-                                1,
-                                ChronoUnit.DAYS
-                        )
-                        .truncatedTo(
-                                ChronoUnit.MICROS
-                        );
+        Instant validFrom = Instant.now().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MICROS);
 
         UUID managerOrganizationAssignmentId =
                 organizationAssignmentService
@@ -367,9 +223,7 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                                         "Operations Manager",
                                         true,
                                         validFrom,
-                                        null
-                                )
-                        )
+                                        null))
                         .id();
 
         UUID otherOrganizationAssignmentId =
@@ -384,13 +238,10 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                                         "Other Manager",
                                         true,
                                         validFrom,
-                                        null
-                                )
-                        )
+                                        null))
                         .id();
 
-        AuthorizationUserRoleAssignmentResponse
-                directReportsAssignment =
+        AuthorizationUserRoleAssignmentResponse directReportsAssignment =
                 createAssignment(
                         tenant,
                         administrator,
@@ -399,13 +250,9 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                         AuthorizationScopeType.DIRECT_REPORTS,
                         managerOrganizationAssignmentId,
                         validFrom,
-                        null
-                );
+                        null);
 
-        assertEquals(
-                managerOrganizationAssignmentId,
-                directReportsAssignment.scopeTargetId()
-        );
+        assertEquals(managerOrganizationAssignmentId, directReportsAssignment.scopeTargetId());
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -418,78 +265,37 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                                 AuthorizationScopeType.DIRECT_REPORTS,
                                 otherOrganizationAssignmentId,
                                 validFrom,
-                                null
-                        )
-        );
+                                null));
     }
 
     @Test
     void rejectsCrossTenantUsersRolesAndTargets() {
-        Tenant firstTenant =
-                createTenant("role-scope-first");
+        Tenant firstTenant = createTenant("role-scope-first");
 
-        Tenant secondTenant =
-                createTenant("role-scope-second");
+        Tenant secondTenant = createTenant("role-scope-second");
 
         AppUser firstAdministrator =
-                createUser(
-                        firstTenant,
-                        "First Scope Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+                createUser(firstTenant, "First Scope Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser firstMember =
-                createUser(
-                        firstTenant,
-                        "First Scope Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser firstMember = createUser(firstTenant, "First Scope Member", UserRole.TENANT_USER);
 
         AppUser secondAdministrator =
-                createUser(
-                        secondTenant,
-                        "Second Scope Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+                createUser(secondTenant, "Second Scope Administrator", UserRole.TENANT_ADMIN);
 
         AppUser secondMember =
-                createUser(
-                        secondTenant,
-                        "Second Scope Member",
-                        UserRole.TENANT_USER
-                );
+                createUser(secondTenant, "Second Scope Member", UserRole.TENANT_USER);
 
         AuthorizationRoleResponse firstRole =
-                initializeAndGetRole(
-                        firstTenant,
-                        SystemRoleCodes.MEMBER
-                );
+                initializeAndGetRole(firstTenant, SystemRoleCodes.MEMBER);
 
         AuthorizationRoleResponse secondRole =
-                initializeAndGetRole(
-                        secondTenant,
-                        SystemRoleCodes.MEMBER
-                );
+                initializeAndGetRole(secondTenant, SystemRoleCodes.MEMBER);
 
-        OrganizationalUnit secondUnit =
-                createUnit(
-                        secondTenant,
-                        "Second Unit",
-                        "SECOND-UNIT"
-                );
+        OrganizationalUnit secondUnit = createUnit(secondTenant, "Second Unit", "SECOND-UNIT");
 
-        Project secondProject =
-                createProject(
-                        secondTenant,
-                        secondAdministrator,
-                        "Second Project"
-                );
+        Project secondProject = createProject(secondTenant, secondAdministrator, "Second Project");
 
-        Instant validFrom =
-                Instant.now()
-                        .truncatedTo(
-                                ChronoUnit.MICROS
-                        );
+        Instant validFrom = Instant.now().truncatedTo(ChronoUnit.MICROS);
 
         assertThrows(
                 ResourceNotFoundException.class,
@@ -502,9 +308,7 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                                 AuthorizationScopeType.TENANT,
                                 null,
                                 validFrom,
-                                null
-                        )
-        );
+                                null));
 
         assertThrows(
                 ResourceNotFoundException.class,
@@ -517,9 +321,7 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                                 AuthorizationScopeType.TENANT,
                                 null,
                                 validFrom,
-                                null
-                        )
-        );
+                                null));
 
         assertThrows(
                 ResourceNotFoundException.class,
@@ -529,13 +331,10 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                                 firstAdministrator,
                                 firstMember,
                                 firstRole,
-                                AuthorizationScopeType
-                                        .ORGANIZATIONAL_UNIT,
+                                AuthorizationScopeType.ORGANIZATIONAL_UNIT,
                                 secondUnit.getId(),
                                 validFrom,
-                                null
-                        )
-        );
+                                null));
 
         assertThrows(
                 ResourceNotFoundException.class,
@@ -548,45 +347,21 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                                 AuthorizationScopeType.PROJECT,
                                 secondProject.getId(),
                                 validFrom,
-                                null
-                        )
-        );
+                                null));
     }
 
     @Test
     void effectiveQueryAndDeactivationRespectAssignmentStatus() {
-        Tenant tenant =
-                createTenant("role-scope-effective");
+        Tenant tenant = createTenant("role-scope-effective");
 
         AppUser administrator =
-                createUser(
-                        tenant,
-                        "Effective Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+                createUser(tenant, "Effective Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Effective Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Effective Member", UserRole.TENANT_USER);
 
-        AuthorizationRoleResponse memberRole =
-                initializeAndGetRole(
-                        tenant,
-                        SystemRoleCodes.MEMBER
-                );
+        AuthorizationRoleResponse memberRole = initializeAndGetRole(tenant, SystemRoleCodes.MEMBER);
 
-        Instant validFrom =
-                Instant.now()
-                        .minus(
-                                1,
-                                ChronoUnit.DAYS
-                        )
-                        .truncatedTo(
-                                ChronoUnit.MICROS
-                        );
+        Instant validFrom = Instant.now().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MICROS);
 
         AuthorizationUserRoleAssignmentResponse assignment =
                 createAssignment(
@@ -597,75 +372,37 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
                         AuthorizationScopeType.SELF,
                         null,
                         validFrom,
-                        null
-                );
+                        null);
 
-        List<AuthorizationUserRoleAssignmentResponse>
-                effectiveBefore =
-                assignmentService
-                        .getEffectiveUserAssignments(
-                                tenant.getId(),
-                                member.getId(),
-                                Instant.now()
-                        );
+        List<AuthorizationUserRoleAssignmentResponse> effectiveBefore =
+                assignmentService.getEffectiveUserAssignments(
+                        tenant.getId(), member.getId(), Instant.now());
 
-        assertEquals(
-                1,
-                effectiveBefore.size()
-        );
+        assertEquals(1, effectiveBefore.size());
 
         AuthorizationUserRoleAssignmentResponse deactivated =
-                assignmentService
-                        .deactivateAssignment(
-                                tenant.getId(),
-                                assignment.id()
-                        );
+                assignmentService.deactivateAssignment(tenant.getId(), assignment.id());
 
-        assertEquals(
-                AuthorizationUserRoleAssignmentStatus.INACTIVE,
-                deactivated.status()
-        );
+        assertEquals(AuthorizationUserRoleAssignmentStatus.INACTIVE, deactivated.status());
 
-        assertNotNull(
-                deactivated.validUntil()
-        );
+        assertNotNull(deactivated.validUntil());
 
-        List<AuthorizationUserRoleAssignmentResponse>
-                effectiveAfter =
-                assignmentService
-                        .getEffectiveUserAssignments(
-                                tenant.getId(),
-                                member.getId(),
-                                Instant.now()
-                        );
+        List<AuthorizationUserRoleAssignmentResponse> effectiveAfter =
+                assignmentService.getEffectiveUserAssignments(
+                        tenant.getId(), member.getId(), Instant.now());
 
-        assertTrue(
-                effectiveAfter.isEmpty()
-        );
+        assertTrue(effectiveAfter.isEmpty());
 
-        List<AuthorizationUserRoleAssignmentResponse>
-                allAssignments =
-                assignmentService
-                        .getUserAssignments(
-                                tenant.getId(),
-                                member.getId()
-                        );
+        List<AuthorizationUserRoleAssignmentResponse> allAssignments =
+                assignmentService.getUserAssignments(tenant.getId(), member.getId());
 
-        assertEquals(
-                1,
-                allAssignments.size()
-        );
+        assertEquals(1, allAssignments.size());
 
         assertFalse(
-                allAssignments
-                        .getFirst()
-                        .status()
-                        == AuthorizationUserRoleAssignmentStatus.ACTIVE
-        );
+                allAssignments.getFirst().status() == AuthorizationUserRoleAssignmentStatus.ACTIVE);
     }
 
-    private AuthorizationUserRoleAssignmentResponse
-    createAssignment(
+    private AuthorizationUserRoleAssignmentResponse createAssignment(
             Tenant tenant,
             AppUser createdBy,
             AppUser assignedUser,
@@ -673,107 +410,60 @@ class AuthorizationUserRoleAssignmentIntegrationTest {
             AuthorizationScopeType scopeType,
             UUID scopeTargetId,
             Instant validFrom,
-            Instant validUntil
-    ) {
-        return assignmentService
-                .createAssignment(
-                        tenant.getId(),
-                        createdBy.getId(),
-                        new AuthorizationUserRoleAssignmentCreateRequest(
-                                assignedUser.getId(),
-                                role.id(),
-                                scopeType,
-                                scopeTargetId,
-                                validFrom,
-                                validUntil
-                        )
-                );
+            Instant validUntil) {
+        return assignmentService.createAssignment(
+                tenant.getId(),
+                createdBy.getId(),
+                new AuthorizationUserRoleAssignmentCreateRequest(
+                        assignedUser.getId(),
+                        role.id(),
+                        scopeType,
+                        scopeTargetId,
+                        validFrom,
+                        validUntil));
     }
 
-    private AuthorizationRoleResponse initializeAndGetRole(
-            Tenant tenant,
-            String roleCode
-    ) {
-        authorizationRoleService
-                .initializeDefaultRoles(
-                        tenant.getId()
-                );
+    private AuthorizationRoleResponse initializeAndGetRole(Tenant tenant, String roleCode) {
+        authorizationRoleService.initializeDefaultRoles(tenant.getId());
 
-        return authorizationRoleService
-                .getRoleByCode(
-                        tenant.getId(),
-                        roleCode
-                );
+        return authorizationRoleService.getRoleByCode(tenant.getId(), roleCode);
     }
 
-    private OrganizationalUnit createUnit(
-            Tenant tenant,
-            String name,
-            String code
-    ) {
-        return organizationHierarchyService
-                .createUnit(
-                        tenant.getId(),
-                        null,
-                        name,
-                        code,
-                        OrganizationalUnitType.DEPARTMENT
-                );
+    private OrganizationalUnit createUnit(Tenant tenant, String name, String code) {
+        return organizationHierarchyService.createUnit(
+                tenant.getId(), null, name, code, OrganizationalUnitType.DEPARTMENT);
     }
 
-    private Project createProject(
-            Tenant tenant,
-            AppUser createdBy,
-            String name
-    ) {
-        Project project = new Project(
-                tenant,
-                createdBy,
-                name,
-                "Authorization scope test project"
-        );
+    private Project createProject(Tenant tenant, AppUser createdBy, String name) {
+        Project project = new Project(tenant, createdBy, name, "Authorization scope test project");
 
-        return projectRepository
-                .saveAndFlush(project);
+        return projectRepository.saveAndFlush(project);
     }
 
-    private AppUser createUser(
-            Tenant tenant,
-            String fullName,
-            UserRole role
-    ) {
-        AppUser user = new AppUser(
-                tenant,
-                fullName,
-                role.name()
-                        .toLowerCase()
-                        .replace('_', '.')
-                        + "."
-                        + uniqueSuffix()
-                        + "@example.test",
-                "test-password-hash",
-                role
-        );
+    private AppUser createUser(Tenant tenant, String fullName, UserRole role) {
+        AppUser user =
+                new AppUser(
+                        tenant,
+                        fullName,
+                        role.name().toLowerCase().replace('_', '.')
+                                + "."
+                                + uniqueSuffix()
+                                + "@example.test",
+                        "test-password-hash",
+                        role);
 
-        return appUserRepository
-                .saveAndFlush(user);
+        return appUserRepository.saveAndFlush(user);
     }
 
     private Tenant createTenant(String prefix) {
         String suffix = uniqueSuffix();
 
-        Tenant tenant = new Tenant(
-                prefix + " Tenant",
-                prefix + "-" + suffix
-        );
+        Tenant tenant = new Tenant(prefix + " Tenant", prefix + "-" + suffix);
 
-        return tenantRepository
-                .saveAndFlush(tenant);
+        return tenantRepository.saveAndFlush(tenant);
     }
 
     private String uniqueSuffix() {
-        return UUID.randomUUID()
-                .toString()
-                .substring(0, 8);
+        return UUID.randomUUID().toString().substring(0, 8);
     }
 }
