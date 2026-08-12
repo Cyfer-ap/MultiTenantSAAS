@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.ProjectStatus;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -15,6 +14,4 @@ public record ProjectResponse(
         String createdByUserName,
         String createdByUserEmail,
         Instant createdAt,
-        Instant updatedAt
-) {
-}
+        Instant updatedAt) {}

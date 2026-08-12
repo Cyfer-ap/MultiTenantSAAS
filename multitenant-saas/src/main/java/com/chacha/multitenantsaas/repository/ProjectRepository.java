@@ -2,29 +2,23 @@ package com.chacha.multitenantsaas.repository;
 
 import com.chacha.multitenantsaas.entity.Project;
 import com.chacha.multitenantsaas.entity.ProjectStatus;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
-public interface ProjectRepository
-        extends JpaRepository<Project, UUID> {
+    Optional<Project> findByTenant_IdAndId(UUID tenantId, UUID projectId);
 
-    Optional<Project> findByTenant_IdAndId(
-            UUID tenantId,
-            UUID projectId
-    );
+    List<Project> findAllByTenant_IdOrderByNameAsc(UUID tenantId);
 
-    List<Project> findAllByTenant_IdOrderByNameAsc(
-            UUID tenantId
-    );
-
-    @Query("""
+    @Query(
+            """
             SELECT project
             FROM Project project
             WHERE project.tenant.id = :tenantId
@@ -41,13 +35,9 @@ public interface ProjectRepository
             @Param("tenantId") UUID tenantId,
             @Param("status") ProjectStatus status,
             @Param("search") String search,
-            Pageable pageable
-    );
+            Pageable pageable);
 
     long countByTenant_Id(UUID tenantId);
 
-    long countByTenant_IdAndStatus(
-            UUID tenantId,
-            ProjectStatus status
-    );
+    long countByTenant_IdAndStatus(UUID tenantId, ProjectStatus status);
 }

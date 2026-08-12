@@ -15,7 +15,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -23,33 +22,22 @@ import java.util.UUID;
 @Table(
         name = "authorization_permissions",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_authorization_permission_catalog_code",
-                        columnNames = {
-                                "catalog_key",
-                                "code"
-                        }
-                )
+            @UniqueConstraint(
+                    name = "uk_authorization_permission_catalog_code",
+                    columnNames = {"catalog_key", "code"})
         },
         indexes = {
-                @Index(
-                        name = "idx_authorization_permission_source_status",
-                        columnList = "source,status"
-                ),
-                @Index(
-                        name = "idx_authorization_permission_tenant_status",
-                        columnList = "tenant_id,status"
-                ),
-                @Index(
-                        name = "idx_authorization_permission_category",
-                        columnList = "category"
-                )
-        }
-)
+            @Index(
+                    name = "idx_authorization_permission_source_status",
+                    columnList = "source,status"),
+            @Index(
+                    name = "idx_authorization_permission_tenant_status",
+                    columnList = "tenant_id,status"),
+            @Index(name = "idx_authorization_permission_category", columnList = "category")
+        })
 public class AuthorizationPermission {
 
-    public static final String PLATFORM_CATALOG_KEY =
-            "PLATFORM";
+    public static final String PLATFORM_CATALOG_KEY = "PLATFORM";
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -59,71 +47,39 @@ public class AuthorizationPermission {
     @JoinColumn(name = "tenant_id")
     private Tenant tenant;
 
-    @Column(
-            name = "catalog_key",
-            nullable = false,
-            length = 64,
-            updatable = false
-    )
+    @Column(name = "catalog_key", nullable = false, length = 64, updatable = false)
     private String catalogKey;
 
-    @Column(
-            nullable = false,
-            length = 120,
-            updatable = false
-    )
+    @Column(nullable = false, length = 120, updatable = false)
     private String code;
 
-    @Column(
-            nullable = false,
-            length = 150
-    )
+    @Column(nullable = false, length = 150)
     private String name;
 
     @Column(length = 500)
     private String description;
 
-    @Column(
-            nullable = false,
-            length = 60
-    )
+    @Column(nullable = false, length = 60)
     private String category;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            nullable = false,
-            length = 30,
-            updatable = false
-    )
+    @Column(nullable = false, length = 30, updatable = false)
     private AuthorizationPermissionSource source;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            nullable = false,
-            length = 30
-    )
-    private AuthorizationPermissionStatus status =
-            AuthorizationPermissionStatus.ACTIVE;
+    @Column(nullable = false, length = 30)
+    private AuthorizationPermissionStatus status = AuthorizationPermissionStatus.ACTIVE;
 
-    @Column(
-            nullable = false,
-            updatable = false
-    )
+    @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(nullable = false)
     private Instant updatedAt;
 
-    public AuthorizationPermission() {
-    }
+    public AuthorizationPermission() {}
 
     public AuthorizationPermission(
-            Tenant tenant,
-            String code,
-            String name,
-            String description,
-            String category
-    ) {
+            Tenant tenant, String code, String name, String description, String category) {
         this.tenant = tenant;
         this.code = code;
         this.name = name;
@@ -133,8 +89,7 @@ public class AuthorizationPermission {
                 tenant == null
                         ? AuthorizationPermissionSource.PLATFORM
                         : AuthorizationPermissionSource.TENANT;
-        this.status =
-                AuthorizationPermissionStatus.ACTIVE;
+        this.status = AuthorizationPermissionStatus.ACTIVE;
 
         synchronizeCatalogIdentity();
     }
@@ -149,8 +104,7 @@ public class AuthorizationPermission {
         this.updatedAt = now;
 
         if (this.status == null) {
-            this.status =
-                    AuthorizationPermissionStatus.ACTIVE;
+            this.status = AuthorizationPermissionStatus.ACTIVE;
         }
     }
 
@@ -161,46 +115,34 @@ public class AuthorizationPermission {
     }
 
     private void synchronizeCatalogIdentity() {
-        if (source
-                == AuthorizationPermissionSource.PLATFORM) {
+        if (source == AuthorizationPermissionSource.PLATFORM) {
             this.tenant = null;
             this.catalogKey = PLATFORM_CATALOG_KEY;
             return;
         }
 
-        if (source
-                == AuthorizationPermissionSource.TENANT) {
-            if (tenant == null
-                    || tenant.getId() == null) {
+        if (source == AuthorizationPermissionSource.TENANT) {
+            if (tenant == null || tenant.getId() == null) {
                 throw new IllegalStateException(
-                        "Tenant permission requires "
-                                + "a persisted tenant."
-                );
+                        "Tenant permission requires " + "a persisted tenant.");
             }
 
-            this.catalogKey =
-                    tenant.getId().toString();
+            this.catalogKey = tenant.getId().toString();
 
             return;
         }
 
         if (tenant == null) {
-            this.source =
-                    AuthorizationPermissionSource.PLATFORM;
-            this.catalogKey =
-                    PLATFORM_CATALOG_KEY;
+            this.source = AuthorizationPermissionSource.PLATFORM;
+            this.catalogKey = PLATFORM_CATALOG_KEY;
         } else {
             if (tenant.getId() == null) {
                 throw new IllegalStateException(
-                        "Tenant permission requires "
-                                + "a persisted tenant."
-                );
+                        "Tenant permission requires " + "a persisted tenant.");
             }
 
-            this.source =
-                    AuthorizationPermissionSource.TENANT;
-            this.catalogKey =
-                    tenant.getId().toString();
+            this.source = AuthorizationPermissionSource.TENANT;
+            this.catalogKey = tenant.getId().toString();
         }
     }
 
@@ -264,9 +206,7 @@ public class AuthorizationPermission {
         this.category = category;
     }
 
-    public void setStatus(
-            AuthorizationPermissionStatus status
-    ) {
+    public void setStatus(AuthorizationPermissionStatus status) {
         this.status = status;
     }
 }

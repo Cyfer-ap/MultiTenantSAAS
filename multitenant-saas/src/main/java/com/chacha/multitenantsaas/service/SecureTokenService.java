@@ -1,11 +1,10 @@
 package com.chacha.multitenantsaas.service;
 
-import org.springframework.stereotype.Service;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
+import org.springframework.stereotype.Service;
 
 @Service
 public class SecureTokenService {
@@ -16,18 +15,14 @@ public class SecureTokenService {
         byte[] tokenBytes = new byte[64];
         secureRandom.nextBytes(tokenBytes);
 
-        return Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(tokenBytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
     }
 
     public String hashToken(String rawToken) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
-            byte[] hashedBytes = digest.digest(
-                    rawToken.getBytes(StandardCharsets.UTF_8)
-            );
+            byte[] hashedBytes = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
 
             StringBuilder result = new StringBuilder();
 
@@ -38,10 +33,7 @@ public class SecureTokenService {
             return result.toString();
 
         } catch (Exception exception) {
-            throw new IllegalStateException(
-                    "Could not hash secure token",
-                    exception
-            );
+            throw new IllegalStateException("Could not hash secure token", exception);
         }
     }
 }

@@ -2,7 +2,6 @@ package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.ProjectTaskPriority;
 import com.chacha.multitenantsaas.entity.ProjectTaskStatus;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -23,6 +22,4 @@ public record ProjectTaskResponse(
         Instant dueAt,
         Instant completedAt,
         Instant createdAt,
-        Instant updatedAt
-) {
-}
+        Instant updatedAt) {}

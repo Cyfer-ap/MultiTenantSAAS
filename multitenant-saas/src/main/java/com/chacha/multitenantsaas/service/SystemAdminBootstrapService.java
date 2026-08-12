@@ -24,8 +24,7 @@ public class SystemAdminBootstrapService {
             @Value("${app.system-admin.bootstrap.enabled:false}") boolean bootstrapEnabled,
             @Value("${app.system-admin.bootstrap.full-name:}") String fullName,
             @Value("${app.system-admin.bootstrap.email:}") String email,
-            @Value("${app.system-admin.bootstrap.password:}") String password
-    ) {
+            @Value("${app.system-admin.bootstrap.password:}") String password) {
         this.systemAdminRepository = systemAdminRepository;
         this.passwordEncoder = passwordEncoder;
         this.bootstrapEnabled = bootstrapEnabled;
@@ -54,11 +53,11 @@ public class SystemAdminBootstrapService {
             return;
         }
 
-        SystemAdmin systemAdmin = new SystemAdmin(
-                fullName == null || fullName.isBlank() ? "System Admin" : fullName.trim(),
-                normalizedEmail,
-                passwordEncoder.encode(password)
-        );
+        SystemAdmin systemAdmin =
+                new SystemAdmin(
+                        fullName == null || fullName.isBlank() ? "System Admin" : fullName.trim(),
+                        normalizedEmail,
+                        passwordEncoder.encode(password));
 
         systemAdminRepository.save(systemAdmin);
     }

@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.entity;
 
 import jakarta.persistence.*;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,14 +8,13 @@ import java.util.UUID;
 @Table(
         name = "audit_logs",
         indexes = {
-                @Index(name = "idx_audit_tenant", columnList = "tenant_id"),
-                @Index(name = "idx_audit_actor_user", columnList = "actor_user_id"),
-                @Index(name = "idx_audit_actor_system_admin", columnList = "actor_system_admin_id"),
-                @Index(name = "idx_audit_target_user", columnList = "target_user_id"),
-                @Index(name = "idx_audit_action", columnList = "action"),
-                @Index(name = "idx_audit_created_at", columnList = "created_at")
-        }
-)
+            @Index(name = "idx_audit_tenant", columnList = "tenant_id"),
+            @Index(name = "idx_audit_actor_user", columnList = "actor_user_id"),
+            @Index(name = "idx_audit_actor_system_admin", columnList = "actor_system_admin_id"),
+            @Index(name = "idx_audit_target_user", columnList = "target_user_id"),
+            @Index(name = "idx_audit_action", columnList = "action"),
+            @Index(name = "idx_audit_created_at", columnList = "created_at")
+        })
 public class AuditLog {
 
     @Id
@@ -56,8 +54,7 @@ public class AuditLog {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-    public AuditLog() {
-    }
+    public AuditLog() {}
 
     public AuditLog(
             Tenant tenant,
@@ -65,8 +62,7 @@ public class AuditLog {
             AppUser targetUser,
             AuditAction action,
             boolean success,
-            String message
-    ) {
+            String message) {
         this.tenant = tenant;
         this.actorType = actorUser == null ? AuditActorType.SYSTEM : AuditActorType.TENANT_USER;
         this.actorUser = actorUser;
@@ -82,10 +78,10 @@ public class AuditLog {
             AppUser targetUser,
             AuditAction action,
             boolean success,
-            String message
-    ) {
+            String message) {
         this.tenant = tenant;
-        this.actorType = actorSystemAdmin == null ? AuditActorType.SYSTEM : AuditActorType.SYSTEM_ADMIN;
+        this.actorType =
+                actorSystemAdmin == null ? AuditActorType.SYSTEM : AuditActorType.SYSTEM_ADMIN;
         this.actorSystemAdmin = actorSystemAdmin;
         this.targetUser = targetUser;
         this.action = action;

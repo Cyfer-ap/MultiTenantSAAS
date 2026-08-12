@@ -15,13 +15,11 @@ public class SystemAdminGuardService {
     }
 
     public void ensureCanChangeStatus(
-            SystemAdmin actorSystemAdmin,
-            SystemAdmin targetSystemAdmin,
-            UserStatus newStatus
-    ) {
+            SystemAdmin actorSystemAdmin, SystemAdmin targetSystemAdmin, UserStatus newStatus) {
         if (isSameSystemAdmin(actorSystemAdmin, targetSystemAdmin)
                 && newStatus != UserStatus.ACTIVE) {
-            throw new IllegalArgumentException("You cannot deactivate or suspend your own system admin account");
+            throw new IllegalArgumentException(
+                    "You cannot deactivate or suspend your own system admin account");
         }
 
         if (isDisablingActiveSystemAdmin(targetSystemAdmin, newStatus)) {
@@ -29,19 +27,13 @@ public class SystemAdminGuardService {
         }
     }
 
-    private boolean isSameSystemAdmin(
-            SystemAdmin actorSystemAdmin,
-            SystemAdmin targetSystemAdmin
-    ) {
+    private boolean isSameSystemAdmin(SystemAdmin actorSystemAdmin, SystemAdmin targetSystemAdmin) {
         return actorSystemAdmin.getId().equals(targetSystemAdmin.getId());
     }
 
     private boolean isDisablingActiveSystemAdmin(
-            SystemAdmin targetSystemAdmin,
-            UserStatus newStatus
-    ) {
-        return targetSystemAdmin.getStatus() == UserStatus.ACTIVE
-                && newStatus != UserStatus.ACTIVE;
+            SystemAdmin targetSystemAdmin, UserStatus newStatus) {
+        return targetSystemAdmin.getStatus() == UserStatus.ACTIVE && newStatus != UserStatus.ACTIVE;
     }
 
     private void ensureAnotherActiveSystemAdminExists() {

@@ -1,21 +1,20 @@
 package com.chacha.multitenantsaas.controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.chacha.multitenantsaas.common.ApiResponse;
 import com.chacha.multitenantsaas.dto.ForgotPasswordRequest;
 import com.chacha.multitenantsaas.dto.ForgotPasswordResponse;
 import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.service.PasswordResetService;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
-
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class PasswordResetControllerSecurityTest {
 
@@ -29,81 +28,49 @@ class PasswordResetControllerSecurityTest {
     @Test
     void missingAccountReturnsGenericSuccess() {
         PasswordResetService service = mock(PasswordResetService.class);
-        PasswordResetController controller =
-                new PasswordResetController(service, false);
+        PasswordResetController controller = new PasswordResetController(service, false);
 
         when(service.forgotPassword(TENANT_ID, REQUEST))
                 .thenThrow(new ResourceNotFoundException("User not found"));
 
-        assertGenericResponse(
-                controller.forgotPassword(TENANT_ID, REQUEST),
-                null
-        );
+        assertGenericResponse(controller.forgotPassword(TENANT_ID, REQUEST), null);
     }
 
     @Test
     void inactiveAccountReturnsSameGenericSuccess() {
         PasswordResetService service = mock(PasswordResetService.class);
-        PasswordResetController controller =
-                new PasswordResetController(service, false);
+        PasswordResetController controller = new PasswordResetController(service, false);
 
         when(service.forgotPassword(TENANT_ID, REQUEST))
-                .thenThrow(
-                        new AuthenticationFailedException(
-                                "User account is not active"
-                        )
-                );
+                .thenThrow(new AuthenticationFailedException("User account is not active"));
 
-        assertGenericResponse(
-                controller.forgotPassword(TENANT_ID, REQUEST),
-                null
-        );
+        assertGenericResponse(controller.forgotPassword(TENANT_ID, REQUEST), null);
     }
 
     @Test
     void productionResponseDoesNotExposeRawResetToken() {
         PasswordResetService service = mock(PasswordResetService.class);
-        PasswordResetController controller =
-                new PasswordResetController(service, false);
+        PasswordResetController controller = new PasswordResetController(service, false);
 
         when(service.forgotPassword(TENANT_ID, REQUEST))
-                .thenReturn(
-                        new ForgotPasswordResponse(
-                                "internal message",
-                                "raw-reset-token"
-                        )
-                );
+                .thenReturn(new ForgotPasswordResponse("internal message", "raw-reset-token"));
 
-        assertGenericResponse(
-                controller.forgotPassword(TENANT_ID, REQUEST),
-                null
-        );
+        assertGenericResponse(controller.forgotPassword(TENANT_ID, REQUEST), null);
     }
 
     @Test
     void explicitDevelopmentSettingCanExposeRawResetToken() {
         PasswordResetService service = mock(PasswordResetService.class);
-        PasswordResetController controller =
-                new PasswordResetController(service, true);
+        PasswordResetController controller = new PasswordResetController(service, true);
 
         when(service.forgotPassword(TENANT_ID, REQUEST))
-                .thenReturn(
-                        new ForgotPasswordResponse(
-                                "internal message",
-                                "raw-reset-token"
-                        )
-                );
+                .thenReturn(new ForgotPasswordResponse("internal message", "raw-reset-token"));
 
-        assertGenericResponse(
-                controller.forgotPassword(TENANT_ID, REQUEST),
-                "raw-reset-token"
-        );
+        assertGenericResponse(controller.forgotPassword(TENANT_ID, REQUEST), "raw-reset-token");
     }
 
     private void assertGenericResponse(
-            ResponseEntity<ApiResponse<ForgotPasswordResponse>> response,
-            String expectedToken
-    ) {
+            ResponseEntity<ApiResponse<ForgotPasswordResponse>> response, String expectedToken) {
         ApiResponse<ForgotPasswordResponse> body = response.getBody();
 
         assertNotNull(body);
@@ -114,10 +81,7 @@ class PasswordResetControllerSecurityTest {
         if (expectedToken == null) {
             assertNull(body.data().devResetToken());
         } else {
-            assertEquals(
-                    expectedToken,
-                    body.data().devResetToken()
-            );
+            assertEquals(expectedToken, body.data().devResetToken());
         }
     }
 }

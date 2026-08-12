@@ -1,14 +1,12 @@
 package com.chacha.multitenantsaas.common;
 
-import org.springframework.data.domain.Sort;
-
 import java.util.Arrays;
 import java.util.List;
+import org.springframework.data.domain.Sort;
 
 public final class SortingUtils {
 
-    private SortingUtils() {
-    }
+    private SortingUtils() {}
 
     public static Sort.Direction getDirection(String sortDir) {
         if ("asc".equalsIgnoreCase(sortDir)) {
@@ -23,18 +21,14 @@ public final class SortingUtils {
     }
 
     public static String validateSortBy(
-            String sortBy,
-            String defaultSortBy,
-            String... allowedFields
-    ) {
+            String sortBy, String defaultSortBy, String... allowedFields) {
         String normalizedSortBy = normalizeSortBy(sortBy, defaultSortBy);
 
         List<String> allowedFieldList = Arrays.asList(allowedFields);
 
         if (!allowedFieldList.contains(normalizedSortBy)) {
             throw new IllegalArgumentException(
-                    "sortBy must be one of: " + String.join(", ", allowedFields)
-            );
+                    "sortBy must be one of: " + String.join(", ", allowedFields));
         }
 
         return normalizedSortBy;

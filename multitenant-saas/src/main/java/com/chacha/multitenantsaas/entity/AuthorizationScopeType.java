@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.entity;
 
 public enum AuthorizationScopeType {
-
     TENANT,
 
     ORGANIZATIONAL_UNIT,

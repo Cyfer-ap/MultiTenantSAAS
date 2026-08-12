@@ -4,16 +4,15 @@ import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import jakarta.persistence.LockModeType;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
 
@@ -23,7 +22,8 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
 
     Optional<AppUser> findByTenantIdAndId(UUID tenantId, UUID userId);
 
-    @Query("""
+    @Query(
+            """
             SELECT appUser
             FROM AppUser appUser
             JOIN FETCH appUser.tenant tenant
@@ -31,45 +31,40 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
               AND appUser.id = :userId
             """)
     Optional<AppUser> findSessionUserByTenantIdAndId(
-            @Param("tenantId") UUID tenantId,
-            @Param("userId") UUID userId
-    );
+            @Param("tenantId") UUID tenantId, @Param("userId") UUID userId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
+    @Query(
+            """
             SELECT appUser
             FROM AppUser appUser
             WHERE appUser.tenant.id = :tenantId
               AND appUser.id = :userId
             """)
     Optional<AppUser> findByTenantIdAndIdForUpdate(
-            @Param("tenantId") UUID tenantId,
-            @Param("userId") UUID userId
-    );
+            @Param("tenantId") UUID tenantId, @Param("userId") UUID userId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
+    @Query(
+            """
             SELECT appUser
             FROM AppUser appUser
             WHERE appUser.id = :userId
             """)
-    Optional<AppUser> findByIdForUpdate(
-            @Param("userId") UUID userId
-    );
+    Optional<AppUser> findByIdForUpdate(@Param("userId") UUID userId);
 
     Optional<AppUser> findByTenantIdAndEmail(UUID tenantId, String email);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
+    @Query(
+            """
             SELECT appUser
             FROM AppUser appUser
             WHERE appUser.tenant.id = :tenantId
               AND appUser.email = :email
             """)
     Optional<AppUser> findByTenantIdAndEmailForUpdate(
-            @Param("tenantId") UUID tenantId,
-            @Param("email") String email
-    );
+            @Param("tenantId") UUID tenantId, @Param("email") String email);
 
     boolean existsByTenantIdAndEmail(UUID tenantId, String email);
 
@@ -81,7 +76,8 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
 
     long countByTenantIdAndRoleAndStatus(UUID tenantId, UserRole role, UserStatus status);
 
-    @Query("""
+    @Query(
+            """
             SELECT appUser
             FROM AppUser appUser
             WHERE appUser.tenant.id = :tenantId
@@ -98,6 +94,5 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
             @Param("role") UserRole role,
             @Param("status") UserStatus status,
             @Param("search") String search,
-            Pageable pageable
-    );
+            Pageable pageable);
 }

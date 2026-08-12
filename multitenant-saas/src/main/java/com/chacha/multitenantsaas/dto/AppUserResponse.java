@@ -2,7 +2,6 @@ package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.entity.UserStatus;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -14,6 +13,4 @@ public record AppUserResponse(
         UserRole role,
         UserStatus status,
         Instant createdAt,
-        Instant updatedAt
-) {
-}
+        Instant updatedAt) {}

@@ -20,12 +20,9 @@ public class TenantOnboardingController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<TenantOnboardingResponse>> onboardTenant(
-            @Valid @RequestBody TenantOnboardingRequest request
-    ) {
+            @Valid @RequestBody TenantOnboardingRequest request) {
         TenantOnboardingResponse response = tenantOnboardingService.onboardTenant(request);
 
-        return ResponseEntity.ok(
-                ApiResponse.success("Tenant onboarded successfully", response)
-        );
+        return ResponseEntity.ok(ApiResponse.success("Tenant onboarded successfully", response));
     }
 }

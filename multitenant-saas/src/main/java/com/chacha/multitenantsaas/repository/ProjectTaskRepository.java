@@ -3,40 +3,30 @@ package com.chacha.multitenantsaas.repository;
 import com.chacha.multitenantsaas.entity.ProjectTask;
 import com.chacha.multitenantsaas.entity.ProjectTaskPriority;
 import com.chacha.multitenantsaas.entity.ProjectTaskStatus;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import java.time.Instant;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.UUID;
 
-public interface ProjectTaskRepository
-        extends JpaRepository<ProjectTask, UUID> {
+public interface ProjectTaskRepository extends JpaRepository<ProjectTask, UUID> {
 
-    Optional<ProjectTask>
-    findByProject_Tenant_IdAndProject_IdAndId(
-            UUID tenantId,
-            UUID projectId,
-            UUID taskId
-    );
+    Optional<ProjectTask> findByProject_Tenant_IdAndProject_IdAndId(
+            UUID tenantId, UUID projectId, UUID taskId);
 
     long countByTenant_Id(UUID tenantId);
 
-    long countByTenant_IdAndStatus(
-            UUID tenantId,
-            ProjectTaskStatus status
-    );
+    long countByTenant_IdAndStatus(UUID tenantId, ProjectTaskStatus status);
 
     long countByTenant_IdAndDueAtBeforeAndStatusNotIn(
-            UUID tenantId,
-            Instant currentTime,
-            Collection<ProjectTaskStatus> excludedStatuses
-    );
+            UUID tenantId, Instant currentTime, Collection<ProjectTaskStatus> excludedStatuses);
 
-    @Query("""
+    @Query(
+            """
             SELECT task
             FROM ProjectTask task
             WHERE task.tenant.id = :tenantId
@@ -68,6 +58,5 @@ public interface ProjectTaskRepository
             @Param("priority") ProjectTaskPriority priority,
             @Param("assigneeUserId") UUID assigneeUserId,
             @Param("search") String search,
-            Pageable pageable
-    );
+            Pageable pageable);
 }

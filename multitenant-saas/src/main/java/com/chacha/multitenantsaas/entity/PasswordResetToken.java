@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.entity;
 
 import jakarta.persistence.*;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,13 +8,12 @@ import java.util.UUID;
 @Table(
         name = "password_reset_tokens",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_password_reset_token_hash", columnNames = "token_hash")
+            @UniqueConstraint(name = "uk_password_reset_token_hash", columnNames = "token_hash")
         },
         indexes = {
-                @Index(name = "idx_password_reset_user", columnList = "user_id"),
-                @Index(name = "idx_password_reset_expires_at", columnList = "expires_at")
-        }
-)
+            @Index(name = "idx_password_reset_user", columnList = "user_id"),
+            @Index(name = "idx_password_reset_expires_at", columnList = "expires_at")
+        })
 public class PasswordResetToken {
 
     @Id
@@ -40,8 +38,7 @@ public class PasswordResetToken {
 
     private Instant usedAt;
 
-    public PasswordResetToken() {
-    }
+    public PasswordResetToken() {}
 
     public PasswordResetToken(AppUser user, String tokenHash, Instant expiresAt) {
         this.user = user;

@@ -10,13 +10,12 @@ import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.ProjectMemberRepository;
 import com.chacha.multitenantsaas.repository.ProjectRepository;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 public class ProjectMemberService {
@@ -32,8 +31,7 @@ public class ProjectMemberService {
             ProjectRepository projectRepository,
             AppUserRepository appUserRepository,
             CurrentActorService currentActorService,
-            AuditLogService auditLogService
-    ) {
+            AuditLogService auditLogService) {
         this.projectMemberRepository = projectMemberRepository;
         this.projectRepository = projectRepository;
         this.appUserRepository = appUserRepository;
@@ -43,48 +41,22 @@ public class ProjectMemberService {
 
     @Transactional
     public ProjectMemberResponse addMember(
-            UUID tenantId,
-            UUID projectId,
-            ProjectMemberAddRequest request,
-            Jwt jwt
-    ) {
-        Project project = getProjectOrThrow(
-                tenantId,
-                projectId
-        );
+            UUID tenantId, UUID projectId, ProjectMemberAddRequest request, Jwt jwt) {
+        Project project = getProjectOrThrow(tenantId, projectId);
 
         ensureProjectCanBeModified(project);
 
-        AppUser assignedBy =
-                currentActorService.getRequiredActiveActor(
-                        tenantId,
-                        jwt
-                );
+        AppUser assignedBy = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
-        AppUser user = getActiveTenantUserOrThrow(
-                tenantId,
-                request.userId()
-        );
+        AppUser user = getActiveTenantUserOrThrow(tenantId, request.userId());
 
-        if (projectMemberRepository
-                .existsByProject_IdAndUser_Id(
-                        projectId,
-                        user.getId()
-                )) {
-            throw new DuplicateResourceException(
-                    "User is already assigned to this project"
-            );
+        if (projectMemberRepository.existsByProject_IdAndUser_Id(projectId, user.getId())) {
+            throw new DuplicateResourceException("User is already assigned to this project");
         }
 
-        ProjectMember membership = new ProjectMember(
-                project,
-                user,
-                assignedBy,
-                request.role()
-        );
+        ProjectMember membership = new ProjectMember(project, user, assignedBy, request.role());
 
-        ProjectMember savedMembership =
-                projectMemberRepository.save(membership);
+        ProjectMember savedMembership = projectMemberRepository.save(membership);
 
         auditLogService.recordSuccess(
                 project.getTenant(),
@@ -96,8 +68,7 @@ public class ProjectMemberService {
                         + " as "
                         + request.role()
                         + ": "
-                        + user.getEmail()
-        );
+                        + user.getEmail());
 
         return mapToResponse(savedMembership);
     }
@@ -108,46 +79,26 @@ public class ProjectMemberService {
             UUID projectId,
             ProjectMemberRole role,
             String search,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
         getProjectOrThrow(tenantId, projectId);
 
         Page<ProjectMember> memberships =
                 projectMemberRepository.findProjectMembers(
-                        tenantId,
-                        projectId,
-                        role,
-                        normalizeSearch(search),
-                        pageable
-                );
+                        tenantId, projectId, role, normalizeSearch(search), pageable);
 
         return new PageResponse<>(
-                memberships.getContent()
-                        .stream()
-                        .map(this::mapToResponse)
-                        .toList(),
+                memberships.getContent().stream().map(this::mapToResponse).toList(),
                 memberships.getNumber(),
                 memberships.getSize(),
                 memberships.getTotalElements(),
                 memberships.getTotalPages(),
                 memberships.isFirst(),
-                memberships.isLast()
-        );
+                memberships.isLast());
     }
 
     @Transactional(readOnly = true)
-    public ProjectMemberResponse getMember(
-            UUID tenantId,
-            UUID projectId,
-            UUID userId
-    ) {
-        return mapToResponse(
-                getMembershipOrThrow(
-                        tenantId,
-                        projectId,
-                        userId
-                )
-        );
+    public ProjectMemberResponse getMember(UUID tenantId, UUID projectId, UUID userId) {
+        return mapToResponse(getMembershipOrThrow(tenantId, projectId, userId));
     }
 
     @Transactional
@@ -156,44 +107,29 @@ public class ProjectMemberService {
             UUID projectId,
             UUID userId,
             ProjectMemberRoleUpdateRequest request,
-            Jwt jwt
-    ) {
-        Project project =
-                getProjectOrThrow(tenantId, projectId);
+            Jwt jwt) {
+        Project project = getProjectOrThrow(tenantId, projectId);
 
         ensureProjectCanBeModified(project);
 
-        AppUser actor =
-                currentActorService.getRequiredActiveActor(
-                        tenantId,
-                        jwt
-                );
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
-        ProjectMember membership =
-                getMembershipOrThrow(
-                        tenantId,
-                        projectId,
-                        userId
-                );
+        ProjectMember membership = getMembershipOrThrow(tenantId, projectId, userId);
 
         if (membership.getRole() == request.role()) {
             return mapToResponse(membership);
         }
 
-        if (membership.getRole()
-                == ProjectMemberRole.PROJECT_LEAD
-                && request.role()
-                != ProjectMemberRole.PROJECT_LEAD) {
+        if (membership.getRole() == ProjectMemberRole.PROJECT_LEAD
+                && request.role() != ProjectMemberRole.PROJECT_LEAD) {
             ensureAnotherProjectLeadExists(projectId);
         }
 
-        ProjectMemberRole previousRole =
-                membership.getRole();
+        ProjectMemberRole previousRole = membership.getRole();
 
         membership.setRole(request.role());
 
-        ProjectMember updatedMembership =
-                projectMemberRepository.save(membership);
+        ProjectMember updatedMembership = projectMemberRepository.save(membership);
 
         auditLogService.recordSuccess(
                 project.getTenant(),
@@ -207,46 +143,28 @@ public class ProjectMemberService {
                         + " for project "
                         + projectId
                         + ": "
-                        + membership.getUser().getEmail()
-        );
+                        + membership.getUser().getEmail());
 
         return mapToResponse(updatedMembership);
     }
 
     @Transactional
-    public ProjectMemberResponse removeMember(
-            UUID tenantId,
-            UUID projectId,
-            UUID userId,
-            Jwt jwt
-    ) {
-        Project project =
-                getProjectOrThrow(tenantId, projectId);
+    public ProjectMemberResponse removeMember(UUID tenantId, UUID projectId, UUID userId, Jwt jwt) {
+        Project project = getProjectOrThrow(tenantId, projectId);
 
         ensureProjectCanBeModified(project);
 
-        AppUser actor =
-                currentActorService.getRequiredActiveActor(
-                        tenantId,
-                        jwt
-                );
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
-        ProjectMember membership =
-                getMembershipOrThrow(
-                        tenantId,
-                        projectId,
-                        userId
-                );
+        ProjectMember membership = getMembershipOrThrow(tenantId, projectId, userId);
 
-        if (membership.getRole()
-                == ProjectMemberRole.PROJECT_LEAD) {
+        if (membership.getRole() == ProjectMemberRole.PROJECT_LEAD) {
             ensureAnotherProjectLeadExists(projectId);
         }
 
         AppUser removedUser = membership.getUser();
 
-        ProjectMemberResponse response =
-                mapToResponse(membership);
+        ProjectMemberResponse response = mapToResponse(membership);
 
         projectMemberRepository.delete(membership);
 
@@ -255,121 +173,78 @@ public class ProjectMemberService {
                 actor,
                 removedUser,
                 AuditAction.PROJECT_MEMBER_REMOVED,
-                "User removed from project "
-                        + projectId
-                        + ": "
-                        + removedUser.getEmail()
-        );
+                "User removed from project " + projectId + ": " + removedUser.getEmail());
 
         return response;
     }
 
     @Transactional
-    public void addCreatorAsProjectLead(
-            Project project,
-            AppUser creator
-    ) {
-        if (projectMemberRepository
-                .existsByProject_IdAndUser_Id(
-                        project.getId(),
-                        creator.getId()
-                )) {
+    public void addCreatorAsProjectLead(Project project, AppUser creator) {
+        if (projectMemberRepository.existsByProject_IdAndUser_Id(
+                project.getId(), creator.getId())) {
             return;
         }
 
-        ProjectMember membership = new ProjectMember(
-                project,
-                creator,
-                creator,
-                ProjectMemberRole.PROJECT_LEAD
-        );
+        ProjectMember membership =
+                new ProjectMember(project, creator, creator, ProjectMemberRole.PROJECT_LEAD);
 
         projectMemberRepository.save(membership);
     }
 
-    private Project getProjectOrThrow(
-            UUID tenantId,
-            UUID projectId
-    ) {
+    private Project getProjectOrThrow(UUID tenantId, UUID projectId) {
         return projectRepository
-                .findByTenant_IdAndId(
-                        tenantId,
-                        projectId
-                )
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Project not found with id: "
-                                + projectId
-                                + " for tenant: "
-                                + tenantId
-                ));
+                .findByTenant_IdAndId(tenantId, projectId)
+                .orElseThrow(
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Project not found with id: "
+                                                + projectId
+                                                + " for tenant: "
+                                                + tenantId));
     }
 
-    private AppUser getActiveTenantUserOrThrow(
-            UUID tenantId,
-            UUID userId
-    ) {
-        AppUser user = appUserRepository
-                .findByTenantIdAndId(
-                        tenantId,
-                        userId
-                )
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "User not found with id: "
-                                + userId
-                                + " for tenant: "
-                                + tenantId
-                ));
+    private AppUser getActiveTenantUserOrThrow(UUID tenantId, UUID userId) {
+        AppUser user =
+                appUserRepository
+                        .findByTenantIdAndId(tenantId, userId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "User not found with id: "
+                                                        + userId
+                                                        + " for tenant: "
+                                                        + tenantId));
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new IllegalArgumentException(
-                    "Only active tenant users can be assigned to projects"
-            );
+                    "Only active tenant users can be assigned to projects");
         }
 
         return user;
     }
 
-    private ProjectMember getMembershipOrThrow(
-            UUID tenantId,
-            UUID projectId,
-            UUID userId
-    ) {
+    private ProjectMember getMembershipOrThrow(UUID tenantId, UUID projectId, UUID userId) {
         return projectMemberRepository
-                .findByProject_Tenant_IdAndProject_IdAndUser_Id(
-                        tenantId,
-                        projectId,
-                        userId
-                )
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Project membership not found for user: "
-                                + userId
-                ));
+                .findByProject_Tenant_IdAndProject_IdAndUser_Id(tenantId, projectId, userId)
+                .orElseThrow(
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Project membership not found for user: " + userId));
     }
 
-    private void ensureProjectCanBeModified(
-            Project project
-    ) {
+    private void ensureProjectCanBeModified(Project project) {
         if (project.getStatus() == ProjectStatus.ARCHIVED) {
-            throw new IllegalArgumentException(
-                    "Archived project memberships cannot be modified"
-            );
+            throw new IllegalArgumentException("Archived project memberships cannot be modified");
         }
     }
 
-    private void ensureAnotherProjectLeadExists(
-            UUID projectId
-    ) {
+    private void ensureAnotherProjectLeadExists(UUID projectId) {
         long projectLeadCount =
-                projectMemberRepository
-                        .countByProject_IdAndRole(
-                                projectId,
-                                ProjectMemberRole.PROJECT_LEAD
-                        );
+                projectMemberRepository.countByProject_IdAndRole(
+                        projectId, ProjectMemberRole.PROJECT_LEAD);
 
         if (projectLeadCount <= 1) {
-            throw new IllegalArgumentException(
-                    "Project must have at least one project lead"
-            );
+            throw new IllegalArgumentException("Project must have at least one project lead");
         }
     }
 
@@ -380,14 +255,10 @@ public class ProjectMemberService {
 
         String normalized = search.trim();
 
-        return normalized.isBlank()
-                ? null
-                : normalized;
+        return normalized.isBlank() ? null : normalized;
     }
 
-    private ProjectMemberResponse mapToResponse(
-            ProjectMember membership
-    ) {
+    private ProjectMemberResponse mapToResponse(ProjectMember membership) {
         AppUser member = membership.getUser();
         AppUser assignedBy = membership.getAssignedByUser();
 
@@ -404,7 +275,6 @@ public class ProjectMemberService {
                 assignedBy.getFullName(),
                 assignedBy.getEmail(),
                 membership.getAssignedAt(),
-                membership.getUpdatedAt()
-        );
+                membership.getUpdatedAt());
     }
 }

@@ -24,150 +24,94 @@ import com.chacha.multitenantsaas.repository.AuthorizationUserRoleAssignmentRepo
 import com.chacha.multitenantsaas.repository.OrganizationalUnitRepository;
 import com.chacha.multitenantsaas.repository.ProjectRepository;
 import com.chacha.multitenantsaas.repository.UserOrganizationAssignmentRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthorizationUserRoleAssignmentService {
 
-    private static final String TENANT_SCOPE_KEY =
-            "TENANT";
+    private static final String TENANT_SCOPE_KEY = "TENANT";
 
-    private static final String SELF_SCOPE_KEY =
-            "SELF";
+    private static final String SELF_SCOPE_KEY = "SELF";
 
     private final TenantLookupService tenantLookupService;
 
     private final AppUserRepository appUserRepository;
 
-    private final AuthorizationRoleRepository
-            authorizationRoleRepository;
+    private final AuthorizationRoleRepository authorizationRoleRepository;
 
     private final AuthorizationUserRoleAssignmentRepository
             authorizationUserRoleAssignmentRepository;
 
-    private final OrganizationalUnitRepository
-            organizationalUnitRepository;
+    private final OrganizationalUnitRepository organizationalUnitRepository;
 
-    private final UserOrganizationAssignmentRepository
-            userOrganizationAssignmentRepository;
+    private final UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     private final ProjectRepository projectRepository;
 
     public AuthorizationUserRoleAssignmentService(
             TenantLookupService tenantLookupService,
             AppUserRepository appUserRepository,
-            AuthorizationRoleRepository
-                    authorizationRoleRepository,
-            AuthorizationUserRoleAssignmentRepository
-                    authorizationUserRoleAssignmentRepository,
-            OrganizationalUnitRepository
-                    organizationalUnitRepository,
-            UserOrganizationAssignmentRepository
-                    userOrganizationAssignmentRepository,
-            ProjectRepository projectRepository
-    ) {
-        this.tenantLookupService =
-                tenantLookupService;
+            AuthorizationRoleRepository authorizationRoleRepository,
+            AuthorizationUserRoleAssignmentRepository authorizationUserRoleAssignmentRepository,
+            OrganizationalUnitRepository organizationalUnitRepository,
+            UserOrganizationAssignmentRepository userOrganizationAssignmentRepository,
+            ProjectRepository projectRepository) {
+        this.tenantLookupService = tenantLookupService;
 
-        this.appUserRepository =
-                appUserRepository;
+        this.appUserRepository = appUserRepository;
 
-        this.authorizationRoleRepository =
-                authorizationRoleRepository;
+        this.authorizationRoleRepository = authorizationRoleRepository;
 
-        this.authorizationUserRoleAssignmentRepository =
-                authorizationUserRoleAssignmentRepository;
+        this.authorizationUserRoleAssignmentRepository = authorizationUserRoleAssignmentRepository;
 
-        this.organizationalUnitRepository =
-                organizationalUnitRepository;
+        this.organizationalUnitRepository = organizationalUnitRepository;
 
-        this.userOrganizationAssignmentRepository =
-                userOrganizationAssignmentRepository;
+        this.userOrganizationAssignmentRepository = userOrganizationAssignmentRepository;
 
-        this.projectRepository =
-                projectRepository;
+        this.projectRepository = projectRepository;
     }
 
     @Transactional
-    public AuthorizationUserRoleAssignmentResponse
-    createAssignment(
+    public AuthorizationUserRoleAssignmentResponse createAssignment(
             UUID tenantId,
             UUID createdByUserId,
-            AuthorizationUserRoleAssignmentCreateRequest request
-    ) {
+            AuthorizationUserRoleAssignmentCreateRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException(
-                    "User-role assignment request "
-                            + "is required."
-            );
+            throw new IllegalArgumentException("User-role assignment request " + "is required.");
         }
 
         if (request.userId() == null) {
-            throw new IllegalArgumentException(
-                    "Assigned user id is required."
-            );
+            throw new IllegalArgumentException("Assigned user id is required.");
         }
 
         if (request.roleId() == null) {
-            throw new IllegalArgumentException(
-                    "Authorization role id is required."
-            );
+            throw new IllegalArgumentException("Authorization role id is required.");
         }
 
         if (request.scopeType() == null) {
-            throw new IllegalArgumentException(
-                    "Authorization scope type is required."
-            );
+            throw new IllegalArgumentException("Authorization scope type is required.");
         }
 
-        Tenant tenant =
-                tenantLookupService
-                        .getActiveByIdOrThrow(
-                                tenantId
-                        );
+        Tenant tenant = tenantLookupService.getActiveByIdOrThrow(tenantId);
 
-        AppUser assignedUser =
-                getRequiredActiveUser(
-                        tenantId,
-                        request.userId(),
-                        "Assigned user"
-                );
+        AppUser assignedUser = getRequiredActiveUser(tenantId, request.userId(), "Assigned user");
 
-        AppUser createdByUser =
-                getRequiredActiveUser(
-                        tenantId,
-                        createdByUserId,
-                        "Creating user"
-                );
+        AppUser createdByUser = getRequiredActiveUser(tenantId, createdByUserId, "Creating user");
 
-        AuthorizationRole role =
-                getRequiredActiveRole(
-                        tenantId,
-                        request.roleId()
-                );
+        AuthorizationRole role = getRequiredActiveRole(tenantId, request.roleId());
 
         Instant validFrom =
                 normalizeDatabaseInstant(
-                        request.validFrom() == null
-                                ? Instant.now()
-                                : request.validFrom()
-                );
+                        request.validFrom() == null ? Instant.now() : request.validFrom());
 
-        Instant validUntil =
-                normalizeDatabaseInstant(
-                        request.validUntil()
-                );
+        Instant validUntil = normalizeDatabaseInstant(request.validUntil());
 
-        validateValidityRange(
-                validFrom,
-                validUntil
-        );
+        validateValidityRange(validFrom, validUntil);
 
         String scopeKey =
                 validateScopeAndBuildKey(
@@ -176,8 +120,7 @@ public class AuthorizationUserRoleAssignmentService {
                         request.scopeType(),
                         request.scopeTargetId(),
                         validFrom,
-                        validUntil
-                );
+                        validUntil);
 
         validateNoOverlappingAssignment(
                 tenantId,
@@ -186,8 +129,7 @@ public class AuthorizationUserRoleAssignmentService {
                 request.scopeType(),
                 scopeKey,
                 validFrom,
-                validUntil
-        );
+                validUntil);
 
         AuthorizationUserRoleAssignment assignment =
                 new AuthorizationUserRoleAssignment(
@@ -199,80 +141,44 @@ public class AuthorizationUserRoleAssignmentService {
                         scopeKey,
                         validFrom,
                         validUntil,
-                        createdByUser
-                );
+                        createdByUser);
 
         AuthorizationUserRoleAssignment savedAssignment =
-                authorizationUserRoleAssignmentRepository
-                        .saveAndFlush(assignment);
+                authorizationUserRoleAssignmentRepository.saveAndFlush(assignment);
 
         return mapToResponse(savedAssignment);
     }
 
     @Transactional(readOnly = true)
-    public AuthorizationUserRoleAssignmentResponse
-    getAssignment(
-            UUID tenantId,
-            UUID assignmentId
-    ) {
-        tenantLookupService
-                .getActiveByIdOrThrow(tenantId);
+    public AuthorizationUserRoleAssignmentResponse getAssignment(UUID tenantId, UUID assignmentId) {
+        tenantLookupService.getActiveByIdOrThrow(tenantId);
 
-        return mapToResponse(
-                getAssignmentOrThrow(
-                        tenantId,
-                        assignmentId
-                )
-        );
+        return mapToResponse(getAssignmentOrThrow(tenantId, assignmentId));
     }
 
     @Transactional(readOnly = true)
-    public List<AuthorizationUserRoleAssignmentResponse>
-    getUserAssignments(
-            UUID tenantId,
-            UUID userId
-    ) {
-        tenantLookupService
-                .getActiveByIdOrThrow(tenantId);
+    public List<AuthorizationUserRoleAssignmentResponse> getUserAssignments(
+            UUID tenantId, UUID userId) {
+        tenantLookupService.getActiveByIdOrThrow(tenantId);
 
-        getUserOrThrow(
-                tenantId,
-                userId,
-                "User"
-        );
+        getUserOrThrow(tenantId, userId, "User");
 
         return authorizationUserRoleAssignmentRepository
-                .findUserAssignments(
-                        tenantId,
-                        userId
-                )
+                .findUserAssignments(tenantId, userId)
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<AuthorizationUserRoleAssignmentResponse>
-    getEffectiveUserAssignments(
-            UUID tenantId,
-            UUID userId,
-            Instant effectiveAt
-    ) {
-        tenantLookupService
-                .getActiveByIdOrThrow(tenantId);
+    public List<AuthorizationUserRoleAssignmentResponse> getEffectiveUserAssignments(
+            UUID tenantId, UUID userId, Instant effectiveAt) {
+        tenantLookupService.getActiveByIdOrThrow(tenantId);
 
-        getUserOrThrow(
-                tenantId,
-                userId,
-                "User"
-        );
+        getUserOrThrow(tenantId, userId, "User");
 
         Instant resolvedEffectiveAt =
-                normalizeDatabaseInstant(
-                        effectiveAt == null
-                                ? Instant.now()
-                                : effectiveAt
-                );
+                normalizeDatabaseInstant(effectiveAt == null ? Instant.now() : effectiveAt);
 
         return authorizationUserRoleAssignmentRepository
                 .findEffectiveAssignmentsForUser(
@@ -280,79 +186,49 @@ public class AuthorizationUserRoleAssignmentService {
                         userId,
                         AuthorizationUserRoleAssignmentStatus.ACTIVE,
                         AuthorizationRoleStatus.ACTIVE,
-                        resolvedEffectiveAt
-                )
+                        resolvedEffectiveAt)
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<AuthorizationUserRoleAssignmentResponse>
-    getRoleAssignments(
-            UUID tenantId,
-            UUID roleId
-    ) {
-        tenantLookupService
-                .getActiveByIdOrThrow(tenantId);
+    public List<AuthorizationUserRoleAssignmentResponse> getRoleAssignments(
+            UUID tenantId, UUID roleId) {
+        tenantLookupService.getActiveByIdOrThrow(tenantId);
 
-        getRoleOrThrow(
-                tenantId,
-                roleId
-        );
+        getRoleOrThrow(tenantId, roleId);
 
         return authorizationUserRoleAssignmentRepository
-                .findRoleAssignments(
-                        tenantId,
-                        roleId
-                )
+                .findRoleAssignments(tenantId, roleId)
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
     @Transactional
-    public AuthorizationUserRoleAssignmentResponse
-    deactivateAssignment(
-            UUID tenantId,
-            UUID assignmentId
-    ) {
-        tenantLookupService
-                .getActiveByIdOrThrow(tenantId);
+    public AuthorizationUserRoleAssignmentResponse deactivateAssignment(
+            UUID tenantId, UUID assignmentId) {
+        tenantLookupService.getActiveByIdOrThrow(tenantId);
 
-        AuthorizationUserRoleAssignment assignment =
-                getAssignmentOrThrow(
-                        tenantId,
-                        assignmentId
-                );
+        AuthorizationUserRoleAssignment assignment = getAssignmentOrThrow(tenantId, assignmentId);
 
-        if (assignment.getStatus()
-                == AuthorizationUserRoleAssignmentStatus.INACTIVE) {
+        if (assignment.getStatus() == AuthorizationUserRoleAssignmentStatus.INACTIVE) {
             return mapToResponse(assignment);
         }
 
-        Instant now =
-                normalizeDatabaseInstant(
-                        Instant.now()
-                );
+        Instant now = normalizeDatabaseInstant(Instant.now());
 
-        assignment.setStatus(
-                AuthorizationUserRoleAssignmentStatus.INACTIVE
-        );
+        assignment.setStatus(AuthorizationUserRoleAssignmentStatus.INACTIVE);
 
         if (!now.isBefore(assignment.getValidFrom())
-                && (
-                assignment.getValidUntil() == null
-                        || assignment
-                        .getValidUntil()
-                        .isAfter(now)
-        )) {
+                && (assignment.getValidUntil() == null
+                        || assignment.getValidUntil().isAfter(now))) {
             assignment.setValidUntil(now);
         }
 
         AuthorizationUserRoleAssignment savedAssignment =
-                authorizationUserRoleAssignmentRepository
-                        .saveAndFlush(assignment);
+                authorizationUserRoleAssignmentRepository.saveAndFlush(assignment);
 
         return mapToResponse(savedAssignment);
     }
@@ -363,40 +239,26 @@ public class AuthorizationUserRoleAssignmentService {
             AuthorizationScopeType scopeType,
             UUID scopeTargetId,
             Instant validFrom,
-            Instant validUntil
-    ) {
+            Instant validUntil) {
         return switch (scopeType) {
             case TENANT -> {
-                requireMissingScopeTarget(
-                        scopeType,
-                        scopeTargetId
-                );
+                requireMissingScopeTarget(scopeType, scopeTargetId);
 
                 yield TENANT_SCOPE_KEY;
             }
 
             case SELF -> {
-                requireMissingScopeTarget(
-                        scopeType,
-                        scopeTargetId
-                );
+                requireMissingScopeTarget(scopeType, scopeTargetId);
 
                 yield SELF_SCOPE_KEY;
             }
 
-            case ORGANIZATIONAL_UNIT,
-                 ORGANIZATIONAL_SUBTREE -> {
-                requireScopeTarget(
-                        scopeType,
-                        scopeTargetId
-                );
+            case ORGANIZATIONAL_UNIT, ORGANIZATIONAL_SUBTREE -> {
+                requireScopeTarget(scopeType, scopeTargetId);
 
                 OrganizationalUnit unit =
                         organizationalUnitRepository
-                                .findByTenant_IdAndId(
-                                        tenantId,
-                                        scopeTargetId
-                                )
+                                .findByTenant_IdAndId(tenantId, scopeTargetId)
                                 .orElseThrow(
                                         () ->
                                                 new ResourceNotFoundException(
@@ -404,68 +266,46 @@ public class AuthorizationUserRoleAssignmentService {
                                                                 + "scope unit "
                                                                 + "not found "
                                                                 + "with id: "
-                                                                + scopeTargetId
-                                                )
-                                );
+                                                                + scopeTargetId));
 
-                if (unit.getStatus()
-                        != OrganizationalUnitStatus.ACTIVE) {
+                if (unit.getStatus() != OrganizationalUnitStatus.ACTIVE) {
                     throw new IllegalArgumentException(
-                            "Organizational scope unit "
-                                    + "must be active."
-                    );
+                            "Organizational scope unit " + "must be active.");
                 }
 
                 yield scopeTargetId.toString();
             }
 
             case PROJECT -> {
-                requireScopeTarget(
-                        scopeType,
-                        scopeTargetId
-                );
+                requireScopeTarget(scopeType, scopeTargetId);
 
                 Project project =
                         projectRepository
-                                .findByTenant_IdAndId(
-                                        tenantId,
-                                        scopeTargetId
-                                )
+                                .findByTenant_IdAndId(tenantId, scopeTargetId)
                                 .orElseThrow(
                                         () ->
                                                 new ResourceNotFoundException(
                                                         "Project scope target "
                                                                 + "not found "
                                                                 + "with id: "
-                                                                + scopeTargetId
-                                                )
-                                );
+                                                                + scopeTargetId));
 
-                if (project.getStatus()
-                        == ProjectStatus.ARCHIVED) {
+                if (project.getStatus() == ProjectStatus.ARCHIVED) {
                     throw new IllegalArgumentException(
                             "Archived project cannot be "
                                     + "used as an authorization "
-                                    + "scope target."
-                    );
+                                    + "scope target.");
                 }
 
                 yield scopeTargetId.toString();
             }
 
             case DIRECT_REPORTS -> {
-                requireScopeTarget(
-                        scopeType,
-                        scopeTargetId
-                );
+                requireScopeTarget(scopeType, scopeTargetId);
 
-                UserOrganizationAssignment
-                        managerAssignment =
+                UserOrganizationAssignment managerAssignment =
                         userOrganizationAssignmentRepository
-                                .findByTenant_IdAndId(
-                                        tenantId,
-                                        scopeTargetId
-                                )
+                                .findByTenant_IdAndId(tenantId, scopeTargetId)
                                 .orElseThrow(
                                         () ->
                                                 new ResourceNotFoundException(
@@ -474,16 +314,9 @@ public class AuthorizationUserRoleAssignmentService {
                                                                 + "assignment "
                                                                 + "not found "
                                                                 + "with id: "
-                                                                + scopeTargetId
-                                                )
-                                );
+                                                                + scopeTargetId));
 
-                validateDirectReportsAnchor(
-                        assignedUser,
-                        managerAssignment,
-                        validFrom,
-                        validUntil
-                );
+                validateDirectReportsAnchor(assignedUser, managerAssignment, validFrom, validUntil);
 
                 yield scopeTargetId.toString();
             }
@@ -494,73 +327,45 @@ public class AuthorizationUserRoleAssignmentService {
             AppUser assignedUser,
             UserOrganizationAssignment managerAssignment,
             Instant validFrom,
-            Instant validUntil
-    ) {
-        if (managerAssignment.getStatus()
-                != OrganizationAssignmentStatus.ACTIVE) {
+            Instant validUntil) {
+        if (managerAssignment.getStatus() != OrganizationAssignmentStatus.ACTIVE) {
             throw new IllegalArgumentException(
-                    "Direct-reports scope requires "
-                            + "an active organizational "
-                            + "assignment."
-            );
+                    "Direct-reports scope requires " + "an active organizational " + "assignment.");
         }
 
-        if (!managerAssignment
-                .getUser()
-                .getId()
-                .equals(assignedUser.getId())) {
+        if (!managerAssignment.getUser().getId().equals(assignedUser.getId())) {
             throw new IllegalArgumentException(
                     "Direct-reports scope target must "
                             + "belong to the user receiving "
-                            + "the authorization role."
-            );
+                            + "the authorization role.");
         }
 
-        if (managerAssignment
-                .getUser()
-                .getStatus()
-                != UserStatus.ACTIVE) {
-            throw new IllegalArgumentException(
-                    "Direct-reports scope user "
-                            + "must be active."
-            );
+        if (managerAssignment.getUser().getStatus() != UserStatus.ACTIVE) {
+            throw new IllegalArgumentException("Direct-reports scope user " + "must be active.");
         }
 
-        if (managerAssignment
-                .getOrganizationalUnit()
-                .getStatus()
+        if (managerAssignment.getOrganizationalUnit().getStatus()
                 != OrganizationalUnitStatus.ACTIVE) {
             throw new IllegalArgumentException(
-                    "Direct-reports organizational unit "
-                            + "must be active."
-            );
+                    "Direct-reports organizational unit " + "must be active.");
         }
 
-        if (managerAssignment
-                .getValidFrom()
-                .isAfter(validFrom)) {
+        if (managerAssignment.getValidFrom().isAfter(validFrom)) {
             throw new IllegalArgumentException(
                     "Direct-reports scope assignment "
                             + "must begin on or before "
-                            + "the role assignment."
-            );
+                            + "the role assignment.");
         }
 
-        Instant anchorValidUntil =
-                managerAssignment.getValidUntil();
+        Instant anchorValidUntil = managerAssignment.getValidUntil();
 
         if (anchorValidUntil != null
-                && (
-                validUntil == null
-                        || anchorValidUntil
-                        .isBefore(validUntil)
-        )) {
+                && (validUntil == null || anchorValidUntil.isBefore(validUntil))) {
             throw new IllegalArgumentException(
                     "Direct-reports scope assignment "
                             + "must remain valid for the "
                             + "complete role-assignment "
-                            + "period."
-            );
+                            + "period.");
         }
     }
 
@@ -571,245 +376,140 @@ public class AuthorizationUserRoleAssignmentService {
             AuthorizationScopeType scopeType,
             String scopeKey,
             Instant validFrom,
-            Instant validUntil
-    ) {
+            Instant validUntil) {
         long overlappingAssignmentCount =
-                authorizationUserRoleAssignmentRepository
-                        .countOverlappingActiveAssignments(
-                                tenantId,
-                                userId,
-                                roleId,
-                                scopeType,
-                                scopeKey,
-                                AuthorizationUserRoleAssignmentStatus.ACTIVE,
-                                validFrom,
-                                validUntil
-                        );
+                authorizationUserRoleAssignmentRepository.countOverlappingActiveAssignments(
+                        tenantId,
+                        userId,
+                        roleId,
+                        scopeType,
+                        scopeKey,
+                        AuthorizationUserRoleAssignmentStatus.ACTIVE,
+                        validFrom,
+                        validUntil);
 
         if (overlappingAssignmentCount > 0) {
             throw new DuplicateResourceException(
                     "User already has an overlapping "
                             + "active assignment for this "
-                            + "role and authorization scope."
-            );
+                            + "role and authorization scope.");
         }
     }
 
-    private void requireScopeTarget(
-            AuthorizationScopeType scopeType,
-            UUID scopeTargetId
-    ) {
+    private void requireScopeTarget(AuthorizationScopeType scopeType, UUID scopeTargetId) {
         if (scopeTargetId == null) {
             throw new IllegalArgumentException(
-                    scopeType
-                            + " scope requires "
-                            + "a scope target id."
-            );
+                    scopeType + " scope requires " + "a scope target id.");
         }
     }
 
-    private void requireMissingScopeTarget(
-            AuthorizationScopeType scopeType,
-            UUID scopeTargetId
-    ) {
+    private void requireMissingScopeTarget(AuthorizationScopeType scopeType, UUID scopeTargetId) {
         if (scopeTargetId != null) {
             throw new IllegalArgumentException(
-                    scopeType
-                            + " scope must not contain "
-                            + "a scope target id."
-            );
+                    scopeType + " scope must not contain " + "a scope target id.");
         }
     }
 
-    private AuthorizationRole getRequiredActiveRole(
-            UUID tenantId,
-            UUID roleId
-    ) {
-        AuthorizationRole role =
-                getRoleOrThrow(
-                        tenantId,
-                        roleId
-                );
+    private AuthorizationRole getRequiredActiveRole(UUID tenantId, UUID roleId) {
+        AuthorizationRole role = getRoleOrThrow(tenantId, roleId);
 
-        if (role.getStatus()
-                != AuthorizationRoleStatus.ACTIVE) {
-            throw new IllegalArgumentException(
-                    "Authorization role must be active."
-            );
+        if (role.getStatus() != AuthorizationRoleStatus.ACTIVE) {
+            throw new IllegalArgumentException("Authorization role must be active.");
         }
 
         return role;
     }
 
-    private AuthorizationRole getRoleOrThrow(
-            UUID tenantId,
-            UUID roleId
-    ) {
+    private AuthorizationRole getRoleOrThrow(UUID tenantId, UUID roleId) {
         if (roleId == null) {
-            throw new IllegalArgumentException(
-                    "Authorization role id is required."
-            );
+            throw new IllegalArgumentException("Authorization role id is required.");
         }
 
         return authorizationRoleRepository
-                .findByTenant_IdAndId(
-                        tenantId,
-                        roleId
-                )
+                .findByTenant_IdAndId(tenantId, roleId)
                 .orElseThrow(
                         () ->
                                 new ResourceNotFoundException(
                                         "Authorization role "
                                                 + "not found "
                                                 + "with id: "
-                                                + roleId
-                                )
-                );
+                                                + roleId));
     }
 
-    private AppUser getRequiredActiveUser(
-            UUID tenantId,
-            UUID userId,
-            String description
-    ) {
-        AppUser user =
-                getUserOrThrow(
-                        tenantId,
-                        userId,
-                        description
-                );
+    private AppUser getRequiredActiveUser(UUID tenantId, UUID userId, String description) {
+        AppUser user = getUserOrThrow(tenantId, userId, description);
 
         if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new IllegalArgumentException(
-                    description + " must be active."
-            );
+            throw new IllegalArgumentException(description + " must be active.");
         }
 
         return user;
     }
 
-    private AppUser getUserOrThrow(
-            UUID tenantId,
-            UUID userId,
-            String description
-    ) {
+    private AppUser getUserOrThrow(UUID tenantId, UUID userId, String description) {
         if (userId == null) {
-            throw new IllegalArgumentException(
-                    description + " id is required."
-            );
+            throw new IllegalArgumentException(description + " id is required.");
         }
 
         return appUserRepository
-                .findByTenantIdAndId(
-                        tenantId,
-                        userId
-                )
+                .findByTenantIdAndId(tenantId, userId)
                 .orElseThrow(
                         () ->
                                 new ResourceNotFoundException(
-                                        description
-                                                + " not found "
-                                                + "with id: "
-                                                + userId
-                                )
-                );
+                                        description + " not found " + "with id: " + userId));
     }
 
-    private AuthorizationUserRoleAssignment
-    getAssignmentOrThrow(
-            UUID tenantId,
-            UUID assignmentId
-    ) {
+    private AuthorizationUserRoleAssignment getAssignmentOrThrow(UUID tenantId, UUID assignmentId) {
         if (assignmentId == null) {
-            throw new IllegalArgumentException(
-                    "User-role assignment id is required."
-            );
+            throw new IllegalArgumentException("User-role assignment id is required.");
         }
 
         return authorizationUserRoleAssignmentRepository
-                .findByTenant_IdAndId(
-                        tenantId,
-                        assignmentId
-                )
+                .findByTenant_IdAndId(tenantId, assignmentId)
                 .orElseThrow(
                         () ->
                                 new ResourceNotFoundException(
                                         "User-role assignment "
                                                 + "not found "
                                                 + "with id: "
-                                                + assignmentId
-                                )
-                );
+                                                + assignmentId));
     }
 
-    private void validateValidityRange(
-            Instant validFrom,
-            Instant validUntil
-    ) {
-        if (validUntil != null
-                && !validUntil.isAfter(validFrom)) {
+    private void validateValidityRange(Instant validFrom, Instant validUntil) {
+        if (validUntil != null && !validUntil.isAfter(validFrom)) {
             throw new IllegalArgumentException(
-                    "Role-assignment valid-until time "
-                            + "must be after valid-from time."
-            );
+                    "Role-assignment valid-until time " + "must be after valid-from time.");
         }
     }
 
-    private Instant normalizeDatabaseInstant(
-            Instant value
-    ) {
+    private Instant normalizeDatabaseInstant(Instant value) {
         if (value == null) {
             return null;
         }
 
-        return value.truncatedTo(
-                ChronoUnit.MICROS
-        );
+        return value.truncatedTo(ChronoUnit.MICROS);
     }
 
-    private AuthorizationUserRoleAssignmentResponse
-    mapToResponse(
-            AuthorizationUserRoleAssignment assignment
-    ) {
+    private AuthorizationUserRoleAssignmentResponse mapToResponse(
+            AuthorizationUserRoleAssignment assignment) {
         return new AuthorizationUserRoleAssignmentResponse(
                 assignment.getId(),
-                assignment
-                        .getTenant()
-                        .getId(),
-                assignment
-                        .getUser()
-                        .getId(),
-                assignment
-                        .getUser()
-                        .getFullName(),
-                assignment
-                        .getUser()
-                        .getEmail(),
-                assignment
-                        .getRole()
-                        .getId(),
-                assignment
-                        .getRole()
-                        .getCode(),
-                assignment
-                        .getRole()
-                        .getName(),
-                assignment
-                        .getRole()
-                        .getSource(),
+                assignment.getTenant().getId(),
+                assignment.getUser().getId(),
+                assignment.getUser().getFullName(),
+                assignment.getUser().getEmail(),
+                assignment.getRole().getId(),
+                assignment.getRole().getCode(),
+                assignment.getRole().getName(),
+                assignment.getRole().getSource(),
                 assignment.getScopeType(),
                 assignment.getScopeTargetId(),
                 assignment.getStatus(),
                 assignment.getValidFrom(),
                 assignment.getValidUntil(),
-                assignment
-                        .getCreatedByUser()
-                        .getId(),
-                assignment
-                        .getCreatedByUser()
-                        .getEmail(),
+                assignment.getCreatedByUser().getId(),
+                assignment.getCreatedByUser().getEmail(),
                 assignment.getCreatedAt(),
-                assignment.getUpdatedAt()
-        );
+                assignment.getUpdatedAt());
     }
 }
