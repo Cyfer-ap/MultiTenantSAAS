@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Maven output
+target
+
+# Local database/data
+data
+*.db
+*.mv.db
+*.trace.db
+
+# Logs
+*.log
+logs
+
+# Environment/secrets
+.env
+.env.*
+*.env
+
+# Never bake developer-local Spring configuration into an image
+src/main/resources/application-local.properties
+src/main/resources/application-local.yml
+src/main/resources/application-local.yaml
+
+# Maven wrapper is not required inside this Docker build because
+# the builder image already provides the pinned Maven version.
+.mvn
+mvnw
+mvnw.cmd
+
+# OS junk
+.DS_Store
+Thumbs.db
