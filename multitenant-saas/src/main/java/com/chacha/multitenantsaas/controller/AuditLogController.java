@@ -10,6 +10,7 @@ import com.chacha.multitenantsaas.service.AuditLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -20,26 +21,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.UUID;
-
 @RestController
-@RequestMapping(
-        "/api/tenants/{tenantId}/audit-logs"
-)
-@Tag(
-        name = "Audit Logs",
-        description =
-                "Tenant audit-log APIs protected by "
-                        + "Authorization V2"
-)
+@RequestMapping("/api/tenants/{tenantId}/audit-logs")
+@Tag(name = "Audit Logs", description = "Tenant audit-log APIs protected by " + "Authorization V2")
 @SecurityRequirement(name = "bearerAuth")
 public class AuditLogController {
 
     private final AuditLogService auditLogService;
 
-    public AuditLogController(
-            AuditLogService auditLogService
-    ) {
+    public AuditLogController(AuditLogService auditLogService) {
         this.auditLogService = auditLogService;
     }
 
@@ -49,8 +39,7 @@ public class AuditLogController {
                     "Returns the complete paginated, "
                             + "filterable, and sortable "
                             + "tenant audit feed. Requires "
-                            + "tenant-scoped audit.read."
-    )
+                            + "tenant-scoped audit.read.")
     @PreAuthorize(
             "@authorizationSecurity"
                     + ".hasTenantPermission("
@@ -58,49 +47,22 @@ public class AuditLogController {
                     + "'audit.read'"
                     + ")"
                     + " or "
-                    + "@systemSecurity.isSystemAdmin()"
-    )
+                    + "@systemSecurity.isSystemAdmin()")
     @GetMapping
-    public ResponseEntity<
-            ApiResponse<PageResponse<AuditLogResponse>>
-            >
-    getTenantAuditLogs(
+    public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getTenantAuditLogs(
             @PathVariable UUID tenantId,
-            @RequestParam(defaultValue = "0")
-            int page,
-            @RequestParam(defaultValue = "10")
-            int size,
-            @RequestParam(defaultValue = "createdAt")
-            String sortBy,
-            @RequestParam(defaultValue = "desc")
-            String sortDir,
-            @RequestParam(required = false)
-            AuditAction action,
-            @RequestParam(required = false)
-            Boolean success
-    ) {
-        Pageable pageable =
-                createPageable(
-                        page,
-                        size,
-                        sortBy,
-                        sortDir
-                );
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) AuditAction action,
+            @RequestParam(required = false) Boolean success) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDir);
 
         PageResponse<AuditLogResponse> auditLogs =
-                auditLogService.getAuditLogsByTenant(
-                        tenantId,
-                        action,
-                        success,
-                        pageable
-                );
+                auditLogService.getAuditLogsByTenant(tenantId, action, success, pageable);
 
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        "Audit logs fetched successfully",
-                        auditLogs
-                )
-        );
+        return ResponseEntity.ok(ApiResponse.success("Audit logs fetched successfully", auditLogs));
     }
 
     @Operation(
@@ -109,8 +71,7 @@ public class AuditLogController {
                     "Returns audit logs where the requested "
                             + "user is the actor or target. "
                             + "Supports tenant, SELF, and "
-                            + "DIRECT_REPORTS scopes."
-    )
+                            + "DIRECT_REPORTS scopes.")
     @PreAuthorize(
             "@authorizationSecurity"
                     + ".hasUserPermission("
@@ -119,72 +80,32 @@ public class AuditLogController {
                     + "'audit.read'"
                     + ")"
                     + " or "
-                    + "@systemSecurity.isSystemAdmin()"
-    )
+                    + "@systemSecurity.isSystemAdmin()")
     @GetMapping("/users/{userId}")
-    public ResponseEntity<
-            ApiResponse<PageResponse<AuditLogResponse>>
-            >
-    getUserAuditLogs(
+    public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getUserAuditLogs(
             @PathVariable UUID tenantId,
             @PathVariable UUID userId,
-            @RequestParam(defaultValue = "0")
-            int page,
-            @RequestParam(defaultValue = "10")
-            int size,
-            @RequestParam(defaultValue = "createdAt")
-            String sortBy,
-            @RequestParam(defaultValue = "desc")
-            String sortDir,
-            @RequestParam(required = false)
-            AuditAction action,
-            @RequestParam(required = false)
-            Boolean success
-    ) {
-        Pageable pageable =
-                createPageable(
-                        page,
-                        size,
-                        sortBy,
-                        sortDir
-                );
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) AuditAction action,
+            @RequestParam(required = false) Boolean success) {
+        Pageable pageable = createPageable(page, size, sortBy, sortDir);
 
         PageResponse<AuditLogResponse> auditLogs =
-                auditLogService
-                        .getAuditLogsByTenantAndUser(
-                                tenantId,
-                                userId,
-                                action,
-                                success,
-                                pageable
-                        );
+                auditLogService.getAuditLogsByTenantAndUser(
+                        tenantId, userId, action, success, pageable);
 
         return ResponseEntity.ok(
-                ApiResponse.success(
-                        "User audit logs fetched "
-                                + "successfully",
-                        auditLogs
-                )
-        );
+                ApiResponse.success("User audit logs fetched " + "successfully", auditLogs));
     }
 
-    private Pageable createPageable(
-            int page,
-            int size,
-            String sortBy,
-            String sortDir
-    ) {
+    private Pageable createPageable(int page, int size, String sortBy, String sortDir) {
         return PageRequest.of(
                 PaginationUtils.validatePage(page),
                 PaginationUtils.validateSize(size),
                 SortingUtils.getDirection(sortDir),
-                SortingUtils.validateSortBy(
-                        sortBy,
-                        "createdAt",
-                        "createdAt",
-                        "action",
-                        "success"
-                )
-        );
+                SortingUtils.validateSortBy(sortBy, "createdAt", "createdAt", "action", "success"));
     }
 }

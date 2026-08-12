@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -21,8 +20,7 @@ public record TenantSubscriptionEntitlementResponse(
         Instant trialEndsAt,
         Instant evaluatedAt,
         ResourceEntitlement users,
-        ResourceEntitlement projects
-) {
+        ResourceEntitlement projects) {
 
     public record ResourceEntitlement(
             long used,
@@ -31,7 +29,5 @@ public record TenantSubscriptionEntitlementResponse(
             boolean unlimited,
             boolean limitReached,
             boolean overLimit,
-            boolean creationAllowed
-    ) {
-    }
+            boolean creationAllowed) {}
 }

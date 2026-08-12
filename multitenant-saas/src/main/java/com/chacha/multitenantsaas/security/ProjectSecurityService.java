@@ -2,12 +2,11 @@ package com.chacha.multitenantsaas.security;
 
 import com.chacha.multitenantsaas.entity.*;
 import com.chacha.multitenantsaas.repository.*;
+import java.util.UUID;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
-
-import java.util.UUID;
 
 @Component("projectSecurity")
 public class ProjectSecurityService {
@@ -23,8 +22,7 @@ public class ProjectSecurityService {
             AppUserRepository appUserRepository,
             ProjectRepository projectRepository,
             ProjectMemberRepository projectMemberRepository,
-            ProjectTaskRepository projectTaskRepository
-    ) {
+            ProjectTaskRepository projectTaskRepository) {
         this.tenantRepository = tenantRepository;
         this.appUserRepository = appUserRepository;
         this.projectRepository = projectRepository;
@@ -32,10 +30,22 @@ public class ProjectSecurityService {
         this.projectTaskRepository = projectTaskRepository;
     }
 
-    public boolean canReadTasks(
-            UUID tenantId,
-            UUID projectId
-    ) {
+    public boolean canReadTasks(UUID tenantId, UUID projectId) {
+        AppUser user = getActiveUserForTenant(tenantId);
+
+        if (user == null || !projectExists(tenantId, projectId)) {
+            return false;
+        }
+
+        if (isTenantAdminOrManager(user)) {
+            return true;
+        }
+
+        return projectMemberRepository.existsByProject_Tenant_IdAndProject_IdAndUser_Id(
+                tenantId, projectId, user.getId());
+    }
+
+    public boolean canManageTasks(UUID tenantId, UUID projectId) {
         AppUser user = getActiveUserForTenant(tenantId);
 
         if (user == null || !projectExists(tenantId, projectId)) {
@@ -47,17 +57,13 @@ public class ProjectSecurityService {
         }
 
         return projectMemberRepository
-                .existsByProject_Tenant_IdAndProject_IdAndUser_Id(
-                        tenantId,
-                        projectId,
-                        user.getId()
-                );
+                .findByProject_Tenant_IdAndProject_IdAndUser_Id(tenantId, projectId, user.getId())
+                .map(ProjectMember::getRole)
+                .filter(role -> role == ProjectMemberRole.PROJECT_LEAD)
+                .isPresent();
     }
 
-    public boolean canManageTasks(
-            UUID tenantId,
-            UUID projectId
-    ) {
+    public boolean canUpdateTaskStatus(UUID tenantId, UUID projectId, UUID taskId) {
         AppUser user = getActiveUserForTenant(tenantId);
 
         if (user == null || !projectExists(tenantId, projectId)) {
@@ -68,161 +74,72 @@ public class ProjectSecurityService {
             return true;
         }
 
-        return projectMemberRepository
-                .findByProject_Tenant_IdAndProject_IdAndUser_Id(
-                        tenantId,
-                        projectId,
-                        user.getId()
-                )
-                .map(ProjectMember::getRole)
-                .filter(role ->
-                        role == ProjectMemberRole.PROJECT_LEAD
-                )
-                .isPresent();
-    }
-
-    public boolean canUpdateTaskStatus(
-            UUID tenantId,
-            UUID projectId,
-            UUID taskId
-    ) {
-        AppUser user = getActiveUserForTenant(tenantId);
-
-        if (user == null || !projectExists(tenantId, projectId)) {
-            return false;
-        }
-
-        if (isTenantAdminOrManager(user)) {
-            return true;
-        }
-
-        boolean projectLead = projectMemberRepository
-                .findByProject_Tenant_IdAndProject_IdAndUser_Id(
-                        tenantId,
-                        projectId,
-                        user.getId()
-                )
-                .map(ProjectMember::getRole)
-                .filter(role ->
-                        role == ProjectMemberRole.PROJECT_LEAD
-                )
-                .isPresent();
+        boolean projectLead =
+                projectMemberRepository
+                        .findByProject_Tenant_IdAndProject_IdAndUser_Id(
+                                tenantId, projectId, user.getId())
+                        .map(ProjectMember::getRole)
+                        .filter(role -> role == ProjectMemberRole.PROJECT_LEAD)
+                        .isPresent();
 
         if (projectLead) {
             return true;
         }
 
         return projectTaskRepository
-                .findByProject_Tenant_IdAndProject_IdAndId(
-                        tenantId,
-                        projectId,
-                        taskId
-                )
+                .findByProject_Tenant_IdAndProject_IdAndId(tenantId, projectId, taskId)
                 .map(ProjectTask::getAssigneeUser)
                 .map(AppUser::getId)
                 .filter(user.getId()::equals)
                 .isPresent();
     }
 
-    public boolean isCurrentUserProjectMember(
-            UUID tenantId,
-            UUID projectId
-    ) {
-        AppUser user =
-                getActiveUserForTenant(tenantId);
+    public boolean isCurrentUserProjectMember(UUID tenantId, UUID projectId) {
+        AppUser user = getActiveUserForTenant(tenantId);
 
-        if (user == null
-                || !projectExists(
-                tenantId,
-                projectId
-        )) {
+        if (user == null || !projectExists(tenantId, projectId)) {
             return false;
         }
 
-        return projectMemberRepository
-                .existsByProject_Tenant_IdAndProject_IdAndUser_Id(
-                        tenantId,
-                        projectId,
-                        user.getId()
-                );
+        return projectMemberRepository.existsByProject_Tenant_IdAndProject_IdAndUser_Id(
+                tenantId, projectId, user.getId());
     }
 
-    public boolean isCurrentUserProjectLead(
-            UUID tenantId,
-            UUID projectId
-    ) {
-        AppUser user =
-                getActiveUserForTenant(tenantId);
+    public boolean isCurrentUserProjectLead(UUID tenantId, UUID projectId) {
+        AppUser user = getActiveUserForTenant(tenantId);
 
-        if (user == null
-                || !projectExists(
-                tenantId,
-                projectId
-        )) {
+        if (user == null || !projectExists(tenantId, projectId)) {
             return false;
         }
 
         return projectMemberRepository
-                .findByProject_Tenant_IdAndProject_IdAndUser_Id(
-                        tenantId,
-                        projectId,
-                        user.getId()
-                )
+                .findByProject_Tenant_IdAndProject_IdAndUser_Id(tenantId, projectId, user.getId())
                 .map(ProjectMember::getRole)
-                .filter(
-                        role ->
-                                role
-                                        == ProjectMemberRole
-                                        .PROJECT_LEAD
-                )
+                .filter(role -> role == ProjectMemberRole.PROJECT_LEAD)
                 .isPresent();
     }
 
-    public boolean isCurrentUserTaskAssignee(
-            UUID tenantId,
-            UUID projectId,
-            UUID taskId
-    ) {
-        AppUser user =
-                getActiveUserForTenant(tenantId);
+    public boolean isCurrentUserTaskAssignee(UUID tenantId, UUID projectId, UUID taskId) {
+        AppUser user = getActiveUserForTenant(tenantId);
 
-        if (user == null
-                || !projectExists(
-                tenantId,
-                projectId
-        )) {
+        if (user == null || !projectExists(tenantId, projectId)) {
             return false;
         }
 
         return projectTaskRepository
-                .findByProject_Tenant_IdAndProject_IdAndId(
-                        tenantId,
-                        projectId,
-                        taskId
-                )
+                .findByProject_Tenant_IdAndProject_IdAndId(tenantId, projectId, taskId)
                 .map(ProjectTask::getAssigneeUser)
                 .map(AppUser::getId)
                 .filter(user.getId()::equals)
                 .isPresent();
     }
 
-    private boolean projectExists(
-            UUID tenantId,
-            UUID projectId
-    ) {
-        return projectRepository
-                .findByTenant_IdAndId(
-                        tenantId,
-                        projectId
-                )
-                .isPresent();
+    private boolean projectExists(UUID tenantId, UUID projectId) {
+        return projectRepository.findByTenant_IdAndId(tenantId, projectId).isPresent();
     }
 
-    private boolean isTenantAdminOrManager(
-            AppUser user
-    ) {
-        return user.getRole() == UserRole.TENANT_ADMIN
-                || user.getRole() == UserRole.TENANT_MANAGER;
+    private boolean isTenantAdminOrManager(AppUser user) {
+        return user.getRole() == UserRole.TENANT_ADMIN || user.getRole() == UserRole.TENANT_MANAGER;
     }
 
     private AppUser getActiveUserForTenant(UUID tenantId) {
@@ -232,36 +149,23 @@ public class ProjectSecurityService {
             return null;
         }
 
-        UUID tokenTenantId =
-                parseUuid(jwt.getClaimAsString("tenantId"));
+        UUID tokenTenantId = parseUuid(jwt.getClaimAsString("tenantId"));
 
-        UUID tokenUserId =
-                parseUuid(jwt.getSubject());
+        UUID tokenUserId = parseUuid(jwt.getSubject());
 
-        if (tokenTenantId == null
-                || tokenUserId == null
-                || !tenantId.equals(tokenTenantId)) {
+        if (tokenTenantId == null || tokenUserId == null || !tenantId.equals(tokenTenantId)) {
             return null;
         }
 
-        Tenant tenant = tenantRepository
-                .findById(tenantId)
-                .orElse(null);
+        Tenant tenant = tenantRepository.findById(tenantId).orElse(null);
 
-        if (tenant == null
-                || tenant.getStatus() != TenantStatus.ACTIVE) {
+        if (tenant == null || tenant.getStatus() != TenantStatus.ACTIVE) {
             return null;
         }
 
-        AppUser user = appUserRepository
-                .findByTenantIdAndId(
-                        tenantId,
-                        tokenUserId
-                )
-                .orElse(null);
+        AppUser user = appUserRepository.findByTenantIdAndId(tenantId, tokenUserId).orElse(null);
 
-        if (user == null
-                || user.getStatus() != UserStatus.ACTIVE) {
+        if (user == null || user.getStatus() != UserStatus.ACTIVE) {
             return null;
         }
 
@@ -270,23 +174,16 @@ public class ProjectSecurityService {
 
     private UUID parseUuid(String value) {
         try {
-            return value == null
-                    ? null
-                    : UUID.fromString(value);
+            return value == null ? null : UUID.fromString(value);
         } catch (IllegalArgumentException exception) {
             return null;
         }
     }
 
     private Jwt getJwt() {
-        Authentication authentication =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null
-                || !(authentication.getPrincipal()
-                instanceof Jwt jwt)) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
             return null;
         }
 

@@ -2,8 +2,7 @@ package com.chacha.multitenantsaas.exception;
 
 import com.chacha.multitenantsaas.dto.SubscriptionAccessReason;
 
-public class SubscriptionRestrictionException
-        extends RuntimeException {
+public class SubscriptionRestrictionException extends RuntimeException {
 
     public enum RestrictionType {
         SERVICE_UNAVAILABLE,
@@ -24,8 +23,7 @@ public class SubscriptionRestrictionException
             String resource,
             Long used,
             Long limit,
-            String message
-    ) {
+            String message) {
         super(message);
         this.restrictionType = restrictionType;
         this.accessReason = accessReason;

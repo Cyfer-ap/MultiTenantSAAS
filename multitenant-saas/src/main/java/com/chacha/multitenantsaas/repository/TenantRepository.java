@@ -3,15 +3,14 @@ package com.chacha.multitenantsaas.repository;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.TenantStatus;
 import jakarta.persistence.LockModeType;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.util.Optional;
-import java.util.UUID;
 
 public interface TenantRepository extends JpaRepository<Tenant, UUID> {
 
@@ -22,16 +21,16 @@ public interface TenantRepository extends JpaRepository<Tenant, UUID> {
     long countByStatus(TenantStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
+    @Query(
+            """
             SELECT tenant
             FROM Tenant tenant
             WHERE tenant.id = :tenantId
             """)
-    Optional<Tenant> findByIdForUpdate(
-            @Param("tenantId") UUID tenantId
-    );
+    Optional<Tenant> findByIdForUpdate(@Param("tenantId") UUID tenantId);
 
-    @Query("""
+    @Query(
+            """
             SELECT tenant
             FROM Tenant tenant
             WHERE (:status IS NULL OR tenant.status = :status)
@@ -44,6 +43,5 @@ public interface TenantRepository extends JpaRepository<Tenant, UUID> {
     Page<Tenant> findTenants(
             @Param("status") TenantStatus status,
             @Param("search") String search,
-            Pageable pageable
-    );
+            Pageable pageable);
 }

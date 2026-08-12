@@ -9,20 +9,16 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @OpenAPIDefinition(
-        info = @Info(
-                title = "Multi-Tenant SaaS Backend API",
-                version = "1.0.0",
-                description = "Learning-focused multi-tenant SaaS backend built with Spring Boot.",
-                contact = @Contact(
-                        name = "Chacha"
-                )
-        )
-)
+        info =
+                @Info(
+                        title = "Multi-Tenant SaaS Backend API",
+                        version = "1.0.0",
+                        description =
+                                "Learning-focused multi-tenant SaaS backend built with Spring Boot.",
+                        contact = @Contact(name = "Chacha")))
 @SecurityScheme(
         name = "bearerAuth",
         type = SecuritySchemeType.HTTP,
         scheme = "bearer",
-        bearerFormat = "JWT"
-)
-public class OpenApiConfig {
-}
+        bearerFormat = "JWT")
+public class OpenApiConfig {}

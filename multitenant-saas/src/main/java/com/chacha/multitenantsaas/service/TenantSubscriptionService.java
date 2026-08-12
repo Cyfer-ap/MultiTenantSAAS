@@ -12,92 +12,58 @@ import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
 import com.chacha.multitenantsaas.exception.DuplicateResourceException;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.TenantSubscriptionRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TenantSubscriptionService {
 
-    private final TenantSubscriptionRepository
-            tenantSubscriptionRepository;
+    private final TenantSubscriptionRepository tenantSubscriptionRepository;
 
     private final TenantLookupService tenantLookupService;
 
-    private final SubscriptionPlanService
-            subscriptionPlanService;
+    private final SubscriptionPlanService subscriptionPlanService;
 
     public TenantSubscriptionService(
-            TenantSubscriptionRepository
-                    tenantSubscriptionRepository,
+            TenantSubscriptionRepository tenantSubscriptionRepository,
             TenantLookupService tenantLookupService,
-            SubscriptionPlanService subscriptionPlanService
-    ) {
-        this.tenantSubscriptionRepository =
-                tenantSubscriptionRepository;
+            SubscriptionPlanService subscriptionPlanService) {
+        this.tenantSubscriptionRepository = tenantSubscriptionRepository;
         this.tenantLookupService = tenantLookupService;
         this.subscriptionPlanService = subscriptionPlanService;
     }
 
     @Transactional
     public TenantSubscriptionResponse startSubscription(
-            UUID tenantId,
-            TenantSubscriptionStartRequest request
-    ) {
+            UUID tenantId, TenantSubscriptionStartRequest request) {
         if (request == null) {
+            throw new IllegalArgumentException("Tenant subscription request is required.");
+        }
+
+        Tenant tenant = tenantLookupService.getActiveByIdForUpdateOrThrow(tenantId);
+
+        if (tenantSubscriptionRepository.existsByTenant_Id(tenantId)) {
+            throw new DuplicateResourceException("Tenant already has a subscription.");
+        }
+
+        SubscriptionPlan plan = subscriptionPlanService.getActivePlanEntity(request.planId());
+
+        TenantSubscriptionStatus status = requireValue(request.status(), "Subscription status");
+
+        if (status != TenantSubscriptionStatus.TRIALING
+                && status != TenantSubscriptionStatus.ACTIVE) {
             throw new IllegalArgumentException(
-                    "Tenant subscription request is required."
-            );
+                    "A new subscription must start as " + "TRIALING or ACTIVE.");
         }
 
-        Tenant tenant =
-                tenantLookupService
-                        .getActiveByIdForUpdateOrThrow(tenantId);
-
-        if (tenantSubscriptionRepository
-                .existsByTenant_Id(tenantId)) {
-            throw new DuplicateResourceException(
-                    "Tenant already has a subscription."
-            );
-        }
-
-        SubscriptionPlan plan =
-                subscriptionPlanService
-                        .getActivePlanEntity(request.planId());
-
-        TenantSubscriptionStatus status =
-                requireValue(
-                        request.status(),
-                        "Subscription status"
-                );
-
-        if (
-                status != TenantSubscriptionStatus.TRIALING
-                        && status != TenantSubscriptionStatus.ACTIVE
-        ) {
-            throw new IllegalArgumentException(
-                    "A new subscription must start as "
-                            + "TRIALING or ACTIVE."
-            );
-        }
-
-        Instant startedAt = request.startedAt() == null
-                ? Instant.now()
-                : request.startedAt();
+        Instant startedAt = request.startedAt() == null ? Instant.now() : request.startedAt();
 
         Instant periodStart =
-                request.currentPeriodStart() == null
-                        ? startedAt
-                        : request.currentPeriodStart();
+                request.currentPeriodStart() == null ? startedAt : request.currentPeriodStart();
 
-        validatePeriod(
-                periodStart,
-                request.currentPeriodEnd(),
-                request.trialEndsAt(),
-                status
-        );
+        validatePeriod(periodStart, request.currentPeriodEnd(), request.trialEndsAt(), status);
 
         TenantSubscription subscription =
                 new TenantSubscription(
@@ -108,215 +74,141 @@ public class TenantSubscriptionService {
                         periodStart,
                         request.currentPeriodEnd(),
                         request.trialEndsAt(),
-                        request.cancelAtPeriodEnd()
-                );
+                        request.cancelAtPeriodEnd());
 
-        return mapToResponse(
-                tenantSubscriptionRepository
-                        .saveAndFlush(subscription)
-        );
+        return mapToResponse(tenantSubscriptionRepository.saveAndFlush(subscription));
     }
 
     @Transactional(readOnly = true)
-    public TenantSubscriptionResponse getSubscription(
-            UUID tenantId
-    ) {
+    public TenantSubscriptionResponse getSubscription(UUID tenantId) {
         tenantLookupService.ensureExists(tenantId);
         return mapToResponse(getSubscriptionEntity(tenantId));
     }
 
     @Transactional
     public TenantSubscriptionResponse changePlan(
-            UUID tenantId,
-            TenantSubscriptionPlanChangeRequest request
-    ) {
+            UUID tenantId, TenantSubscriptionPlanChangeRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException(
-                    "Plan-change request is required."
-            );
+            throw new IllegalArgumentException("Plan-change request is required.");
         }
 
-        TenantSubscription subscription =
-                getSubscriptionEntityForUpdate(tenantId);
+        TenantSubscription subscription = getSubscriptionEntityForUpdate(tenantId);
 
-        if (
-                subscription.getStatus()
-                        == TenantSubscriptionStatus.CANCELLED
-                        || subscription.getStatus()
-                        == TenantSubscriptionStatus.EXPIRED
-        ) {
+        if (subscription.getStatus() == TenantSubscriptionStatus.CANCELLED
+                || subscription.getStatus() == TenantSubscriptionStatus.EXPIRED) {
             throw new IllegalArgumentException(
-                    "Cancelled or expired subscriptions "
-                            + "cannot change plans."
-            );
+                    "Cancelled or expired subscriptions " + "cannot change plans.");
         }
 
-        SubscriptionPlan plan =
-                subscriptionPlanService
-                        .getActivePlanEntity(request.planId());
+        SubscriptionPlan plan = subscriptionPlanService.getActivePlanEntity(request.planId());
 
         validatePeriod(
                 request.currentPeriodStart(),
                 request.currentPeriodEnd(),
                 null,
-                TenantSubscriptionStatus.ACTIVE
-        );
+                TenantSubscriptionStatus.ACTIVE);
 
         subscription.setPlan(plan);
-        subscription.setCurrentPeriodStart(
-                request.currentPeriodStart()
-        );
-        subscription.setCurrentPeriodEnd(
-                request.currentPeriodEnd()
-        );
+        subscription.setCurrentPeriodStart(request.currentPeriodStart());
+        subscription.setCurrentPeriodEnd(request.currentPeriodEnd());
         subscription.setTrialEndsAt(null);
 
-        return mapToResponse(
-                tenantSubscriptionRepository
-                        .saveAndFlush(subscription)
-        );
+        return mapToResponse(tenantSubscriptionRepository.saveAndFlush(subscription));
     }
 
     @Transactional
     public TenantSubscriptionResponse updateLifecycle(
-            UUID tenantId,
-            TenantSubscriptionLifecycleUpdateRequest request
-    ) {
+            UUID tenantId, TenantSubscriptionLifecycleUpdateRequest request) {
         if (request == null) {
-            throw new IllegalArgumentException(
-                    "Subscription lifecycle request is required."
-            );
+            throw new IllegalArgumentException("Subscription lifecycle request is required.");
         }
 
-        TenantSubscription subscription =
-                getSubscriptionEntityForUpdate(tenantId);
+        TenantSubscription subscription = getSubscriptionEntityForUpdate(tenantId);
 
-        TenantSubscriptionStatus status =
-                requireValue(
-                        request.status(),
-                        "Subscription status"
-                );
+        TenantSubscriptionStatus status = requireValue(request.status(), "Subscription status");
 
-        Instant periodEnd = request.currentPeriodEnd() == null
-                ? subscription.getCurrentPeriodEnd()
-                : request.currentPeriodEnd();
+        Instant periodEnd =
+                request.currentPeriodEnd() == null
+                        ? subscription.getCurrentPeriodEnd()
+                        : request.currentPeriodEnd();
 
         validatePeriod(
-                subscription.getCurrentPeriodStart(),
-                periodEnd,
-                request.trialEndsAt(),
-                status
-        );
+                subscription.getCurrentPeriodStart(), periodEnd, request.trialEndsAt(), status);
 
         subscription.setStatus(status);
         subscription.setCurrentPeriodEnd(periodEnd);
         subscription.setTrialEndsAt(request.trialEndsAt());
-        subscription.setCancelAtPeriodEnd(
-                request.cancelAtPeriodEnd()
-        );
+        subscription.setCancelAtPeriodEnd(request.cancelAtPeriodEnd());
 
         if (status == TenantSubscriptionStatus.CANCELLED) {
             subscription.setCancelledAt(Instant.now());
             subscription.setCancelAtPeriodEnd(false);
-        } else if (
-                status == TenantSubscriptionStatus.ACTIVE
-                        || status == TenantSubscriptionStatus.TRIALING
-        ) {
+        } else if (status == TenantSubscriptionStatus.ACTIVE
+                || status == TenantSubscriptionStatus.TRIALING) {
             subscription.setCancelledAt(null);
         }
 
-        return mapToResponse(
-                tenantSubscriptionRepository
-                        .saveAndFlush(subscription)
-        );
+        return mapToResponse(tenantSubscriptionRepository.saveAndFlush(subscription));
     }
 
-    private TenantSubscription getSubscriptionEntity(
-            UUID tenantId
-    ) {
+    private TenantSubscription getSubscriptionEntity(UUID tenantId) {
         if (tenantId == null) {
-            throw new IllegalArgumentException(
-                    "Tenant id is required."
-            );
+            throw new IllegalArgumentException("Tenant id is required.");
         }
 
         return tenantSubscriptionRepository
                 .findByTenantIdWithPlan(tenantId)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException(
-                                "Tenant subscription not found for tenant: "
-                                        + tenantId
-                        )
-                );
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Tenant subscription not found for tenant: " + tenantId));
     }
 
-    private TenantSubscription getSubscriptionEntityForUpdate(
-            UUID tenantId
-    ) {
+    private TenantSubscription getSubscriptionEntityForUpdate(UUID tenantId) {
         if (tenantId == null) {
-            throw new IllegalArgumentException(
-                    "Tenant id is required."
-            );
+            throw new IllegalArgumentException("Tenant id is required.");
         }
 
         return tenantSubscriptionRepository
                 .findByTenantIdWithPlanForUpdate(tenantId)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException(
-                                "Tenant subscription not found for tenant: "
-                                        + tenantId
-                        )
-                );
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Tenant subscription not found for tenant: " + tenantId));
     }
 
     private void validatePeriod(
             Instant periodStart,
             Instant periodEnd,
             Instant trialEndsAt,
-            TenantSubscriptionStatus status
-    ) {
+            TenantSubscriptionStatus status) {
         if (periodStart == null) {
-            throw new IllegalArgumentException(
-                    "Current period start is required."
-            );
+            throw new IllegalArgumentException("Current period start is required.");
         }
 
         if (periodEnd == null) {
-            throw new IllegalArgumentException(
-                    "Current period end is required."
-            );
+            throw new IllegalArgumentException("Current period end is required.");
         }
 
         if (!periodEnd.isAfter(periodStart)) {
             throw new IllegalArgumentException(
-                    "Current period end must be after "
-                            + "the period start."
-            );
+                    "Current period end must be after " + "the period start.");
         }
 
         if (status == TenantSubscriptionStatus.TRIALING) {
             if (trialEndsAt == null) {
                 throw new IllegalArgumentException(
-                        "Trial end is required for a "
-                                + "trialing subscription."
-                );
+                        "Trial end is required for a " + "trialing subscription.");
             }
 
-            if (
-                    trialEndsAt.isBefore(periodStart)
-                            || trialEndsAt.isAfter(periodEnd)
-            ) {
+            if (trialEndsAt.isBefore(periodStart) || trialEndsAt.isAfter(periodEnd)) {
                 throw new IllegalArgumentException(
-                        "Trial end must be inside the "
-                                + "current billing period."
-                );
+                        "Trial end must be inside the " + "current billing period.");
             }
         }
     }
 
-    private TenantSubscriptionResponse mapToResponse(
-            TenantSubscription subscription
-    ) {
+    private TenantSubscriptionResponse mapToResponse(TenantSubscription subscription) {
         SubscriptionPlan plan = subscription.getPlan();
 
         SubscriptionPlanResponse planResponse =
@@ -333,8 +225,7 @@ public class TenantSubscriptionService {
                         plan.getMaxStorageMb(),
                         plan.getStatus(),
                         plan.getCreatedAt(),
-                        plan.getUpdatedAt()
-                );
+                        plan.getUpdatedAt());
 
         return new TenantSubscriptionResponse(
                 subscription.getId(),
@@ -349,15 +240,12 @@ public class TenantSubscriptionService {
                 subscription.isCancelAtPeriodEnd(),
                 subscription.getCancelledAt(),
                 subscription.getCreatedAt(),
-                subscription.getUpdatedAt()
-        );
+                subscription.getUpdatedAt());
     }
 
     private <T> T requireValue(T value, String fieldName) {
         if (value == null) {
-            throw new IllegalArgumentException(
-                    fieldName + " is required."
-            );
+            throw new IllegalArgumentException(fieldName + " is required.");
         }
 
         return value;

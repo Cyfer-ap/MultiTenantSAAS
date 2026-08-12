@@ -5,4 +5,3 @@ public enum UserRole {
     TENANT_MANAGER,
     TENANT_USER
 }
-

@@ -2,7 +2,6 @@ package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.AuditAction;
 import com.chacha.multitenantsaas.entity.AuditActorType;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -19,6 +18,4 @@ public record AuditLogResponse(
         AuditAction action,
         boolean success,
         String message,
-        Instant createdAt
-) {
-}
+        Instant createdAt) {}

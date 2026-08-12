@@ -7,6 +7,9 @@ import com.chacha.multitenantsaas.dto.OrganizationAssignmentUserOptionResponse;
 import com.chacha.multitenantsaas.service.OrganizationAssignmentCommandService;
 import com.chacha.multitenantsaas.service.OrganizationAssignmentService;
 import jakarta.validation.Valid;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,34 +24,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
-
 @RestController
-@RequestMapping(
-        "/api/tenants/{tenantId}"
-                + "/organization/assignments"
-)
+@RequestMapping("/api/tenants/{tenantId}" + "/organization/assignments")
 public class OrganizationAssignmentController {
 
-    private final OrganizationAssignmentService
-            organizationAssignmentService;
+    private final OrganizationAssignmentService organizationAssignmentService;
 
-    private final OrganizationAssignmentCommandService
-            organizationAssignmentCommandService;
+    private final OrganizationAssignmentCommandService organizationAssignmentCommandService;
 
     public OrganizationAssignmentController(
-            OrganizationAssignmentService
-                    organizationAssignmentService,
-            OrganizationAssignmentCommandService
-                    organizationAssignmentCommandService
-    ) {
-        this.organizationAssignmentService =
-                organizationAssignmentService;
+            OrganizationAssignmentService organizationAssignmentService,
+            OrganizationAssignmentCommandService organizationAssignmentCommandService) {
+        this.organizationAssignmentService = organizationAssignmentService;
 
-        this.organizationAssignmentCommandService =
-                organizationAssignmentCommandService;
+        this.organizationAssignmentCommandService = organizationAssignmentCommandService;
     }
 
     @PreAuthorize(
@@ -57,33 +46,18 @@ public class OrganizationAssignmentController {
                     + "#tenantId,"
                     + "#request.organizationalUnitId(),"
                     + "'organization.assignment.manage'"
-                    + ")"
-    )
+                    + ")")
     @PostMapping
-    public ResponseEntity<
-            ApiResponse<OrganizationAssignmentResponse>
-            >
-    createAssignment(
+    public ResponseEntity<ApiResponse<OrganizationAssignmentResponse>> createAssignment(
             @PathVariable UUID tenantId,
-            @Valid @RequestBody
-            OrganizationAssignmentCreateRequest request,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
+            @Valid @RequestBody OrganizationAssignmentCreateRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
         OrganizationAssignmentResponse response =
-                organizationAssignmentCommandService
-                        .createAssignment(
-                                tenantId,
-                                request,
-                                jwt
-                        );
+                organizationAssignmentCommandService.createAssignment(tenantId, request, jwt);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Organizational assignment "
-                                + "created successfully",
-                        response
-                )
-        );
+                        "Organizational assignment " + "created successfully", response));
     }
 
     @PreAuthorize(
@@ -92,35 +66,17 @@ public class OrganizationAssignmentController {
                     + "#tenantId,"
                     + "#organizationalUnitId,"
                     + "'organization.assignment.manage'"
-                    + ")"
-    )
-    @GetMapping(
-            "/units/{organizationalUnitId}/user-options"
-    )
-    public ResponseEntity<
-            ApiResponse<
-                    List<OrganizationAssignmentUserOptionResponse>
-                    >
-            >
-    getAssignableUsers(
-            @PathVariable UUID tenantId,
-            @PathVariable UUID organizationalUnitId
-    ) {
-        List<OrganizationAssignmentUserOptionResponse>
-                response =
-                organizationAssignmentService
-                        .getAssignableUsers(
-                                tenantId,
-                                organizationalUnitId
-                        );
+                    + ")")
+    @GetMapping("/units/{organizationalUnitId}/user-options")
+    public ResponseEntity<ApiResponse<List<OrganizationAssignmentUserOptionResponse>>>
+            getAssignableUsers(
+                    @PathVariable UUID tenantId, @PathVariable UUID organizationalUnitId) {
+        List<OrganizationAssignmentUserOptionResponse> response =
+                organizationAssignmentService.getAssignableUsers(tenantId, organizationalUnitId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Assignable organization users "
-                                + "fetched successfully",
-                        response
-                )
-        );
+                        "Assignable organization users " + "fetched successfully", response));
     }
 
     @PreAuthorize(
@@ -129,30 +85,16 @@ public class OrganizationAssignmentController {
                     + "#tenantId,"
                     + "#assignmentId,"
                     + "'organization.assignment.read'"
-                    + ")"
-    )
+                    + ")")
     @GetMapping("/{assignmentId}")
-    public ResponseEntity<
-            ApiResponse<OrganizationAssignmentResponse>
-            >
-    getAssignment(
-            @PathVariable UUID tenantId,
-            @PathVariable UUID assignmentId
-    ) {
+    public ResponseEntity<ApiResponse<OrganizationAssignmentResponse>> getAssignment(
+            @PathVariable UUID tenantId, @PathVariable UUID assignmentId) {
         OrganizationAssignmentResponse response =
-                organizationAssignmentService
-                        .getAssignment(
-                                tenantId,
-                                assignmentId
-                        );
+                organizationAssignmentService.getAssignment(tenantId, assignmentId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Organizational assignment "
-                                + "fetched successfully",
-                        response
-                )
-        );
+                        "Organizational assignment " + "fetched successfully", response));
     }
 
     @PreAuthorize(
@@ -161,32 +103,16 @@ public class OrganizationAssignmentController {
                     + "#tenantId,"
                     + "#userId,"
                     + "'organization.assignment.read'"
-                    + ")"
-    )
+                    + ")")
     @GetMapping("/users/{userId}")
-    public ResponseEntity<
-            ApiResponse<
-                    List<OrganizationAssignmentResponse>
-                    >
-            >
-    getUserAssignments(
-            @PathVariable UUID tenantId,
-            @PathVariable UUID userId
-    ) {
+    public ResponseEntity<ApiResponse<List<OrganizationAssignmentResponse>>> getUserAssignments(
+            @PathVariable UUID tenantId, @PathVariable UUID userId) {
         List<OrganizationAssignmentResponse> response =
-                organizationAssignmentService
-                        .getUserAssignments(
-                                tenantId,
-                                userId
-                        );
+                organizationAssignmentService.getUserAssignments(tenantId, userId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "User organizational assignments "
-                                + "fetched successfully",
-                        response
-                )
-        );
+                        "User organizational assignments " + "fetched successfully", response));
     }
 
     @PreAuthorize(
@@ -195,39 +121,23 @@ public class OrganizationAssignmentController {
                     + "#tenantId,"
                     + "#userId,"
                     + "'organization.assignment.read'"
-                    + ")"
-    )
+                    + ")")
     @GetMapping("/users/{userId}/effective")
-    public ResponseEntity<
-            ApiResponse<
-                    List<OrganizationAssignmentResponse>
-                    >
-            >
-    getEffectiveUserAssignments(
-            @PathVariable UUID tenantId,
-            @PathVariable UUID userId,
-            @RequestParam(required = false)
-            @DateTimeFormat(
-                    iso = DateTimeFormat.ISO.DATE_TIME
-            )
-            Instant effectiveAt
-    ) {
+    public ResponseEntity<ApiResponse<List<OrganizationAssignmentResponse>>>
+            getEffectiveUserAssignments(
+                    @PathVariable UUID tenantId,
+                    @PathVariable UUID userId,
+                    @RequestParam(required = false)
+                            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                            Instant effectiveAt) {
         List<OrganizationAssignmentResponse> response =
-                organizationAssignmentService
-                        .getEffectiveUserAssignments(
-                                tenantId,
-                                userId,
-                                effectiveAt
-                        );
+                organizationAssignmentService.getEffectiveUserAssignments(
+                        tenantId, userId, effectiveAt);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Effective organizational "
-                                + "assignments fetched "
-                                + "successfully",
-                        response
-                )
-        );
+                        "Effective organizational " + "assignments fetched " + "successfully",
+                        response));
     }
 
     @PreAuthorize(
@@ -236,32 +146,16 @@ public class OrganizationAssignmentController {
                     + "#tenantId,"
                     + "#organizationalUnitId,"
                     + "'organization.assignment.read'"
-                    + ")"
-    )
+                    + ")")
     @GetMapping("/units/{organizationalUnitId}")
-    public ResponseEntity<
-            ApiResponse<
-                    List<OrganizationAssignmentResponse>
-                    >
-            >
-    getUnitAssignments(
-            @PathVariable UUID tenantId,
-            @PathVariable UUID organizationalUnitId
-    ) {
+    public ResponseEntity<ApiResponse<List<OrganizationAssignmentResponse>>> getUnitAssignments(
+            @PathVariable UUID tenantId, @PathVariable UUID organizationalUnitId) {
         List<OrganizationAssignmentResponse> response =
-                organizationAssignmentService
-                        .getUnitAssignments(
-                                tenantId,
-                                organizationalUnitId
-                        );
+                organizationAssignmentService.getUnitAssignments(tenantId, organizationalUnitId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Organizational unit assignments "
-                                + "fetched successfully",
-                        response
-                )
-        );
+                        "Organizational unit assignments " + "fetched successfully", response));
     }
 
     @PreAuthorize(
@@ -270,34 +164,16 @@ public class OrganizationAssignmentController {
                     + "#tenantId,"
                     + "#managerAssignmentId,"
                     + "'organization.assignment.read'"
-                    + ")"
-    )
-    @GetMapping(
-            "/{managerAssignmentId}/direct-reports"
-    )
-    public ResponseEntity<
-            ApiResponse<
-                    List<OrganizationAssignmentResponse>
-                    >
-            >
-    getDirectReports(
-            @PathVariable UUID tenantId,
-            @PathVariable UUID managerAssignmentId
-    ) {
+                    + ")")
+    @GetMapping("/{managerAssignmentId}/direct-reports")
+    public ResponseEntity<ApiResponse<List<OrganizationAssignmentResponse>>> getDirectReports(
+            @PathVariable UUID tenantId, @PathVariable UUID managerAssignmentId) {
         List<OrganizationAssignmentResponse> response =
-                organizationAssignmentService
-                        .getDirectReports(
-                                tenantId,
-                                managerAssignmentId
-                        );
+                organizationAssignmentService.getDirectReports(tenantId, managerAssignmentId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Direct-report assignments "
-                                + "fetched successfully",
-                        response
-                )
-        );
+                        "Direct-report assignments " + "fetched successfully", response));
     }
 
     @PreAuthorize(
@@ -306,31 +182,18 @@ public class OrganizationAssignmentController {
                     + "#tenantId,"
                     + "#assignmentId,"
                     + "'organization.assignment.manage'"
-                    + ")"
-    )
+                    + ")")
     @PatchMapping("/{assignmentId}/deactivate")
-    public ResponseEntity<
-            ApiResponse<OrganizationAssignmentResponse>
-            >
-    deactivateAssignment(
+    public ResponseEntity<ApiResponse<OrganizationAssignmentResponse>> deactivateAssignment(
             @PathVariable UUID tenantId,
             @PathVariable UUID assignmentId,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
+            @AuthenticationPrincipal Jwt jwt) {
         OrganizationAssignmentResponse response =
-                organizationAssignmentCommandService
-                        .deactivateAssignment(
-                                tenantId,
-                                assignmentId,
-                                jwt
-                        );
+                organizationAssignmentCommandService.deactivateAssignment(
+                        tenantId, assignmentId, jwt);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Organizational assignment "
-                                + "deactivated successfully",
-                        response
-                )
-        );
+                        "Organizational assignment " + "deactivated successfully", response));
     }
 }

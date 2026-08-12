@@ -5,6 +5,4 @@ public record TokenRefreshResponse(
         String refreshToken,
         String tokenType,
         long expiresInSeconds,
-        String message
-) {
-}
+        String message) {}

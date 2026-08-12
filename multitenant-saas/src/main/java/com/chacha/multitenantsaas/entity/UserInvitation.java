@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.entity;
 
 import jakarta.persistence.*;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,18 +8,14 @@ import java.util.UUID;
 @Table(
         name = "user_invitations",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_user_invitation_token_hash",
-                        columnNames = "token_hash"
-                )
+            @UniqueConstraint(name = "uk_user_invitation_token_hash", columnNames = "token_hash")
         },
         indexes = {
-                @Index(name = "idx_user_invitation_tenant", columnList = "tenant_id"),
-                @Index(name = "idx_user_invitation_email", columnList = "tenant_id,email"),
-                @Index(name = "idx_user_invitation_status", columnList = "status"),
-                @Index(name = "idx_user_invitation_expires_at", columnList = "expires_at")
-        }
-)
+            @Index(name = "idx_user_invitation_tenant", columnList = "tenant_id"),
+            @Index(name = "idx_user_invitation_email", columnList = "tenant_id,email"),
+            @Index(name = "idx_user_invitation_status", columnList = "status"),
+            @Index(name = "idx_user_invitation_expires_at", columnList = "expires_at")
+        })
 public class UserInvitation {
 
     @Id
@@ -68,8 +63,7 @@ public class UserInvitation {
     @Column(name = "revoked_at")
     private Instant revokedAt;
 
-    public UserInvitation() {
-    }
+    public UserInvitation() {}
 
     public UserInvitation(
             Tenant tenant,
@@ -79,8 +73,7 @@ public class UserInvitation {
             String email,
             UserRole role,
             String tokenHash,
-            Instant expiresAt
-    ) {
+            Instant expiresAt) {
         this.tenant = tenant;
         this.invitedByUser = invitedByUser;
         this.invitedBySystemAdmin = invitedBySystemAdmin;

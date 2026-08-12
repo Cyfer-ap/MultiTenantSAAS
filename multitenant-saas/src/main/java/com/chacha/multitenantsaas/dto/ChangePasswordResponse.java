@@ -1,6 +1,3 @@
 package com.chacha.multitenantsaas.dto;
 
-public record ChangePasswordResponse(
-        String message
-) {
-}
+public record ChangePasswordResponse(String message) {}

@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.UserStatus;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -13,6 +12,4 @@ public record SystemAdminResponse(
         int failedLoginAttempts,
         Instant lockedUntil,
         Instant createdAt,
-        Instant updatedAt
-) {
-}
+        Instant updatedAt) {}

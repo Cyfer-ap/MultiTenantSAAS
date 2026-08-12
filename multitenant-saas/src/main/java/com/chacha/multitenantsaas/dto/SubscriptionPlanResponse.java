@@ -2,7 +2,6 @@ package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.BillingInterval;
 import com.chacha.multitenantsaas.entity.SubscriptionPlanStatus;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -20,6 +19,4 @@ public record SubscriptionPlanResponse(
         Long maxStorageMb,
         SubscriptionPlanStatus status,
         Instant createdAt,
-        Instant updatedAt
-) {
-}
+        Instant updatedAt) {}
