@@ -1,21 +1,44 @@
 version: 2
 
 updates:
-
   - package-ecosystem: maven
     directory: /multitenant-saas
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
+
+    groups:
+      maven-patch-updates:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - patch
+
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+
 
   - package-ecosystem: npm
     directory: /multitenant-saas-frontend
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
 
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
+    groups:
+      frontend-minor-and-patch:
+        applies-to: 2
+
+    groups:
+      github-actions:
+        applies-to: version-updates
+        patterns:
+          - "actions/*"
+
+    ignore:
+      - dependency-name: "JetBrains/qodana-action"
+        update-types:
+          - version-update:semver-major
