@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -18,6 +17,4 @@ public record TenantSubscriptionResponse(
         boolean cancelAtPeriodEnd,
         Instant cancelledAt,
         Instant createdAt,
-        Instant updatedAt
-) {
-}
+        Instant updatedAt) {}

@@ -5,54 +5,35 @@ import com.chacha.multitenantsaas.security.SystemSecurityService;
 import com.chacha.multitenantsaas.service.SubscriptionLifecycleGuardService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.HandlerMapping;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
 @Component
-public class SubscriptionMutationInterceptor
-        implements HandlerInterceptor {
+public class SubscriptionMutationInterceptor implements HandlerInterceptor {
 
-    private static final Set<String> READ_METHODS =
-            Set.of(
-                    "GET",
-                    "HEAD",
-                    "OPTIONS"
-            );
+    private static final Set<String> READ_METHODS = Set.of("GET", "HEAD", "OPTIONS");
 
-    private final SubscriptionLifecycleGuardService
-            subscriptionLifecycleGuardService;
-    private final AuthorizationSecurityService
-            authorizationSecurityService;
-    private final SystemSecurityService
-            systemSecurityService;
+    private final SubscriptionLifecycleGuardService subscriptionLifecycleGuardService;
+    private final AuthorizationSecurityService authorizationSecurityService;
+    private final SystemSecurityService systemSecurityService;
 
     public SubscriptionMutationInterceptor(
-            SubscriptionLifecycleGuardService
-                    subscriptionLifecycleGuardService,
-            AuthorizationSecurityService
-                    authorizationSecurityService,
-            SystemSecurityService systemSecurityService
-    ) {
-        this.subscriptionLifecycleGuardService =
-                subscriptionLifecycleGuardService;
-        this.authorizationSecurityService =
-                authorizationSecurityService;
-        this.systemSecurityService =
-                systemSecurityService;
+            SubscriptionLifecycleGuardService subscriptionLifecycleGuardService,
+            AuthorizationSecurityService authorizationSecurityService,
+            SystemSecurityService systemSecurityService) {
+        this.subscriptionLifecycleGuardService = subscriptionLifecycleGuardService;
+        this.authorizationSecurityService = authorizationSecurityService;
+        this.systemSecurityService = systemSecurityService;
     }
 
     @Override
     public boolean preHandle(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            Object handler
-    ) {
+            HttpServletRequest request, HttpServletResponse response, Object handler) {
         if (READ_METHODS.contains(request.getMethod())) {
             return true;
         }
@@ -77,8 +58,7 @@ public class SubscriptionMutationInterceptor
          * to the route tenant. Method security remains responsible
          * for the eventual 401/403 response.
          */
-        if (!authorizationSecurityService
-                .isCurrentTenant(tenantId)) {
+        if (!authorizationSecurityService.isCurrentTenant(tenantId)) {
             return true;
         }
 
@@ -86,31 +66,20 @@ public class SubscriptionMutationInterceptor
             return true;
         }
 
-        subscriptionLifecycleGuardService
-                .requireBusinessMutationAllowed(tenantId);
+        subscriptionLifecycleGuardService.requireBusinessMutationAllowed(tenantId);
 
         return true;
     }
 
-    private boolean isReadOnlyAllowed(
-            HandlerMethod handlerMethod
-    ) {
-        return handlerMethod.getMethodAnnotation(
-                SubscriptionReadOnlyAllowed.class
-        ) != null
-                || handlerMethod.getBeanType()
-                .isAnnotationPresent(
-                        SubscriptionReadOnlyAllowed.class
-                );
+    private boolean isReadOnlyAllowed(HandlerMethod handlerMethod) {
+        return handlerMethod.getMethodAnnotation(SubscriptionReadOnlyAllowed.class) != null
+                || handlerMethod
+                        .getBeanType()
+                        .isAnnotationPresent(SubscriptionReadOnlyAllowed.class);
     }
 
-    private UUID resolveTenantId(
-            HttpServletRequest request
-    ) {
-        Object attribute = request.getAttribute(
-                HandlerMapping
-                        .URI_TEMPLATE_VARIABLES_ATTRIBUTE
-        );
+    private UUID resolveTenantId(HttpServletRequest request) {
+        Object attribute = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
 
         if (!(attribute instanceof Map<?, ?> variables)) {
             return null;

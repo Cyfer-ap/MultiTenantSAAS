@@ -4,45 +4,36 @@ import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.TenantStatus;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-import java.util.UUID;
-
 @Component
-public class TenantSessionJwtValidator
-        implements OAuth2TokenValidator<Jwt> {
+public class TenantSessionJwtValidator implements OAuth2TokenValidator<Jwt> {
 
     private static final String INVALID_TOKEN = "invalid_token";
 
     private final AppUserRepository appUserRepository;
 
-    public TenantSessionJwtValidator(
-            AppUserRepository appUserRepository
-    ) {
+    public TenantSessionJwtValidator(AppUserRepository appUserRepository) {
         this.appUserRepository = appUserRepository;
     }
 
     @Override
     public OAuth2TokenValidatorResult validate(Jwt jwt) {
-        if ("SYSTEM_ADMIN".equals(
-                jwt.getClaimAsString("accountType")
-        )) {
+        if ("SYSTEM_ADMIN".equals(jwt.getClaimAsString("accountType"))) {
             return OAuth2TokenValidatorResult.success();
         }
 
         try {
-            UUID tenantId = UUID.fromString(
-                    jwt.getClaimAsString("tenantId")
-            );
+            UUID tenantId = UUID.fromString(jwt.getClaimAsString("tenantId"));
             UUID userId = UUID.fromString(jwt.getSubject());
 
-            Object sessionVersionClaim =
-                    jwt.getClaims().get("sessionVersion");
+            Object sessionVersionClaim = jwt.getClaims().get("sessionVersion");
 
             long tokenSessionVersion;
 
@@ -52,60 +43,36 @@ public class TenantSessionJwtValidator
             } else if (sessionVersionClaim instanceof Number number) {
                 tokenSessionVersion = number.longValue();
             } else {
-                return failure(
-                        "The tenant access token has an invalid session version."
-                );
+                return failure("The tenant access token has an invalid session version.");
             }
 
             Optional<AppUser> user =
-                    appUserRepository.findSessionUserByTenantIdAndId(
-                            tenantId,
-                            userId
-                    );
+                    appUserRepository.findSessionUserByTenantIdAndId(tenantId, userId);
 
             if (user.isEmpty()) {
-                return failure(
-                        "The tenant access-token account no longer exists."
-                );
+                return failure("The tenant access-token account no longer exists.");
             }
 
-            if (user.get().getTenant().getStatus()
-                    != TenantStatus.ACTIVE) {
-                return failure(
-                        "The tenant access-token workspace is not active."
-                );
+            if (user.get().getTenant().getStatus() != TenantStatus.ACTIVE) {
+                return failure("The tenant access-token workspace is not active.");
             }
 
             if (user.get().getStatus() != UserStatus.ACTIVE) {
-                return failure(
-                        "The tenant access-token account is not active."
-                );
+                return failure("The tenant access-token account is not active.");
             }
 
-            if (user.get().getSessionVersion()
-                    != tokenSessionVersion) {
-                return failure(
-                        "The tenant access-token session was revoked."
-                );
+            if (user.get().getSessionVersion() != tokenSessionVersion) {
+                return failure("The tenant access-token session was revoked.");
             }
 
             return OAuth2TokenValidatorResult.success();
         } catch (RuntimeException exception) {
-            return failure(
-                    "The tenant access token contains invalid session data."
-            );
+            return failure("The tenant access token contains invalid session data.");
         }
     }
 
-    private OAuth2TokenValidatorResult failure(
-            String description
-    ) {
+    private OAuth2TokenValidatorResult failure(String description) {
         return OAuth2TokenValidatorResult.failure(
-                new OAuth2Error(
-                        INVALID_TOKEN,
-                        description,
-                        null
-                )
-        );
+                new OAuth2Error(INVALID_TOKEN, description, null));
     }
 }

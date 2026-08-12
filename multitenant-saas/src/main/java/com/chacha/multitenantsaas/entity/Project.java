@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.entity;
 
 import jakarta.persistence.*;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,20 +8,10 @@ import java.util.UUID;
 @Table(
         name = "projects",
         indexes = {
-                @Index(
-                        name = "idx_project_tenant",
-                        columnList = "tenant_id"
-                ),
-                @Index(
-                        name = "idx_project_tenant_status",
-                        columnList = "tenant_id,status"
-                ),
-                @Index(
-                        name = "idx_project_tenant_created_at",
-                        columnList = "tenant_id,created_at"
-                )
-        }
-)
+            @Index(name = "idx_project_tenant", columnList = "tenant_id"),
+            @Index(name = "idx_project_tenant_status", columnList = "tenant_id,status"),
+            @Index(name = "idx_project_tenant_created_at", columnList = "tenant_id,created_at")
+        })
 public class Project {
 
     @Id
@@ -34,10 +23,7 @@ public class Project {
     private Tenant tenant;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "created_by_user_id",
-            nullable = false
-    )
+    @JoinColumn(name = "created_by_user_id", nullable = false)
     private AppUser createdByUser;
 
     @Column(nullable = false, length = 150)
@@ -56,15 +42,9 @@ public class Project {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    public Project() {
-    }
+    public Project() {}
 
-    public Project(
-            Tenant tenant,
-            AppUser createdByUser,
-            String name,
-            String description
-    ) {
+    public Project(Tenant tenant, AppUser createdByUser, String name, String description) {
         this.tenant = tenant;
         this.createdByUser = createdByUser;
         this.name = name;

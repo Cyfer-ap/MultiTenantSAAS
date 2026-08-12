@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.TenantStatus;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -11,6 +10,4 @@ public record TenantResponse(
         String slug,
         TenantStatus status,
         Instant createdAt,
-        Instant updatedAt
-) {
-}
+        Instant updatedAt) {}

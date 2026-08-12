@@ -15,11 +15,7 @@ public class TenantAdminGuardService {
         this.appUserRepository = appUserRepository;
     }
 
-    public void ensureCanChangeRole(
-            AppUser actorUser,
-            AppUser targetUser,
-            UserRole newRole
-    ) {
+    public void ensureCanChangeRole(AppUser actorUser, AppUser targetUser, UserRole newRole) {
         if (isSameUser(actorUser, targetUser)) {
             throw new IllegalArgumentException("You cannot change your own role");
         }
@@ -27,18 +23,11 @@ public class TenantAdminGuardService {
         ensureTenantKeepsActiveAdminAfterRoleChange(targetUser, newRole);
     }
 
-    public void ensureCanChangeRole(
-            AppUser targetUser,
-            UserRole newRole
-    ) {
+    public void ensureCanChangeRole(AppUser targetUser, UserRole newRole) {
         ensureTenantKeepsActiveAdminAfterRoleChange(targetUser, newRole);
     }
 
-    public void ensureCanChangeStatus(
-            AppUser actorUser,
-            AppUser targetUser,
-            UserStatus newStatus
-    ) {
+    public void ensureCanChangeStatus(AppUser actorUser, AppUser targetUser, UserStatus newStatus) {
         if (isSameUser(actorUser, targetUser) && newStatus != UserStatus.ACTIVE) {
             throw new IllegalArgumentException("You cannot deactivate or suspend your own account");
         }
@@ -46,10 +35,7 @@ public class TenantAdminGuardService {
         ensureTenantKeepsActiveAdminAfterStatusChange(targetUser, newStatus);
     }
 
-    public void ensureCanChangeStatus(
-            AppUser targetUser,
-            UserStatus newStatus
-    ) {
+    public void ensureCanChangeStatus(AppUser targetUser, UserStatus newStatus) {
         ensureTenantKeepsActiveAdminAfterStatusChange(targetUser, newStatus);
     }
 
@@ -65,19 +51,14 @@ public class TenantAdminGuardService {
         ensureTenantKeepsActiveAdminAfterDeactivation(targetUser);
     }
 
-    private void ensureTenantKeepsActiveAdminAfterRoleChange(
-            AppUser targetUser,
-            UserRole newRole
-    ) {
+    private void ensureTenantKeepsActiveAdminAfterRoleChange(AppUser targetUser, UserRole newRole) {
         if (isRemovingActiveAdminAccess(targetUser, newRole)) {
             ensureAnotherActiveAdminExists(targetUser);
         }
     }
 
     private void ensureTenantKeepsActiveAdminAfterStatusChange(
-            AppUser targetUser,
-            UserStatus newStatus
-    ) {
+            AppUser targetUser, UserStatus newStatus) {
         if (isDisablingActiveAdmin(targetUser, newStatus)) {
             ensureAnotherActiveAdminExists(targetUser);
         }
@@ -107,11 +88,9 @@ public class TenantAdminGuardService {
     }
 
     private void ensureAnotherActiveAdminExists(AppUser targetUser) {
-        long activeAdminCount = appUserRepository.countByTenantIdAndRoleAndStatus(
-                targetUser.getTenant().getId(),
-                UserRole.TENANT_ADMIN,
-                UserStatus.ACTIVE
-        );
+        long activeAdminCount =
+                appUserRepository.countByTenantIdAndRoleAndStatus(
+                        targetUser.getTenant().getId(), UserRole.TENANT_ADMIN, UserStatus.ACTIVE);
 
         if (activeAdminCount <= 1) {
             throw new IllegalArgumentException("At least one active tenant admin must remain");

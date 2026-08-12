@@ -5,6 +5,7 @@ import com.chacha.multitenantsaas.dto.AuthorizationProvisioningBackfillResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationProvisioningReadinessResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationProvisioningSummary;
 import com.chacha.multitenantsaas.service.AuthorizationProvisioningService;
+import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,24 +14,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.UUID;
-
 @RestController
-@RequestMapping(
-        "/api/tenants/{tenantId}"
-                + "/authorization/provisioning"
-)
+@RequestMapping("/api/tenants/{tenantId}" + "/authorization/provisioning")
 public class AuthorizationProvisioningController {
 
-    private final AuthorizationProvisioningService
-            authorizationProvisioningService;
+    private final AuthorizationProvisioningService authorizationProvisioningService;
 
     public AuthorizationProvisioningController(
-            AuthorizationProvisioningService
-                    authorizationProvisioningService
-    ) {
-        this.authorizationProvisioningService =
-                authorizationProvisioningService;
+            AuthorizationProvisioningService authorizationProvisioningService) {
+        this.authorizationProvisioningService = authorizationProvisioningService;
     }
 
     @PreAuthorize(
@@ -40,34 +32,19 @@ public class AuthorizationProvisioningController {
                     + "'authorization.manage'"
                     + ")"
                     + " or "
-                    + "@systemSecurity.isSystemAdmin()"
-    )
+                    + "@systemSecurity.isSystemAdmin()")
     @GetMapping("/readiness")
-    public ResponseEntity<
-            ApiResponse<
-                    AuthorizationProvisioningReadinessResponse
-                    >
-            >
-    getReadiness(
-            @PathVariable UUID tenantId
-    ) {
-        AuthorizationProvisioningReadinessResponse
-                readiness =
-                authorizationProvisioningService
-                        .getTenantReadiness(
-                                tenantId
-                        );
+    public ResponseEntity<ApiResponse<AuthorizationProvisioningReadinessResponse>> getReadiness(
+            @PathVariable UUID tenantId) {
+        AuthorizationProvisioningReadinessResponse readiness =
+                authorizationProvisioningService.getTenantReadiness(tenantId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
                         readiness.ready()
-                                ? "Authorization V2 tenant "
-                                + "is ready"
-                                : "Authorization V2 tenant "
-                                + "requires backfill",
-                        readiness
-                )
-        );
+                                ? "Authorization V2 tenant " + "is ready"
+                                : "Authorization V2 tenant " + "requires backfill",
+                        readiness));
     }
 
     @PreAuthorize(
@@ -77,47 +54,26 @@ public class AuthorizationProvisioningController {
                     + "'authorization.manage'"
                     + ")"
                     + " or "
-                    + "@systemSecurity.isSystemAdmin()"
-    )
+                    + "@systemSecurity.isSystemAdmin()")
     @PostMapping("/backfill")
-    public ResponseEntity<
-            ApiResponse<
-                    AuthorizationProvisioningBackfillResponse
-                    >
-            >
-    backfillTenant(
-            @PathVariable UUID tenantId
-    ) {
+    public ResponseEntity<ApiResponse<AuthorizationProvisioningBackfillResponse>> backfillTenant(
+            @PathVariable UUID tenantId) {
         AuthorizationProvisioningSummary summary =
-                authorizationProvisioningService
-                        .provisionTenantFromLegacyRoles(
-                                tenantId
-                        );
+                authorizationProvisioningService.provisionTenantFromLegacyRoles(tenantId);
 
-        AuthorizationProvisioningReadinessResponse
-                readiness =
-                authorizationProvisioningService
-                        .getTenantReadiness(
-                                tenantId
-                        );
+        AuthorizationProvisioningReadinessResponse readiness =
+                authorizationProvisioningService.getTenantReadiness(tenantId);
 
-        AuthorizationProvisioningBackfillResponse
-                response =
-                new AuthorizationProvisioningBackfillResponse(
-                        summary,
-                        readiness
-                );
+        AuthorizationProvisioningBackfillResponse response =
+                new AuthorizationProvisioningBackfillResponse(summary, readiness);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
                         readiness.ready()
-                                ? "Authorization V2 backfill "
-                                + "completed successfully"
+                                ? "Authorization V2 backfill " + "completed successfully"
                                 : "Authorization V2 backfill "
-                                + "completed with unresolved "
-                                + "issues",
-                        response
-                )
-        );
+                                        + "completed with unresolved "
+                                        + "issues",
+                        response));
     }
 }

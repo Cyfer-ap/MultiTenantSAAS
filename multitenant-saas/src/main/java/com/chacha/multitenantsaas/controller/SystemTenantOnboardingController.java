@@ -24,14 +24,11 @@ public class SystemTenantOnboardingController {
     @PreAuthorize("@systemSecurity.isSystemAdmin()")
     @PostMapping
     public ResponseEntity<ApiResponse<TenantOnboardingResponse>> onboardTenantBySystemAdmin(
-            @Valid @RequestBody TenantOnboardingRequest request,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
+            @Valid @RequestBody TenantOnboardingRequest request, @AuthenticationPrincipal Jwt jwt) {
         TenantOnboardingResponse response =
                 tenantOnboardingService.onboardTenantBySystemAdmin(request, jwt);
 
         return ResponseEntity.ok(
-                ApiResponse.success("Tenant onboarded successfully by system admin", response)
-        );
+                ApiResponse.success("Tenant onboarded successfully by system admin", response));
     }
 }

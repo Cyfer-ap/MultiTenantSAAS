@@ -15,9 +15,7 @@ public class PlatformAuditLogService {
 
     private final PlatformAuditLogRepository platformAuditLogRepository;
 
-    public PlatformAuditLogService(
-            PlatformAuditLogRepository platformAuditLogRepository
-    ) {
+    public PlatformAuditLogService(PlatformAuditLogRepository platformAuditLogRepository) {
         this.platformAuditLogRepository = platformAuditLogRepository;
     }
 
@@ -26,15 +24,9 @@ public class PlatformAuditLogService {
             SystemAdmin targetSystemAdmin,
             PlatformAuditAction action,
             boolean success,
-            String message
-    ) {
-        PlatformAuditLog auditLog = new PlatformAuditLog(
-                actorSystemAdmin,
-                targetSystemAdmin,
-                action,
-                success,
-                message
-        );
+            String message) {
+        PlatformAuditLog auditLog =
+                new PlatformAuditLog(actorSystemAdmin, targetSystemAdmin, action, success, message);
 
         platformAuditLogRepository.save(auditLog);
     }
@@ -43,63 +35,35 @@ public class PlatformAuditLogService {
             SystemAdmin actorSystemAdmin,
             SystemAdmin targetSystemAdmin,
             PlatformAuditAction action,
-            String message
-    ) {
-        record(
-                actorSystemAdmin,
-                targetSystemAdmin,
-                action,
-                true,
-                message
-        );
+            String message) {
+        record(actorSystemAdmin, targetSystemAdmin, action, true, message);
     }
 
     public void recordFailure(
             SystemAdmin actorSystemAdmin,
             SystemAdmin targetSystemAdmin,
             PlatformAuditAction action,
-            String message
-    ) {
-        record(
-                actorSystemAdmin,
-                targetSystemAdmin,
-                action,
-                false,
-                message
-        );
+            String message) {
+        record(actorSystemAdmin, targetSystemAdmin, action, false, message);
     }
 
     public PageResponse<PlatformAuditLogResponse> getPlatformAuditLogs(
-            PlatformAuditAction action,
-            Boolean success,
-            String search,
-            Pageable pageable
-    ) {
+            PlatformAuditAction action, Boolean success, String search, Pageable pageable) {
         Page<PlatformAuditLog> auditLogs =
                 platformAuditLogRepository.findPlatformAuditLogs(
-                        action,
-                        success,
-                        normalizeSearch(search),
-                        pageable
-                );
+                        action, success, normalizeSearch(search), pageable);
 
         return new PageResponse<>(
-                auditLogs.getContent()
-                        .stream()
-                        .map(this::mapToResponse)
-                        .toList(),
+                auditLogs.getContent().stream().map(this::mapToResponse).toList(),
                 auditLogs.getNumber(),
                 auditLogs.getSize(),
                 auditLogs.getTotalElements(),
                 auditLogs.getTotalPages(),
                 auditLogs.isFirst(),
-                auditLogs.isLast()
-        );
+                auditLogs.isLast());
     }
 
-    private PlatformAuditLogResponse mapToResponse(
-            PlatformAuditLog auditLog
-    ) {
+    private PlatformAuditLogResponse mapToResponse(PlatformAuditLog auditLog) {
         SystemAdmin actor = auditLog.getActorSystemAdmin();
         SystemAdmin target = auditLog.getTargetSystemAdmin();
 
@@ -112,8 +76,7 @@ public class PlatformAuditLogService {
                 auditLog.getAction(),
                 auditLog.isSuccess(),
                 auditLog.getMessage(),
-                auditLog.getCreatedAt()
-        );
+                auditLog.getCreatedAt());
     }
 
     private String normalizeSearch(String search) {
