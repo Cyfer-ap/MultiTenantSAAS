@@ -14,12 +14,11 @@ import com.chacha.multitenantsaas.repository.ProjectTaskRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import com.chacha.multitenantsaas.security.AuthenticatedUserContext;
 import com.chacha.multitenantsaas.security.JwtContextService;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
 
 @Service
 public class TenantDashboardService {
@@ -37,8 +36,7 @@ public class TenantDashboardService {
             ProjectRepository projectRepository,
             ProjectMemberRepository projectMemberRepository,
             ProjectTaskRepository projectTaskRepository,
-            JwtContextService jwtContextService
-    ) {
+            JwtContextService jwtContextService) {
         this.tenantRepository = tenantRepository;
         this.appUserRepository = appUserRepository;
         this.projectRepository = projectRepository;
@@ -48,144 +46,90 @@ public class TenantDashboardService {
     }
 
     public TenantDashboardSummaryResponse getTenantSummary(Jwt jwt) {
-        AuthenticatedUserContext currentUser =
-                jwtContextService.getCurrentUser(jwt);
+        AuthenticatedUserContext currentUser = jwtContextService.getCurrentUser(jwt);
 
         UUID tenantId = currentUser.tenantId();
 
-        Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() ->
-                        new AuthenticationFailedException("Tenant not found")
-                );
+        Tenant tenant =
+                tenantRepository
+                        .findById(tenantId)
+                        .orElseThrow(() -> new AuthenticationFailedException("Tenant not found"));
 
         if (tenant.getStatus() != TenantStatus.ACTIVE) {
-            throw new AuthenticationFailedException(
-                    "Tenant is not active"
-            );
+            throw new AuthenticationFailedException("Tenant is not active");
         }
 
-        long totalProjects =
-                projectRepository.countByTenant_Id(tenantId);
+        long totalProjects = projectRepository.countByTenant_Id(tenantId);
 
         long planningProjects =
-                projectRepository.countByTenant_IdAndStatus(
-                        tenantId,
-                        ProjectStatus.PLANNING
-                );
+                projectRepository.countByTenant_IdAndStatus(tenantId, ProjectStatus.PLANNING);
 
         long activeProjects =
-                projectRepository.countByTenant_IdAndStatus(
-                        tenantId,
-                        ProjectStatus.ACTIVE
-                );
+                projectRepository.countByTenant_IdAndStatus(tenantId, ProjectStatus.ACTIVE);
 
         long onHoldProjects =
-                projectRepository.countByTenant_IdAndStatus(
-                        tenantId,
-                        ProjectStatus.ON_HOLD
-                );
+                projectRepository.countByTenant_IdAndStatus(tenantId, ProjectStatus.ON_HOLD);
 
         long completedProjects =
-                projectRepository.countByTenant_IdAndStatus(
-                        tenantId,
-                        ProjectStatus.COMPLETED
-                );
+                projectRepository.countByTenant_IdAndStatus(tenantId, ProjectStatus.COMPLETED);
 
         long archivedProjects =
-                projectRepository.countByTenant_IdAndStatus(
-                        tenantId,
-                        ProjectStatus.ARCHIVED
-                );
+                projectRepository.countByTenant_IdAndStatus(tenantId, ProjectStatus.ARCHIVED);
 
-        long totalProjectMemberships =
-                projectMemberRepository.countByProject_Tenant_Id(
-                        tenantId
-                );
+        long totalProjectMemberships = projectMemberRepository.countByProject_Tenant_Id(tenantId);
 
-        long totalTasks =
-                projectTaskRepository.countByTenant_Id(tenantId);
+        long totalTasks = projectTaskRepository.countByTenant_Id(tenantId);
 
         long todoTasks =
-                projectTaskRepository.countByTenant_IdAndStatus(
-                        tenantId,
-                        ProjectTaskStatus.TODO
-                );
+                projectTaskRepository.countByTenant_IdAndStatus(tenantId, ProjectTaskStatus.TODO);
 
         long inProgressTasks =
                 projectTaskRepository.countByTenant_IdAndStatus(
-                        tenantId,
-                        ProjectTaskStatus.IN_PROGRESS
-                );
+                        tenantId, ProjectTaskStatus.IN_PROGRESS);
 
         long blockedTasks =
                 projectTaskRepository.countByTenant_IdAndStatus(
-                        tenantId,
-                        ProjectTaskStatus.BLOCKED
-                );
+                        tenantId, ProjectTaskStatus.BLOCKED);
 
         long completedTasks =
                 projectTaskRepository.countByTenant_IdAndStatus(
-                        tenantId,
-                        ProjectTaskStatus.COMPLETED
-                );
+                        tenantId, ProjectTaskStatus.COMPLETED);
 
         long cancelledTasks =
                 projectTaskRepository.countByTenant_IdAndStatus(
-                        tenantId,
-                        ProjectTaskStatus.CANCELLED
-                );
+                        tenantId, ProjectTaskStatus.CANCELLED);
 
         Instant currentTime = Instant.now();
 
         long overdueTasks =
-                projectTaskRepository
-                        .countByTenant_IdAndDueAtBeforeAndStatusNotIn(
-                                tenantId,
-                                currentTime,
-                                List.of(
-                                        ProjectTaskStatus.COMPLETED,
-                                        ProjectTaskStatus.CANCELLED
-                                )
-                        );
+                projectTaskRepository.countByTenant_IdAndDueAtBeforeAndStatusNotIn(
+                        tenantId,
+                        currentTime,
+                        List.of(ProjectTaskStatus.COMPLETED, ProjectTaskStatus.CANCELLED));
 
-        long completionEligibleTasks =
-                totalTasks - cancelledTasks;
+        long completionEligibleTasks = totalTasks - cancelledTasks;
 
         double taskCompletionPercentage =
                 completionEligibleTasks == 0
                         ? 0.0
-                        : completedTasks * 100.0
-                        / completionEligibleTasks;
+                        : completedTasks * 100.0 / completionEligibleTasks;
 
         return new TenantDashboardSummaryResponse(
                 tenant.getId(),
                 tenant.getName(),
                 tenant.getSlug(),
                 tenant.getStatus(),
-
                 appUserRepository.countByTenantId(tenantId),
-                appUserRepository.countByTenantIdAndStatus(
-                        tenantId,
-                        UserStatus.ACTIVE
-                ),
-                appUserRepository.countByTenantIdAndStatus(
-                        tenantId,
-                        UserStatus.INACTIVE
-                ),
-                appUserRepository.countByTenantIdAndStatus(
-                        tenantId,
-                        UserStatus.SUSPENDED
-                ),
-
+                appUserRepository.countByTenantIdAndStatus(tenantId, UserStatus.ACTIVE),
+                appUserRepository.countByTenantIdAndStatus(tenantId, UserStatus.INACTIVE),
+                appUserRepository.countByTenantIdAndStatus(tenantId, UserStatus.SUSPENDED),
                 totalProjects,
                 planningProjects,
                 activeProjects,
                 onHoldProjects,
                 completedProjects,
                 archivedProjects,
-
                 totalProjectMemberships,
-
                 totalTasks,
                 todoTasks,
                 inProgressTasks,
@@ -193,7 +137,6 @@ public class TenantDashboardService {
                 completedTasks,
                 cancelledTasks,
                 overdueTasks,
-                taskCompletionPercentage
-        );
+                taskCompletionPercentage);
     }
 }

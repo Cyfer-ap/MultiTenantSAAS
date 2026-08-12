@@ -4,50 +4,37 @@ import com.chacha.multitenantsaas.config.PublicAuthRateLimitProperties;
 import com.chacha.multitenantsaas.exception.RateLimitExceededException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.HandlerInterceptor;
-
 import java.time.Instant;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
-public class PublicAuthRateLimitInterceptor
-        implements HandlerInterceptor {
+public class PublicAuthRateLimitInterceptor implements HandlerInterceptor {
 
     private static final Pattern TENANT_LOGIN_PATTERN =
-            Pattern.compile(
-                    "^/api/tenants/[^/]+/auth/login/?$"
-            );
+            Pattern.compile("^/api/tenants/[^/]+/auth/login/?$");
     private static final Pattern TENANT_FORGOT_PASSWORD_PATTERN =
-            Pattern.compile(
-                    "^/api/tenants/[^/]+/auth/forgot-password/?$"
-            );
+            Pattern.compile("^/api/tenants/[^/]+/auth/forgot-password/?$");
 
     private static final long CLEANUP_INTERVAL = 256L;
 
     private final PublicAuthRateLimitProperties properties;
-    private final ConcurrentMap<RateLimitKey, RateLimitWindow>
-            windows = new ConcurrentHashMap<>();
+    private final ConcurrentMap<RateLimitKey, RateLimitWindow> windows = new ConcurrentHashMap<>();
     private final AtomicLong requestSequence = new AtomicLong();
 
-    public PublicAuthRateLimitInterceptor(
-            PublicAuthRateLimitProperties properties
-    ) {
+    public PublicAuthRateLimitInterceptor(PublicAuthRateLimitProperties properties) {
         this.properties = properties;
     }
 
     @Override
     public boolean preHandle(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            Object handler
-    ) {
-        if (!properties.isEnabled()
-                || !"POST".equalsIgnoreCase(request.getMethod())) {
+            HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if (!properties.isEnabled() || !"POST".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
 
@@ -63,18 +50,13 @@ public class PublicAuthRateLimitInterceptor
         if (windowSeconds <= 0L || maxRequests <= 0) {
             throw new IllegalStateException(
                     "Public authentication rate-limit configuration "
-                            + "must use positive limits and window size."
-            );
+                            + "must use positive limits and window size.");
         }
 
         long nowEpochSecond = Instant.now().getEpochSecond();
-        long windowStartEpochSecond = Math.floorDiv(
-                nowEpochSecond,
-                windowSeconds
-        ) * windowSeconds;
+        long windowStartEpochSecond = Math.floorDiv(nowEpochSecond, windowSeconds) * windowSeconds;
 
-        if (requestSequence.incrementAndGet()
-                % CLEANUP_INTERVAL == 0L) {
+        if (requestSequence.incrementAndGet() % CLEANUP_INTERVAL == 0L) {
             removeExpiredWindows(windowStartEpochSecond);
         }
 
@@ -84,42 +66,28 @@ public class PublicAuthRateLimitInterceptor
             remoteAddress = "unknown";
         }
 
-        RateLimitKey key = new RateLimitKey(
-                scope,
-                remoteAddress
-        );
+        RateLimitKey key = new RateLimitKey(scope, remoteAddress);
 
-        RateLimitWindow updatedWindow = windows.compute(
-                key,
-                (ignored, currentWindow) -> {
-                    if (currentWindow == null
-                            || currentWindow.windowStartEpochSecond()
-                            != windowStartEpochSecond) {
-                        return new RateLimitWindow(
-                                windowStartEpochSecond,
-                                1
-                        );
-                    }
+        RateLimitWindow updatedWindow =
+                windows.compute(
+                        key,
+                        (ignored, currentWindow) -> {
+                            if (currentWindow == null
+                                    || currentWindow.windowStartEpochSecond()
+                                            != windowStartEpochSecond) {
+                                return new RateLimitWindow(windowStartEpochSecond, 1);
+                            }
 
-                    return new RateLimitWindow(
-                            windowStartEpochSecond,
-                            currentWindow.requestCount() + 1
-                    );
-                }
-        );
+                            return new RateLimitWindow(
+                                    windowStartEpochSecond, currentWindow.requestCount() + 1);
+                        });
 
         if (updatedWindow.requestCount() > maxRequests) {
-            long retryAfterSeconds = Math.max(
-                    1L,
-                    windowStartEpochSecond
-                            + windowSeconds
-                            - nowEpochSecond
-            );
+            long retryAfterSeconds =
+                    Math.max(1L, windowStartEpochSecond + windowSeconds - nowEpochSecond);
 
             throw new RateLimitExceededException(
-                    scope.name().toLowerCase(Locale.ROOT),
-                    retryAfterSeconds
-            );
+                    scope.name().toLowerCase(Locale.ROOT), retryAfterSeconds);
         }
 
         return true;
@@ -140,13 +108,11 @@ public class PublicAuthRateLimitInterceptor
             return RateLimitScope.RECOVERY;
         }
 
-        if ("/api/auth/refresh".equals(path)
-                || "/api/auth/refresh/".equals(path)) {
+        if ("/api/auth/refresh".equals(path) || "/api/auth/refresh/".equals(path)) {
             return RateLimitScope.TOKEN;
         }
 
-        if ("/api/onboarding/tenants".equals(path)
-                || "/api/onboarding/tenants/".equals(path)) {
+        if ("/api/onboarding/tenants".equals(path) || "/api/onboarding/tenants/".equals(path)) {
             return RateLimitScope.ONBOARDING;
         }
 
@@ -170,23 +136,19 @@ public class PublicAuthRateLimitInterceptor
             return "";
         }
 
-        if (contextPath != null
-                && !contextPath.isEmpty()
-                && requestUri.startsWith(contextPath)) {
+        if (contextPath != null && !contextPath.isEmpty() && requestUri.startsWith(contextPath)) {
             return requestUri.substring(contextPath.length());
         }
 
         return requestUri;
     }
 
-    private void removeExpiredWindows(
-            long currentWindowStartEpochSecond
-    ) {
-        windows.entrySet().removeIf(
-                entry -> entry.getValue()
-                        .windowStartEpochSecond()
-                        < currentWindowStartEpochSecond
-        );
+    private void removeExpiredWindows(long currentWindowStartEpochSecond) {
+        windows.entrySet()
+                .removeIf(
+                        entry ->
+                                entry.getValue().windowStartEpochSecond()
+                                        < currentWindowStartEpochSecond);
     }
 
     private enum RateLimitScope {
@@ -196,15 +158,7 @@ public class PublicAuthRateLimitInterceptor
         ONBOARDING
     }
 
-    private record RateLimitKey(
-            RateLimitScope scope,
-            String remoteAddress
-    ) {
-    }
+    private record RateLimitKey(RateLimitScope scope, String remoteAddress) {}
 
-    private record RateLimitWindow(
-            long windowStartEpochSecond,
-            int requestCount
-    ) {
-    }
+    private record RateLimitWindow(long windowStartEpochSecond, int requestCount) {}
 }

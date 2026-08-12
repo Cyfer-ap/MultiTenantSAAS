@@ -1,5 +1,11 @@
 package com.chacha.multitenantsaas.integration;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.chacha.multitenantsaas.dto.AuthorizationRoleCreateRequest;
 import com.chacha.multitenantsaas.dto.AuthorizationRoleResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationUserRoleAssignmentCreateRequest;
@@ -19,6 +25,10 @@ import com.chacha.multitenantsaas.security.PlatformPermissionCodes;
 import com.chacha.multitenantsaas.service.AuthorizationRoleService;
 import com.chacha.multitenantsaas.service.AuthorizationUserRoleAssignmentService;
 import com.chacha.multitenantsaas.service.TenantOnboardingService;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,85 +42,45 @@ import org.springframework.test.web.servlet.MvcResult;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Set;
-import java.util.UUID;
-
-import static org.springframework.test.web.servlet
-        .request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet
-        .request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet
-        .request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet
-        .result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet
-        .result.MockMvcResultMatchers.status;
-
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class ProjectAuthorizationV2IntegrationTest {
 
-    private static final String PASSWORD =
-            "ScopedProject@123";
+    private static final String PASSWORD = "ScopedProject@123";
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
 
-    @Autowired
-    private JsonMapper jsonMapper;
+    @Autowired private JsonMapper jsonMapper;
 
-    @Autowired
-    private TenantOnboardingService
-            tenantOnboardingService;
+    @Autowired private TenantOnboardingService tenantOnboardingService;
 
-    @Autowired
-    private AuthorizationRoleService
-            authorizationRoleService;
+    @Autowired private AuthorizationRoleService authorizationRoleService;
 
-    @Autowired
-    private AuthorizationUserRoleAssignmentService
-            assignmentService;
+    @Autowired private AuthorizationUserRoleAssignmentService assignmentService;
 
-    @Autowired
-    private AuthorizationPermissionRepository
-            permissionRepository;
+    @Autowired private AuthorizationPermissionRepository permissionRepository;
 
-    @Autowired
-    private TenantRepository tenantRepository;
+    @Autowired private TenantRepository tenantRepository;
 
-    @Autowired
-    private AppUserRepository appUserRepository;
+    @Autowired private AppUserRepository appUserRepository;
 
-    @Autowired
-    private ProjectRepository projectRepository;
+    @Autowired private ProjectRepository projectRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @Autowired private PasswordEncoder passwordEncoder;
 
     @Test
-    void projectScopedRoleCannotAccessAnotherProject()
-            throws Exception {
+    void projectScopedRoleCannotAccessAnotherProject() throws Exception {
 
-        TenantOnboardingResponse onboarding =
-                onboardTenant();
+        TenantOnboardingResponse onboarding = onboardTenant();
 
-        UUID tenantId =
-                onboarding.tenant().id();
+        UUID tenantId = onboarding.tenant().id();
 
-        Tenant tenant =
-                tenantRepository
-                        .findById(tenantId)
-                        .orElseThrow();
+        Tenant tenant = tenantRepository.findById(tenantId).orElseThrow();
 
         AppUser administrator =
                 appUserRepository
-                        .findByTenantIdAndId(
-                                tenantId,
-                                onboarding.adminUser().id()
-                        )
+                        .findByTenantIdAndId(tenantId, onboarding.adminUser().id())
                         .orElseThrow();
 
         /*
@@ -120,58 +90,27 @@ class ProjectAuthorizationV2IntegrationTest {
          * manager role must not bypass the project scope.
          */
         AppUser scopedOperator =
-                createUser(
-                        tenant,
-                        "Scoped Project Operator",
-                        UserRole.TENANT_MANAGER
-                );
+                createUser(tenant, "Scoped Project Operator", UserRole.TENANT_MANAGER);
 
-        Project allowedProject =
-                createProject(
-                        tenant,
-                        administrator,
-                        "Allowed Project"
-                );
+        Project allowedProject = createProject(tenant, administrator, "Allowed Project");
 
-        Project deniedProject =
-                createProject(
-                        tenant,
-                        administrator,
-                        "Denied Project"
-                );
+        Project deniedProject = createProject(tenant, administrator, "Denied Project");
 
         AuthorizationRoleResponse role =
-                authorizationRoleService
-                        .createTenantRole(
-                                tenantId,
-                                new AuthorizationRoleCreateRequest(
-                                        "SCOPED_PROJECT_OPERATOR",
-                                        "Scoped Project Operator",
-                                        "Can operate one project only.",
-                                        Set.of(
-                                                getPermissionId(
-                                                        PlatformPermissionCodes
-                                                                .PROJECT_READ
-                                                ),
-                                                getPermissionId(
-                                                        PlatformPermissionCodes
-                                                                .PROJECT_UPDATE
-                                                ),
-                                                getPermissionId(
-                                                        PlatformPermissionCodes
-                                                                .PROJECT_MEMBER_MANAGE
-                                                ),
-                                                getPermissionId(
-                                                        PlatformPermissionCodes
-                                                                .PROJECT_TASK_READ
-                                                ),
-                                                getPermissionId(
-                                                        PlatformPermissionCodes
-                                                                .PROJECT_TASK_MANAGE
-                                                )
-                                        )
-                                )
-                        );
+                authorizationRoleService.createTenantRole(
+                        tenantId,
+                        new AuthorizationRoleCreateRequest(
+                                "SCOPED_PROJECT_OPERATOR",
+                                "Scoped Project Operator",
+                                "Can operate one project only.",
+                                Set.of(
+                                        getPermissionId(PlatformPermissionCodes.PROJECT_READ),
+                                        getPermissionId(PlatformPermissionCodes.PROJECT_UPDATE),
+                                        getPermissionId(
+                                                PlatformPermissionCodes.PROJECT_MEMBER_MANAGE),
+                                        getPermissionId(PlatformPermissionCodes.PROJECT_TASK_READ),
+                                        getPermissionId(
+                                                PlatformPermissionCodes.PROJECT_TASK_MANAGE))));
 
         assignmentService.createAssignment(
                 tenantId,
@@ -181,37 +120,17 @@ class ProjectAuthorizationV2IntegrationTest {
                         role.id(),
                         AuthorizationScopeType.PROJECT,
                         allowedProject.getId(),
-                        Instant.now()
-                                .minus(
-                                        1,
-                                        ChronoUnit.DAYS
-                                )
-                                .truncatedTo(
-                                        ChronoUnit.MICROS
-                                ),
-                        null
-                )
-        );
+                        Instant.now().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MICROS),
+                        null));
 
-        String accessToken =
-                login(
-                        tenantId,
-                        scopedOperator.getEmail()
-                );
+        String accessToken = login(tenantId, scopedOperator.getEmail());
 
         /*
          * A project-scoped role cannot list every project.
          */
         mockMvc.perform(
-                        get(
-                                "/api/tenants/{tenantId}/projects",
-                                tenantId
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                )
+                        get("/api/tenants/{tenantId}/projects", tenantId)
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isForbidden());
 
         /*
@@ -219,38 +138,19 @@ class ProjectAuthorizationV2IntegrationTest {
          */
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/projects/{projectId}",
-                                tenantId,
-                                allowedProject.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}" + "/projects/{projectId}",
+                                        tenantId,
+                                        allowedProject.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.data.id")
-                                .value(
-                                        allowedProject
-                                                .getId()
-                                                .toString()
-                                )
-                );
+                .andExpect(jsonPath("$.data.id").value(allowedProject.getId().toString()));
 
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/projects/{projectId}",
-                                tenantId,
-                                deniedProject.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}" + "/projects/{projectId}",
+                                        tenantId,
+                                        deniedProject.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isForbidden());
 
         /*
@@ -258,18 +158,11 @@ class ProjectAuthorizationV2IntegrationTest {
          */
         mockMvc.perform(
                         put(
-                                "/api/tenants/{tenantId}"
-                                        + "/projects/{projectId}",
-                                tenantId,
-                                allowedProject.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
+                                        "/api/tenants/{tenantId}" + "/projects/{projectId}",
+                                        tenantId,
+                                        allowedProject.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken))
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
                                         {
@@ -277,40 +170,24 @@ class ProjectAuthorizationV2IntegrationTest {
                                           "description":
                                             "Updated through scoped V2 access."
                                         }
-                                        """
-                                )
-                )
+                                        """))
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.data.name")
-                                .value(
-                                        "Allowed Project Updated"
-                                )
-                );
+                .andExpect(jsonPath("$.data.name").value("Allowed Project Updated"));
 
         mockMvc.perform(
                         put(
-                                "/api/tenants/{tenantId}"
-                                        + "/projects/{projectId}",
-                                tenantId,
-                                deniedProject.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
+                                        "/api/tenants/{tenantId}" + "/projects/{projectId}",
+                                        tenantId,
+                                        deniedProject.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken))
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
                                         {
                                           "name": "Unauthorized Update",
                                           "description": null
                                         }
-                                        """
-                                )
-                )
+                                        """))
                 .andExpect(status().isForbidden());
 
         /*
@@ -318,30 +195,18 @@ class ProjectAuthorizationV2IntegrationTest {
          */
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/projects/{projectId}/members",
-                                tenantId,
-                                allowedProject.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}" + "/projects/{projectId}/members",
+                                        tenantId,
+                                        allowedProject.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/projects/{projectId}/members",
-                                tenantId,
-                                deniedProject.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}" + "/projects/{projectId}/members",
+                                        tenantId,
+                                        deniedProject.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isForbidden());
 
         /*
@@ -349,18 +214,11 @@ class ProjectAuthorizationV2IntegrationTest {
          */
         mockMvc.perform(
                         post(
-                                "/api/tenants/{tenantId}"
-                                        + "/projects/{projectId}/tasks",
-                                tenantId,
-                                allowedProject.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
+                                        "/api/tenants/{tenantId}" + "/projects/{projectId}/tasks",
+                                        tenantId,
+                                        allowedProject.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken))
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
                                         {
@@ -371,29 +229,17 @@ class ProjectAuthorizationV2IntegrationTest {
                                           "dueAt": null,
                                           "assigneeUserId": null
                                         }
-                                        """
-                                )
-                )
+                                        """))
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.data.title")
-                                .value("Scoped task")
-                );
+                .andExpect(jsonPath("$.data.title").value("Scoped task"));
 
         mockMvc.perform(
                         post(
-                                "/api/tenants/{tenantId}"
-                                        + "/projects/{projectId}/tasks",
-                                tenantId,
-                                deniedProject.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
+                                        "/api/tenants/{tenantId}" + "/projects/{projectId}/tasks",
+                                        tenantId,
+                                        deniedProject.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken))
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
                                         {
@@ -403,143 +249,84 @@ class ProjectAuthorizationV2IntegrationTest {
                                           "dueAt": null,
                                           "assigneeUserId": null
                                         }
-                                        """
-                                )
-                )
+                                        """))
                 .andExpect(status().isForbidden());
 
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/projects/{projectId}/tasks",
-                                tenantId,
-                                allowedProject.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}" + "/projects/{projectId}/tasks",
+                                        tenantId,
+                                        allowedProject.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/projects/{projectId}/tasks",
-                                tenantId,
-                                deniedProject.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}" + "/projects/{projectId}/tasks",
+                                        tenantId,
+                                        deniedProject.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isForbidden());
     }
 
     private UUID getPermissionId(String code) {
         return permissionRepository
-                .findBySourceAndCode(
-                        AuthorizationPermissionSource.PLATFORM,
-                        code
-                )
+                .findBySourceAndCode(AuthorizationPermissionSource.PLATFORM, code)
                 .orElseThrow()
                 .getId();
     }
 
-    private Project createProject(
-            Tenant tenant,
-            AppUser createdBy,
-            String name
-    ) {
-        Project project = new Project(
-                tenant,
-                createdBy,
-                name,
-                "Project authorization V2 test"
-        );
+    private Project createProject(Tenant tenant, AppUser createdBy, String name) {
+        Project project = new Project(tenant, createdBy, name, "Project authorization V2 test");
 
-        return projectRepository
-                .saveAndFlush(project);
+        return projectRepository.saveAndFlush(project);
     }
 
-    private AppUser createUser(
-            Tenant tenant,
-            String fullName,
-            UserRole legacyRole
-    ) {
+    private AppUser createUser(Tenant tenant, String fullName, UserRole legacyRole) {
         String suffix = uniqueSuffix();
 
-        AppUser user = new AppUser(
-                tenant,
-                fullName,
-                "scoped.project."
-                        + suffix
-                        + "@example.test",
-                passwordEncoder.encode(PASSWORD),
-                legacyRole
-        );
+        AppUser user =
+                new AppUser(
+                        tenant,
+                        fullName,
+                        "scoped.project." + suffix + "@example.test",
+                        passwordEncoder.encode(PASSWORD),
+                        legacyRole);
 
-        return appUserRepository
-                .saveAndFlush(user);
+        return appUserRepository.saveAndFlush(user);
     }
 
     private TenantOnboardingResponse onboardTenant() {
         String suffix = uniqueSuffix();
 
-        return tenantOnboardingService
-                .onboardTenant(
-                        new TenantOnboardingRequest(
-                                "Project V2 Tenant",
-                                "project-v2-" + suffix,
-                                "Project V2 Administrator",
-                                "project.v2.admin."
-                                        + suffix
-                                        + "@example.test",
-                                PASSWORD
-                        )
-                );
+        return tenantOnboardingService.onboardTenant(
+                new TenantOnboardingRequest(
+                        "Project V2 Tenant",
+                        "project-v2-" + suffix,
+                        "Project V2 Administrator",
+                        "project.v2.admin." + suffix + "@example.test",
+                        PASSWORD));
     }
 
-    private String login(
-            UUID tenantId,
-            String email
-    ) throws Exception {
+    private String login(UUID tenantId, String email) throws Exception {
         MvcResult result =
                 mockMvc.perform(
-                                post(
-                                        "/api/tenants/{tenantId}"
-                                                + "/auth/login",
-                                        tenantId
-                                )
-                                        .contentType(
-                                                MediaType.APPLICATION_JSON
-                                        )
+                                post("/api/tenants/{tenantId}" + "/auth/login", tenantId)
+                                        .contentType(MediaType.APPLICATION_JSON)
                                         .content(
                                                 """
                                                 {
                                                   "email": "%s",
                                                   "password": "%s"
                                                 }
-                                                """.formatted(
-                                                        email,
-                                                        PASSWORD
-                                                )
-                                        )
-                        )
+                                                """
+                                                        .formatted(email, PASSWORD)))
                         .andExpect(status().isOk())
                         .andReturn();
 
-        JsonNode responseBody =
-                jsonMapper.readTree(
-                        result.getResponse()
-                                .getContentAsString()
-                );
+        JsonNode responseBody = jsonMapper.readTree(result.getResponse().getContentAsString());
 
-        return responseBody
-                .path("data")
-                .path("accessToken")
-                .asText();
+        return responseBody.path("data").path("accessToken").asText();
     }
 
     private String bearer(String token) {
@@ -547,8 +334,6 @@ class ProjectAuthorizationV2IntegrationTest {
     }
 
     private String uniqueSuffix() {
-        return UUID.randomUUID()
-                .toString()
-                .substring(0, 8);
+        return UUID.randomUUID().toString().substring(0, 8);
     }
 }

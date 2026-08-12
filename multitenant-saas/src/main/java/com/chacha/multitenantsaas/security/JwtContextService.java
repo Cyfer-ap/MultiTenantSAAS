@@ -2,10 +2,9 @@ package com.chacha.multitenantsaas.security;
 
 import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
+import java.util.UUID;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 public class JwtContextService {
@@ -25,13 +24,7 @@ public class JwtContextService {
 
             UserRole role = UserRole.valueOf(roleValue);
 
-            return new AuthenticatedUserContext(
-                    tenantId,
-                    userId,
-                    email,
-                    fullName,
-                    role
-            );
+            return new AuthenticatedUserContext(tenantId, userId, email, fullName, role);
 
         } catch (Exception exception) {
             throw new AuthenticationFailedException("Invalid token data");

@@ -4,8 +4,7 @@ public final class PaginationUtils {
 
     private static final int MAX_PAGE_SIZE = 100;
 
-    private PaginationUtils() {
-    }
+    private PaginationUtils() {}
 
     public static int validatePage(int page) {
         if (page < 0) {

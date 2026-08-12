@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.entity;
 
 import jakarta.persistence.*;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,29 +8,15 @@ import java.util.UUID;
 @Table(
         name = "project_members",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_project_member",
-                        columnNames = {
-                                "project_id",
-                                "user_id"
-                        }
-                )
+            @UniqueConstraint(
+                    name = "uk_project_member",
+                    columnNames = {"project_id", "user_id"})
         },
         indexes = {
-                @Index(
-                        name = "idx_project_member_project",
-                        columnList = "project_id"
-                ),
-                @Index(
-                        name = "idx_project_member_user",
-                        columnList = "user_id"
-                ),
-                @Index(
-                        name = "idx_project_member_project_role",
-                        columnList = "project_id,role"
-                )
-        }
-)
+            @Index(name = "idx_project_member_project", columnList = "project_id"),
+            @Index(name = "idx_project_member_user", columnList = "user_id"),
+            @Index(name = "idx_project_member_project_role", columnList = "project_id,role")
+        })
 public class ProjectMember {
 
     @Id
@@ -39,24 +24,15 @@ public class ProjectMember {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "project_id",
-            nullable = false
-    )
+    @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "user_id",
-            nullable = false
-    )
+    @JoinColumn(name = "user_id", nullable = false)
     private AppUser user;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "assigned_by_user_id",
-            nullable = false
-    )
+    @JoinColumn(name = "assigned_by_user_id", nullable = false)
     private AppUser assignedByUser;
 
     @Enumerated(EnumType.STRING)
@@ -69,15 +45,10 @@ public class ProjectMember {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    public ProjectMember() {
-    }
+    public ProjectMember() {}
 
     public ProjectMember(
-            Project project,
-            AppUser user,
-            AppUser assignedByUser,
-            ProjectMemberRole role
-    ) {
+            Project project, AppUser user, AppUser assignedByUser, ProjectMemberRole role) {
         this.project = project;
         this.user = user;
         this.assignedByUser = assignedByUser;

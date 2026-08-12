@@ -1,5 +1,9 @@
 package com.chacha.multitenantsaas.integration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import com.chacha.multitenantsaas.dto.OrganizationalUnitMoveRequest;
 import com.chacha.multitenantsaas.dto.OrganizationalUnitPathResponse;
 import com.chacha.multitenantsaas.dto.OrganizationalUnitResponse;
@@ -13,36 +17,26 @@ import com.chacha.multitenantsaas.exception.DuplicateResourceException;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import com.chacha.multitenantsaas.service.OrganizationHierarchyService;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
 class OrganizationHierarchyMutationIntegrationTest {
 
-    @Autowired
-    private TenantRepository tenantRepository;
+    @Autowired private TenantRepository tenantRepository;
 
-    @Autowired
-    private OrganizationHierarchyService
-            organizationHierarchyService;
+    @Autowired private OrganizationHierarchyService organizationHierarchyService;
 
     @Test
     void updatesUnitDetailsAndStatus() {
-        Tenant tenant = createTenant(
-                "update-unit"
-        );
+        Tenant tenant = createTenant("update-unit");
 
         OrganizationalUnit unit =
                 createUnit(
@@ -50,85 +44,48 @@ class OrganizationHierarchyMutationIntegrationTest {
                         null,
                         "Engineering",
                         "ENGINEERING",
-                        OrganizationalUnitType.DIVISION
-                );
+                        OrganizationalUnitType.DIVISION);
 
         OrganizationalUnitResponse updated =
-                organizationHierarchyService
-                        .updateUnit(
-                                tenant.getId(),
-                                unit.getId(),
-                                new OrganizationalUnitUpdateRequest(
-                                        "  Product Engineering  ",
-                                        " product_eng ",
-                                        OrganizationalUnitType.DEPARTMENT
-                                )
-                        );
+                organizationHierarchyService.updateUnit(
+                        tenant.getId(),
+                        unit.getId(),
+                        new OrganizationalUnitUpdateRequest(
+                                "  Product Engineering  ",
+                                " product_eng ",
+                                OrganizationalUnitType.DEPARTMENT));
 
-        assertEquals(
-                "Product Engineering",
-                updated.name()
-        );
+        assertEquals("Product Engineering", updated.name());
 
-        assertEquals(
-                "PRODUCT_ENG",
-                updated.code()
-        );
+        assertEquals("PRODUCT_ENG", updated.code());
 
-        assertEquals(
-                OrganizationalUnitType.DEPARTMENT,
-                updated.type()
-        );
+        assertEquals(OrganizationalUnitType.DEPARTMENT, updated.type());
 
-        assertEquals(
-                OrganizationalUnitStatus.ACTIVE,
-                updated.status()
-        );
+        assertEquals(OrganizationalUnitStatus.ACTIVE, updated.status());
 
         OrganizationalUnitResponse inactive =
-                organizationHierarchyService
-                        .updateUnitStatus(
-                                tenant.getId(),
-                                unit.getId(),
-                                new OrganizationalUnitStatusUpdateRequest(
-                                        OrganizationalUnitStatus.INACTIVE
-                                )
-                        );
+                organizationHierarchyService.updateUnitStatus(
+                        tenant.getId(),
+                        unit.getId(),
+                        new OrganizationalUnitStatusUpdateRequest(
+                                OrganizationalUnitStatus.INACTIVE));
 
-        assertEquals(
-                OrganizationalUnitStatus.INACTIVE,
-                inactive.status()
-        );
+        assertEquals(OrganizationalUnitStatus.INACTIVE, inactive.status());
 
         OrganizationalUnitResponse activeAgain =
-                organizationHierarchyService
-                        .updateUnitStatus(
-                                tenant.getId(),
-                                unit.getId(),
-                                new OrganizationalUnitStatusUpdateRequest(
-                                        OrganizationalUnitStatus.ACTIVE
-                                )
-                        );
+                organizationHierarchyService.updateUnitStatus(
+                        tenant.getId(),
+                        unit.getId(),
+                        new OrganizationalUnitStatusUpdateRequest(OrganizationalUnitStatus.ACTIVE));
 
-        assertEquals(
-                OrganizationalUnitStatus.ACTIVE,
-                activeAgain.status()
-        );
+        assertEquals(OrganizationalUnitStatus.ACTIVE, activeAgain.status());
     }
 
     @Test
     void rejectsDuplicateCodeDuringUpdate() {
-        Tenant tenant = createTenant(
-                "update-duplicate"
-        );
+        Tenant tenant = createTenant("update-duplicate");
 
-        createUnit(
-                tenant,
-                null,
-                "Engineering",
-                "ENGINEERING",
-                OrganizationalUnitType.DIVISION
-        );
+        createUnit(tenant, null, "Engineering", "ENGINEERING", OrganizationalUnitType.DIVISION);
 
         OrganizationalUnit operations =
                 createUnit(
@@ -136,30 +93,23 @@ class OrganizationHierarchyMutationIntegrationTest {
                         null,
                         "Operations",
                         "OPERATIONS",
-                        OrganizationalUnitType.DEPARTMENT
-                );
+                        OrganizationalUnitType.DEPARTMENT);
 
         assertThrows(
                 DuplicateResourceException.class,
                 () ->
-                        organizationHierarchyService
-                                .updateUnit(
-                                        tenant.getId(),
-                                        operations.getId(),
-                                        new OrganizationalUnitUpdateRequest(
-                                                "Operations Updated",
-                                                " engineering ",
-                                                OrganizationalUnitType.DEPARTMENT
-                                        )
-                                )
-        );
+                        organizationHierarchyService.updateUnit(
+                                tenant.getId(),
+                                operations.getId(),
+                                new OrganizationalUnitUpdateRequest(
+                                        "Operations Updated",
+                                        " engineering ",
+                                        OrganizationalUnitType.DEPARTMENT)));
     }
 
     @Test
     void movesEntireSubtreeAndRebuildsPaths() {
-        Tenant tenant = createTenant(
-                "move-subtree"
-        );
+        Tenant tenant = createTenant("move-subtree");
 
         OrganizationalUnit firstCompany =
                 createUnit(
@@ -167,8 +117,7 @@ class OrganizationHierarchyMutationIntegrationTest {
                         null,
                         "First Company",
                         "FIRST-COMPANY",
-                        OrganizationalUnitType.COMPANY
-                );
+                        OrganizationalUnitType.COMPANY);
 
         OrganizationalUnit engineering =
                 createUnit(
@@ -176,8 +125,7 @@ class OrganizationHierarchyMutationIntegrationTest {
                         firstCompany.getId(),
                         "Engineering",
                         "ENGINEERING",
-                        OrganizationalUnitType.DIVISION
-                );
+                        OrganizationalUnitType.DIVISION);
 
         OrganizationalUnit backend =
                 createUnit(
@@ -185,8 +133,7 @@ class OrganizationHierarchyMutationIntegrationTest {
                         engineering.getId(),
                         "Backend",
                         "BACKEND",
-                        OrganizationalUnitType.TEAM
-                );
+                        OrganizationalUnitType.TEAM);
 
         OrganizationalUnit apiTeam =
                 createUnit(
@@ -194,8 +141,7 @@ class OrganizationHierarchyMutationIntegrationTest {
                         backend.getId(),
                         "API Team",
                         "API-TEAM",
-                        OrganizationalUnitType.SUBTEAM
-                );
+                        OrganizationalUnitType.SUBTEAM);
 
         OrganizationalUnit secondCompany =
                 createUnit(
@@ -203,8 +149,7 @@ class OrganizationHierarchyMutationIntegrationTest {
                         null,
                         "Second Company",
                         "SECOND-COMPANY",
-                        OrganizationalUnitType.COMPANY
-                );
+                        OrganizationalUnitType.COMPANY);
 
         OrganizationalUnit operations =
                 createUnit(
@@ -212,31 +157,18 @@ class OrganizationHierarchyMutationIntegrationTest {
                         secondCompany.getId(),
                         "Operations",
                         "OPERATIONS",
-                        OrganizationalUnitType.DEPARTMENT
-                );
+                        OrganizationalUnitType.DEPARTMENT);
 
         OrganizationalUnitResponse moved =
-                organizationHierarchyService
-                        .moveUnit(
-                                tenant.getId(),
-                                engineering.getId(),
-                                new OrganizationalUnitMoveRequest(
-                                        operations.getId()
-                                )
-                        );
+                organizationHierarchyService.moveUnit(
+                        tenant.getId(),
+                        engineering.getId(),
+                        new OrganizationalUnitMoveRequest(operations.getId()));
 
-        assertEquals(
-                operations.getId(),
-                moved.parentUnitId()
-        );
+        assertEquals(operations.getId(), moved.parentUnitId());
 
-        List<OrganizationalUnitPathResponse>
-                apiAncestors =
-                organizationHierarchyService
-                        .getAncestors(
-                                tenant.getId(),
-                                apiTeam.getId()
-                        );
+        List<OrganizationalUnitPathResponse> apiAncestors =
+                organizationHierarchyService.getAncestors(tenant.getId(), apiTeam.getId());
 
         assertEquals(
                 List.of(
@@ -244,86 +176,40 @@ class OrganizationHierarchyMutationIntegrationTest {
                         backend.getId(),
                         engineering.getId(),
                         operations.getId(),
-                        secondCompany.getId()
-                ),
-                apiAncestors.stream()
-                        .map(
-                                OrganizationalUnitPathResponse::id
-                        )
-                        .toList()
-        );
+                        secondCompany.getId()),
+                apiAncestors.stream().map(OrganizationalUnitPathResponse::id).toList());
 
         assertEquals(
                 List.of(0, 1, 2, 3, 4),
-                apiAncestors.stream()
-                        .map(
-                                OrganizationalUnitPathResponse::depth
-                        )
-                        .toList()
-        );
+                apiAncestors.stream().map(OrganizationalUnitPathResponse::depth).toList());
 
-        List<OrganizationalUnitPathResponse>
-                firstCompanyDescendants =
-                organizationHierarchyService
-                        .getDescendants(
-                                tenant.getId(),
-                                firstCompany.getId()
-                        );
+        List<OrganizationalUnitPathResponse> firstCompanyDescendants =
+                organizationHierarchyService.getDescendants(tenant.getId(), firstCompany.getId());
 
         assertEquals(
                 List.of(firstCompany.getId()),
-                firstCompanyDescendants.stream()
-                        .map(
-                                OrganizationalUnitPathResponse::id
-                        )
-                        .toList()
-        );
+                firstCompanyDescendants.stream().map(OrganizationalUnitPathResponse::id).toList());
 
-        List<OrganizationalUnitPathResponse>
-                engineeringDescendants =
-                organizationHierarchyService
-                        .getDescendants(
-                                tenant.getId(),
-                                engineering.getId()
-                        );
+        List<OrganizationalUnitPathResponse> engineeringDescendants =
+                organizationHierarchyService.getDescendants(tenant.getId(), engineering.getId());
 
         assertEquals(
-                List.of(
-                        engineering.getId(),
-                        backend.getId(),
-                        apiTeam.getId()
-                ),
-                engineeringDescendants.stream()
-                        .map(
-                                OrganizationalUnitPathResponse::id
-                        )
-                        .toList()
-        );
+                List.of(engineering.getId(), backend.getId(), apiTeam.getId()),
+                engineeringDescendants.stream().map(OrganizationalUnitPathResponse::id).toList());
 
         assertEquals(
                 List.of(0, 1, 2),
                 engineeringDescendants.stream()
-                        .map(
-                                OrganizationalUnitPathResponse::depth
-                        )
-                        .toList()
-        );
+                        .map(OrganizationalUnitPathResponse::depth)
+                        .toList());
     }
 
     @Test
     void movesNestedUnitToRootLevel() {
-        Tenant tenant = createTenant(
-                "move-root"
-        );
+        Tenant tenant = createTenant("move-root");
 
         OrganizationalUnit company =
-                createUnit(
-                        tenant,
-                        null,
-                        "Company",
-                        "COMPANY",
-                        OrganizationalUnitType.COMPANY
-                );
+                createUnit(tenant, null, "Company", "COMPANY", OrganizationalUnitType.COMPANY);
 
         OrganizationalUnit engineering =
                 createUnit(
@@ -331,8 +217,7 @@ class OrganizationHierarchyMutationIntegrationTest {
                         company.getId(),
                         "Engineering",
                         "ENGINEERING",
-                        OrganizationalUnitType.DIVISION
-                );
+                        OrganizationalUnitType.DIVISION);
 
         OrganizationalUnit backend =
                 createUnit(
@@ -340,81 +225,45 @@ class OrganizationHierarchyMutationIntegrationTest {
                         engineering.getId(),
                         "Backend",
                         "BACKEND",
-                        OrganizationalUnitType.TEAM
-                );
+                        OrganizationalUnitType.TEAM);
 
         OrganizationalUnitResponse moved =
-                organizationHierarchyService
-                        .moveUnit(
-                                tenant.getId(),
-                                engineering.getId(),
-                                new OrganizationalUnitMoveRequest(
-                                        null
-                                )
-                        );
+                organizationHierarchyService.moveUnit(
+                        tenant.getId(),
+                        engineering.getId(),
+                        new OrganizationalUnitMoveRequest(null));
 
         assertNull(moved.parentUnitId());
 
         assertEquals(
                 List.of(engineering.getId()),
                 organizationHierarchyService
-                        .getAncestors(
-                                tenant.getId(),
-                                engineering.getId()
-                        )
+                        .getAncestors(tenant.getId(), engineering.getId())
                         .stream()
-                        .map(
-                                OrganizationalUnitPathResponse::id
-                        )
-                        .toList()
-        );
+                        .map(OrganizationalUnitPathResponse::id)
+                        .toList());
 
         assertEquals(
-                List.of(
-                        backend.getId(),
-                        engineering.getId()
-                ),
-                organizationHierarchyService
-                        .getAncestors(
-                                tenant.getId(),
-                                backend.getId()
-                        )
-                        .stream()
-                        .map(
-                                OrganizationalUnitPathResponse::id
-                        )
-                        .toList()
-        );
+                List.of(backend.getId(), engineering.getId()),
+                organizationHierarchyService.getAncestors(tenant.getId(), backend.getId()).stream()
+                        .map(OrganizationalUnitPathResponse::id)
+                        .toList());
 
         assertEquals(
                 List.of(company.getId()),
                 organizationHierarchyService
-                        .getDescendants(
-                                tenant.getId(),
-                                company.getId()
-                        )
+                        .getDescendants(tenant.getId(), company.getId())
                         .stream()
-                        .map(
-                                OrganizationalUnitPathResponse::id
-                        )
-                        .toList()
-        );
+                        .map(OrganizationalUnitPathResponse::id)
+                        .toList());
     }
 
     @Test
     void rejectsSelfParentingAndDescendantCycle() {
-        Tenant tenant = createTenant(
-                "move-cycle"
-        );
+        Tenant tenant = createTenant("move-cycle");
 
         OrganizationalUnit company =
-                createUnit(
-                        tenant,
-                        null,
-                        "Company",
-                        "COMPANY",
-                        OrganizationalUnitType.COMPANY
-                );
+                createUnit(tenant, null, "Company", "COMPANY", OrganizationalUnitType.COMPANY);
 
         OrganizationalUnit engineering =
                 createUnit(
@@ -422,8 +271,7 @@ class OrganizationHierarchyMutationIntegrationTest {
                         company.getId(),
                         "Engineering",
                         "ENGINEERING",
-                        OrganizationalUnitType.DIVISION
-                );
+                        OrganizationalUnitType.DIVISION);
 
         OrganizationalUnit backend =
                 createUnit(
@@ -431,45 +279,30 @@ class OrganizationHierarchyMutationIntegrationTest {
                         engineering.getId(),
                         "Backend",
                         "BACKEND",
-                        OrganizationalUnitType.TEAM
-                );
+                        OrganizationalUnitType.TEAM);
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
-                        organizationHierarchyService
-                                .moveUnit(
-                                        tenant.getId(),
-                                        engineering.getId(),
-                                        new OrganizationalUnitMoveRequest(
-                                                engineering.getId()
-                                        )
-                                )
-        );
+                        organizationHierarchyService.moveUnit(
+                                tenant.getId(),
+                                engineering.getId(),
+                                new OrganizationalUnitMoveRequest(engineering.getId())));
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
-                        organizationHierarchyService
-                                .moveUnit(
-                                        tenant.getId(),
-                                        company.getId(),
-                                        new OrganizationalUnitMoveRequest(
-                                                backend.getId()
-                                        )
-                                )
-        );
+                        organizationHierarchyService.moveUnit(
+                                tenant.getId(),
+                                company.getId(),
+                                new OrganizationalUnitMoveRequest(backend.getId())));
     }
 
     @Test
     void rejectsInactiveAndCrossTenantDestinationParents() {
-        Tenant firstTenant = createTenant(
-                "move-first"
-        );
+        Tenant firstTenant = createTenant("move-first");
 
-        Tenant secondTenant = createTenant(
-                "move-second"
-        );
+        Tenant secondTenant = createTenant("move-second");
 
         OrganizationalUnit movingUnit =
                 createUnit(
@@ -477,8 +310,7 @@ class OrganizationHierarchyMutationIntegrationTest {
                         null,
                         "Moving Unit",
                         "MOVING-UNIT",
-                        OrganizationalUnitType.DIVISION
-                );
+                        OrganizationalUnitType.DIVISION);
 
         OrganizationalUnit inactiveParent =
                 createUnit(
@@ -486,30 +318,20 @@ class OrganizationHierarchyMutationIntegrationTest {
                         null,
                         "Inactive Parent",
                         "INACTIVE-PARENT",
-                        OrganizationalUnitType.DEPARTMENT
-                );
+                        OrganizationalUnitType.DEPARTMENT);
 
-        organizationHierarchyService
-                .updateUnitStatus(
-                        firstTenant.getId(),
-                        inactiveParent.getId(),
-                        new OrganizationalUnitStatusUpdateRequest(
-                                OrganizationalUnitStatus.INACTIVE
-                        )
-                );
+        organizationHierarchyService.updateUnitStatus(
+                firstTenant.getId(),
+                inactiveParent.getId(),
+                new OrganizationalUnitStatusUpdateRequest(OrganizationalUnitStatus.INACTIVE));
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
-                        organizationHierarchyService
-                                .moveUnit(
-                                        firstTenant.getId(),
-                                        movingUnit.getId(),
-                                        new OrganizationalUnitMoveRequest(
-                                                inactiveParent.getId()
-                                        )
-                                )
-        );
+                        organizationHierarchyService.moveUnit(
+                                firstTenant.getId(),
+                                movingUnit.getId(),
+                                new OrganizationalUnitMoveRequest(inactiveParent.getId())));
 
         OrganizationalUnit foreignParent =
                 createUnit(
@@ -517,21 +339,15 @@ class OrganizationHierarchyMutationIntegrationTest {
                         null,
                         "Foreign Parent",
                         "FOREIGN-PARENT",
-                        OrganizationalUnitType.DIVISION
-                );
+                        OrganizationalUnitType.DIVISION);
 
         assertThrows(
                 ResourceNotFoundException.class,
                 () ->
-                        organizationHierarchyService
-                                .moveUnit(
-                                        firstTenant.getId(),
-                                        movingUnit.getId(),
-                                        new OrganizationalUnitMoveRequest(
-                                                foreignParent.getId()
-                                        )
-                                )
-        );
+                        organizationHierarchyService.moveUnit(
+                                firstTenant.getId(),
+                                movingUnit.getId(),
+                                new OrganizationalUnitMoveRequest(foreignParent.getId())));
     }
 
     private OrganizationalUnit createUnit(
@@ -539,29 +355,16 @@ class OrganizationHierarchyMutationIntegrationTest {
             UUID parentUnitId,
             String name,
             String code,
-            OrganizationalUnitType type
-    ) {
-        return organizationHierarchyService
-                .createUnit(
-                        tenant.getId(),
-                        parentUnitId,
-                        name,
-                        code,
-                        type
-                );
+            OrganizationalUnitType type) {
+        return organizationHierarchyService.createUnit(
+                tenant.getId(), parentUnitId, name, code, type);
     }
 
     private Tenant createTenant(String prefix) {
-        String suffix = UUID.randomUUID()
-                .toString()
-                .substring(0, 8);
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
 
-        Tenant tenant = new Tenant(
-                prefix + " Tenant",
-                prefix + "-" + suffix
-        );
+        Tenant tenant = new Tenant(prefix + " Tenant", prefix + "-" + suffix);
 
-        return tenantRepository
-                .saveAndFlush(tenant);
+        return tenantRepository.saveAndFlush(tenant);
     }
 }

@@ -15,7 +15,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -23,25 +22,14 @@ import java.util.UUID;
 @Table(
         name = "authorization_roles",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_authorization_role_tenant_code",
-                        columnNames = {
-                                "tenant_id",
-                                "code"
-                        }
-                )
+            @UniqueConstraint(
+                    name = "uk_authorization_role_tenant_code",
+                    columnNames = {"tenant_id", "code"})
         },
         indexes = {
-                @Index(
-                        name = "idx_authorization_role_tenant_status",
-                        columnList = "tenant_id,status"
-                ),
-                @Index(
-                        name = "idx_authorization_role_tenant_source",
-                        columnList = "tenant_id,source"
-                )
-        }
-)
+            @Index(name = "idx_authorization_role_tenant_status", columnList = "tenant_id,status"),
+            @Index(name = "idx_authorization_role_tenant_source", columnList = "tenant_id,source")
+        })
 public class AuthorizationRole {
 
     @Id
@@ -49,68 +37,40 @@ public class AuthorizationRole {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "tenant_id",
-            nullable = false,
-            updatable = false
-    )
+    @JoinColumn(name = "tenant_id", nullable = false, updatable = false)
     private Tenant tenant;
 
-    @Column(
-            nullable = false,
-            length = 60,
-            updatable = false
-    )
+    @Column(nullable = false, length = 60, updatable = false)
     private String code;
 
-    @Column(
-            nullable = false,
-            length = 150
-    )
+    @Column(nullable = false, length = 150)
     private String name;
 
     @Column(length = 500)
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            nullable = false,
-            length = 30,
-            updatable = false
-    )
+    @Column(nullable = false, length = 30, updatable = false)
     private AuthorizationRoleSource source;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            nullable = false,
-            length = 30
-    )
-    private AuthorizationRoleStatus status =
-            AuthorizationRoleStatus.ACTIVE;
+    @Column(nullable = false, length = 30)
+    private AuthorizationRoleStatus status = AuthorizationRoleStatus.ACTIVE;
 
-    @Column(
-            name = "created_at",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(
-            name = "updated_at",
-            nullable = false
-    )
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    public AuthorizationRole() {
-    }
+    public AuthorizationRole() {}
 
     public AuthorizationRole(
             Tenant tenant,
             String code,
             String name,
             String description,
-            AuthorizationRoleSource source
-    ) {
+            AuthorizationRoleSource source) {
         this.tenant = tenant;
         this.code = code;
         this.name = name;
@@ -184,9 +144,7 @@ public class AuthorizationRole {
         this.description = description;
     }
 
-    public void setStatus(
-            AuthorizationRoleStatus status
-    ) {
+    public void setStatus(AuthorizationRoleStatus status) {
         this.status = status;
     }
 }

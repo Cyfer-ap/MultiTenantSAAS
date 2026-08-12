@@ -30,75 +30,44 @@ public class TenantOnboardingService {
 
     private final AuditLogService auditLogService;
 
-    private final CurrentSystemAdminService
-            currentSystemAdminService;
+    private final CurrentSystemAdminService currentSystemAdminService;
 
-    private final AuthorizationProvisioningService
-            authorizationProvisioningService;
+    private final AuthorizationProvisioningService authorizationProvisioningService;
 
     public TenantOnboardingService(
             TenantRepository tenantRepository,
             AppUserRepository appUserRepository,
             PasswordEncoder passwordEncoder,
             AuditLogService auditLogService,
-            CurrentSystemAdminService
-                    currentSystemAdminService,
-            AuthorizationProvisioningService
-                    authorizationProvisioningService
-    ) {
-        this.tenantRepository =
-                tenantRepository;
+            CurrentSystemAdminService currentSystemAdminService,
+            AuthorizationProvisioningService authorizationProvisioningService) {
+        this.tenantRepository = tenantRepository;
 
-        this.appUserRepository =
-                appUserRepository;
+        this.appUserRepository = appUserRepository;
 
-        this.passwordEncoder =
-                passwordEncoder;
+        this.passwordEncoder = passwordEncoder;
 
-        this.auditLogService =
-                auditLogService;
+        this.auditLogService = auditLogService;
 
-        this.currentSystemAdminService =
-                currentSystemAdminService;
+        this.currentSystemAdminService = currentSystemAdminService;
 
-        this.authorizationProvisioningService =
-                authorizationProvisioningService;
+        this.authorizationProvisioningService = authorizationProvisioningService;
     }
 
     @Transactional
-    public TenantOnboardingResponse onboardTenant(
-            TenantOnboardingRequest request
-    ) {
-        String normalizedSlug =
-                normalizeSlug(
-                        request.tenantSlug()
-                );
+    public TenantOnboardingResponse onboardTenant(TenantOnboardingRequest request) {
+        String normalizedSlug = normalizeSlug(request.tenantSlug());
 
-        String normalizedEmail =
-                normalizeEmail(
-                        request.adminEmail()
-                );
+        String normalizedEmail = normalizeEmail(request.adminEmail());
 
         validateUniqueSlug(normalizedSlug);
 
-        Tenant savedTenant =
-                createTenant(
-                        request,
-                        normalizedSlug
-                );
+        Tenant savedTenant = createTenant(request, normalizedSlug);
 
-        AppUser savedAdminUser =
-                createInitialTenantAdmin(
-                        request,
-                        savedTenant,
-                        normalizedEmail
-                );
+        AppUser savedAdminUser = createInitialTenantAdmin(request, savedTenant, normalizedEmail);
 
-        authorizationProvisioningService
-                .provisionInitialTenantAdministrator(
-                        savedTenant.getId(),
-                        savedAdminUser.getId()
-                );
+        authorizationProvisioningService.provisionInitialTenantAdministrator(
+                savedTenant.getId(), savedAdminUser.getId());
 
         auditLogService.recordSelfSuccess(
                 savedTenant,
@@ -108,56 +77,31 @@ public class TenantOnboardingService {
                         + "initial tenant administrator: "
                         + normalizedEmail
                         + "; Authorization V2 roles "
-                        + "initialized; ADMIN role assigned"
-        );
+                        + "initialized; ADMIN role assigned");
 
         return new TenantOnboardingResponse(
                 mapTenantToResponse(savedTenant),
                 mapUserToResponse(savedAdminUser),
-                "Tenant onboarded successfully"
-        );
+                "Tenant onboarded successfully");
     }
 
     @Transactional
-    public TenantOnboardingResponse
-    onboardTenantBySystemAdmin(
-            TenantOnboardingRequest request,
-            Jwt jwt
-    ) {
-        SystemAdmin actorSystemAdmin =
-                currentSystemAdminService
-                        .getRequiredActiveSystemAdmin(jwt);
+    public TenantOnboardingResponse onboardTenantBySystemAdmin(
+            TenantOnboardingRequest request, Jwt jwt) {
+        SystemAdmin actorSystemAdmin = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
 
-        String normalizedSlug =
-                normalizeSlug(
-                        request.tenantSlug()
-                );
+        String normalizedSlug = normalizeSlug(request.tenantSlug());
 
-        String normalizedEmail =
-                normalizeEmail(
-                        request.adminEmail()
-                );
+        String normalizedEmail = normalizeEmail(request.adminEmail());
 
         validateUniqueSlug(normalizedSlug);
 
-        Tenant savedTenant =
-                createTenant(
-                        request,
-                        normalizedSlug
-                );
+        Tenant savedTenant = createTenant(request, normalizedSlug);
 
-        AppUser savedAdminUser =
-                createInitialTenantAdmin(
-                        request,
-                        savedTenant,
-                        normalizedEmail
-                );
+        AppUser savedAdminUser = createInitialTenantAdmin(request, savedTenant, normalizedEmail);
 
-        authorizationProvisioningService
-                .provisionInitialTenantAdministrator(
-                        savedTenant.getId(),
-                        savedAdminUser.getId()
-                );
+        authorizationProvisioningService.provisionInitialTenantAdministrator(
+                savedTenant.getId(), savedAdminUser.getId());
 
         auditLogService.recordSystemAdminSuccess(
                 savedTenant,
@@ -169,118 +113,80 @@ public class TenantOnboardingService {
                         + "administrator: "
                         + normalizedEmail
                         + "; Authorization V2 roles "
-                        + "initialized; ADMIN role assigned"
-        );
+                        + "initialized; ADMIN role assigned");
 
         return new TenantOnboardingResponse(
                 mapTenantToResponse(savedTenant),
                 mapUserToResponse(savedAdminUser),
-                "Tenant onboarded successfully "
-                        + "by system admin"
-        );
+                "Tenant onboarded successfully " + "by system admin");
     }
 
-    private void validateUniqueSlug(
-            String normalizedSlug
-    ) {
-        if (tenantRepository.existsBySlug(
-                normalizedSlug
-        )) {
+    private void validateUniqueSlug(String normalizedSlug) {
+        if (tenantRepository.existsBySlug(normalizedSlug)) {
             throw new DuplicateResourceException(
-                    "Tenant already exists with slug: "
-                            + normalizedSlug
-            );
+                    "Tenant already exists with slug: " + normalizedSlug);
         }
     }
 
-    private Tenant createTenant(
-            TenantOnboardingRequest request,
-            String normalizedSlug
-    ) {
+    private Tenant createTenant(TenantOnboardingRequest request, String normalizedSlug) {
         Tenant tenant = new Tenant();
 
-        tenant.setName(
-                request.tenantName().trim()
-        );
+        tenant.setName(request.tenantName().trim());
 
         tenant.setSlug(normalizedSlug);
 
-        tenant.setStatus(
-                TenantStatus.ACTIVE
-        );
+        tenant.setStatus(TenantStatus.ACTIVE);
 
         /*
          * Flush guarantees that the tenant UUID is available
          * to the role-provisioning services immediately.
          * It still remains inside the onboarding transaction.
          */
-        return tenantRepository
-                .saveAndFlush(tenant);
+        return tenantRepository.saveAndFlush(tenant);
     }
 
     private AppUser createInitialTenantAdmin(
-            TenantOnboardingRequest request,
-            Tenant savedTenant,
-            String normalizedEmail
-    ) {
+            TenantOnboardingRequest request, Tenant savedTenant, String normalizedEmail) {
         AppUser adminUser = new AppUser();
 
         adminUser.setTenant(savedTenant);
 
-        adminUser.setFullName(
-                request.adminFullName().trim()
-        );
+        adminUser.setFullName(request.adminFullName().trim());
 
         adminUser.setEmail(normalizedEmail);
 
-        adminUser.setPasswordHash(
-                passwordEncoder.encode(
-                        request.adminPassword()
-                )
-        );
+        adminUser.setPasswordHash(passwordEncoder.encode(request.adminPassword()));
 
-        adminUser.setRole(
-                UserRole.TENANT_ADMIN
-        );
+        adminUser.setRole(UserRole.TENANT_ADMIN);
 
-        adminUser.setStatus(
-                UserStatus.ACTIVE
-        );
+        adminUser.setStatus(UserStatus.ACTIVE);
 
         /*
          * The user UUID must exist before creating the V2
          * user-role assignment.
          */
-        return appUserRepository
-                .saveAndFlush(adminUser);
+        return appUserRepository.saveAndFlush(adminUser);
     }
 
     private String normalizeSlug(String slug) {
-        return slug.trim()
-                .toLowerCase();
+        return slug.trim().toLowerCase();
     }
 
     private String normalizeEmail(String email) {
-        return email.trim()
-                .toLowerCase();
+        return email.trim().toLowerCase();
     }
 
-    private TenantResponse mapTenantToResponse(
-            Tenant tenant
-    ) {
+    private TenantResponse mapTenantToResponse(Tenant tenant) {
         return new TenantResponse(
                 tenant.getId(),
                 tenant.getName(),
                 tenant.getSlug(),
                 tenant.getStatus(),
                 tenant.getCreatedAt(),
-                tenant.getUpdatedAt()
-        );
+                tenant.getUpdatedAt());
     }
 
-    private AppUserResponse mapUserToResponse(
-            AppUser user
-    ) {
+    private AppUserResponse mapUserToResponse(AppUser user) {
         return new AppUserResponse(
                 user.getId(),
                 user.getTenant().getId(),
@@ -289,7 +195,6 @@ public class TenantOnboardingService {
                 user.getRole(),
                 user.getStatus(),
                 user.getCreatedAt(),
-                user.getUpdatedAt()
-        );
+                user.getUpdatedAt());
     }
 }

@@ -5,11 +5,10 @@ import com.chacha.multitenantsaas.entity.SystemAdmin;
 import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.SystemAdminRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 @Service
 public class LoginAttemptService {
@@ -23,8 +22,7 @@ public class LoginAttemptService {
             AppUserRepository appUserRepository,
             SystemAdminRepository systemAdminRepository,
             @Value("${app.security.max-failed-login-attempts:5}") int maxFailedAttempts,
-            @Value("${app.security.account-lock-minutes:15}") long lockMinutes
-    ) {
+            @Value("${app.security.account-lock-minutes:15}") long lockMinutes) {
         this.appUserRepository = appUserRepository;
         this.systemAdminRepository = systemAdminRepository;
         this.maxFailedAttempts = maxFailedAttempts;
@@ -38,8 +36,7 @@ public class LoginAttemptService {
 
         if (user.getLockedUntil().isAfter(Instant.now())) {
             throw new AuthenticationFailedException(
-                    "Account is temporarily locked. Please try again later."
-            );
+                    "Account is temporarily locked. Please try again later.");
         }
 
         user.setLockedUntil(null);
@@ -54,8 +51,7 @@ public class LoginAttemptService {
 
         if (systemAdmin.getLockedUntil().isAfter(Instant.now())) {
             throw new AuthenticationFailedException(
-                    "System admin account is temporarily locked. Please try again later."
-            );
+                    "System admin account is temporarily locked. Please try again later.");
         }
 
         systemAdmin.setLockedUntil(null);
@@ -69,9 +65,7 @@ public class LoginAttemptService {
         user.setFailedLoginAttempts(failedAttempts);
 
         if (failedAttempts >= maxFailedAttempts) {
-            user.setLockedUntil(
-                    Instant.now().plus(lockMinutes, ChronoUnit.MINUTES)
-            );
+            user.setLockedUntil(Instant.now().plus(lockMinutes, ChronoUnit.MINUTES));
         }
 
         appUserRepository.save(user);
@@ -83,9 +77,7 @@ public class LoginAttemptService {
         systemAdmin.setFailedLoginAttempts(failedAttempts);
 
         if (failedAttempts >= maxFailedAttempts) {
-            systemAdmin.setLockedUntil(
-                    Instant.now().plus(lockMinutes, ChronoUnit.MINUTES)
-            );
+            systemAdmin.setLockedUntil(Instant.now().plus(lockMinutes, ChronoUnit.MINUTES));
         }
 
         systemAdminRepository.save(systemAdmin);
@@ -118,6 +110,4 @@ public class LoginAttemptService {
 
         systemAdminRepository.save(systemAdmin);
     }
-
-
 }

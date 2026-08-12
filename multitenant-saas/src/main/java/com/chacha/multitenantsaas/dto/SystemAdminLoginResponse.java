@@ -10,6 +10,4 @@ public record SystemAdminLoginResponse(
         String accessToken,
         String tokenType,
         long expiresInSeconds,
-        String message
-) {
-}
+        String message) {}

@@ -6,23 +6,17 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class PublicAuthRateLimitWebMvcConfiguration
-        implements WebMvcConfigurer {
+public class PublicAuthRateLimitWebMvcConfiguration implements WebMvcConfigurer {
 
-    private final PublicAuthRateLimitInterceptor
-            publicAuthRateLimitInterceptor;
+    private final PublicAuthRateLimitInterceptor publicAuthRateLimitInterceptor;
 
     public PublicAuthRateLimitWebMvcConfiguration(
-            PublicAuthRateLimitInterceptor
-                    publicAuthRateLimitInterceptor
-    ) {
-        this.publicAuthRateLimitInterceptor =
-                publicAuthRateLimitInterceptor;
+            PublicAuthRateLimitInterceptor publicAuthRateLimitInterceptor) {
+        this.publicAuthRateLimitInterceptor = publicAuthRateLimitInterceptor;
     }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(publicAuthRateLimitInterceptor)
-                .addPathPatterns("/api/**");
+        registry.addInterceptor(publicAuthRateLimitInterceptor).addPathPatterns("/api/**");
     }
 }

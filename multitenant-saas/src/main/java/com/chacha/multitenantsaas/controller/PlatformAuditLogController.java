@@ -19,51 +19,32 @@ public class PlatformAuditLogController {
 
     private final PlatformAuditLogService platformAuditLogService;
 
-    public PlatformAuditLogController(
-            PlatformAuditLogService platformAuditLogService
-    ) {
+    public PlatformAuditLogController(PlatformAuditLogService platformAuditLogService) {
         this.platformAuditLogService = platformAuditLogService;
     }
 
     @PreAuthorize("@systemSecurity.isSystemAdmin()")
     @GetMapping
-    public ResponseEntity<
-            ApiResponse<PageResponse<PlatformAuditLogResponse>>
-            > getPlatformAuditLogs(
+    public ResponseEntity<ApiResponse<PageResponse<PlatformAuditLogResponse>>> getPlatformAuditLogs(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
             @RequestParam(required = false) PlatformAuditAction action,
             @RequestParam(required = false) Boolean success,
-            @RequestParam(required = false) String search
-    ) {
-        Pageable pageable = PageRequest.of(
-                PaginationUtils.validatePage(page),
-                PaginationUtils.validateSize(size),
-                SortingUtils.getDirection(sortDir),
-                SortingUtils.validateSortBy(
-                        sortBy,
-                        "createdAt",
-                        "createdAt",
-                        "action",
-                        "success"
-                )
-        );
+            @RequestParam(required = false) String search) {
+        Pageable pageable =
+                PageRequest.of(
+                        PaginationUtils.validatePage(page),
+                        PaginationUtils.validateSize(size),
+                        SortingUtils.getDirection(sortDir),
+                        SortingUtils.validateSortBy(
+                                sortBy, "createdAt", "createdAt", "action", "success"));
 
         PageResponse<PlatformAuditLogResponse> response =
-                platformAuditLogService.getPlatformAuditLogs(
-                        action,
-                        success,
-                        search,
-                        pageable
-                );
+                platformAuditLogService.getPlatformAuditLogs(action, success, search, pageable);
 
         return ResponseEntity.ok(
-                ApiResponse.success(
-                        "Platform audit logs fetched successfully",
-                        response
-                )
-        );
+                ApiResponse.success("Platform audit logs fetched successfully", response));
     }
 }

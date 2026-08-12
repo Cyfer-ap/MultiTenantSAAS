@@ -1,5 +1,9 @@
 package com.chacha.multitenantsaas.integration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.OrganizationAssignmentStatus;
 import com.chacha.multitenantsaas.entity.OrganizationalUnit;
@@ -11,97 +15,61 @@ import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import com.chacha.multitenantsaas.repository.UserOrganizationAssignmentRepository;
 import com.chacha.multitenantsaas.service.OrganizationHierarchyService;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
 class OrganizationAssignmentPersistenceIntegrationTest {
 
-    @Autowired
-    private TenantRepository tenantRepository;
+    @Autowired private TenantRepository tenantRepository;
 
-    @Autowired
-    private AppUserRepository appUserRepository;
+    @Autowired private AppUserRepository appUserRepository;
 
-    @Autowired
-    private UserOrganizationAssignmentRepository
-            userOrganizationAssignmentRepository;
+    @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
-    @Autowired
-    private OrganizationHierarchyService
-            organizationHierarchyService;
+    @Autowired private OrganizationHierarchyService organizationHierarchyService;
 
     @Test
     void storesPrimarySecondaryAndReportingAssignments() {
-        Tenant tenant = createTenant(
-                "assignment-persistence"
-        );
+        Tenant tenant = createTenant("assignment-persistence");
 
-        AppUser administrator = createUser(
-                tenant,
-                "Tenant Administrator",
-                UserRole.TENANT_ADMIN
-        );
+        AppUser administrator = createUser(tenant, "Tenant Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser manager = createUser(
-                tenant,
-                "Engineering Manager",
-                UserRole.TENANT_MANAGER
-        );
+        AppUser manager = createUser(tenant, "Engineering Manager", UserRole.TENANT_MANAGER);
 
-        AppUser member = createUser(
-                tenant,
-                "Backend Engineer",
-                UserRole.TENANT_USER
-        );
+        AppUser member = createUser(tenant, "Backend Engineer", UserRole.TENANT_USER);
 
-        OrganizationalUnit company = createUnit(
-                tenant,
-                null,
-                "Company",
-                "COMPANY",
-                OrganizationalUnitType.COMPANY
-        );
+        OrganizationalUnit company =
+                createUnit(tenant, null, "Company", "COMPANY", OrganizationalUnitType.COMPANY);
 
-        OrganizationalUnit engineering = createUnit(
-                tenant,
-                company.getId(),
-                "Engineering",
-                "ENGINEERING",
-                OrganizationalUnitType.DIVISION
-        );
+        OrganizationalUnit engineering =
+                createUnit(
+                        tenant,
+                        company.getId(),
+                        "Engineering",
+                        "ENGINEERING",
+                        OrganizationalUnitType.DIVISION);
 
-        OrganizationalUnit backend = createUnit(
-                tenant,
-                engineering.getId(),
-                "Backend",
-                "BACKEND",
-                OrganizationalUnitType.TEAM
-        );
+        OrganizationalUnit backend =
+                createUnit(
+                        tenant,
+                        engineering.getId(),
+                        "Backend",
+                        "BACKEND",
+                        OrganizationalUnitType.TEAM);
 
-        Instant validFrom =
-                Instant.now()
-                        .minus(
-                                1,
-                                ChronoUnit.DAYS
-                        );
+        Instant validFrom = Instant.now().minus(1, ChronoUnit.DAYS);
 
-        UserOrganizationAssignment
-                managerAssignment =
+        UserOrganizationAssignment managerAssignment =
                 new UserOrganizationAssignment(
                         tenant,
                         manager,
@@ -111,17 +79,11 @@ class OrganizationAssignmentPersistenceIntegrationTest {
                         true,
                         validFrom,
                         null,
-                        administrator
-                );
+                        administrator);
 
-        managerAssignment =
-                userOrganizationAssignmentRepository
-                        .saveAndFlush(
-                                managerAssignment
-                        );
+        managerAssignment = userOrganizationAssignmentRepository.saveAndFlush(managerAssignment);
 
-        UserOrganizationAssignment
-                memberPrimaryAssignment =
+        UserOrganizationAssignment memberPrimaryAssignment =
                 new UserOrganizationAssignment(
                         tenant,
                         member,
@@ -131,11 +93,9 @@ class OrganizationAssignmentPersistenceIntegrationTest {
                         true,
                         validFrom,
                         null,
-                        administrator
-                );
+                        administrator);
 
-        UserOrganizationAssignment
-                memberSecondaryAssignment =
+        UserOrganizationAssignment memberSecondaryAssignment =
                 new UserOrganizationAssignment(
                         tenant,
                         member,
@@ -145,153 +105,89 @@ class OrganizationAssignmentPersistenceIntegrationTest {
                         false,
                         validFrom,
                         null,
-                        administrator
-                );
+                        administrator);
 
-        userOrganizationAssignmentRepository
-                .saveAllAndFlush(
-                        List.of(
-                                memberPrimaryAssignment,
-                                memberSecondaryAssignment
-                        )
-                );
+        userOrganizationAssignmentRepository.saveAllAndFlush(
+                List.of(memberPrimaryAssignment, memberSecondaryAssignment));
 
-        List<UserOrganizationAssignment>
-                memberAssignments =
-                userOrganizationAssignmentRepository
-                        .findUserAssignments(
-                                tenant.getId(),
-                                member.getId()
-                        );
+        List<UserOrganizationAssignment> memberAssignments =
+                userOrganizationAssignmentRepository.findUserAssignments(
+                        tenant.getId(), member.getId());
 
-        assertEquals(
-                2,
-                memberAssignments.size()
-        );
+        assertEquals(2, memberAssignments.size());
 
-        assertTrue(
-                memberAssignments
-                        .getFirst()
-                        .isPrimaryAssignment()
-        );
+        assertTrue(memberAssignments.getFirst().isPrimaryAssignment());
 
-        assertEquals(
-                backend.getId(),
-                memberAssignments
-                        .getFirst()
-                        .getOrganizationalUnit()
-                        .getId()
-        );
+        assertEquals(backend.getId(), memberAssignments.getFirst().getOrganizationalUnit().getId());
 
         assertEquals(
                 managerAssignment.getId(),
-                memberAssignments
-                        .getFirst()
-                        .getReportsToAssignment()
-                        .getId()
-        );
+                memberAssignments.getFirst().getReportsToAssignment().getId());
 
-        List<UserOrganizationAssignment>
-                backendAssignments =
-                userOrganizationAssignmentRepository
-                        .findUnitAssignments(
-                                tenant.getId(),
-                                backend.getId()
-                        );
+        List<UserOrganizationAssignment> backendAssignments =
+                userOrganizationAssignmentRepository.findUnitAssignments(
+                        tenant.getId(), backend.getId());
 
-        assertEquals(
-                1,
-                backendAssignments.size()
-        );
+        assertEquals(1, backendAssignments.size());
 
-        assertEquals(
-                member.getId(),
-                backendAssignments
-                        .getFirst()
-                        .getUser()
-                        .getId()
-        );
+        assertEquals(member.getId(), backendAssignments.getFirst().getUser().getId());
 
-        List<UserOrganizationAssignment>
-                directReports =
-                userOrganizationAssignmentRepository
-                        .findDirectReports(
-                                tenant.getId(),
-                                managerAssignment.getId()
-                        );
+        List<UserOrganizationAssignment> directReports =
+                userOrganizationAssignmentRepository.findDirectReports(
+                        tenant.getId(), managerAssignment.getId());
 
-        assertEquals(
-                1,
-                directReports.size()
-        );
+        assertEquals(1, directReports.size());
 
-        assertEquals(
-                member.getId(),
-                directReports
-                        .getFirst()
-                        .getUser()
-                        .getId()
-        );
+        assertEquals(member.getId(), directReports.getFirst().getUser().getId());
 
         assertTrue(
                 userOrganizationAssignmentRepository
                         .existsByTenant_IdAndUser_IdAndPrimaryAssignmentTrueAndStatus(
                                 tenant.getId(),
                                 member.getId(),
-                                OrganizationAssignmentStatus.ACTIVE
-                        )
-        );
+                                OrganizationAssignmentStatus.ACTIVE));
     }
 
     @Test
     void effectiveQueryRespectsStatusAndValidity() {
-        Tenant tenant = createTenant(
-                "assignment-validity"
-        );
+        Tenant tenant = createTenant("assignment-validity");
 
-        AppUser administrator = createUser(
-                tenant,
-                "Assignment Administrator",
-                UserRole.TENANT_ADMIN
-        );
+        AppUser administrator =
+                createUser(tenant, "Assignment Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser member = createUser(
-                tenant,
-                "Temporal Member",
-                UserRole.TENANT_USER
-        );
+        AppUser member = createUser(tenant, "Temporal Member", UserRole.TENANT_USER);
 
-        OrganizationalUnit activeUnit = createUnit(
-                tenant,
-                null,
-                "Active Unit",
-                "ACTIVE-UNIT",
-                OrganizationalUnitType.DEPARTMENT
-        );
+        OrganizationalUnit activeUnit =
+                createUnit(
+                        tenant,
+                        null,
+                        "Active Unit",
+                        "ACTIVE-UNIT",
+                        OrganizationalUnitType.DEPARTMENT);
 
-        OrganizationalUnit futureUnit = createUnit(
-                tenant,
-                null,
-                "Future Unit",
-                "FUTURE-UNIT",
-                OrganizationalUnitType.DEPARTMENT
-        );
+        OrganizationalUnit futureUnit =
+                createUnit(
+                        tenant,
+                        null,
+                        "Future Unit",
+                        "FUTURE-UNIT",
+                        OrganizationalUnitType.DEPARTMENT);
 
-        OrganizationalUnit expiredUnit = createUnit(
-                tenant,
-                null,
-                "Expired Unit",
-                "EXPIRED-UNIT",
-                OrganizationalUnitType.DEPARTMENT
-        );
+        OrganizationalUnit expiredUnit =
+                createUnit(
+                        tenant,
+                        null,
+                        "Expired Unit",
+                        "EXPIRED-UNIT",
+                        OrganizationalUnitType.DEPARTMENT);
 
-        OrganizationalUnit inactiveUnit = createUnit(
-                tenant,
-                null,
-                "Inactive Assignment Unit",
-                "INACTIVE-ASSIGNMENT-UNIT",
-                OrganizationalUnitType.DEPARTMENT
-        );
+        OrganizationalUnit inactiveUnit =
+                createUnit(
+                        tenant,
+                        null,
+                        "Inactive Assignment Unit",
+                        "INACTIVE-ASSIGNMENT-UNIT",
+                        OrganizationalUnitType.DEPARTMENT);
 
         Instant now = Instant.now();
 
@@ -303,13 +199,9 @@ class OrganizationAssignmentPersistenceIntegrationTest {
                         null,
                         "Current Position",
                         true,
-                        now.minus(
-                                1,
-                                ChronoUnit.DAYS
-                        ),
+                        now.minus(1, ChronoUnit.DAYS),
                         null,
-                        administrator
-                );
+                        administrator);
 
         UserOrganizationAssignment futureAssignment =
                 new UserOrganizationAssignment(
@@ -319,13 +211,9 @@ class OrganizationAssignmentPersistenceIntegrationTest {
                         null,
                         "Future Position",
                         false,
-                        now.plus(
-                                1,
-                                ChronoUnit.DAYS
-                        ),
+                        now.plus(1, ChronoUnit.DAYS),
                         null,
-                        administrator
-                );
+                        administrator);
 
         UserOrganizationAssignment expiredAssignment =
                 new UserOrganizationAssignment(
@@ -335,16 +223,9 @@ class OrganizationAssignmentPersistenceIntegrationTest {
                         null,
                         "Expired Position",
                         false,
-                        now.minus(
-                                10,
-                                ChronoUnit.DAYS
-                        ),
-                        now.minus(
-                                1,
-                                ChronoUnit.DAYS
-                        ),
-                        administrator
-                );
+                        now.minus(10, ChronoUnit.DAYS),
+                        now.minus(1, ChronoUnit.DAYS),
+                        administrator);
 
         UserOrganizationAssignment inactiveAssignment =
                 new UserOrganizationAssignment(
@@ -354,93 +235,54 @@ class OrganizationAssignmentPersistenceIntegrationTest {
                         null,
                         "Inactive Position",
                         false,
-                        now.minus(
-                                1,
-                                ChronoUnit.DAYS
-                        ),
+                        now.minus(1, ChronoUnit.DAYS),
                         null,
-                        administrator
-                );
+                        administrator);
 
-        inactiveAssignment.setStatus(
-                OrganizationAssignmentStatus.INACTIVE
-        );
+        inactiveAssignment.setStatus(OrganizationAssignmentStatus.INACTIVE);
 
-        userOrganizationAssignmentRepository
-                .saveAllAndFlush(
-                        List.of(
-                                currentAssignment,
-                                futureAssignment,
-                                expiredAssignment,
-                                inactiveAssignment
-                        )
-                );
+        userOrganizationAssignmentRepository.saveAllAndFlush(
+                List.of(
+                        currentAssignment,
+                        futureAssignment,
+                        expiredAssignment,
+                        inactiveAssignment));
 
-        List<UserOrganizationAssignment>
-                effectiveAssignments =
-                userOrganizationAssignmentRepository
-                        .findEffectiveAssignmentsForUser(
-                                tenant.getId(),
-                                member.getId(),
-                                OrganizationAssignmentStatus.ACTIVE,
-                                now
-                        );
+        List<UserOrganizationAssignment> effectiveAssignments =
+                userOrganizationAssignmentRepository.findEffectiveAssignmentsForUser(
+                        tenant.getId(), member.getId(), OrganizationAssignmentStatus.ACTIVE, now);
 
-        assertEquals(
-                1,
-                effectiveAssignments.size()
-        );
+        assertEquals(1, effectiveAssignments.size());
 
         assertEquals(
                 activeUnit.getId(),
-                effectiveAssignments
-                        .getFirst()
-                        .getOrganizationalUnit()
-                        .getId()
-        );
+                effectiveAssignments.getFirst().getOrganizationalUnit().getId());
 
-        assertTrue(
-                effectiveAssignments
-                        .getFirst()
-                        .isPrimaryAssignment()
-        );
+        assertTrue(effectiveAssignments.getFirst().isPrimaryAssignment());
     }
 
     @Test
     void assignmentLookupsAreTenantScoped() {
-        Tenant firstTenant = createTenant(
-                "assignment-first"
-        );
+        Tenant firstTenant = createTenant("assignment-first");
 
-        Tenant secondTenant = createTenant(
-                "assignment-second"
-        );
+        Tenant secondTenant = createTenant("assignment-second");
 
-        AppUser firstAdministrator = createUser(
-                firstTenant,
-                "First Administrator",
-                UserRole.TENANT_ADMIN
-        );
+        AppUser firstAdministrator =
+                createUser(firstTenant, "First Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser secondAdministrator = createUser(
-                secondTenant,
-                "Second Administrator",
-                UserRole.TENANT_ADMIN
-        );
+        AppUser secondAdministrator =
+                createUser(secondTenant, "Second Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser secondMember = createUser(
-                secondTenant,
-                "Second Tenant Member",
-                UserRole.TENANT_USER
-        );
+        AppUser secondMember =
+                createUser(secondTenant, "Second Tenant Member", UserRole.TENANT_USER);
 
-        OrganizationalUnit secondUnit = createUnit(
-                secondTenant,
-                null,
-                "Second Tenant Unit",
-                "SECOND-TENANT-UNIT",
-                OrganizationalUnitType.DEPARTMENT
-        );
+        OrganizationalUnit secondUnit =
+                createUnit(
+                        secondTenant,
+                        null,
+                        "Second Tenant Unit",
+                        "SECOND-TENANT-UNIT",
+                        OrganizationalUnitType.DEPARTMENT);
 
         UserOrganizationAssignment assignment =
                 new UserOrganizationAssignment(
@@ -452,59 +294,37 @@ class OrganizationAssignmentPersistenceIntegrationTest {
                         true,
                         Instant.now(),
                         null,
-                        secondAdministrator
-                );
+                        secondAdministrator);
 
-        assignment =
-                userOrganizationAssignmentRepository
-                        .saveAndFlush(assignment);
+        assignment = userOrganizationAssignmentRepository.saveAndFlush(assignment);
 
         assertTrue(
                 userOrganizationAssignmentRepository
-                        .findByTenant_IdAndId(
-                                secondTenant.getId(),
-                                assignment.getId()
-                        )
-                        .isPresent()
-        );
+                        .findByTenant_IdAndId(secondTenant.getId(), assignment.getId())
+                        .isPresent());
 
         assertTrue(
                 userOrganizationAssignmentRepository
-                        .findByTenant_IdAndId(
-                                firstTenant.getId(),
-                                assignment.getId()
-                        )
-                        .isEmpty()
-        );
+                        .findByTenant_IdAndId(firstTenant.getId(), assignment.getId())
+                        .isEmpty());
 
         assertTrue(
                 userOrganizationAssignmentRepository
-                        .findUserAssignments(
-                                firstTenant.getId(),
-                                secondMember.getId()
-                        )
-                        .isEmpty()
-        );
+                        .findUserAssignments(firstTenant.getId(), secondMember.getId())
+                        .isEmpty());
 
         assertFalse(
                 userOrganizationAssignmentRepository
                         .existsByTenant_IdAndUser_IdAndPrimaryAssignmentTrueAndStatus(
                                 firstTenant.getId(),
                                 secondMember.getId(),
-                                OrganizationAssignmentStatus.ACTIVE
-                        )
-        );
+                                OrganizationAssignmentStatus.ACTIVE));
 
         /*
          * Prevent an unused-variable warning while keeping
          * the first tenant's actor fixture explicit.
          */
-        assertEquals(
-                firstTenant.getId(),
-                firstAdministrator
-                        .getTenant()
-                        .getId()
-        );
+        assertEquals(firstTenant.getId(), firstAdministrator.getTenant().getId());
     }
 
     private OrganizationalUnit createUnit(
@@ -512,57 +332,37 @@ class OrganizationAssignmentPersistenceIntegrationTest {
             UUID parentUnitId,
             String name,
             String code,
-            OrganizationalUnitType type
-    ) {
-        return organizationHierarchyService
-                .createUnit(
-                        tenant.getId(),
-                        parentUnitId,
-                        name,
-                        code,
-                        type
-                );
+            OrganizationalUnitType type) {
+        return organizationHierarchyService.createUnit(
+                tenant.getId(), parentUnitId, name, code, type);
     }
 
-    private AppUser createUser(
-            Tenant tenant,
-            String fullName,
-            UserRole role
-    ) {
+    private AppUser createUser(Tenant tenant, String fullName, UserRole role) {
         String suffix = uniqueSuffix();
 
-        AppUser user = new AppUser(
-                tenant,
-                fullName,
-                role.name()
-                        .toLowerCase()
-                        .replace('_', '.')
-                        + "."
-                        + suffix
-                        + "@example.test",
-                "test-password-hash",
-                role
-        );
+        AppUser user =
+                new AppUser(
+                        tenant,
+                        fullName,
+                        role.name().toLowerCase().replace('_', '.')
+                                + "."
+                                + suffix
+                                + "@example.test",
+                        "test-password-hash",
+                        role);
 
-        return appUserRepository
-                .saveAndFlush(user);
+        return appUserRepository.saveAndFlush(user);
     }
 
     private Tenant createTenant(String prefix) {
         String suffix = uniqueSuffix();
 
-        Tenant tenant = new Tenant(
-                prefix + " Tenant",
-                prefix + "-" + suffix
-        );
+        Tenant tenant = new Tenant(prefix + " Tenant", prefix + "-" + suffix);
 
-        return tenantRepository
-                .saveAndFlush(tenant);
+        return tenantRepository.saveAndFlush(tenant);
     }
 
     private String uniqueSuffix() {
-        return UUID.randomUUID()
-                .toString()
-                .substring(0, 8);
+        return UUID.randomUUID().toString().substring(0, 8);
     }
 }

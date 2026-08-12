@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.UserRole;
-
 import java.util.UUID;
 
 public record LoginResponse(
@@ -14,6 +13,4 @@ public record LoginResponse(
         String refreshToken,
         String tokenType,
         long expiresInSeconds,
-        String message
-) {
-}
+        String message) {}

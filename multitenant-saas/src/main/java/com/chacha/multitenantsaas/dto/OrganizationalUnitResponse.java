@@ -2,7 +2,6 @@ package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.OrganizationalUnitStatus;
 import com.chacha.multitenantsaas.entity.OrganizationalUnitType;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -15,6 +14,4 @@ public record OrganizationalUnitResponse(
         OrganizationalUnitType type,
         OrganizationalUnitStatus status,
         Instant createdAt,
-        Instant updatedAt
-) {
-}
+        Instant updatedAt) {}
