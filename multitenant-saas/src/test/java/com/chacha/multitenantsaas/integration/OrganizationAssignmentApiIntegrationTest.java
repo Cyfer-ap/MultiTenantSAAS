@@ -1,5 +1,13 @@
 package com.chacha.multitenantsaas.integration;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.OrganizationalUnit;
 import com.chacha.multitenantsaas.entity.OrganizationalUnitType;
@@ -7,8 +15,11 @@ import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
-import com.chacha.multitenantsaas.service.OrganizationHierarchyService;
 import com.chacha.multitenantsaas.service.AuthorizationProvisioningService;
+import com.chacha.multitenantsaas.service.OrganizationHierarchyService;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,81 +33,38 @@ import org.springframework.test.web.servlet.MvcResult;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.UUID;
-
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet
-        .request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet
-        .request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet
-        .request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet
-        .result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet
-        .result.MockMvcResultMatchers.status;
-
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class OrganizationAssignmentApiIntegrationTest {
 
-    private static final String PASSWORD =
-            "OrganizationAssignmentAdmin@123";
+    private static final String PASSWORD = "OrganizationAssignmentAdmin@123";
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
 
-    @Autowired
-    private JsonMapper jsonMapper;
+    @Autowired private JsonMapper jsonMapper;
 
-    @Autowired
-    private TenantRepository tenantRepository;
+    @Autowired private TenantRepository tenantRepository;
 
-    @Autowired
-    private AppUserRepository appUserRepository;
+    @Autowired private AppUserRepository appUserRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @Autowired private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private OrganizationHierarchyService
-            organizationHierarchyService;
+    @Autowired private OrganizationHierarchyService organizationHierarchyService;
 
-    @Autowired
-    private AuthorizationProvisioningService
-            authorizationProvisioningService;
+    @Autowired private AuthorizationProvisioningService authorizationProvisioningService;
 
     @Test
-    void assignmentEndpointsCreateReadDeactivateAndAudit()
-            throws Exception {
+    void assignmentEndpointsCreateReadDeactivateAndAudit() throws Exception {
 
-        Tenant tenant =
-                createTenant("assignment-api");
+        Tenant tenant = createTenant("assignment-api");
 
         AppUser administrator =
-                createUser(
-                        tenant,
-                        "Assignment API Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+                createUser(tenant, "Assignment API Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser manager =
-                createUser(
-                        tenant,
-                        "Assignment API Manager",
-                        UserRole.TENANT_MANAGER
-                );
+        AppUser manager = createUser(tenant, "Assignment API Manager", UserRole.TENANT_MANAGER);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Assignment API Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Assignment API Member", UserRole.TENANT_USER);
 
         OrganizationalUnit engineering =
                 createUnit(
@@ -104,8 +72,7 @@ class OrganizationAssignmentApiIntegrationTest {
                         null,
                         "Engineering",
                         "ENGINEERING",
-                        OrganizationalUnitType.DIVISION
-                );
+                        OrganizationalUnitType.DIVISION);
 
         OrganizationalUnit backend =
                 createUnit(
@@ -113,58 +80,26 @@ class OrganizationAssignmentApiIntegrationTest {
                         engineering.getId(),
                         "Backend",
                         "BACKEND",
-                        OrganizationalUnitType.TEAM
-                );
+                        OrganizationalUnitType.TEAM);
 
-        String accessToken =
-                login(
-                        tenant.getId(),
-                        administrator.getEmail()
-                );
+        String accessToken = login(tenant.getId(), administrator.getEmail());
 
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/organization/assignments"
-                                        + "/units/{unitId}"
-                                        + "/user-options",
-                                tenant.getId(),
-                                backend.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}"
+                                                + "/organization/assignments"
+                                                + "/units/{unitId}"
+                                                + "/user-options",
+                                        tenant.getId(),
+                                        backend.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.data", hasSize(3))
-                )
-                .andExpect(
-                        jsonPath("$.data[0].fullName")
-                                .value(
-                                        "Assignment API Administrator"
-                                )
-                )
-                .andExpect(
-                        jsonPath("$.data[1].fullName")
-                                .value(
-                                        "Assignment API Manager"
-                                )
-                )
-                .andExpect(
-                        jsonPath("$.data[2].fullName")
-                                .value(
-                                        "Assignment API Member"
-                                )
-                );
+                .andExpect(jsonPath("$.data", hasSize(3)))
+                .andExpect(jsonPath("$.data[0].fullName").value("Assignment API Administrator"))
+                .andExpect(jsonPath("$.data[1].fullName").value("Assignment API Manager"))
+                .andExpect(jsonPath("$.data[2].fullName").value("Assignment API Member"));
 
-        Instant validFrom =
-                Instant.now()
-                        .minus(
-                                1,
-                                ChronoUnit.DAYS
-                        );
+        Instant validFrom = Instant.now().minus(1, ChronoUnit.DAYS);
 
         UUID managerAssignmentId =
                 createAssignment(
@@ -176,8 +111,7 @@ class OrganizationAssignmentApiIntegrationTest {
                         "Engineering Manager",
                         true,
                         validFrom,
-                        null
-                );
+                        null);
 
         UUID memberAssignmentId =
                 createAssignment(
@@ -189,330 +123,145 @@ class OrganizationAssignmentApiIntegrationTest {
                         "Backend Engineer",
                         true,
                         validFrom,
-                        null
-                );
+                        null);
 
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/organization/assignments"
-                                        + "/{assignmentId}",
-                                tenant.getId(),
-                                memberAssignmentId
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}"
+                                                + "/organization/assignments"
+                                                + "/{assignmentId}",
+                                        tenant.getId(),
+                                        memberAssignmentId)
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(memberAssignmentId.toString()))
+                .andExpect(jsonPath("$.data.userId").value(member.getId().toString()))
                 .andExpect(
-                        jsonPath("$.success")
-                                .value(true)
-                )
+                        jsonPath("$.data." + "organizationalUnitId")
+                                .value(backend.getId().toString()))
                 .andExpect(
-                        jsonPath("$.data.id")
-                                .value(
-                                        memberAssignmentId
-                                                .toString()
-                                )
-                )
-                .andExpect(
-                        jsonPath("$.data.userId")
-                                .value(
-                                        member.getId()
-                                                .toString()
-                                )
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.data."
-                                        + "organizationalUnitId"
-                        )
-                                .value(
-                                        backend.getId()
-                                                .toString()
-                                )
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.data."
-                                        + "reportsToAssignmentId"
-                        )
-                                .value(
-                                        managerAssignmentId
-                                                .toString()
-                                )
-                )
-                .andExpect(
-                        jsonPath("$.data.managerUserId")
-                                .value(
-                                        manager.getId()
-                                                .toString()
-                                )
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.data.primaryAssignment"
-                        )
-                                .value(true)
-                );
+                        jsonPath("$.data." + "reportsToAssignmentId")
+                                .value(managerAssignmentId.toString()))
+                .andExpect(jsonPath("$.data.managerUserId").value(manager.getId().toString()))
+                .andExpect(jsonPath("$.data.primaryAssignment").value(true));
 
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/organization/assignments"
-                                        + "/users/{userId}",
-                                tenant.getId(),
-                                member.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}"
+                                                + "/organization/assignments"
+                                                + "/users/{userId}",
+                                        tenant.getId(),
+                                        member.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.data", hasSize(1))
-                )
-                .andExpect(
-                        jsonPath("$.data[0].id")
-                                .value(
-                                        memberAssignmentId
-                                                .toString()
-                                )
-                );
+                .andExpect(jsonPath("$.data", hasSize(1)))
+                .andExpect(jsonPath("$.data[0].id").value(memberAssignmentId.toString()));
 
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/organization/assignments"
-                                        + "/users/{userId}/effective",
-                                tenant.getId(),
-                                member.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                                .param(
-                                        "effectiveAt",
-                                        Instant.now().toString()
-                                )
-                )
+                                        "/api/tenants/{tenantId}"
+                                                + "/organization/assignments"
+                                                + "/users/{userId}/effective",
+                                        tenant.getId(),
+                                        member.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken))
+                                .param("effectiveAt", Instant.now().toString()))
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.data", hasSize(1))
-                );
+                .andExpect(jsonPath("$.data", hasSize(1)));
 
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/organization/assignments"
-                                        + "/units/{unitId}",
-                                tenant.getId(),
-                                backend.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}"
+                                                + "/organization/assignments"
+                                                + "/units/{unitId}",
+                                        tenant.getId(),
+                                        backend.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.data", hasSize(1))
-                )
-                .andExpect(
-                        jsonPath("$.data[0].userId")
-                                .value(
-                                        member.getId()
-                                                .toString()
-                                )
-                );
+                .andExpect(jsonPath("$.data", hasSize(1)))
+                .andExpect(jsonPath("$.data[0].userId").value(member.getId().toString()));
 
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/organization/assignments"
-                                        + "/{assignmentId}/direct-reports",
-                                tenant.getId(),
-                                managerAssignmentId
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}"
+                                                + "/organization/assignments"
+                                                + "/{assignmentId}/direct-reports",
+                                        tenant.getId(),
+                                        managerAssignmentId)
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.data", hasSize(1))
-                )
-                .andExpect(
-                        jsonPath("$.data[0].userId")
-                                .value(
-                                        member.getId()
-                                                .toString()
-                                )
-                );
+                .andExpect(jsonPath("$.data", hasSize(1)))
+                .andExpect(jsonPath("$.data[0].userId").value(member.getId().toString()));
 
         mockMvc.perform(
                         patch(
-                                "/api/tenants/{tenantId}"
-                                        + "/organization/assignments"
-                                        + "/{assignmentId}/deactivate",
-                                tenant.getId(),
-                                memberAssignmentId
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}"
+                                                + "/organization/assignments"
+                                                + "/{assignmentId}/deactivate",
+                                        tenant.getId(),
+                                        memberAssignmentId)
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.data.status")
-                                .value("INACTIVE")
-                )
-                .andExpect(
-                        jsonPath("$.data.validUntil")
-                                .isNotEmpty()
-                );
+                .andExpect(jsonPath("$.data.status").value("INACTIVE"))
+                .andExpect(jsonPath("$.data.validUntil").isNotEmpty());
 
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/organization/assignments"
-                                        + "/users/{userId}/effective",
-                                tenant.getId(),
-                                member.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}"
+                                                + "/organization/assignments"
+                                                + "/users/{userId}/effective",
+                                        tenant.getId(),
+                                        member.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.data", hasSize(0))
-                );
+                .andExpect(jsonPath("$.data", hasSize(0)));
 
         mockMvc.perform(
-                        get(
-                                "/api/tenants/{tenantId}"
-                                        + "/audit-logs",
-                                tenant.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                                .param(
-                                        "action",
-                                        "ORG_ASSIGNMENT_CREATED"
-                                )
+                        get("/api/tenants/{tenantId}" + "/audit-logs", tenant.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken))
+                                .param("action", "ORG_ASSIGNMENT_CREATED")
                                 .param("success", "true")
                                 .param("page", "0")
                                 .param("size", "10")
                                 .param("sortBy", "createdAt")
-                                .param("sortDir", "desc")
-                )
+                                .param("sortDir", "desc"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements").value(2))
                 .andExpect(
-                        jsonPath(
-                                "$.data.totalElements"
-                        )
-                                .value(2)
-                )
+                        jsonPath("$.data.content[0]" + ".actorUserId")
+                                .value(administrator.getId().toString()))
                 .andExpect(
-                        jsonPath(
-                                "$.data.content[0]"
-                                        + ".actorUserId"
-                        )
-                                .value(
-                                        administrator
-                                                .getId()
-                                                .toString()
-                                )
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.data.content[0]"
-                                        + ".targetUserId"
-                        )
-                                .value(
-                                        member.getId()
-                                                .toString()
-                                )
-                )
+                        jsonPath("$.data.content[0]" + ".targetUserId")
+                                .value(member.getId().toString()))
                 .andExpect(
                         jsonPath(
                                 "$.data.content[0].message",
-                                containsString(
-                                        memberAssignmentId
-                                                .toString()
-                                )
-                        )
-                );
+                                containsString(memberAssignmentId.toString())));
 
         mockMvc.perform(
-                        get(
-                                "/api/tenants/{tenantId}"
-                                        + "/audit-logs",
-                                tenant.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                                .param(
-                                        "action",
-                                        "ORG_ASSIGNMENT_DEACTIVATED"
-                                )
+                        get("/api/tenants/{tenantId}" + "/audit-logs", tenant.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken))
+                                .param("action", "ORG_ASSIGNMENT_DEACTIVATED")
                                 .param("success", "true")
                                 .param("page", "0")
-                                .param("size", "10")
-                )
+                                .param("size", "10"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements").value(1))
                 .andExpect(
-                        jsonPath(
-                                "$.data.totalElements"
-                        )
-                                .value(1)
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.data.content[0]"
-                                        + ".targetUserId"
-                        )
-                                .value(
-                                        member.getId()
-                                                .toString()
-                                )
-                );
+                        jsonPath("$.data.content[0]" + ".targetUserId")
+                                .value(member.getId().toString()));
     }
 
     @Test
-    void assignmentApiValidatesRequestsAndDuplicatePrimary()
-            throws Exception {
+    void assignmentApiValidatesRequestsAndDuplicatePrimary() throws Exception {
 
-        Tenant tenant =
-                createTenant(
-                        "assignment-validation"
-                );
+        Tenant tenant = createTenant("assignment-validation");
 
         AppUser administrator =
-                createUser(
-                        tenant,
-                        "Assignment Validation Admin",
-                        UserRole.TENANT_ADMIN
-                );
+                createUser(tenant, "Assignment Validation Admin", UserRole.TENANT_ADMIN);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Assignment Validation Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Assignment Validation Member", UserRole.TENANT_USER);
 
         OrganizationalUnit firstUnit =
                 createUnit(
@@ -520,8 +269,7 @@ class OrganizationAssignmentApiIntegrationTest {
                         null,
                         "First Validation Unit",
                         "FIRST-VALIDATION-UNIT",
-                        OrganizationalUnitType.DEPARTMENT
-                );
+                        OrganizationalUnitType.DEPARTMENT);
 
         OrganizationalUnit secondUnit =
                 createUnit(
@@ -529,21 +277,11 @@ class OrganizationAssignmentApiIntegrationTest {
                         null,
                         "Second Validation Unit",
                         "SECOND-VALIDATION-UNIT",
-                        OrganizationalUnitType.DEPARTMENT
-                );
+                        OrganizationalUnitType.DEPARTMENT);
 
-        String accessToken =
-                login(
-                        tenant.getId(),
-                        administrator.getEmail()
-                );
+        String accessToken = login(tenant.getId(), administrator.getEmail());
 
-        Instant start =
-                Instant.now()
-                        .minus(
-                                1,
-                                ChronoUnit.DAYS
-                        );
+        Instant start = Instant.now().minus(1, ChronoUnit.DAYS);
 
         createAssignment(
                 tenant.getId(),
@@ -554,22 +292,14 @@ class OrganizationAssignmentApiIntegrationTest {
                 "Primary Position",
                 true,
                 start,
-                null
-        );
+                null);
 
         mockMvc.perform(
                         post(
-                                "/api/tenants/{tenantId}"
-                                        + "/organization/assignments",
-                                tenant.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
+                                        "/api/tenants/{tenantId}" + "/organization/assignments",
+                                        tenant.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken))
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         assignmentRequestBody(
                                                 member.getId(),
@@ -578,25 +308,15 @@ class OrganizationAssignmentApiIntegrationTest {
                                                 "Duplicate Primary",
                                                 true,
                                                 Instant.now(),
-                                                null
-                                        )
-                                )
-                )
+                                                null)))
                 .andExpect(status().isConflict());
 
         mockMvc.perform(
                         post(
-                                "/api/tenants/{tenantId}"
-                                        + "/organization/assignments",
-                                tenant.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(accessToken)
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
+                                        "/api/tenants/{tenantId}" + "/organization/assignments",
+                                        tenant.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(accessToken))
+                                .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
                                         {
@@ -604,86 +324,49 @@ class OrganizationAssignmentApiIntegrationTest {
                                             "Missing References",
                                           "primaryAssignment": false
                                         }
-                                        """
-                                )
-                )
+                                        """))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
-    void assignmentApiEnforcesRoleAndTenantIsolation()
-            throws Exception {
+    void assignmentApiEnforcesRoleAndTenantIsolation() throws Exception {
 
-        Tenant firstTenant =
-                createTenant("assignment-security-first");
+        Tenant firstTenant = createTenant("assignment-security-first");
 
-        Tenant secondTenant =
-                createTenant("assignment-security-second");
+        Tenant secondTenant = createTenant("assignment-security-second");
 
         AppUser firstAdministrator =
-                createUser(
-                        firstTenant,
-                        "First Assignment Admin",
-                        UserRole.TENANT_ADMIN
-                );
+                createUser(firstTenant, "First Assignment Admin", UserRole.TENANT_ADMIN);
 
         AppUser firstRegularUser =
-                createUser(
-                        firstTenant,
-                        "First Regular User",
-                        UserRole.TENANT_USER
-                );
+                createUser(firstTenant, "First Regular User", UserRole.TENANT_USER);
 
         AppUser secondMember =
-                createUser(
-                        secondTenant,
-                        "Second Tenant Member",
-                        UserRole.TENANT_USER
-                );
+                createUser(secondTenant, "Second Tenant Member", UserRole.TENANT_USER);
 
-        String firstAdminToken =
-                login(
-                        firstTenant.getId(),
-                        firstAdministrator.getEmail()
-                );
+        String firstAdminToken = login(firstTenant.getId(), firstAdministrator.getEmail());
 
-        String regularUserToken =
-                login(
-                        firstTenant.getId(),
-                        firstRegularUser.getEmail()
-                );
+        String regularUserToken = login(firstTenant.getId(), firstRegularUser.getEmail());
 
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/organization/assignments"
-                                        + "/users/{userId}",
-                                firstTenant.getId(),
-                                firstRegularUser.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(regularUserToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}"
+                                                + "/organization/assignments"
+                                                + "/users/{userId}",
+                                        firstTenant.getId(),
+                                        firstRegularUser.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(regularUserToken)))
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.data", hasSize(0))
-                );
+                .andExpect(jsonPath("$.data", hasSize(0)));
 
         mockMvc.perform(
                         get(
-                                "/api/tenants/{tenantId}"
-                                        + "/organization/assignments"
-                                        + "/users/{userId}",
-                                secondTenant.getId(),
-                                secondMember.getId()
-                        )
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        bearer(firstAdminToken)
-                                )
-                )
+                                        "/api/tenants/{tenantId}"
+                                                + "/organization/assignments"
+                                                + "/users/{userId}",
+                                        secondTenant.getId(),
+                                        secondMember.getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(firstAdminToken)))
                 .andExpect(status().isForbidden());
     }
 
@@ -696,22 +379,16 @@ class OrganizationAssignmentApiIntegrationTest {
             String positionTitle,
             boolean primaryAssignment,
             Instant validFrom,
-            Instant validUntil
-    ) throws Exception {
+            Instant validUntil)
+            throws Exception {
         MvcResult result =
                 mockMvc.perform(
                                 post(
-                                        "/api/tenants/{tenantId}"
-                                                + "/organization/assignments",
-                                        tenantId
-                                )
-                                        .header(
-                                                HttpHeaders.AUTHORIZATION,
-                                                bearer(accessToken)
-                                        )
-                                        .contentType(
-                                                MediaType.APPLICATION_JSON
-                                        )
+                                                "/api/tenants/{tenantId}"
+                                                        + "/organization/assignments",
+                                                tenantId)
+                                        .header(HttpHeaders.AUTHORIZATION, bearer(accessToken))
+                                        .contentType(MediaType.APPLICATION_JSON)
                                         .content(
                                                 assignmentRequestBody(
                                                         userId,
@@ -720,25 +397,13 @@ class OrganizationAssignmentApiIntegrationTest {
                                                         positionTitle,
                                                         primaryAssignment,
                                                         validFrom,
-                                                        validUntil
-                                                )
-                                        )
-                        )
+                                                        validUntil)))
                         .andExpect(status().isOk())
                         .andReturn();
 
-        JsonNode responseBody =
-                jsonMapper.readTree(
-                        result.getResponse()
-                                .getContentAsString()
-                );
+        JsonNode responseBody = jsonMapper.readTree(result.getResponse().getContentAsString());
 
-        return UUID.fromString(
-                responseBody
-                        .path("data")
-                        .path("id")
-                        .asText()
-        );
+        return UUID.fromString(responseBody.path("data").path("id").asText());
     }
 
     private String assignmentRequestBody(
@@ -748,21 +413,11 @@ class OrganizationAssignmentApiIntegrationTest {
             String positionTitle,
             boolean primaryAssignment,
             Instant validFrom,
-            Instant validUntil
-    ) {
+            Instant validUntil) {
         String reportsToValue =
-                reportsToAssignmentId == null
-                        ? "null"
-                        : "\""
-                        + reportsToAssignmentId
-                        + "\"";
+                reportsToAssignmentId == null ? "null" : "\"" + reportsToAssignmentId + "\"";
 
-        String validUntilValue =
-                validUntil == null
-                        ? "null"
-                        : "\""
-                        + validUntil
-                        + "\"";
+        String validUntilValue = validUntil == null ? "null" : "\"" + validUntil + "\"";
 
         return """
                 {
@@ -774,15 +429,15 @@ class OrganizationAssignmentApiIntegrationTest {
                   "validFrom": "%s",
                   "validUntil": %s
                 }
-                """.formatted(
-                userId,
-                organizationalUnitId,
-                reportsToValue,
-                positionTitle,
-                primaryAssignment,
-                validFrom,
-                validUntilValue
-        );
+                """
+                .formatted(
+                        userId,
+                        organizationalUnitId,
+                        reportsToValue,
+                        positionTitle,
+                        primaryAssignment,
+                        validFrom,
+                        validUntilValue);
     }
 
     private OrganizationalUnit createUnit(
@@ -790,85 +445,48 @@ class OrganizationAssignmentApiIntegrationTest {
             UUID parentUnitId,
             String name,
             String code,
-            OrganizationalUnitType type
-    ) {
-        return organizationHierarchyService
-                .createUnit(
-                        tenant.getId(),
-                        parentUnitId,
-                        name,
-                        code,
-                        type
-                );
+            OrganizationalUnitType type) {
+        return organizationHierarchyService.createUnit(
+                tenant.getId(), parentUnitId, name, code, type);
     }
 
-    private String login(
-            UUID tenantId,
-            String email
-    ) throws Exception {
+    private String login(UUID tenantId, String email) throws Exception {
         MvcResult result =
                 mockMvc.perform(
-                                post(
-                                        "/api/tenants/{tenantId}"
-                                                + "/auth/login",
-                                        tenantId
-                                )
-                                        .contentType(
-                                                MediaType.APPLICATION_JSON
-                                        )
+                                post("/api/tenants/{tenantId}" + "/auth/login", tenantId)
+                                        .contentType(MediaType.APPLICATION_JSON)
                                         .content(
                                                 """
                                                 {
                                                   "email": "%s",
                                                   "password": "%s"
                                                 }
-                                                """.formatted(
-                                                        email,
-                                                        PASSWORD
-                                                )
-                                        )
-                        )
+                                                """
+                                                        .formatted(email, PASSWORD)))
                         .andExpect(status().isOk())
                         .andReturn();
 
-        JsonNode responseBody =
-                jsonMapper.readTree(
-                        result.getResponse()
-                                .getContentAsString()
-                );
+        JsonNode responseBody = jsonMapper.readTree(result.getResponse().getContentAsString());
 
-        return responseBody
-                .path("data")
-                .path("accessToken")
-                .asText();
+        return responseBody.path("data").path("accessToken").asText();
     }
 
-    private AppUser createUser(
-            Tenant tenant,
-            String fullName,
-            UserRole role
-    ) {
-        AppUser user = new AppUser(
-                tenant,
-                fullName,
-                role.name()
-                        .toLowerCase()
-                        .replace('_', '.')
-                        + "."
-                        + uniqueSuffix()
-                        + "@example.test",
-                passwordEncoder.encode(PASSWORD),
-                role
-        );
+    private AppUser createUser(Tenant tenant, String fullName, UserRole role) {
+        AppUser user =
+                new AppUser(
+                        tenant,
+                        fullName,
+                        role.name().toLowerCase().replace('_', '.')
+                                + "."
+                                + uniqueSuffix()
+                                + "@example.test",
+                        passwordEncoder.encode(PASSWORD),
+                        role);
 
-        AppUser savedUser =
-                appUserRepository.saveAndFlush(user);
+        AppUser savedUser = appUserRepository.saveAndFlush(user);
 
-        authorizationProvisioningService
-                .synchronizeUserFromLegacyState(
-                        tenant.getId(),
-                        savedUser.getId()
-                );
+        authorizationProvisioningService.synchronizeUserFromLegacyState(
+                tenant.getId(), savedUser.getId());
 
         return savedUser;
     }
@@ -876,13 +494,9 @@ class OrganizationAssignmentApiIntegrationTest {
     private Tenant createTenant(String prefix) {
         String suffix = uniqueSuffix();
 
-        Tenant tenant = new Tenant(
-                prefix + " Tenant",
-                prefix + "-" + suffix
-        );
+        Tenant tenant = new Tenant(prefix + " Tenant", prefix + "-" + suffix);
 
-        return tenantRepository
-                .saveAndFlush(tenant);
+        return tenantRepository.saveAndFlush(tenant);
     }
 
     private String bearer(String accessToken) {
@@ -890,8 +504,6 @@ class OrganizationAssignmentApiIntegrationTest {
     }
 
     private String uniqueSuffix() {
-        return UUID.randomUUID()
-                .toString()
-                .substring(0, 8);
+        return UUID.randomUUID().toString().substring(0, 8);
     }
 }

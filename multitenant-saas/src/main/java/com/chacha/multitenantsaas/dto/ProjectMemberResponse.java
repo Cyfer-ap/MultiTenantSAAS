@@ -3,7 +3,6 @@ package com.chacha.multitenantsaas.dto;
 import com.chacha.multitenantsaas.entity.ProjectMemberRole;
 import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.entity.UserStatus;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -20,6 +19,4 @@ public record ProjectMemberResponse(
         String assignedByUserName,
         String assignedByUserEmail,
         Instant assignedAt,
-        Instant updatedAt
-) {
-}
+        Instant updatedAt) {}

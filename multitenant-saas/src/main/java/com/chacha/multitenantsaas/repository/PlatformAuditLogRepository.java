@@ -2,18 +2,17 @@ package com.chacha.multitenantsaas.repository;
 
 import com.chacha.multitenantsaas.entity.PlatformAuditAction;
 import com.chacha.multitenantsaas.entity.PlatformAuditLog;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.UUID;
+public interface PlatformAuditLogRepository extends JpaRepository<PlatformAuditLog, UUID> {
 
-public interface PlatformAuditLogRepository
-        extends JpaRepository<PlatformAuditLog, UUID> {
-
-    @Query("""
+    @Query(
+            """
             SELECT auditLog
             FROM PlatformAuditLog auditLog
             LEFT JOIN auditLog.actorSystemAdmin actor
@@ -31,6 +30,5 @@ public interface PlatformAuditLogRepository
             @Param("action") PlatformAuditAction action,
             @Param("success") Boolean success,
             @Param("search") String search,
-            Pageable pageable
-    );
+            Pageable pageable);
 }

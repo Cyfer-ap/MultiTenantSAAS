@@ -4,10 +4,9 @@ import com.chacha.multitenantsaas.entity.SystemAdmin;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import com.chacha.multitenantsaas.repository.SystemAdminRepository;
+import java.util.UUID;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 public class CurrentSystemAdminService {
@@ -36,8 +35,11 @@ public class CurrentSystemAdminService {
             throw new AuthenticationFailedException("Invalid system admin token subject");
         }
 
-        SystemAdmin systemAdmin = systemAdminRepository.findById(systemAdminId)
-                .orElseThrow(() -> new AuthenticationFailedException("System admin not found"));
+        SystemAdmin systemAdmin =
+                systemAdminRepository
+                        .findById(systemAdminId)
+                        .orElseThrow(
+                                () -> new AuthenticationFailedException("System admin not found"));
 
         if (systemAdmin.getStatus() != UserStatus.ACTIVE) {
             throw new AuthenticationFailedException("System admin account is not active");

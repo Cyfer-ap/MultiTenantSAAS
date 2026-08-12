@@ -6,13 +6,12 @@ import com.chacha.multitenantsaas.entity.TenantStatus;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
+import java.util.Arrays;
+import java.util.UUID;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
-
-import java.util.Arrays;
-import java.util.UUID;
 
 @Component("tenantSecurity")
 public class TenantSecurityService {
@@ -21,9 +20,7 @@ public class TenantSecurityService {
     private final AppUserRepository appUserRepository;
 
     public TenantSecurityService(
-            TenantRepository tenantRepository,
-            AppUserRepository appUserRepository
-    ) {
+            TenantRepository tenantRepository, AppUserRepository appUserRepository) {
         this.tenantRepository = tenantRepository;
         this.appUserRepository = appUserRepository;
     }
@@ -33,7 +30,8 @@ public class TenantSecurityService {
     }
 
     public boolean isSameTenantBySlug(String slug) {
-        return tenantRepository.findBySlug(slug)
+        return tenantRepository
+                .findBySlug(slug)
                 .map(Tenant::getId)
                 .map(this::isSameTenant)
                 .orElse(false);
@@ -101,10 +99,7 @@ public class TenantSecurityService {
             return null;
         }
 
-        AppUser user = appUserRepository.findByTenantIdAndId(
-                tenantId,
-                tokenUserId
-        ).orElse(null);
+        AppUser user = appUserRepository.findByTenantIdAndId(tenantId, tokenUserId).orElse(null);
 
         if (user == null || user.getStatus() != UserStatus.ACTIVE) {
             return null;

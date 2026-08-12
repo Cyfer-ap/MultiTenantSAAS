@@ -16,7 +16,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -24,22 +23,14 @@ import java.util.UUID;
 @Table(
         name = "tenant_subscriptions",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_tenant_subscription_tenant",
-                        columnNames = "tenant_id"
-                )
+            @UniqueConstraint(name = "uk_tenant_subscription_tenant", columnNames = "tenant_id")
         },
         indexes = {
-                @Index(
-                        name = "idx_tenant_subscription_plan_status",
-                        columnList = "plan_id,status"
-                ),
-                @Index(
-                        name = "idx_tenant_subscription_period_end",
-                        columnList = "status,current_period_end"
-                )
-        }
-)
+            @Index(name = "idx_tenant_subscription_plan_status", columnList = "plan_id,status"),
+            @Index(
+                    name = "idx_tenant_subscription_period_end",
+                    columnList = "status,current_period_end")
+        })
 public class TenantSubscription {
 
     @Id
@@ -47,11 +38,7 @@ public class TenantSubscription {
     private UUID id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "tenant_id",
-            nullable = false,
-            updatable = false
-    )
+    @JoinColumn(name = "tenant_id", nullable = false, updatable = false)
     private Tenant tenant;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -65,42 +52,28 @@ public class TenantSubscription {
     @Column(name = "started_at", nullable = false)
     private Instant startedAt;
 
-    @Column(
-            name = "current_period_start",
-            nullable = false
-    )
+    @Column(name = "current_period_start", nullable = false)
     private Instant currentPeriodStart;
 
-    @Column(
-            name = "current_period_end",
-            nullable = false
-    )
+    @Column(name = "current_period_end", nullable = false)
     private Instant currentPeriodEnd;
 
     @Column(name = "trial_ends_at")
     private Instant trialEndsAt;
 
-    @Column(
-            name = "cancel_at_period_end",
-            nullable = false
-    )
+    @Column(name = "cancel_at_period_end", nullable = false)
     private boolean cancelAtPeriodEnd;
 
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
 
-    @Column(
-            name = "created_at",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    public TenantSubscription() {
-    }
+    public TenantSubscription() {}
 
     public TenantSubscription(
             Tenant tenant,
@@ -110,8 +83,7 @@ public class TenantSubscription {
             Instant currentPeriodStart,
             Instant currentPeriodEnd,
             Instant trialEndsAt,
-            boolean cancelAtPeriodEnd
-    ) {
+            boolean cancelAtPeriodEnd) {
         this.tenant = tenant;
         this.plan = plan;
         this.status = status;
@@ -194,9 +166,7 @@ public class TenantSubscription {
         this.status = status;
     }
 
-    public void setCurrentPeriodStart(
-            Instant currentPeriodStart
-    ) {
+    public void setCurrentPeriodStart(Instant currentPeriodStart) {
         this.currentPeriodStart = currentPeriodStart;
     }
 
@@ -208,9 +178,7 @@ public class TenantSubscription {
         this.trialEndsAt = trialEndsAt;
     }
 
-    public void setCancelAtPeriodEnd(
-            boolean cancelAtPeriodEnd
-    ) {
+    public void setCancelAtPeriodEnd(boolean cancelAtPeriodEnd) {
         this.cancelAtPeriodEnd = cancelAtPeriodEnd;
     }
 

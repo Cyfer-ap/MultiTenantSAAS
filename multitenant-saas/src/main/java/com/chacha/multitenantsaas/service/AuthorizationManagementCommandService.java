@@ -11,24 +11,20 @@ import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.AuditAction;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.UUID;
-
 @Service
 public class AuthorizationManagementCommandService {
 
-    private final AuthorizationPermissionService
-            authorizationPermissionService;
+    private final AuthorizationPermissionService authorizationPermissionService;
 
-    private final AuthorizationRoleService
-            authorizationRoleService;
+    private final AuthorizationRoleService authorizationRoleService;
 
-    private final AuthorizationUserRoleAssignmentService
-            authorizationUserRoleAssignmentService;
+    private final AuthorizationUserRoleAssignmentService authorizationUserRoleAssignmentService;
 
     private final CurrentActorService currentActorService;
 
@@ -37,54 +33,32 @@ public class AuthorizationManagementCommandService {
     private final AuditLogService auditLogService;
 
     public AuthorizationManagementCommandService(
-            AuthorizationPermissionService
-                    authorizationPermissionService,
-            AuthorizationRoleService
-                    authorizationRoleService,
-            AuthorizationUserRoleAssignmentService
-                    authorizationUserRoleAssignmentService,
+            AuthorizationPermissionService authorizationPermissionService,
+            AuthorizationRoleService authorizationRoleService,
+            AuthorizationUserRoleAssignmentService authorizationUserRoleAssignmentService,
             CurrentActorService currentActorService,
             AppUserRepository appUserRepository,
-            AuditLogService auditLogService
-    ) {
-        this.authorizationPermissionService =
-                authorizationPermissionService;
+            AuditLogService auditLogService) {
+        this.authorizationPermissionService = authorizationPermissionService;
 
-        this.authorizationRoleService =
-                authorizationRoleService;
+        this.authorizationRoleService = authorizationRoleService;
 
-        this.authorizationUserRoleAssignmentService =
-                authorizationUserRoleAssignmentService;
+        this.authorizationUserRoleAssignmentService = authorizationUserRoleAssignmentService;
 
-        this.currentActorService =
-                currentActorService;
+        this.currentActorService = currentActorService;
 
-        this.appUserRepository =
-                appUserRepository;
+        this.appUserRepository = appUserRepository;
 
-        this.auditLogService =
-                auditLogService;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
-    public AuthorizationPermissionResponse
-    createTenantPermission(
-            UUID tenantId,
-            TenantPermissionCreateRequest request,
-            Jwt jwt
-    ) {
-        AppUser actor =
-                getActor(
-                        tenantId,
-                        jwt
-                );
+    public AuthorizationPermissionResponse createTenantPermission(
+            UUID tenantId, TenantPermissionCreateRequest request, Jwt jwt) {
+        AppUser actor = getActor(tenantId, jwt);
 
         AuthorizationPermissionResponse permission =
-                authorizationPermissionService
-                        .createTenantPermission(
-                                tenantId,
-                                request
-                        );
+                authorizationPermissionService.createTenantPermission(tenantId, request);
 
         auditLogService.recordSuccess(
                 actor.getTenant(),
@@ -96,38 +70,21 @@ public class AuthorizationManagementCommandService {
                         + "; code="
                         + permission.code()
                         + "; category="
-                        + permission.category()
-        );
+                        + permission.category());
 
         return permission;
     }
 
     @Transactional
-    public AuthorizationPermissionResponse
-    deactivateTenantPermission(
-            UUID tenantId,
-            UUID permissionId,
-            Jwt jwt
-    ) {
-        AppUser actor =
-                getActor(
-                        tenantId,
-                        jwt
-                );
+    public AuthorizationPermissionResponse deactivateTenantPermission(
+            UUID tenantId, UUID permissionId, Jwt jwt) {
+        AppUser actor = getActor(tenantId, jwt);
 
         AuthorizationPermissionResponse existing =
-                authorizationPermissionService
-                        .getPermission(
-                                tenantId,
-                                permissionId
-                        );
+                authorizationPermissionService.getPermission(tenantId, permissionId);
 
         AuthorizationPermissionResponse permission =
-                authorizationPermissionService
-                        .deactivateTenantPermission(
-                                tenantId,
-                                permissionId
-                        );
+                authorizationPermissionService.deactivateTenantPermission(tenantId, permissionId);
 
         auditLogService.recordSuccess(
                 actor.getTenant(),
@@ -141,70 +98,38 @@ public class AuthorizationManagementCommandService {
                         + "; status="
                         + existing.status()
                         + " -> "
-                        + permission.status()
-        );
+                        + permission.status());
 
         return permission;
     }
 
     @Transactional
-    public List<AuthorizationRoleResponse>
-    initializeDefaultRoles(
-            UUID tenantId,
-            Jwt jwt
-    ) {
-        AppUser actor =
-                getActor(
-                        tenantId,
-                        jwt
-                );
+    public List<AuthorizationRoleResponse> initializeDefaultRoles(UUID tenantId, Jwt jwt) {
+        AppUser actor = getActor(tenantId, jwt);
 
         List<AuthorizationRoleResponse> roles =
-                authorizationRoleService
-                        .initializeDefaultRoles(
-                                tenantId
-                        );
+                authorizationRoleService.initializeDefaultRoles(tenantId);
 
         String initializedCodes =
-                roles.stream()
-                        .map(
-                                AuthorizationRoleResponse::code
-                        )
-                        .sorted()
-                        .toList()
-                        .toString();
+                roles.stream().map(AuthorizationRoleResponse::code).sorted().toList().toString();
 
         auditLogService.recordSuccess(
                 actor.getTenant(),
                 actor,
                 actor,
                 AuditAction.AUTH_ROLES_INITIALIZED,
-                "System authorization roles initialized "
-                        + "or synchronized: "
-                        + initializedCodes
-        );
+                "System authorization roles initialized " + "or synchronized: " + initializedCodes);
 
         return roles;
     }
 
     @Transactional
     public AuthorizationRoleResponse createTenantRole(
-            UUID tenantId,
-            AuthorizationRoleCreateRequest request,
-            Jwt jwt
-    ) {
-        AppUser actor =
-                getActor(
-                        tenantId,
-                        jwt
-                );
+            UUID tenantId, AuthorizationRoleCreateRequest request, Jwt jwt) {
+        AppUser actor = getActor(tenantId, jwt);
 
         AuthorizationRoleResponse role =
-                authorizationRoleService
-                        .createTenantRole(
-                                tenantId,
-                                request
-                        );
+                authorizationRoleService.createTenantRole(tenantId, request);
 
         auditLogService.recordSuccess(
                 actor.getTenant(),
@@ -216,47 +141,25 @@ public class AuthorizationManagementCommandService {
                         + "; code="
                         + role.code()
                         + "; permissions="
-                        + role.permissions().size()
-        );
+                        + role.permissions().size());
 
         return role;
     }
 
     @Transactional
-    public AuthorizationRoleResponse
-    replaceTenantRolePermissions(
-            UUID tenantId,
-            UUID roleId,
-            AuthorizationRolePermissionUpdateRequest request,
-            Jwt jwt
-    ) {
-        if (request == null
-                || request.permissionIds() == null) {
-            throw new IllegalArgumentException(
-                    "Permission ids are required."
-            );
+    public AuthorizationRoleResponse replaceTenantRolePermissions(
+            UUID tenantId, UUID roleId, AuthorizationRolePermissionUpdateRequest request, Jwt jwt) {
+        if (request == null || request.permissionIds() == null) {
+            throw new IllegalArgumentException("Permission ids are required.");
         }
 
-        AppUser actor =
-                getActor(
-                        tenantId,
-                        jwt
-                );
+        AppUser actor = getActor(tenantId, jwt);
 
-        AuthorizationRoleResponse previousRole =
-                authorizationRoleService
-                        .getRole(
-                                tenantId,
-                                roleId
-                        );
+        AuthorizationRoleResponse previousRole = authorizationRoleService.getRole(tenantId, roleId);
 
         AuthorizationRoleResponse updatedRole =
-                authorizationRoleService
-                        .replaceTenantRolePermissions(
-                                tenantId,
-                                roleId,
-                                request.permissionIds()
-                        );
+                authorizationRoleService.replaceTenantRolePermissions(
+                        tenantId, roleId, request.permissionIds());
 
         auditLogService.recordSuccess(
                 actor.getTenant(),
@@ -270,37 +173,19 @@ public class AuthorizationManagementCommandService {
                         + "; permissionCount="
                         + previousRole.permissions().size()
                         + " -> "
-                        + updatedRole.permissions().size()
-        );
+                        + updatedRole.permissions().size());
 
         return updatedRole;
     }
 
     @Transactional
-    public AuthorizationRoleResponse deactivateTenantRole(
-            UUID tenantId,
-            UUID roleId,
-            Jwt jwt
-    ) {
-        AppUser actor =
-                getActor(
-                        tenantId,
-                        jwt
-                );
+    public AuthorizationRoleResponse deactivateTenantRole(UUID tenantId, UUID roleId, Jwt jwt) {
+        AppUser actor = getActor(tenantId, jwt);
 
-        AuthorizationRoleResponse previousRole =
-                authorizationRoleService
-                        .getRole(
-                                tenantId,
-                                roleId
-                        );
+        AuthorizationRoleResponse previousRole = authorizationRoleService.getRole(tenantId, roleId);
 
         AuthorizationRoleResponse role =
-                authorizationRoleService
-                        .deactivateTenantRole(
-                                tenantId,
-                                roleId
-                        );
+                authorizationRoleService.deactivateTenantRole(tenantId, roleId);
 
         auditLogService.recordSuccess(
                 actor.getTenant(),
@@ -314,38 +199,21 @@ public class AuthorizationManagementCommandService {
                         + "; status="
                         + previousRole.status()
                         + " -> "
-                        + role.status()
-        );
+                        + role.status());
 
         return role;
     }
 
     @Transactional
-    public AuthorizationUserRoleAssignmentResponse
-    createUserRoleAssignment(
-            UUID tenantId,
-            AuthorizationUserRoleAssignmentCreateRequest request,
-            Jwt jwt
-    ) {
-        AppUser actor =
-                getActor(
-                        tenantId,
-                        jwt
-                );
+    public AuthorizationUserRoleAssignmentResponse createUserRoleAssignment(
+            UUID tenantId, AuthorizationUserRoleAssignmentCreateRequest request, Jwt jwt) {
+        AppUser actor = getActor(tenantId, jwt);
 
         AuthorizationUserRoleAssignmentResponse assignment =
-                authorizationUserRoleAssignmentService
-                        .createAssignment(
-                                tenantId,
-                                actor.getId(),
-                                request
-                        );
+                authorizationUserRoleAssignmentService.createAssignment(
+                        tenantId, actor.getId(), request);
 
-        AppUser targetUser =
-                getTargetUser(
-                        tenantId,
-                        assignment.userId()
-                );
+        AppUser targetUser = getTargetUser(tenantId, assignment.userId());
 
         auditLogService.recordSuccess(
                 actor.getTenant(),
@@ -363,53 +231,29 @@ public class AuthorizationManagementCommandService {
                         + "; scopeType="
                         + assignment.scopeType()
                         + "; scopeTargetId="
-                        + formatNullableUuid(
-                        assignment.scopeTargetId()
-                )
-        );
+                        + formatNullableUuid(assignment.scopeTargetId()));
 
         return assignment;
     }
 
     @Transactional
-    public AuthorizationUserRoleAssignmentResponse
-    deactivateUserRoleAssignment(
-            UUID tenantId,
-            UUID assignmentId,
-            Jwt jwt
-    ) {
-        AppUser actor =
-                getActor(
-                        tenantId,
-                        jwt
-                );
+    public AuthorizationUserRoleAssignmentResponse deactivateUserRoleAssignment(
+            UUID tenantId, UUID assignmentId, Jwt jwt) {
+        AppUser actor = getActor(tenantId, jwt);
 
         AuthorizationUserRoleAssignmentResponse existing =
-                authorizationUserRoleAssignmentService
-                        .getAssignment(
-                                tenantId,
-                                assignmentId
-                        );
+                authorizationUserRoleAssignmentService.getAssignment(tenantId, assignmentId);
 
-        AppUser targetUser =
-                getTargetUser(
-                        tenantId,
-                        existing.userId()
-                );
+        AppUser targetUser = getTargetUser(tenantId, existing.userId());
 
         AuthorizationUserRoleAssignmentResponse assignment =
-                authorizationUserRoleAssignmentService
-                        .deactivateAssignment(
-                                tenantId,
-                                assignmentId
-                        );
+                authorizationUserRoleAssignmentService.deactivateAssignment(tenantId, assignmentId);
 
         auditLogService.recordSuccess(
                 actor.getTenant(),
                 actor,
                 targetUser,
-                AuditAction
-                        .AUTH_USER_ROLE_ASSIGNMENT_DEACTIVATED,
+                AuditAction.AUTH_USER_ROLE_ASSIGNMENT_DEACTIVATED,
                 "Authorization role assignment "
                         + "deactivated: "
                         + assignment.id()
@@ -422,45 +266,27 @@ public class AuthorizationManagementCommandService {
                         + "; status="
                         + existing.status()
                         + " -> "
-                        + assignment.status()
-        );
+                        + assignment.status());
 
         return assignment;
     }
 
-    private AppUser getActor(
-            UUID tenantId,
-            Jwt jwt
-    ) {
-        return currentActorService
-                .getRequiredActiveActor(
-                        tenantId,
-                        jwt
-                );
+    private AppUser getActor(UUID tenantId, Jwt jwt) {
+        return currentActorService.getRequiredActiveActor(tenantId, jwt);
     }
 
-    private AppUser getTargetUser(
-            UUID tenantId,
-            UUID userId
-    ) {
+    private AppUser getTargetUser(UUID tenantId, UUID userId) {
         return appUserRepository
-                .findByTenantIdAndId(
-                        tenantId,
-                        userId
-                )
+                .findByTenantIdAndId(tenantId, userId)
                 .orElseThrow(
                         () ->
                                 new ResourceNotFoundException(
                                         "Authorization target user "
                                                 + "not found with id: "
-                                                + userId
-                                )
-                );
+                                                + userId));
     }
 
     private String formatNullableUuid(UUID value) {
-        return value == null
-                ? "NONE"
-                : value.toString();
+        return value == null ? "NONE" : value.toString();
     }
 }

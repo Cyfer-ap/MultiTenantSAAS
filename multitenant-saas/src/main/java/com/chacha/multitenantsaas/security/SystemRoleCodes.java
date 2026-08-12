@@ -10,13 +10,7 @@ public final class SystemRoleCodes {
 
     public static final String MEMBER = "MEMBER";
 
-    public static final Set<String> ALL =
-            Set.of(
-                    ADMIN,
-                    MANAGER,
-                    MEMBER
-            );
+    public static final Set<String> ALL = Set.of(ADMIN, MANAGER, MEMBER);
 
-    private SystemRoleCodes() {
-    }
+    private SystemRoleCodes() {}
 }

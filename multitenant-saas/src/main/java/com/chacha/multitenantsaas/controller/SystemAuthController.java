@@ -25,37 +25,29 @@ public class SystemAuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<SystemAdminLoginResponse>> login(
-            @Valid @RequestBody SystemAdminLoginRequest request
-    ) {
+            @Valid @RequestBody SystemAdminLoginRequest request) {
         SystemAdminLoginResponse response = systemAuthService.login(request);
 
-        return ResponseEntity.ok(
-                ApiResponse.success("System admin login successful", response)
-        );
+        return ResponseEntity.ok(ApiResponse.success("System admin login successful", response));
     }
 
     @PreAuthorize("@systemSecurity.isSystemAdmin()")
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<SystemAdminCurrentResponse>> getCurrentSystemAdmin(
-            @AuthenticationPrincipal Jwt jwt
-    ) {
+            @AuthenticationPrincipal Jwt jwt) {
         SystemAdminCurrentResponse response = systemAuthService.getCurrentSystemAdmin(jwt);
 
         return ResponseEntity.ok(
-                ApiResponse.success("Current system admin fetched successfully", response)
-        );
+                ApiResponse.success("Current system admin fetched successfully", response));
     }
 
     @PreAuthorize("@systemSecurity.isSystemAdmin()")
     @PostMapping("/change-password")
     public ResponseEntity<ApiResponse<SystemAdminCurrentResponse>> changePassword(
-            @AuthenticationPrincipal Jwt jwt,
-            @Valid @RequestBody ChangePasswordRequest request
-    ) {
+            @AuthenticationPrincipal Jwt jwt, @Valid @RequestBody ChangePasswordRequest request) {
         SystemAdminCurrentResponse response = systemAuthService.changePassword(jwt, request);
 
         return ResponseEntity.ok(
-                ApiResponse.success("System admin password changed successfully", response)
-        );
+                ApiResponse.success("System admin password changed successfully", response));
     }
 }

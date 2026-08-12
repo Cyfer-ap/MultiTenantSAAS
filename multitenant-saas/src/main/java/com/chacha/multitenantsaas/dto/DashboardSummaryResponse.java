@@ -5,10 +5,7 @@ public record DashboardSummaryResponse(
         long activeTenants,
         long inactiveTenants,
         long suspendedTenants,
-
         long totalUsers,
         long activeUsers,
         long inactiveUsers,
-        long suspendedUsers
-) {
-}
+        long suspendedUsers) {}

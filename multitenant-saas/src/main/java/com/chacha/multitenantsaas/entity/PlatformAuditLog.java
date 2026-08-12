@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.entity;
 
 import jakarta.persistence.*;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,24 +8,11 @@ import java.util.UUID;
 @Table(
         name = "platform_audit_logs",
         indexes = {
-                @Index(
-                        name = "idx_platform_audit_actor",
-                        columnList = "actor_system_admin_id"
-                ),
-                @Index(
-                        name = "idx_platform_audit_target",
-                        columnList = "target_system_admin_id"
-                ),
-                @Index(
-                        name = "idx_platform_audit_action",
-                        columnList = "action"
-                ),
-                @Index(
-                        name = "idx_platform_audit_created_at",
-                        columnList = "created_at"
-                )
-        }
-)
+            @Index(name = "idx_platform_audit_actor", columnList = "actor_system_admin_id"),
+            @Index(name = "idx_platform_audit_target", columnList = "target_system_admin_id"),
+            @Index(name = "idx_platform_audit_action", columnList = "action"),
+            @Index(name = "idx_platform_audit_created_at", columnList = "created_at")
+        })
 public class PlatformAuditLog {
 
     @Id
@@ -54,16 +40,14 @@ public class PlatformAuditLog {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-    public PlatformAuditLog() {
-    }
+    public PlatformAuditLog() {}
 
     public PlatformAuditLog(
             SystemAdmin actorSystemAdmin,
             SystemAdmin targetSystemAdmin,
             PlatformAuditAction action,
             boolean success,
-            String message
-    ) {
+            String message) {
         this.actorSystemAdmin = actorSystemAdmin;
         this.targetSystemAdmin = targetSystemAdmin;
         this.action = action;

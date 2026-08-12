@@ -15,7 +15,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -23,103 +22,61 @@ import java.util.UUID;
 @Table(
         name = "organizational_units",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_org_unit_tenant_code",
-                        columnNames = {
-                                "tenant_id",
-                                "code"
-                        }
-                ),
-                @UniqueConstraint(
-                        name = "uk_org_unit_tenant_id",
-                        columnNames = {
-                                "tenant_id",
-                                "id"
-                        }
-                )
+            @UniqueConstraint(
+                    name = "uk_org_unit_tenant_code",
+                    columnNames = {"tenant_id", "code"}),
+            @UniqueConstraint(
+                    name = "uk_org_unit_tenant_id",
+                    columnNames = {"tenant_id", "id"})
         },
         indexes = {
-                @Index(
-                        name = "idx_org_unit_tenant",
-                        columnList = "tenant_id"
-                ),
-                @Index(
-                        name = "idx_org_unit_tenant_parent",
-                        columnList = "tenant_id,parent_unit_id"
-                ),
-                @Index(
-                        name = "idx_org_unit_tenant_status",
-                        columnList = "tenant_id,status"
-                ),
-                @Index(
-                        name = "idx_org_unit_tenant_type",
-                        columnList = "tenant_id,type"
-                )
-        }
-)
+            @Index(name = "idx_org_unit_tenant", columnList = "tenant_id"),
+            @Index(name = "idx_org_unit_tenant_parent", columnList = "tenant_id,parent_unit_id"),
+            @Index(name = "idx_org_unit_tenant_status", columnList = "tenant_id,status"),
+            @Index(name = "idx_org_unit_tenant_type", columnList = "tenant_id,type")
+        })
 public class OrganizationalUnit {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = false
-    )
-    @JoinColumn(
-            name = "tenant_id",
-            nullable = false
-    )
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_unit_id")
     private OrganizationalUnit parentUnit;
 
-    @Column(
-            nullable = false,
-            length = 150
-    )
+    @Column(nullable = false, length = 150)
     private String name;
 
     @Column(length = 100)
     private String code;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            nullable = false,
-            length = 30
-    )
+    @Column(nullable = false, length = 30)
     private OrganizationalUnitType type;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            nullable = false,
-            length = 30
-    )
-    private OrganizationalUnitStatus status =
-            OrganizationalUnitStatus.ACTIVE;
+    @Column(nullable = false, length = 30)
+    private OrganizationalUnitStatus status = OrganizationalUnitStatus.ACTIVE;
 
-    @Column(
-            nullable = false,
-            updatable = false
-    )
+    @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(nullable = false)
     private Instant updatedAt;
 
-    public OrganizationalUnit() {
-    }
+    public OrganizationalUnit() {}
 
     public OrganizationalUnit(
             Tenant tenant,
             OrganizationalUnit parentUnit,
             String name,
             String code,
-            OrganizationalUnitType type
-    ) {
+            OrganizationalUnitType type) {
         this.tenant = tenant;
         this.parentUnit = parentUnit;
         this.name = name;
@@ -185,9 +142,7 @@ public class OrganizationalUnit {
         this.tenant = tenant;
     }
 
-    public void setParentUnit(
-            OrganizationalUnit parentUnit
-    ) {
+    public void setParentUnit(OrganizationalUnit parentUnit) {
         this.parentUnit = parentUnit;
     }
 
@@ -199,15 +154,11 @@ public class OrganizationalUnit {
         this.code = code;
     }
 
-    public void setType(
-            OrganizationalUnitType type
-    ) {
+    public void setType(OrganizationalUnitType type) {
         this.type = type;
     }
 
-    public void setStatus(
-            OrganizationalUnitStatus status
-    ) {
+    public void setStatus(OrganizationalUnitStatus status) {
         this.status = status;
     }
 

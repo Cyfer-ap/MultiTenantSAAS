@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.entity;
 
 import jakarta.persistence.*;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,12 +8,8 @@ import java.util.UUID;
 @Table(
         name = "system_admins",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_system_admin_email",
-                        columnNames = "email"
-                )
-        }
-)
+            @UniqueConstraint(name = "uk_system_admin_email", columnNames = "email")
+        })
 public class SystemAdmin {
 
     @Id
@@ -44,8 +39,7 @@ public class SystemAdmin {
 
     private Instant updatedAt;
 
-    public SystemAdmin() {
-    }
+    public SystemAdmin() {}
 
     public SystemAdmin(String fullName, String email, String passwordHash) {
         this.fullName = fullName;
