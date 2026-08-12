@@ -4,9 +4,7 @@ import type {
     SystemAdminSession,
 } from '../types/systemAdmin'
 
-export function createSystemAdminSession(
-    response: SystemAdminLoginResponse,
-): SystemAdminSession {
+export function createSystemAdminSession(response: SystemAdminLoginResponse): SystemAdminSession {
     return {
         systemAdminId: response.systemAdminId,
         fullName: response.fullName,
@@ -14,9 +12,7 @@ export function createSystemAdminSession(
         role: response.role,
         accessToken: response.accessToken,
         tokenType: response.tokenType,
-        accessTokenExpiresAt:
-            Date.now() +
-            Math.max(response.expiresInSeconds, 0) * 1_000,
+        accessTokenExpiresAt: Date.now() + Math.max(response.expiresInSeconds, 0) * 1_000,
     }
 }
 

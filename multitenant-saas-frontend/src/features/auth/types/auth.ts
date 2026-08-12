@@ -1,12 +1,6 @@
-export type TenantRole =
-    | 'TENANT_ADMIN'
-    | 'TENANT_MANAGER'
-    | 'TENANT_USER'
+export type TenantRole = 'TENANT_ADMIN' | 'TENANT_MANAGER' | 'TENANT_USER'
 
-export type UserStatus =
-    | 'ACTIVE'
-    | 'INACTIVE'
-    | 'SUSPENDED'
+export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 
 export interface LoginRequest {
     email: string
@@ -24,8 +18,7 @@ export interface TokenPairResponse {
     expiresInSeconds: number
 }
 
-export interface LoginResponse
-    extends TokenPairResponse {
+export interface LoginResponse extends TokenPairResponse {
     tenantId: string
     userId: string
     fullName: string
@@ -34,8 +27,7 @@ export interface LoginResponse
     message: string
 }
 
-export type TokenRefreshResponse =
-    TokenPairResponse
+export type TokenRefreshResponse = TokenPairResponse
 
 export interface RefreshTokenRequest {
     refreshToken: string

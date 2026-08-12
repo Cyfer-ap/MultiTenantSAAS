@@ -1,20 +1,9 @@
-import type {
-    TenantRole,
-    UserStatus,
-} from '../../auth/types/auth'
+import type { TenantRole, UserStatus } from '../../auth/types/auth'
 
-export type InvitationStatus =
-    | 'PENDING'
-    | 'ACCEPTED'
-    | 'REVOKED'
+export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'REVOKED'
 
 export type InvitationSortField =
-    | 'createdAt'
-    | 'fullName'
-    | 'email'
-    | 'role'
-    | 'status'
-    | 'expiresAt'
+    'createdAt' | 'fullName' | 'email' | 'role' | 'status' | 'expiresAt'
 
 export type SortDirection = 'asc' | 'desc'
 

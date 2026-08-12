@@ -11,8 +11,7 @@ export function createTenantAuthorizationContext({
     userId = 'user-1',
     permissionCodes,
 }: TenantAuthorizationContextOptions): CurrentAuthorizationContext {
-    const uniquePermissionCodes =
-        Array.from(new Set(permissionCodes)).sort()
+    const uniquePermissionCodes = Array.from(new Set(permissionCodes)).sort()
 
     return {
         tenantId,
@@ -22,22 +21,23 @@ export function createTenantAuthorizationContext({
         evaluatedAt: '2026-08-04T12:00:00Z',
         tenantPermissionCodes: uniquePermissionCodes,
         allPermissionCodes: uniquePermissionCodes,
-        grants: uniquePermissionCodes.length === 0
-            ? []
-            : [
-                {
-                    assignmentId: 'test-assignment',
-                    roleId: 'test-role',
-                    roleCode: 'TEST_ROLE',
-                    roleName: 'Test Role',
-                    roleSource: 'TENANT',
-                    scopeType: 'TENANT',
-                    scopeTargetId: null,
-                    validFrom: '2026-08-01T00:00:00Z',
-                    validUntil: null,
-                    permissionCodes: uniquePermissionCodes,
-                },
-            ],
+        grants:
+            uniquePermissionCodes.length === 0
+                ? []
+                : [
+                      {
+                          assignmentId: 'test-assignment',
+                          roleId: 'test-role',
+                          roleCode: 'TEST_ROLE',
+                          roleName: 'Test Role',
+                          roleSource: 'TENANT',
+                          scopeType: 'TENANT',
+                          scopeTargetId: null,
+                          validFrom: '2026-08-01T00:00:00Z',
+                          validUntil: null,
+                          permissionCodes: uniquePermissionCodes,
+                      },
+                  ],
     }
 }
 
@@ -56,15 +56,10 @@ export function createProjectAuthorizationContext({
     tenantPermissionCodes = [],
     permissionCodes,
 }: ProjectAuthorizationContextOptions): CurrentAuthorizationContext {
-    const uniqueTenantPermissionCodes =
-        Array.from(new Set(tenantPermissionCodes)).sort()
-    const uniqueProjectPermissionCodes =
-        Array.from(new Set(permissionCodes)).sort()
+    const uniqueTenantPermissionCodes = Array.from(new Set(tenantPermissionCodes)).sort()
+    const uniqueProjectPermissionCodes = Array.from(new Set(permissionCodes)).sort()
     const allPermissionCodes = Array.from(
-        new Set([
-            ...uniqueTenantPermissionCodes,
-            ...uniqueProjectPermissionCodes,
-        ]),
+        new Set([...uniqueTenantPermissionCodes, ...uniqueProjectPermissionCodes]),
     ).sort()
 
     return {
@@ -79,20 +74,19 @@ export function createProjectAuthorizationContext({
             ...(uniqueTenantPermissionCodes.length === 0
                 ? []
                 : [
-                    {
-                        assignmentId: 'test-tenant-assignment',
-                        roleId: 'test-tenant-role',
-                        roleCode: 'TEST_TENANT_ROLE',
-                        roleName: 'Test Tenant Role',
-                        roleSource: 'TENANT' as const,
-                        scopeType: 'TENANT' as const,
-                        scopeTargetId: null,
-                        validFrom: '2026-08-01T00:00:00Z',
-                        validUntil: null,
-                        permissionCodes:
-                            uniqueTenantPermissionCodes,
-                    },
-                ]),
+                      {
+                          assignmentId: 'test-tenant-assignment',
+                          roleId: 'test-tenant-role',
+                          roleCode: 'TEST_TENANT_ROLE',
+                          roleName: 'Test Tenant Role',
+                          roleSource: 'TENANT' as const,
+                          scopeType: 'TENANT' as const,
+                          scopeTargetId: null,
+                          validFrom: '2026-08-01T00:00:00Z',
+                          validUntil: null,
+                          permissionCodes: uniqueTenantPermissionCodes,
+                      },
+                  ]),
             {
                 assignmentId: 'test-project-assignment',
                 roleId: 'test-project-role',

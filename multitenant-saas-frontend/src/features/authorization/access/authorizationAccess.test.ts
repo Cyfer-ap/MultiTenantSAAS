@@ -1,8 +1,4 @@
-import {
-    describe,
-    expect,
-    it,
-} from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import {
     getDefaultAuthorizedPath,
@@ -21,9 +17,7 @@ const context: CurrentAuthorizationContext = {
     email: 'scoped@example.com',
     evaluatedAt: '2026-08-04T12:00:00Z',
 
-    tenantPermissionCodes: [
-        authorizationPermissionCodes.TENANT_READ,
-    ],
+    tenantPermissionCodes: [authorizationPermissionCodes.TENANT_READ],
 
     allPermissionCodes: [
         authorizationPermissionCodes.TENANT_READ,
@@ -42,10 +36,7 @@ const context: CurrentAuthorizationContext = {
             scopeTargetId: null,
             validFrom: '2026-08-01T00:00:00Z',
             validUntil: null,
-            permissionCodes: [
-                authorizationPermissionCodes
-                    .TENANT_READ,
-            ],
+            permissionCodes: [authorizationPermissionCodes.TENANT_READ],
         },
         {
             assignmentId: 'assignment-2',
@@ -57,10 +48,7 @@ const context: CurrentAuthorizationContext = {
             scopeTargetId: 'project-1',
             validFrom: '2026-08-01T00:00:00Z',
             validUntil: null,
-            permissionCodes: [
-                authorizationPermissionCodes
-                    .PROJECT_READ,
-            ],
+            permissionCodes: [authorizationPermissionCodes.PROJECT_READ],
         },
         {
             assignmentId: 'assignment-3',
@@ -72,64 +60,31 @@ const context: CurrentAuthorizationContext = {
             scopeTargetId: null,
             validFrom: '2026-08-01T00:00:00Z',
             validUntil: null,
-            permissionCodes: [
-                authorizationPermissionCodes
-                    .AUDIT_READ,
-            ],
+            permissionCodes: [authorizationPermissionCodes.AUDIT_READ],
         },
     ],
 }
 
 describe('authorizationAccess', () => {
     it('does not treat scoped permissions as tenant-wide permissions', () => {
-        expect(
-            hasTenantPermission(
-                context,
-                authorizationPermissionCodes
-                    .TENANT_READ,
-            ),
-        ).toBe(true)
+        expect(hasTenantPermission(context, authorizationPermissionCodes.TENANT_READ)).toBe(true)
 
-        expect(
-            hasTenantPermission(
-                context,
-                authorizationPermissionCodes
-                    .PROJECT_READ,
-            ),
-        ).toBe(false)
+        expect(hasTenantPermission(context, authorizationPermissionCodes.PROJECT_READ)).toBe(false)
 
-        expect(
-            hasTenantPermission(
-                context,
-                authorizationPermissionCodes
-                    .AUDIT_READ,
-            ),
-        ).toBe(false)
+        expect(hasTenantPermission(context, authorizationPermissionCodes.AUDIT_READ)).toBe(false)
     })
 
     it('matches only the project targeted by a project-scoped grant', () => {
         expect(
-            hasProjectPermission(
-                context,
-                authorizationPermissionCodes
-                    .PROJECT_READ,
-                'project-1',
-            ),
+            hasProjectPermission(context, authorizationPermissionCodes.PROJECT_READ, 'project-1'),
         ).toBe(true)
 
         expect(
-            hasProjectPermission(
-                context,
-                authorizationPermissionCodes
-                    .PROJECT_READ,
-                'project-2',
-            ),
+            hasProjectPermission(context, authorizationPermissionCodes.PROJECT_READ, 'project-2'),
         ).toBe(false)
     })
 
     it('uses the first readable scoped project as the fallback path', () => {
-        expect(
-            getDefaultAuthorizedPath(context),
-        ).toBe('/projects/project-1')
+        expect(getDefaultAuthorizedPath(context)).toBe('/projects/project-1')
     })
 })

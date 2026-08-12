@@ -1,28 +1,13 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    render,
-    screen,
-    waitFor,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { appTheme } from '../../../theme/appTheme'
 import { organizationApi } from '../api/organizationApi'
-import type {
-    OrganizationAssignment,
-} from '../types/organization'
+import type { OrganizationAssignment } from '../types/organization'
 import { CreateAssignmentDialog } from './OrganizationDialogs'
 
 const assignment: OrganizationAssignment = {
@@ -53,16 +38,10 @@ function renderDialog() {
         },
     })
 
-    function Wrapper({
-        children,
-    }: PropsWithChildren) {
+    function Wrapper({ children }: PropsWithChildren) {
         return (
             <ThemeProvider theme={appTheme}>
-                <QueryClientProvider
-                    client={queryClient}
-                >
-                    {children}
-                </QueryClientProvider>
+                <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
             </ThemeProvider>
         )
     }
@@ -83,39 +62,25 @@ function renderDialog() {
 describe('CreateAssignmentDialog', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
-        vi.spyOn(
-            organizationApi,
-            'getAssignmentUserOptions',
-        ).mockResolvedValue([
+        vi.spyOn(organizationApi, 'getAssignmentUserOptions').mockResolvedValue([
             {
                 id: 'user-2',
                 fullName: 'Grace User',
                 email: 'grace@example.com',
             },
         ])
-        vi.spyOn(
-            organizationApi,
-            'createAssignment',
-        ).mockResolvedValue(assignment)
+        vi.spyOn(organizationApi, 'createAssignment').mockResolvedValue(assignment)
     })
 
     it('assigns a readable user selection without exposing a UUID field', async () => {
         const user = userEvent.setup()
-        const createAssignment = vi.mocked(
-            organizationApi.createAssignment,
-        )
+        const createAssignment = vi.mocked(organizationApi.createAssignment)
 
         renderDialog()
 
-        expect(
-            screen.queryByLabelText(/uuid/i),
-        ).not.toBeInTheDocument()
+        expect(screen.queryByLabelText(/uuid/i)).not.toBeInTheDocument()
 
-        const userSelector =
-            await screen.findByRole(
-                'combobox',
-                { name: /^user$/i },
-            )
+        const userSelector = await screen.findByRole('combobox', { name: /^user$/i })
 
         await user.type(userSelector, 'Grace')
         await user.click(
@@ -130,18 +95,15 @@ describe('CreateAssignmentDialog', () => {
         )
 
         await waitFor(() => {
-            expect(createAssignment).toHaveBeenCalledWith(
-                'tenant-1',
-                {
-                    userId: 'user-2',
-                    organizationalUnitId: 'unit-1',
-                    reportsToAssignmentId: null,
-                    positionTitle: null,
-                    primaryAssignment: false,
-                    validFrom: null,
-                    validUntil: null,
-                },
-            )
+            expect(createAssignment).toHaveBeenCalledWith('tenant-1', {
+                userId: 'user-2',
+                organizationalUnitId: 'unit-1',
+                reportsToAssignmentId: null,
+                positionTitle: null,
+                primaryAssignment: false,
+                validFrom: null,
+                validUntil: null,
+            })
         })
     })
 })

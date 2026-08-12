@@ -1,9 +1,6 @@
 import { publicHttpClient } from '../../../api/httpClient'
 import { systemHttpClient } from '../../../api/systemHttpClient'
-import type {
-    ApiResponse,
-    PageResponse,
-} from '../../../types/api'
+import type { ApiResponse, PageResponse } from '../../../types/api'
 import type {
     ChangeSystemAdminPasswordInput,
     CurrentSystemAdmin,
@@ -23,48 +20,43 @@ import type {
     UpdateSystemAdminStatusInput,
 } from '../types/systemAdmin'
 
-async function login(
-    input: SystemAdminLoginInput,
-): Promise<SystemAdminLoginResponse> {
-    const response = await publicHttpClient.post<
-        ApiResponse<SystemAdminLoginResponse>
-    >('/api/system/auth/login', input)
+async function login(input: SystemAdminLoginInput): Promise<SystemAdminLoginResponse> {
+    const response = await publicHttpClient.post<ApiResponse<SystemAdminLoginResponse>>(
+        '/api/system/auth/login',
+        input,
+    )
 
     return response.data.data
 }
 
 async function getCurrentAdmin(): Promise<CurrentSystemAdmin> {
-    const response = await systemHttpClient.get<
-        ApiResponse<CurrentSystemAdmin>
-    >('/api/system/auth/me')
+    const response =
+        await systemHttpClient.get<ApiResponse<CurrentSystemAdmin>>('/api/system/auth/me')
 
     return response.data.data
 }
 
-async function changePassword(
-    input: ChangeSystemAdminPasswordInput,
-): Promise<CurrentSystemAdmin> {
-    const response = await systemHttpClient.post<
-        ApiResponse<CurrentSystemAdmin>
-    >('/api/system/auth/change-password', input)
+async function changePassword(input: ChangeSystemAdminPasswordInput): Promise<CurrentSystemAdmin> {
+    const response = await systemHttpClient.post<ApiResponse<CurrentSystemAdmin>>(
+        '/api/system/auth/change-password',
+        input,
+    )
 
     return response.data.data
 }
 
 async function getDashboardSummary(): Promise<SystemDashboardSummary> {
-    const response = await systemHttpClient.get<
-        ApiResponse<SystemDashboardSummary>
-    >('/api/dashboard/summary')
+    const response =
+        await systemHttpClient.get<ApiResponse<SystemDashboardSummary>>('/api/dashboard/summary')
 
     return response.data.data
 }
 
-async function getTenants(
-    params: SystemTenantsQueryParams,
-): Promise<PageResponse<SystemTenant>> {
-    const response = await systemHttpClient.get<
-        ApiResponse<PageResponse<SystemTenant>>
-    >('/api/tenants', { params })
+async function getTenants(params: SystemTenantsQueryParams): Promise<PageResponse<SystemTenant>> {
+    const response = await systemHttpClient.get<ApiResponse<PageResponse<SystemTenant>>>(
+        '/api/tenants',
+        { params },
+    )
 
     return response.data.data
 }
@@ -73,9 +65,10 @@ async function updateTenantStatus(
     tenantId: string,
     input: UpdateSystemTenantStatusInput,
 ): Promise<SystemTenant> {
-    const response = await systemHttpClient.patch<
-        ApiResponse<SystemTenant>
-    >(`/api/tenants/${tenantId}/status`, input)
+    const response = await systemHttpClient.patch<ApiResponse<SystemTenant>>(
+        `/api/tenants/${tenantId}/status`,
+        input,
+    )
 
     return response.data.data
 }
@@ -83,9 +76,10 @@ async function updateTenantStatus(
 async function onboardTenant(
     input: SystemTenantOnboardingInput,
 ): Promise<SystemTenantOnboardingResponse> {
-    const response = await systemHttpClient.post<
-        ApiResponse<SystemTenantOnboardingResponse>
-    >('/api/system/onboarding/tenants', input)
+    const response = await systemHttpClient.post<ApiResponse<SystemTenantOnboardingResponse>>(
+        '/api/system/onboarding/tenants',
+        input,
+    )
 
     return response.data.data
 }
@@ -93,19 +87,19 @@ async function onboardTenant(
 async function getSystemAdmins(
     params: SystemAdminsQueryParams,
 ): Promise<PageResponse<SystemAdminRecord>> {
-    const response = await systemHttpClient.get<
-        ApiResponse<PageResponse<SystemAdminRecord>>
-    >('/api/system/admins', { params })
+    const response = await systemHttpClient.get<ApiResponse<PageResponse<SystemAdminRecord>>>(
+        '/api/system/admins',
+        { params },
+    )
 
     return response.data.data
 }
 
-async function createSystemAdmin(
-    input: CreateSystemAdminInput,
-): Promise<SystemAdminRecord> {
-    const response = await systemHttpClient.post<
-        ApiResponse<SystemAdminRecord>
-    >('/api/system/admins', input)
+async function createSystemAdmin(input: CreateSystemAdminInput): Promise<SystemAdminRecord> {
+    const response = await systemHttpClient.post<ApiResponse<SystemAdminRecord>>(
+        '/api/system/admins',
+        input,
+    )
 
     return response.data.data
 }
@@ -114,19 +108,18 @@ async function updateSystemAdminStatus(
     systemAdminId: string,
     input: UpdateSystemAdminStatusInput,
 ): Promise<SystemAdminRecord> {
-    const response = await systemHttpClient.patch<
-        ApiResponse<SystemAdminRecord>
-    >(`/api/system/admins/${systemAdminId}/status`, input)
+    const response = await systemHttpClient.patch<ApiResponse<SystemAdminRecord>>(
+        `/api/system/admins/${systemAdminId}/status`,
+        input,
+    )
 
     return response.data.data
 }
 
-async function unlockSystemAdminLogin(
-    systemAdminId: string,
-): Promise<SystemAdminRecord> {
-    const response = await systemHttpClient.patch<
-        ApiResponse<SystemAdminRecord>
-    >(`/api/system/admins/${systemAdminId}/unlock`)
+async function unlockSystemAdminLogin(systemAdminId: string): Promise<SystemAdminRecord> {
+    const response = await systemHttpClient.patch<ApiResponse<SystemAdminRecord>>(
+        `/api/system/admins/${systemAdminId}/unlock`,
+    )
 
     return response.data.data
 }
@@ -134,9 +127,10 @@ async function unlockSystemAdminLogin(
 async function getPlatformAuditLogs(
     params: PlatformAuditLogsQueryParams,
 ): Promise<PageResponse<PlatformAuditLog>> {
-    const response = await systemHttpClient.get<
-        ApiResponse<PageResponse<PlatformAuditLog>>
-    >('/api/system/audit-logs', { params })
+    const response = await systemHttpClient.get<ApiResponse<PageResponse<PlatformAuditLog>>>(
+        '/api/system/audit-logs',
+        { params },
+    )
 
     return response.data.data
 }

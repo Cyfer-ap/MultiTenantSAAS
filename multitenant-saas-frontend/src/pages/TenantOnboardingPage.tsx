@@ -18,27 +18,17 @@ import { useNavigate } from 'react-router'
 import { ApiClientError } from '../api/apiError'
 import { useTenantOnboarding } from '../features/onboarding/hooks/useTenantOnboarding'
 
-const passwordPattern =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,100}$/
+const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,100}$/
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 function getErrorMessage(error: unknown): string {
-    return error instanceof Error
-        ? error.message
-        : 'The workspace could not be created.'
+    return error instanceof Error ? error.message : 'The workspace could not be created.'
 }
 
-function getFieldError(
-    error: unknown,
-    field: string,
-): string | undefined {
-    const detail = error instanceof ApiClientError
-        ? error.details?.[field]
-        : undefined
+function getFieldError(error: unknown, field: string): string | undefined {
+    const detail = error instanceof ApiClientError ? error.details?.[field] : undefined
 
-    return typeof detail === 'string'
-        ? detail
-        : undefined
+    return typeof detail === 'string' ? detail : undefined
 }
 
 export function TenantOnboardingPage() {
@@ -50,16 +40,13 @@ export function TenantOnboardingPage() {
     const [adminEmail, setAdminEmail] = useState('')
     const [adminPassword, setAdminPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
-    const [validationError, setValidationError] =
-        useState<string | null>(null)
+    const [validationError, setValidationError] = useState<string | null>(null)
 
     const clearValidationError = (): void => {
         setValidationError(null)
     }
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         const normalizedTenantName = tenantName.trim()
@@ -67,13 +54,8 @@ export function TenantOnboardingPage() {
         const normalizedAdminFullName = adminFullName.trim()
         const normalizedAdminEmail = adminEmail.trim().toLowerCase()
 
-        if (
-            normalizedTenantName.length < 2 ||
-            normalizedTenantName.length > 100
-        ) {
-            setValidationError(
-                'Workspace name must be between 2 and 100 characters.',
-            )
+        if (normalizedTenantName.length < 2 || normalizedTenantName.length > 100) {
+            setValidationError('Workspace name must be between 2 and 100 characters.')
             return
         }
 
@@ -88,13 +70,8 @@ export function TenantOnboardingPage() {
             return
         }
 
-        if (
-            normalizedAdminFullName.length < 2 ||
-            normalizedAdminFullName.length > 100
-        ) {
-            setValidationError(
-                'Administrator name must be between 2 and 100 characters.',
-            )
+        if (normalizedAdminFullName.length < 2 || normalizedAdminFullName.length > 100) {
+            setValidationError('Administrator name must be between 2 and 100 characters.')
             return
         }
 
@@ -125,8 +102,7 @@ export function TenantOnboardingPage() {
                 adminEmail: normalizedAdminEmail,
                 adminPassword,
             })
-        }
-        catch {
+        } catch {
             // The mutation error is rendered on the page.
         }
     }
@@ -183,10 +159,7 @@ export function TenantOnboardingPage() {
                                     <Typography component="h1" variant="h4">
                                         Workspace created
                                     </Typography>
-                                    <Typography
-                                        color="text.secondary"
-                                        sx={{ marginTop: 1 }}
-                                    >
+                                    <Typography color="text.secondary" sx={{ marginTop: 1 }}>
                                         Your administrator account is ready.
                                     </Typography>
                                 </Box>
@@ -201,21 +174,13 @@ export function TenantOnboardingPage() {
                                     sx={{ width: '100%' }}
                                 >
                                     <Box>
-                                        <Typography
-                                            color="text.secondary"
-                                            variant="caption"
-                                        >
+                                        <Typography color="text.secondary" variant="caption">
                                             Workspace
                                         </Typography>
-                                        <Typography>
-                                            {mutation.data.tenant.name}
-                                        </Typography>
+                                        <Typography>{mutation.data.tenant.name}</Typography>
                                     </Box>
                                     <Box>
-                                        <Typography
-                                            color="text.secondary"
-                                            variant="caption"
-                                        >
+                                        <Typography color="text.secondary" variant="caption">
                                             Tenant ID
                                         </Typography>
                                         <Typography sx={{ overflowWrap: 'anywhere' }}>
@@ -223,15 +188,10 @@ export function TenantOnboardingPage() {
                                         </Typography>
                                     </Box>
                                     <Box>
-                                        <Typography
-                                            color="text.secondary"
-                                            variant="caption"
-                                        >
+                                        <Typography color="text.secondary" variant="caption">
                                             Administrator email
                                         </Typography>
-                                        <Typography>
-                                            {mutation.data.adminUser.email}
-                                        </Typography>
+                                        <Typography>{mutation.data.adminUser.email}</Typography>
                                     </Box>
                                 </Stack>
 
@@ -250,10 +210,7 @@ export function TenantOnboardingPage() {
                                     <Typography component="h1" variant="h4">
                                         Create workspace
                                     </Typography>
-                                    <Typography
-                                        color="text.secondary"
-                                        sx={{ marginTop: 1 }}
-                                    >
+                                    <Typography color="text.secondary" sx={{ marginTop: 1 }}>
                                         Set up a tenant and its first administrator.
                                     </Typography>
                                 </Box>
@@ -269,8 +226,7 @@ export function TenantOnboardingPage() {
                                     <Stack spacing={2}>
                                         {(validationError || mutation.isError) && (
                                             <Alert severity="error">
-                                                {validationError ??
-                                                    getErrorMessage(mutation.error)}
+                                                {validationError ?? getErrorMessage(mutation.error)}
                                             </Alert>
                                         )}
 
@@ -279,15 +235,9 @@ export function TenantOnboardingPage() {
                                             autoFocus
                                             disabled={mutation.isPending}
                                             error={Boolean(
-                                                getFieldError(
-                                                    mutation.error,
-                                                    'tenantName',
-                                                ),
+                                                getFieldError(mutation.error, 'tenantName'),
                                             )}
-                                            helperText={getFieldError(
-                                                mutation.error,
-                                                'tenantName',
-                                            )}
+                                            helperText={getFieldError(mutation.error, 'tenantName')}
                                             label="Workspace name"
                                             onChange={(event) => {
                                                 setTenantName(event.target.value)
@@ -300,16 +250,10 @@ export function TenantOnboardingPage() {
                                             autoComplete="off"
                                             disabled={mutation.isPending}
                                             error={Boolean(
-                                                getFieldError(
-                                                    mutation.error,
-                                                    'tenantSlug',
-                                                ),
+                                                getFieldError(mutation.error, 'tenantSlug'),
                                             )}
                                             helperText={
-                                                getFieldError(
-                                                    mutation.error,
-                                                    'tenantSlug',
-                                                ) ??
+                                                getFieldError(mutation.error, 'tenantSlug') ??
                                                 'Lowercase letters, numbers, and single hyphens.'
                                             }
                                             label="Workspace slug"
@@ -327,10 +271,7 @@ export function TenantOnboardingPage() {
                                             autoComplete="name"
                                             disabled={mutation.isPending}
                                             error={Boolean(
-                                                getFieldError(
-                                                    mutation.error,
-                                                    'adminFullName',
-                                                ),
+                                                getFieldError(mutation.error, 'adminFullName'),
                                             )}
                                             helperText={getFieldError(
                                                 mutation.error,
@@ -348,15 +289,9 @@ export function TenantOnboardingPage() {
                                             autoComplete="email"
                                             disabled={mutation.isPending}
                                             error={Boolean(
-                                                getFieldError(
-                                                    mutation.error,
-                                                    'adminEmail',
-                                                ),
+                                                getFieldError(mutation.error, 'adminEmail'),
                                             )}
-                                            helperText={getFieldError(
-                                                mutation.error,
-                                                'adminEmail',
-                                            )}
+                                            helperText={getFieldError(mutation.error, 'adminEmail')}
                                             label="Email address"
                                             onChange={(event) => {
                                                 setAdminEmail(event.target.value)
@@ -370,16 +305,10 @@ export function TenantOnboardingPage() {
                                             autoComplete="new-password"
                                             disabled={mutation.isPending}
                                             error={Boolean(
-                                                getFieldError(
-                                                    mutation.error,
-                                                    'adminPassword',
-                                                ),
+                                                getFieldError(mutation.error, 'adminPassword'),
                                             )}
                                             helperText={
-                                                getFieldError(
-                                                    mutation.error,
-                                                    'adminPassword',
-                                                ) ??
+                                                getFieldError(mutation.error, 'adminPassword') ??
                                                 '8–100 characters with uppercase, lowercase, number, special character, and no spaces.'
                                             }
                                             label="Password"

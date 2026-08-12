@@ -11,10 +11,7 @@ import {
     Typography,
 } from '@mui/material'
 import { useForm } from 'react-hook-form'
-import {
-    useLocation,
-    useNavigate,
-} from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 
 import { normalizeApiError } from '../../../api/apiError'
 import { useAuth } from '../hooks/useAuth'
@@ -29,28 +26,17 @@ interface LoginRouteState {
 }
 
 function resolvePrefillValue(value: unknown): string {
-    return typeof value === 'string'
-        ? value
-        : ''
+    return typeof value === 'string' ? value : ''
 }
 
-function resolveRedirectPath(
-    state: unknown,
-): string {
-    if (
-        typeof state !== 'object' ||
-        state === null
-    ) {
+function resolveRedirectPath(state: unknown): string {
+    if (typeof state !== 'object' || state === null) {
         return '/dashboard'
     }
 
     const { from } = state as LoginRouteState
 
-    if (
-        typeof from === 'string' &&
-        from.startsWith('/') &&
-        !from.startsWith('//')
-    ) {
+    if (typeof from === 'string' && from.startsWith('/') && !from.startsWith('//')) {
         return from
     }
 
@@ -62,9 +48,8 @@ export function LoginPage() {
     const navigate = useNavigate()
     const location = useLocation()
     const routeState =
-        typeof location.state === 'object' &&
-        location.state !== null
-            ? location.state as LoginRouteState
+        typeof location.state === 'object' && location.state !== null
+            ? (location.state as LoginRouteState)
             : {}
 
     const {
@@ -72,10 +57,7 @@ export function LoginPage() {
         handleSubmit,
         clearErrors,
         setError,
-        formState: {
-            errors,
-            isSubmitting,
-        },
+        formState: { errors, isSubmitting },
     } = useForm<LoginInput>({
         defaultValues: {
             tenantId: resolvePrefillValue(routeState.tenantId),
@@ -84,9 +66,7 @@ export function LoginPage() {
         },
     })
 
-    const submitLogin = async (
-        input: LoginInput,
-    ): Promise<void> => {
+    const submitLogin = async (input: LoginInput): Promise<void> => {
         clearErrors('root')
 
         try {
@@ -96,14 +76,10 @@ export function LoginPage() {
                 password: input.password,
             })
 
-            navigate(
-                resolveRedirectPath(location.state),
-                {
-                    replace: true,
-                },
-            )
-        }
-        catch (error: unknown) {
+            navigate(resolveRedirectPath(location.state), {
+                replace: true,
+            })
+        } catch (error: unknown) {
             const apiError = normalizeApiError(error)
 
             setError('root', {
@@ -155,10 +131,7 @@ export function LoginPage() {
                                 textAlign: 'center',
                             }}
                         >
-                            <Typography
-                                component="h1"
-                                variant="h4"
-                            >
+                            <Typography component="h1" variant="h4">
                                 Sign in
                             </Typography>
 
@@ -182,20 +155,20 @@ export function LoginPage() {
                         >
                             <Stack spacing={2}>
                                 {errors.root?.message && (
-                                    <Alert severity="error">
-                                        {errors.root.message}
-                                    </Alert>
+                                    <Alert severity="error">{errors.root.message}</Alert>
                                 )}
 
                                 {routeState.passwordChanged === true && (
                                     <Alert severity="success">
-                                        Password changed successfully. Sign in with your new password.
+                                        Password changed successfully. Sign in with your new
+                                        password.
                                     </Alert>
                                 )}
 
                                 {routeState.allDevicesSignedOut === true && (
                                     <Alert severity="success">
-                                        All device refresh sessions were revoked. Sign in again to continue.
+                                        All device refresh sessions were revoked. Sign in again to
+                                        continue.
                                     </Alert>
                                 )}
 
@@ -206,13 +179,10 @@ export function LoginPage() {
                                     autoComplete="organization"
                                     disabled={isSubmitting}
                                     error={Boolean(errors.tenantId)}
-                                    helperText={
-                                        errors.tenantId?.message
-                                    }
+                                    helperText={errors.tenantId?.message}
                                     {...register('tenantId', {
                                         validate: (value) =>
-                                            value.trim().length > 0 ||
-                                            'Tenant ID is required.',
+                                            value.trim().length > 0 || 'Tenant ID is required.',
                                     })}
                                 />
 
@@ -225,13 +195,10 @@ export function LoginPage() {
                                     error={Boolean(errors.email)}
                                     helperText={errors.email?.message}
                                     {...register('email', {
-                                        required:
-                                            'Email address is required.',
+                                        required: 'Email address is required.',
                                         pattern: {
-                                            value:
-                                                /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                                            message:
-                                                'Enter a valid email address.',
+                                            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                                            message: 'Enter a valid email address.',
                                         },
                                     })}
                                 />
@@ -243,9 +210,7 @@ export function LoginPage() {
                                     autoComplete="current-password"
                                     disabled={isSubmitting}
                                     error={Boolean(errors.password)}
-                                    helperText={
-                                        errors.password?.message
-                                    }
+                                    helperText={errors.password?.message}
                                     {...register('password', {
                                         required: 'Password is required.',
                                     })}
@@ -258,9 +223,7 @@ export function LoginPage() {
                                     size="large"
                                     disabled={isSubmitting}
                                 >
-                                    {isSubmitting
-                                        ? 'Signing in...'
-                                        : 'Sign in'}
+                                    {isSubmitting ? 'Signing in...' : 'Sign in'}
                                 </Button>
 
                                 <Button

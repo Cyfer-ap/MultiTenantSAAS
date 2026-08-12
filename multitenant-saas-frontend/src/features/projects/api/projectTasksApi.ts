@@ -1,8 +1,5 @@
 import { httpClient } from '../../../api/httpClient'
-import type {
-    ApiResponse,
-    PageResponse,
-} from '../../../types/api'
+import type { ApiResponse, PageResponse } from '../../../types/api'
 import type {
     CreateProjectTaskInput,
     ProjectTask,
@@ -12,10 +9,7 @@ import type {
     UpdateProjectTaskStatusInput,
 } from '../types/projectTasks'
 
-function tasksPath(
-    tenantId: string,
-    projectId: string,
-): string {
+function tasksPath(tenantId: string, projectId: string): string {
     return `/api/tenants/${tenantId}/projects/${projectId}/tasks`
 }
 
@@ -24,9 +18,10 @@ async function getTasks(
     projectId: string,
     params: ProjectTasksQueryParams,
 ): Promise<PageResponse<ProjectTask>> {
-    const response = await httpClient.get<
-        ApiResponse<PageResponse<ProjectTask>>
-    >(tasksPath(tenantId, projectId), { params })
+    const response = await httpClient.get<ApiResponse<PageResponse<ProjectTask>>>(
+        tasksPath(tenantId, projectId),
+        { params },
+    )
 
     return response.data.data
 }
@@ -36,9 +31,10 @@ async function createTask(
     projectId: string,
     input: CreateProjectTaskInput,
 ): Promise<ProjectTask> {
-    const response = await httpClient.post<
-        ApiResponse<ProjectTask>
-    >(tasksPath(tenantId, projectId), input)
+    const response = await httpClient.post<ApiResponse<ProjectTask>>(
+        tasksPath(tenantId, projectId),
+        input,
+    )
 
     return response.data.data
 }
@@ -49,9 +45,10 @@ async function updateTask(
     taskId: string,
     input: ProjectTaskDetailsInput,
 ): Promise<ProjectTask> {
-    const response = await httpClient.put<
-        ApiResponse<ProjectTask>
-    >(`${tasksPath(tenantId, projectId)}/${taskId}`, input)
+    const response = await httpClient.put<ApiResponse<ProjectTask>>(
+        `${tasksPath(tenantId, projectId)}/${taskId}`,
+        input,
+    )
 
     return response.data.data
 }
@@ -62,9 +59,7 @@ async function updateTaskStatus(
     taskId: string,
     input: UpdateProjectTaskStatusInput,
 ): Promise<ProjectTask> {
-    const response = await httpClient.patch<
-        ApiResponse<ProjectTask>
-    >(
+    const response = await httpClient.patch<ApiResponse<ProjectTask>>(
         `${tasksPath(tenantId, projectId)}/${taskId}/status`,
         input,
     )
@@ -78,9 +73,7 @@ async function updateTaskAssignee(
     taskId: string,
     input: UpdateProjectTaskAssigneeInput,
 ): Promise<ProjectTask> {
-    const response = await httpClient.patch<
-        ApiResponse<ProjectTask>
-    >(
+    const response = await httpClient.patch<ApiResponse<ProjectTask>>(
         `${tasksPath(tenantId, projectId)}/${taskId}/assignee`,
         input,
     )
@@ -93,9 +86,9 @@ async function cancelTask(
     projectId: string,
     taskId: string,
 ): Promise<ProjectTask> {
-    const response = await httpClient.delete<
-        ApiResponse<ProjectTask>
-    >(`${tasksPath(tenantId, projectId)}/${taskId}`)
+    const response = await httpClient.delete<ApiResponse<ProjectTask>>(
+        `${tasksPath(tenantId, projectId)}/${taskId}`,
+    )
 
     return response.data.data
 }

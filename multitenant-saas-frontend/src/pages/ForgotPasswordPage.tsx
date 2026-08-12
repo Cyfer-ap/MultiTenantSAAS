@@ -24,36 +24,25 @@ function getErrorMessage(error: unknown): string {
         : 'The password reset request could not be completed.'
 }
 
-function getFieldError(
-    error: unknown,
-    field: string,
-): string | undefined {
-    const detail = error instanceof ApiClientError
-        ? error.details?.[field]
-        : undefined
+function getFieldError(error: unknown, field: string): string | undefined {
+    const detail = error instanceof ApiClientError ? error.details?.[field] : undefined
 
-    return typeof detail === 'string'
-        ? detail
-        : undefined
+    return typeof detail === 'string' ? detail : undefined
 }
 
 export function ForgotPasswordPage() {
     const navigate = useNavigate()
     const [tenantId, setTenantId] = useState('')
     const [email, setEmail] = useState('')
-    const [validationError, setValidationError] =
-        useState<string | null>(null)
-    const [copyFeedback, setCopyFeedback] =
-        useState<string | null>(null)
+    const [validationError, setValidationError] = useState<string | null>(null)
+    const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
     const mutation = useForgotPassword()
 
     const resetLink = mutation.data?.devResetToken
         ? `${window.location.origin}/reset-password?token=${encodeURIComponent(mutation.data.devResetToken)}`
         : null
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         const normalizedTenantId = tenantId.trim()
@@ -77,8 +66,7 @@ export function ForgotPasswordPage() {
                 tenantId: normalizedTenantId,
                 email: normalizedEmail,
             })
-        }
-        catch {
+        } catch {
             // The mutation error is rendered on the page.
         }
     }
@@ -91,11 +79,8 @@ export function ForgotPasswordPage() {
         try {
             await navigator.clipboard.writeText(resetLink)
             setCopyFeedback('Reset link copied.')
-        }
-        catch {
-            setCopyFeedback(
-                'Copy failed. Select and copy the link manually.',
-            )
+        } catch {
+            setCopyFeedback('Copy failed. Select and copy the link manually.')
         }
     }
 
@@ -135,25 +120,20 @@ export function ForgotPasswordPage() {
                             <Typography component="h1" variant="h4">
                                 Forgot password
                             </Typography>
-                            <Typography
-                                color="text.secondary"
-                                sx={{ marginTop: 1 }}
-                            >
+                            <Typography color="text.secondary" sx={{ marginTop: 1 }}>
                                 Request a one-time link for your tenant account.
                             </Typography>
                         </Box>
 
                         {mutation.isSuccess ? (
                             <Stack spacing={2} sx={{ width: '100%' }}>
-                                <Alert severity="success">
-                                    {mutation.data.message}
-                                </Alert>
+                                <Alert severity="success">{mutation.data.message}</Alert>
 
                                 {resetLink ? (
                                     <>
                                         <Typography color="text.secondary">
-                                            This development link expires after 15
-                                            minutes and can be used only once.
+                                            This development link expires after 15 minutes and can
+                                            be used only once.
                                         </Typography>
                                         <TextField
                                             fullWidth
@@ -166,17 +146,13 @@ export function ForgotPasswordPage() {
                                             value={resetLink}
                                         />
                                         {copyFeedback && (
-                                            <Alert severity="info">
-                                                {copyFeedback}
-                                            </Alert>
+                                            <Alert severity="info">{copyFeedback}</Alert>
                                         )}
                                         <Button
                                             onClick={() => {
                                                 void copyResetLink()
                                             }}
-                                            startIcon={
-                                                <ContentCopyRoundedIcon />
-                                            }
+                                            startIcon={<ContentCopyRoundedIcon />}
                                             variant="outlined"
                                         >
                                             Copy reset link
@@ -218,8 +194,7 @@ export function ForgotPasswordPage() {
                                 <Stack spacing={2}>
                                     {(validationError || mutation.isError) && (
                                         <Alert severity="error">
-                                            {validationError ??
-                                                getErrorMessage(mutation.error)}
+                                            {validationError ?? getErrorMessage(mutation.error)}
                                         </Alert>
                                     )}
 
@@ -238,16 +213,8 @@ export function ForgotPasswordPage() {
                                     <TextField
                                         autoComplete="email"
                                         disabled={mutation.isPending}
-                                        error={Boolean(
-                                            getFieldError(
-                                                mutation.error,
-                                                'email',
-                                            ),
-                                        )}
-                                        helperText={getFieldError(
-                                            mutation.error,
-                                            'email',
-                                        )}
+                                        error={Boolean(getFieldError(mutation.error, 'email'))}
+                                        helperText={getFieldError(mutation.error, 'email')}
                                         label="Email address"
                                         onChange={(event) => {
                                             setEmail(event.target.value)

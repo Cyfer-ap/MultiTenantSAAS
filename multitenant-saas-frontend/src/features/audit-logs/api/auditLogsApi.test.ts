@@ -1,10 +1,4 @@
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { httpClient } from '../../../api/httpClient'
 import type { TenantAuditLog } from '../types/auditLogs'
@@ -49,24 +43,17 @@ describe('auditLogsApi', () => {
             first: false,
             last: true,
         }
-        const get = vi
-            .spyOn(httpClient, 'get')
-            .mockResolvedValue({
-                data: {
-                    success: true,
-                    message: 'Audit logs fetched successfully',
-                    data: page,
-                    timestamp: '2026-08-01T10:31:00Z',
-                },
-            })
+        const get = vi.spyOn(httpClient, 'get').mockResolvedValue({
+            data: {
+                success: true,
+                message: 'Audit logs fetched successfully',
+                data: page,
+                timestamp: '2026-08-01T10:31:00Z',
+            },
+        })
 
-        await expect(
-            auditLogsApi.getAuditLogs('tenant-1', params),
-        ).resolves.toEqual(page)
+        await expect(auditLogsApi.getAuditLogs('tenant-1', params)).resolves.toEqual(page)
 
-        expect(get).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/audit-logs',
-            { params },
-        )
+        expect(get).toHaveBeenCalledWith('/api/tenants/tenant-1/audit-logs', { params })
     })
 })

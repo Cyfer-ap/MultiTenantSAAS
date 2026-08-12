@@ -20,10 +20,7 @@ import { useState } from 'react'
 
 import { ApiClientError } from '../../../api/apiError'
 import { authStorage } from '../../auth/storage/authStorage'
-import type {
-    TenantRole,
-    UserStatus,
-} from '../../auth/types/auth'
+import type { TenantRole, UserStatus } from '../../auth/types/auth'
 import {
     useCreateTenantUser,
     useUnlockTenantUserLogin,
@@ -44,8 +41,7 @@ interface UserDialogProps extends DialogBaseProps {
     user: TenantUser | null
 }
 
-interface ChangeUserStatusDialogProps
-    extends UserDialogProps {
+interface ChangeUserStatusDialogProps extends UserDialogProps {
     activationAllowed?: boolean
     activationRestrictionMessage?: string
 }
@@ -62,8 +58,7 @@ const statusLabels: Record<UserStatus, string> = {
     SUSPENDED: 'Suspended',
 }
 
-const passwordPattern =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,100}$/
+const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,100}$/
 
 function getErrorMessage(error: unknown): string {
     return error instanceof Error
@@ -71,32 +66,18 @@ function getErrorMessage(error: unknown): string {
         : 'The requested user change could not be completed.'
 }
 
-function getFieldError(
-    error: unknown,
-    field: string,
-): string | undefined {
-    const detail = error instanceof ApiClientError
-        ? error.details?.[field]
-        : undefined
+function getFieldError(error: unknown, field: string): string | undefined {
+    const detail = error instanceof ApiClientError ? error.details?.[field] : undefined
 
-    return typeof detail === 'string'
-        ? detail
-        : undefined
+    return typeof detail === 'string' ? detail : undefined
 }
 
-export function CreateUserDialog({
-    open,
-    tenantId,
-    onClose,
-    onSuccess,
-}: DialogBaseProps) {
+export function CreateUserDialog({ open, tenantId, onClose, onSuccess }: DialogBaseProps) {
     const [fullName, setFullName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [role, setRole] =
-        useState<TenantRole>('TENANT_USER')
-    const [validationError, setValidationError] =
-        useState<string | null>(null)
+    const [role, setRole] = useState<TenantRole>('TENANT_USER')
+    const [validationError, setValidationError] = useState<string | null>(null)
     const mutation = useCreateTenantUser(tenantId)
 
     const closeDialog = (): void => {
@@ -105,18 +86,14 @@ export function CreateUserDialog({
         }
     }
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         const normalizedName = fullName.trim()
         const normalizedEmail = email.trim().toLowerCase()
 
         if (normalizedName.length < 2) {
-            setValidationError(
-                'Full name must contain at least 2 characters.',
-            )
+            setValidationError('Full name must contain at least 2 characters.')
             return
         }
 
@@ -142,26 +119,21 @@ export function CreateUserDialog({
                 role,
             })
 
-            onSuccess(
-                `${createdUser.fullName} was created successfully.`,
-            )
+            onSuccess(`${createdUser.fullName} was created successfully.`)
             onClose()
-        }
-        catch {
+        } catch {
             // The mutation error is rendered in the dialog.
         }
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="sm"
-            onClose={closeDialog}
-            open={open}
-        >
-            <Box component="form" onSubmit={(event) => {
-                void submit(event)
-            }}>
+        <Dialog fullWidth maxWidth="sm" onClose={closeDialog} open={open}>
+            <Box
+                component="form"
+                onSubmit={(event) => {
+                    void submit(event)
+                }}
+            >
                 <DialogTitle>Add tenant user</DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ marginBottom: 2 }}>
@@ -171,23 +143,14 @@ export function CreateUserDialog({
                     <Stack spacing={2}>
                         {(validationError || mutation.isError) && (
                             <Alert severity="error">
-                                {validationError ??
-                                    getErrorMessage(mutation.error)}
+                                {validationError ?? getErrorMessage(mutation.error)}
                             </Alert>
                         )}
 
                         <TextField
                             autoFocus
-                            error={Boolean(
-                                getFieldError(
-                                    mutation.error,
-                                    'fullName',
-                                ),
-                            )}
-                            helperText={getFieldError(
-                                mutation.error,
-                                'fullName',
-                            )}
+                            error={Boolean(getFieldError(mutation.error, 'fullName'))}
+                            helperText={getFieldError(mutation.error, 'fullName')}
                             label="Full name"
                             onChange={(event) => {
                                 setFullName(event.target.value)
@@ -198,16 +161,8 @@ export function CreateUserDialog({
                         />
 
                         <TextField
-                            error={Boolean(
-                                getFieldError(
-                                    mutation.error,
-                                    'email',
-                                ),
-                            )}
-                            helperText={getFieldError(
-                                mutation.error,
-                                'email',
-                            )}
+                            error={Boolean(getFieldError(mutation.error, 'email'))}
+                            helperText={getFieldError(mutation.error, 'email')}
                             label="Email"
                             onChange={(event) => {
                                 setEmail(event.target.value)
@@ -219,17 +174,9 @@ export function CreateUserDialog({
                         />
 
                         <TextField
-                            error={Boolean(
-                                getFieldError(
-                                    mutation.error,
-                                    'password',
-                                ),
-                            )}
+                            error={Boolean(getFieldError(mutation.error, 'password'))}
                             helperText={
-                                getFieldError(
-                                    mutation.error,
-                                    'password',
-                                ) ??
+                                getFieldError(mutation.error, 'password') ??
                                 '8–100 characters with uppercase, lowercase, number, special character, and no spaces.'
                             }
                             label="Initial password"
@@ -242,62 +189,32 @@ export function CreateUserDialog({
                             value={password}
                         />
 
-                        <FormControl
-                            error={Boolean(
-                                getFieldError(
-                                    mutation.error,
-                                    'role',
-                                ),
-                            )}
-                        >
-                            <InputLabel id="create-user-role-label">
-                                Role
-                            </InputLabel>
+                        <FormControl error={Boolean(getFieldError(mutation.error, 'role'))}>
+                            <InputLabel id="create-user-role-label">Role</InputLabel>
                             <Select
                                 label="Role"
                                 labelId="create-user-role-label"
                                 onChange={(event) => {
-                                    setRole(
-                                        event.target.value as TenantRole,
-                                    )
+                                    setRole(event.target.value as TenantRole)
                                 }}
                                 value={role}
                             >
-                                {Object.entries(roleLabels).map(
-                                    ([value, label]) => (
-                                        <MenuItem
-                                            key={value}
-                                            value={value}
-                                        >
-                                            {label}
-                                        </MenuItem>
-                                    ),
-                                )}
+                                {Object.entries(roleLabels).map(([value, label]) => (
+                                    <MenuItem key={value} value={value}>
+                                        {label}
+                                    </MenuItem>
+                                ))}
                             </Select>
-                            <FormHelperText>
-                                {getFieldError(
-                                    mutation.error,
-                                    'role',
-                                )}
-                            </FormHelperText>
+                            <FormHelperText>{getFieldError(mutation.error, 'role')}</FormHelperText>
                         </FormControl>
                     </Stack>
                 </DialogContent>
                 <DialogActions>
-                    <Button
-                        disabled={mutation.isPending}
-                        onClick={closeDialog}
-                    >
+                    <Button disabled={mutation.isPending} onClick={closeDialog}>
                         Cancel
                     </Button>
-                    <Button
-                        disabled={mutation.isPending}
-                        type="submit"
-                        variant="contained"
-                    >
-                        {mutation.isPending
-                            ? 'Creating…'
-                            : 'Create user'}
+                    <Button disabled={mutation.isPending} type="submit" variant="contained">
+                        {mutation.isPending ? 'Creating…' : 'Create user'}
                     </Button>
                 </DialogActions>
             </Box>
@@ -305,19 +222,9 @@ export function CreateUserDialog({
     )
 }
 
-export function EditUserDialog({
-    open,
-    tenantId,
-    user,
-    onClose,
-    onSuccess,
-}: UserDialogProps) {
-    const [fullName, setFullName] = useState(
-        user?.fullName ?? '',
-    )
-    const [email, setEmail] = useState(
-        user?.email ?? '',
-    )
+export function EditUserDialog({ open, tenantId, user, onClose, onSuccess }: UserDialogProps) {
+    const [fullName, setFullName] = useState(user?.fullName ?? '')
+    const [email, setEmail] = useState(user?.email ?? '')
     const mutation = useUpdateTenantUser(tenantId)
 
     const closeDialog = (): void => {
@@ -326,9 +233,7 @@ export function EditUserDialog({
         }
     }
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         if (!user) {
@@ -346,10 +251,7 @@ export function EditUserDialog({
 
             const currentSession = authStorage.read()
 
-            if (
-                currentSession?.tenantId === tenantId &&
-                currentSession.userId === updatedUser.id
-            ) {
+            if (currentSession?.tenantId === tenantId && currentSession.userId === updatedUser.id) {
                 authStorage.write({
                     ...currentSession,
                     fullName: updatedUser.fullName,
@@ -357,47 +259,32 @@ export function EditUserDialog({
                 })
             }
 
-            onSuccess(
-                `${updatedUser.fullName}'s profile was updated.`,
-            )
+            onSuccess(`${updatedUser.fullName}'s profile was updated.`)
             onClose()
-        }
-        catch {
+        } catch {
             // The mutation error is rendered in the dialog.
         }
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="sm"
-            onClose={closeDialog}
-            open={open}
-        >
-            <Box component="form" onSubmit={(event) => {
-                void submit(event)
-            }}>
+        <Dialog fullWidth maxWidth="sm" onClose={closeDialog} open={open}>
+            <Box
+                component="form"
+                onSubmit={(event) => {
+                    void submit(event)
+                }}
+            >
                 <DialogTitle>Edit user profile</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} sx={{ marginTop: 1 }}>
                         {mutation.isError && (
-                            <Alert severity="error">
-                                {getErrorMessage(mutation.error)}
-                            </Alert>
+                            <Alert severity="error">{getErrorMessage(mutation.error)}</Alert>
                         )}
 
                         <TextField
                             autoFocus
-                            error={Boolean(
-                                getFieldError(
-                                    mutation.error,
-                                    'fullName',
-                                ),
-                            )}
-                            helperText={getFieldError(
-                                mutation.error,
-                                'fullName',
-                            )}
+                            error={Boolean(getFieldError(mutation.error, 'fullName'))}
+                            helperText={getFieldError(mutation.error, 'fullName')}
                             label="Full name"
                             onChange={(event) => {
                                 setFullName(event.target.value)
@@ -407,16 +294,8 @@ export function EditUserDialog({
                         />
 
                         <TextField
-                            error={Boolean(
-                                getFieldError(
-                                    mutation.error,
-                                    'email',
-                                ),
-                            )}
-                            helperText={getFieldError(
-                                mutation.error,
-                                'email',
-                            )}
+                            error={Boolean(getFieldError(mutation.error, 'email'))}
+                            helperText={getFieldError(mutation.error, 'email')}
                             label="Email"
                             onChange={(event) => {
                                 setEmail(event.target.value)
@@ -428,20 +307,11 @@ export function EditUserDialog({
                     </Stack>
                 </DialogContent>
                 <DialogActions>
-                    <Button
-                        disabled={mutation.isPending}
-                        onClick={closeDialog}
-                    >
+                    <Button disabled={mutation.isPending} onClick={closeDialog}>
                         Cancel
                     </Button>
-                    <Button
-                        disabled={mutation.isPending}
-                        type="submit"
-                        variant="contained"
-                    >
-                        {mutation.isPending
-                            ? 'Saving…'
-                            : 'Save profile'}
+                    <Button disabled={mutation.isPending} type="submit" variant="contained">
+                        {mutation.isPending ? 'Saving…' : 'Save profile'}
                     </Button>
                 </DialogActions>
             </Box>
@@ -456,9 +326,7 @@ export function ChangeUserRoleDialog({
     onClose,
     onSuccess,
 }: UserDialogProps) {
-    const [role, setRole] = useState<TenantRole>(
-        user?.role ?? 'TENANT_USER',
-    )
+    const [role, setRole] = useState<TenantRole>(user?.role ?? 'TENANT_USER')
     const mutation = useUpdateTenantUserRole(tenantId)
 
     const closeDialog = (): void => {
@@ -467,9 +335,7 @@ export function ChangeUserRoleDialog({
         }
     }
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         if (!user) {
@@ -482,26 +348,21 @@ export function ChangeUserRoleDialog({
                 input: { role },
             })
 
-            onSuccess(
-                `${updatedUser.fullName}'s role is now ${roleLabels[updatedUser.role]}.`,
-            )
+            onSuccess(`${updatedUser.fullName}'s role is now ${roleLabels[updatedUser.role]}.`)
             onClose()
-        }
-        catch {
+        } catch {
             // The mutation error is rendered in the dialog.
         }
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="xs"
-            onClose={closeDialog}
-            open={open}
-        >
-            <Box component="form" onSubmit={(event) => {
-                void submit(event)
-            }}>
+        <Dialog fullWidth maxWidth="xs" onClose={closeDialog} open={open}>
+            <Box
+                component="form"
+                onSubmit={(event) => {
+                    void submit(event)
+                }}
+            >
                 <DialogTitle>Change user role</DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ marginBottom: 2 }}>
@@ -515,46 +376,33 @@ export function ChangeUserRoleDialog({
                     )}
 
                     <FormControl fullWidth>
-                        <InputLabel id="change-user-role-label">
-                            Role
-                        </InputLabel>
+                        <InputLabel id="change-user-role-label">Role</InputLabel>
                         <Select
                             label="Role"
                             labelId="change-user-role-label"
                             onChange={(event) => {
-                                setRole(
-                                    event.target.value as TenantRole,
-                                )
+                                setRole(event.target.value as TenantRole)
                             }}
                             value={role}
                         >
-                            {Object.entries(roleLabels).map(
-                                ([value, label]) => (
-                                    <MenuItem key={value} value={value}>
-                                        {label}
-                                    </MenuItem>
-                                ),
-                            )}
+                            {Object.entries(roleLabels).map(([value, label]) => (
+                                <MenuItem key={value} value={value}>
+                                    {label}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
                 </DialogContent>
                 <DialogActions>
-                    <Button
-                        disabled={mutation.isPending}
-                        onClick={closeDialog}
-                    >
+                    <Button disabled={mutation.isPending} onClick={closeDialog}>
                         Cancel
                     </Button>
                     <Button
-                        disabled={
-                            mutation.isPending || role === user?.role
-                        }
+                        disabled={mutation.isPending || role === user?.role}
                         type="submit"
                         variant="contained"
                     >
-                        {mutation.isPending
-                            ? 'Saving…'
-                            : 'Change role'}
+                        {mutation.isPending ? 'Saving…' : 'Change role'}
                     </Button>
                 </DialogActions>
             </Box>
@@ -569,17 +417,12 @@ export function ChangeUserStatusDialog({
     onClose,
     onSuccess,
     activationAllowed = true,
-    activationRestrictionMessage =
-        'The current subscription does not allow reactivating this user.',
+    activationRestrictionMessage = 'The current subscription does not allow reactivating this user.',
 }: ChangeUserStatusDialogProps) {
-    const [status, setStatus] = useState<UserStatus>(
-        user?.status ?? 'ACTIVE',
-    )
+    const [status, setStatus] = useState<UserStatus>(user?.status ?? 'ACTIVE')
     const mutation = useUpdateTenantUserStatus(tenantId)
     const activationRestricted = Boolean(
-        user?.status !== 'ACTIVE' &&
-        status === 'ACTIVE' &&
-        !activationAllowed,
+        user?.status !== 'ACTIVE' && status === 'ACTIVE' && !activationAllowed,
     )
 
     const closeDialog = (): void => {
@@ -588,9 +431,7 @@ export function ChangeUserStatusDialog({
         }
     }
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         if (!user) {
@@ -607,26 +448,24 @@ export function ChangeUserStatusDialog({
                 `${updatedUser.fullName}'s status is now ${statusLabels[updatedUser.status]}.`,
             )
             onClose()
-        }
-        catch {
+        } catch {
             // The mutation error is rendered in the dialog.
         }
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="xs"
-            onClose={closeDialog}
-            open={open}
-        >
-            <Box component="form" onSubmit={(event) => {
-                void submit(event)
-            }}>
+        <Dialog fullWidth maxWidth="xs" onClose={closeDialog} open={open}>
+            <Box
+                component="form"
+                onSubmit={(event) => {
+                    void submit(event)
+                }}
+            >
                 <DialogTitle>Change account status</DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ marginBottom: 2 }}>
-                        Inactive and suspended users cannot sign in. Their active refresh tokens are revoked.
+                        Inactive and suspended users cannot sign in. Their active refresh tokens are
+                        revoked.
                     </DialogContentText>
 
                     {mutation.isError && (
@@ -635,67 +474,50 @@ export function ChangeUserStatusDialog({
                         </Alert>
                     )}
 
-                    {user?.status !== 'ACTIVE' &&
-                        !activationAllowed && (
-                        <Alert
-                            severity="warning"
-                            sx={{ marginBottom: 2 }}
-                        >
+                    {user?.status !== 'ACTIVE' && !activationAllowed && (
+                        <Alert severity="warning" sx={{ marginBottom: 2 }}>
                             {activationRestrictionMessage}
                         </Alert>
                     )}
 
                     <FormControl fullWidth>
-                        <InputLabel id="change-user-status-label">
-                            Status
-                        </InputLabel>
+                        <InputLabel id="change-user-status-label">Status</InputLabel>
                         <Select
                             label="Status"
                             labelId="change-user-status-label"
                             onChange={(event) => {
-                                setStatus(
-                                    event.target.value as UserStatus,
-                                )
+                                setStatus(event.target.value as UserStatus)
                             }}
                             value={status}
                         >
-                            {Object.entries(statusLabels).map(
-                                ([value, label]) => (
-                                    <MenuItem
-                                        disabled={
-                                            value === 'ACTIVE' &&
-                                            user?.status !== 'ACTIVE' &&
-                                            !activationAllowed
-                                        }
-                                        key={value}
-                                        value={value}
-                                    >
-                                        {label}
-                                    </MenuItem>
-                                ),
-                            )}
+                            {Object.entries(statusLabels).map(([value, label]) => (
+                                <MenuItem
+                                    disabled={
+                                        value === 'ACTIVE' &&
+                                        user?.status !== 'ACTIVE' &&
+                                        !activationAllowed
+                                    }
+                                    key={value}
+                                    value={value}
+                                >
+                                    {label}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
                 </DialogContent>
                 <DialogActions>
-                    <Button
-                        disabled={mutation.isPending}
-                        onClick={closeDialog}
-                    >
+                    <Button disabled={mutation.isPending} onClick={closeDialog}>
                         Cancel
                     </Button>
                     <Button
                         disabled={
-                            mutation.isPending ||
-                            status === user?.status ||
-                            activationRestricted
+                            mutation.isPending || status === user?.status || activationRestricted
                         }
                         type="submit"
                         variant="contained"
                     >
-                        {mutation.isPending
-                            ? 'Saving…'
-                            : 'Change status'}
+                        {mutation.isPending ? 'Saving…' : 'Change status'}
                     </Button>
                 </DialogActions>
             </Box>
@@ -703,13 +525,7 @@ export function ChangeUserStatusDialog({
     )
 }
 
-export function UnlockUserDialog({
-    open,
-    tenantId,
-    user,
-    onClose,
-    onSuccess,
-}: UserDialogProps) {
+export function UnlockUserDialog({ open, tenantId, user, onClose, onSuccess }: UserDialogProps) {
     const mutation = useUnlockTenantUserLogin(tenantId)
 
     const closeDialog = (): void => {
@@ -724,16 +540,11 @@ export function UnlockUserDialog({
         }
 
         try {
-            const updatedUser = await mutation.mutateAsync(
-                user.id,
-            )
+            const updatedUser = await mutation.mutateAsync(user.id)
 
-            onSuccess(
-                `${updatedUser.fullName}'s login lock was cleared.`,
-            )
+            onSuccess(`${updatedUser.fullName}'s login lock was cleared.`)
             onClose()
-        }
-        catch {
+        } catch {
             // The mutation error is rendered in the dialog.
         }
     }
@@ -743,7 +554,8 @@ export function UnlockUserDialog({
             <DialogTitle>Unlock user login?</DialogTitle>
             <DialogContent>
                 <DialogContentText>
-                    This clears failed sign-in attempts for {user?.fullName}. It does not change the user&apos;s password or account status.
+                    This clears failed sign-in attempts for {user?.fullName}. It does not change the
+                    user&apos;s password or account status.
                 </DialogContentText>
 
                 {mutation.isError && (
@@ -753,10 +565,7 @@ export function UnlockUserDialog({
                 )}
             </DialogContent>
             <DialogActions>
-                <Button
-                    disabled={mutation.isPending}
-                    onClick={closeDialog}
-                >
+                <Button disabled={mutation.isPending} onClick={closeDialog}>
                     Cancel
                 </Button>
                 <Button
@@ -766,9 +575,7 @@ export function UnlockUserDialog({
                     }}
                     variant="contained"
                 >
-                    {mutation.isPending
-                        ? 'Unlocking…'
-                        : 'Unlock login'}
+                    {mutation.isPending ? 'Unlocking…' : 'Unlock login'}
                 </Button>
             </DialogActions>
         </Dialog>

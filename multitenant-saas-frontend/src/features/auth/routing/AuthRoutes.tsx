@@ -1,12 +1,5 @@
-import {
-    Box,
-    CircularProgress,
-} from '@mui/material'
-import {
-    Navigate,
-    Outlet,
-    useLocation,
-} from 'react-router'
+import { Box, CircularProgress } from '@mui/material'
+import { Navigate, Outlet, useLocation } from 'react-router'
 
 import { useAuth } from '../hooks/useAuth'
 
@@ -19,9 +12,7 @@ function AuthenticationLoadingScreen() {
                 placeItems: 'center',
             }}
         >
-            <CircularProgress
-                aria-label="Loading session"
-            />
+            <CircularProgress aria-label="Loading session" />
         </Box>
     )
 }
@@ -34,15 +25,8 @@ export function ProtectedRoute() {
         return <AuthenticationLoadingScreen />
     }
 
-    if (
-        status === 'unauthenticated' ||
-        !session
-    ) {
-        const redirectPath = [
-            location.pathname,
-            location.search,
-            location.hash,
-        ].join('')
+    if (status === 'unauthenticated' || !session) {
+        const redirectPath = [location.pathname, location.search, location.hash].join('')
 
         return (
             <Navigate
@@ -65,16 +49,8 @@ export function PublicOnlyRoute() {
         return <AuthenticationLoadingScreen />
     }
 
-    if (
-        status === 'authenticated' &&
-        session
-    ) {
-        return (
-            <Navigate
-                to="/"
-                replace
-            />
-        )
+    if (status === 'authenticated' && session) {
+        return <Navigate to="/" replace />
     }
 
     return <Outlet />

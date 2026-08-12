@@ -1,23 +1,13 @@
-import {
-    hasTenantPermission,
-} from '../../authorization/access/authorizationAccess'
-import type {
-    CurrentAuthorizationContext,
-} from '../../authorization/types/authorization'
-import type {
-    FlatOrganizationalUnit,
-    OrganizationalUnitTree,
-} from '../types/organization'
+import { hasTenantPermission } from '../../authorization/access/authorizationAccess'
+import type { CurrentAuthorizationContext } from '../../authorization/types/authorization'
+import type { FlatOrganizationalUnit, OrganizationalUnitTree } from '../types/organization'
 
 export function flattenOrganizationTree(
     tree: readonly OrganizationalUnitTree[],
 ): FlatOrganizationalUnit[] {
     const result: FlatOrganizationalUnit[] = []
 
-    const visit = (
-        units: readonly OrganizationalUnitTree[],
-        depth: number,
-    ): void => {
+    const visit = (units: readonly OrganizationalUnitTree[], depth: number): void => {
         units.forEach((unit) => {
             result.push({
                 ...unit,
@@ -36,9 +26,7 @@ export function getOrganizationUnitAncestorIds(
     units: readonly FlatOrganizationalUnit[],
     unitId: string,
 ): string[] {
-    const byId = new Map(
-        units.map((unit) => [unit.id, unit]),
-    )
+    const byId = new Map(units.map((unit) => [unit.id, unit]))
     const ancestorIds: string[] = []
     let current = byId.get(unitId)
 
@@ -64,36 +52,19 @@ export function hasOrganizationUnitPermission(
         return false
     }
 
-    const inheritedTargets = new Set([
-        unitId,
-        ...getOrganizationUnitAncestorIds(
-            units,
-            unitId,
-        ),
-    ])
+    const inheritedTargets = new Set([unitId, ...getOrganizationUnitAncestorIds(units, unitId)])
 
     return context.grants.some((grant) => {
-        if (
-            !grant.permissionCodes.includes(permissionCode) ||
-            grant.scopeTargetId === null
-        ) {
+        if (!grant.permissionCodes.includes(permissionCode) || grant.scopeTargetId === null) {
             return false
         }
 
-        if (
-            grant.scopeType ===
-            'ORGANIZATIONAL_UNIT'
-        ) {
+        if (grant.scopeType === 'ORGANIZATIONAL_UNIT') {
             return grant.scopeTargetId === unitId
         }
 
-        if (
-            grant.scopeType ===
-            'ORGANIZATIONAL_SUBTREE'
-        ) {
-            return inheritedTargets.has(
-                grant.scopeTargetId,
-            )
+        if (grant.scopeType === 'ORGANIZATIONAL_SUBTREE') {
+            return inheritedTargets.has(grant.scopeTargetId)
         }
 
         return false
@@ -105,8 +76,5 @@ export function isOrganizationUnitDescendant(
     possibleDescendantId: string,
     unitId: string,
 ): boolean {
-    return getOrganizationUnitAncestorIds(
-        units,
-        possibleDescendantId,
-    ).includes(unitId)
+    return getOrganizationUnitAncestorIds(units, possibleDescendantId).includes(unitId)
 }

@@ -5,26 +5,16 @@ import type {
     TokenRefreshResponse,
 } from '../types/auth'
 
-function calculateExpirationTime(
-    expiresInSeconds: number,
-): number {
-    return (
-        Date.now() +
-        Math.max(expiresInSeconds, 0) * 1_000
-    )
+function calculateExpirationTime(expiresInSeconds: number): number {
+    return Date.now() + Math.max(expiresInSeconds, 0) * 1_000
 }
 
-export function createAuthSession(
-    response: LoginResponse,
-): AuthSession {
+export function createAuthSession(response: LoginResponse): AuthSession {
     return {
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
         tokenType: response.tokenType,
-        accessTokenExpiresAt:
-            calculateExpirationTime(
-                response.expiresInSeconds,
-            ),
+        accessTokenExpiresAt: calculateExpirationTime(response.expiresInSeconds),
         tenantId: response.tenantId,
         userId: response.userId,
         fullName: response.fullName,
@@ -42,17 +32,11 @@ export function applyTokenRefresh(
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
         tokenType: response.tokenType,
-        accessTokenExpiresAt:
-            calculateExpirationTime(
-                response.expiresInSeconds,
-            ),
+        accessTokenExpiresAt: calculateExpirationTime(response.expiresInSeconds),
     }
 }
 
-export function applyCurrentUser(
-    session: AuthSession,
-    user: CurrentUserResponse,
-): AuthSession {
+export function applyCurrentUser(session: AuthSession, user: CurrentUserResponse): AuthSession {
     return {
         ...session,
         tenantId: user.tenantId,

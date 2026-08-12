@@ -1,53 +1,31 @@
-import type {
-    AuthSession,
-    TenantRole,
-} from '../types/auth'
+import type { AuthSession, TenantRole } from '../types/auth'
 
-const AUTH_STORAGE_KEY =
-    'multitenant-saas.auth-session'
+const AUTH_STORAGE_KEY = 'multitenant-saas.auth-session'
 
-type AuthStorageListener = (
-    session: AuthSession | null,
-) => void
+type AuthStorageListener = (session: AuthSession | null) => void
 
 const listeners = new Set<AuthStorageListener>()
 
 let storageListenerAttached = false
 
-const tenantRoles: TenantRole[] = [
-    'TENANT_ADMIN',
-    'TENANT_MANAGER',
-    'TENANT_USER',
-]
+const tenantRoles: TenantRole[] = ['TENANT_ADMIN', 'TENANT_MANAGER', 'TENANT_USER']
 
-function isTenantRole(
-    value: unknown,
-): value is TenantRole {
-    return (
-        typeof value === 'string' &&
-        tenantRoles.includes(value as TenantRole)
-    )
+function isTenantRole(value: unknown): value is TenantRole {
+    return typeof value === 'string' && tenantRoles.includes(value as TenantRole)
 }
 
-function isAuthSession(
-    value: unknown,
-): value is AuthSession {
-    if (
-        typeof value !== 'object' ||
-        value === null
-    ) {
+function isAuthSession(value: unknown): value is AuthSession {
+    if (typeof value !== 'object' || value === null) {
         return false
     }
 
-    const candidate =
-        value as Partial<AuthSession>
+    const candidate = value as Partial<AuthSession>
 
     return (
         typeof candidate.accessToken === 'string' &&
         typeof candidate.refreshToken === 'string' &&
         typeof candidate.tokenType === 'string' &&
-        typeof candidate.accessTokenExpiresAt ===
-        'number' &&
+        typeof candidate.accessTokenExpiresAt === 'number' &&
         typeof candidate.tenantId === 'string' &&
         typeof candidate.userId === 'string' &&
         typeof candidate.fullName === 'string' &&
@@ -58,15 +36,13 @@ function isAuthSession(
 
 function read(): AuthSession | null {
     try {
-        const storedValue =
-            localStorage.getItem(AUTH_STORAGE_KEY)
+        const storedValue = localStorage.getItem(AUTH_STORAGE_KEY)
 
         if (!storedValue) {
             return null
         }
 
-        const parsedValue: unknown =
-            JSON.parse(storedValue)
+        const parsedValue: unknown = JSON.parse(storedValue)
 
         if (!isAuthSession(parsedValue)) {
             localStorage.removeItem(AUTH_STORAGE_KEY)
@@ -75,8 +51,7 @@ function read(): AuthSession | null {
         }
 
         return parsedValue
-    }
-    catch {
+    } catch {
         localStorage.removeItem(AUTH_STORAGE_KEY)
         notify(null)
         return null
@@ -84,10 +59,7 @@ function read(): AuthSession | null {
 }
 
 function write(session: AuthSession): void {
-    localStorage.setItem(
-        AUTH_STORAGE_KEY,
-        JSON.stringify(session),
-    )
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session))
 
     notify(session)
 }
@@ -97,30 +69,22 @@ function clear(): void {
     notify(null)
 }
 
-function notify(
-    session: AuthSession | null,
-): void {
+function notify(session: AuthSession | null): void {
     listeners.forEach((listener) => {
         listener(session)
     })
 }
 
-function parseStoredSession(
-    storedValue: string | null,
-): AuthSession | null {
+function parseStoredSession(storedValue: string | null): AuthSession | null {
     if (!storedValue) {
         return null
     }
 
     try {
-        const parsedValue: unknown =
-            JSON.parse(storedValue)
+        const parsedValue: unknown = JSON.parse(storedValue)
 
-        return isAuthSession(parsedValue)
-            ? parsedValue
-            : null
-    }
-    catch {
+        return isAuthSession(parsedValue) ? parsedValue : null
+    } catch {
         return null
     }
 }
@@ -134,38 +98,24 @@ function handleStorageEvent(event: StorageEvent): void {
 }
 
 function attachStorageListener(): void {
-    if (
-        storageListenerAttached ||
-        typeof window === 'undefined'
-    ) {
+    if (storageListenerAttached || typeof window === 'undefined') {
         return
     }
 
-    window.addEventListener(
-        'storage',
-        handleStorageEvent,
-    )
+    window.addEventListener('storage', handleStorageEvent)
     storageListenerAttached = true
 }
 
 function detachStorageListener(): void {
-    if (
-        !storageListenerAttached ||
-        typeof window === 'undefined'
-    ) {
+    if (!storageListenerAttached || typeof window === 'undefined') {
         return
     }
 
-    window.removeEventListener(
-        'storage',
-        handleStorageEvent,
-    )
+    window.removeEventListener('storage', handleStorageEvent)
     storageListenerAttached = false
 }
 
-function subscribe(
-    listener: AuthStorageListener,
-): () => void {
+function subscribe(listener: AuthStorageListener): () => void {
     listeners.add(listener)
     attachStorageListener()
 

@@ -1,17 +1,6 @@
-import {
-    AxiosError,
-    AxiosHeaders,
-} from 'axios'
-import type {
-    AxiosResponse,
-    InternalAxiosRequestConfig,
-} from 'axios'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-} from 'vitest'
+import { AxiosError, AxiosHeaders } from 'axios'
+import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { authStorage } from '../features/auth/storage/authStorage'
 import { systemAdminStorage } from '../features/system-admin/storage/systemAdminStorage'
@@ -40,9 +29,7 @@ const tenantSession = {
     role: 'TENANT_ADMIN' as const,
 }
 
-function forbiddenError(
-    config: InternalAxiosRequestConfig,
-): AxiosError<ApiErrorResponse> {
+function forbiddenError(config: InternalAxiosRequestConfig): AxiosError<ApiErrorResponse> {
     const response: AxiosResponse<ApiErrorResponse> = {
         data: {
             success: false,

@@ -12,12 +12,8 @@ import type {
     UpdateOrganizationalUnitStatusInput,
 } from '../types/organization'
 
-async function getTree(
-    tenantId: string,
-): Promise<OrganizationalUnitTree[]> {
-    const response = await httpClient.get<
-        ApiResponse<OrganizationalUnitTree[]>
-    >(
+async function getTree(tenantId: string): Promise<OrganizationalUnitTree[]> {
+    const response = await httpClient.get<ApiResponse<OrganizationalUnitTree[]>>(
         `/api/tenants/${tenantId}/organization/units/tree`,
     )
 
@@ -28,9 +24,7 @@ async function createUnit(
     tenantId: string,
     input: CreateOrganizationalUnitInput,
 ): Promise<OrganizationalUnit> {
-    const response = await httpClient.post<
-        ApiResponse<OrganizationalUnit>
-    >(
+    const response = await httpClient.post<ApiResponse<OrganizationalUnit>>(
         `/api/tenants/${tenantId}/organization/units`,
         input,
     )
@@ -43,9 +37,7 @@ async function updateUnit(
     unitId: string,
     input: UpdateOrganizationalUnitInput,
 ): Promise<OrganizationalUnit> {
-    const response = await httpClient.put<
-        ApiResponse<OrganizationalUnit>
-    >(
+    const response = await httpClient.put<ApiResponse<OrganizationalUnit>>(
         `/api/tenants/${tenantId}/organization/units/${unitId}`,
         input,
     )
@@ -58,9 +50,7 @@ async function moveUnit(
     unitId: string,
     input: MoveOrganizationalUnitInput,
 ): Promise<OrganizationalUnit> {
-    const response = await httpClient.patch<
-        ApiResponse<OrganizationalUnit>
-    >(
+    const response = await httpClient.patch<ApiResponse<OrganizationalUnit>>(
         `/api/tenants/${tenantId}/organization/units/${unitId}/move`,
         input,
     )
@@ -73,9 +63,7 @@ async function updateUnitStatus(
     unitId: string,
     input: UpdateOrganizationalUnitStatusInput,
 ): Promise<OrganizationalUnit> {
-    const response = await httpClient.patch<
-        ApiResponse<OrganizationalUnit>
-    >(
+    const response = await httpClient.patch<ApiResponse<OrganizationalUnit>>(
         `/api/tenants/${tenantId}/organization/units/${unitId}/status`,
         input,
     )
@@ -87,9 +75,7 @@ async function getUnitAssignments(
     tenantId: string,
     unitId: string,
 ): Promise<OrganizationAssignment[]> {
-    const response = await httpClient.get<
-        ApiResponse<OrganizationAssignment[]>
-    >(
+    const response = await httpClient.get<ApiResponse<OrganizationAssignment[]>>(
         `/api/tenants/${tenantId}/organization/assignments/units/${unitId}`,
     )
 
@@ -100,9 +86,7 @@ async function getAssignmentUserOptions(
     tenantId: string,
     unitId: string,
 ): Promise<OrganizationAssignmentUserOption[]> {
-    const response = await httpClient.get<
-        ApiResponse<OrganizationAssignmentUserOption[]>
-    >(
+    const response = await httpClient.get<ApiResponse<OrganizationAssignmentUserOption[]>>(
         `/api/tenants/${tenantId}/organization/assignments/units/${unitId}/user-options`,
     )
 
@@ -113,9 +97,7 @@ async function createAssignment(
     tenantId: string,
     input: CreateOrganizationAssignmentInput,
 ): Promise<OrganizationAssignment> {
-    const response = await httpClient.post<
-        ApiResponse<OrganizationAssignment>
-    >(
+    const response = await httpClient.post<ApiResponse<OrganizationAssignment>>(
         `/api/tenants/${tenantId}/organization/assignments`,
         input,
     )
@@ -127,9 +109,7 @@ async function deactivateAssignment(
     tenantId: string,
     assignmentId: string,
 ): Promise<OrganizationAssignment> {
-    const response = await httpClient.patch<
-        ApiResponse<OrganizationAssignment>
-    >(
+    const response = await httpClient.patch<ApiResponse<OrganizationAssignment>>(
         `/api/tenants/${tenantId}/organization/assignments/${assignmentId}/deactivate`,
     )
 

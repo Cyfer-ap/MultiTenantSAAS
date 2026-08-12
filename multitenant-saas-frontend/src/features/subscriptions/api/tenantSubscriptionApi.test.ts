@@ -1,10 +1,4 @@
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { httpClient } from '../../../api/httpClient'
 import { tenantSubscriptionApi } from './tenantSubscriptionApi'
@@ -97,10 +91,7 @@ describe('tenantSubscriptionApi', () => {
     })
 
     it('loads the current tenant subscription', async () => {
-        const get = vi.spyOn(
-            httpClient,
-            'get',
-        ).mockResolvedValue({
+        const get = vi.spyOn(httpClient, 'get').mockResolvedValue({
             data: {
                 success: true,
                 message: 'ok',
@@ -108,22 +99,15 @@ describe('tenantSubscriptionApi', () => {
             },
         })
 
-        await expect(
-            tenantSubscriptionApi.getSubscription(
-                'tenant-1',
-            ),
-        ).resolves.toEqual(subscription)
-
-        expect(get).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/subscription',
+        await expect(tenantSubscriptionApi.getSubscription('tenant-1')).resolves.toEqual(
+            subscription,
         )
+
+        expect(get).toHaveBeenCalledWith('/api/tenants/tenant-1/subscription')
     })
 
     it('loads detailed tenant entitlements', async () => {
-        const get = vi.spyOn(
-            httpClient,
-            'get',
-        ).mockResolvedValue({
+        const get = vi.spyOn(httpClient, 'get').mockResolvedValue({
             data: {
                 success: true,
                 message: 'ok',
@@ -131,22 +115,15 @@ describe('tenantSubscriptionApi', () => {
             },
         })
 
-        await expect(
-            tenantSubscriptionApi.getEntitlements(
-                'tenant-1',
-            ),
-        ).resolves.toEqual(entitlements)
-
-        expect(get).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/subscription/entitlements',
+        await expect(tenantSubscriptionApi.getEntitlements('tenant-1')).resolves.toEqual(
+            entitlements,
         )
+
+        expect(get).toHaveBeenCalledWith('/api/tenants/tenant-1/subscription/entitlements')
     })
 
     it('loads lightweight workspace access state', async () => {
-        const get = vi.spyOn(
-            httpClient,
-            'get',
-        ).mockResolvedValue({
+        const get = vi.spyOn(httpClient, 'get').mockResolvedValue({
             data: {
                 success: true,
                 message: 'ok',
@@ -154,14 +131,8 @@ describe('tenantSubscriptionApi', () => {
             },
         })
 
-        await expect(
-            tenantSubscriptionApi.getAccess(
-                'tenant-1',
-            ),
-        ).resolves.toEqual(access)
+        await expect(tenantSubscriptionApi.getAccess('tenant-1')).resolves.toEqual(access)
 
-        expect(get).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/subscription/access',
-        )
+        expect(get).toHaveBeenCalledWith('/api/tenants/tenant-1/subscription/access')
     })
 })

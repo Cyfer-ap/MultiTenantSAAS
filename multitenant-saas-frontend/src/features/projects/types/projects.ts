@@ -1,15 +1,6 @@
-export type ProjectStatus =
-    | 'PLANNING'
-    | 'ACTIVE'
-    | 'ON_HOLD'
-    | 'COMPLETED'
-    | 'ARCHIVED'
+export type ProjectStatus = 'PLANNING' | 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'ARCHIVED'
 
-export type ProjectSortField =
-    | 'createdAt'
-    | 'updatedAt'
-    | 'name'
-    | 'status'
+export type ProjectSortField = 'createdAt' | 'updatedAt' | 'name' | 'status'
 
 export type SortDirection = 'asc' | 'desc'
 
@@ -44,14 +35,9 @@ export interface UpdateProjectStatusInput {
     status: Exclude<ProjectStatus, 'ARCHIVED'>
 }
 
-export type ProjectMemberRole =
-    | 'PROJECT_LEAD'
-    | 'MEMBER'
+export type ProjectMemberRole = 'PROJECT_LEAD' | 'MEMBER'
 
-export type ProjectMemberSortField =
-    | 'assignedAt'
-    | 'updatedAt'
-    | 'role'
+export type ProjectMemberSortField = 'assignedAt' | 'updatedAt' | 'role'
 
 export interface ProjectMember {
     membershipId: string
@@ -59,10 +45,7 @@ export interface ProjectMember {
     userId: string
     fullName: string
     email: string
-    tenantRole:
-        | 'TENANT_ADMIN'
-        | 'TENANT_MANAGER'
-        | 'TENANT_USER'
+    tenantRole: 'TENANT_ADMIN' | 'TENANT_MANAGER' | 'TENANT_USER'
     userStatus: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
     projectRole: ProjectMemberRole
     assignedByUserId: string

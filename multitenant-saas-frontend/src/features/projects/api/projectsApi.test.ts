@@ -1,10 +1,4 @@
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { httpClient } from '../../../api/httpClient'
 import type { TenantProject } from '../types/projects'
@@ -40,75 +34,49 @@ describe('projectsApi management operations', () => {
     })
 
     it('loads one tenant project by id', async () => {
-        const get = vi
-            .spyOn(httpClient, 'get')
-            .mockResolvedValue(successfulResponse(tenantProject))
+        const get = vi.spyOn(httpClient, 'get').mockResolvedValue(successfulResponse(tenantProject))
 
-        await expect(
-            projectsApi.getProject('tenant-1', 'project-1'),
-        ).resolves.toEqual(tenantProject)
-
-        expect(get).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/projects/project-1',
+        await expect(projectsApi.getProject('tenant-1', 'project-1')).resolves.toEqual(
+            tenantProject,
         )
+
+        expect(get).toHaveBeenCalledWith('/api/tenants/tenant-1/projects/project-1')
     })
 
     it('creates and updates a project in the selected tenant', async () => {
         const post = vi
             .spyOn(httpClient, 'post')
             .mockResolvedValue(successfulResponse(tenantProject))
-        const put = vi
-            .spyOn(httpClient, 'put')
-            .mockResolvedValue(successfulResponse(tenantProject))
+        const put = vi.spyOn(httpClient, 'put').mockResolvedValue(successfulResponse(tenantProject))
         const input = {
             name: 'Research workspace',
             description: 'Coordinate the research programme.',
         }
 
         await projectsApi.createProject('tenant-1', input)
-        await projectsApi.updateProject(
-            'tenant-1',
-            'project-1',
-            input,
-        )
+        await projectsApi.updateProject('tenant-1', 'project-1', input)
 
-        expect(post).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/projects',
-            input,
-        )
-        expect(put).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/projects/project-1',
-            input,
-        )
+        expect(post).toHaveBeenCalledWith('/api/tenants/tenant-1/projects', input)
+        expect(put).toHaveBeenCalledWith('/api/tenants/tenant-1/projects/project-1', input)
     })
 
     it('uses the dedicated status and archive endpoints', async () => {
         const patch = vi
             .spyOn(httpClient, 'patch')
             .mockResolvedValue(successfulResponse(tenantProject))
-        const remove = vi
-            .spyOn(httpClient, 'delete')
-            .mockResolvedValue(successfulResponse({
+        const remove = vi.spyOn(httpClient, 'delete').mockResolvedValue(
+            successfulResponse({
                 ...tenantProject,
                 status: 'ARCHIVED',
-            }))
-
-        await projectsApi.updateProjectStatus(
-            'tenant-1',
-            'project-1',
-            { status: 'ACTIVE' },
-        )
-        await projectsApi.archiveProject(
-            'tenant-1',
-            'project-1',
+            }),
         )
 
-        expect(patch).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/projects/project-1/status',
-            { status: 'ACTIVE' },
-        )
-        expect(remove).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/projects/project-1',
-        )
+        await projectsApi.updateProjectStatus('tenant-1', 'project-1', { status: 'ACTIVE' })
+        await projectsApi.archiveProject('tenant-1', 'project-1')
+
+        expect(patch).toHaveBeenCalledWith('/api/tenants/tenant-1/projects/project-1/status', {
+            status: 'ACTIVE',
+        })
+        expect(remove).toHaveBeenCalledWith('/api/tenants/tenant-1/projects/project-1')
     })
 })

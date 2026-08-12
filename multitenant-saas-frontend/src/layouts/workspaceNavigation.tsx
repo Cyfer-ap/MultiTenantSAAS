@@ -22,94 +22,67 @@ export interface WorkspaceNavigationItem {
     label: string
     path: string
     icon: ReactNode
-    requiredTenantPermissions:
-        readonly string[]
+    requiredTenantPermissions: readonly string[]
     match?: 'all' | 'any'
 }
 
-export const workspaceNavigationItems:
-    readonly WorkspaceNavigationItem[] = [
-        {
-            label: 'Dashboard',
-            path: '/dashboard',
-            icon: <DashboardRoundedIcon />,
-            requiredTenantPermissions:
-                dashboardRequiredTenantPermissions,
-        },
-        {
-            label: 'Users',
-            path: '/users',
-            icon: <GroupsRoundedIcon />,
-            requiredTenantPermissions: [
-                authorizationPermissionCodes.USER_READ,
-            ],
-        },
-        {
-            label: 'Organization',
-            path: '/organization',
-            icon: <AccountTreeRoundedIcon />,
-            requiredTenantPermissions: [
-                authorizationPermissionCodes
-                    .ORGANIZATION_UNIT_READ,
-            ],
-        },
-        {
-            label: 'Projects',
-            path: '/projects',
-            icon: <FolderRoundedIcon />,
-            requiredTenantPermissions: [
-                authorizationPermissionCodes.PROJECT_READ,
-            ],
-        },
-        {
-            label: 'Invitations',
-            path: '/invitations',
-            icon: <PersonAddAltRoundedIcon />,
-            requiredTenantPermissions: [
-                authorizationPermissionCodes.USER_READ,
-            ],
-        },
-        {
-            label: 'Authorization',
-            path: '/authorization',
-            icon: <AdminPanelSettingsRoundedIcon />,
-            requiredTenantPermissions: [
-                authorizationPermissionCodes
-                    .AUTHORIZATION_MANAGE,
-            ],
-        },
-        {
-            label: 'Subscription',
-            path: '/subscription',
-            icon: <PaymentsRoundedIcon />,
-            requiredTenantPermissions: [
-                authorizationPermissionCodes
-                    .SUBSCRIPTION_READ,
-            ],
-        },
-        {
-            label: 'Audit Logs',
-            path: '/audit-logs',
-            icon: <HistoryRoundedIcon />,
-            requiredTenantPermissions: [
-                authorizationPermissionCodes.AUDIT_READ,
-            ],
-        },
-    ]
+export const workspaceNavigationItems: readonly WorkspaceNavigationItem[] = [
+    {
+        label: 'Dashboard',
+        path: '/dashboard',
+        icon: <DashboardRoundedIcon />,
+        requiredTenantPermissions: dashboardRequiredTenantPermissions,
+    },
+    {
+        label: 'Users',
+        path: '/users',
+        icon: <GroupsRoundedIcon />,
+        requiredTenantPermissions: [authorizationPermissionCodes.USER_READ],
+    },
+    {
+        label: 'Organization',
+        path: '/organization',
+        icon: <AccountTreeRoundedIcon />,
+        requiredTenantPermissions: [authorizationPermissionCodes.ORGANIZATION_UNIT_READ],
+    },
+    {
+        label: 'Projects',
+        path: '/projects',
+        icon: <FolderRoundedIcon />,
+        requiredTenantPermissions: [authorizationPermissionCodes.PROJECT_READ],
+    },
+    {
+        label: 'Invitations',
+        path: '/invitations',
+        icon: <PersonAddAltRoundedIcon />,
+        requiredTenantPermissions: [authorizationPermissionCodes.USER_READ],
+    },
+    {
+        label: 'Authorization',
+        path: '/authorization',
+        icon: <AdminPanelSettingsRoundedIcon />,
+        requiredTenantPermissions: [authorizationPermissionCodes.AUTHORIZATION_MANAGE],
+    },
+    {
+        label: 'Subscription',
+        path: '/subscription',
+        icon: <PaymentsRoundedIcon />,
+        requiredTenantPermissions: [authorizationPermissionCodes.SUBSCRIPTION_READ],
+    },
+    {
+        label: 'Audit Logs',
+        path: '/audit-logs',
+        icon: <HistoryRoundedIcon />,
+        requiredTenantPermissions: [authorizationPermissionCodes.AUDIT_READ],
+    },
+]
 
 export function getAvailableWorkspaceNavigationItems(
     context: CurrentAuthorizationContext,
 ): readonly WorkspaceNavigationItem[] {
-    return workspaceNavigationItems.filter(
-        (item) =>
-            item.match === 'any'
-                ? hasAnyTenantPermission(
-                    context,
-                    item.requiredTenantPermissions,
-                )
-                : hasAllTenantPermissions(
-                    context,
-                    item.requiredTenantPermissions,
-                ),
+    return workspaceNavigationItems.filter((item) =>
+        item.match === 'any'
+            ? hasAnyTenantPermission(context, item.requiredTenantPermissions)
+            : hasAllTenantPermissions(context, item.requiredTenantPermissions),
     )
 }

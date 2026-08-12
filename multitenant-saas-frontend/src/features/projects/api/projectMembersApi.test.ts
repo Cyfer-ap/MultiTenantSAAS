@@ -1,10 +1,4 @@
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { httpClient } from '../../../api/httpClient'
 import type { ProjectMember } from '../types/projects'
@@ -52,9 +46,7 @@ describe('projectMembersApi', () => {
             first: true,
             last: true,
         }
-        const get = vi
-            .spyOn(httpClient, 'get')
-            .mockResolvedValue(successfulResponse(page))
+        const get = vi.spyOn(httpClient, 'get').mockResolvedValue(successfulResponse(page))
         const params = {
             page: 0,
             size: 10,
@@ -65,78 +57,45 @@ describe('projectMembersApi', () => {
         }
 
         await expect(
-            projectMembersApi.getMembers(
-                'tenant-1',
-                'project-1',
-                params,
-            ),
+            projectMembersApi.getMembers('tenant-1', 'project-1', params),
         ).resolves.toEqual(page)
 
-        expect(get).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/projects/project-1/members',
-            { params },
-        )
+        expect(get).toHaveBeenCalledWith('/api/tenants/tenant-1/projects/project-1/members', {
+            params,
+        })
     })
 
     it('uses the dedicated add, role, and remove endpoints', async () => {
-        const get = vi
-            .spyOn(httpClient, 'get')
-            .mockResolvedValue(
-                successfulResponse(projectMember),
-            )
+        const get = vi.spyOn(httpClient, 'get').mockResolvedValue(successfulResponse(projectMember))
         const post = vi
             .spyOn(httpClient, 'post')
-            .mockResolvedValue(
-                successfulResponse(projectMember),
-            )
+            .mockResolvedValue(successfulResponse(projectMember))
         const patch = vi
             .spyOn(httpClient, 'patch')
-            .mockResolvedValue(
-                successfulResponse(projectMember),
-            )
+            .mockResolvedValue(successfulResponse(projectMember))
         const remove = vi
             .spyOn(httpClient, 'delete')
-            .mockResolvedValue(
-                successfulResponse(projectMember),
-            )
+            .mockResolvedValue(successfulResponse(projectMember))
 
-        await projectMembersApi.addMember(
-            'tenant-1',
-            'project-1',
-            { userId: 'user-2', role: 'MEMBER' },
-        )
-        await projectMembersApi.updateMemberRole(
-            'tenant-1',
-            'project-1',
-            'user-2',
-            { role: 'PROJECT_LEAD' },
-        )
-        await projectMembersApi.removeMember(
-            'tenant-1',
-            'project-1',
-            'user-2',
-        )
+        await projectMembersApi.addMember('tenant-1', 'project-1', {
+            userId: 'user-2',
+            role: 'MEMBER',
+        })
+        await projectMembersApi.updateMemberRole('tenant-1', 'project-1', 'user-2', {
+            role: 'PROJECT_LEAD',
+        })
+        await projectMembersApi.removeMember('tenant-1', 'project-1', 'user-2')
 
-        const basePath =
-            '/api/tenants/tenant-1/projects/project-1/members'
+        const basePath = '/api/tenants/tenant-1/projects/project-1/members'
 
-        await projectMembersApi.getMember(
-            'tenant-1',
-            'project-1',
-            'user-2',
-        )
+        await projectMembersApi.getMember('tenant-1', 'project-1', 'user-2')
 
         expect(get).toHaveBeenCalledWith(`${basePath}/user-2`)
         expect(post).toHaveBeenCalledWith(basePath, {
             userId: 'user-2',
             role: 'MEMBER',
         })
-        expect(patch).toHaveBeenCalledWith(
-            `${basePath}/user-2/role`,
-            { role: 'PROJECT_LEAD' },
-        )
-        expect(remove).toHaveBeenCalledWith(
-            `${basePath}/user-2`,
-        )
+        expect(patch).toHaveBeenCalledWith(`${basePath}/user-2/role`, { role: 'PROJECT_LEAD' })
+        expect(remove).toHaveBeenCalledWith(`${basePath}/user-2`)
     })
 })

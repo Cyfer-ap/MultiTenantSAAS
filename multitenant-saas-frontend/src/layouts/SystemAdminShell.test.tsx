@@ -1,20 +1,8 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    render,
-    screen,
-} from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import {
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
-import {
-    MemoryRouter,
-    Route,
-    Routes,
-} from 'react-router'
+import { describe, expect, it, vi } from 'vitest'
+import { MemoryRouter, Route, Routes } from 'react-router'
 
 import { SystemAdminContext } from '../features/system-admin/context/SystemAdminContext'
 import { appTheme } from '../theme/appTheme'
@@ -36,12 +24,14 @@ describe('SystemAdminShell', () => {
 
         render(
             <ThemeProvider theme={appTheme}>
-                <SystemAdminContext.Provider value={{
-                    status: 'authenticated',
-                    session,
-                    login: vi.fn(),
-                    logout: vi.fn(),
-                }}>
+                <SystemAdminContext.Provider
+                    value={{
+                        status: 'authenticated',
+                        session,
+                        login: vi.fn(),
+                        logout: vi.fn(),
+                    }}
+                >
                     <MemoryRouter initialEntries={['/system/dashboard']}>
                         <Routes>
                             <Route path="system" element={<SystemAdminShell />}>
@@ -60,15 +50,17 @@ describe('SystemAdminShell', () => {
             </ThemeProvider>,
         )
 
-        await user.click(screen.getByRole('button', {
-            name: /system administrator menu/i,
-        }))
-        await user.click(screen.getByRole('menuitem', {
-            name: /change password/i,
-        }))
+        await user.click(
+            screen.getByRole('button', {
+                name: /system administrator menu/i,
+            }),
+        )
+        await user.click(
+            screen.getByRole('menuitem', {
+                name: /change password/i,
+            }),
+        )
 
-        expect(await screen.findByText(
-            'Password page destination',
-        )).toBeInTheDocument()
+        expect(await screen.findByText('Password page destination')).toBeInTheDocument()
     })
 })

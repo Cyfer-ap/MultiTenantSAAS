@@ -3,8 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { AuthSession } from '../types/auth'
 import { authStorage } from './authStorage'
 
-const AUTH_STORAGE_KEY =
-    'multitenant-saas.auth-session'
+const AUTH_STORAGE_KEY = 'multitenant-saas.auth-session'
 
 const session: AuthSession = {
     accessToken: 'access-token',
@@ -37,8 +36,7 @@ describe('authStorage cross-tab synchronization', () => {
 
             expect(listener).toHaveBeenCalledOnce()
             expect(listener).toHaveBeenCalledWith(session)
-        }
-        finally {
+        } finally {
             unsubscribe()
         }
     })
@@ -57,8 +55,7 @@ describe('authStorage cross-tab synchronization', () => {
 
             expect(listener).toHaveBeenCalledOnce()
             expect(listener).toHaveBeenCalledWith(null)
-        }
-        finally {
+        } finally {
             unsubscribe()
         }
     })
@@ -76,8 +73,7 @@ describe('authStorage cross-tab synchronization', () => {
             )
 
             expect(listener).not.toHaveBeenCalled()
-        }
-        finally {
+        } finally {
             unsubscribe()
         }
     })

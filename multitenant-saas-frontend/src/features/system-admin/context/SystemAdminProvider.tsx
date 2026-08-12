@@ -1,46 +1,27 @@
 import { useQueryClient } from '@tanstack/react-query'
 import type { PropsWithChildren } from 'react'
-import {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { normalizeApiError } from '../../../api/apiError'
 import { systemAdminApi } from '../api/systemAdminApi'
-import {
-    applyCurrentSystemAdmin,
-    createSystemAdminSession,
-} from '../session/systemAdminSession'
+import { applyCurrentSystemAdmin, createSystemAdminSession } from '../session/systemAdminSession'
 import { systemAdminStorage } from '../storage/systemAdminStorage'
-import type {
-    SystemAdminLoginInput,
-    SystemAdminSession,
-} from '../types/systemAdmin'
+import type { SystemAdminLoginInput, SystemAdminSession } from '../types/systemAdmin'
 import {
     SystemAdminContext,
     type SystemAdminAuthStatus,
     type SystemAdminContextValue,
 } from './SystemAdminContext'
 
-export function SystemAdminProvider({
-    children,
-}: PropsWithChildren) {
+export function SystemAdminProvider({ children }: PropsWithChildren) {
     const queryClient = useQueryClient()
-    const [status, setStatus] =
-        useState<SystemAdminAuthStatus>('loading')
-    const [session, setSession] =
-        useState<SystemAdminSession | null>(null)
+    const [status, setStatus] = useState<SystemAdminAuthStatus>('loading')
+    const [session, setSession] = useState<SystemAdminSession | null>(null)
     const restorationStarted = useRef(false)
 
-    const commitSession = useCallback(
-        (nextSession: SystemAdminSession) => {
-            systemAdminStorage.write(nextSession)
-        },
-        [],
-    )
+    const commitSession = useCallback((nextSession: SystemAdminSession) => {
+        systemAdminStorage.write(nextSession)
+    }, [])
 
     const clearSession = useCallback(() => {
         systemAdminStorage.clear()
@@ -48,21 +29,19 @@ export function SystemAdminProvider({
 
     useEffect(
         () =>
-            systemAdminStorage.subscribe(
-                (storedSession) => {
-                    if (storedSession) {
-                        setSession(storedSession)
-                        setStatus('authenticated')
-                        return
-                    }
+            systemAdminStorage.subscribe((storedSession) => {
+                if (storedSession) {
+                    setSession(storedSession)
+                    setStatus('authenticated')
+                    return
+                }
 
-                    void queryClient.removeQueries({
-                        queryKey: ['system-admin'],
-                    })
-                    setSession(null)
-                    setStatus('unauthenticated')
-                },
-            ),
+                void queryClient.removeQueries({
+                    queryKey: ['system-admin'],
+                })
+                setSession(null)
+                setStatus('unauthenticated')
+            }),
         [queryClient],
     )
 
@@ -82,31 +61,19 @@ export function SystemAdminProvider({
             }
 
             try {
-                const currentAdmin =
-                    await systemAdminApi.getCurrentAdmin()
-                const validatedSession =
-                    systemAdminStorage.read()
+                const currentAdmin = await systemAdminApi.getCurrentAdmin()
+                const validatedSession = systemAdminStorage.read()
 
                 if (!validatedSession) {
                     clearSession()
                     return
                 }
 
-                commitSession(
-                    applyCurrentSystemAdmin(
-                        validatedSession,
-                        currentAdmin,
-                    ),
-                )
-            }
-            catch (error: unknown) {
-                const normalizedError =
-                    normalizeApiError(error)
+                commitSession(applyCurrentSystemAdmin(validatedSession, currentAdmin))
+            } catch (error: unknown) {
+                const normalizedError = normalizeApiError(error)
 
-                if (
-                    normalizedError.status === 401 ||
-                    normalizedError.status === 403
-                ) {
+                if (normalizedError.status === 401 || normalizedError.status === 403) {
                     clearSession()
                     return
                 }
@@ -141,8 +108,6 @@ export function SystemAdminProvider({
     )
 
     return (
-        <SystemAdminContext.Provider value={contextValue}>
-            {children}
-        </SystemAdminContext.Provider>
+        <SystemAdminContext.Provider value={contextValue}>{children}</SystemAdminContext.Provider>
     )
 }

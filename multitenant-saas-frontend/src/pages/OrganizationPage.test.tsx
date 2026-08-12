@@ -1,21 +1,8 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    render,
-    screen,
-    within,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, within } from '@testing-library/react'
 import type { PropsWithChildren } from 'react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AuthContext } from '../features/auth/context/AuthContext'
 import type { AuthContextValue } from '../features/auth/context/AuthContext'
@@ -35,8 +22,7 @@ const authContextValue: AuthContextValue = {
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
         tokenType: 'Bearer',
-        accessTokenExpiresAt:
-            Date.now() + 60_000,
+        accessTokenExpiresAt: Date.now() + 60_000,
         tenantId: 'tenant-1',
         userId: 'user-1',
         fullName: 'Ada Admin',
@@ -91,18 +77,11 @@ const assignment: OrganizationAssignment = {
     updatedAt: '2026-08-01T00:00:00Z',
 }
 
-function authorizationContext(
-    canManage: boolean,
-): CurrentAuthorizationContext {
+function authorizationContext(canManage: boolean): CurrentAuthorizationContext {
     const permissions = [
         'organization.unit.read',
         'organization.assignment.read',
-        ...(canManage
-            ? [
-                'organization.unit.manage',
-                'organization.assignment.manage',
-            ]
-            : []),
+        ...(canManage ? ['organization.unit.manage', 'organization.assignment.manage'] : []),
     ]
 
     return {
@@ -125,19 +104,11 @@ function renderPage() {
         },
     })
 
-    function Wrapper({
-        children,
-    }: PropsWithChildren) {
+    function Wrapper({ children }: PropsWithChildren) {
         return (
             <ThemeProvider theme={appTheme}>
-                <QueryClientProvider
-                    client={queryClient}
-                >
-                    <AuthContext.Provider
-                        value={authContextValue}
-                    >
-                        {children}
-                    </AuthContext.Provider>
+                <QueryClientProvider client={queryClient}>
+                    <AuthContext.Provider value={authContextValue}>{children}</AuthContext.Provider>
                 </QueryClientProvider>
             </ThemeProvider>
         )
@@ -151,46 +122,24 @@ function renderPage() {
 describe('OrganizationPage', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
-        vi.spyOn(
-            organizationApi,
-            'getTree',
-        ).mockResolvedValue(tree)
-        vi.spyOn(
-            organizationApi,
-            'getUnitAssignments',
-        ).mockResolvedValue([assignment])
+        vi.spyOn(organizationApi, 'getTree').mockResolvedValue(tree)
+        vi.spyOn(organizationApi, 'getUnitAssignments').mockResolvedValue([assignment])
     })
 
     it('renders the hierarchy and management controls', async () => {
-        vi.spyOn(
-            authorizationApi,
-            'getCurrentAuthorizationContext',
-        ).mockResolvedValue(
+        vi.spyOn(authorizationApi, 'getCurrentAuthorizationContext').mockResolvedValue(
             authorizationContext(true),
         )
 
         renderPage()
 
-        const hierarchy = await screen.findByRole(
-            'list',
-            {
-                name: /organizational units/i,
-            },
-        )
+        const hierarchy = await screen.findByRole('list', {
+            name: /organizational units/i,
+        })
 
-        expect(
-            within(hierarchy).getByText(
-                'Example Company',
-            ),
-        ).toBeInTheDocument()
-        expect(
-            within(hierarchy).getByText(
-                'Engineering',
-            ),
-        ).toBeInTheDocument()
-        expect(
-            await screen.findByText('Grace User'),
-        ).toBeInTheDocument()
+        expect(within(hierarchy).getByText('Example Company')).toBeInTheDocument()
+        expect(within(hierarchy).getByText('Engineering')).toBeInTheDocument()
+        expect(await screen.findByText('Grace User')).toBeInTheDocument()
         expect(
             screen.getByRole('button', {
                 name: /add root unit/i,
@@ -204,30 +153,18 @@ describe('OrganizationPage', () => {
     })
 
     it('keeps mutation controls hidden for read-only access', async () => {
-        vi.spyOn(
-            authorizationApi,
-            'getCurrentAuthorizationContext',
-        ).mockResolvedValue(
+        vi.spyOn(authorizationApi, 'getCurrentAuthorizationContext').mockResolvedValue(
             authorizationContext(false),
         )
 
         renderPage()
 
-        const hierarchy = await screen.findByRole(
-            'list',
-            {
-                name: /organizational units/i,
-            },
-        )
+        const hierarchy = await screen.findByRole('list', {
+            name: /organizational units/i,
+        })
 
-        expect(
-            within(hierarchy).getByText(
-                'Example Company',
-            ),
-        ).toBeInTheDocument()
-        expect(
-            await screen.findByText('Grace User'),
-        ).toBeInTheDocument()
+        expect(within(hierarchy).getByText('Example Company')).toBeInTheDocument()
+        expect(await screen.findByText('Grace User')).toBeInTheDocument()
         expect(
             screen.queryByRole('button', {
                 name: /add root unit/i,

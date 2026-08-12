@@ -1,14 +1,6 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    render,
-    screen,
-} from '@testing-library/react'
-import {
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 
 import { appTheme } from '../../../theme/appTheme'
@@ -44,12 +36,8 @@ describe('LoginPage', () => {
             </ThemeProvider>,
         )
 
-        expect(screen.getByLabelText(/tenant id/i)).toHaveValue(
-            'tenant-1',
-        )
-        expect(screen.getByLabelText(/email address/i)).toHaveValue(
-            'grace@example.com',
-        )
+        expect(screen.getByLabelText(/tenant id/i)).toHaveValue('tenant-1')
+        expect(screen.getByLabelText(/email address/i)).toHaveValue('grace@example.com')
     })
 
     it('confirms device-session revocation and preserves sign-in context', () => {
@@ -81,14 +69,8 @@ describe('LoginPage', () => {
             </ThemeProvider>,
         )
 
-        expect(screen.getByText(
-            /all device refresh sessions were revoked/i,
-        )).toBeInTheDocument()
-        expect(screen.getByLabelText(/tenant id/i)).toHaveValue(
-            'tenant-1',
-        )
-        expect(screen.getByLabelText(/email address/i)).toHaveValue(
-            'grace@example.com',
-        )
+        expect(screen.getByText(/all device refresh sessions were revoked/i)).toBeInTheDocument()
+        expect(screen.getByLabelText(/tenant id/i)).toHaveValue('tenant-1')
+        expect(screen.getByLabelText(/email address/i)).toHaveValue('grace@example.com')
     })
 })

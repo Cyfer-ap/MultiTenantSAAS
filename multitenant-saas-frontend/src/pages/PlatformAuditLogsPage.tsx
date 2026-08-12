@@ -30,9 +30,7 @@ import type { FormEvent } from 'react'
 import { useState } from 'react'
 
 import { usePlatformAuditLogs } from '../features/system-admin/hooks/usePlatformAuditLogs'
-import {
-    platformAuditActions,
-} from '../features/system-admin/types/systemAdmin'
+import { platformAuditActions } from '../features/system-admin/types/systemAdmin'
 import type {
     PlatformAuditAction,
     PlatformAuditLogsQueryParams,
@@ -80,8 +78,7 @@ export function PlatformAuditLogsPage() {
     const [search, setSearch] = useState('')
     const [action, setAction] = useState<ActionFilter>('ALL')
     const [outcome, setOutcome] = useState<OutcomeFilter>('ALL')
-    const [sortBy, setSortBy] =
-        useState<PlatformAuditSortField>('createdAt')
+    const [sortBy, setSortBy] = useState<PlatformAuditSortField>('createdAt')
     const [sortDir, setSortDir] = useState<SortDirection>('desc')
 
     const queryParams: PlatformAuditLogsQueryParams = {
@@ -90,14 +87,11 @@ export function PlatformAuditLogsPage() {
         sortBy,
         sortDir,
         ...(action === 'ALL' ? {} : { action }),
-        ...(outcome === 'ALL'
-            ? {}
-            : { success: outcome === 'SUCCESS' }),
+        ...(outcome === 'ALL' ? {} : { success: outcome === 'SUCCESS' }),
         ...(search ? { search } : {}),
     }
     const query = usePlatformAuditLogs(queryParams)
-    const hasFilters =
-        search.length > 0 || action !== 'ALL' || outcome !== 'ALL'
+    const hasFilters = search.length > 0 || action !== 'ALL' || outcome !== 'ALL'
 
     const submitSearch = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault()
@@ -108,7 +102,7 @@ export function PlatformAuditLogsPage() {
     const changeSort = (nextSortBy: PlatformAuditSortField): void => {
         setPage(0)
         if (nextSortBy === sortBy) {
-            setSortDir((current) => current === 'asc' ? 'desc' : 'asc')
+            setSortDir((current) => (current === 'asc' ? 'desc' : 'asc'))
             return
         }
         setSortBy(nextSortBy)
@@ -143,11 +137,15 @@ export function PlatformAuditLogsPage() {
                 </Box>
                 <Button
                     disabled={query.isFetching}
-                    onClick={() => { void query.refetch() }}
+                    onClick={() => {
+                        void query.refetch()
+                    }}
                     startIcon={
-                        query.isFetching
-                            ? <CircularProgress color="inherit" size={16} />
-                            : <RefreshRoundedIcon />
+                        query.isFetching ? (
+                            <CircularProgress color="inherit" size={16} />
+                        ) : (
+                            <RefreshRoundedIcon />
+                        )
                     }
                     variant="outlined"
                 >
@@ -155,12 +153,7 @@ export function PlatformAuditLogsPage() {
                 </Button>
             </Stack>
 
-            <Paper
-                component="form"
-                onSubmit={submitSearch}
-                sx={{ mt: 3, p: 2 }}
-                variant="outlined"
-            >
+            <Paper component="form" onSubmit={submitSearch} sx={{ mt: 3, p: 2 }} variant="outlined">
                 <Stack
                     direction={{ xs: 'column', lg: 'row' }}
                     spacing={2}
@@ -168,7 +161,9 @@ export function PlatformAuditLogsPage() {
                 >
                     <TextField
                         label="Search platform events"
-                        onChange={(event) => { setSearchDraft(event.target.value) }}
+                        onChange={(event) => {
+                            setSearchDraft(event.target.value)
+                        }}
                         placeholder="Actor, target, or message"
                         size="small"
                         slotProps={{
@@ -218,7 +213,9 @@ export function PlatformAuditLogsPage() {
                             <MenuItem value="FAILURE">Failed</MenuItem>
                         </Select>
                     </FormControl>
-                    <Button type="submit" variant="contained">Search</Button>
+                    <Button type="submit" variant="contained">
+                        Search
+                    </Button>
                     <Button
                         disabled={!hasFilters && !searchDraft}
                         onClick={clearFilters}
@@ -236,14 +233,16 @@ export function PlatformAuditLogsPage() {
                 {query.isPending && <AuditTableSkeleton />}
                 {query.isError && (
                     <Alert
-                        action={(
+                        action={
                             <Button
                                 color="inherit"
-                                onClick={() => { void query.refetch() }}
+                                onClick={() => {
+                                    void query.refetch()
+                                }}
                             >
                                 Retry
                             </Button>
-                        )}
+                        }
                         severity="error"
                         sx={{ m: 2 }}
                     >
@@ -262,7 +261,9 @@ export function PlatformAuditLogsPage() {
                                             <TableSortLabel
                                                 active={sortBy === 'action'}
                                                 direction={sortBy === 'action' ? sortDir : 'asc'}
-                                                onClick={() => { changeSort('action') }}
+                                                onClick={() => {
+                                                    changeSort('action')
+                                                }}
                                             >
                                                 Event
                                             </TableSortLabel>
@@ -273,7 +274,9 @@ export function PlatformAuditLogsPage() {
                                             <TableSortLabel
                                                 active={sortBy === 'success'}
                                                 direction={sortBy === 'success' ? sortDir : 'asc'}
-                                                onClick={() => { changeSort('success') }}
+                                                onClick={() => {
+                                                    changeSort('success')
+                                                }}
                                             >
                                                 Outcome
                                             </TableSortLabel>
@@ -281,8 +284,12 @@ export function PlatformAuditLogsPage() {
                                         <TableCell sx={{ minWidth: 180 }}>
                                             <TableSortLabel
                                                 active={sortBy === 'createdAt'}
-                                                direction={sortBy === 'createdAt' ? sortDir : 'desc'}
-                                                onClick={() => { changeSort('createdAt') }}
+                                                direction={
+                                                    sortBy === 'createdAt' ? sortDir : 'desc'
+                                                }
+                                                onClick={() => {
+                                                    changeSort('createdAt')
+                                                }}
                                             >
                                                 Occurred
                                             </TableSortLabel>
@@ -293,24 +300,42 @@ export function PlatformAuditLogsPage() {
                                     {query.data.content.map((log) => (
                                         <TableRow hover key={log.id}>
                                             <TableCell>
-                                                <Typography sx={{ fontWeight: 600 }} variant="body2">
+                                                <Typography
+                                                    sx={{ fontWeight: 600 }}
+                                                    variant="body2"
+                                                >
                                                     {formatLabel(log.action)}
                                                 </Typography>
                                                 <Typography
                                                     color="text.secondary"
-                                                    sx={{ mt: 0.5, maxWidth: 460, overflowWrap: 'anywhere' }}
+                                                    sx={{
+                                                        mt: 0.5,
+                                                        maxWidth: 460,
+                                                        overflowWrap: 'anywhere',
+                                                    }}
                                                     variant="caption"
                                                 >
                                                     {log.message}
                                                 </Typography>
                                             </TableCell>
                                             <TableCell>
-                                                <Typography sx={{ overflowWrap: 'anywhere' }} variant="body2">
+                                                <Typography
+                                                    sx={{ overflowWrap: 'anywhere' }}
+                                                    variant="body2"
+                                                >
                                                     {log.actorSystemAdminEmail ?? 'System'}
                                                 </Typography>
                                             </TableCell>
                                             <TableCell>
-                                                <Typography color={log.targetSystemAdminEmail ? 'text.primary' : 'text.secondary'} sx={{ overflowWrap: 'anywhere' }} variant="body2">
+                                                <Typography
+                                                    color={
+                                                        log.targetSystemAdminEmail
+                                                            ? 'text.primary'
+                                                            : 'text.secondary'
+                                                    }
+                                                    sx={{ overflowWrap: 'anywhere' }}
+                                                    variant="body2"
+                                                >
                                                     {log.targetSystemAdminEmail ?? '—'}
                                                 </Typography>
                                             </TableCell>
@@ -341,8 +366,13 @@ export function PlatformAuditLogsPage() {
                         <TablePagination
                             component="div"
                             count={query.data.totalElements}
-                            onPageChange={(_event, nextPage) => { setPage(nextPage) }}
-                            onRowsPerPageChange={(event) => { setPage(0); setSize(Number(event.target.value)) }}
+                            onPageChange={(_event, nextPage) => {
+                                setPage(nextPage)
+                            }}
+                            onRowsPerPageChange={(event) => {
+                                setPage(0)
+                                setSize(Number(event.target.value))
+                            }}
                             page={Math.min(page, Math.max(query.data.totalPages - 1, 0))}
                             rowsPerPage={size}
                             rowsPerPageOptions={[5, 10, 25, 50]}

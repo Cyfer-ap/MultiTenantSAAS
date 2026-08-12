@@ -12,56 +12,37 @@ import {
 } from '@mui/material'
 import type { FormEvent } from 'react'
 import { useState } from 'react'
-import {
-    useNavigate,
-    useSearchParams,
-} from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 
 import { ApiClientError } from '../api/apiError'
 import { useResetPassword } from '../features/password-reset/hooks/usePasswordReset'
 
-const passwordPattern =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,100}$/
+const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,100}$/
 
 function getErrorMessage(error: unknown): string {
-    return error instanceof Error
-        ? error.message
-        : 'The password could not be reset.'
+    return error instanceof Error ? error.message : 'The password could not be reset.'
 }
 
-function getFieldError(
-    error: unknown,
-    field: string,
-): string | undefined {
-    const detail = error instanceof ApiClientError
-        ? error.details?.[field]
-        : undefined
+function getFieldError(error: unknown, field: string): string | undefined {
+    const detail = error instanceof ApiClientError ? error.details?.[field] : undefined
 
-    return typeof detail === 'string'
-        ? detail
-        : undefined
+    return typeof detail === 'string' ? detail : undefined
 }
 
 export function ResetPasswordPage() {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const [password, setPassword] = useState('')
-    const [confirmPassword, setConfirmPassword] =
-        useState('')
-    const [validationError, setValidationError] =
-        useState<string | null>(null)
+    const [confirmPassword, setConfirmPassword] = useState('')
+    const [validationError, setValidationError] = useState<string | null>(null)
     const mutation = useResetPassword()
     const resetToken = searchParams.get('token')?.trim() ?? ''
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         if (!resetToken) {
-            setValidationError(
-                'This reset link does not contain a token.',
-            )
+            setValidationError('This reset link does not contain a token.')
             return
         }
 
@@ -85,8 +66,7 @@ export function ResetPasswordPage() {
                 newPassword: password,
                 confirmPassword,
             })
-        }
-        catch {
+        } catch {
             // The mutation error is rendered on the page.
         }
     }
@@ -129,10 +109,7 @@ export function ResetPasswordPage() {
                                     <Typography component="h1" variant="h4">
                                         Password updated
                                     </Typography>
-                                    <Typography
-                                        color="text.secondary"
-                                        sx={{ marginTop: 1 }}
-                                    >
+                                    <Typography color="text.secondary" sx={{ marginTop: 1 }}>
                                         Your previous sessions have been revoked.
                                     </Typography>
                                 </Box>
@@ -158,18 +135,15 @@ export function ResetPasswordPage() {
                                     <Typography component="h1" variant="h4">
                                         Reset password
                                     </Typography>
-                                    <Typography
-                                        color="text.secondary"
-                                        sx={{ marginTop: 1 }}
-                                    >
+                                    <Typography color="text.secondary" sx={{ marginTop: 1 }}>
                                         Choose a new password for your account.
                                     </Typography>
                                 </Box>
 
                                 {!resetToken && (
                                     <Alert severity="error" sx={{ width: '100%' }}>
-                                        This reset link is incomplete. Request a new
-                                        password reset link.
+                                        This reset link is incomplete. Request a new password reset
+                                        link.
                                     </Alert>
                                 )}
 
@@ -184,28 +158,18 @@ export function ResetPasswordPage() {
                                     <Stack spacing={2}>
                                         {(validationError || mutation.isError) && (
                                             <Alert severity="error">
-                                                {validationError ??
-                                                    getErrorMessage(mutation.error)}
+                                                {validationError ?? getErrorMessage(mutation.error)}
                                             </Alert>
                                         )}
                                         <TextField
                                             autoComplete="new-password"
                                             autoFocus
-                                            disabled={
-                                                mutation.isPending ||
-                                                !resetToken
-                                            }
+                                            disabled={mutation.isPending || !resetToken}
                                             error={Boolean(
-                                                getFieldError(
-                                                    mutation.error,
-                                                    'newPassword',
-                                                ),
+                                                getFieldError(mutation.error, 'newPassword'),
                                             )}
                                             helperText={
-                                                getFieldError(
-                                                    mutation.error,
-                                                    'newPassword',
-                                                ) ??
+                                                getFieldError(mutation.error, 'newPassword') ??
                                                 '8–100 characters with uppercase, lowercase, number, special character, and no spaces.'
                                             }
                                             label="New password"
@@ -219,15 +183,9 @@ export function ResetPasswordPage() {
                                         />
                                         <TextField
                                             autoComplete="new-password"
-                                            disabled={
-                                                mutation.isPending ||
-                                                !resetToken
-                                            }
+                                            disabled={mutation.isPending || !resetToken}
                                             error={Boolean(
-                                                getFieldError(
-                                                    mutation.error,
-                                                    'confirmPassword',
-                                                ),
+                                                getFieldError(mutation.error, 'confirmPassword'),
                                             )}
                                             helperText={getFieldError(
                                                 mutation.error,
@@ -235,9 +193,7 @@ export function ResetPasswordPage() {
                                             )}
                                             label="Confirm password"
                                             onChange={(event) => {
-                                                setConfirmPassword(
-                                                    event.target.value,
-                                                )
+                                                setConfirmPassword(event.target.value)
                                                 setValidationError(null)
                                             }}
                                             required
@@ -245,10 +201,7 @@ export function ResetPasswordPage() {
                                             value={confirmPassword}
                                         />
                                         <Button
-                                            disabled={
-                                                mutation.isPending ||
-                                                !resetToken
-                                            }
+                                            disabled={mutation.isPending || !resetToken}
                                             size="large"
                                             type="submit"
                                             variant="contained"

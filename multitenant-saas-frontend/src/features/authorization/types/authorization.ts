@@ -7,41 +7,30 @@ export const authorizationPermissionCodes = {
     USER_UPDATE: 'user.update',
     USER_STATUS_UPDATE: 'user.status.update',
 
-    ORGANIZATION_UNIT_READ:
-        'organization.unit.read',
-    ORGANIZATION_UNIT_MANAGE:
-        'organization.unit.manage',
+    ORGANIZATION_UNIT_READ: 'organization.unit.read',
+    ORGANIZATION_UNIT_MANAGE: 'organization.unit.manage',
 
-    ORGANIZATION_ASSIGNMENT_READ:
-        'organization.assignment.read',
-    ORGANIZATION_ASSIGNMENT_MANAGE:
-        'organization.assignment.manage',
+    ORGANIZATION_ASSIGNMENT_READ: 'organization.assignment.read',
+    ORGANIZATION_ASSIGNMENT_MANAGE: 'organization.assignment.manage',
 
     PROJECT_READ: 'project.read',
     PROJECT_CREATE: 'project.create',
     PROJECT_UPDATE: 'project.update',
     PROJECT_ARCHIVE: 'project.archive',
-    PROJECT_MEMBER_MANAGE:
-        'project.member.manage',
+    PROJECT_MEMBER_MANAGE: 'project.member.manage',
     PROJECT_TASK_READ: 'project.task.read',
     PROJECT_TASK_MANAGE: 'project.task.manage',
 
     AUDIT_READ: 'audit.read',
-    AUTHORIZATION_MANAGE:
-        'authorization.manage',
+    AUTHORIZATION_MANAGE: 'authorization.manage',
 
-    SUBSCRIPTION_READ:
-        'subscription.read',
+    SUBSCRIPTION_READ: 'subscription.read',
 } as const
 
 export type AuthorizationPermissionCode =
-    typeof authorizationPermissionCodes[
-        keyof typeof authorizationPermissionCodes
-    ]
+    (typeof authorizationPermissionCodes)[keyof typeof authorizationPermissionCodes]
 
-export type AuthorizationRoleSource =
-    | 'SYSTEM'
-    | 'TENANT'
+export type AuthorizationRoleSource = 'SYSTEM' | 'TENANT'
 
 export type AuthorizationScopeType =
     | 'TENANT'
@@ -66,11 +55,9 @@ export interface AuthorizationAssignmentScopeTargetOption {
 
 export interface AuthorizationAssignmentReferenceData {
     users: AuthorizationAssignmentUserOption[]
-    organizationalUnits:
-        AuthorizationAssignmentScopeTargetOption[]
+    organizationalUnits: AuthorizationAssignmentScopeTargetOption[]
     projects: AuthorizationAssignmentScopeTargetOption[]
-    directReportsAnchors:
-        AuthorizationAssignmentScopeTargetOption[]
+    directReportsAnchors: AuthorizationAssignmentScopeTargetOption[]
 }
 
 export interface CurrentAuthorizationGrant {
@@ -97,9 +84,7 @@ export interface CurrentAuthorizationContext {
     grants: CurrentAuthorizationGrant[]
 }
 
-export type AuthorizationEntityStatus =
-    | 'ACTIVE'
-    | 'INACTIVE'
+export type AuthorizationEntityStatus = 'ACTIVE' | 'INACTIVE'
 
 export interface AuthorizationPermission {
     id: string

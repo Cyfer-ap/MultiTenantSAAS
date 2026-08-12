@@ -1,9 +1,6 @@
 import axios from 'axios'
 
-import type {
-    ApiErrorResponse,
-    ErrorCode,
-} from '../types/api'
+import type { ApiErrorResponse, ErrorCode } from '../types/api'
 
 interface ApiClientErrorOptions {
     message: string
@@ -24,14 +21,14 @@ export class ApiClientError extends Error {
     readonly networkError: boolean
 
     constructor({
-                    message,
-                    errorCode,
-                    status,
-                    path,
-                    details = null,
-                    timestamp,
-                    networkError = false,
-                }: ApiClientErrorOptions) {
+        message,
+        errorCode,
+        status,
+        path,
+        details = null,
+        timestamp,
+        networkError = false,
+    }: ApiClientErrorOptions) {
         super(message)
 
         this.name = 'ApiClientError'
@@ -44,18 +41,12 @@ export class ApiClientError extends Error {
     }
 }
 
-function isApiErrorResponse(
-    value: unknown,
-): value is ApiErrorResponse {
-    if (
-        typeof value !== 'object' ||
-        value === null
-    ) {
+function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
+    if (typeof value !== 'object' || value === null) {
         return false
     }
 
-    const candidate =
-        value as Partial<ApiErrorResponse>
+    const candidate = value as Partial<ApiErrorResponse>
 
     return (
         candidate.success === false &&
@@ -65,16 +56,13 @@ function isApiErrorResponse(
     )
 }
 
-export function normalizeApiError(
-    error: unknown,
-): ApiClientError {
+export function normalizeApiError(error: unknown): ApiClientError {
     if (error instanceof ApiClientError) {
         return error
     }
 
     if (axios.isAxiosError(error)) {
-        const responseBody: unknown =
-            error.response?.data
+        const responseBody: unknown = error.response?.data
 
         if (isApiErrorResponse(responseBody)) {
             return new ApiClientError({
@@ -96,8 +84,7 @@ export function normalizeApiError(
         }
 
         return new ApiClientError({
-            message:
-                'The server returned an unexpected response.',
+            message: 'The server returned an unexpected response.',
             status: error.response.status,
         })
     }

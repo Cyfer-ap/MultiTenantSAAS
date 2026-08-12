@@ -31,18 +31,11 @@ export const auditActions = [
     'TASK_CANCELLED',
 ] as const
 
-export type AuditAction =
-    (typeof auditActions)[number]
+export type AuditAction = (typeof auditActions)[number]
 
-export type AuditActorType =
-    | 'TENANT_USER'
-    | 'SYSTEM_ADMIN'
-    | 'SYSTEM'
+export type AuditActorType = 'TENANT_USER' | 'SYSTEM_ADMIN' | 'SYSTEM'
 
-export type AuditLogSortField =
-    | 'createdAt'
-    | 'action'
-    | 'success'
+export type AuditLogSortField = 'createdAt' | 'action' | 'success'
 
 export type SortDirection = 'asc' | 'desc'
 

@@ -1,23 +1,9 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    render,
-    screen,
-    waitFor,
-    within,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AuthContext } from '../features/auth/context/AuthContext'
 import type { AuthContextValue } from '../features/auth/context/AuthContext'
@@ -92,29 +78,37 @@ const assignment: AuthorizationUserRoleAssignment = {
 }
 
 const referenceData: AuthorizationAssignmentReferenceData = {
-    users: [{
-        id: 'user-2',
-        fullName: 'Grace User',
-        email: 'grace@example.com',
-    }],
-    organizationalUnits: [{
-        id: 'unit-1',
-        label: 'Engineering',
-        description: 'DEPARTMENT • ENG',
-        ownerUserId: null,
-    }],
-    projects: [{
-        id: 'project-1',
-        label: 'Apollo',
-        description: 'ACTIVE',
-        ownerUserId: null,
-    }],
-    directReportsAnchors: [{
-        id: 'org-assignment-1',
-        label: 'Engineering — Team Lead',
-        description: 'Primary organizational assignment',
-        ownerUserId: 'user-2',
-    }],
+    users: [
+        {
+            id: 'user-2',
+            fullName: 'Grace User',
+            email: 'grace@example.com',
+        },
+    ],
+    organizationalUnits: [
+        {
+            id: 'unit-1',
+            label: 'Engineering',
+            description: 'DEPARTMENT • ENG',
+            ownerUserId: null,
+        },
+    ],
+    projects: [
+        {
+            id: 'project-1',
+            label: 'Apollo',
+            description: 'ACTIVE',
+            ownerUserId: null,
+        },
+    ],
+    directReportsAnchors: [
+        {
+            id: 'org-assignment-1',
+            label: 'Engineering — Team Lead',
+            description: 'Primary organizational assignment',
+            ownerUserId: 'user-2',
+        },
+    ],
 }
 
 const authContextValue: AuthContextValue = {
@@ -150,9 +144,7 @@ function renderPage() {
         return (
             <ThemeProvider theme={appTheme}>
                 <QueryClientProvider client={queryClient}>
-                    <AuthContext.Provider value={authContextValue}>
-                        {children}
-                    </AuthContext.Provider>
+                    <AuthContext.Provider value={authContextValue}>{children}</AuthContext.Provider>
                 </QueryClientProvider>
             </ThemeProvider>
         )
@@ -166,34 +158,20 @@ function renderPage() {
 describe('AuthorizationManagementPage', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
-        vi.spyOn(
-            authorizationApi,
-            'getPermissions',
-        ).mockResolvedValue([permission])
-        vi.spyOn(
-            authorizationApi,
-            'getRoles',
-        ).mockResolvedValue([systemRole, tenantRole])
-        vi.spyOn(
-            authorizationApi,
-            'getUserAssignments',
-        ).mockResolvedValue([])
-        vi.spyOn(
-            authorizationApi,
-            'getAssignmentReferenceData',
-        ).mockResolvedValue(referenceData)
-        vi.spyOn(
-            authorizationApi,
-            'initializeDefaultRoles',
-        ).mockResolvedValue([systemRole, tenantRole])
+        vi.spyOn(authorizationApi, 'getPermissions').mockResolvedValue([permission])
+        vi.spyOn(authorizationApi, 'getRoles').mockResolvedValue([systemRole, tenantRole])
+        vi.spyOn(authorizationApi, 'getUserAssignments').mockResolvedValue([])
+        vi.spyOn(authorizationApi, 'getAssignmentReferenceData').mockResolvedValue(referenceData)
+        vi.spyOn(authorizationApi, 'initializeDefaultRoles').mockResolvedValue([
+            systemRole,
+            tenantRole,
+        ])
     })
 
     it('keeps system roles read-only and tenant roles manageable', async () => {
         renderPage()
 
-        expect(
-            await screen.findByText('Tenant Operator'),
-        ).toBeInTheDocument()
+        expect(await screen.findByText('Tenant Operator')).toBeInTheDocument()
 
         expect(
             screen.queryByRole('button', {
@@ -210,14 +188,12 @@ describe('AuthorizationManagementPage', () => {
 
     it('creates a normalized tenant role', async () => {
         const user = userEvent.setup()
-        const createRole = vi
-            .spyOn(authorizationApi, 'createRole')
-            .mockResolvedValue({
-                ...tenantRole,
-                id: 'role-created',
-                code: 'PROJECT_COORDINATOR',
-                name: 'Project Coordinator',
-            })
+        const createRole = vi.spyOn(authorizationApi, 'createRole').mockResolvedValue({
+            ...tenantRole,
+            id: 'role-created',
+            code: 'PROJECT_COORDINATOR',
+            name: 'Project Coordinator',
+        })
 
         renderPage()
         await screen.findByText('Tenant Operator')
@@ -231,14 +207,8 @@ describe('AuthorizationManagementPage', () => {
         const dialog = screen.getByRole('dialog', {
             name: /create authorization role/i,
         })
-        await user.type(
-            within(dialog).getByLabelText(/role code/i),
-            'project coordinator',
-        )
-        await user.type(
-            within(dialog).getByLabelText(/role name/i),
-            'Project Coordinator',
-        )
+        await user.type(within(dialog).getByLabelText(/role code/i), 'project coordinator')
+        await user.type(within(dialog).getByLabelText(/role name/i), 'Project Coordinator')
         await user.click(
             within(dialog).getByRole('checkbox', {
                 name: /project read/i,
@@ -251,15 +221,12 @@ describe('AuthorizationManagementPage', () => {
         )
 
         await waitFor(() => {
-            expect(createRole).toHaveBeenCalledWith(
-                'tenant-1',
-                {
-                    code: 'PROJECT_COORDINATOR',
-                    name: 'Project Coordinator',
-                    description: null,
-                    permissionIds: ['permission-1'],
-                },
-            )
+            expect(createRole).toHaveBeenCalledWith('tenant-1', {
+                code: 'PROJECT_COORDINATOR',
+                name: 'Project Coordinator',
+                description: null,
+                permissionIds: ['permission-1'],
+            })
         })
     })
 
@@ -278,10 +245,7 @@ describe('AuthorizationManagementPage', () => {
             }),
         )
 
-        const userSelector = screen.getByRole(
-            'combobox',
-            { name: /^user$/i },
-        )
+        const userSelector = screen.getByRole('combobox', { name: /^user$/i })
         await user.type(userSelector, 'Grace')
         await user.click(
             screen.getByRole('option', {
@@ -289,9 +253,7 @@ describe('AuthorizationManagementPage', () => {
             }),
         )
 
-        expect(
-            await screen.findByText(/no assignments found/i),
-        ).toBeInTheDocument()
+        expect(await screen.findByText(/no assignments found/i)).toBeInTheDocument()
 
         await user.click(
             screen.getByRole('button', {
@@ -302,27 +264,20 @@ describe('AuthorizationManagementPage', () => {
         const dialog = screen.getByRole('dialog', {
             name: /assign authorization role/i,
         })
-        await user.click(
-            within(dialog).getByLabelText(/^role$/i),
-        )
+        await user.click(within(dialog).getByLabelText(/^role$/i))
         await user.click(
             screen.getByRole('option', {
                 name: /tenant operator/i,
             }),
         )
-        await user.click(
-            within(dialog).getByLabelText(/^scope$/i),
-        )
+        await user.click(within(dialog).getByLabelText(/^scope$/i))
         await user.click(
             screen.getByRole('option', {
                 name: /^project$/i,
             }),
         )
 
-        const projectSelector = within(dialog).getByRole(
-            'combobox',
-            { name: /^project$/i },
-        )
+        const projectSelector = within(dialog).getByRole('combobox', { name: /^project$/i })
         await user.type(projectSelector, 'Apollo')
         await user.click(
             screen.getByRole('option', {
@@ -336,17 +291,14 @@ describe('AuthorizationManagementPage', () => {
         )
 
         await waitFor(() => {
-            expect(createAssignment).toHaveBeenCalledWith(
-                'tenant-1',
-                {
-                    userId: 'user-2',
-                    roleId: 'role-tenant',
-                    scopeType: 'PROJECT',
-                    scopeTargetId: 'project-1',
-                    validFrom: null,
-                    validUntil: null,
-                },
-            )
+            expect(createAssignment).toHaveBeenCalledWith('tenant-1', {
+                userId: 'user-2',
+                roleId: 'role-tenant',
+                scopeType: 'PROJECT',
+                scopeTargetId: 'project-1',
+                validFrom: null,
+                validUntil: null,
+            })
         })
     })
 })

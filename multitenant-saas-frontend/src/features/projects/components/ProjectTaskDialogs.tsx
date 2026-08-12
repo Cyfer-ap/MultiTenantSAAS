@@ -24,11 +24,7 @@ import {
     useUpdateProjectTaskAssignee,
     useUpdateProjectTaskStatus,
 } from '../hooks/useProjectTasks'
-import type {
-    ProjectTask,
-    ProjectTaskPriority,
-    ProjectTaskStatus,
-} from '../types/projectTasks'
+import type { ProjectTask, ProjectTaskPriority, ProjectTaskStatus } from '../types/projectTasks'
 import type { ProjectMember } from '../types/projects'
 
 interface DialogBaseProps {
@@ -55,20 +51,14 @@ const priorityLabels: Record<ProjectTaskPriority, string> = {
     URGENT: 'Urgent',
 }
 
-const statusLabels: Record<
-    Exclude<ProjectTaskStatus, 'CANCELLED'>,
-    string
-> = {
+const statusLabels: Record<Exclude<ProjectTaskStatus, 'CANCELLED'>, string> = {
     TODO: 'To do',
     IN_PROGRESS: 'In progress',
     BLOCKED: 'Blocked',
     COMPLETED: 'Completed',
 }
 
-function getErrorMessage(
-    error: unknown,
-    fallback: string,
-): string {
+function getErrorMessage(error: unknown, fallback: string): string {
     return error instanceof Error ? error.message : fallback
 }
 
@@ -84,18 +74,14 @@ function toLocalDateTime(value: string | null): string {
     }
 
     const offset = date.getTimezoneOffset() * 60_000
-    return new Date(date.getTime() - offset)
-        .toISOString()
-        .slice(0, 16)
+    return new Date(date.getTime() - offset).toISOString().slice(0, 16)
 }
 
 function toApiDateTime(value: string): string | null {
     return value ? new Date(value).toISOString() : null
 }
 
-function activeAssignees(
-    members: ProjectMember[],
-): AssigneeOption[] {
+function activeAssignees(members: ProjectMember[]): AssigneeOption[] {
     return members
         .filter((member) => member.userStatus === 'ACTIVE')
         .map(({ userId, fullName, email }) => ({
@@ -153,26 +139,20 @@ function TaskFields({
                 value={description}
             />
             <FormControl fullWidth required>
-                <InputLabel id="task-priority-label">
-                    Priority
-                </InputLabel>
+                <InputLabel id="task-priority-label">Priority</InputLabel>
                 <Select
                     label="Priority"
                     labelId="task-priority-label"
                     onChange={(event) => {
-                        onPriorityChange(
-                            event.target.value as ProjectTaskPriority,
-                        )
+                        onPriorityChange(event.target.value as ProjectTaskPriority)
                     }}
                     value={priority}
                 >
-                    {Object.entries(priorityLabels).map(
-                        ([value, label]) => (
-                            <MenuItem key={value} value={value}>
-                                {label}
-                            </MenuItem>
-                        ),
-                    )}
+                    {Object.entries(priorityLabels).map(([value, label]) => (
+                        <MenuItem key={value} value={value}>
+                            {label}
+                        </MenuItem>
+                    ))}
                 </Select>
             </FormControl>
             <TextField
@@ -202,8 +182,7 @@ export function CreateProjectTaskDialog({
 }: CreateTaskDialogProps) {
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
-    const [priority, setPriority] =
-        useState<ProjectTaskPriority>('MEDIUM')
+    const [priority, setPriority] = useState<ProjectTaskPriority>('MEDIUM')
     const [dueAt, setDueAt] = useState('')
     const [assigneeUserId, setAssigneeUserId] = useState('')
     const mutation = useCreateProjectTask(tenantId, projectId)
@@ -230,64 +209,47 @@ export function CreateProjectTaskDialog({
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="sm"
-            onClose={onClose}
-            open
-        >
+        <Dialog fullWidth maxWidth="sm" onClose={onClose} open>
             <Box component="form" onSubmit={submit}>
                 <DialogTitle>Create task</DialogTitle>
                 <DialogContent>
-                {mutation.isError && (
-                    <Alert severity="error" sx={{ marginBottom: 2 }}>
-                        {getErrorMessage(
-                            mutation.error,
-                            'The task could not be created.',
-                        )}
-                    </Alert>
-                )}
-                <TaskFields
-                    description={description}
-                    dueAt={dueAt}
-                    onDescriptionChange={setDescription}
-                    onDueAtChange={setDueAt}
-                    onPriorityChange={setPriority}
-                    onTitleChange={setTitle}
-                    priority={priority}
-                    title={title}
-                />
-                <FormControl fullWidth sx={{ marginTop: 2 }}>
-                    <InputLabel id="create-task-assignee-label">
-                        Assignee
-                    </InputLabel>
-                    <Select
-                        label="Assignee"
-                        labelId="create-task-assignee-label"
-                        onChange={(event) => {
-                            setAssigneeUserId(event.target.value)
-                        }}
-                        value={assigneeUserId}
-                    >
-                        <MenuItem value="">Unassigned</MenuItem>
-                        {assignees.map((member) => (
-                            <MenuItem
-                                key={member.userId}
-                                value={member.userId}
-                            >
-                                {member.fullName} ({member.email})
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+                    {mutation.isError && (
+                        <Alert severity="error" sx={{ marginBottom: 2 }}>
+                            {getErrorMessage(mutation.error, 'The task could not be created.')}
+                        </Alert>
+                    )}
+                    <TaskFields
+                        description={description}
+                        dueAt={dueAt}
+                        onDescriptionChange={setDescription}
+                        onDueAtChange={setDueAt}
+                        onPriorityChange={setPriority}
+                        onTitleChange={setTitle}
+                        priority={priority}
+                        title={title}
+                    />
+                    <FormControl fullWidth sx={{ marginTop: 2 }}>
+                        <InputLabel id="create-task-assignee-label">Assignee</InputLabel>
+                        <Select
+                            label="Assignee"
+                            labelId="create-task-assignee-label"
+                            onChange={(event) => {
+                                setAssigneeUserId(event.target.value)
+                            }}
+                            value={assigneeUserId}
+                        >
+                            <MenuItem value="">Unassigned</MenuItem>
+                            {assignees.map((member) => (
+                                <MenuItem key={member.userId} value={member.userId}>
+                                    {member.fullName} ({member.email})
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={onClose}>Cancel</Button>
-                    <Button
-                        disabled={mutation.isPending}
-                        type="submit"
-                        variant="contained"
-                    >
+                    <Button disabled={mutation.isPending} type="submit" variant="contained">
                         Create task
                     </Button>
                 </DialogActions>
@@ -304,12 +266,9 @@ export function EditProjectTaskDialog({
     onSuccess,
 }: TaskDialogProps) {
     const [title, setTitle] = useState(task.title)
-    const [description, setDescription] =
-        useState(task.description ?? '')
-    const [priority, setPriority] =
-        useState<ProjectTaskPriority>(task.priority)
-    const [dueAt, setDueAt] =
-        useState(toLocalDateTime(task.dueAt))
+    const [description, setDescription] = useState(task.description ?? '')
+    const [priority, setPriority] = useState<ProjectTaskPriority>(task.priority)
+    const [dueAt, setDueAt] = useState(toLocalDateTime(task.dueAt))
     const mutation = useUpdateProjectTask(tenantId, projectId)
 
     const submit = (event: FormEvent<HTMLFormElement>): void => {
@@ -335,41 +294,29 @@ export function EditProjectTaskDialog({
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="sm"
-            onClose={onClose}
-            open
-        >
+        <Dialog fullWidth maxWidth="sm" onClose={onClose} open>
             <Box component="form" onSubmit={submit}>
                 <DialogTitle>Edit task</DialogTitle>
                 <DialogContent>
-                {mutation.isError && (
-                    <Alert severity="error" sx={{ marginBottom: 2 }}>
-                        {getErrorMessage(
-                            mutation.error,
-                            'The task could not be updated.',
-                        )}
-                    </Alert>
-                )}
-                <TaskFields
-                    description={description}
-                    dueAt={dueAt}
-                    onDescriptionChange={setDescription}
-                    onDueAtChange={setDueAt}
-                    onPriorityChange={setPriority}
-                    onTitleChange={setTitle}
-                    priority={priority}
-                    title={title}
-                />
+                    {mutation.isError && (
+                        <Alert severity="error" sx={{ marginBottom: 2 }}>
+                            {getErrorMessage(mutation.error, 'The task could not be updated.')}
+                        </Alert>
+                    )}
+                    <TaskFields
+                        description={description}
+                        dueAt={dueAt}
+                        onDescriptionChange={setDescription}
+                        onDueAtChange={setDueAt}
+                        onPriorityChange={setPriority}
+                        onTitleChange={setTitle}
+                        priority={priority}
+                        title={title}
+                    />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={onClose}>Cancel</Button>
-                    <Button
-                        disabled={mutation.isPending}
-                        type="submit"
-                        variant="contained"
-                    >
+                    <Button disabled={mutation.isPending} type="submit" variant="contained">
                         Save changes
                     </Button>
                 </DialogActions>
@@ -385,16 +332,9 @@ export function ChangeProjectTaskStatusDialog({
     onClose,
     onSuccess,
 }: TaskDialogProps) {
-    const initialStatus = task.status === 'CANCELLED'
-        ? 'TODO'
-        : task.status
-    const [status, setStatus] = useState<
-        Exclude<ProjectTaskStatus, 'CANCELLED'>
-    >(initialStatus)
-    const mutation = useUpdateProjectTaskStatus(
-        tenantId,
-        projectId,
-    )
+    const initialStatus = task.status === 'CANCELLED' ? 'TODO' : task.status
+    const [status, setStatus] = useState<Exclude<ProjectTaskStatus, 'CANCELLED'>>(initialStatus)
+    const mutation = useUpdateProjectTaskStatus(tenantId, projectId)
 
     const submit = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault()
@@ -410,57 +350,41 @@ export function ChangeProjectTaskStatusDialog({
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="xs"
-            onClose={onClose}
-            open
-        >
+        <Dialog fullWidth maxWidth="xs" onClose={onClose} open>
             <Box component="form" onSubmit={submit}>
                 <DialogTitle>Change task status</DialogTitle>
                 <DialogContent>
-                {mutation.isError && (
-                    <Alert severity="error" sx={{ marginBottom: 2 }}>
-                        {getErrorMessage(
-                            mutation.error,
-                            'The task status could not be updated.',
-                        )}
-                    </Alert>
-                )}
-                <FormControl fullWidth sx={{ marginTop: 1 }}>
-                    <InputLabel id="task-status-label">
-                        Status
-                    </InputLabel>
-                    <Select
-                        label="Status"
-                        labelId="task-status-label"
-                        onChange={(event) => {
-                            setStatus(
-                                event.target.value as Exclude<
-                                    ProjectTaskStatus,
-                                    'CANCELLED'
-                                >,
-                            )
-                        }}
-                        value={status}
-                    >
-                        {Object.entries(statusLabels).map(
-                            ([value, label]) => (
+                    {mutation.isError && (
+                        <Alert severity="error" sx={{ marginBottom: 2 }}>
+                            {getErrorMessage(
+                                mutation.error,
+                                'The task status could not be updated.',
+                            )}
+                        </Alert>
+                    )}
+                    <FormControl fullWidth sx={{ marginTop: 1 }}>
+                        <InputLabel id="task-status-label">Status</InputLabel>
+                        <Select
+                            label="Status"
+                            labelId="task-status-label"
+                            onChange={(event) => {
+                                setStatus(
+                                    event.target.value as Exclude<ProjectTaskStatus, 'CANCELLED'>,
+                                )
+                            }}
+                            value={status}
+                        >
+                            {Object.entries(statusLabels).map(([value, label]) => (
                                 <MenuItem key={value} value={value}>
                                     {label}
                                 </MenuItem>
-                            ),
-                        )}
-                    </Select>
-                </FormControl>
+                            ))}
+                        </Select>
+                    </FormControl>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={onClose}>Cancel</Button>
-                    <Button
-                        disabled={mutation.isPending}
-                        type="submit"
-                        variant="contained"
-                    >
+                    <Button disabled={mutation.isPending} type="submit" variant="contained">
                         Change status
                     </Button>
                 </DialogActions>
@@ -481,12 +405,8 @@ export function AssignProjectTaskDialog({
     onClose,
     onSuccess,
 }: AssignProjectTaskDialogProps) {
-    const [assigneeUserId, setAssigneeUserId] =
-        useState(task.assigneeUserId ?? '')
-    const mutation = useUpdateProjectTaskAssignee(
-        tenantId,
-        projectId,
-    )
+    const [assigneeUserId, setAssigneeUserId] = useState(task.assigneeUserId ?? '')
+    const mutation = useUpdateProjectTaskAssignee(tenantId, projectId)
     const assignees = activeAssignees(members)
 
     const submit = (event: FormEvent<HTMLFormElement>): void => {
@@ -508,54 +428,40 @@ export function AssignProjectTaskDialog({
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="sm"
-            onClose={onClose}
-            open
-        >
+        <Dialog fullWidth maxWidth="sm" onClose={onClose} open>
             <Box component="form" onSubmit={submit}>
                 <DialogTitle>Assign task</DialogTitle>
                 <DialogContent>
-                {mutation.isError && (
-                    <Alert severity="error" sx={{ marginBottom: 2 }}>
-                        {getErrorMessage(
-                            mutation.error,
-                            'The task assignee could not be updated.',
-                        )}
-                    </Alert>
-                )}
-                <FormControl fullWidth sx={{ marginTop: 1 }}>
-                    <InputLabel id="update-task-assignee-label">
-                        Assignee
-                    </InputLabel>
-                    <Select
-                        label="Assignee"
-                        labelId="update-task-assignee-label"
-                        onChange={(event) => {
-                            setAssigneeUserId(event.target.value)
-                        }}
-                        value={assigneeUserId}
-                    >
-                        <MenuItem value="">Unassigned</MenuItem>
-                        {assignees.map((member) => (
-                            <MenuItem
-                                key={member.userId}
-                                value={member.userId}
-                            >
-                                {member.fullName} ({member.email})
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+                    {mutation.isError && (
+                        <Alert severity="error" sx={{ marginBottom: 2 }}>
+                            {getErrorMessage(
+                                mutation.error,
+                                'The task assignee could not be updated.',
+                            )}
+                        </Alert>
+                    )}
+                    <FormControl fullWidth sx={{ marginTop: 1 }}>
+                        <InputLabel id="update-task-assignee-label">Assignee</InputLabel>
+                        <Select
+                            label="Assignee"
+                            labelId="update-task-assignee-label"
+                            onChange={(event) => {
+                                setAssigneeUserId(event.target.value)
+                            }}
+                            value={assigneeUserId}
+                        >
+                            <MenuItem value="">Unassigned</MenuItem>
+                            {assignees.map((member) => (
+                                <MenuItem key={member.userId} value={member.userId}>
+                                    {member.fullName} ({member.email})
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={onClose}>Cancel</Button>
-                    <Button
-                        disabled={mutation.isPending}
-                        type="submit"
-                        variant="contained"
-                    >
+                    <Button disabled={mutation.isPending} type="submit" variant="contained">
                         Update assignee
                     </Button>
                 </DialogActions>
@@ -579,10 +485,7 @@ export function CancelProjectTaskDialog({
             <DialogContent>
                 {mutation.isError && (
                     <Alert severity="error" sx={{ marginBottom: 2 }}>
-                        {getErrorMessage(
-                            mutation.error,
-                            'The task could not be cancelled.',
-                        )}
+                        {getErrorMessage(mutation.error, 'The task could not be cancelled.')}
                     </Alert>
                 )}
                 <Typography>

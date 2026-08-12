@@ -1,10 +1,4 @@
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { publicHttpClient } from '../../../api/httpClient'
 import { onboardingApi } from './onboardingApi'
@@ -58,13 +52,8 @@ describe('onboardingApi', () => {
             .spyOn(publicHttpClient, 'post')
             .mockResolvedValue(successfulResponse(response))
 
-        await expect(
-            onboardingApi.onboardTenant(input),
-        ).resolves.toEqual(response)
+        await expect(onboardingApi.onboardTenant(input)).resolves.toEqual(response)
 
-        expect(post).toHaveBeenCalledWith(
-            '/api/onboarding/tenants',
-            input,
-        )
+        expect(post).toHaveBeenCalledWith('/api/onboarding/tenants', input)
     })
 })

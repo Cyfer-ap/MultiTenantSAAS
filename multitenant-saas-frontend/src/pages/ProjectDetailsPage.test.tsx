@@ -1,29 +1,10 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    fireEvent,
-    render,
-    screen,
-    waitFor,
-    within,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
-import {
-    MemoryRouter,
-    Route,
-    Routes,
-} from 'react-router'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { MemoryRouter, Route, Routes } from 'react-router'
 
 import { AuthContext } from '../features/auth/context/AuthContext'
 import type { AuthContextValue } from '../features/auth/context/AuthContext'
@@ -36,10 +17,7 @@ import {
 import { projectMembersApi } from '../features/projects/api/projectMembersApi'
 import { projectTasksApi } from '../features/projects/api/projectTasksApi'
 import { projectsApi } from '../features/projects/api/projectsApi'
-import type {
-    ProjectMember,
-    TenantProject,
-} from '../features/projects/types/projects'
+import type { ProjectMember, TenantProject } from '../features/projects/types/projects'
 import { appTheme } from '../theme/appTheme'
 import type { PageResponse } from '../types/api'
 import { ProjectDetailsPage } from './ProjectDetailsPage'
@@ -110,16 +88,15 @@ const authContextValue: AuthContextValue = {
     logout: vi.fn(),
 }
 
-const projectManagerAuthorization =
-    createProjectAuthorizationContext({
-        projectId: 'project-1',
-        permissionCodes: [
-            authorizationPermissionCodes.PROJECT_READ,
-            authorizationPermissionCodes.PROJECT_MEMBER_MANAGE,
-            authorizationPermissionCodes.PROJECT_TASK_READ,
-            authorizationPermissionCodes.PROJECT_TASK_MANAGE,
-        ],
-    })
+const projectManagerAuthorization = createProjectAuthorizationContext({
+    projectId: 'project-1',
+    permissionCodes: [
+        authorizationPermissionCodes.PROJECT_READ,
+        authorizationPermissionCodes.PROJECT_MEMBER_MANAGE,
+        authorizationPermissionCodes.PROJECT_TASK_READ,
+        authorizationPermissionCodes.PROJECT_TASK_MANAGE,
+    ],
+})
 
 function createTestQueryClient(): QueryClient {
     return new QueryClient({
@@ -132,18 +109,14 @@ function createTestQueryClient(): QueryClient {
 
 function renderProjectDetailsPage(
     contextValue: AuthContextValue = authContextValue,
-    authorizationContext: CurrentAuthorizationContext =
-        projectManagerAuthorization,
+    authorizationContext: CurrentAuthorizationContext = projectManagerAuthorization,
 ) {
     const queryClient = createTestQueryClient()
     const tenantId = contextValue.session?.tenantId ?? ''
     const userId = contextValue.session?.userId ?? ''
 
     queryClient.setQueryData(
-        currentAuthorizationQueryKeys.current(
-            tenantId,
-            userId,
-        ),
+        currentAuthorizationQueryKeys.current(tenantId, userId),
         authorizationContext,
     )
 
@@ -151,15 +124,10 @@ function renderProjectDetailsPage(
         return (
             <ThemeProvider theme={appTheme}>
                 <QueryClientProvider client={queryClient}>
-                    <MemoryRouter
-                        initialEntries={['/projects/project-1']}
-                    >
+                    <MemoryRouter initialEntries={['/projects/project-1']}>
                         <AuthContext.Provider value={contextValue}>
                             <Routes>
-                                <Route
-                                    path="/projects/:projectId"
-                                    element={children}
-                                />
+                                <Route path="/projects/:projectId" element={children} />
                             </Routes>
                         </AuthContext.Provider>
                     </MemoryRouter>
@@ -176,21 +144,10 @@ function renderProjectDetailsPage(
 describe('ProjectDetailsPage', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
-        vi.spyOn(projectsApi, 'getProject').mockResolvedValue(
-            tenantProject,
-        )
-        vi.spyOn(
-            projectMembersApi,
-            'getMembers',
-        ).mockResolvedValue(membersPage)
-        vi.spyOn(
-            projectMembersApi,
-            'getMember',
-        ).mockResolvedValue(projectMember)
-        vi.spyOn(
-            projectTasksApi,
-            'getTasks',
-        ).mockResolvedValue(tasksPage)
+        vi.spyOn(projectsApi, 'getProject').mockResolvedValue(tenantProject)
+        vi.spyOn(projectMembersApi, 'getMembers').mockResolvedValue(membersPage)
+        vi.spyOn(projectMembersApi, 'getMember').mockResolvedValue(projectMember)
+        vi.spyOn(projectTasksApi, 'getTasks').mockResolvedValue(tasksPage)
     })
 
     it('renders project metadata and its member directory', async () => {
@@ -201,17 +158,9 @@ describe('ProjectDetailsPage', () => {
                 name: 'Research workspace',
             }),
         ).toBeInTheDocument()
-        expect(
-            screen.getByText(
-                'Coordinate the research programme.',
-            ),
-        ).toBeInTheDocument()
-        expect(
-            await screen.findByText('Grace User'),
-        ).toBeInTheDocument()
-        expect(
-            screen.getByText('grace@example.com'),
-        ).toBeInTheDocument()
+        expect(screen.getByText('Coordinate the research programme.')).toBeInTheDocument()
+        expect(await screen.findByText('Grace User')).toBeInTheDocument()
+        expect(screen.getByText('grace@example.com')).toBeInTheDocument()
         expect(
             screen.getByRole('button', {
                 name: /add member/i,
@@ -220,26 +169,17 @@ describe('ProjectDetailsPage', () => {
     })
 
     it('submits server-side member search and role filters', async () => {
-        const getMembers = vi
-            .spyOn(projectMembersApi, 'getMembers')
-            .mockResolvedValue(membersPage)
+        const getMembers = vi.spyOn(projectMembersApi, 'getMembers').mockResolvedValue(membersPage)
 
         renderProjectDetailsPage()
         await screen.findByText('Grace User')
 
-        fireEvent.change(
-            screen.getByLabelText(/search project members/i),
-            { target: { value: '  grace  ' } },
-        )
-        fireEvent.mouseDown(
-            screen.getByLabelText(/^project role$/i),
-        )
-        fireEvent.click(
-            screen.getByRole('option', { name: 'Member' }),
-        )
-        const memberSearchForm = screen
-            .getByLabelText(/search project members/i)
-            .closest('form')
+        fireEvent.change(screen.getByLabelText(/search project members/i), {
+            target: { value: '  grace  ' },
+        })
+        fireEvent.mouseDown(screen.getByLabelText(/^project role$/i))
+        fireEvent.click(screen.getByRole('option', { name: 'Member' }))
+        const memberSearchForm = screen.getByLabelText(/search project members/i).closest('form')
 
         expect(memberSearchForm).not.toBeNull()
         fireEvent.click(
@@ -261,12 +201,10 @@ describe('ProjectDetailsPage', () => {
 
     it('changes a member project role', async () => {
         const user = userEvent.setup()
-        const updateMemberRole = vi
-            .spyOn(projectMembersApi, 'updateMemberRole')
-            .mockResolvedValue({
-                ...projectMember,
-                projectRole: 'PROJECT_LEAD',
-            })
+        const updateMemberRole = vi.spyOn(projectMembersApi, 'updateMemberRole').mockResolvedValue({
+            ...projectMember,
+            projectRole: 'PROJECT_LEAD',
+        })
 
         renderProjectDetailsPage()
         await screen.findByText('Grace User')
@@ -284,9 +222,7 @@ describe('ProjectDetailsPage', () => {
         const dialog = screen.getByRole('dialog', {
             name: /change project role/i,
         })
-        await user.click(
-            within(dialog).getByLabelText(/project role/i),
-        )
+        await user.click(within(dialog).getByLabelText(/project role/i))
         await user.click(
             screen.getByRole('option', {
                 name: /project lead/i,
@@ -299,12 +235,9 @@ describe('ProjectDetailsPage', () => {
         )
 
         await waitFor(() => {
-            expect(updateMemberRole).toHaveBeenCalledWith(
-                'tenant-1',
-                'project-1',
-                'user-2',
-                { role: 'PROJECT_LEAD' },
-            )
+            expect(updateMemberRole).toHaveBeenCalledWith('tenant-1', 'project-1', 'user-2', {
+                role: 'PROJECT_LEAD',
+            })
         })
     })
 
@@ -321,9 +254,7 @@ describe('ProjectDetailsPage', () => {
             createProjectAuthorizationContext({
                 userId: 'user-2',
                 projectId: 'project-2',
-                permissionCodes: [
-                    authorizationPermissionCodes.PROJECT_MEMBER_MANAGE,
-                ],
+                permissionCodes: [authorizationPermissionCodes.PROJECT_MEMBER_MANAGE],
             }),
         )
 
@@ -350,9 +281,7 @@ describe('ProjectDetailsPage', () => {
         renderProjectDetailsPage()
         await screen.findByText('Grace User')
 
-        expect(
-            screen.getByText(/memberships and tasks remain visible/i),
-        ).toBeInTheDocument()
+        expect(screen.getByText(/memberships and tasks remain visible/i)).toBeInTheDocument()
         expect(
             screen.getByRole('button', {
                 name: /add member/i,

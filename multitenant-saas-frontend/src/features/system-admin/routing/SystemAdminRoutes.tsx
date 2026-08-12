@@ -1,12 +1,5 @@
-import {
-    Box,
-    CircularProgress,
-} from '@mui/material'
-import {
-    Navigate,
-    Outlet,
-    useLocation,
-} from 'react-router'
+import { Box, CircularProgress } from '@mui/material'
+import { Navigate, Outlet, useLocation } from 'react-router'
 
 import { useSystemAdmin } from '../hooks/useSystemAdmin'
 
@@ -37,11 +30,7 @@ export function SystemProtectedRoute() {
             <Navigate
                 replace
                 state={{
-                    from: [
-                        location.pathname,
-                        location.search,
-                        location.hash,
-                    ].join(''),
+                    from: [location.pathname, location.search, location.hash].join(''),
                 }}
                 to="/system/login"
             />

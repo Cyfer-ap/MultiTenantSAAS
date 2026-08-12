@@ -27,10 +27,7 @@ import {
     useRemoveProjectMember,
     useUpdateProjectMemberRole,
 } from '../hooks/useProjectMembers'
-import type {
-    ProjectMember,
-    ProjectMemberRole,
-} from '../types/projects'
+import type { ProjectMember, ProjectMemberRole } from '../types/projects'
 
 interface DialogBaseProps {
     tenantId: string
@@ -47,10 +44,7 @@ interface MemberDialogProps extends DialogBaseProps {
     member: ProjectMember
 }
 
-const projectRoleLabels: Record<
-    ProjectMemberRole,
-    string
-> = {
+const projectRoleLabels: Record<ProjectMemberRole, string> = {
     PROJECT_LEAD: 'Project lead',
     MEMBER: 'Member',
 }
@@ -68,14 +62,9 @@ export function AddProjectMemberDialog({
     onClose,
     onSuccess,
 }: AddMemberDialogProps) {
-    const [selectedUser, setSelectedUser] =
-        useState<TenantUser | null>(null)
-    const [role, setRole] =
-        useState<ProjectMemberRole>('MEMBER')
-    const mutation = useAddProjectMember(
-        tenantId,
-        projectId,
-    )
+    const [selectedUser, setSelectedUser] = useState<TenantUser | null>(null)
+    const [role, setRole] = useState<ProjectMemberRole>('MEMBER')
+    const mutation = useAddProjectMember(tenantId, projectId)
     const usersQuery = useTenantUsers(tenantId, {
         page: 0,
         size: 100,
@@ -85,9 +74,7 @@ export function AddProjectMemberDialog({
     })
 
     const availableUsers =
-        usersQuery.data?.content.filter(
-            (user) => !existingMemberIds.has(user.id),
-        ) ?? []
+        usersQuery.data?.content.filter((user) => !existingMemberIds.has(user.id)) ?? []
 
     const closeDialog = (): void => {
         if (!mutation.isPending) {
@@ -95,9 +82,7 @@ export function AddProjectMemberDialog({
         }
     }
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         if (!selectedUser) {
@@ -114,22 +99,19 @@ export function AddProjectMemberDialog({
                 `${member.fullName} was added as ${projectRoleLabels[member.projectRole].toLowerCase()}.`,
             )
             onClose()
-        }
-        catch {
+        } catch {
             // The mutation error is rendered in the dialog.
         }
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="sm"
-            onClose={closeDialog}
-            open
-        >
-            <Box component="form" onSubmit={(event) => {
-                void submit(event)
-            }}>
+        <Dialog fullWidth maxWidth="sm" onClose={closeDialog} open>
+            <Box
+                component="form"
+                onSubmit={(event) => {
+                    void submit(event)
+                }}
+            >
                 <DialogTitle>Add project member</DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ marginBottom: 2 }}>
@@ -145,53 +127,39 @@ export function AddProjectMemberDialog({
                             </Alert>
                         )}
 
-                        {usersQuery.isPending
-                            ? <Skeleton height={56} variant="rounded" />
-                            : (
-                                <Autocomplete
-                                    getOptionLabel={(option) =>
-                                        `${option.fullName} (${option.email})`
-                                    }
-                                    isOptionEqualToValue={(option, value) =>
-                                        option.id === value.id
-                                    }
-                                    noOptionsText="No active users available"
-                                    onChange={(_event, value) => {
-                                        setSelectedUser(value)
-                                    }}
-                                    options={availableUsers}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            label="Tenant user"
-                                            required
-                                        />
-                                    )}
-                                    value={selectedUser}
-                                />
-                            )}
+                        {usersQuery.isPending ? (
+                            <Skeleton height={56} variant="rounded" />
+                        ) : (
+                            <Autocomplete
+                                getOptionLabel={(option) => `${option.fullName} (${option.email})`}
+                                isOptionEqualToValue={(option, value) => option.id === value.id}
+                                noOptionsText="No active users available"
+                                onChange={(_event, value) => {
+                                    setSelectedUser(value)
+                                }}
+                                options={availableUsers}
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Tenant user" required />
+                                )}
+                                value={selectedUser}
+                            />
+                        )}
 
                         <FormControl fullWidth>
-                            <InputLabel id="add-project-member-role-label">
-                                Project role
-                            </InputLabel>
+                            <InputLabel id="add-project-member-role-label">Project role</InputLabel>
                             <Select
                                 label="Project role"
                                 labelId="add-project-member-role-label"
                                 onChange={(event) => {
-                                    setRole(
-                                        event.target.value as ProjectMemberRole,
-                                    )
+                                    setRole(event.target.value as ProjectMemberRole)
                                 }}
                                 value={role}
                             >
-                                {Object.entries(projectRoleLabels).map(
-                                    ([value, label]) => (
-                                        <MenuItem key={value} value={value}>
-                                            {label}
-                                        </MenuItem>
-                                    ),
-                                )}
+                                {Object.entries(projectRoleLabels).map(([value, label]) => (
+                                    <MenuItem key={value} value={value}>
+                                        {label}
+                                    </MenuItem>
+                                ))}
                             </Select>
                         </FormControl>
 
@@ -203,24 +171,15 @@ export function AddProjectMemberDialog({
                     </Stack>
                 </DialogContent>
                 <DialogActions>
-                    <Button
-                        disabled={mutation.isPending}
-                        onClick={closeDialog}
-                    >
+                    <Button disabled={mutation.isPending} onClick={closeDialog}>
                         Cancel
                     </Button>
                     <Button
-                        disabled={
-                            mutation.isPending ||
-                            !selectedUser ||
-                            usersQuery.isError
-                        }
+                        disabled={mutation.isPending || !selectedUser || usersQuery.isError}
                         type="submit"
                         variant="contained"
                     >
-                        {mutation.isPending
-                            ? 'Adding…'
-                            : 'Add member'}
+                        {mutation.isPending ? 'Adding…' : 'Add member'}
                     </Button>
                 </DialogActions>
             </Box>
@@ -235,12 +194,8 @@ export function ChangeProjectMemberRoleDialog({
     onClose,
     onSuccess,
 }: MemberDialogProps) {
-    const [role, setRole] =
-        useState<ProjectMemberRole>(member.projectRole)
-    const mutation = useUpdateProjectMemberRole(
-        tenantId,
-        projectId,
-    )
+    const [role, setRole] = useState<ProjectMemberRole>(member.projectRole)
+    const mutation = useUpdateProjectMemberRole(tenantId, projectId)
 
     const closeDialog = (): void => {
         if (!mutation.isPending) {
@@ -248,9 +203,7 @@ export function ChangeProjectMemberRoleDialog({
         }
     }
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         try {
@@ -263,22 +216,19 @@ export function ChangeProjectMemberRoleDialog({
                 `${updatedMember.fullName} is now ${projectRoleLabels[updatedMember.projectRole].toLowerCase()}.`,
             )
             onClose()
-        }
-        catch {
+        } catch {
             // The mutation error is rendered in the dialog.
         }
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="xs"
-            onClose={closeDialog}
-            open
-        >
-            <Box component="form" onSubmit={(event) => {
-                void submit(event)
-            }}>
+        <Dialog fullWidth maxWidth="xs" onClose={closeDialog} open>
+            <Box
+                component="form"
+                onSubmit={(event) => {
+                    void submit(event)
+                }}
+            >
                 <DialogTitle>Change project role</DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ marginBottom: 2 }}>
@@ -292,47 +242,33 @@ export function ChangeProjectMemberRoleDialog({
                     )}
 
                     <FormControl fullWidth>
-                        <InputLabel id="change-project-member-role-label">
-                            Project role
-                        </InputLabel>
+                        <InputLabel id="change-project-member-role-label">Project role</InputLabel>
                         <Select
                             label="Project role"
                             labelId="change-project-member-role-label"
                             onChange={(event) => {
-                                setRole(
-                                    event.target.value as ProjectMemberRole,
-                                )
+                                setRole(event.target.value as ProjectMemberRole)
                             }}
                             value={role}
                         >
-                            {Object.entries(projectRoleLabels).map(
-                                ([value, label]) => (
-                                    <MenuItem key={value} value={value}>
-                                        {label}
-                                    </MenuItem>
-                                ),
-                            )}
+                            {Object.entries(projectRoleLabels).map(([value, label]) => (
+                                <MenuItem key={value} value={value}>
+                                    {label}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
                 </DialogContent>
                 <DialogActions>
-                    <Button
-                        disabled={mutation.isPending}
-                        onClick={closeDialog}
-                    >
+                    <Button disabled={mutation.isPending} onClick={closeDialog}>
                         Cancel
                     </Button>
                     <Button
-                        disabled={
-                            mutation.isPending ||
-                            role === member.projectRole
-                        }
+                        disabled={mutation.isPending || role === member.projectRole}
                         type="submit"
                         variant="contained"
                     >
-                        {mutation.isPending
-                            ? 'Saving…'
-                            : 'Change role'}
+                        {mutation.isPending ? 'Saving…' : 'Change role'}
                     </Button>
                 </DialogActions>
             </Box>
@@ -347,10 +283,7 @@ export function RemoveProjectMemberDialog({
     onClose,
     onSuccess,
 }: MemberDialogProps) {
-    const mutation = useRemoveProjectMember(
-        tenantId,
-        projectId,
-    )
+    const mutation = useRemoveProjectMember(tenantId, projectId)
 
     const closeDialog = (): void => {
         if (!mutation.isPending) {
@@ -360,16 +293,11 @@ export function RemoveProjectMemberDialog({
 
     const remove = async (): Promise<void> => {
         try {
-            const removedMember = await mutation.mutateAsync(
-                member.userId,
-            )
+            const removedMember = await mutation.mutateAsync(member.userId)
 
-            onSuccess(
-                `${removedMember.fullName} was removed from the project.`,
-            )
+            onSuccess(`${removedMember.fullName} was removed from the project.`)
             onClose()
-        }
-        catch {
+        } catch {
             // The mutation error is rendered in the dialog.
         }
     }
@@ -389,10 +317,7 @@ export function RemoveProjectMemberDialog({
                 )}
             </DialogContent>
             <DialogActions>
-                <Button
-                    disabled={mutation.isPending}
-                    onClick={closeDialog}
-                >
+                <Button disabled={mutation.isPending} onClick={closeDialog}>
                     Cancel
                 </Button>
                 <Button
@@ -403,9 +328,7 @@ export function RemoveProjectMemberDialog({
                     }}
                     variant="contained"
                 >
-                    {mutation.isPending
-                        ? 'Removing…'
-                        : 'Remove member'}
+                    {mutation.isPending ? 'Removing…' : 'Remove member'}
                 </Button>
             </DialogActions>
         </Dialog>

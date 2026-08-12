@@ -1,15 +1,7 @@
-import {
-    describe,
-    expect,
-    it,
-} from 'vitest'
+import { describe, expect, it } from 'vitest'
 
-import type {
-    CurrentAuthorizationContext,
-} from '../../authorization/types/authorization'
-import type {
-    OrganizationalUnitTree,
-} from '../types/organization'
+import type { CurrentAuthorizationContext } from '../../authorization/types/authorization'
+import type { OrganizationalUnitTree } from '../types/organization'
 import {
     flattenOrganizationTree,
     hasOrganizationUnitPermission,
@@ -52,8 +44,7 @@ const tree: OrganizationalUnitTree[] = [
 ]
 
 function context(
-    scopeType: 'ORGANIZATIONAL_UNIT' |
-        'ORGANIZATIONAL_SUBTREE',
+    scopeType: 'ORGANIZATIONAL_UNIT' | 'ORGANIZATIONAL_SUBTREE',
     scopeTargetId: string,
 ): CurrentAuthorizationContext {
     return {
@@ -63,9 +54,7 @@ function context(
         email: 'ada@example.com',
         evaluatedAt: '2026-08-05T00:00:00Z',
         tenantPermissionCodes: [],
-        allPermissionCodes: [
-            'organization.unit.manage',
-        ],
+        allPermissionCodes: ['organization.unit.manage'],
         grants: [
             {
                 assignmentId: 'assignment-1',
@@ -77,9 +66,7 @@ function context(
                 scopeTargetId,
                 validFrom: '2026-08-01T00:00:00Z',
                 validUntil: null,
-                permissionCodes: [
-                    'organization.unit.manage',
-                ],
+                permissionCodes: ['organization.unit.manage'],
             },
         ],
     }
@@ -88,12 +75,10 @@ function context(
 describe('organization access helpers', () => {
     it('flattens hierarchy depth-first', () => {
         expect(
-            flattenOrganizationTree(tree).map(
-                ({ id, depth }) => ({
-                    id,
-                    depth,
-                }),
-            ),
+            flattenOrganizationTree(tree).map(({ id, depth }) => ({
+                id,
+                depth,
+            })),
         ).toEqual([
             { id: 'company', depth: 0 },
             { id: 'engineering', depth: 1 },
@@ -106,10 +91,7 @@ describe('organization access helpers', () => {
 
         expect(
             hasOrganizationUnitPermission(
-                context(
-                    'ORGANIZATIONAL_SUBTREE',
-                    'engineering',
-                ),
+                context('ORGANIZATIONAL_SUBTREE', 'engineering'),
                 'organization.unit.manage',
                 'platform',
                 units,
@@ -122,22 +104,13 @@ describe('organization access helpers', () => {
 
         expect(
             hasOrganizationUnitPermission(
-                context(
-                    'ORGANIZATIONAL_UNIT',
-                    'engineering',
-                ),
+                context('ORGANIZATIONAL_UNIT', 'engineering'),
                 'organization.unit.manage',
                 'platform',
                 units,
             ),
         ).toBe(false)
 
-        expect(
-            isOrganizationUnitDescendant(
-                units,
-                'platform',
-                'engineering',
-            ),
-        ).toBe(true)
+        expect(isOrganizationUnitDescendant(units, 'platform', 'engineering')).toBe(true)
     })
 })

@@ -1,19 +1,7 @@
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import {
-    httpClient,
-    publicHttpClient,
-} from '../../../api/httpClient'
-import type {
-    CreatedInvitation,
-    TenantInvitation,
-} from '../types/invitations'
+import { httpClient, publicHttpClient } from '../../../api/httpClient'
+import type { CreatedInvitation, TenantInvitation } from '../types/invitations'
 import { invitationsApi } from './invitationsApi'
 
 const invitation: TenantInvitation = {
@@ -82,55 +70,34 @@ describe('invitationsApi', () => {
             first: false,
             last: true,
         }
-        const get = vi
-            .spyOn(httpClient, 'get')
-            .mockResolvedValue(successfulResponse(page))
+        const get = vi.spyOn(httpClient, 'get').mockResolvedValue(successfulResponse(page))
 
-        await expect(
-            invitationsApi.getInvitations(
-                'tenant-1',
-                params,
-            ),
-        ).resolves.toEqual(page)
+        await expect(invitationsApi.getInvitations('tenant-1', params)).resolves.toEqual(page)
 
-        expect(get).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/user-invitations',
-            { params },
-        )
+        expect(get).toHaveBeenCalledWith('/api/tenants/tenant-1/user-invitations', { params })
     })
 
     it('creates and revokes invitations through tenant endpoints', async () => {
         const post = vi
             .spyOn(httpClient, 'post')
-            .mockResolvedValue(
-                successfulResponse(createdInvitation),
-            )
-        const patch = vi
-            .spyOn(httpClient, 'patch')
-            .mockResolvedValue(successfulResponse({
+            .mockResolvedValue(successfulResponse(createdInvitation))
+        const patch = vi.spyOn(httpClient, 'patch').mockResolvedValue(
+            successfulResponse({
                 ...invitation,
                 status: 'REVOKED',
                 active: false,
-            }))
+            }),
+        )
         const input = {
             fullName: 'Grace User',
             email: 'grace@example.com',
             role: 'TENANT_USER' as const,
         }
 
-        await invitationsApi.createInvitation(
-            'tenant-1',
-            input,
-        )
-        await invitationsApi.revokeInvitation(
-            'tenant-1',
-            'invitation-1',
-        )
+        await invitationsApi.createInvitation('tenant-1', input)
+        await invitationsApi.revokeInvitation('tenant-1', 'invitation-1')
 
-        expect(post).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/user-invitations',
-            input,
-        )
+        expect(post).toHaveBeenCalledWith('/api/tenants/tenant-1/user-invitations', input)
         expect(patch).toHaveBeenCalledWith(
             '/api/tenants/tenant-1/user-invitations/invitation-1/revoke',
         )
@@ -159,13 +126,8 @@ describe('invitationsApi', () => {
             confirmPassword: 'Strong@123',
         }
 
-        await expect(
-            invitationsApi.acceptInvitation(input),
-        ).resolves.toEqual(response)
+        await expect(invitationsApi.acceptInvitation(input)).resolves.toEqual(response)
 
-        expect(post).toHaveBeenCalledWith(
-            '/api/user-invitations/accept',
-            input,
-        )
+        expect(post).toHaveBeenCalledWith('/api/user-invitations/accept', input)
     })
 })

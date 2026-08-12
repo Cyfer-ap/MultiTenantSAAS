@@ -1,28 +1,10 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    fireEvent,
-    render,
-    screen,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
-import {
-    MemoryRouter,
-    Route,
-    Routes,
-    useLocation,
-} from 'react-router'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 
 import { ApiClientError } from '../api/apiError'
 import { onboardingApi } from '../features/onboarding/api/onboardingApi'
@@ -54,11 +36,7 @@ const onboardingResponse = {
 function LoginStateProbe() {
     const location = useLocation()
 
-    return (
-        <output aria-label="login route state">
-            {JSON.stringify(location.state)}
-        </output>
-    )
+    return <output aria-label="login route state">{JSON.stringify(location.state)}</output>
 }
 
 function renderOnboardingPage() {
@@ -118,10 +96,7 @@ describe('TenantOnboardingPage', () => {
 
     it('validates the onboarding form before calling the API', async () => {
         const user = userEvent.setup()
-        const onboardTenant = vi.spyOn(
-            onboardingApi,
-            'onboardTenant',
-        )
+        const onboardTenant = vi.spyOn(onboardingApi, 'onboardTenant')
 
         renderOnboardingPage()
         fireEvent.change(screen.getByLabelText(/workspace name/i), {
@@ -134,9 +109,7 @@ describe('TenantOnboardingPage', () => {
         )
 
         expect(
-            await screen.findByText(
-                /workspace name must be between 2 and 100 characters/i,
-            ),
+            await screen.findByText(/workspace name must be between 2 and 100 characters/i),
         ).toBeInTheDocument()
         expect(onboardTenant).not.toHaveBeenCalled()
     })
@@ -176,9 +149,7 @@ describe('TenantOnboardingPage', () => {
             }),
         )
 
-        expect(
-            screen.getByLabelText(/login route state/i),
-        ).toHaveTextContent(
+        expect(screen.getByLabelText(/login route state/i)).toHaveTextContent(
             JSON.stringify({
                 tenantId: 'tenant-1',
                 email: 'grace@example.com',
@@ -188,10 +159,7 @@ describe('TenantOnboardingPage', () => {
 
     it('surfaces a duplicate workspace slug returned by the backend', async () => {
         const user = userEvent.setup()
-        vi.spyOn(
-            onboardingApi,
-            'onboardTenant',
-        ).mockRejectedValue(
+        vi.spyOn(onboardingApi, 'onboardTenant').mockRejectedValue(
             new ApiClientError({
                 message: 'Tenant already exists with slug: research-workspace',
                 errorCode: 'RESOURCE_ALREADY_EXISTS',
@@ -207,8 +175,6 @@ describe('TenantOnboardingPage', () => {
             }),
         )
 
-        expect(
-            await screen.findByText(/tenant already exists with slug/i),
-        ).toBeInTheDocument()
+        expect(await screen.findByText(/tenant already exists with slug/i)).toBeInTheDocument()
     })
 })

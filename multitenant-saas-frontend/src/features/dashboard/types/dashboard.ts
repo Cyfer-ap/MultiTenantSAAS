@@ -1,7 +1,4 @@
-export type TenantStatus =
-    | 'ACTIVE'
-    | 'INACTIVE'
-    | 'SUSPENDED'
+export type TenantStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 
 export interface TenantDashboardSummary {
     tenantId: string

@@ -1,10 +1,4 @@
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { httpClient } from '../../../api/httpClient'
 import { authApi } from './authApi'
@@ -36,11 +30,9 @@ describe('authApi account operations', () => {
             role: 'TENANT_ADMIN' as const,
             status: 'ACTIVE' as const,
         }
-        const get = vi.spyOn(httpClient, 'get')
-            .mockResolvedValue(successfulResponse(currentUser))
+        const get = vi.spyOn(httpClient, 'get').mockResolvedValue(successfulResponse(currentUser))
 
-        await expect(authApi.getCurrentUser())
-            .resolves.toEqual(currentUser)
+        await expect(authApi.getCurrentUser()).resolves.toEqual(currentUser)
         expect(get).toHaveBeenCalledWith('/api/auth/me')
     })
 
@@ -53,28 +45,19 @@ describe('authApi account operations', () => {
             newPassword: 'Stronger@456',
             confirmPassword: 'Stronger@456',
         }
-        const post = vi.spyOn(httpClient, 'post')
-            .mockResolvedValue(successfulResponse(response))
+        const post = vi.spyOn(httpClient, 'post').mockResolvedValue(successfulResponse(response))
 
-        await expect(authApi.changePassword(input))
-            .resolves.toEqual(response)
-        expect(post).toHaveBeenCalledWith(
-            '/api/auth/change-password',
-            input,
-        )
+        await expect(authApi.changePassword(input)).resolves.toEqual(response)
+        expect(post).toHaveBeenCalledWith('/api/auth/change-password', input)
     })
 
     it('revokes every device refresh session through the protected tenant endpoint', async () => {
         const response = {
             message: 'Logged out from all devices successfully',
         }
-        const post = vi.spyOn(httpClient, 'post')
-            .mockResolvedValue(successfulResponse(response))
+        const post = vi.spyOn(httpClient, 'post').mockResolvedValue(successfulResponse(response))
 
-        await expect(authApi.logoutAllDevices())
-            .resolves.toEqual(response)
-        expect(post).toHaveBeenCalledWith(
-            '/api/auth/logout-all',
-        )
+        await expect(authApi.logoutAllDevices()).resolves.toEqual(response)
+        expect(post).toHaveBeenCalledWith('/api/auth/logout-all')
     })
 })

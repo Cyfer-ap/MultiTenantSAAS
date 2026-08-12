@@ -1,24 +1,14 @@
-import {
-    Route,
-    Routes,
-} from 'react-router'
+import { Route, Routes } from 'react-router'
 
 import { LoginPage } from '../features/auth/pages/LoginPage'
-import {
-    ProtectedRoute,
-    PublicOnlyRoute,
-} from '../features/auth/routing/AuthRoutes'
-import {
-    dashboardRequiredTenantPermissions,
-} from '../features/authorization/access/authorizationAccess'
+import { ProtectedRoute, PublicOnlyRoute } from '../features/auth/routing/AuthRoutes'
+import { dashboardRequiredTenantPermissions } from '../features/authorization/access/authorizationAccess'
 import {
     AuthorizationHomeRedirect,
     ProjectPermissionProtectedRoute,
     TenantPermissionProtectedRoute,
 } from '../features/authorization/routing/AuthorizationRoutes'
-import {
-    authorizationPermissionCodes,
-} from '../features/authorization/types/authorization'
+import { authorizationPermissionCodes } from '../features/authorization/types/authorization'
 import {
     SystemHomeRedirect,
     SystemProtectedRoute,
@@ -54,245 +44,139 @@ export function AppRoutes() {
     return (
         <Routes>
             <Route element={<SystemPublicOnlyRoute />}>
-                <Route
-                    path="system/login"
-                    element={<SystemLoginPage />}
-                />
+                <Route path="system/login" element={<SystemLoginPage />} />
             </Route>
 
             <Route element={<SystemProtectedRoute />}>
-                <Route
-                    path="system"
-                    element={<SystemAdminShell />}
-                >
-                    <Route
-                        index
-                        element={<SystemHomeRedirect />}
-                    />
-                    <Route
-                        path="dashboard"
-                        element={<SystemDashboardPage />}
-                    />
-                    <Route
-                        path="tenants"
-                        element={<SystemTenantsPage />}
-                    />
-                    <Route
-                        path="subscriptions"
-                        element={<SystemSubscriptionsPage />}
-                    />
-                    <Route
-                        path="admins"
-                        element={<SystemAdminsPage />}
-                    />
-                    <Route
-                        path="audit-logs"
-                        element={<PlatformAuditLogsPage />}
-                    />
-                    <Route
-                        path="change-password"
-                        element={<SystemChangePasswordPage />}
-                    />
-                    <Route
-                        path="*"
-                        element={<NotFoundPage />}
-                    />
+                <Route path="system" element={<SystemAdminShell />}>
+                    <Route index element={<SystemHomeRedirect />} />
+                    <Route path="dashboard" element={<SystemDashboardPage />} />
+                    <Route path="tenants" element={<SystemTenantsPage />} />
+                    <Route path="subscriptions" element={<SystemSubscriptionsPage />} />
+                    <Route path="admins" element={<SystemAdminsPage />} />
+                    <Route path="audit-logs" element={<PlatformAuditLogsPage />} />
+                    <Route path="change-password" element={<SystemChangePasswordPage />} />
+                    <Route path="*" element={<NotFoundPage />} />
                 </Route>
             </Route>
 
             <Route element={<PublicOnlyRoute />}>
-                <Route
-                    path="login"
-                    element={<LoginPage />}
-                />
+                <Route path="login" element={<LoginPage />} />
 
-                <Route
-                    path="accept-invitation"
-                    element={<AcceptInvitationPage />}
-                />
+                <Route path="accept-invitation" element={<AcceptInvitationPage />} />
 
-                <Route
-                    path="forgot-password"
-                    element={<ForgotPasswordPage />}
-                />
+                <Route path="forgot-password" element={<ForgotPasswordPage />} />
 
-                <Route
-                    path="reset-password"
-                    element={<ResetPasswordPage />}
-                />
+                <Route path="reset-password" element={<ResetPasswordPage />} />
 
-                <Route
-                    path="register"
-                    element={<TenantOnboardingPage />}
-                />
+                <Route path="register" element={<TenantOnboardingPage />} />
             </Route>
 
             <Route element={<ProtectedRoute />}>
                 <Route element={<AppShell />}>
-                    <Route
-                        index
-                        element={<AuthorizationHomeRedirect />}
-                    />
+                    <Route index element={<AuthorizationHomeRedirect />} />
 
                     <Route
                         element={
                             <TenantPermissionProtectedRoute
-                                requiredPermissions={
-                                    dashboardRequiredTenantPermissions
-                                }
+                                requiredPermissions={dashboardRequiredTenantPermissions}
                             />
                         }
                     >
-                        <Route
-                            path="dashboard"
-                            element={<DashboardPage />}
-                        />
+                        <Route path="dashboard" element={<DashboardPage />} />
+                    </Route>
+
+                    <Route
+                        element={
+                            <TenantPermissionProtectedRoute
+                                requiredPermissions={[authorizationPermissionCodes.USER_READ]}
+                            />
+                        }
+                    >
+                        <Route path="users" element={<UsersPage />} />
+                    </Route>
+
+                    <Route
+                        element={
+                            <TenantPermissionProtectedRoute
+                                requiredPermissions={[authorizationPermissionCodes.USER_READ]}
+                            />
+                        }
+                    >
+                        <Route path="invitations" element={<InvitationsPage />} />
                     </Route>
 
                     <Route
                         element={
                             <TenantPermissionProtectedRoute
                                 requiredPermissions={[
-                                    authorizationPermissionCodes
-                                        .USER_READ,
+                                    authorizationPermissionCodes.ORGANIZATION_UNIT_READ,
                                 ]}
                             />
                         }
                     >
-                        <Route
-                            path="users"
-                            element={<UsersPage />}
-                        />
+                        <Route path="organization" element={<OrganizationPage />} />
                     </Route>
 
                     <Route
                         element={
                             <TenantPermissionProtectedRoute
                                 requiredPermissions={[
-                                    authorizationPermissionCodes
-                                        .USER_READ,
+                                    authorizationPermissionCodes.AUTHORIZATION_MANAGE,
                                 ]}
                             />
                         }
                     >
-                        <Route
-                            path="invitations"
-                            element={<InvitationsPage />}
-                        />
+                        <Route path="authorization" element={<AuthorizationManagementPage />} />
                     </Route>
 
                     <Route
                         element={
                             <TenantPermissionProtectedRoute
-                                requiredPermissions={[
-                                    authorizationPermissionCodes
-                                        .ORGANIZATION_UNIT_READ,
-                                ]}
+                                requiredPermissions={[authorizationPermissionCodes.AUDIT_READ]}
                             />
                         }
                     >
-                        <Route
-                            path="organization"
-                            element={<OrganizationPage />}
-                        />
+                        <Route path="audit-logs" element={<AuditLogsPage />} />
                     </Route>
 
                     <Route
                         element={
                             <TenantPermissionProtectedRoute
-                                requiredPermissions={[
-                                    authorizationPermissionCodes
-                                        .AUTHORIZATION_MANAGE,
-                                ]}
+                                requiredPermissions={[authorizationPermissionCodes.PROJECT_READ]}
                             />
                         }
                     >
-                        <Route
-                            path="authorization"
-                            element={<AuthorizationManagementPage />}
-                        />
-                    </Route>
-
-                    <Route
-                        element={
-                            <TenantPermissionProtectedRoute
-                                requiredPermissions={[
-                                    authorizationPermissionCodes
-                                        .AUDIT_READ,
-                                ]}
-                            />
-                        }
-                    >
-                        <Route
-                            path="audit-logs"
-                            element={<AuditLogsPage />}
-                        />
-                    </Route>
-
-                    <Route
-                        element={
-                            <TenantPermissionProtectedRoute
-                                requiredPermissions={[
-                                    authorizationPermissionCodes
-                                        .PROJECT_READ,
-                                ]}
-                            />
-                        }
-                    >
-                        <Route
-                            path="projects"
-                            element={<ProjectsPage />}
-                        />
+                        <Route path="projects" element={<ProjectsPage />} />
                     </Route>
 
                     <Route
                         element={
                             <ProjectPermissionProtectedRoute
-                                permissionCode={
-                                    authorizationPermissionCodes
-                                        .PROJECT_READ
-                                }
+                                permissionCode={authorizationPermissionCodes.PROJECT_READ}
                             />
                         }
                     >
-                        <Route
-                            path="projects/:projectId"
-                            element={<ProjectDetailsPage />}
-                        />
+                        <Route path="projects/:projectId" element={<ProjectDetailsPage />} />
                     </Route>
 
                     <Route
                         element={
                             <TenantPermissionProtectedRoute
                                 requiredPermissions={[
-                                    authorizationPermissionCodes
-                                        .SUBSCRIPTION_READ,
+                                    authorizationPermissionCodes.SUBSCRIPTION_READ,
                                 ]}
                             />
                         }
                     >
-                        <Route
-                            path="subscription"
-                            element={
-                                <TenantSubscriptionPage />
-                            }
-                        />
+                        <Route path="subscription" element={<TenantSubscriptionPage />} />
                     </Route>
 
-                    <Route
-                        path="account"
-                        element={<AccountSettingsPage />}
-                    />
+                    <Route path="account" element={<AccountSettingsPage />} />
 
-                    <Route
-                        path="account/change-password"
-                        element={<TenantChangePasswordPage />}
-                    />
+                    <Route path="account/change-password" element={<TenantChangePasswordPage />} />
 
-                    <Route
-                        path="*"
-                        element={<NotFoundPage />}
-                    />
+                    <Route path="*" element={<NotFoundPage />} />
                 </Route>
             </Route>
         </Routes>

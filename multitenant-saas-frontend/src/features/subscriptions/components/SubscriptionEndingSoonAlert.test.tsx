@@ -1,20 +1,10 @@
 import { ThemeProvider } from '@mui/material'
 import { render, screen } from '@testing-library/react'
-import {
-    afterEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { appTheme } from '../../../theme/appTheme'
-import {
-    WorkspaceSubscriptionAccessProvider,
-} from '../context/WorkspaceSubscriptionAccessContext'
-import type {
-    WorkspaceSubscriptionAccess,
-} from '../types/subscriptions'
+import { WorkspaceSubscriptionAccessProvider } from '../context/WorkspaceSubscriptionAccessContext'
+import type { WorkspaceSubscriptionAccess } from '../types/subscriptions'
 import { SubscriptionEndingSoonAlert } from './SubscriptionEndingSoonAlert'
 
 const access: WorkspaceSubscriptionAccess = {
@@ -34,14 +24,10 @@ const access: WorkspaceSubscriptionAccess = {
     evaluatedAt: '2026-08-07T12:00:00Z',
 }
 
-function renderAlert(
-    value: WorkspaceSubscriptionAccess,
-) {
+function renderAlert(value: WorkspaceSubscriptionAccess) {
     return render(
         <ThemeProvider theme={appTheme}>
-            <WorkspaceSubscriptionAccessProvider
-                access={value}
-            >
+            <WorkspaceSubscriptionAccessProvider access={value}>
                 <SubscriptionEndingSoonAlert />
             </WorkspaceSubscriptionAccessProvider>
         </ThemeProvider>,
@@ -55,24 +41,16 @@ describe('SubscriptionEndingSoonAlert', () => {
 
     it('stays hidden for a normal active subscription', () => {
         vi.useFakeTimers()
-        vi.setSystemTime(
-            new Date('2026-08-07T12:00:00Z'),
-        )
+        vi.setSystemTime(new Date('2026-08-07T12:00:00Z'))
 
         renderAlert(access)
 
-        expect(
-            screen.queryByLabelText(
-                'Subscription ending soon',
-            ),
-        ).not.toBeInTheDocument()
+        expect(screen.queryByLabelText('Subscription ending soon')).not.toBeInTheDocument()
     })
 
     it('warns within seven days of scheduled cancellation', () => {
         vi.useFakeTimers()
-        vi.setSystemTime(
-            new Date('2026-08-07T12:00:00Z'),
-        )
+        vi.setSystemTime(new Date('2026-08-07T12:00:00Z'))
 
         renderAlert({
             ...access,
@@ -80,16 +58,12 @@ describe('SubscriptionEndingSoonAlert', () => {
             currentPeriodEnd: '2026-08-12T12:00:00Z',
         })
 
-        expect(
-            screen.getByText(/scheduled to end/i),
-        ).toBeInTheDocument()
+        expect(screen.getByText(/scheduled to end/i)).toBeInTheDocument()
     })
 
     it('does not warn more than seven days before cancellation', () => {
         vi.useFakeTimers()
-        vi.setSystemTime(
-            new Date('2026-08-07T12:00:00Z'),
-        )
+        vi.setSystemTime(new Date('2026-08-07T12:00:00Z'))
 
         renderAlert({
             ...access,
@@ -97,18 +71,12 @@ describe('SubscriptionEndingSoonAlert', () => {
             currentPeriodEnd: '2026-08-15T12:00:01Z',
         })
 
-        expect(
-            screen.queryByLabelText(
-                'Subscription ending soon',
-            ),
-        ).not.toBeInTheDocument()
+        expect(screen.queryByLabelText('Subscription ending soon')).not.toBeInTheDocument()
     })
 
     it('warns when a trial ends within seven days', () => {
         vi.useFakeTimers()
-        vi.setSystemTime(
-            new Date('2026-08-07T12:00:00Z'),
-        )
+        vi.setSystemTime(new Date('2026-08-07T12:00:00Z'))
 
         renderAlert({
             ...access,
@@ -117,16 +85,12 @@ describe('SubscriptionEndingSoonAlert', () => {
             trialEndsAt: '2026-08-10T12:00:00Z',
         })
 
-        expect(
-            screen.getByText(/trial ends/i),
-        ).toBeInTheDocument()
+        expect(screen.getByText(/trial ends/i)).toBeInTheDocument()
     })
 
     it('does not turn blocked state into a dashboard-wide warning', () => {
         vi.useFakeTimers()
-        vi.setSystemTime(
-            new Date('2026-08-07T12:00:00Z'),
-        )
+        vi.setSystemTime(new Date('2026-08-07T12:00:00Z'))
 
         renderAlert({
             ...access,
@@ -139,10 +103,6 @@ describe('SubscriptionEndingSoonAlert', () => {
             projectCreationAllowed: false,
         })
 
-        expect(
-            screen.queryByLabelText(
-                'Subscription ending soon',
-            ),
-        ).not.toBeInTheDocument()
+        expect(screen.queryByLabelText('Subscription ending soon')).not.toBeInTheDocument()
     })
 })

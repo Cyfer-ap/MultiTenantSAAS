@@ -3,12 +3,8 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 import { appTheme } from '../../../theme/appTheme'
-import type {
-    WorkspaceSubscriptionAccess,
-} from '../types/subscriptions'
-import {
-    WorkspaceSubscriptionBanner,
-} from './WorkspaceSubscriptionBanner'
+import type { WorkspaceSubscriptionAccess } from '../types/subscriptions'
+import { WorkspaceSubscriptionBanner } from './WorkspaceSubscriptionBanner'
 
 const activeAccess: WorkspaceSubscriptionAccess = {
     tenantId: 'tenant-1',
@@ -27,14 +23,10 @@ const activeAccess: WorkspaceSubscriptionAccess = {
     evaluatedAt: '2026-08-07T00:00:00Z',
 }
 
-function renderBanner(
-    access: WorkspaceSubscriptionAccess,
-) {
+function renderBanner(access: WorkspaceSubscriptionAccess) {
     return render(
         <ThemeProvider theme={appTheme}>
-            <WorkspaceSubscriptionBanner
-                access={access}
-            />
+            <WorkspaceSubscriptionBanner access={access} />
         </ThemeProvider>,
     )
 }
@@ -43,11 +35,7 @@ describe('WorkspaceSubscriptionBanner', () => {
     it('stays hidden for normal active access', () => {
         renderBanner(activeAccess)
 
-        expect(
-            screen.queryByLabelText(
-                'Workspace subscription status',
-            ),
-        ).not.toBeInTheDocument()
+        expect(screen.queryByLabelText('Workspace subscription status')).not.toBeInTheDocument()
     })
 
     it('warns when the workspace is in grace access', () => {
@@ -58,9 +46,7 @@ describe('WorkspaceSubscriptionBanner', () => {
             accessReason: 'PAST_DUE_GRACE',
         })
 
-        expect(
-            screen.getByText(/past-due grace access/i),
-        ).toBeInTheDocument()
+        expect(screen.getByText(/past-due grace access/i)).toBeInTheDocument()
     })
 
     it('shows blocked lifecycle restrictions', () => {
@@ -75,8 +61,6 @@ describe('WorkspaceSubscriptionBanner', () => {
             projectCreationAllowed: false,
         })
 
-        expect(
-            screen.getByText(/subscription has expired/i),
-        ).toBeInTheDocument()
+        expect(screen.getByText(/subscription has expired/i)).toBeInTheDocument()
     })
 })

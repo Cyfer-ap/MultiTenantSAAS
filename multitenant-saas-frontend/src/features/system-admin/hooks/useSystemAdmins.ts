@@ -1,9 +1,4 @@
-import {
-    keepPreviousData,
-    useMutation,
-    useQuery,
-    useQueryClient,
-} from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { systemAdminApi } from '../api/systemAdminApi'
 import type {
@@ -15,10 +10,7 @@ import { platformAuditLogQueryKeys } from './usePlatformAuditLogs'
 
 export const systemAdminsQueryKeys = {
     all: ['system-admin', 'accounts'] as const,
-    list: (params: SystemAdminsQueryParams) => [
-        ...systemAdminsQueryKeys.all,
-        params,
-    ] as const,
+    list: (params: SystemAdminsQueryParams) => [...systemAdminsQueryKeys.all, params] as const,
 }
 
 export function useSystemAdmins(params: SystemAdminsQueryParams) {
@@ -48,8 +40,7 @@ export function useCreateSystemAdmin() {
     const invalidate = useInvalidateSystemAdminManagement()
 
     return useMutation({
-        mutationFn: (input: CreateSystemAdminInput) =>
-            systemAdminApi.createSystemAdmin(input),
+        mutationFn: (input: CreateSystemAdminInput) => systemAdminApi.createSystemAdmin(input),
         onSuccess: invalidate,
     })
 }
@@ -64,10 +55,7 @@ export function useUpdateSystemAdminStatus() {
         }: {
             systemAdminId: string
             input: UpdateSystemAdminStatusInput
-        }) => systemAdminApi.updateSystemAdminStatus(
-            systemAdminId,
-            input,
-        ),
+        }) => systemAdminApi.updateSystemAdminStatus(systemAdminId, input),
         onSuccess: invalidate,
     })
 }
@@ -76,8 +64,7 @@ export function useUnlockSystemAdminLogin() {
     const invalidate = useInvalidateSystemAdminManagement()
 
     return useMutation({
-        mutationFn: (systemAdminId: string) =>
-            systemAdminApi.unlockSystemAdminLogin(systemAdminId),
+        mutationFn: (systemAdminId: string) => systemAdminApi.unlockSystemAdminLogin(systemAdminId),
         onSuccess: invalidate,
     })
 }

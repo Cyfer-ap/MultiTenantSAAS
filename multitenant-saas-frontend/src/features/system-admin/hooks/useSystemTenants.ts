@@ -1,9 +1,4 @@
-import {
-    keepPreviousData,
-    useMutation,
-    useQuery,
-    useQueryClient,
-} from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { systemAdminApi } from '../api/systemAdminApi'
 import type {
@@ -15,15 +10,10 @@ import { systemDashboardQueryKey } from './useSystemDashboard'
 
 export const systemTenantsQueryKeys = {
     all: ['system-admin', 'tenants'] as const,
-    list: (params: SystemTenantsQueryParams) => [
-        ...systemTenantsQueryKeys.all,
-        params,
-    ] as const,
+    list: (params: SystemTenantsQueryParams) => [...systemTenantsQueryKeys.all, params] as const,
 }
 
-export function useSystemTenants(
-    params: SystemTenantsQueryParams,
-) {
+export function useSystemTenants(params: SystemTenantsQueryParams) {
     return useQuery({
         queryKey: systemTenantsQueryKeys.list(params),
         queryFn: () => systemAdminApi.getTenants(params),
@@ -41,11 +31,7 @@ export function useUpdateSystemTenantStatus() {
         }: {
             tenantId: string
             input: UpdateSystemTenantStatusInput
-        }) =>
-            systemAdminApi.updateTenantStatus(
-                tenantId,
-                input,
-            ),
+        }) => systemAdminApi.updateTenantStatus(tenantId, input),
         onSuccess: async () => {
             await Promise.all([
                 queryClient.invalidateQueries({
@@ -63,9 +49,7 @@ export function useSystemTenantOnboarding() {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: (
-            input: SystemTenantOnboardingInput,
-        ) => systemAdminApi.onboardTenant(input),
+        mutationFn: (input: SystemTenantOnboardingInput) => systemAdminApi.onboardTenant(input),
         onSuccess: async () => {
             await Promise.all([
                 queryClient.invalidateQueries({

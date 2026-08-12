@@ -2,7 +2,11 @@ import { ThemeProvider } from '@mui/material'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { useSubscriptionPlans, useTenantSubscription, useUpdateSubscriptionPlanStatus } from '../features/subscriptions/hooks/useSystemSubscriptions'
+import {
+    useSubscriptionPlans,
+    useTenantSubscription,
+    useUpdateSubscriptionPlanStatus,
+} from '../features/subscriptions/hooks/useSystemSubscriptions'
 import { useSystemTenants } from '../features/system-admin/hooks/useSystemTenants'
 import { appTheme } from '../theme/appTheme'
 import { SystemSubscriptionsPage } from './SystemSubscriptionsPage'
@@ -51,7 +55,15 @@ describe('SystemSubscriptionsPage', () => {
             error: null,
         } as never)
         vi.mocked(useSystemTenants).mockReturnValue({
-            data: { content: [], page: 0, size: 25, totalElements: 0, totalPages: 0, first: true, last: true },
+            data: {
+                content: [],
+                page: 0,
+                size: 25,
+                totalElements: 0,
+                totalPages: 0,
+                first: true,
+                last: true,
+            },
             isError: false,
             isFetching: false,
             error: null,

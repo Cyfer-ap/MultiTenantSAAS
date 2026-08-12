@@ -5,7 +5,6 @@ import type { TenantOnboardingInput } from '../types/onboarding'
 
 export function useTenantOnboarding() {
     return useMutation({
-        mutationFn: (input: TenantOnboardingInput) =>
-            onboardingApi.onboardTenant(input),
+        mutationFn: (input: TenantOnboardingInput) => onboardingApi.onboardTenant(input),
     })
 }

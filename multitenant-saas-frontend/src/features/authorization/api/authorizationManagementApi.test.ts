@@ -1,16 +1,7 @@
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { httpClient } from '../../../api/httpClient'
-import type {
-    AuthorizationRole,
-    AuthorizationUserRoleAssignment,
-} from '../types/authorization'
+import type { AuthorizationRole, AuthorizationUserRoleAssignment } from '../types/authorization'
 import { authorizationApi } from './authorizationApi'
 
 function successfulResponse<T>(data: T) {
@@ -59,23 +50,29 @@ const assignment: AuthorizationUserRoleAssignment = {
 }
 
 const referenceData = {
-    users: [{
-        id: 'user-1',
-        fullName: 'Grace User',
-        email: 'grace@example.com',
-    }],
-    organizationalUnits: [{
-        id: 'unit-1',
-        label: 'Engineering',
-        description: 'DEPARTMENT • ENG',
-        ownerUserId: null,
-    }],
-    projects: [{
-        id: 'project-1',
-        label: 'Apollo',
-        description: 'ACTIVE',
-        ownerUserId: null,
-    }],
+    users: [
+        {
+            id: 'user-1',
+            fullName: 'Grace User',
+            email: 'grace@example.com',
+        },
+    ],
+    organizationalUnits: [
+        {
+            id: 'unit-1',
+            label: 'Engineering',
+            description: 'DEPARTMENT • ENG',
+            ownerUserId: null,
+        },
+    ],
+    projects: [
+        {
+            id: 'project-1',
+            label: 'Apollo',
+            description: 'ACTIVE',
+            ownerUserId: null,
+        },
+    ],
     directReportsAnchors: [],
 }
 
@@ -85,28 +82,21 @@ describe('authorization management API', () => {
     })
 
     it('loads all tenant authorization roles', async () => {
-        const get = vi.spyOn(httpClient, 'get')
-            .mockResolvedValue(successfulResponse([role]))
+        const get = vi.spyOn(httpClient, 'get').mockResolvedValue(successfulResponse([role]))
 
-        await expect(
-            authorizationApi.getRoles('tenant-1'),
-        ).resolves.toEqual([role])
+        await expect(authorizationApi.getRoles('tenant-1')).resolves.toEqual([role])
 
-        expect(get).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/authorization/roles',
-            { params: { activeOnly: false } },
-        )
+        expect(get).toHaveBeenCalledWith('/api/tenants/tenant-1/authorization/roles', {
+            params: { activeOnly: false },
+        })
     })
 
     it('loads human-readable assignment selector data', async () => {
-        const get = vi.spyOn(httpClient, 'get')
-            .mockResolvedValue(successfulResponse(referenceData))
+        const get = vi.spyOn(httpClient, 'get').mockResolvedValue(successfulResponse(referenceData))
 
-        await expect(
-            authorizationApi.getAssignmentReferenceData(
-                'tenant-1',
-            ),
-        ).resolves.toEqual(referenceData)
+        await expect(authorizationApi.getAssignmentReferenceData('tenant-1')).resolves.toEqual(
+            referenceData,
+        )
 
         expect(get).toHaveBeenCalledWith(
             '/api/tenants/tenant-1/authorization/assignment-reference-data',
@@ -114,8 +104,7 @@ describe('authorization management API', () => {
     })
 
     it('creates a scoped user-role assignment', async () => {
-        const post = vi.spyOn(httpClient, 'post')
-            .mockResolvedValue(successfulResponse(assignment))
+        const post = vi.spyOn(httpClient, 'post').mockResolvedValue(successfulResponse(assignment))
 
         const input = {
             userId: 'user-1',
@@ -126,32 +115,22 @@ describe('authorization management API', () => {
             validUntil: null,
         }
 
-        await expect(
-            authorizationApi.createAssignment(
-                'tenant-1',
-                input,
-            ),
-        ).resolves.toEqual(assignment)
-
-        expect(post).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/authorization/assignments',
-            input,
+        await expect(authorizationApi.createAssignment('tenant-1', input)).resolves.toEqual(
+            assignment,
         )
+
+        expect(post).toHaveBeenCalledWith('/api/tenants/tenant-1/authorization/assignments', input)
     })
 
     it('deactivates an authorization assignment', async () => {
-        const patch = vi.spyOn(httpClient, 'patch')
-            .mockResolvedValue(
-                successfulResponse({
-                    ...assignment,
-                    status: 'INACTIVE',
-                }),
-            )
-
-        await authorizationApi.deactivateAssignment(
-            'tenant-1',
-            'assignment-1',
+        const patch = vi.spyOn(httpClient, 'patch').mockResolvedValue(
+            successfulResponse({
+                ...assignment,
+                status: 'INACTIVE',
+            }),
         )
+
+        await authorizationApi.deactivateAssignment('tenant-1', 'assignment-1')
 
         expect(patch).toHaveBeenCalledWith(
             '/api/tenants/tenant-1/authorization/assignments/assignment-1/deactivate',

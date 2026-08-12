@@ -8,12 +8,32 @@ export default defineConfig({
         environment: 'jsdom',
         setupFiles: './src/test/setup.ts',
         css: true,
+
         testTimeout: 15_000,
         hookTimeout: 15_000,
         maxWorkers: 2,
+
+        coverage: {
+            provider: 'v8',
+
+            reportsDirectory: './coverage',
+
+            reporter: [
+                'text',
+                [
+                    'html',
+                    {
+                        subdir: 'html',
+                    },
+                ],
+                'lcov',
+            ],
+
+            reportOnFailure: true,
+        },
+
         env: {
-            VITE_API_BASE_URL:
-                'http://localhost:8081',
+            VITE_API_BASE_URL: 'http://localhost:8081',
         },
     },
 })

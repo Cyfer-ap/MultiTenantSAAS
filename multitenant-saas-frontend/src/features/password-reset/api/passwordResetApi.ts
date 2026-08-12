@@ -11,9 +11,7 @@ async function forgotPassword(
     tenantId: string,
     input: ForgotPasswordInput,
 ): Promise<ForgotPasswordResponse> {
-    const response = await publicHttpClient.post<
-        ApiResponse<ForgotPasswordResponse>
-    >(
+    const response = await publicHttpClient.post<ApiResponse<ForgotPasswordResponse>>(
         `/api/tenants/${tenantId}/auth/forgot-password`,
         input,
     )
@@ -21,12 +19,11 @@ async function forgotPassword(
     return response.data.data
 }
 
-async function resetPassword(
-    input: ResetPasswordInput,
-): Promise<ResetPasswordResponse> {
-    const response = await publicHttpClient.post<
-        ApiResponse<ResetPasswordResponse>
-    >('/api/auth/reset-password', input)
+async function resetPassword(input: ResetPasswordInput): Promise<ResetPasswordResponse> {
+    const response = await publicHttpClient.post<ApiResponse<ResetPasswordResponse>>(
+        '/api/auth/reset-password',
+        input,
+    )
 
     return response.data.data
 }

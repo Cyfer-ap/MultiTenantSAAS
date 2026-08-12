@@ -1,23 +1,9 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    fireEvent,
-    render,
-    screen,
-    within,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { systemAdminApi } from '../features/system-admin/api/systemAdminApi'
 import { SystemAdminContext } from '../features/system-admin/context/SystemAdminContext'
@@ -70,20 +56,22 @@ function renderAdmins() {
         return (
             <ThemeProvider theme={appTheme}>
                 <QueryClientProvider client={queryClient}>
-                    <SystemAdminContext.Provider value={{
-                        status: 'authenticated',
-                        session: {
-                            systemAdminId: owner.id,
-                            fullName: owner.fullName,
-                            email: owner.email,
-                            role: 'SYSTEM_ADMIN',
-                            accessToken: 'system-token',
-                            tokenType: 'Bearer',
-                            accessTokenExpiresAt: Date.now() + 60_000,
-                        },
-                        login: vi.fn(),
-                        logout: vi.fn(),
-                    }}>
+                    <SystemAdminContext.Provider
+                        value={{
+                            status: 'authenticated',
+                            session: {
+                                systemAdminId: owner.id,
+                                fullName: owner.fullName,
+                                email: owner.email,
+                                role: 'SYSTEM_ADMIN',
+                                accessToken: 'system-token',
+                                tokenType: 'Bearer',
+                                accessTokenExpiresAt: Date.now() + 60_000,
+                            },
+                            login: vi.fn(),
+                            logout: vi.fn(),
+                        }}
+                    >
                         {children}
                     </SystemAdminContext.Provider>
                 </QueryClientProvider>
@@ -97,8 +85,7 @@ function renderAdmins() {
 describe('SystemAdminsPage', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
-        vi.spyOn(systemAdminApi, 'getSystemAdmins')
-            .mockResolvedValue(adminPage)
+        vi.spyOn(systemAdminApi, 'getSystemAdmins').mockResolvedValue(adminPage)
     })
 
     it('renders administrators, current-account safety, and login restrictions', async () => {
@@ -148,8 +135,7 @@ describe('SystemAdminsPage', () => {
 
     it('normalizes and creates a system administrator', async () => {
         const user = userEvent.setup()
-        const create = vi.spyOn(systemAdminApi, 'createSystemAdmin')
-            .mockResolvedValue(lockedAdmin)
+        const create = vi.spyOn(systemAdminApi, 'createSystemAdmin').mockResolvedValue(lockedAdmin)
         renderAdmins()
         await screen.findByText('Platform Owner')
 
@@ -169,9 +155,11 @@ describe('SystemAdminsPage', () => {
         fireEvent.change(within(dialog).getByLabelText(/confirm temporary password/i), {
             target: { value: 'Strong@123' },
         })
-        await user.click(within(dialog).getByRole('button', {
-            name: /create administrator/i,
-        }))
+        await user.click(
+            within(dialog).getByRole('button', {
+                name: /create administrator/i,
+            }),
+        )
 
         expect(create).toHaveBeenCalledWith({
             fullName: 'Security Operator',
@@ -183,14 +171,14 @@ describe('SystemAdminsPage', () => {
 
     it('updates another administrator status and unlocks login', async () => {
         const user = userEvent.setup()
-        const update = vi.spyOn(systemAdminApi, 'updateSystemAdminStatus')
+        const update = vi
+            .spyOn(systemAdminApi, 'updateSystemAdminStatus')
             .mockResolvedValue({ ...lockedAdmin, status: 'SUSPENDED' })
-        const unlock = vi.spyOn(systemAdminApi, 'unlockSystemAdminLogin')
-            .mockResolvedValue({
-                ...lockedAdmin,
-                failedLoginAttempts: 0,
-                lockedUntil: null,
-            })
+        const unlock = vi.spyOn(systemAdminApi, 'unlockSystemAdminLogin').mockResolvedValue({
+            ...lockedAdmin,
+            failedLoginAttempts: 0,
+            lockedUntil: null,
+        })
         renderAdmins()
         await screen.findByText('Security Operator')
 
@@ -205,10 +193,7 @@ describe('SystemAdminsPage', () => {
         await user.click(screen.getByRole('option', { name: 'Suspended' }))
         await user.click(within(dialog).getByRole('button', { name: /save status/i }))
 
-        expect(update).toHaveBeenCalledWith(
-            lockedAdmin.id,
-            { status: 'SUSPENDED' },
-        )
+        expect(update).toHaveBeenCalledWith(lockedAdmin.id, { status: 'SUSPENDED' })
 
         await user.click(screen.getByRole('button', { name: /^unlock$/i }))
         dialog = screen.getByRole('dialog', {

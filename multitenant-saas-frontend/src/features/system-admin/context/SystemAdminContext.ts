@@ -1,14 +1,8 @@
 import { createContext } from 'react'
 
-import type {
-    SystemAdminLoginInput,
-    SystemAdminSession,
-} from '../types/systemAdmin'
+import type { SystemAdminLoginInput, SystemAdminSession } from '../types/systemAdmin'
 
-export type SystemAdminAuthStatus =
-    | 'loading'
-    | 'authenticated'
-    | 'unauthenticated'
+export type SystemAdminAuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
 
 export interface SystemAdminContextValue {
     status: SystemAdminAuthStatus
@@ -17,7 +11,4 @@ export interface SystemAdminContextValue {
     logout: () => void
 }
 
-export const SystemAdminContext =
-    createContext<SystemAdminContextValue | undefined>(
-        undefined,
-    )
+export const SystemAdminContext = createContext<SystemAdminContextValue | undefined>(undefined)

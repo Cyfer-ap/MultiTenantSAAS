@@ -1,10 +1,4 @@
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { httpClient } from '../../../api/httpClient'
 import type { ProjectTask } from '../types/projectTasks'
@@ -56,9 +50,7 @@ describe('projectTasksApi', () => {
             first: true,
             last: true,
         }
-        const get = vi
-            .spyOn(httpClient, 'get')
-            .mockResolvedValue(successfulResponse(page))
+        const get = vi.spyOn(httpClient, 'get').mockResolvedValue(successfulResponse(page))
         const params = {
             page: 0,
             size: 10,
@@ -70,75 +62,42 @@ describe('projectTasksApi', () => {
             search: 'access',
         }
 
-        await expect(
-            projectTasksApi.getTasks(
-                'tenant-1',
-                'project-1',
-                params,
-            ),
-        ).resolves.toEqual(page)
-
-        expect(get).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/projects/project-1/tasks',
-            { params },
+        await expect(projectTasksApi.getTasks('tenant-1', 'project-1', params)).resolves.toEqual(
+            page,
         )
+
+        expect(get).toHaveBeenCalledWith('/api/tenants/tenant-1/projects/project-1/tasks', {
+            params,
+        })
     })
 
     it('uses the exact task lifecycle endpoints', async () => {
-        const post = vi
-            .spyOn(httpClient, 'post')
-            .mockResolvedValue(successfulResponse(task))
-        const put = vi
-            .spyOn(httpClient, 'put')
-            .mockResolvedValue(successfulResponse(task))
-        const patch = vi
-            .spyOn(httpClient, 'patch')
-            .mockResolvedValue(successfulResponse(task))
-        const remove = vi
-            .spyOn(httpClient, 'delete')
-            .mockResolvedValue(successfulResponse(task))
-        const basePath =
-            '/api/tenants/tenant-1/projects/project-1/tasks'
+        const post = vi.spyOn(httpClient, 'post').mockResolvedValue(successfulResponse(task))
+        const put = vi.spyOn(httpClient, 'put').mockResolvedValue(successfulResponse(task))
+        const patch = vi.spyOn(httpClient, 'patch').mockResolvedValue(successfulResponse(task))
+        const remove = vi.spyOn(httpClient, 'delete').mockResolvedValue(successfulResponse(task))
+        const basePath = '/api/tenants/tenant-1/projects/project-1/tasks'
 
-        await projectTasksApi.createTask(
-            'tenant-1',
-            'project-1',
-            {
-                title: 'Review access controls',
-                description: null,
-                priority: 'HIGH',
-                dueAt: null,
-                assigneeUserId: 'user-2',
-            },
-        )
-        await projectTasksApi.updateTask(
-            'tenant-1',
-            'project-1',
-            'task-1',
-            {
-                title: 'Review authorization',
-                description: null,
-                priority: 'URGENT',
-                dueAt: null,
-            },
-        )
-        await projectTasksApi.updateTaskStatus(
-            'tenant-1',
-            'project-1',
-            'task-1',
-            { status: 'IN_PROGRESS' },
-        )
-        await projectTasksApi.updateTaskAssignee(
-            'tenant-1',
-            'project-1',
-            'task-1',
-            { assigneeUserId: null },
-        )
-        await projectTasksApi.cancelTask(
-            'tenant-1',
-            'project-1',
-            'task-1',
-        )
+        await projectTasksApi.createTask('tenant-1', 'project-1', {
+            title: 'Review access controls',
+            description: null,
+            priority: 'HIGH',
+            dueAt: null,
+            assigneeUserId: 'user-2',
+        })
+        await projectTasksApi.updateTask('tenant-1', 'project-1', 'task-1', {
+            title: 'Review authorization',
+            description: null,
+            priority: 'URGENT',
+            dueAt: null,
+        })
+        await projectTasksApi.updateTaskStatus('tenant-1', 'project-1', 'task-1', {
+            status: 'IN_PROGRESS',
+        })
+        await projectTasksApi.updateTaskAssignee('tenant-1', 'project-1', 'task-1', {
+            assigneeUserId: null,
+        })
+        await projectTasksApi.cancelTask('tenant-1', 'project-1', 'task-1')
 
         expect(post).toHaveBeenCalledWith(basePath, {
             title: 'Review access controls',
@@ -147,27 +106,18 @@ describe('projectTasksApi', () => {
             dueAt: null,
             assigneeUserId: 'user-2',
         })
-        expect(put).toHaveBeenCalledWith(
-            `${basePath}/task-1`,
-            {
-                title: 'Review authorization',
-                description: null,
-                priority: 'URGENT',
-                dueAt: null,
-            },
-        )
-        expect(patch).toHaveBeenNthCalledWith(
-            1,
-            `${basePath}/task-1/status`,
-            { status: 'IN_PROGRESS' },
-        )
-        expect(patch).toHaveBeenNthCalledWith(
-            2,
-            `${basePath}/task-1/assignee`,
-            { assigneeUserId: null },
-        )
-        expect(remove).toHaveBeenCalledWith(
-            `${basePath}/task-1`,
-        )
+        expect(put).toHaveBeenCalledWith(`${basePath}/task-1`, {
+            title: 'Review authorization',
+            description: null,
+            priority: 'URGENT',
+            dueAt: null,
+        })
+        expect(patch).toHaveBeenNthCalledWith(1, `${basePath}/task-1/status`, {
+            status: 'IN_PROGRESS',
+        })
+        expect(patch).toHaveBeenNthCalledWith(2, `${basePath}/task-1/assignee`, {
+            assigneeUserId: null,
+        })
+        expect(remove).toHaveBeenCalledWith(`${basePath}/task-1`)
     })
 })

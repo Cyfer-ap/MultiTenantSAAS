@@ -5,10 +5,7 @@ interface PagePlaceholderProps {
     description: string
 }
 
-export function PagePlaceholder({
-                                    title,
-                                    description,
-                                }: PagePlaceholderProps) {
+export function PagePlaceholder({ title, description }: PagePlaceholderProps) {
     return (
         <Box>
             <Typography component="h1" variant="h4">

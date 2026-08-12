@@ -38,11 +38,9 @@ export function UserMenu() {
     const { session, logout } = useAuth()
     const navigate = useNavigate()
 
-    const [menuAnchor, setMenuAnchor] =
-        useState<HTMLElement | null>(null)
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
 
-    const [isLoggingOut, setIsLoggingOut] =
-        useState(false)
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
 
     if (!session) {
         return null
@@ -50,9 +48,7 @@ export function UserMenu() {
 
     const menuOpen = Boolean(menuAnchor)
 
-    const openMenu = (
-        event: MouseEvent<HTMLButtonElement>,
-    ): void => {
+    const openMenu = (event: MouseEvent<HTMLButtonElement>): void => {
         setMenuAnchor(event.currentTarget)
     }
 
@@ -66,8 +62,7 @@ export function UserMenu() {
 
         try {
             await logout()
-        }
-        catch {
+        } catch {
             // The provider clears local authentication
             // state even if the server logout request fails.
             setIsLoggingOut(false)
@@ -79,13 +74,9 @@ export function UserMenu() {
             <Button
                 id="user-menu-button"
                 color="inherit"
-                aria-controls={
-                    menuOpen ? 'user-menu' : undefined
-                }
+                aria-controls={menuOpen ? 'user-menu' : undefined}
                 aria-haspopup="true"
-                aria-expanded={
-                    menuOpen ? 'true' : undefined
-                }
+                aria-expanded={menuOpen ? 'true' : undefined}
                 disabled={isLoggingOut}
                 onClick={openMenu}
                 sx={{
@@ -200,7 +191,6 @@ export function UserMenu() {
                     <ListItemIcon>
                         <ManageAccountsRoundedIcon fontSize="small" />
                     </ListItemIcon>
-
                     Account settings
                 </MenuItem>
 
@@ -216,9 +206,7 @@ export function UserMenu() {
                         <LogoutOutlinedIcon fontSize="small" />
                     </ListItemIcon>
 
-                    {isLoggingOut
-                        ? 'Signing out...'
-                        : 'Sign out'}
+                    {isLoggingOut ? 'Signing out...' : 'Sign out'}
                 </MenuItem>
             </Menu>
         </>

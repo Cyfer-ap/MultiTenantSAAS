@@ -36,10 +36,7 @@ import {
     TextField,
     Typography,
 } from '@mui/material'
-import type {
-    FormEvent,
-    MouseEvent,
-} from 'react'
+import type { FormEvent, MouseEvent } from 'react'
 import { useState } from 'react'
 import { Link } from 'react-router'
 
@@ -67,11 +64,7 @@ import type {
 } from '../features/projects/types/projects'
 
 type StatusFilter = ProjectStatus | 'ALL'
-type ProjectDialog =
-    | 'edit'
-    | 'status'
-    | 'archive'
-    | null
+type ProjectDialog = 'edit' | 'status' | 'archive' | null
 
 const statusLabels: Record<ProjectStatus, string> = {
     PLANNING: 'Planning',
@@ -81,9 +74,7 @@ const statusLabels: Record<ProjectStatus, string> = {
     ARCHIVED: 'Archived',
 }
 
-function getStatusColor(
-    status: ProjectStatus,
-): 'default' | 'success' | 'warning' | 'primary' {
+function getStatusColor(status: ProjectStatus): 'default' | 'success' | 'warning' | 'primary' {
     if (status === 'ACTIVE') {
         return 'success'
     }
@@ -112,21 +103,14 @@ function formatDate(value: string): string {
 }
 
 function getErrorMessage(error: unknown): string {
-    return error instanceof Error
-        ? error.message
-        : 'The tenant projects could not be loaded.'
+    return error instanceof Error ? error.message : 'The tenant projects could not be loaded.'
 }
 
 function ProjectsTableSkeleton() {
     return (
         <Box aria-label="Loading projects" role="status">
             {[0, 1, 2, 3, 4].map((row) => (
-                <Stack
-                    direction="row"
-                    key={row}
-                    spacing={2}
-                    sx={{ padding: 2 }}
-                >
+                <Stack direction="row" key={row} spacing={2} sx={{ padding: 2 }}>
                     <Skeleton width="40%" />
                     <Skeleton width="15%" />
                     <Skeleton width="20%" />
@@ -143,30 +127,20 @@ export function ProjectsPage() {
     const [size, setSize] = useState(10)
     const [searchDraft, setSearchDraft] = useState('')
     const [search, setSearch] = useState('')
-    const [status, setStatus] =
-        useState<StatusFilter>('ALL')
-    const [sortBy, setSortBy] =
-        useState<ProjectSortField>('createdAt')
-    const [sortDir, setSortDir] =
-        useState<SortDirection>('desc')
-    const [createDialogOpen, setCreateDialogOpen] =
-        useState(false)
-    const [menuAnchor, setMenuAnchor] =
-        useState<HTMLElement | null>(null)
-    const [selectedProject, setSelectedProject] =
-        useState<TenantProject | null>(null)
-    const [activeDialog, setActiveDialog] =
-        useState<ProjectDialog>(null)
-    const [feedback, setFeedback] =
-        useState<string | null>(null)
+    const [status, setStatus] = useState<StatusFilter>('ALL')
+    const [sortBy, setSortBy] = useState<ProjectSortField>('createdAt')
+    const [sortDir, setSortDir] = useState<SortDirection>('desc')
+    const [createDialogOpen, setCreateDialogOpen] = useState(false)
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
+    const [selectedProject, setSelectedProject] = useState<TenantProject | null>(null)
+    const [activeDialog, setActiveDialog] = useState<ProjectDialog>(null)
+    const [feedback, setFeedback] = useState<string | null>(null)
 
     const tenantId = session?.tenantId ?? ''
     const authorizationQuery = useCurrentAuthorization()
     const authorization = authorizationQuery.data
-    const subscriptionAccess =
-        useWorkspaceSubscriptionAccessContext()
-    const projectCreationAllowed =
-        subscriptionAccess?.projectCreationAllowed ?? true
+    const subscriptionAccess = useWorkspaceSubscriptionAccessContext()
+    const projectCreationAllowed = subscriptionAccess?.projectCreationAllowed ?? true
     const projectCreationRestrictionMessage =
         subscriptionAccess?.mutationsAllowed === false
             ? 'The current subscription does not allow creating projects.'
@@ -178,35 +152,22 @@ export function ProjectsPage() {
     )
 
     const canUpdateProject = (projectId: string): boolean =>
-        hasProjectPermission(
-            authorization,
-            authorizationPermissionCodes.PROJECT_UPDATE,
-            projectId,
-        )
+        hasProjectPermission(authorization, authorizationPermissionCodes.PROJECT_UPDATE, projectId)
 
     const canArchiveProject = (projectId: string): boolean =>
-        hasProjectPermission(
-            authorization,
-            authorizationPermissionCodes.PROJECT_ARCHIVE,
-            projectId,
-        )
+        hasProjectPermission(authorization, authorizationPermissionCodes.PROJECT_ARCHIVE, projectId)
 
     const canManageProject = (projectId: string): boolean =>
-        canUpdateProject(projectId) ||
-        canArchiveProject(projectId)
+        canUpdateProject(projectId) || canArchiveProject(projectId)
 
     const selectedProjectCanUpdate = Boolean(
-        selectedProject &&
-        canUpdateProject(selectedProject.id),
+        selectedProject && canUpdateProject(selectedProject.id),
     )
     const selectedProjectCanArchive = Boolean(
-        selectedProject &&
-        canArchiveProject(selectedProject.id),
+        selectedProject && canArchiveProject(selectedProject.id),
     )
     const showProjectActionControls =
-        canCreateProjects ||
-        selectedProjectCanUpdate ||
-        selectedProjectCanArchive
+        canCreateProjects || selectedProjectCanUpdate || selectedProjectCanArchive
 
     const queryParams: TenantProjectsQueryParams = {
         page,
@@ -217,17 +178,11 @@ export function ProjectsPage() {
         ...(search ? { search } : {}),
     }
 
-    const projectsQuery = useTenantProjects(
-        tenantId,
-        queryParams,
-    )
+    const projectsQuery = useTenantProjects(tenantId, queryParams)
 
-    const hasFilters =
-        search.length > 0 || status !== 'ALL'
+    const hasFilters = search.length > 0 || status !== 'ALL'
 
-    const submitSearch = (
-        event: FormEvent<HTMLFormElement>,
-    ): void => {
+    const submitSearch = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault()
         setPage(0)
         setSearch(searchDraft.trim())
@@ -240,15 +195,11 @@ export function ProjectsPage() {
         setStatus('ALL')
     }
 
-    const changeSort = (
-        nextSortBy: ProjectSortField,
-    ): void => {
+    const changeSort = (nextSortBy: ProjectSortField): void => {
         setPage(0)
 
         if (nextSortBy === sortBy) {
-            setSortDir((current) =>
-                current === 'asc' ? 'desc' : 'asc',
-            )
+            setSortDir((current) => (current === 'asc' ? 'desc' : 'asc'))
             return
         }
 
@@ -268,9 +219,7 @@ export function ProjectsPage() {
         setMenuAnchor(null)
     }
 
-    const openProjectDialog = (
-        dialog: Exclude<ProjectDialog, null>,
-    ): void => {
+    const openProjectDialog = (dialog: Exclude<ProjectDialog, null>): void => {
         setActiveDialog(dialog)
         closeProjectMenu()
     }
@@ -298,10 +247,7 @@ export function ProjectsPage() {
                         Projects
                     </Typography>
 
-                    <Typography
-                        color="text.secondary"
-                        sx={{ marginTop: 0.5 }}
-                    >
+                    <Typography color="text.secondary" sx={{ marginTop: 0.5 }}>
                         Browse tenant projects and manage their lifecycle.
                     </Typography>
                 </Box>
@@ -322,14 +268,11 @@ export function ProjectsPage() {
 
                     <Button
                         startIcon={
-                            projectsQuery.isFetching
-                                ? (
-                                    <CircularProgress
-                                        color="inherit"
-                                        size={16}
-                                    />
-                                )
-                                : <RefreshRoundedIcon />
+                            projectsQuery.isFetching ? (
+                                <CircularProgress color="inherit" size={16} />
+                            ) : (
+                                <RefreshRoundedIcon />
+                            )
                         }
                         disabled={projectsQuery.isFetching}
                         onClick={() => {
@@ -344,10 +287,7 @@ export function ProjectsPage() {
             </Stack>
 
             {canCreateProjects && !projectCreationAllowed && (
-                <Alert
-                    severity="warning"
-                    sx={{ marginTop: 2 }}
-                >
+                <Alert severity="warning" sx={{ marginTop: 2 }}>
                     {projectCreationRestrictionMessage}
                 </Alert>
             )}
@@ -384,33 +324,22 @@ export function ProjectsPage() {
                     />
 
                     <FormControl size="small" sx={{ minWidth: 170 }}>
-                        <InputLabel id="project-status-filter-label">
-                            Status
-                        </InputLabel>
+                        <InputLabel id="project-status-filter-label">Status</InputLabel>
                         <Select
                             label="Status"
                             labelId="project-status-filter-label"
                             onChange={(event) => {
                                 setPage(0)
-                                setStatus(
-                                    event.target.value as StatusFilter,
-                                )
+                                setStatus(event.target.value as StatusFilter)
                             }}
                             value={status}
                         >
-                            <MenuItem value="ALL">
-                                All statuses
-                            </MenuItem>
-                            {Object.entries(statusLabels).map(
-                                ([value, label]) => (
-                                    <MenuItem
-                                        key={value}
-                                        value={value}
-                                    >
-                                        {label}
-                                    </MenuItem>
-                                ),
-                            )}
+                            <MenuItem value="ALL">All statuses</MenuItem>
+                            {Object.entries(statusLabels).map(([value, label]) => (
+                                <MenuItem key={value} value={value}>
+                                    {label}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
 
@@ -418,26 +347,16 @@ export function ProjectsPage() {
                         Search
                     </Button>
 
-                    {hasFilters && (
-                        <Button onClick={clearFilters}>
-                            Clear filters
-                        </Button>
-                    )}
+                    {hasFilters && <Button onClick={clearFilters}>Clear filters</Button>}
                 </Stack>
             </Paper>
 
-            <Paper
-                variant="outlined"
-                sx={{ marginTop: 2, overflow: 'hidden' }}
-            >
-                {projectsQuery.isFetching &&
-                    !projectsQuery.isPending && (
-                        <LinearProgress aria-label="Updating projects" />
-                    )}
-
-                {projectsQuery.isPending && (
-                    <ProjectsTableSkeleton />
+            <Paper variant="outlined" sx={{ marginTop: 2, overflow: 'hidden' }}>
+                {projectsQuery.isFetching && !projectsQuery.isPending && (
+                    <LinearProgress aria-label="Updating projects" />
                 )}
+
+                {projectsQuery.isPending && <ProjectsTableSkeleton />}
 
                 {projectsQuery.isError && (
                     <Alert
@@ -466,19 +385,11 @@ export function ProjectsPage() {
                                 <TableHead>
                                     <TableRow>
                                         <TableCell
-                                            sortDirection={
-                                                sortBy === 'name'
-                                                    ? sortDir
-                                                    : false
-                                            }
+                                            sortDirection={sortBy === 'name' ? sortDir : false}
                                         >
                                             <TableSortLabel
                                                 active={sortBy === 'name'}
-                                                direction={
-                                                    sortBy === 'name'
-                                                        ? sortDir
-                                                        : 'asc'
-                                                }
+                                                direction={sortBy === 'name' ? sortDir : 'asc'}
                                                 onClick={() => {
                                                     changeSort('name')
                                                 }}
@@ -487,21 +398,11 @@ export function ProjectsPage() {
                                             </TableSortLabel>
                                         </TableCell>
                                         <TableCell
-                                            sortDirection={
-                                                sortBy === 'status'
-                                                    ? sortDir
-                                                    : false
-                                            }
+                                            sortDirection={sortBy === 'status' ? sortDir : false}
                                         >
                                             <TableSortLabel
-                                                active={
-                                                    sortBy === 'status'
-                                                }
-                                                direction={
-                                                    sortBy === 'status'
-                                                        ? sortDir
-                                                        : 'asc'
-                                                }
+                                                active={sortBy === 'status'}
+                                                direction={sortBy === 'status' ? sortDir : 'asc'}
                                                 onClick={() => {
                                                     changeSort('status')
                                                 }}
@@ -511,21 +412,11 @@ export function ProjectsPage() {
                                         </TableCell>
                                         <TableCell>Created by</TableCell>
                                         <TableCell
-                                            sortDirection={
-                                                sortBy === 'updatedAt'
-                                                    ? sortDir
-                                                    : false
-                                            }
+                                            sortDirection={sortBy === 'updatedAt' ? sortDir : false}
                                         >
                                             <TableSortLabel
-                                                active={
-                                                    sortBy === 'updatedAt'
-                                                }
-                                                direction={
-                                                    sortBy === 'updatedAt'
-                                                        ? sortDir
-                                                        : 'asc'
-                                                }
+                                                active={sortBy === 'updatedAt'}
+                                                direction={sortBy === 'updatedAt' ? sortDir : 'asc'}
                                                 onClick={() => {
                                                     changeSort('updatedAt')
                                                 }}
@@ -533,168 +424,139 @@ export function ProjectsPage() {
                                                 Updated
                                             </TableSortLabel>
                                         </TableCell>
-                                        {projectsQuery.data.content.some(
-                                            (project) =>
-                                                canManageProject(project.id),
-                                        ) && (
-                                            <TableCell align="right">
-                                                Actions
-                                            </TableCell>
-                                        )}
+                                        {projectsQuery.data.content.some((project) =>
+                                            canManageProject(project.id),
+                                        ) && <TableCell align="right">Actions</TableCell>}
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {projectsQuery.data.content.map(
-                                        (project) => (
-                                            <TableRow
-                                                hover
-                                                key={project.id}
+                                    {projectsQuery.data.content.map((project) => (
+                                        <TableRow
+                                            hover
+                                            key={project.id}
+                                            sx={{
+                                                '&:last-child td': {
+                                                    borderBottom: 0,
+                                                },
+                                            }}
+                                        >
+                                            <TableCell
                                                 sx={{
-                                                    '&:last-child td': {
-                                                        borderBottom: 0,
-                                                    },
+                                                    minWidth: 340,
+                                                    width: '46%',
                                                 }}
                                             >
-                                                <TableCell
+                                                <Stack
+                                                    direction="row"
+                                                    spacing={1.5}
                                                     sx={{
-                                                        minWidth: 340,
-                                                        width: '46%',
+                                                        alignItems: 'center',
+                                                        minHeight: 52,
                                                     }}
                                                 >
-                                                    <Stack
-                                                        direction="row"
-                                                        spacing={1.5}
+                                                    <Box
                                                         sx={{
                                                             alignItems: 'center',
-                                                            minHeight: 52,
+                                                            backgroundColor: 'action.hover',
+                                                            borderRadius: 2,
+                                                            color: 'primary.main',
+                                                            display: 'flex',
+                                                            flexShrink: 0,
+                                                            height: 42,
+                                                            justifyContent: 'center',
+                                                            width: 42,
                                                         }}
                                                     >
-                                                        <Box
+                                                        <FolderOpenRoundedIcon fontSize="small" />
+                                                    </Box>
+
+                                                    <Box sx={{ minWidth: 0 }}>
+                                                        <Button
+                                                            component={Link}
+                                                            size="small"
+                                                            to={`/projects/${project.id}`}
                                                             sx={{
-                                                                alignItems: 'center',
-                                                                backgroundColor: 'action.hover',
-                                                                borderRadius: 2,
-                                                                color: 'primary.main',
-                                                                display: 'flex',
-                                                                flexShrink: 0,
-                                                                height: 42,
-                                                                justifyContent: 'center',
-                                                                width: 42,
+                                                                display: 'block',
+                                                                fontWeight: 700,
+                                                                maxWidth: '100%',
+                                                                overflow: 'hidden',
+                                                                padding: 0,
+                                                                textAlign: 'left',
+                                                                textOverflow: 'ellipsis',
+                                                                textTransform: 'none',
+                                                                whiteSpace: 'nowrap',
                                                             }}
                                                         >
-                                                            <FolderOpenRoundedIcon
-                                                                fontSize="small"
-                                                            />
-                                                        </Box>
-
-                                                        <Box sx={{ minWidth: 0 }}>
-                                                            <Button
-                                                                component={Link}
-                                                                size="small"
-                                                                to={`/projects/${project.id}`}
-                                                                sx={{
-                                                                    display: 'block',
-                                                                    fontWeight: 700,
-                                                                    maxWidth: '100%',
-                                                                    overflow: 'hidden',
-                                                                    padding: 0,
-                                                                    textAlign: 'left',
-                                                                    textOverflow: 'ellipsis',
-                                                                    textTransform: 'none',
-                                                                    whiteSpace: 'nowrap',
-                                                                }}
-                                                            >
-                                                                {project.name}
-                                                            </Button>
-                                                            <Typography
-                                                                color="text.secondary"
-                                                                sx={{
-                                                                    display: 'block',
-                                                                    marginTop: 0.5,
-                                                                    maxWidth: 520,
-                                                                    overflow: 'hidden',
-                                                                    textOverflow: 'ellipsis',
-                                                                    whiteSpace: 'nowrap',
-                                                                }}
-                                                                variant="body2"
-                                                            >
-                                                                {project.description ||
-                                                                    'No description provided'}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Stack>
+                                                            {project.name}
+                                                        </Button>
+                                                        <Typography
+                                                            color="text.secondary"
+                                                            sx={{
+                                                                display: 'block',
+                                                                marginTop: 0.5,
+                                                                maxWidth: 520,
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                whiteSpace: 'nowrap',
+                                                            }}
+                                                            variant="body2"
+                                                        >
+                                                            {project.description ||
+                                                                'No description provided'}
+                                                        </Typography>
+                                                    </Box>
+                                                </Stack>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    color={getStatusColor(project.status)}
+                                                    label={statusLabels[project.status]}
+                                                    size="small"
+                                                    variant="outlined"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography
+                                                    sx={{ fontWeight: 500 }}
+                                                    variant="body2"
+                                                >
+                                                    {project.createdByUserName}
+                                                </Typography>
+                                                <Typography
+                                                    color="text.secondary"
+                                                    sx={{
+                                                        display: 'block',
+                                                        marginTop: 0.25,
+                                                    }}
+                                                    variant="caption"
+                                                >
+                                                    {project.createdByUserEmail}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2">
+                                                    {formatDate(project.updatedAt)}
+                                                </Typography>
+                                            </TableCell>
+                                            {projectsQuery.data.content.some((listedProject) =>
+                                                canManageProject(listedProject.id),
+                                            ) && (
+                                                <TableCell align="right">
+                                                    {canManageProject(project.id) && (
+                                                        <IconButton
+                                                            aria-label={`Manage ${project.name}`}
+                                                            onClick={(event) => {
+                                                                openProjectMenu(event, project)
+                                                            }}
+                                                            size="small"
+                                                        >
+                                                            <MoreVertRoundedIcon />
+                                                        </IconButton>
+                                                    )}
                                                 </TableCell>
-                                                <TableCell>
-                                                    <Chip
-                                                        color={getStatusColor(
-                                                            project.status,
-                                                        )}
-                                                        label={
-                                                            statusLabels[
-                                                                project.status
-                                                            ]
-                                                        }
-                                                        size="small"
-                                                        variant="outlined"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Typography
-                                                        sx={{ fontWeight: 500 }}
-                                                        variant="body2"
-                                                    >
-                                                        {
-                                                            project.createdByUserName
-                                                        }
-                                                    </Typography>
-                                                    <Typography
-                                                        color="text.secondary"
-                                                        sx={{
-                                                            display: 'block',
-                                                            marginTop: 0.25,
-                                                        }}
-                                                        variant="caption"
-                                                    >
-                                                        {
-                                                            project.createdByUserEmail
-                                                        }
-                                                    </Typography>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Typography variant="body2">
-                                                        {formatDate(
-                                                            project.updatedAt,
-                                                        )}
-                                                    </Typography>
-                                                </TableCell>
-                                                {projectsQuery.data.content.some(
-                                                    (listedProject) =>
-                                                        canManageProject(
-                                                            listedProject.id,
-                                                        ),
-                                                ) && (
-                                                    <TableCell align="right">
-                                                        {canManageProject(
-                                                            project.id,
-                                                        ) && (
-                                                            <IconButton
-                                                                aria-label={`Manage ${project.name}`}
-                                                                onClick={(event) => {
-                                                                    openProjectMenu(
-                                                                        event,
-                                                                        project,
-                                                                    )
-                                                                }}
-                                                                size="small"
-                                                            >
-                                                                <MoreVertRoundedIcon />
-                                                            </IconButton>
-                                                        )}
-                                                    </TableCell>
-                                                )}
-                                            </TableRow>
-                                        ),
-                                    )}
+                                            )}
+                                        </TableRow>
+                                    ))}
                                 </TableBody>
                             </Table>
                         </TableContainer>
@@ -706,9 +568,7 @@ export function ProjectsPage() {
                                     textAlign: 'center',
                                 }}
                             >
-                                <Typography variant="h6">
-                                    No projects found
-                                </Typography>
+                                <Typography variant="h6">No projects found</Typography>
                                 <Typography
                                     color="text.secondary"
                                     variant="body2"
@@ -723,9 +583,7 @@ export function ProjectsPage() {
 
                         <TablePagination
                             component="div"
-                            count={
-                                projectsQuery.data.totalElements
-                            }
+                            count={projectsQuery.data.totalElements}
                             onPageChange={(_event, nextPage) => {
                                 setPage(nextPage)
                             }}
@@ -750,9 +608,7 @@ export function ProjectsPage() {
                     >
                         {selectedProjectCanUpdate && (
                             <MenuItem
-                                disabled={
-                                    selectedProject?.status === 'ARCHIVED'
-                                }
+                                disabled={selectedProject?.status === 'ARCHIVED'}
                                 onClick={() => {
                                     openProjectDialog('edit')
                                 }}
@@ -765,9 +621,7 @@ export function ProjectsPage() {
                         )}
                         {selectedProjectCanUpdate && (
                             <MenuItem
-                                disabled={
-                                    selectedProject?.status === 'ARCHIVED'
-                                }
+                                disabled={selectedProject?.status === 'ARCHIVED'}
                                 onClick={() => {
                                     openProjectDialog('status')
                                 }}
@@ -780,9 +634,7 @@ export function ProjectsPage() {
                         )}
                         {selectedProjectCanArchive && (
                             <MenuItem
-                                disabled={
-                                    selectedProject?.status === 'ARCHIVED'
-                                }
+                                disabled={selectedProject?.status === 'ARCHIVED'}
                                 onClick={() => {
                                     openProjectDialog('archive')
                                 }}
@@ -804,33 +656,30 @@ export function ProjectsPage() {
                             tenantId={tenantId}
                         />
                     )}
-                    {activeDialog === 'edit' &&
-                        selectedProjectCanUpdate && (
-                            <EditProjectDialog
-                                onClose={closeProjectDialog}
-                                onSuccess={setFeedback}
-                                project={selectedProject}
-                                tenantId={tenantId}
-                            />
-                        )}
-                    {activeDialog === 'status' &&
-                        selectedProjectCanUpdate && (
-                            <ChangeProjectStatusDialog
-                                onClose={closeProjectDialog}
-                                onSuccess={setFeedback}
-                                project={selectedProject}
-                                tenantId={tenantId}
-                            />
-                        )}
-                    {activeDialog === 'archive' &&
-                        selectedProjectCanArchive && (
-                            <ArchiveProjectDialog
-                                onClose={closeProjectDialog}
-                                onSuccess={setFeedback}
-                                project={selectedProject}
-                                tenantId={tenantId}
-                            />
-                        )}
+                    {activeDialog === 'edit' && selectedProjectCanUpdate && (
+                        <EditProjectDialog
+                            onClose={closeProjectDialog}
+                            onSuccess={setFeedback}
+                            project={selectedProject}
+                            tenantId={tenantId}
+                        />
+                    )}
+                    {activeDialog === 'status' && selectedProjectCanUpdate && (
+                        <ChangeProjectStatusDialog
+                            onClose={closeProjectDialog}
+                            onSuccess={setFeedback}
+                            project={selectedProject}
+                            tenantId={tenantId}
+                        />
+                    )}
+                    {activeDialog === 'archive' && selectedProjectCanArchive && (
+                        <ArchiveProjectDialog
+                            onClose={closeProjectDialog}
+                            onSuccess={setFeedback}
+                            project={selectedProject}
+                            tenantId={tenantId}
+                        />
+                    )}
                 </>
             )}
 

@@ -1,21 +1,10 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    render,
-    screen,
-} from '@testing-library/react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiClientError } from '../api/apiError'
 import { AuthContext } from '../features/auth/context/AuthContext'
-import type {
-    AuthContextValue,
-} from '../features/auth/context/AuthContext'
+import type { AuthContextValue } from '../features/auth/context/AuthContext'
 import {
     useWorkspaceSubscription,
     useWorkspaceSubscriptionEntitlements,
@@ -23,13 +12,10 @@ import {
 import { appTheme } from '../theme/appTheme'
 import { TenantSubscriptionPage } from './TenantSubscriptionPage'
 
-vi.mock(
-    '../features/subscriptions/hooks/useWorkspaceSubscription',
-    () => ({
-        useWorkspaceSubscription: vi.fn(),
-        useWorkspaceSubscriptionEntitlements: vi.fn(),
-    }),
-)
+vi.mock('../features/subscriptions/hooks/useWorkspaceSubscription', () => ({
+    useWorkspaceSubscription: vi.fn(),
+    useWorkspaceSubscriptionEntitlements: vi.fn(),
+}))
 
 const authContextValue: AuthContextValue = {
     status: 'authenticated',
@@ -37,8 +23,7 @@ const authContextValue: AuthContextValue = {
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
         tokenType: 'Bearer',
-        accessTokenExpiresAt:
-            Date.now() + 60_000,
+        accessTokenExpiresAt: Date.now() + 60_000,
         tenantId: 'tenant-1',
         userId: 'user-1',
         fullName: 'Ada Admin',
@@ -57,8 +42,7 @@ const subscription = {
         id: 'plan-1',
         code: 'GROWTH',
         name: 'Growth',
-        description:
-            'For growing product teams.',
+        description: 'For growing product teams.',
         billingInterval: 'MONTHLY' as const,
         price: 49,
         currency: 'USD',
@@ -71,17 +55,14 @@ const subscription = {
     },
     status: 'ACTIVE' as const,
     startedAt: '2026-08-05T12:00:00Z',
-    currentPeriodStart:
-        '2026-08-05T12:00:00Z',
-    currentPeriodEnd:
-        '2026-09-05T12:00:00Z',
+    currentPeriodStart: '2026-08-05T12:00:00Z',
+    currentPeriodEnd: '2026-09-05T12:00:00Z',
     trialEndsAt: null,
     cancelAtPeriodEnd: false,
     cancelledAt: null,
     createdAt: '2026-08-05T12:00:00Z',
     updatedAt: '2026-08-05T12:00:00Z',
 }
-
 
 const entitlements = {
     tenantId: 'tenant-1',
@@ -121,9 +102,7 @@ const entitlements = {
 function renderPage() {
     return render(
         <ThemeProvider theme={appTheme}>
-            <AuthContext.Provider
-                value={authContextValue}
-            >
+            <AuthContext.Provider value={authContextValue}>
                 <TenantSubscriptionPage />
             </AuthContext.Provider>
         </ThemeProvider>,
@@ -132,9 +111,7 @@ function renderPage() {
 
 describe('TenantSubscriptionPage', () => {
     beforeEach(() => {
-        vi.mocked(
-            useWorkspaceSubscription,
-        ).mockReturnValue({
+        vi.mocked(useWorkspaceSubscription).mockReturnValue({
             data: subscription,
             error: null,
             isError: false,
@@ -142,9 +119,7 @@ describe('TenantSubscriptionPage', () => {
             isPending: false,
             refetch: vi.fn(),
         } as never)
-        vi.mocked(
-            useWorkspaceSubscriptionEntitlements,
-        ).mockReturnValue({
+        vi.mocked(useWorkspaceSubscriptionEntitlements).mockReturnValue({
             data: entitlements,
             error: null,
             isError: false,
@@ -162,33 +137,18 @@ describe('TenantSubscriptionPage', () => {
                 name: 'Growth',
             }),
         ).toBeInTheDocument()
-        expect(
-            screen.getByText('GROWTH'),
-        ).toBeInTheDocument()
-        expect(
-            screen.getByText('2 / 25'),
-        ).toBeInTheDocument()
-        expect(
-            screen.getByText('7 / 100'),
-        ).toBeInTheDocument()
-        expect(
-            screen.queryByText(
-                'subscription-1',
-            ),
-        ).not.toBeInTheDocument()
-        expect(
-            screen.queryByText('plan-1'),
-        ).not.toBeInTheDocument()
+        expect(screen.getByText('GROWTH')).toBeInTheDocument()
+        expect(screen.getByText('2 / 25')).toBeInTheDocument()
+        expect(screen.getByText('7 / 100')).toBeInTheDocument()
+        expect(screen.queryByText('subscription-1')).not.toBeInTheDocument()
+        expect(screen.queryByText('plan-1')).not.toBeInTheDocument()
     })
 
     it('shows a clear empty state when no plan is assigned', () => {
-        vi.mocked(
-            useWorkspaceSubscription,
-        ).mockReturnValue({
+        vi.mocked(useWorkspaceSubscription).mockReturnValue({
             data: undefined,
             error: new ApiClientError({
-                message:
-                    'Subscription not found.',
+                message: 'Subscription not found.',
                 status: 404,
             }),
             isError: true,
@@ -199,10 +159,6 @@ describe('TenantSubscriptionPage', () => {
 
         renderPage()
 
-        expect(
-            screen.getByText(
-                'No subscription assigned',
-            ),
-        ).toBeInTheDocument()
+        expect(screen.getByText('No subscription assigned')).toBeInTheDocument()
     })
 })

@@ -26,19 +26,13 @@ interface SessionSecurityCardProps {
 }
 
 function getErrorMessage(error: unknown): string {
-    return error instanceof Error
-        ? error.message
-        : 'Your device sessions could not be revoked.'
+    return error instanceof Error ? error.message : 'Your device sessions could not be revoked.'
 }
 
-export function SessionSecurityCard({
-    tenantId,
-    email,
-}: SessionSecurityCardProps) {
+export function SessionSecurityCard({ tenantId, email }: SessionSecurityCardProps) {
     const navigate = useNavigate()
     const mutation = useLogoutAllDevices()
-    const [confirmationOpen, setConfirmationOpen] =
-        useState(false)
+    const [confirmationOpen, setConfirmationOpen] = useState(false)
 
     const openConfirmation = (): void => {
         mutation.reset()
@@ -67,8 +61,7 @@ export function SessionSecurityCard({
                     allDevicesSignedOut: true,
                 },
             })
-        }
-        catch {
+        } catch {
             // The mutation error is rendered in the confirmation dialog.
         }
     }
@@ -85,18 +78,10 @@ export function SessionSecurityCard({
                             justifyContent: 'space-between',
                         }}
                     >
-                        <Stack
-                            direction="row"
-                            spacing={1.5}
-                            sx={{ alignItems: 'center' }}
-                        >
+                        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                             <DevicesRoundedIcon color="primary" />
                             <Box>
-                                <Typography
-                                    component="h2"
-                                    sx={{ fontWeight: 700 }}
-                                    variant="h6"
-                                >
+                                <Typography component="h2" sx={{ fontWeight: 700 }} variant="h6">
                                     Device sessions
                                 </Typography>
                                 <Typography color="text.secondary" variant="body2">
@@ -124,16 +109,16 @@ export function SessionSecurityCard({
                 onClose={closeConfirmation}
                 open={confirmationOpen}
             >
-                <DialogTitle id="logout-all-devices-title">
-                    Sign out all devices?
-                </DialogTitle>
+                <DialogTitle id="logout-all-devices-title">Sign out all devices?</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Every active refresh token for {email} will be revoked. This browser will sign out immediately.
+                        Every active refresh token for {email} will be revoked. This browser will
+                        sign out immediately.
                     </DialogContentText>
 
                     <Alert severity="warning" sx={{ mt: 2 }}>
-                        This invalidates existing tenant access and refresh sessions. Other browsers will return to sign in on their next server request.
+                        This invalidates existing tenant access and refresh sessions. Other browsers
+                        will return to sign in on their next server request.
                     </Alert>
 
                     {mutation.isError && (
@@ -143,10 +128,7 @@ export function SessionSecurityCard({
                     )}
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 2.5 }}>
-                    <Button
-                        disabled={mutation.isPending}
-                        onClick={closeConfirmation}
-                    >
+                    <Button disabled={mutation.isPending} onClick={closeConfirmation}>
                         Keep sessions
                     </Button>
                     <Button
@@ -157,9 +139,7 @@ export function SessionSecurityCard({
                         }}
                         variant="contained"
                     >
-                        {mutation.isPending
-                            ? 'Signing out…'
-                            : 'Sign out all devices'}
+                        {mutation.isPending ? 'Signing out…' : 'Sign out all devices'}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -1,14 +1,5 @@
 import LockResetRoundedIcon from '@mui/icons-material/LockResetRounded'
-import {
-    Alert,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Stack,
-    TextField,
-    Typography,
-} from '@mui/material'
+import { Alert, Box, Button, Card, CardContent, Stack, TextField, Typography } from '@mui/material'
 import type { FormEvent } from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -16,20 +7,12 @@ import { useNavigate } from 'react-router'
 import { ApiClientError } from '../api/apiError'
 import { useChangeSystemAdminPassword } from '../features/system-admin/hooks/useSystemAdminPassword'
 
-const passwordPattern =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,100}$/
+const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,100}$/
 
-function getFieldError(
-    error: unknown,
-    field: string,
-): string | undefined {
-    const detail = error instanceof ApiClientError
-        ? error.details?.[field]
-        : undefined
+function getFieldError(error: unknown, field: string): string | undefined {
+    const detail = error instanceof ApiClientError ? error.details?.[field] : undefined
 
-    return typeof detail === 'string'
-        ? detail
-        : undefined
+    return typeof detail === 'string' ? detail : undefined
 }
 
 function getErrorMessage(error: unknown): string {
@@ -44,10 +27,8 @@ export function SystemChangePasswordPage() {
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
-    const [validationError, setValidationError] =
-        useState<string | null>(null)
-    const [successMessage, setSuccessMessage] =
-        useState<string | null>(null)
+    const [validationError, setValidationError] = useState<string | null>(null)
+    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     const clearFeedback = (): void => {
         setValidationError(null)
@@ -55,9 +36,7 @@ export function SystemChangePasswordPage() {
         mutation.reset()
     }
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         if (!currentPassword) {
@@ -78,9 +57,7 @@ export function SystemChangePasswordPage() {
         }
 
         if (currentPassword === newPassword) {
-            setValidationError(
-                'New password must be different from the current password.',
-            )
+            setValidationError('New password must be different from the current password.')
             return
         }
 
@@ -99,8 +76,7 @@ export function SystemChangePasswordPage() {
             setSuccessMessage(
                 'Password changed successfully. Use the new password the next time you sign in.',
             )
-        }
-        catch {
+        } catch {
             // The mutation error is rendered below.
         }
     }
@@ -135,9 +111,7 @@ export function SystemChangePasswordPage() {
                                 <LockResetRoundedIcon />
                             </Box>
                             <Box>
-                                <Typography sx={{ fontWeight: 700 }}>
-                                    Account security
-                                </Typography>
+                                <Typography sx={{ fontWeight: 700 }}>Account security</Typography>
                                 <Typography color="text.secondary" variant="body2">
                                     Enter your current password before choosing a new one.
                                 </Typography>
@@ -148,11 +122,7 @@ export function SystemChangePasswordPage() {
                             Your current system-console session remains active after this change.
                         </Alert>
 
-                        {successMessage && (
-                            <Alert severity="success">
-                                {successMessage}
-                            </Alert>
-                        )}
+                        {successMessage && <Alert severity="success">{successMessage}</Alert>}
 
                         {(validationError || mutation.isError) && (
                             <Alert severity="error">
@@ -162,21 +132,17 @@ export function SystemChangePasswordPage() {
 
                         <Stack
                             component="form"
-                            onSubmit={(event) => { void submit(event) }}
+                            onSubmit={(event) => {
+                                void submit(event)
+                            }}
                             spacing={2}
                         >
                             <TextField
                                 autoComplete="current-password"
                                 autoFocus
                                 disabled={mutation.isPending}
-                                error={Boolean(getFieldError(
-                                    mutation.error,
-                                    'currentPassword',
-                                ))}
-                                helperText={getFieldError(
-                                    mutation.error,
-                                    'currentPassword',
-                                )}
+                                error={Boolean(getFieldError(mutation.error, 'currentPassword'))}
+                                helperText={getFieldError(mutation.error, 'currentPassword')}
                                 label="Current password"
                                 onChange={(event) => {
                                     setCurrentPassword(event.target.value)
@@ -190,14 +156,11 @@ export function SystemChangePasswordPage() {
                             <TextField
                                 autoComplete="new-password"
                                 disabled={mutation.isPending}
-                                error={Boolean(getFieldError(
-                                    mutation.error,
-                                    'newPassword',
-                                ))}
-                                helperText={getFieldError(
-                                    mutation.error,
-                                    'newPassword',
-                                ) ?? '8–100 characters with uppercase, lowercase, number, special character, and no spaces.'}
+                                error={Boolean(getFieldError(mutation.error, 'newPassword'))}
+                                helperText={
+                                    getFieldError(mutation.error, 'newPassword') ??
+                                    '8–100 characters with uppercase, lowercase, number, special character, and no spaces.'
+                                }
                                 label="New password"
                                 onChange={(event) => {
                                     setNewPassword(event.target.value)
@@ -211,14 +174,8 @@ export function SystemChangePasswordPage() {
                             <TextField
                                 autoComplete="new-password"
                                 disabled={mutation.isPending}
-                                error={Boolean(getFieldError(
-                                    mutation.error,
-                                    'confirmPassword',
-                                ))}
-                                helperText={getFieldError(
-                                    mutation.error,
-                                    'confirmPassword',
-                                )}
+                                error={Boolean(getFieldError(mutation.error, 'confirmPassword'))}
+                                helperText={getFieldError(mutation.error, 'confirmPassword')}
                                 label="Confirm new password"
                                 onChange={(event) => {
                                     setConfirmPassword(event.target.value)
@@ -236,7 +193,9 @@ export function SystemChangePasswordPage() {
                             >
                                 <Button
                                     disabled={mutation.isPending}
-                                    onClick={() => { navigate('/system/dashboard') }}
+                                    onClick={() => {
+                                        navigate('/system/dashboard')
+                                    }}
                                     type="button"
                                 >
                                     Cancel
@@ -246,9 +205,7 @@ export function SystemChangePasswordPage() {
                                     type="submit"
                                     variant="contained"
                                 >
-                                    {mutation.isPending
-                                        ? 'Changing password…'
-                                        : 'Change password'}
+                                    {mutation.isPending ? 'Changing password…' : 'Change password'}
                                 </Button>
                             </Stack>
                         </Stack>

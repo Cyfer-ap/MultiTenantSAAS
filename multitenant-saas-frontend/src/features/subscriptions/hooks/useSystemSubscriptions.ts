@@ -1,8 +1,4 @@
-import {
-    useMutation,
-    useQuery,
-    useQueryClient,
-} from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { platformAuditLogQueryKeys } from '../../system-admin/hooks/usePlatformAuditLogs'
 import { systemSubscriptionApi } from '../api/systemSubscriptionApi'
@@ -17,16 +13,9 @@ import type {
 
 export const systemSubscriptionQueryKeys = {
     all: ['system-admin', 'subscriptions'] as const,
-    plans: (activeOnly: boolean) => [
-        ...systemSubscriptionQueryKeys.all,
-        'plans',
-        activeOnly,
-    ] as const,
-    tenant: (tenantId: string) => [
-        ...systemSubscriptionQueryKeys.all,
-        'tenant',
-        tenantId,
-    ] as const,
+    plans: (activeOnly: boolean) =>
+        [...systemSubscriptionQueryKeys.all, 'plans', activeOnly] as const,
+    tenant: (tenantId: string) => [...systemSubscriptionQueryKeys.all, 'tenant', tenantId] as const,
 }
 
 export function useSubscriptionPlans(activeOnly = false) {
@@ -56,9 +45,11 @@ function useInvalidateSubscriptions() {
                 queryKey: platformAuditLogQueryKeys.all,
             }),
             ...(tenantId
-                ? [queryClient.invalidateQueries({
-                    queryKey: systemSubscriptionQueryKeys.tenant(tenantId),
-                })]
+                ? [
+                      queryClient.invalidateQueries({
+                          queryKey: systemSubscriptionQueryKeys.tenant(tenantId),
+                      }),
+                  ]
                 : []),
         ])
     }
@@ -67,8 +58,7 @@ function useInvalidateSubscriptions() {
 export function useCreateSubscriptionPlan() {
     const invalidate = useInvalidateSubscriptions()
     return useMutation({
-        mutationFn: (input: CreateSubscriptionPlanInput) =>
-            systemSubscriptionApi.createPlan(input),
+        mutationFn: (input: CreateSubscriptionPlanInput) => systemSubscriptionApi.createPlan(input),
         onSuccess: () => invalidate(),
     })
 }
@@ -76,10 +66,8 @@ export function useCreateSubscriptionPlan() {
 export function useUpdateSubscriptionPlan() {
     const invalidate = useInvalidateSubscriptions()
     return useMutation({
-        mutationFn: ({ planId, input }: {
-            planId: string
-            input: UpdateSubscriptionPlanInput
-        }) => systemSubscriptionApi.updatePlan(planId, input),
+        mutationFn: ({ planId, input }: { planId: string; input: UpdateSubscriptionPlanInput }) =>
+            systemSubscriptionApi.updatePlan(planId, input),
         onSuccess: () => invalidate(),
     })
 }
@@ -87,10 +75,8 @@ export function useUpdateSubscriptionPlan() {
 export function useUpdateSubscriptionPlanStatus() {
     const invalidate = useInvalidateSubscriptions()
     return useMutation({
-        mutationFn: ({ planId, status }: {
-            planId: string
-            status: SubscriptionPlanStatus
-        }) => systemSubscriptionApi.updatePlanStatus(planId, status),
+        mutationFn: ({ planId, status }: { planId: string; status: SubscriptionPlanStatus }) =>
+            systemSubscriptionApi.updatePlanStatus(planId, status),
         onSuccess: () => invalidate(),
     })
 }
@@ -98,7 +84,10 @@ export function useUpdateSubscriptionPlanStatus() {
 export function useStartTenantSubscription() {
     const invalidate = useInvalidateSubscriptions()
     return useMutation({
-        mutationFn: ({ tenantId, input }: {
+        mutationFn: ({
+            tenantId,
+            input,
+        }: {
             tenantId: string
             input: StartTenantSubscriptionInput
         }) => systemSubscriptionApi.startTenantSubscription(tenantId, input),
@@ -109,7 +98,10 @@ export function useStartTenantSubscription() {
 export function useChangeTenantSubscriptionPlan() {
     const invalidate = useInvalidateSubscriptions()
     return useMutation({
-        mutationFn: ({ tenantId, input }: {
+        mutationFn: ({
+            tenantId,
+            input,
+        }: {
             tenantId: string
             input: ChangeTenantSubscriptionPlanInput
         }) => systemSubscriptionApi.changeTenantPlan(tenantId, input),
@@ -120,7 +112,10 @@ export function useChangeTenantSubscriptionPlan() {
 export function useUpdateTenantSubscriptionLifecycle() {
     const invalidate = useInvalidateSubscriptions()
     return useMutation({
-        mutationFn: ({ tenantId, input }: {
+        mutationFn: ({
+            tenantId,
+            input,
+        }: {
             tenantId: string
             input: UpdateTenantSubscriptionLifecycleInput
         }) => systemSubscriptionApi.updateTenantLifecycle(tenantId, input),

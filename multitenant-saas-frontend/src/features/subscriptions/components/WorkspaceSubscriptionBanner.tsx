@@ -1,9 +1,6 @@
 import { Alert } from '@mui/material'
 
-import type {
-    SubscriptionAccessReason,
-    WorkspaceSubscriptionAccess,
-} from '../types/subscriptions'
+import type { SubscriptionAccessReason, WorkspaceSubscriptionAccess } from '../types/subscriptions'
 
 interface WorkspaceSubscriptionBannerProps {
     access: WorkspaceSubscriptionAccess | null
@@ -25,9 +22,7 @@ function formatDate(value: string | null): string {
     }).format(date)
 }
 
-function blockedMessage(
-    reason: SubscriptionAccessReason,
-): string {
+function blockedMessage(reason: SubscriptionAccessReason): string {
     switch (reason) {
         case 'NO_SUBSCRIPTION':
             return 'This workspace has no active subscription. Creating or reactivating users and creating projects is unavailable.'
@@ -48,9 +43,7 @@ function blockedMessage(
     }
 }
 
-export function WorkspaceSubscriptionBanner({
-    access,
-}: WorkspaceSubscriptionBannerProps) {
+export function WorkspaceSubscriptionBanner({ access }: WorkspaceSubscriptionBannerProps) {
     if (!access) {
         return null
     }
@@ -74,11 +67,9 @@ export function WorkspaceSubscriptionBanner({
                 severity="warning"
                 sx={{ marginBottom: 2 }}
             >
-                This workspace is in past-due grace access
-                through{' '}
-                {formatDate(access.currentPeriodEnd)}.
-                New users and projects remain available
-                while plan capacity allows.
+                This workspace is in past-due grace access through{' '}
+                {formatDate(access.currentPeriodEnd)}. New users and projects remain available while
+                plan capacity allows.
             </Alert>
         )
     }
@@ -90,8 +81,7 @@ export function WorkspaceSubscriptionBanner({
                 severity="warning"
                 sx={{ marginBottom: 2 }}
             >
-                This subscription is scheduled to end on{' '}
-                {formatDate(access.currentPeriodEnd)}.
+                This subscription is scheduled to end on {formatDate(access.currentPeriodEnd)}.
             </Alert>
         )
     }
@@ -103,8 +93,7 @@ export function WorkspaceSubscriptionBanner({
                 severity="info"
                 sx={{ marginBottom: 2 }}
             >
-                Trial access is active until{' '}
-                {formatDate(access.trialEndsAt)}.
+                Trial access is active until {formatDate(access.trialEndsAt)}.
             </Alert>
         )
     }

@@ -1,12 +1,6 @@
-import type {
-    TenantRole,
-    UserStatus,
-} from '../../auth/types/auth'
+import type { TenantRole, UserStatus } from '../../auth/types/auth'
 
-export type TenantStatus =
-    | 'ACTIVE'
-    | 'INACTIVE'
-    | 'SUSPENDED'
+export type TenantStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 
 export interface TenantOnboardingInput {
     tenantName: string

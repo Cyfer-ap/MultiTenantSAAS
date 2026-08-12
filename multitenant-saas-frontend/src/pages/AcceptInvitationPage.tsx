@@ -12,57 +12,37 @@ import {
 } from '@mui/material'
 import type { FormEvent } from 'react'
 import { useState } from 'react'
-import {
-    useNavigate,
-    useSearchParams,
-} from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 
 import { ApiClientError } from '../api/apiError'
 import { useAcceptInvitation } from '../features/invitations/hooks/useTenantInvitations'
 
-const passwordPattern =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,100}$/
+const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,100}$/
 
 function getErrorMessage(error: unknown): string {
-    return error instanceof Error
-        ? error.message
-        : 'The invitation could not be accepted.'
+    return error instanceof Error ? error.message : 'The invitation could not be accepted.'
 }
 
-function getFieldError(
-    error: unknown,
-    field: string,
-): string | undefined {
-    const detail = error instanceof ApiClientError
-        ? error.details?.[field]
-        : undefined
+function getFieldError(error: unknown, field: string): string | undefined {
+    const detail = error instanceof ApiClientError ? error.details?.[field] : undefined
 
-    return typeof detail === 'string'
-        ? detail
-        : undefined
+    return typeof detail === 'string' ? detail : undefined
 }
 
 export function AcceptInvitationPage() {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const [password, setPassword] = useState('')
-    const [confirmPassword, setConfirmPassword] =
-        useState('')
-    const [validationError, setValidationError] =
-        useState<string | null>(null)
+    const [confirmPassword, setConfirmPassword] = useState('')
+    const [validationError, setValidationError] = useState<string | null>(null)
     const mutation = useAcceptInvitation()
-    const invitationToken =
-        searchParams.get('token')?.trim() ?? ''
+    const invitationToken = searchParams.get('token')?.trim() ?? ''
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         if (!invitationToken) {
-            setValidationError(
-                'This invitation link does not contain a token.',
-            )
+            setValidationError('This invitation link does not contain a token.')
             return
         }
 
@@ -86,8 +66,7 @@ export function AcceptInvitationPage() {
                 newPassword: password,
                 confirmPassword,
             })
-        }
-        catch {
+        } catch {
             // The mutation error is rendered on the page.
         }
     }
@@ -127,16 +106,10 @@ export function AcceptInvitationPage() {
                         {mutation.isSuccess ? (
                             <>
                                 <Box sx={{ textAlign: 'center' }}>
-                                    <Typography
-                                        component="h1"
-                                        variant="h4"
-                                    >
+                                    <Typography component="h1" variant="h4">
                                         Welcome, {mutation.data.user.fullName}
                                     </Typography>
-                                    <Typography
-                                        color="text.secondary"
-                                        sx={{ marginTop: 1 }}
-                                    >
+                                    <Typography color="text.secondary" sx={{ marginTop: 1 }}>
                                         Your account is active and ready to use.
                                     </Typography>
                                 </Box>
@@ -159,9 +132,7 @@ export function AcceptInvitationPage() {
                                     >
                                         Email
                                     </Typography>
-                                    <Typography>
-                                        {mutation.data.user.email}
-                                    </Typography>
+                                    <Typography>{mutation.data.user.email}</Typography>
                                 </Stack>
 
                                 <Button
@@ -180,24 +151,18 @@ export function AcceptInvitationPage() {
                         ) : (
                             <>
                                 <Box sx={{ textAlign: 'center' }}>
-                                    <Typography
-                                        component="h1"
-                                        variant="h4"
-                                    >
+                                    <Typography component="h1" variant="h4">
                                         Join workspace
                                     </Typography>
-                                    <Typography
-                                        color="text.secondary"
-                                        sx={{ marginTop: 1 }}
-                                    >
+                                    <Typography color="text.secondary" sx={{ marginTop: 1 }}>
                                         Set a secure password to activate your account.
                                     </Typography>
                                 </Box>
 
                                 {!invitationToken && (
                                     <Alert severity="error" sx={{ width: '100%' }}>
-                                        This invitation link is incomplete. Ask your
-                                        tenant administrator for a new invitation.
+                                        This invitation link is incomplete. Ask your tenant
+                                        administrator for a new invitation.
                                     </Alert>
                                 )}
 
@@ -212,29 +177,19 @@ export function AcceptInvitationPage() {
                                     <Stack spacing={2}>
                                         {(validationError || mutation.isError) && (
                                             <Alert severity="error">
-                                                {validationError ??
-                                                    getErrorMessage(mutation.error)}
+                                                {validationError ?? getErrorMessage(mutation.error)}
                                             </Alert>
                                         )}
 
                                         <TextField
                                             autoComplete="new-password"
                                             autoFocus
-                                            disabled={
-                                                mutation.isPending ||
-                                                !invitationToken
-                                            }
+                                            disabled={mutation.isPending || !invitationToken}
                                             error={Boolean(
-                                                getFieldError(
-                                                    mutation.error,
-                                                    'newPassword',
-                                                ),
+                                                getFieldError(mutation.error, 'newPassword'),
                                             )}
                                             helperText={
-                                                getFieldError(
-                                                    mutation.error,
-                                                    'newPassword',
-                                                ) ??
+                                                getFieldError(mutation.error, 'newPassword') ??
                                                 '8–100 characters with uppercase, lowercase, number, special character, and no spaces.'
                                             }
                                             label="Password"
@@ -249,15 +204,9 @@ export function AcceptInvitationPage() {
 
                                         <TextField
                                             autoComplete="new-password"
-                                            disabled={
-                                                mutation.isPending ||
-                                                !invitationToken
-                                            }
+                                            disabled={mutation.isPending || !invitationToken}
                                             error={Boolean(
-                                                getFieldError(
-                                                    mutation.error,
-                                                    'confirmPassword',
-                                                ),
+                                                getFieldError(mutation.error, 'confirmPassword'),
                                             )}
                                             helperText={getFieldError(
                                                 mutation.error,
@@ -265,9 +214,7 @@ export function AcceptInvitationPage() {
                                             )}
                                             label="Confirm password"
                                             onChange={(event) => {
-                                                setConfirmPassword(
-                                                    event.target.value,
-                                                )
+                                                setConfirmPassword(event.target.value)
                                                 setValidationError(null)
                                             }}
                                             required
@@ -276,10 +223,7 @@ export function AcceptInvitationPage() {
                                         />
 
                                         <Button
-                                            disabled={
-                                                mutation.isPending ||
-                                                !invitationToken
-                                            }
+                                            disabled={mutation.isPending || !invitationToken}
                                             fullWidth
                                             size="large"
                                             type="submit"

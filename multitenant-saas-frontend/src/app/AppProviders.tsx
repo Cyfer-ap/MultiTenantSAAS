@@ -1,8 +1,5 @@
 import type { PropsWithChildren } from 'react'
-import {
-    CssBaseline,
-    ThemeProvider,
-} from '@mui/material'
+import { CssBaseline, ThemeProvider } from '@mui/material'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router'
 
@@ -11,9 +8,7 @@ import { SystemAdminProvider } from '../features/system-admin/context/SystemAdmi
 import { appTheme } from '../theme/appTheme'
 import { queryClient } from './queryClient'
 
-export function AppProviders({
-                                 children,
-                             }: PropsWithChildren) {
+export function AppProviders({ children }: PropsWithChildren) {
     return (
         <ThemeProvider theme={appTheme}>
             <CssBaseline />
@@ -21,9 +16,7 @@ export function AppProviders({
             <QueryClientProvider client={queryClient}>
                 <BrowserRouter>
                     <SystemAdminProvider>
-                        <AuthProvider>
-                            {children}
-                        </AuthProvider>
+                        <AuthProvider>{children}</AuthProvider>
                     </SystemAdminProvider>
                 </BrowserRouter>
             </QueryClientProvider>

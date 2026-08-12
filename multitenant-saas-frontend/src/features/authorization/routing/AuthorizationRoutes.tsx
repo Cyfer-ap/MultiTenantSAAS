@@ -1,15 +1,5 @@
-import {
-    Alert,
-    Box,
-    Button,
-    CircularProgress,
-    Stack,
-} from '@mui/material'
-import {
-    Navigate,
-    Outlet,
-    useParams,
-} from 'react-router'
+import { Alert, Box, Button, CircularProgress, Stack } from '@mui/material'
+import { Navigate, Outlet, useParams } from 'react-router'
 
 import {
     getDefaultAuthorizedPath,
@@ -28,9 +18,7 @@ function AuthorizationLoadingScreen() {
                 placeItems: 'center',
             }}
         >
-            <CircularProgress
-                aria-label="Loading authorization"
-            />
+            <CircularProgress aria-label="Loading authorization" />
         </Box>
     )
 }
@@ -40,10 +28,7 @@ interface AuthorizationLoadErrorProps {
     retry: () => void
 }
 
-function AuthorizationLoadError({
-    message,
-    retry,
-}: AuthorizationLoadErrorProps) {
+function AuthorizationLoadError({ message, retry }: AuthorizationLoadErrorProps) {
     return (
         <Stack
             spacing={2}
@@ -51,9 +36,7 @@ function AuthorizationLoadError({
                 maxWidth: 640,
             }}
         >
-            <Alert severity="error">
-                {message}
-            </Alert>
+            <Alert severity="error">{message}</Alert>
 
             <Button
                 variant="outlined"
@@ -79,22 +62,17 @@ export function TenantPermissionProtectedRoute({
     requiredPermissions,
     match = 'all',
 }: TenantPermissionProtectedRouteProps) {
-    const authorization =
-        useCurrentAuthorization()
+    const authorization = useCurrentAuthorization()
 
     if (authorization.isPending) {
         return <AuthorizationLoadingScreen />
     }
 
-    if (
-        authorization.isError ||
-        !authorization.data
-    ) {
+    if (authorization.isError || !authorization.data) {
         return (
             <AuthorizationLoadError
                 message={
-                    authorization.error?.message ??
-                    'Unable to load authorization permissions.'
+                    authorization.error?.message ?? 'Unable to load authorization permissions.'
                 }
                 retry={() => {
                     void authorization.refetch()
@@ -105,24 +83,11 @@ export function TenantPermissionProtectedRoute({
 
     const permitted =
         match === 'all'
-            ? hasAllTenantPermissions(
-                authorization.data,
-                requiredPermissions,
-            )
-            : hasAnyTenantPermission(
-                authorization.data,
-                requiredPermissions,
-            )
+            ? hasAllTenantPermissions(authorization.data, requiredPermissions)
+            : hasAnyTenantPermission(authorization.data, requiredPermissions)
 
     if (!permitted) {
-        return (
-            <Navigate
-                to={getDefaultAuthorizedPath(
-                    authorization.data,
-                )}
-                replace
-            />
-        )
+        return <Navigate to={getDefaultAuthorizedPath(authorization.data)} replace />
     }
 
     return <Outlet />
@@ -136,22 +101,17 @@ export function ProjectPermissionProtectedRoute({
     permissionCode,
 }: ProjectPermissionProtectedRouteProps) {
     const { projectId } = useParams()
-    const authorization =
-        useCurrentAuthorization()
+    const authorization = useCurrentAuthorization()
 
     if (authorization.isPending) {
         return <AuthorizationLoadingScreen />
     }
 
-    if (
-        authorization.isError ||
-        !authorization.data
-    ) {
+    if (authorization.isError || !authorization.data) {
         return (
             <AuthorizationLoadError
                 message={
-                    authorization.error?.message ??
-                    'Unable to load authorization permissions.'
+                    authorization.error?.message ?? 'Unable to load authorization permissions.'
                 }
                 retry={() => {
                     void authorization.refetch()
@@ -160,44 +120,25 @@ export function ProjectPermissionProtectedRoute({
         )
     }
 
-    if (
-        !projectId ||
-        !hasProjectPermission(
-            authorization.data,
-            permissionCode,
-            projectId,
-        )
-    ) {
-        return (
-            <Navigate
-                to={getDefaultAuthorizedPath(
-                    authorization.data,
-                )}
-                replace
-            />
-        )
+    if (!projectId || !hasProjectPermission(authorization.data, permissionCode, projectId)) {
+        return <Navigate to={getDefaultAuthorizedPath(authorization.data)} replace />
     }
 
     return <Outlet />
 }
 
 export function AuthorizationHomeRedirect() {
-    const authorization =
-        useCurrentAuthorization()
+    const authorization = useCurrentAuthorization()
 
     if (authorization.isPending) {
         return <AuthorizationLoadingScreen />
     }
 
-    if (
-        authorization.isError ||
-        !authorization.data
-    ) {
+    if (authorization.isError || !authorization.data) {
         return (
             <AuthorizationLoadError
                 message={
-                    authorization.error?.message ??
-                    'Unable to load authorization permissions.'
+                    authorization.error?.message ?? 'Unable to load authorization permissions.'
                 }
                 retry={() => {
                     void authorization.refetch()
@@ -206,12 +147,5 @@ export function AuthorizationHomeRedirect() {
         )
     }
 
-    return (
-        <Navigate
-            to={getDefaultAuthorizedPath(
-                authorization.data,
-            )}
-            replace
-        />
-    )
+    return <Navigate to={getDefaultAuthorizedPath(authorization.data)} replace />
 }

@@ -5,7 +5,6 @@ import type { ChangeSystemAdminPasswordInput } from '../types/systemAdmin'
 
 export function useChangeSystemAdminPassword() {
     return useMutation({
-        mutationFn: (input: ChangeSystemAdminPasswordInput) =>
-            systemAdminApi.changePassword(input),
+        mutationFn: (input: ChangeSystemAdminPasswordInput) => systemAdminApi.changePassword(input),
     })
 }

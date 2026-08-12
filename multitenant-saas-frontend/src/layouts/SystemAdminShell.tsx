@@ -29,11 +29,7 @@ import {
 } from '@mui/material'
 import type { MouseEvent, ReactNode } from 'react'
 import { useState } from 'react'
-import {
-    Outlet,
-    useLocation,
-    useNavigate,
-} from 'react-router'
+import { Outlet, useLocation, useNavigate } from 'react-router'
 
 import { useSystemAdmin } from '../features/system-admin/hooks/useSystemAdmin'
 
@@ -74,12 +70,14 @@ const navigationItems: readonly NavigationItem[] = [
 ]
 
 function initials(fullName: string): string {
-    return fullName
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase())
-        .join('') || 'SA'
+    return (
+        fullName
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((part) => part[0]?.toUpperCase())
+            .join('') || 'SA'
+    )
 }
 
 export function SystemAdminShell() {
@@ -89,8 +87,7 @@ export function SystemAdminShell() {
     const theme = useTheme()
     const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
     const [mobileOpen, setMobileOpen] = useState(false)
-    const [menuAnchor, setMenuAnchor] =
-        useState<HTMLElement | null>(null)
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
 
     const navigateTo = (path: string): void => {
         navigate(path)
@@ -115,9 +112,7 @@ export function SystemAdminShell() {
             <Toolbar sx={{ gap: 1.5 }}>
                 <AdminPanelSettingsRoundedIcon color="primary" />
                 <Box>
-                    <Typography sx={{ fontWeight: 800 }}>
-                        SaaS Control
-                    </Typography>
+                    <Typography sx={{ fontWeight: 800 }}>SaaS Control</Typography>
                     <Typography color="text.secondary" variant="caption">
                         System administration
                     </Typography>
@@ -128,7 +123,9 @@ export function SystemAdminShell() {
                 {navigationItems.map((item) => (
                     <ListItemButton
                         key={item.path}
-                        onClick={() => { navigateTo(item.path) }}
+                        onClick={() => {
+                            navigateTo(item.path)
+                        }}
                         selected={
                             location.pathname === item.path ||
                             location.pathname.startsWith(item.path + '/')
@@ -163,7 +160,9 @@ export function SystemAdminShell() {
                     <IconButton
                         aria-label="Open system navigation"
                         edge="start"
-                        onClick={() => { setMobileOpen(true) }}
+                        onClick={() => {
+                            setMobileOpen(true)
+                        }}
                         sx={{ display: { md: 'none' }, mr: 2 }}
                     >
                         <MenuRoundedIcon />
@@ -185,7 +184,9 @@ export function SystemAdminShell() {
                     </Tooltip>
                     <Menu
                         anchorEl={menuAnchor}
-                        onClose={() => { setMenuAnchor(null) }}
+                        onClose={() => {
+                            setMenuAnchor(null)
+                        }}
                         open={Boolean(menuAnchor)}
                     >
                         <Box sx={{ maxWidth: 280, px: 2, py: 1 }}>
@@ -198,37 +199,61 @@ export function SystemAdminShell() {
                         </Box>
                         <Divider />
                         <MenuItem onClick={openPasswordPage}>
-                            <ListItemIcon><PasswordRoundedIcon fontSize="small" /></ListItemIcon>
+                            <ListItemIcon>
+                                <PasswordRoundedIcon fontSize="small" />
+                            </ListItemIcon>
                             Change password
                         </MenuItem>
                         <MenuItem onClick={signOut}>
-                            <ListItemIcon><LogoutRoundedIcon fontSize="small" /></ListItemIcon>
+                            <ListItemIcon>
+                                <LogoutRoundedIcon fontSize="small" />
+                            </ListItemIcon>
                             Sign out
                         </MenuItem>
                     </Menu>
                 </Toolbar>
             </AppBar>
 
-            <Box component="nav" aria-label="System navigation" sx={{ flexShrink: { md: 0 }, width: { md: drawerWidth } }}>
+            <Box
+                component="nav"
+                aria-label="System navigation"
+                sx={{ flexShrink: { md: 0 }, width: { md: drawerWidth } }}
+            >
                 <Drawer
                     ModalProps={{ keepMounted: true }}
-                    onClose={() => { setMobileOpen(false) }}
+                    onClose={() => {
+                        setMobileOpen(false)
+                    }}
                     open={mobileOpen}
-                    sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth } }}
+                    sx={{
+                        display: { xs: 'block', md: 'none' },
+                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                    }}
                     variant="temporary"
                 >
                     {drawer}
                 </Drawer>
                 <Drawer
                     open
-                    sx={{ display: { xs: 'none', md: 'block' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth } }}
+                    sx={{
+                        display: { xs: 'none', md: 'block' },
+                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                    }}
                     variant="permanent"
                 >
                     {drawer}
                 </Drawer>
             </Box>
 
-            <Box component="main" sx={{ flexGrow: 1, mt: 8, p: { xs: 2, sm: 3 }, width: { md: 'calc(100% - ' + drawerWidth + 'px)' } }}>
+            <Box
+                component="main"
+                sx={{
+                    flexGrow: 1,
+                    mt: 8,
+                    p: { xs: 2, sm: 3 },
+                    width: { md: 'calc(100% - ' + drawerWidth + 'px)' },
+                }}
+            >
                 <Stack sx={{ mx: 'auto', maxWidth: 1440 }}>
                     <Outlet />
                 </Stack>

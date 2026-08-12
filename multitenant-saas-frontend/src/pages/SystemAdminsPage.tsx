@@ -58,9 +58,7 @@ const statusLabels: Record<SystemAdminStatus, string> = {
     SUSPENDED: 'Suspended',
 }
 
-function statusColor(
-    status: SystemAdminStatus,
-): 'success' | 'default' | 'warning' {
+function statusColor(status: SystemAdminStatus): 'success' | 'default' | 'warning' {
     if (status === 'ACTIVE') return 'success'
     if (status === 'SUSPENDED') return 'warning'
     return 'default'
@@ -106,14 +104,11 @@ export function SystemAdminsPage() {
     const [searchDraft, setSearchDraft] = useState('')
     const [search, setSearch] = useState('')
     const [status, setStatus] = useState<StatusFilter>('ALL')
-    const [sortBy, setSortBy] =
-        useState<SystemAdminSortField>('createdAt')
+    const [sortBy, setSortBy] = useState<SystemAdminSortField>('createdAt')
     const [sortDir, setSortDir] = useState<SortDirection>('desc')
     const [createOpen, setCreateOpen] = useState(false)
-    const [statusTarget, setStatusTarget] =
-        useState<SystemAdminRecord | null>(null)
-    const [unlockTarget, setUnlockTarget] =
-        useState<SystemAdminRecord | null>(null)
+    const [statusTarget, setStatusTarget] = useState<SystemAdminRecord | null>(null)
+    const [unlockTarget, setUnlockTarget] = useState<SystemAdminRecord | null>(null)
     const [feedback, setFeedback] = useState<string | null>(null)
 
     const queryParams: SystemAdminsQueryParams = {
@@ -136,7 +131,7 @@ export function SystemAdminsPage() {
     const changeSort = (nextSortBy: SystemAdminSortField): void => {
         setPage(0)
         if (nextSortBy === sortBy) {
-            setSortDir((current) => current === 'asc' ? 'desc' : 'asc')
+            setSortDir((current) => (current === 'asc' ? 'desc' : 'asc'))
             return
         }
         setSortBy(nextSortBy)
@@ -170,7 +165,9 @@ export function SystemAdminsPage() {
                 </Box>
                 <Stack direction="row" spacing={1}>
                     <Button
-                        onClick={() => { setCreateOpen(true) }}
+                        onClick={() => {
+                            setCreateOpen(true)
+                        }}
                         startIcon={<AddModeratorRoundedIcon />}
                         variant="contained"
                     >
@@ -178,11 +175,15 @@ export function SystemAdminsPage() {
                     </Button>
                     <Button
                         disabled={query.isFetching}
-                        onClick={() => { void query.refetch() }}
+                        onClick={() => {
+                            void query.refetch()
+                        }}
                         startIcon={
-                            query.isFetching
-                                ? <CircularProgress color="inherit" size={16} />
-                                : <RefreshRoundedIcon />
+                            query.isFetching ? (
+                                <CircularProgress color="inherit" size={16} />
+                            ) : (
+                                <RefreshRoundedIcon />
+                            )
                         }
                         variant="outlined"
                     >
@@ -191,12 +192,7 @@ export function SystemAdminsPage() {
                 </Stack>
             </Stack>
 
-            <Paper
-                component="form"
-                onSubmit={submitSearch}
-                sx={{ mt: 3, p: 2 }}
-                variant="outlined"
-            >
+            <Paper component="form" onSubmit={submitSearch} sx={{ mt: 3, p: 2 }} variant="outlined">
                 <Stack
                     direction={{ xs: 'column', md: 'row' }}
                     spacing={2}
@@ -204,7 +200,9 @@ export function SystemAdminsPage() {
                 >
                     <TextField
                         label="Search administrators"
-                        onChange={(event) => { setSearchDraft(event.target.value) }}
+                        onChange={(event) => {
+                            setSearchDraft(event.target.value)
+                        }}
                         placeholder="Full name or email"
                         size="small"
                         slotProps={{
@@ -220,9 +218,7 @@ export function SystemAdminsPage() {
                         value={searchDraft}
                     />
                     <FormControl size="small" sx={{ minWidth: 170 }}>
-                        <InputLabel id="system-admin-status-filter-label">
-                            Status
-                        </InputLabel>
+                        <InputLabel id="system-admin-status-filter-label">Status</InputLabel>
                         <Select
                             label="Status"
                             labelId="system-admin-status-filter-label"
@@ -238,7 +234,9 @@ export function SystemAdminsPage() {
                             <MenuItem value="SUSPENDED">Suspended</MenuItem>
                         </Select>
                     </FormControl>
-                    <Button type="submit" variant="contained">Search</Button>
+                    <Button type="submit" variant="contained">
+                        Search
+                    </Button>
                     <Button
                         disabled={!hasFilters && !searchDraft}
                         onClick={clearFilters}
@@ -256,14 +254,16 @@ export function SystemAdminsPage() {
                 {query.isPending && <AdminTableSkeleton />}
                 {query.isError && (
                     <Alert
-                        action={(
+                        action={
                             <Button
                                 color="inherit"
-                                onClick={() => { void query.refetch() }}
+                                onClick={() => {
+                                    void query.refetch()
+                                }}
                             >
                                 Retry
                             </Button>
-                        )}
+                        }
                         severity="error"
                         sx={{ m: 2 }}
                     >
@@ -282,7 +282,9 @@ export function SystemAdminsPage() {
                                             <TableSortLabel
                                                 active={sortBy === 'fullName'}
                                                 direction={sortBy === 'fullName' ? sortDir : 'asc'}
-                                                onClick={() => { changeSort('fullName') }}
+                                                onClick={() => {
+                                                    changeSort('fullName')
+                                                }}
                                             >
                                                 Administrator
                                             </TableSortLabel>
@@ -291,7 +293,9 @@ export function SystemAdminsPage() {
                                             <TableSortLabel
                                                 active={sortBy === 'status'}
                                                 direction={sortBy === 'status' ? sortDir : 'asc'}
-                                                onClick={() => { changeSort('status') }}
+                                                onClick={() => {
+                                                    changeSort('status')
+                                                }}
                                             >
                                                 Status
                                             </TableSortLabel>
@@ -300,8 +304,12 @@ export function SystemAdminsPage() {
                                         <TableCell>
                                             <TableSortLabel
                                                 active={sortBy === 'createdAt'}
-                                                direction={sortBy === 'createdAt' ? sortDir : 'desc'}
-                                                onClick={() => { changeSort('createdAt') }}
+                                                direction={
+                                                    sortBy === 'createdAt' ? sortDir : 'desc'
+                                                }
+                                                onClick={() => {
+                                                    changeSort('createdAt')
+                                                }}
                                             >
                                                 Created
                                             </TableSortLabel>
@@ -311,28 +319,51 @@ export function SystemAdminsPage() {
                                 </TableHead>
                                 <TableBody>
                                     {query.data.content.map((systemAdmin) => {
-                                        const isCurrent =
-                                            systemAdmin.id === session?.systemAdminId
-                                        const restricted =
-                                            isLoginRestricted(systemAdmin)
+                                        const isCurrent = systemAdmin.id === session?.systemAdminId
+                                        const restricted = isLoginRestricted(systemAdmin)
 
                                         return (
                                             <TableRow hover key={systemAdmin.id}>
                                                 <TableCell sx={{ minWidth: 280 }}>
-                                                    <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-                                                        <Avatar sx={{ bgcolor: 'primary.50', color: 'primary.main', height: 40, width: 40 }}>
+                                                    <Stack
+                                                        direction="row"
+                                                        spacing={1.5}
+                                                        sx={{ alignItems: 'center' }}
+                                                    >
+                                                        <Avatar
+                                                            sx={{
+                                                                bgcolor: 'primary.50',
+                                                                color: 'primary.main',
+                                                                height: 40,
+                                                                width: 40,
+                                                            }}
+                                                        >
                                                             <AdminPanelSettingsRoundedIcon fontSize="small" />
                                                         </Avatar>
                                                         <Box sx={{ minWidth: 0 }}>
-                                                            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                                                                <Typography noWrap sx={{ fontWeight: 700 }}>
+                                                            <Stack
+                                                                direction="row"
+                                                                spacing={1}
+                                                                sx={{ alignItems: 'center' }}
+                                                            >
+                                                                <Typography
+                                                                    noWrap
+                                                                    sx={{ fontWeight: 700 }}
+                                                                >
                                                                     {systemAdmin.fullName}
                                                                 </Typography>
                                                                 {isCurrent && (
-                                                                    <Chip label="You" size="small" />
+                                                                    <Chip
+                                                                        label="You"
+                                                                        size="small"
+                                                                    />
                                                                 )}
                                                             </Stack>
-                                                            <Typography color="text.secondary" noWrap variant="body2">
+                                                            <Typography
+                                                                color="text.secondary"
+                                                                noWrap
+                                                                variant="body2"
+                                                            >
                                                                 {systemAdmin.email}
                                                             </Typography>
                                                         </Box>
@@ -349,23 +380,47 @@ export function SystemAdminsPage() {
                                                 <TableCell>
                                                     {restricted ? (
                                                         <Stack spacing={0.25}>
-                                                            <Chip color="error" label="Restricted" size="small" variant="outlined" />
-                                                            <Typography color="text.secondary" variant="caption">
-                                                                {systemAdmin.failedLoginAttempts} failed attempt{systemAdmin.failedLoginAttempts === 1 ? '' : 's'}
+                                                            <Chip
+                                                                color="error"
+                                                                label="Restricted"
+                                                                size="small"
+                                                                variant="outlined"
+                                                            />
+                                                            <Typography
+                                                                color="text.secondary"
+                                                                variant="caption"
+                                                            >
+                                                                {systemAdmin.failedLoginAttempts}{' '}
+                                                                failed attempt
+                                                                {systemAdmin.failedLoginAttempts ===
+                                                                1
+                                                                    ? ''
+                                                                    : 's'}
                                                             </Typography>
                                                         </Stack>
                                                     ) : (
-                                                        <Typography color="text.secondary" variant="body2">
+                                                        <Typography
+                                                            color="text.secondary"
+                                                            variant="body2"
+                                                        >
                                                             No lock
                                                         </Typography>
                                                     )}
                                                 </TableCell>
-                                                <TableCell>{formatDate(systemAdmin.createdAt)}</TableCell>
+                                                <TableCell>
+                                                    {formatDate(systemAdmin.createdAt)}
+                                                </TableCell>
                                                 <TableCell align="right">
-                                                    <Stack direction="row" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>
+                                                    <Stack
+                                                        direction="row"
+                                                        spacing={0.5}
+                                                        sx={{ justifyContent: 'flex-end' }}
+                                                    >
                                                         {restricted && (
                                                             <Button
-                                                                onClick={() => { setUnlockTarget(systemAdmin) }}
+                                                                onClick={() => {
+                                                                    setUnlockTarget(systemAdmin)
+                                                                }}
                                                                 size="small"
                                                                 startIcon={<LockOpenRoundedIcon />}
                                                             >
@@ -373,7 +428,9 @@ export function SystemAdminsPage() {
                                                             </Button>
                                                         )}
                                                         <Button
-                                                            onClick={() => { setStatusTarget(systemAdmin) }}
+                                                            onClick={() => {
+                                                                setStatusTarget(systemAdmin)
+                                                            }}
                                                             size="small"
                                                             startIcon={<EditOutlinedIcon />}
                                                         >
@@ -400,8 +457,13 @@ export function SystemAdminsPage() {
                         <TablePagination
                             component="div"
                             count={query.data.totalElements}
-                            onPageChange={(_event, nextPage) => { setPage(nextPage) }}
-                            onRowsPerPageChange={(event) => { setPage(0); setSize(Number(event.target.value)) }}
+                            onPageChange={(_event, nextPage) => {
+                                setPage(nextPage)
+                            }}
+                            onRowsPerPageChange={(event) => {
+                                setPage(0)
+                                setSize(Number(event.target.value))
+                            }}
                             page={Math.min(page, Math.max(query.data.totalPages - 1, 0))}
                             rowsPerPage={size}
                             rowsPerPageOptions={[5, 10, 25, 50]}
@@ -412,7 +474,9 @@ export function SystemAdminsPage() {
 
             {createOpen && (
                 <CreateSystemAdminDialog
-                    onClose={() => { setCreateOpen(false) }}
+                    onClose={() => {
+                        setCreateOpen(false)
+                    }}
                     onSuccess={setFeedback}
                     open
                 />
@@ -420,7 +484,9 @@ export function SystemAdminsPage() {
             {statusTarget && session && (
                 <ChangeSystemAdminStatusDialog
                     currentSystemAdminId={session.systemAdminId}
-                    onClose={() => { setStatusTarget(null) }}
+                    onClose={() => {
+                        setStatusTarget(null)
+                    }}
                     onSuccess={setFeedback}
                     open
                     systemAdmin={statusTarget}
@@ -428,7 +494,9 @@ export function SystemAdminsPage() {
             )}
             {unlockTarget && (
                 <UnlockSystemAdminDialog
-                    onClose={() => { setUnlockTarget(null) }}
+                    onClose={() => {
+                        setUnlockTarget(null)
+                    }}
                     onSuccess={setFeedback}
                     open
                     systemAdmin={unlockTarget}
@@ -437,7 +505,9 @@ export function SystemAdminsPage() {
             <Snackbar
                 autoHideDuration={4000}
                 message={feedback}
-                onClose={() => { setFeedback(null) }}
+                onClose={() => {
+                    setFeedback(null)
+                }}
                 open={Boolean(feedback)}
             />
         </Box>

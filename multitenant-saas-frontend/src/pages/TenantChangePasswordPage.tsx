@@ -1,14 +1,5 @@
 import LockResetRoundedIcon from '@mui/icons-material/LockResetRounded'
-import {
-    Alert,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Stack,
-    TextField,
-    Typography,
-} from '@mui/material'
+import { Alert, Box, Button, Card, CardContent, Stack, TextField, Typography } from '@mui/material'
 import type { FormEvent } from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -18,26 +9,16 @@ import { useChangePassword } from '../features/auth/hooks/useAccount'
 import { useAuth } from '../features/auth/hooks/useAuth'
 import { authStorage } from '../features/auth/storage/authStorage'
 
-const passwordPattern =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,100}$/
+const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,100}$/
 
-function getFieldError(
-    error: unknown,
-    field: string,
-): string | undefined {
-    const detail = error instanceof ApiClientError
-        ? error.details?.[field]
-        : undefined
+function getFieldError(error: unknown, field: string): string | undefined {
+    const detail = error instanceof ApiClientError ? error.details?.[field] : undefined
 
-    return typeof detail === 'string'
-        ? detail
-        : undefined
+    return typeof detail === 'string' ? detail : undefined
 }
 
 function getErrorMessage(error: unknown): string {
-    return error instanceof Error
-        ? error.message
-        : 'Your password could not be changed.'
+    return error instanceof Error ? error.message : 'Your password could not be changed.'
 }
 
 export function TenantChangePasswordPage() {
@@ -47,17 +28,14 @@ export function TenantChangePasswordPage() {
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
-    const [validationError, setValidationError] =
-        useState<string | null>(null)
+    const [validationError, setValidationError] = useState<string | null>(null)
 
     const clearFeedback = (): void => {
         setValidationError(null)
         mutation.reset()
     }
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         if (!currentPassword) {
@@ -78,9 +56,7 @@ export function TenantChangePasswordPage() {
         }
 
         if (currentPassword === newPassword) {
-            setValidationError(
-                'New password must be different from the current password.',
-            )
+            setValidationError('New password must be different from the current password.')
             return
         }
 
@@ -104,8 +80,7 @@ export function TenantChangePasswordPage() {
                 replace: true,
                 state: loginState,
             })
-        }
-        catch {
+        } catch {
             // The mutation error is rendered below.
         }
     }
@@ -124,11 +99,7 @@ export function TenantChangePasswordPage() {
             <Card sx={{ maxWidth: 680, mt: 3 }} variant="outlined">
                 <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
                     <Stack spacing={3}>
-                        <Stack
-                            direction="row"
-                            spacing={1.5}
-                            sx={{ alignItems: 'center' }}
-                        >
+                        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                             <Box
                                 sx={{
                                     alignItems: 'center',
@@ -144,9 +115,7 @@ export function TenantChangePasswordPage() {
                                 <LockResetRoundedIcon />
                             </Box>
                             <Box>
-                                <Typography sx={{ fontWeight: 700 }}>
-                                    Account security
-                                </Typography>
+                                <Typography sx={{ fontWeight: 700 }}>Account security</Typography>
                                 <Typography color="text.secondary" variant="body2">
                                     Confirm your current password before choosing a new one.
                                 </Typography>
@@ -154,7 +123,8 @@ export function TenantChangePasswordPage() {
                         </Stack>
 
                         <Alert severity="warning">
-                            Changing your password revokes every refresh token. This browser will sign out immediately after the update.
+                            Changing your password revokes every refresh token. This browser will
+                            sign out immediately after the update.
                         </Alert>
 
                         {(validationError || mutation.isError) && (
@@ -174,14 +144,8 @@ export function TenantChangePasswordPage() {
                                 autoComplete="current-password"
                                 autoFocus
                                 disabled={mutation.isPending}
-                                error={Boolean(getFieldError(
-                                    mutation.error,
-                                    'currentPassword',
-                                ))}
-                                helperText={getFieldError(
-                                    mutation.error,
-                                    'currentPassword',
-                                )}
+                                error={Boolean(getFieldError(mutation.error, 'currentPassword'))}
+                                helperText={getFieldError(mutation.error, 'currentPassword')}
                                 label="Current password"
                                 onChange={(event) => {
                                     setCurrentPassword(event.target.value)
@@ -195,14 +159,11 @@ export function TenantChangePasswordPage() {
                             <TextField
                                 autoComplete="new-password"
                                 disabled={mutation.isPending}
-                                error={Boolean(getFieldError(
-                                    mutation.error,
-                                    'newPassword',
-                                ))}
-                                helperText={getFieldError(
-                                    mutation.error,
-                                    'newPassword',
-                                ) ?? '8–100 characters with uppercase, lowercase, number, special character, and no spaces.'}
+                                error={Boolean(getFieldError(mutation.error, 'newPassword'))}
+                                helperText={
+                                    getFieldError(mutation.error, 'newPassword') ??
+                                    '8–100 characters with uppercase, lowercase, number, special character, and no spaces.'
+                                }
                                 label="New password"
                                 onChange={(event) => {
                                     setNewPassword(event.target.value)
@@ -216,14 +177,8 @@ export function TenantChangePasswordPage() {
                             <TextField
                                 autoComplete="new-password"
                                 disabled={mutation.isPending}
-                                error={Boolean(getFieldError(
-                                    mutation.error,
-                                    'confirmPassword',
-                                ))}
-                                helperText={getFieldError(
-                                    mutation.error,
-                                    'confirmPassword',
-                                )}
+                                error={Boolean(getFieldError(mutation.error, 'confirmPassword'))}
+                                helperText={getFieldError(mutation.error, 'confirmPassword')}
                                 label="Confirm new password"
                                 onChange={(event) => {
                                     setConfirmPassword(event.target.value)
@@ -253,9 +208,7 @@ export function TenantChangePasswordPage() {
                                     type="submit"
                                     variant="contained"
                                 >
-                                    {mutation.isPending
-                                        ? 'Changing password…'
-                                        : 'Change password'}
+                                    {mutation.isPending ? 'Changing password…' : 'Change password'}
                                 </Button>
                             </Stack>
                         </Stack>

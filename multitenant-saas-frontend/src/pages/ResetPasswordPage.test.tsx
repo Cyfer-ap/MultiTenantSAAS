@@ -1,31 +1,16 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    fireEvent,
-    render,
-    screen,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 
 import { passwordResetApi } from '../features/password-reset/api/passwordResetApi'
 import { appTheme } from '../theme/appTheme'
 import { ResetPasswordPage } from './ResetPasswordPage'
 
-function renderResetPasswordPage(
-    initialEntry = '/reset-password?token=one-time-reset-token',
-) {
+function renderResetPasswordPage(initialEntry = '/reset-password?token=one-time-reset-token') {
     const queryClient = new QueryClient({
         defaultOptions: {
             mutations: {
@@ -38,9 +23,7 @@ function renderResetPasswordPage(
         return (
             <ThemeProvider theme={appTheme}>
                 <QueryClientProvider client={queryClient}>
-                    <MemoryRouter initialEntries={[initialEntry]}>
-                        {children}
-                    </MemoryRouter>
+                    <MemoryRouter initialEntries={[initialEntry]}>{children}</MemoryRouter>
                 </QueryClientProvider>
             </ThemeProvider>
         )
@@ -59,9 +42,7 @@ describe('ResetPasswordPage', () => {
     it('rejects an incomplete reset link', () => {
         renderResetPasswordPage('/reset-password')
 
-        expect(
-            screen.getByText(/reset link is incomplete/i),
-        ).toBeInTheDocument()
+        expect(screen.getByText(/reset link is incomplete/i)).toBeInTheDocument()
         expect(
             screen.getByRole('button', {
                 name: /^reset password$/i,
@@ -71,57 +52,38 @@ describe('ResetPasswordPage', () => {
 
     it('requires matching strong passwords', async () => {
         const user = userEvent.setup()
-        const resetPassword = vi.spyOn(
-            passwordResetApi,
-            'resetPassword',
-        )
+        const resetPassword = vi.spyOn(passwordResetApi, 'resetPassword')
 
         renderResetPasswordPage()
-        fireEvent.change(
-            screen.getByLabelText(/^new password/i),
-            {
-                target: { value: 'Strong@123' },
-            },
-        )
-        fireEvent.change(
-            screen.getByLabelText(/confirm password/i),
-            {
-                target: { value: 'Different@123' },
-            },
-        )
+        fireEvent.change(screen.getByLabelText(/^new password/i), {
+            target: { value: 'Strong@123' },
+        })
+        fireEvent.change(screen.getByLabelText(/confirm password/i), {
+            target: { value: 'Different@123' },
+        })
         await user.click(
             screen.getByRole('button', {
                 name: /^reset password$/i,
             }),
         )
 
-        expect(
-            await screen.findByText(/passwords do not match/i),
-        ).toBeInTheDocument()
+        expect(await screen.findByText(/passwords do not match/i)).toBeInTheDocument()
         expect(resetPassword).not.toHaveBeenCalled()
     })
 
     it('resets the password and returns the user to sign in', async () => {
         const user = userEvent.setup()
-        const resetPassword = vi
-            .spyOn(passwordResetApi, 'resetPassword')
-            .mockResolvedValue({
-                message: 'Password reset successfully. Please login again.',
-            })
+        const resetPassword = vi.spyOn(passwordResetApi, 'resetPassword').mockResolvedValue({
+            message: 'Password reset successfully. Please login again.',
+        })
 
         renderResetPasswordPage()
-        fireEvent.change(
-            screen.getByLabelText(/^new password/i),
-            {
-                target: { value: 'Stronger@456' },
-            },
-        )
-        fireEvent.change(
-            screen.getByLabelText(/confirm password/i),
-            {
-                target: { value: 'Stronger@456' },
-            },
-        )
+        fireEvent.change(screen.getByLabelText(/^new password/i), {
+            target: { value: 'Stronger@456' },
+        })
+        fireEvent.change(screen.getByLabelText(/confirm password/i), {
+            target: { value: 'Stronger@456' },
+        })
         await user.click(
             screen.getByRole('button', {
                 name: /^reset password$/i,

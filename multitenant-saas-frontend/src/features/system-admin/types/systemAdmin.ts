@@ -1,9 +1,10 @@
-import type { TenantOnboardingInput, TenantOnboardingResponse, TenantStatus } from '../../onboarding/types/onboarding'
+import type {
+    TenantOnboardingInput,
+    TenantOnboardingResponse,
+    TenantStatus,
+} from '../../onboarding/types/onboarding'
 
-export type SystemAdminStatus =
-    | 'ACTIVE'
-    | 'INACTIVE'
-    | 'SUSPENDED'
+export type SystemAdminStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 
 export interface SystemAdminLoginInput {
     email: string
@@ -56,11 +57,7 @@ export interface SystemDashboardSummary {
     suspendedUsers: number
 }
 
-export type SystemTenantSortField =
-    | 'createdAt'
-    | 'name'
-    | 'slug'
-    | 'status'
+export type SystemTenantSortField = 'createdAt' | 'name' | 'slug' | 'status'
 
 export type SortDirection = 'asc' | 'desc'
 
@@ -100,11 +97,7 @@ export interface SystemAdminRecord {
     updatedAt: string
 }
 
-export type SystemAdminSortField =
-    | 'createdAt'
-    | 'fullName'
-    | 'email'
-    | 'status'
+export type SystemAdminSortField = 'createdAt' | 'fullName' | 'email' | 'status'
 
 export interface SystemAdminsQueryParams {
     page: number
@@ -137,13 +130,9 @@ export const platformAuditActions = [
     'TENANT_SUBSCRIPTION_LIFECYCLE_UPDATED',
 ] as const
 
-export type PlatformAuditAction =
-    (typeof platformAuditActions)[number]
+export type PlatformAuditAction = (typeof platformAuditActions)[number]
 
-export type PlatformAuditSortField =
-    | 'createdAt'
-    | 'action'
-    | 'success'
+export type PlatformAuditSortField = 'createdAt' | 'action' | 'success'
 
 export interface PlatformAuditLog {
     id: string

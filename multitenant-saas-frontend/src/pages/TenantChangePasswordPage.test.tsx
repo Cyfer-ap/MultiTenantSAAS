@@ -1,26 +1,9 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    fireEvent,
-    render,
-    screen,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
-import {
-    MemoryRouter,
-    Route,
-    Routes,
-} from 'react-router'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { MemoryRouter, Route, Routes } from 'react-router'
 
 import { authApi } from '../features/auth/api/authApi'
 import { AuthContext } from '../features/auth/context/AuthContext'
@@ -65,28 +48,22 @@ function renderPage() {
     return render(
         <ThemeProvider theme={appTheme}>
             <QueryClientProvider client={queryClient}>
-                <AuthContext.Provider value={{
-                    status: 'authenticated',
-                    session,
-                    login: vi.fn(),
-                    logout: vi.fn(),
-                }}>
-                    <MemoryRouter
-                        initialEntries={['/account/change-password']}
-                    >
+                <AuthContext.Provider
+                    value={{
+                        status: 'authenticated',
+                        session,
+                        login: vi.fn(),
+                        logout: vi.fn(),
+                    }}
+                >
+                    <MemoryRouter initialEntries={['/account/change-password']}>
                         <Routes>
                             <Route
                                 path="account/change-password"
                                 element={<TenantChangePasswordPage />}
                             />
-                            <Route
-                                path="account"
-                                element={<output>Account destination</output>}
-                            />
-                            <Route
-                                path="login"
-                                element={<LoginPage />}
-                            />
+                            <Route path="account" element={<output>Account destination</output>} />
+                            <Route path="login" element={<LoginPage />} />
                         </Routes>
                     </MemoryRouter>
                 </AuthContext.Provider>
@@ -125,32 +102,33 @@ describe('TenantChangePasswordPage', () => {
 
     it('changes the password, clears the tenant session, and prepares sign-in', async () => {
         const user = userEvent.setup()
-        const changePassword = vi.spyOn(authApi, 'changePassword')
-            .mockResolvedValue({
-                message: 'Password changed successfully. Please login again.',
-            })
+        const changePassword = vi.spyOn(authApi, 'changePassword').mockResolvedValue({
+            message: 'Password changed successfully. Please login again.',
+        })
         renderPage()
         fillPasswords()
 
-        await user.click(screen.getByRole('button', {
-            name: /^change password$/i,
-        }))
+        await user.click(
+            screen.getByRole('button', {
+                name: /^change password$/i,
+            }),
+        )
 
         expect(changePassword).toHaveBeenCalledWith({
             currentPassword: 'Current@123',
             newPassword: 'Stronger@456',
             confirmPassword: 'Stronger@456',
         })
-        expect(await screen.findByRole('heading', {
-            name: /sign in/i,
-        })).toBeInTheDocument()
-        expect(screen.getByText(
-            /password changed successfully\. sign in with your new password/i,
-        )).toBeInTheDocument()
+        expect(
+            await screen.findByRole('heading', {
+                name: /sign in/i,
+            }),
+        ).toBeInTheDocument()
+        expect(
+            screen.getByText(/password changed successfully\. sign in with your new password/i),
+        ).toBeInTheDocument()
         expect(screen.getByLabelText(/tenant id/i)).toHaveValue('tenant-1')
-        expect(screen.getByLabelText(/email address/i)).toHaveValue(
-            'grace@example.com',
-        )
+        expect(screen.getByLabelText(/email address/i)).toHaveValue('grace@example.com')
         expect(authStorage.read()).toBeNull()
         expect(systemAdminStorage.read()).toEqual(systemSession)
     })
@@ -161,32 +139,36 @@ describe('TenantChangePasswordPage', () => {
         renderPage()
 
         fillPasswords({ newPassword: 'weak', confirmPassword: 'weak' })
-        await user.click(screen.getByRole('button', {
-            name: /^change password$/i,
-        }))
-        expect(await screen.findByText(
-            /new password must be 8–100 characters/i,
-        )).toBeInTheDocument()
+        await user.click(
+            screen.getByRole('button', {
+                name: /^change password$/i,
+            }),
+        )
+        expect(
+            await screen.findByText(/new password must be 8–100 characters/i),
+        ).toBeInTheDocument()
 
         fillPasswords({ confirmPassword: 'Different@456' })
-        await user.click(screen.getByRole('button', {
-            name: /^change password$/i,
-        }))
-        expect(await screen.findByText(
-            /new password and confirmation do not match/i,
-        )).toBeInTheDocument()
+        await user.click(
+            screen.getByRole('button', {
+                name: /^change password$/i,
+            }),
+        )
+        expect(
+            await screen.findByText(/new password and confirmation do not match/i),
+        ).toBeInTheDocument()
 
         fillPasswords({
             currentPassword: 'Current@123',
             newPassword: 'Current@123',
             confirmPassword: 'Current@123',
         })
-        await user.click(screen.getByRole('button', {
-            name: /^change password$/i,
-        }))
-        expect(await screen.findByText(
-            /new password must be different/i,
-        )).toBeInTheDocument()
+        await user.click(
+            screen.getByRole('button', {
+                name: /^change password$/i,
+            }),
+        )
+        expect(await screen.findByText(/new password must be different/i)).toBeInTheDocument()
         expect(changePassword).not.toHaveBeenCalled()
     })
 
@@ -198,13 +180,13 @@ describe('TenantChangePasswordPage', () => {
         renderPage()
         fillPasswords()
 
-        await user.click(screen.getByRole('button', {
-            name: /^change password$/i,
-        }))
+        await user.click(
+            screen.getByRole('button', {
+                name: /^change password$/i,
+            }),
+        )
 
-        expect(await screen.findByText(
-            'Current password is incorrect',
-        )).toBeInTheDocument()
+        expect(await screen.findByText('Current password is incorrect')).toBeInTheDocument()
         expect(authStorage.read()).toEqual(session)
     })
 
@@ -215,9 +197,7 @@ describe('TenantChangePasswordPage', () => {
 
         await user.click(screen.getByRole('button', { name: /cancel/i }))
 
-        expect(await screen.findByText(
-            'Account destination',
-        )).toBeInTheDocument()
+        expect(await screen.findByText('Account destination')).toBeInTheDocument()
         expect(changePassword).not.toHaveBeenCalled()
     })
 })

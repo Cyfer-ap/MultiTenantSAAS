@@ -1,10 +1,4 @@
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { publicHttpClient } from '../../../api/httpClient'
 import { systemHttpClient } from '../../../api/systemHttpClient'
@@ -53,21 +47,25 @@ describe('systemAdminApi', () => {
             role: 'SYSTEM_ADMIN' as const,
             status: 'ACTIVE' as const,
         }
-        const publicPost = vi.spyOn(publicHttpClient, 'post')
+        const publicPost = vi
+            .spyOn(publicHttpClient, 'post')
             .mockResolvedValue(successfulResponse(loginResponse))
-        const protectedGet = vi.spyOn(systemHttpClient, 'get')
+        const protectedGet = vi
+            .spyOn(systemHttpClient, 'get')
             .mockResolvedValue(successfulResponse(currentAdmin))
 
-        await expect(systemAdminApi.login({
-            email: 'owner@example.com',
-            password: 'Strong@123',
-        })).resolves.toEqual(loginResponse)
+        await expect(
+            systemAdminApi.login({
+                email: 'owner@example.com',
+                password: 'Strong@123',
+            }),
+        ).resolves.toEqual(loginResponse)
         await expect(systemAdminApi.getCurrentAdmin()).resolves.toEqual(currentAdmin)
 
-        expect(publicPost).toHaveBeenCalledWith(
-            '/api/system/auth/login',
-            { email: 'owner@example.com', password: 'Strong@123' },
-        )
+        expect(publicPost).toHaveBeenCalledWith('/api/system/auth/login', {
+            email: 'owner@example.com',
+            password: 'Strong@123',
+        })
         expect(protectedGet).toHaveBeenCalledWith('/api/system/auth/me')
     })
 
@@ -79,7 +77,8 @@ describe('systemAdminApi', () => {
             role: 'SYSTEM_ADMIN' as const,
             status: 'ACTIVE' as const,
         }
-        const post = vi.spyOn(systemHttpClient, 'post')
+        const post = vi
+            .spyOn(systemHttpClient, 'post')
             .mockResolvedValue(successfulResponse(currentAdmin))
         const input = {
             currentPassword: 'Current@123',
@@ -87,13 +86,9 @@ describe('systemAdminApi', () => {
             confirmPassword: 'Stronger@456',
         }
 
-        await expect(systemAdminApi.changePassword(input))
-            .resolves.toEqual(currentAdmin)
+        await expect(systemAdminApi.changePassword(input)).resolves.toEqual(currentAdmin)
 
-        expect(post).toHaveBeenCalledWith(
-            '/api/system/auth/change-password',
-            input,
-        )
+        expect(post).toHaveBeenCalledWith('/api/system/auth/change-password', input)
     })
 
     it('loads the global dashboard and filtered tenant directory', async () => {
@@ -116,7 +111,8 @@ describe('systemAdminApi', () => {
             first: true,
             last: true,
         }
-        const get = vi.spyOn(systemHttpClient, 'get')
+        const get = vi
+            .spyOn(systemHttpClient, 'get')
             .mockResolvedValueOnce(successfulResponse(dashboard))
             .mockResolvedValueOnce(successfulResponse(tenantPage))
         const params = {
@@ -151,9 +147,11 @@ describe('systemAdminApi', () => {
             },
             message: 'Tenant onboarded successfully by system admin',
         }
-        const patch = vi.spyOn(systemHttpClient, 'patch')
+        const patch = vi
+            .spyOn(systemHttpClient, 'patch')
             .mockResolvedValue(successfulResponse(suspendedTenant))
-        const post = vi.spyOn(systemHttpClient, 'post')
+        const post = vi
+            .spyOn(systemHttpClient, 'post')
             .mockResolvedValue(successfulResponse(onboardingResponse))
         const input = {
             tenantName: 'Research Lab',
@@ -166,14 +164,8 @@ describe('systemAdminApi', () => {
         await systemAdminApi.updateTenantStatus('tenant-1', { status: 'SUSPENDED' })
         await systemAdminApi.onboardTenant(input)
 
-        expect(patch).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/status',
-            { status: 'SUSPENDED' },
-        )
-        expect(post).toHaveBeenCalledWith(
-            '/api/system/onboarding/tenants',
-            input,
-        )
+        expect(patch).toHaveBeenCalledWith('/api/tenants/tenant-1/status', { status: 'SUSPENDED' })
+        expect(post).toHaveBeenCalledWith('/api/system/onboarding/tenants', input)
     })
 
     it('manages system-administrator accounts through protected endpoints', async () => {
@@ -196,11 +188,10 @@ describe('systemAdminApi', () => {
             first: true,
             last: true,
         }
-        const get = vi.spyOn(systemHttpClient, 'get')
-            .mockResolvedValue(successfulResponse(page))
-        const post = vi.spyOn(systemHttpClient, 'post')
-            .mockResolvedValue(successfulResponse(admin))
-        const patch = vi.spyOn(systemHttpClient, 'patch')
+        const get = vi.spyOn(systemHttpClient, 'get').mockResolvedValue(successfulResponse(page))
+        const post = vi.spyOn(systemHttpClient, 'post').mockResolvedValue(successfulResponse(admin))
+        const patch = vi
+            .spyOn(systemHttpClient, 'patch')
             .mockResolvedValue(successfulResponse(admin))
         const params = {
             page: 0,
@@ -225,15 +216,10 @@ describe('systemAdminApi', () => {
 
         expect(get).toHaveBeenCalledWith('/api/system/admins', { params })
         expect(post).toHaveBeenCalledWith('/api/system/admins', input)
-        expect(patch).toHaveBeenNthCalledWith(
-            1,
-            '/api/system/admins/admin-2/status',
-            { status: 'SUSPENDED' },
-        )
-        expect(patch).toHaveBeenNthCalledWith(
-            2,
-            '/api/system/admins/admin-2/unlock',
-        )
+        expect(patch).toHaveBeenNthCalledWith(1, '/api/system/admins/admin-2/status', {
+            status: 'SUSPENDED',
+        })
+        expect(patch).toHaveBeenNthCalledWith(2, '/api/system/admins/admin-2/unlock')
     })
 
     it('loads filtered platform audit logs from the system endpoint', async () => {
@@ -246,8 +232,7 @@ describe('systemAdminApi', () => {
             first: true,
             last: true,
         }
-        const get = vi.spyOn(systemHttpClient, 'get')
-            .mockResolvedValue(successfulResponse(page))
+        const get = vi.spyOn(systemHttpClient, 'get').mockResolvedValue(successfulResponse(page))
         const params = {
             page: 0,
             size: 25,
@@ -258,12 +243,8 @@ describe('systemAdminApi', () => {
             search: 'owner@example.com',
         }
 
-        await expect(systemAdminApi.getPlatformAuditLogs(params))
-            .resolves.toEqual(page)
+        await expect(systemAdminApi.getPlatformAuditLogs(params)).resolves.toEqual(page)
 
-        expect(get).toHaveBeenCalledWith(
-            '/api/system/audit-logs',
-            { params },
-        )
+        expect(get).toHaveBeenCalledWith('/api/system/audit-logs', { params })
     })
 })

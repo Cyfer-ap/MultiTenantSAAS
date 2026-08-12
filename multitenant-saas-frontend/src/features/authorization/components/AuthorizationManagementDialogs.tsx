@@ -38,10 +38,7 @@ import type {
     AuthorizationUserRoleAssignment,
 } from '../types/authorization'
 
-function getErrorMessage(
-    error: unknown,
-    fallback: string,
-): string {
+function getErrorMessage(error: unknown, fallback: string): string {
     return error instanceof Error ? error.message : fallback
 }
 
@@ -60,9 +57,7 @@ function toIsoTimestamp(value: string): string | null {
 
     const date = new Date(value)
 
-    return Number.isNaN(date.getTime())
-        ? null
-        : date.toISOString()
+    return Number.isNaN(date.getTime()) ? null : date.toISOString()
 }
 
 interface PermissionSelectionProps {
@@ -71,20 +66,10 @@ interface PermissionSelectionProps {
     onToggle: (permissionId: string) => void
 }
 
-function PermissionSelection({
-    permissions,
-    selectedIds,
-    onToggle,
-}: PermissionSelectionProps) {
-    const activePermissions = permissions.filter(
-        (permission) => permission.status === 'ACTIVE',
-    )
+function PermissionSelection({ permissions, selectedIds, onToggle }: PermissionSelectionProps) {
+    const activePermissions = permissions.filter((permission) => permission.status === 'ACTIVE')
     const categories = Array.from(
-        new Set(
-            activePermissions.map(
-                (permission) => permission.category,
-            ),
-        ),
+        new Set(activePermissions.map((permission) => permission.category)),
     ).sort()
 
     return (
@@ -112,17 +97,12 @@ function PermissionSelection({
                     </Typography>
                     <FormGroup>
                         {activePermissions
-                            .filter(
-                                (permission) =>
-                                    permission.category === category,
-                            )
+                            .filter((permission) => permission.category === category)
                             .map((permission) => (
                                 <FormControlLabel
                                     control={
                                         <Checkbox
-                                            checked={selectedIds.includes(
-                                                permission.id,
-                                            )}
+                                            checked={selectedIds.includes(permission.id)}
                                             onChange={() => {
                                                 onToggle(permission.id)
                                             }}
@@ -134,10 +114,7 @@ function PermissionSelection({
                                             <Typography variant="body2">
                                                 {permission.name}
                                             </Typography>
-                                            <Typography
-                                                color="text.secondary"
-                                                variant="caption"
-                                            >
+                                            <Typography color="text.secondary" variant="caption">
                                                 {permission.code}
                                             </Typography>
                                         </Box>
@@ -167,10 +144,8 @@ export function CreateAuthorizationRoleDialog({
     const [code, setCode] = useState('')
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
-    const [permissionIds, setPermissionIds] =
-        useState<string[]>([])
-    const [validationError, setValidationError] =
-        useState<string | null>(null)
+    const [permissionIds, setPermissionIds] = useState<string[]>([])
+    const [validationError, setValidationError] = useState<string | null>(null)
     const mutation = useCreateAuthorizationRole(tenantId)
 
     const togglePermission = (permissionId: string): void => {
@@ -181,18 +156,14 @@ export function CreateAuthorizationRoleDialog({
         )
     }
 
-    const submit = (
-        event: FormEvent<HTMLFormElement>,
-    ): void => {
+    const submit = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault()
 
         const normalizedCode = normalizeRoleCode(code)
         const normalizedName = name.trim()
 
         if (!normalizedCode || !normalizedName) {
-            setValidationError(
-                'Role code and role name are required.',
-            )
+            setValidationError('Role code and role name are required.')
             return
         }
 
@@ -206,9 +177,7 @@ export function CreateAuthorizationRoleDialog({
             },
             {
                 onSuccess: (role) => {
-                    onSuccess(
-                        `${role.name} was created successfully.`,
-                    )
+                    onSuccess(`${role.name} was created successfully.`)
                     onClose()
                 },
             },
@@ -216,12 +185,7 @@ export function CreateAuthorizationRoleDialog({
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="md"
-            onClose={onClose}
-            open
-        >
+        <Dialog fullWidth maxWidth="md" onClose={onClose} open>
             <DialogTitle>Create authorization role</DialogTitle>
             <DialogContent>
                 <Stack
@@ -234,16 +198,10 @@ export function CreateAuthorizationRoleDialog({
                     {(validationError || mutation.isError) && (
                         <Alert severity="error">
                             {validationError ??
-                                getErrorMessage(
-                                    mutation.error,
-                                    'The role could not be created.',
-                                )}
+                                getErrorMessage(mutation.error, 'The role could not be created.')}
                         </Alert>
                     )}
-                    <Stack
-                        direction={{ xs: 'column', sm: 'row' }}
-                        spacing={2}
-                    >
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                         <TextField
                             fullWidth
                             label="Role code"
@@ -273,9 +231,7 @@ export function CreateAuthorizationRoleDialog({
                         value={description}
                     />
                     <Box>
-                        <Typography sx={{ marginBottom: 1 }}>
-                            Permissions
-                        </Typography>
+                        <Typography sx={{ marginBottom: 1 }}>Permissions</Typography>
                         <PermissionSelection
                             onToggle={togglePermission}
                             permissions={permissions}
@@ -285,10 +241,7 @@ export function CreateAuthorizationRoleDialog({
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button
-                    disabled={mutation.isPending}
-                    onClick={onClose}
-                >
+                <Button disabled={mutation.isPending} onClick={onClose}>
                     Cancel
                 </Button>
                 <Button
@@ -319,12 +272,10 @@ export function EditAuthorizationRolePermissionsDialog({
     onClose,
     onSuccess,
 }: EditAuthorizationRolePermissionsDialogProps) {
-    const [permissionIds, setPermissionIds] =
-        useState<string[]>(
-            role.permissions.map((permission) => permission.id),
-        )
-    const mutation =
-        useReplaceAuthorizationRolePermissions(tenantId)
+    const [permissionIds, setPermissionIds] = useState<string[]>(
+        role.permissions.map((permission) => permission.id),
+    )
+    const mutation = useReplaceAuthorizationRolePermissions(tenantId)
 
     const togglePermission = (permissionId: string): void => {
         setPermissionIds((current) =>
@@ -334,9 +285,7 @@ export function EditAuthorizationRolePermissionsDialog({
         )
     }
 
-    const submit = (
-        event: FormEvent<HTMLFormElement>,
-    ): void => {
+    const submit = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault()
         mutation.mutate(
             {
@@ -345,9 +294,7 @@ export function EditAuthorizationRolePermissionsDialog({
             },
             {
                 onSuccess: () => {
-                    onSuccess(
-                        `${role.name} permissions were updated.`,
-                    )
+                    onSuccess(`${role.name} permissions were updated.`)
                     onClose()
                 },
             },
@@ -355,15 +302,8 @@ export function EditAuthorizationRolePermissionsDialog({
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="md"
-            onClose={onClose}
-            open
-        >
-            <DialogTitle>
-                Edit permissions for {role.name}
-            </DialogTitle>
+        <Dialog fullWidth maxWidth="md" onClose={onClose} open>
+            <DialogTitle>Edit permissions for {role.name}</DialogTitle>
             <DialogContent>
                 <Stack
                     component="form"
@@ -388,10 +328,7 @@ export function EditAuthorizationRolePermissionsDialog({
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button
-                    disabled={mutation.isPending}
-                    onClick={onClose}
-                >
+                <Button disabled={mutation.isPending} onClick={onClose}>
                     Cancel
                 </Button>
                 <Button
@@ -435,60 +372,43 @@ export function CreateAuthorizationAssignmentDialog({
     onClose,
     onSuccess,
 }: CreateAuthorizationAssignmentDialogProps) {
-    const activeRoles = roles.filter(
-        (role) => role.status === 'ACTIVE',
-    )
-    const [roleId, setRoleId] = useState(
-        activeRoles[0]?.id ?? '',
-    )
-    const [scopeType, setScopeType] =
-        useState<AuthorizationScopeType>('TENANT')
+    const activeRoles = roles.filter((role) => role.status === 'ACTIVE')
+    const [roleId, setRoleId] = useState(activeRoles[0]?.id ?? '')
+    const [scopeType, setScopeType] = useState<AuthorizationScopeType>('TENANT')
     const [scopeTargetId, setScopeTargetId] = useState('')
     const [validFrom, setValidFrom] = useState('')
     const [validUntil, setValidUntil] = useState('')
-    const [validationError, setValidationError] =
-        useState<string | null>(null)
-    const mutation =
-        useCreateAuthorizationAssignment(tenantId)
-    const scopeRequiresTarget =
-        scopeType !== 'TENANT' && scopeType !== 'SELF'
+    const [validationError, setValidationError] = useState<string | null>(null)
+    const mutation = useCreateAuthorizationAssignment(tenantId)
+    const scopeRequiresTarget = scopeType !== 'TENANT' && scopeType !== 'SELF'
 
-    const scopeTargets:
-        readonly AuthorizationAssignmentScopeTargetOption[] =
-        scopeType === 'ORGANIZATIONAL_UNIT' ||
-        scopeType === 'ORGANIZATIONAL_SUBTREE'
+    const scopeTargets: readonly AuthorizationAssignmentScopeTargetOption[] =
+        scopeType === 'ORGANIZATIONAL_UNIT' || scopeType === 'ORGANIZATIONAL_SUBTREE'
             ? referenceData.organizationalUnits
             : scopeType === 'PROJECT'
-                ? referenceData.projects
-                : scopeType === 'DIRECT_REPORTS'
-                    ? referenceData.directReportsAnchors
-                        .filter(
-                            (target) =>
-                                target.ownerUserId === userId,
-                        )
-                    : []
+              ? referenceData.projects
+              : scopeType === 'DIRECT_REPORTS'
+                ? referenceData.directReportsAnchors.filter(
+                      (target) => target.ownerUserId === userId,
+                  )
+                : []
 
-    const selectedScopeTarget =
-        scopeTargets.find(
-            (target) => target.id === scopeTargetId,
-        ) ?? null
+    const selectedScopeTarget = scopeTargets.find((target) => target.id === scopeTargetId) ?? null
 
     const scopeTargetLabel =
         scopeType === 'PROJECT'
             ? 'Project'
             : scopeType === 'DIRECT_REPORTS'
-                ? 'Manager assignment'
-                : 'Organizational unit'
+              ? 'Manager assignment'
+              : 'Organizational unit'
 
     const scopeTargetHelp =
         scopeType === 'PROJECT'
             ? 'Search non-archived projects by name.'
             : scopeType === 'DIRECT_REPORTS'
-                ? 'Choose one of this userâ€™s active organizational assignments.'
-                : 'Search active organizational units by name or code.'
-    const submit = (
-        event: FormEvent<HTMLFormElement>,
-    ): void => {
+              ? 'Choose one of this userâ€™s active organizational assignments.'
+              : 'Search active organizational units by name or code.'
+    const submit = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault()
 
         if (!roleId) {
@@ -497,9 +417,7 @@ export function CreateAuthorizationAssignmentDialog({
         }
 
         if (scopeRequiresTarget && !scopeTargetId.trim()) {
-            setValidationError(
-                'Select a scope target.',
-            )
+            setValidationError('Select a scope target.')
             return
         }
 
@@ -519,12 +437,9 @@ export function CreateAuthorizationAssignmentDialog({
         if (
             validFromIso &&
             validUntilIso &&
-            new Date(validUntilIso).getTime() <=
-                new Date(validFromIso).getTime()
+            new Date(validUntilIso).getTime() <= new Date(validFromIso).getTime()
         ) {
-            setValidationError(
-                'Valid until must be later than valid from.',
-            )
+            setValidationError('Valid until must be later than valid from.')
             return
         }
 
@@ -534,17 +449,13 @@ export function CreateAuthorizationAssignmentDialog({
                 userId,
                 roleId,
                 scopeType,
-                scopeTargetId: scopeRequiresTarget
-                    ? scopeTargetId.trim()
-                    : null,
+                scopeTargetId: scopeRequiresTarget ? scopeTargetId.trim() : null,
                 validFrom: validFromIso,
                 validUntil: validUntilIso,
             },
             {
                 onSuccess: (assignment) => {
-                    onSuccess(
-                        `${assignment.roleName} was assigned to ${userDisplayName}.`,
-                    )
+                    onSuccess(`${assignment.roleName} was assigned to ${userDisplayName}.`)
                     onClose()
                 },
             },
@@ -552,15 +463,8 @@ export function CreateAuthorizationAssignmentDialog({
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="sm"
-            onClose={onClose}
-            open
-        >
-            <DialogTitle>
-                Assign authorization role
-            </DialogTitle>
+        <Dialog fullWidth maxWidth="sm" onClose={onClose} open>
+            <DialogTitle>Assign authorization role</DialogTitle>
             <DialogContent>
                 <Stack
                     component="form"
@@ -578,13 +482,9 @@ export function CreateAuthorizationAssignmentDialog({
                                 )}
                         </Alert>
                     )}
-                    <Alert severity="info">
-                        Assigning a role to {userDisplayName}.
-                    </Alert>
+                    <Alert severity="info">Assigning a role to {userDisplayName}.</Alert>
                     <FormControl fullWidth>
-                        <InputLabel id="authorization-role-label">
-                            Role
-                        </InputLabel>
+                        <InputLabel id="authorization-role-label">Role</InputLabel>
                         <Select
                             label="Role"
                             labelId="authorization-role-label"
@@ -601,34 +501,27 @@ export function CreateAuthorizationAssignmentDialog({
                         </Select>
                     </FormControl>
                     <FormControl fullWidth>
-                        <InputLabel id="authorization-scope-label">
-                            Scope
-                        </InputLabel>
+                        <InputLabel id="authorization-scope-label">Scope</InputLabel>
                         <Select
                             label="Scope"
                             labelId="authorization-scope-label"
                             onChange={(event) => {
-                                setScopeType(
-                                    event.target
-                                        .value as AuthorizationScopeType,
-                                )
+                                setScopeType(event.target.value as AuthorizationScopeType)
                                 setScopeTargetId('')
                             }}
                             value={scopeType}
                         >
-                            {Object.entries(scopeLabels).map(
-                                ([value, label]) => (
-                                    <MenuItem key={value} value={value}>
-                                        {label}
-                                    </MenuItem>
-                                ),
-                            )}
+                            {Object.entries(scopeLabels).map(([value, label]) => (
+                                <MenuItem key={value} value={value}>
+                                    {label}
+                                </MenuItem>
+                            ))}
                         </Select>
                         <FormHelperText>
                             Tenant and self scopes do not require a target.
                         </FormHelperText>
                     </FormControl>
-                                        {scopeRequiresTarget && (
+                    {scopeRequiresTarget && (
                         <Autocomplete
                             autoHighlight
                             fullWidth
@@ -637,9 +530,7 @@ export function CreateAuthorizationAssignmentDialog({
                                     ? `${option.label} â€” ${option.description}`
                                     : option.label
                             }
-                            isOptionEqualToValue={(option, value) =>
-                                option.id === value.id
-                            }
+                            isOptionEqualToValue={(option, value) => option.id === value.id}
                             noOptionsText={
                                 scopeType === 'DIRECT_REPORTS'
                                     ? 'This user has no active organizational assignment.'
@@ -660,10 +551,7 @@ export function CreateAuthorizationAssignmentDialog({
                             value={selectedScopeTarget}
                         />
                     )}
-                    <Stack
-                        direction={{ xs: 'column', sm: 'row' }}
-                        spacing={2}
-                    >
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                         <TextField
                             fullWidth
                             label="Valid from"
@@ -692,10 +580,7 @@ export function CreateAuthorizationAssignmentDialog({
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button
-                    disabled={mutation.isPending}
-                    onClick={onClose}
-                >
+                <Button disabled={mutation.isPending} onClick={onClose}>
                     Cancel
                 </Button>
                 <Button
@@ -733,22 +618,17 @@ export function DeactivateAuthorizationRoleDialog({
                 <Stack spacing={2} sx={{ paddingTop: 1 }}>
                     {mutation.isError && (
                         <Alert severity="error">
-                            {getErrorMessage(
-                                mutation.error,
-                                'The role could not be deactivated.',
-                            )}
+                            {getErrorMessage(mutation.error, 'The role could not be deactivated.')}
                         </Alert>
                     )}
                     <Typography>
-                        Deactivate {role.name}? Existing assignments will no longer provide permissions from this role.
+                        Deactivate {role.name}? Existing assignments will no longer provide
+                        permissions from this role.
                     </Typography>
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button
-                    disabled={mutation.isPending}
-                    onClick={onClose}
-                >
+                <Button disabled={mutation.isPending} onClick={onClose}>
                     Cancel
                 </Button>
                 <Button
@@ -757,9 +637,7 @@ export function DeactivateAuthorizationRoleDialog({
                     onClick={() => {
                         mutation.mutate(role.id, {
                             onSuccess: () => {
-                                onSuccess(
-                                    `${role.name} was deactivated.`,
-                                )
+                                onSuccess(`${role.name} was deactivated.`)
                                 onClose()
                             },
                         })
@@ -786,8 +664,7 @@ export function DeactivateAuthorizationAssignmentDialog({
     onClose,
     onSuccess,
 }: DeactivateAuthorizationAssignmentDialogProps) {
-    const mutation =
-        useDeactivateAuthorizationAssignment(tenantId)
+    const mutation = useDeactivateAuthorizationAssignment(tenantId)
 
     return (
         <Dialog onClose={onClose} open>
@@ -803,15 +680,13 @@ export function DeactivateAuthorizationAssignmentDialog({
                         </Alert>
                     )}
                     <Typography>
-                        Remove the active {assignment.roleName} grant from {assignment.userFullName}?
+                        Remove the active {assignment.roleName} grant from {assignment.userFullName}
+                        ?
                     </Typography>
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button
-                    disabled={mutation.isPending}
-                    onClick={onClose}
-                >
+                <Button disabled={mutation.isPending} onClick={onClose}>
                     Cancel
                 </Button>
                 <Button
@@ -825,9 +700,7 @@ export function DeactivateAuthorizationAssignmentDialog({
                             },
                             {
                                 onSuccess: () => {
-                                    onSuccess(
-                                        `${assignment.roleName} assignment was deactivated.`,
-                                    )
+                                    onSuccess(`${assignment.roleName} assignment was deactivated.`)
                                     onClose()
                                 },
                             },

@@ -1,22 +1,9 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    fireEvent,
-    render,
-    screen,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { systemAdminApi } from '../features/system-admin/api/systemAdminApi'
 import type { PlatformAuditLog } from '../features/system-admin/types/systemAdmin'
@@ -57,9 +44,7 @@ function renderAuditLogs() {
     function Wrapper({ children }: PropsWithChildren) {
         return (
             <ThemeProvider theme={appTheme}>
-                <QueryClientProvider client={queryClient}>
-                    {children}
-                </QueryClientProvider>
+                <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
             </ThemeProvider>
         )
     }
@@ -70,8 +55,7 @@ function renderAuditLogs() {
 describe('PlatformAuditLogsPage', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
-        vi.spyOn(systemAdminApi, 'getPlatformAuditLogs')
-            .mockResolvedValue(auditPage)
+        vi.spyOn(systemAdminApi, 'getPlatformAuditLogs').mockResolvedValue(auditPage)
     })
 
     it('renders actor, target, event, outcome, and message', async () => {
@@ -94,9 +78,11 @@ describe('PlatformAuditLogsPage', () => {
             target: { value: '  security@example.com  ' },
         })
         await user.click(screen.getByLabelText(/^action$/i))
-        await user.click(screen.getByRole('option', {
-            name: 'System admin login unlocked',
-        }))
+        await user.click(
+            screen.getByRole('option', {
+                name: 'System admin login unlocked',
+            }),
+        )
         await user.click(screen.getByLabelText(/^outcome$/i))
         await user.click(screen.getByRole('option', { name: 'Failed' }))
         await user.click(screen.getByRole('button', { name: /^search$/i }))

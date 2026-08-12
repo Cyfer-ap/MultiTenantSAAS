@@ -20,10 +20,7 @@ import { useNavigate } from 'react-router'
 
 import { SessionSecurityCard } from '../features/auth/components/SessionSecurityCard'
 import { useCurrentUser } from '../features/auth/hooks/useAccount'
-import type {
-    TenantRole,
-    UserStatus,
-} from '../features/auth/types/auth'
+import type { TenantRole, UserStatus } from '../features/auth/types/auth'
 
 const roleLabels: Record<TenantRole, string> = {
     TENANT_ADMIN: 'Tenant administrator',
@@ -38,17 +35,17 @@ const statusLabels: Record<UserStatus, string> = {
 }
 
 function getInitials(fullName: string): string {
-    return fullName
-        .trim()
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((part) => part.charAt(0).toUpperCase())
-        .join('') || 'U'
+    return (
+        fullName
+            .trim()
+            .split(/\s+/)
+            .slice(0, 2)
+            .map((part) => part.charAt(0).toUpperCase())
+            .join('') || 'U'
+    )
 }
 
-function getStatusColor(
-    status: UserStatus,
-): 'default' | 'success' | 'warning' {
+function getStatusColor(status: UserStatus): 'default' | 'success' | 'warning' {
     if (status === 'ACTIVE') {
         return 'success'
     }
@@ -60,20 +57,10 @@ function getStatusColor(
     return 'default'
 }
 
-function InformationItem({
-    label,
-    value,
-}: {
-    label: string
-    value: ReactNode
-}) {
+function InformationItem({ label, value }: { label: string; value: ReactNode }) {
     return (
         <Box>
-            <Typography
-                color="text.secondary"
-                component="dt"
-                variant="caption"
-            >
+            <Typography color="text.secondary" component="dt" variant="caption">
                 {label}
             </Typography>
             <Typography
@@ -93,9 +80,7 @@ function InformationItem({
 }
 
 function getErrorMessage(error: unknown): string {
-    return error instanceof Error
-        ? error.message
-        : 'Your account details could not be loaded.'
+    return error instanceof Error ? error.message : 'Your account details could not be loaded.'
 }
 
 export function AccountSettingsPage() {
@@ -150,7 +135,7 @@ export function AccountSettingsPage() {
 
             {currentUserQuery.isError && (
                 <Alert
-                    action={(
+                    action={
                         <Button
                             color="inherit"
                             onClick={() => {
@@ -160,7 +145,7 @@ export function AccountSettingsPage() {
                         >
                             Retry
                         </Button>
-                    )}
+                    }
                     severity="error"
                     sx={{ mt: 3 }}
                 >
@@ -183,11 +168,7 @@ export function AccountSettingsPage() {
                     <Card variant="outlined">
                         <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
                             <Stack spacing={3}>
-                                <Stack
-                                    direction="row"
-                                    spacing={2}
-                                    sx={{ alignItems: 'center' }}
-                                >
+                                <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
                                     <Avatar
                                         sx={{
                                             bgcolor: 'primary.main',
@@ -260,14 +241,12 @@ export function AccountSettingsPage() {
                                         label="Role"
                                         value={roleLabels[currentUser.role]}
                                     />
-                                    <InformationItem
-                                        label="User ID"
-                                        value={currentUser.userId}
-                                    />
+                                    <InformationItem label="User ID" value={currentUser.userId} />
                                 </Box>
 
                                 <Alert severity="info">
-                                    Name, email, role, and status changes use your workspace user-management controls.
+                                    Name, email, role, and status changes use your workspace
+                                    user-management controls.
                                 </Alert>
                             </Stack>
                         </CardContent>
@@ -353,7 +332,8 @@ export function AccountSettingsPage() {
                                                 Password
                                             </Typography>
                                             <Typography color="text.secondary" variant="body2">
-                                                Change your password and revoke every refresh session.
+                                                Change your password and revoke every refresh
+                                                session.
                                             </Typography>
                                         </Box>
                                     </Stack>

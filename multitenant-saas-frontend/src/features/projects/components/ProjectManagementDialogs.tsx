@@ -24,10 +24,7 @@ import {
     useUpdateTenantProject,
     useUpdateTenantProjectStatus,
 } from '../hooks/useProjectManagement'
-import type {
-    ProjectStatus,
-    TenantProject,
-} from '../types/projects'
+import type { ProjectStatus, TenantProject } from '../types/projects'
 
 interface DialogBaseProps {
     tenantId: string
@@ -39,15 +36,9 @@ interface ProjectDialogProps extends DialogBaseProps {
     project: TenantProject | null
 }
 
-type MutableProjectStatus = Exclude<
-    ProjectStatus,
-    'ARCHIVED'
->
+type MutableProjectStatus = Exclude<ProjectStatus, 'ARCHIVED'>
 
-const statusLabels: Record<
-    MutableProjectStatus,
-    string
-> = {
+const statusLabels: Record<MutableProjectStatus, string> = {
     PLANNING: 'Planning',
     ACTIVE: 'Active',
     ON_HOLD: 'On hold',
@@ -60,36 +51,22 @@ function getErrorMessage(error: unknown): string {
         : 'The requested project change could not be completed.'
 }
 
-function getFieldError(
-    error: unknown,
-    field: string,
-): string | undefined {
-    const detail = error instanceof ApiClientError
-        ? error.details?.[field]
-        : undefined
+function getFieldError(error: unknown, field: string): string | undefined {
+    const detail = error instanceof ApiClientError ? error.details?.[field] : undefined
 
-    return typeof detail === 'string'
-        ? detail
-        : undefined
+    return typeof detail === 'string' ? detail : undefined
 }
 
-function normalizeDescription(
-    description: string,
-): string | null {
+function normalizeDescription(description: string): string | null {
     const normalized = description.trim()
 
     return normalized.length > 0 ? normalized : null
 }
 
-export function CreateProjectDialog({
-    tenantId,
-    onClose,
-    onSuccess,
-}: DialogBaseProps) {
+export function CreateProjectDialog({ tenantId, onClose, onSuccess }: DialogBaseProps) {
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
-    const [validationError, setValidationError] =
-        useState<string | null>(null)
+    const [validationError, setValidationError] = useState<string | null>(null)
     const mutation = useCreateTenantProject(tenantId)
 
     const closeDialog = (): void => {
@@ -98,27 +75,18 @@ export function CreateProjectDialog({
         }
     }
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         const normalizedName = name.trim()
 
-        if (
-            normalizedName.length < 2 ||
-            normalizedName.length > 150
-        ) {
-            setValidationError(
-                'Project name must be between 2 and 150 characters.',
-            )
+        if (normalizedName.length < 2 || normalizedName.length > 150) {
+            setValidationError('Project name must be between 2 and 150 characters.')
             return
         }
 
         if (description.length > 2000) {
-            setValidationError(
-                'Project description cannot exceed 2000 characters.',
-            )
+            setValidationError('Project description cannot exceed 2000 characters.')
             return
         }
 
@@ -127,30 +95,24 @@ export function CreateProjectDialog({
         try {
             const project = await mutation.mutateAsync({
                 name: normalizedName,
-                description:
-                    normalizeDescription(description),
+                description: normalizeDescription(description),
             })
 
-            onSuccess(
-                `${project.name} was created successfully.`,
-            )
+            onSuccess(`${project.name} was created successfully.`)
             onClose()
-        }
-        catch {
+        } catch {
             // The mutation error is rendered in the dialog.
         }
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="sm"
-            onClose={closeDialog}
-            open
-        >
-            <Box component="form" onSubmit={(event) => {
-                void submit(event)
-            }}>
+        <Dialog fullWidth maxWidth="sm" onClose={closeDialog} open>
+            <Box
+                component="form"
+                onSubmit={(event) => {
+                    void submit(event)
+                }}
+            >
                 <DialogTitle>Create project</DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ marginBottom: 2 }}>
@@ -160,23 +122,14 @@ export function CreateProjectDialog({
                     <Stack spacing={2}>
                         {(validationError || mutation.isError) && (
                             <Alert severity="error">
-                                {validationError ??
-                                    getErrorMessage(mutation.error)}
+                                {validationError ?? getErrorMessage(mutation.error)}
                             </Alert>
                         )}
 
                         <TextField
                             autoFocus
-                            error={Boolean(
-                                getFieldError(
-                                    mutation.error,
-                                    'name',
-                                ),
-                            )}
-                            helperText={getFieldError(
-                                mutation.error,
-                                'name',
-                            )}
+                            error={Boolean(getFieldError(mutation.error, 'name'))}
+                            helperText={getFieldError(mutation.error, 'name')}
                             label="Project name"
                             onChange={(event) => {
                                 setName(event.target.value)
@@ -187,17 +140,9 @@ export function CreateProjectDialog({
                         />
 
                         <TextField
-                            error={Boolean(
-                                getFieldError(
-                                    mutation.error,
-                                    'description',
-                                ),
-                            )}
+                            error={Boolean(getFieldError(mutation.error, 'description'))}
                             helperText={
-                                getFieldError(
-                                    mutation.error,
-                                    'description',
-                                ) ??
+                                getFieldError(mutation.error, 'description') ??
                                 `${description.length}/2000 characters`
                             }
                             label="Description"
@@ -212,20 +157,11 @@ export function CreateProjectDialog({
                     </Stack>
                 </DialogContent>
                 <DialogActions>
-                    <Button
-                        disabled={mutation.isPending}
-                        onClick={closeDialog}
-                    >
+                    <Button disabled={mutation.isPending} onClick={closeDialog}>
                         Cancel
                     </Button>
-                    <Button
-                        disabled={mutation.isPending}
-                        type="submit"
-                        variant="contained"
-                    >
-                        {mutation.isPending
-                            ? 'Creating…'
-                            : 'Create project'}
+                    <Button disabled={mutation.isPending} type="submit" variant="contained">
+                        {mutation.isPending ? 'Creating…' : 'Create project'}
                     </Button>
                 </DialogActions>
             </Box>
@@ -233,18 +169,9 @@ export function CreateProjectDialog({
     )
 }
 
-export function EditProjectDialog({
-    tenantId,
-    project,
-    onClose,
-    onSuccess,
-}: ProjectDialogProps) {
-    const [name, setName] = useState(
-        project?.name ?? '',
-    )
-    const [description, setDescription] = useState(
-        project?.description ?? '',
-    )
+export function EditProjectDialog({ tenantId, project, onClose, onSuccess }: ProjectDialogProps) {
+    const [name, setName] = useState(project?.name ?? '')
+    const [description, setDescription] = useState(project?.description ?? '')
     const mutation = useUpdateTenantProject(tenantId)
 
     const closeDialog = (): void => {
@@ -253,9 +180,7 @@ export function EditProjectDialog({
         }
     }
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         if (!project) {
@@ -263,57 +188,40 @@ export function EditProjectDialog({
         }
 
         try {
-            const updatedProject =
-                await mutation.mutateAsync({
-                    projectId: project.id,
-                    input: {
-                        name: name.trim(),
-                        description:
-                            normalizeDescription(description),
-                    },
-                })
+            const updatedProject = await mutation.mutateAsync({
+                projectId: project.id,
+                input: {
+                    name: name.trim(),
+                    description: normalizeDescription(description),
+                },
+            })
 
-            onSuccess(
-                `${updatedProject.name} was updated successfully.`,
-            )
+            onSuccess(`${updatedProject.name} was updated successfully.`)
             onClose()
-        }
-        catch {
+        } catch {
             // The mutation error is rendered in the dialog.
         }
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="sm"
-            onClose={closeDialog}
-            open
-        >
-            <Box component="form" onSubmit={(event) => {
-                void submit(event)
-            }}>
+        <Dialog fullWidth maxWidth="sm" onClose={closeDialog} open>
+            <Box
+                component="form"
+                onSubmit={(event) => {
+                    void submit(event)
+                }}
+            >
                 <DialogTitle>Edit project</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} sx={{ marginTop: 1 }}>
                         {mutation.isError && (
-                            <Alert severity="error">
-                                {getErrorMessage(mutation.error)}
-                            </Alert>
+                            <Alert severity="error">{getErrorMessage(mutation.error)}</Alert>
                         )}
 
                         <TextField
                             autoFocus
-                            error={Boolean(
-                                getFieldError(
-                                    mutation.error,
-                                    'name',
-                                ),
-                            )}
-                            helperText={getFieldError(
-                                mutation.error,
-                                'name',
-                            )}
+                            error={Boolean(getFieldError(mutation.error, 'name'))}
+                            helperText={getFieldError(mutation.error, 'name')}
                             label="Project name"
                             onChange={(event) => {
                                 setName(event.target.value)
@@ -323,17 +231,9 @@ export function EditProjectDialog({
                         />
 
                         <TextField
-                            error={Boolean(
-                                getFieldError(
-                                    mutation.error,
-                                    'description',
-                                ),
-                            )}
+                            error={Boolean(getFieldError(mutation.error, 'description'))}
                             helperText={
-                                getFieldError(
-                                    mutation.error,
-                                    'description',
-                                ) ??
+                                getFieldError(mutation.error, 'description') ??
                                 `${description.length}/2000 characters`
                             }
                             label="Description"
@@ -347,20 +247,11 @@ export function EditProjectDialog({
                     </Stack>
                 </DialogContent>
                 <DialogActions>
-                    <Button
-                        disabled={mutation.isPending}
-                        onClick={closeDialog}
-                    >
+                    <Button disabled={mutation.isPending} onClick={closeDialog}>
                         Cancel
                     </Button>
-                    <Button
-                        disabled={mutation.isPending}
-                        type="submit"
-                        variant="contained"
-                    >
-                        {mutation.isPending
-                            ? 'Saving…'
-                            : 'Save project'}
+                    <Button disabled={mutation.isPending} type="submit" variant="contained">
+                        {mutation.isPending ? 'Saving…' : 'Save project'}
                     </Button>
                 </DialogActions>
             </Box>
@@ -374,14 +265,10 @@ export function ChangeProjectStatusDialog({
     onClose,
     onSuccess,
 }: ProjectDialogProps) {
-    const [status, setStatus] =
-        useState<MutableProjectStatus>(
-            project?.status === 'ARCHIVED'
-                ? 'PLANNING'
-                : project?.status ?? 'PLANNING',
-        )
-    const mutation =
-        useUpdateTenantProjectStatus(tenantId)
+    const [status, setStatus] = useState<MutableProjectStatus>(
+        project?.status === 'ARCHIVED' ? 'PLANNING' : (project?.status ?? 'PLANNING'),
+    )
+    const mutation = useUpdateTenantProjectStatus(tenantId)
 
     const closeDialog = (): void => {
         if (!mutation.isPending) {
@@ -389,9 +276,7 @@ export function ChangeProjectStatusDialog({
         }
     }
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
 
         if (!project) {
@@ -399,32 +284,26 @@ export function ChangeProjectStatusDialog({
         }
 
         try {
-            const updatedProject =
-                await mutation.mutateAsync({
-                    projectId: project.id,
-                    input: { status },
-                })
+            const updatedProject = await mutation.mutateAsync({
+                projectId: project.id,
+                input: { status },
+            })
 
-            onSuccess(
-                `${updatedProject.name} is now ${statusLabels[status].toLowerCase()}.`,
-            )
+            onSuccess(`${updatedProject.name} is now ${statusLabels[status].toLowerCase()}.`)
             onClose()
-        }
-        catch {
+        } catch {
             // The mutation error is rendered in the dialog.
         }
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="xs"
-            onClose={closeDialog}
-            open
-        >
-            <Box component="form" onSubmit={(event) => {
-                void submit(event)
-            }}>
+        <Dialog fullWidth maxWidth="xs" onClose={closeDialog} open>
+            <Box
+                component="form"
+                onSubmit={(event) => {
+                    void submit(event)
+                }}
+            >
                 <DialogTitle>Change project status</DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ marginBottom: 2 }}>
@@ -438,50 +317,33 @@ export function ChangeProjectStatusDialog({
                     )}
 
                     <FormControl fullWidth>
-                        <InputLabel id="project-status-label">
-                            Status
-                        </InputLabel>
+                        <InputLabel id="project-status-label">Status</InputLabel>
                         <Select
                             label="Status"
                             labelId="project-status-label"
                             onChange={(event) => {
-                                setStatus(
-                                    event.target.value as MutableProjectStatus,
-                                )
+                                setStatus(event.target.value as MutableProjectStatus)
                             }}
                             value={status}
                         >
-                            {Object.entries(statusLabels).map(
-                                ([value, label]) => (
-                                    <MenuItem
-                                        key={value}
-                                        value={value}
-                                    >
-                                        {label}
-                                    </MenuItem>
-                                ),
-                            )}
+                            {Object.entries(statusLabels).map(([value, label]) => (
+                                <MenuItem key={value} value={value}>
+                                    {label}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
                 </DialogContent>
                 <DialogActions>
-                    <Button
-                        disabled={mutation.isPending}
-                        onClick={closeDialog}
-                    >
+                    <Button disabled={mutation.isPending} onClick={closeDialog}>
                         Cancel
                     </Button>
                     <Button
-                        disabled={
-                            mutation.isPending ||
-                            status === project?.status
-                        }
+                        disabled={mutation.isPending || status === project?.status}
                         type="submit"
                         variant="contained"
                     >
-                        {mutation.isPending
-                            ? 'Saving…'
-                            : 'Change status'}
+                        {mutation.isPending ? 'Saving…' : 'Change status'}
                     </Button>
                 </DialogActions>
             </Box>
@@ -509,15 +371,11 @@ export function ArchiveProjectDialog({
         }
 
         try {
-            const archivedProject =
-                await mutation.mutateAsync(project.id)
+            const archivedProject = await mutation.mutateAsync(project.id)
 
-            onSuccess(
-                `${archivedProject.name} was archived.`,
-            )
+            onSuccess(`${archivedProject.name} was archived.`)
             onClose()
-        }
-        catch {
+        } catch {
             // The mutation error is rendered in the dialog.
         }
     }
@@ -527,7 +385,8 @@ export function ArchiveProjectDialog({
             <DialogTitle>Archive project?</DialogTitle>
             <DialogContent>
                 <DialogContentText>
-                    {project?.name} will become read-only. Archived projects cannot be restored through the current API.
+                    {project?.name} will become read-only. Archived projects cannot be restored
+                    through the current API.
                 </DialogContentText>
 
                 {mutation.isError && (
@@ -537,10 +396,7 @@ export function ArchiveProjectDialog({
                 )}
             </DialogContent>
             <DialogActions>
-                <Button
-                    disabled={mutation.isPending}
-                    onClick={closeDialog}
-                >
+                <Button disabled={mutation.isPending} onClick={closeDialog}>
                     Cancel
                 </Button>
                 <Button
@@ -551,9 +407,7 @@ export function ArchiveProjectDialog({
                     }}
                     variant="contained"
                 >
-                    {mutation.isPending
-                        ? 'Archiving…'
-                        : 'Archive project'}
+                    {mutation.isPending ? 'Archiving…' : 'Archive project'}
                 </Button>
             </DialogActions>
         </Dialog>

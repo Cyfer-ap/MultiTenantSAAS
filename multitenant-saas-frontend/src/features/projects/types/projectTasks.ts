@@ -1,25 +1,11 @@
 import type { SortDirection } from './projects'
 
-export type ProjectTaskStatus =
-    | 'TODO'
-    | 'IN_PROGRESS'
-    | 'BLOCKED'
-    | 'COMPLETED'
-    | 'CANCELLED'
+export type ProjectTaskStatus = 'TODO' | 'IN_PROGRESS' | 'BLOCKED' | 'COMPLETED' | 'CANCELLED'
 
-export type ProjectTaskPriority =
-    | 'LOW'
-    | 'MEDIUM'
-    | 'HIGH'
-    | 'URGENT'
+export type ProjectTaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
 
 export type ProjectTaskSortField =
-    | 'createdAt'
-    | 'updatedAt'
-    | 'title'
-    | 'status'
-    | 'priority'
-    | 'dueAt'
+    'createdAt' | 'updatedAt' | 'title' | 'status' | 'priority' | 'dueAt'
 
 export interface ProjectTask {
     id: string
@@ -59,8 +45,7 @@ export interface ProjectTaskDetailsInput {
     dueAt: string | null
 }
 
-export interface CreateProjectTaskInput
-    extends ProjectTaskDetailsInput {
+export interface CreateProjectTaskInput extends ProjectTaskDetailsInput {
     assigneeUserId: string | null
 }
 

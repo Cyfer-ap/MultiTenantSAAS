@@ -52,16 +52,9 @@ import type {
     AuthorizationUserRoleAssignment,
 } from '../features/authorization/types/authorization'
 
-type AuthorizationTab =
-    | 'roles'
-    | 'assignments'
-    | 'permissions'
+type AuthorizationTab = 'roles' | 'assignments' | 'permissions'
 
-type RoleDialog =
-    | 'create'
-    | 'permissions'
-    | 'deactivate'
-    | null
+type RoleDialog = 'create' | 'permissions' | 'deactivate' | null
 
 const scopeLabels: Record<AuthorizationScopeType, string> = {
     TENANT: 'Entire tenant',
@@ -89,10 +82,7 @@ function formatDateTime(value: string | null): string {
     }).format(date)
 }
 
-function getErrorMessage(
-    error: unknown,
-    fallback: string,
-): string {
+function getErrorMessage(error: unknown, fallback: string): string {
     return error instanceof Error ? error.message : fallback
 }
 
@@ -108,57 +98,39 @@ function getScopeTargetOption(
         assignment.scopeType === 'PROJECT'
             ? referenceData.projects
             : assignment.scopeType === 'DIRECT_REPORTS'
-                ? referenceData.directReportsAnchors
-                : assignment.scopeType === 'ORGANIZATIONAL_UNIT' ||
-                    assignment.scopeType === 'ORGANIZATIONAL_SUBTREE'
-                    ? referenceData.organizationalUnits
-                    : []
+              ? referenceData.directReportsAnchors
+              : assignment.scopeType === 'ORGANIZATIONAL_UNIT' ||
+                  assignment.scopeType === 'ORGANIZATIONAL_SUBTREE'
+                ? referenceData.organizationalUnits
+                : []
 
-    return options.find(
-        (option) => option.id === assignment.scopeTargetId,
-    ) ?? null
+    return options.find((option) => option.id === assignment.scopeTargetId) ?? null
 }
 
 export function AuthorizationManagementPage() {
     const { session } = useAuth()
     const tenantId = session?.tenantId ?? ''
-    const [tab, setTab] =
-        useState<AuthorizationTab>('roles')
-    const [roleDialog, setRoleDialog] =
-        useState<RoleDialog>(null)
-    const [selectedRole, setSelectedRole] =
-        useState<AuthorizationRole | null>(null)
-    const [selectedUser, setSelectedUser] =
-        useState<AuthorizationAssignmentUserOption | null>(null)
-    const [assignmentDialogOpen, setAssignmentDialogOpen] =
-        useState(false)
+    const [tab, setTab] = useState<AuthorizationTab>('roles')
+    const [roleDialog, setRoleDialog] = useState<RoleDialog>(null)
+    const [selectedRole, setSelectedRole] = useState<AuthorizationRole | null>(null)
+    const [selectedUser, setSelectedUser] = useState<AuthorizationAssignmentUserOption | null>(null)
+    const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false)
     const [deactivateAssignment, setDeactivateAssignment] =
         useState<AuthorizationUserRoleAssignment | null>(null)
-    const [feedback, setFeedback] =
-        useState<string | null>(null)
+    const [feedback, setFeedback] = useState<string | null>(null)
 
-    const permissionsQuery =
-        useAuthorizationPermissions(tenantId)
+    const permissionsQuery = useAuthorizationPermissions(tenantId)
     const rolesQuery = useAuthorizationRoles(tenantId)
-    const assignmentReferenceDataQuery =
-        useAuthorizationAssignmentReferenceData(tenantId)
+    const assignmentReferenceDataQuery = useAuthorizationAssignmentReferenceData(tenantId)
     const selectedUserId = selectedUser?.id ?? ''
-    const assignmentsQuery =
-        useUserAuthorizationAssignments(
-            tenantId,
-            selectedUserId,
-        )
-    const initializeRolesMutation =
-        useInitializeDefaultRoles(tenantId)
+    const assignmentsQuery = useUserAuthorizationAssignments(tenantId, selectedUserId)
+    const initializeRolesMutation = useInitializeDefaultRoles(tenantId)
 
     const permissions = permissionsQuery.data ?? []
     const roles = rolesQuery.data ?? []
-    const activeRoles = roles.filter(
-        (role) => role.status === 'ACTIVE',
-    )
+    const activeRoles = roles.filter((role) => role.status === 'ACTIVE')
     const assignments = assignmentsQuery.data ?? []
-    const selectedUserLabel =
-        assignments[0]?.userFullName ?? selectedUser?.fullName ?? ''
+    const selectedUserLabel = assignments[0]?.userFullName ?? selectedUser?.fullName ?? ''
 
     const openRoleDialog = (
         dialog: Exclude<RoleDialog, null>,
@@ -192,8 +164,7 @@ export function AuthorizationManagementPage() {
         rolesQuery.isFetching ||
         assignmentsQuery.isFetching ||
         assignmentReferenceDataQuery.isFetching
-    const roleDataError =
-        permissionsQuery.isError || rolesQuery.isError
+    const roleDataError = permissionsQuery.isError || rolesQuery.isError
 
     return (
         <Box>
@@ -206,20 +177,13 @@ export function AuthorizationManagementPage() {
                 }}
             >
                 <Box>
-                    <Stack
-                        direction="row"
-                        spacing={1}
-                        sx={{ alignItems: 'center' }}
-                    >
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         <SecurityRoundedIcon color="primary" />
                         <Typography component="h1" variant="h4">
                             Authorization
                         </Typography>
                     </Stack>
-                    <Typography
-                        color="text.secondary"
-                        sx={{ marginTop: 0.5 }}
-                    >
+                    <Typography color="text.secondary" sx={{ marginTop: 0.5 }}>
                         Manage tenant roles, scoped grants, and the permission catalog.
                     </Typography>
                 </Box>
@@ -230,14 +194,11 @@ export function AuthorizationManagementPage() {
                         void refresh()
                     }}
                     startIcon={
-                        isRefreshing
-                            ? (
-                                <CircularProgress
-                                    color="inherit"
-                                    size={16}
-                                />
-                            )
-                            : <RefreshRoundedIcon />
+                        isRefreshing ? (
+                            <CircularProgress color="inherit" size={16} />
+                        ) : (
+                            <RefreshRoundedIcon />
+                        )
                     }
                     variant="outlined"
                 >
@@ -260,10 +221,7 @@ export function AuthorizationManagementPage() {
             </Paper>
 
             {isRefreshing && (
-                <LinearProgress
-                    aria-label="Updating authorization data"
-                    sx={{ marginTop: 1 }}
-                />
+                <LinearProgress aria-label="Updating authorization data" sx={{ marginTop: 1 }} />
             )}
 
             {tab === 'roles' && (
@@ -277,20 +235,15 @@ export function AuthorizationManagementPage() {
                         }}
                     >
                         <Button
-                            disabled={
-                                initializeRolesMutation.isPending
-                            }
+                            disabled={initializeRolesMutation.isPending}
                             onClick={() => {
-                                initializeRolesMutation.mutate(
-                                    undefined,
-                                    {
-                                        onSuccess: () => {
-                                            setFeedback(
-                                                'Default roles were initialized and synchronized.',
-                                            )
-                                        },
+                                initializeRolesMutation.mutate(undefined, {
+                                    onSuccess: () => {
+                                        setFeedback(
+                                            'Default roles were initialized and synchronized.',
+                                        )
                                     },
-                                )
+                                })
                             }}
                             variant="outlined"
                         >
@@ -320,15 +273,13 @@ export function AuthorizationManagementPage() {
                     {roleDataError && (
                         <Alert severity="error">
                             {getErrorMessage(
-                                rolesQuery.error ??
-                                    permissionsQuery.error,
+                                rolesQuery.error ?? permissionsQuery.error,
                                 'Authorization roles could not be loaded.',
                             )}
                         </Alert>
                     )}
 
-                    {(rolesQuery.isPending ||
-                        permissionsQuery.isPending) && (
+                    {(rolesQuery.isPending || permissionsQuery.isPending) && (
                         <Paper
                             aria-label="Loading authorization roles"
                             role="status"
@@ -339,169 +290,146 @@ export function AuthorizationManagementPage() {
                         </Paper>
                     )}
 
-                    {!roleDataError &&
-                        rolesQuery.isSuccess &&
-                        permissionsQuery.isSuccess && (
-                            <Paper variant="outlined">
-                                <TableContainer>
-                                    <Table aria-label="Authorization roles">
-                                        <TableHead>
-                                            <TableRow>
-                                                <TableCell>Role</TableCell>
-                                                <TableCell>Source</TableCell>
-                                                <TableCell>Status</TableCell>
-                                                <TableCell>Permissions</TableCell>
-                                                <TableCell align="right">
-                                                    Actions
-                                                </TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {roles.map((role) => {
-                                                const tenantRoleIsActive =
-                                                    role.source === 'TENANT' &&
-                                                    role.status === 'ACTIVE'
+                    {!roleDataError && rolesQuery.isSuccess && permissionsQuery.isSuccess && (
+                        <Paper variant="outlined">
+                            <TableContainer>
+                                <Table aria-label="Authorization roles">
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Role</TableCell>
+                                            <TableCell>Source</TableCell>
+                                            <TableCell>Status</TableCell>
+                                            <TableCell>Permissions</TableCell>
+                                            <TableCell align="right">Actions</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {roles.map((role) => {
+                                            const tenantRoleIsActive =
+                                                role.source === 'TENANT' && role.status === 'ACTIVE'
 
-                                                return (
-                                                    <TableRow key={role.id}>
-                                                        <TableCell>
-                                                            <Typography
-                                                                sx={{
-                                                                    fontWeight: 700,
-                                                                }}
-                                                                variant="body2"
-                                                            >
-                                                                {role.name}
-                                                            </Typography>
+                                            return (
+                                                <TableRow key={role.id}>
+                                                    <TableCell>
+                                                        <Typography
+                                                            sx={{
+                                                                fontWeight: 700,
+                                                            }}
+                                                            variant="body2"
+                                                        >
+                                                            {role.name}
+                                                        </Typography>
+                                                        <Typography
+                                                            color="text.secondary"
+                                                            variant="caption"
+                                                        >
+                                                            {role.code}
+                                                        </Typography>
+                                                        {role.description && (
                                                             <Typography
                                                                 color="text.secondary"
+                                                                sx={{
+                                                                    display: 'block',
+                                                                    marginTop: 0.5,
+                                                                }}
                                                                 variant="caption"
                                                             >
-                                                                {role.code}
+                                                                {role.description}
                                                             </Typography>
-                                                            {role.description && (
-                                                                <Typography
-                                                                    color="text.secondary"
-                                                                    sx={{
-                                                                        display: 'block',
-                                                                        marginTop: 0.5,
-                                                                    }}
-                                                                    variant="caption"
-                                                                >
-                                                                    {role.description}
-                                                                </Typography>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Chip
-                                                                label={
-                                                                    role.source ===
-                                                                    'SYSTEM'
-                                                                        ? 'System'
-                                                                        : 'Tenant'
-                                                                }
-                                                                size="small"
-                                                                variant="outlined"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Chip
-                                                                color={
-                                                                    role.status ===
-                                                                    'ACTIVE'
-                                                                        ? 'success'
-                                                                        : 'default'
-                                                                }
-                                                                label={
-                                                                    role.status ===
-                                                                    'ACTIVE'
-                                                                        ? 'Active'
-                                                                        : 'Inactive'
-                                                                }
-                                                                size="small"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {role.permissions.length}
-                                                        </TableCell>
-                                                        <TableCell align="right">
-                                                            {tenantRoleIsActive && (
-                                                                <Stack
-                                                                    direction="row"
-                                                                    spacing={0.5}
-                                                                    sx={{
-                                                                        justifyContent:
-                                                                            'flex-end',
-                                                                    }}
-                                                                >
-                                                                    <Tooltip title="Edit permissions">
-                                                                        <IconButton
-                                                                            aria-label={`Edit permissions for ${role.name}`}
-                                                                            onClick={() => {
-                                                                                openRoleDialog(
-                                                                                    'permissions',
-                                                                                    role,
-                                                                                )
-                                                                            }}
-                                                                            size="small"
-                                                                        >
-                                                                            <EditOutlinedIcon />
-                                                                        </IconButton>
-                                                                    </Tooltip>
-                                                                    <Tooltip title="Deactivate role">
-                                                                        <IconButton
-                                                                            aria-label={`Deactivate ${role.name}`}
-                                                                            color="error"
-                                                                            onClick={() => {
-                                                                                openRoleDialog(
-                                                                                    'deactivate',
-                                                                                    role,
-                                                                                )
-                                                                            }}
-                                                                            size="small"
-                                                                        >
-                                                                            <BlockRoundedIcon />
-                                                                        </IconButton>
-                                                                    </Tooltip>
-                                                                </Stack>
-                                                            )}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )
-                                            })}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
-                            </Paper>
-                        )}
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Chip
+                                                            label={
+                                                                role.source === 'SYSTEM'
+                                                                    ? 'System'
+                                                                    : 'Tenant'
+                                                            }
+                                                            size="small"
+                                                            variant="outlined"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Chip
+                                                            color={
+                                                                role.status === 'ACTIVE'
+                                                                    ? 'success'
+                                                                    : 'default'
+                                                            }
+                                                            label={
+                                                                role.status === 'ACTIVE'
+                                                                    ? 'Active'
+                                                                    : 'Inactive'
+                                                            }
+                                                            size="small"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>{role.permissions.length}</TableCell>
+                                                    <TableCell align="right">
+                                                        {tenantRoleIsActive && (
+                                                            <Stack
+                                                                direction="row"
+                                                                spacing={0.5}
+                                                                sx={{
+                                                                    justifyContent: 'flex-end',
+                                                                }}
+                                                            >
+                                                                <Tooltip title="Edit permissions">
+                                                                    <IconButton
+                                                                        aria-label={`Edit permissions for ${role.name}`}
+                                                                        onClick={() => {
+                                                                            openRoleDialog(
+                                                                                'permissions',
+                                                                                role,
+                                                                            )
+                                                                        }}
+                                                                        size="small"
+                                                                    >
+                                                                        <EditOutlinedIcon />
+                                                                    </IconButton>
+                                                                </Tooltip>
+                                                                <Tooltip title="Deactivate role">
+                                                                    <IconButton
+                                                                        aria-label={`Deactivate ${role.name}`}
+                                                                        color="error"
+                                                                        onClick={() => {
+                                                                            openRoleDialog(
+                                                                                'deactivate',
+                                                                                role,
+                                                                            )
+                                                                        }}
+                                                                        size="small"
+                                                                    >
+                                                                        <BlockRoundedIcon />
+                                                                    </IconButton>
+                                                                </Tooltip>
+                                                            </Stack>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </Paper>
+                    )}
                 </Box>
             )}
 
             {tab === 'assignments' && (
                 <Box sx={{ marginTop: 2 }}>
-                    <Paper
-                        sx={{ padding: 2 }}
-                        variant="outlined"
-                    >
+                    <Paper sx={{ padding: 2 }} variant="outlined">
                         <Autocomplete
                             autoHighlight
-                            getOptionLabel={(option) =>
-                                `${option.fullName} (${option.email})`
-                            }
-                            isOptionEqualToValue={(option, value) =>
-                                option.id === value.id
-                            }
-                            loading={
-                                assignmentReferenceDataQuery.isFetching
-                            }
+                            getOptionLabel={(option) => `${option.fullName} (${option.email})`}
+                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                            loading={assignmentReferenceDataQuery.isFetching}
                             onChange={(_event, option) => {
                                 setSelectedUser(option)
                                 setAssignmentDialogOpen(false)
                             }}
-                            options={
-                                assignmentReferenceDataQuery
-                                    .data?.users ?? []
-                            }
+                            options={assignmentReferenceDataQuery.data?.users ?? []}
                             renderInput={(params) => (
                                 <TextField
                                     {...params}
@@ -537,10 +465,7 @@ export function AuthorizationManagementPage() {
                                 <Typography component="h2" variant="h6">
                                     Assignments for {selectedUserLabel}
                                 </Typography>
-                                <Typography
-                                    color="text.secondary"
-                                    variant="caption"
-                                >
+                                <Typography color="text.secondary" variant="caption">
                                     {selectedUser?.email}
                                 </Typography>
                             </Box>
@@ -578,10 +503,7 @@ export function AuthorizationManagementPage() {
                     )}
 
                     {assignmentsQuery.isSuccess && selectedUserId && (
-                        <Paper
-                            sx={{ marginTop: 2 }}
-                            variant="outlined"
-                        >
+                        <Paper sx={{ marginTop: 2 }} variant="outlined">
                             <TableContainer>
                                 <Table aria-label="Authorization assignments">
                                     <TableHead>
@@ -590,9 +512,7 @@ export function AuthorizationManagementPage() {
                                             <TableCell>Scope</TableCell>
                                             <TableCell>Status</TableCell>
                                             <TableCell>Validity</TableCell>
-                                            <TableCell align="right">
-                                                Actions
-                                            </TableCell>
+                                            <TableCell align="right">Actions</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -614,14 +534,9 @@ export function AuthorizationManagementPage() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Typography variant="body2">
-                                                        {
-                                                            scopeLabels[
-                                                                assignment
-                                                                    .scopeType
-                                                            ]
-                                                        }
+                                                        {scopeLabels[assignment.scopeType]}
                                                     </Typography>
-                                                                                                        {assignment.scopeTargetId && (
+                                                    {assignment.scopeTargetId && (
                                                         <Box>
                                                             <Typography variant="body2">
                                                                 {getScopeTargetOption(
@@ -637,10 +552,12 @@ export function AuthorizationManagementPage() {
                                                                     color="text.secondary"
                                                                     variant="caption"
                                                                 >
-                                                                    {getScopeTargetOption(
-                                                                        assignment,
-                                                                        assignmentReferenceDataQuery.data,
-                                                                    )?.description}
+                                                                    {
+                                                                        getScopeTargetOption(
+                                                                            assignment,
+                                                                            assignmentReferenceDataQuery.data,
+                                                                        )?.description
+                                                                    }
                                                                 </Typography>
                                                             )}
                                                         </Box>
@@ -649,14 +566,12 @@ export function AuthorizationManagementPage() {
                                                 <TableCell>
                                                     <Chip
                                                         color={
-                                                            assignment.status ===
-                                                            'ACTIVE'
+                                                            assignment.status === 'ACTIVE'
                                                                 ? 'success'
                                                                 : 'default'
                                                         }
                                                         label={
-                                                            assignment.status ===
-                                                            'ACTIVE'
+                                                            assignment.status === 'ACTIVE'
                                                                 ? 'Active'
                                                                 : 'Inactive'
                                                         }
@@ -665,24 +580,18 @@ export function AuthorizationManagementPage() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Typography variant="body2">
-                                                        From{' '}
-                                                        {formatDateTime(
-                                                            assignment.validFrom,
-                                                        )}
+                                                        From {formatDateTime(assignment.validFrom)}
                                                     </Typography>
                                                     <Typography
                                                         color="text.secondary"
                                                         variant="caption"
                                                     >
                                                         Until{' '}
-                                                        {formatDateTime(
-                                                            assignment.validUntil,
-                                                        )}
+                                                        {formatDateTime(assignment.validUntil)}
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell align="right">
-                                                    {assignment.status ===
-                                                        'ACTIVE' && (
+                                                    {assignment.status === 'ACTIVE' && (
                                                         <Tooltip title="Deactivate assignment">
                                                             <IconButton
                                                                 aria-label={`Deactivate ${assignment.roleName} assignment`}
@@ -712,11 +621,10 @@ export function AuthorizationManagementPage() {
                                         textAlign: 'center',
                                     }}
                                 >
-                                    <Typography variant="h6">
-                                        No assignments found
-                                    </Typography>
+                                    <Typography variant="h6">No assignments found</Typography>
                                     <Typography color="text.secondary">
-                                        Assign a role to create the first scoped grant for this user.
+                                        Assign a role to create the first scoped grant for this
+                                        user.
                                     </Typography>
                                 </Box>
                             )}
@@ -784,33 +692,25 @@ export function AuthorizationManagementPage() {
                                                             }}
                                                             variant="caption"
                                                         >
-                                                            {
-                                                                permission
-                                                                    .description
-                                                            }
+                                                            {permission.description}
                                                         </Typography>
                                                     )}
                                                 </TableCell>
+                                                <TableCell>{permission.category}</TableCell>
                                                 <TableCell>
-                                                    {permission.category}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {permission.source ===
-                                                    'SYSTEM'
+                                                    {permission.source === 'SYSTEM'
                                                         ? 'System'
                                                         : 'Tenant'}
                                                 </TableCell>
                                                 <TableCell>
                                                     <Chip
                                                         color={
-                                                            permission.status ===
-                                                            'ACTIVE'
+                                                            permission.status === 'ACTIVE'
                                                                 ? 'success'
                                                                 : 'default'
                                                         }
                                                         label={
-                                                            permission.status ===
-                                                            'ACTIVE'
+                                                            permission.status === 'ACTIVE'
                                                                 ? 'Active'
                                                                 : 'Inactive'
                                                         }
@@ -856,8 +756,7 @@ export function AuthorizationManagementPage() {
                 />
             )}
 
-            {assignmentDialogOpen && selectedUserId &&
-                assignmentReferenceDataQuery.data && (
+            {assignmentDialogOpen && selectedUserId && assignmentReferenceDataQuery.data && (
                 <CreateAuthorizationAssignmentDialog
                     onClose={() => {
                         setAssignmentDialogOpen(false)
@@ -867,9 +766,7 @@ export function AuthorizationManagementPage() {
                     tenantId={tenantId}
                     userDisplayName={selectedUserLabel}
                     userId={selectedUserId}
-                    referenceData={
-                        assignmentReferenceDataQuery.data
-                    }
+                    referenceData={assignmentReferenceDataQuery.data}
                 />
             )}
 

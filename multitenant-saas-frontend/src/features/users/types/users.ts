@@ -1,14 +1,6 @@
-import type {
-    TenantRole,
-    UserStatus,
-} from '../../auth/types/auth'
+import type { TenantRole, UserStatus } from '../../auth/types/auth'
 
-export type UserSortField =
-    | 'createdAt'
-    | 'fullName'
-    | 'email'
-    | 'role'
-    | 'status'
+export type UserSortField = 'createdAt' | 'fullName' | 'email' | 'role' | 'status'
 
 export type SortDirection = 'asc' | 'desc'
 

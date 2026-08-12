@@ -1,19 +1,9 @@
 export type OrganizationalUnitType =
-    | 'COMPANY'
-    | 'DIVISION'
-    | 'DEPARTMENT'
-    | 'TEAM'
-    | 'SUBTEAM'
-    | 'BRANCH'
-    | 'CUSTOM'
+    'COMPANY' | 'DIVISION' | 'DEPARTMENT' | 'TEAM' | 'SUBTEAM' | 'BRANCH' | 'CUSTOM'
 
-export type OrganizationalUnitStatus =
-    | 'ACTIVE'
-    | 'INACTIVE'
+export type OrganizationalUnitStatus = 'ACTIVE' | 'INACTIVE'
 
-export type OrganizationAssignmentStatus =
-    | 'ACTIVE'
-    | 'INACTIVE'
+export type OrganizationAssignmentStatus = 'ACTIVE' | 'INACTIVE'
 
 export interface OrganizationalUnit {
     id: string
@@ -27,16 +17,14 @@ export interface OrganizationalUnit {
     updatedAt: string
 }
 
-export interface OrganizationalUnitTree
-    extends Omit<
-        OrganizationalUnit,
-        'createdAt' | 'updatedAt'
-    > {
+export interface OrganizationalUnitTree extends Omit<
+    OrganizationalUnit,
+    'createdAt' | 'updatedAt'
+> {
     children: OrganizationalUnitTree[]
 }
 
-export interface FlatOrganizationalUnit
-    extends OrganizationalUnitTree {
+export interface FlatOrganizationalUnit extends OrganizationalUnitTree {
     depth: number
 }
 

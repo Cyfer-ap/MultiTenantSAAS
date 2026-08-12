@@ -1,10 +1,4 @@
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { publicHttpClient } from '../../../api/httpClient'
 import { passwordResetApi } from './passwordResetApi'
@@ -35,16 +29,12 @@ describe('passwordResetApi', () => {
             .mockResolvedValue(successfulResponse(response))
 
         await expect(
-            passwordResetApi.forgotPassword(
-                'tenant-1',
-                { email: 'grace@example.com' },
-            ),
+            passwordResetApi.forgotPassword('tenant-1', { email: 'grace@example.com' }),
         ).resolves.toEqual(response)
 
-        expect(post).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/auth/forgot-password',
-            { email: 'grace@example.com' },
-        )
+        expect(post).toHaveBeenCalledWith('/api/tenants/tenant-1/auth/forgot-password', {
+            email: 'grace@example.com',
+        })
     })
 
     it('resets a password through the public endpoint', async () => {
@@ -60,13 +50,8 @@ describe('passwordResetApi', () => {
             .spyOn(publicHttpClient, 'post')
             .mockResolvedValue(successfulResponse(response))
 
-        await expect(
-            passwordResetApi.resetPassword(input),
-        ).resolves.toEqual(response)
+        await expect(passwordResetApi.resetPassword(input)).resolves.toEqual(response)
 
-        expect(post).toHaveBeenCalledWith(
-            '/api/auth/reset-password',
-            input,
-        )
+        expect(post).toHaveBeenCalledWith('/api/auth/reset-password', input)
     })
 })

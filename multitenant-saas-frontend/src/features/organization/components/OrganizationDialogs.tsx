@@ -45,24 +45,18 @@ const unitTypes: OrganizationalUnitType[] = [
     'CUSTOM',
 ]
 
-const unitTypeLabels:
-    Record<OrganizationalUnitType, string> = {
-        COMPANY: 'Company',
-        DIVISION: 'Division',
-        DEPARTMENT: 'Department',
-        TEAM: 'Team',
-        SUBTEAM: 'Subteam',
-        BRANCH: 'Branch',
-        CUSTOM: 'Custom',
-    }
+const unitTypeLabels: Record<OrganizationalUnitType, string> = {
+    COMPANY: 'Company',
+    DIVISION: 'Division',
+    DEPARTMENT: 'Department',
+    TEAM: 'Team',
+    SUBTEAM: 'Subteam',
+    BRANCH: 'Branch',
+    CUSTOM: 'Custom',
+}
 
-function getErrorMessage(
-    error: unknown,
-    fallback: string,
-): string {
-    return error instanceof Error
-        ? error.message
-        : fallback
+function getErrorMessage(error: unknown, fallback: string): string {
+    return error instanceof Error ? error.message : fallback
 }
 
 interface UnitEditorDialogProps {
@@ -82,48 +76,24 @@ export function UnitEditorDialog({
     onClose,
     onSuccess,
 }: UnitEditorDialogProps) {
-    const [name, setName] = useState(
-        mode === 'edit' && unit
-            ? unit.name
-            : '',
+    const [name, setName] = useState(mode === 'edit' && unit ? unit.name : '')
+    const [code, setCode] = useState(mode === 'edit' && unit ? (unit.code ?? '') : '')
+    const [type, setType] = useState<OrganizationalUnitType>(
+        mode === 'edit' && unit ? unit.type : 'TEAM',
     )
-    const [code, setCode] = useState(
-        mode === 'edit' && unit
-            ? unit.code ?? ''
-            : '',
-    )
-    const [type, setType] =
-        useState<OrganizationalUnitType>(
-            mode === 'edit' && unit
-                ? unit.type
-                : 'TEAM',
-        )
-    const [validationError, setValidationError] =
-        useState<string | null>(null)
+    const [validationError, setValidationError] = useState<string | null>(null)
 
-    const createMutation =
-        useCreateOrganizationUnit(tenantId)
-    const updateMutation =
-        useUpdateOrganizationUnit(tenantId)
-    const mutation =
-        mode === 'create'
-            ? createMutation
-            : updateMutation
+    const createMutation = useCreateOrganizationUnit(tenantId)
+    const updateMutation = useUpdateOrganizationUnit(tenantId)
+    const mutation = mode === 'create' ? createMutation : updateMutation
 
-    const submit = (
-        event: FormEvent<HTMLFormElement>,
-    ): void => {
+    const submit = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault()
         const normalizedName = name.trim()
-        const normalizedCode =
-            code.trim().length > 0
-                ? code.trim()
-                : null
+        const normalizedCode = code.trim().length > 0 ? code.trim() : null
 
         if (!normalizedName) {
-            setValidationError(
-                'Unit name is required.',
-            )
+            setValidationError('Unit name is required.')
             return
         }
 
@@ -139,9 +109,7 @@ export function UnitEditorDialog({
                 },
                 {
                     onSuccess: () => {
-                        onSuccess(
-                            'Organizational unit created.',
-                        )
+                        onSuccess('Organizational unit created.')
                         onClose()
                     },
                 },
@@ -164,9 +132,7 @@ export function UnitEditorDialog({
             },
             {
                 onSuccess: () => {
-                    onSuccess(
-                        'Organizational unit updated.',
-                    )
+                    onSuccess('Organizational unit updated.')
                     onClose()
                 },
             },
@@ -174,16 +140,9 @@ export function UnitEditorDialog({
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="sm"
-            onClose={onClose}
-            open
-        >
+        <Dialog fullWidth maxWidth="sm" onClose={onClose} open>
             <DialogTitle>
-                {mode === 'create'
-                    ? 'Create organizational unit'
-                    : 'Edit organizational unit'}
+                {mode === 'create' ? 'Create organizational unit' : 'Edit organizational unit'}
             </DialogTitle>
             <DialogContent>
                 <Stack
@@ -193,14 +152,10 @@ export function UnitEditorDialog({
                     spacing={2}
                     sx={{ paddingTop: 1 }}
                 >
-                    {(validationError ||
-                        mutation.isError) && (
+                    {(validationError || mutation.isError) && (
                         <Alert severity="error">
                             {validationError ??
-                                getErrorMessage(
-                                    mutation.error,
-                                    'The unit could not be saved.',
-                                )}
+                                getErrorMessage(mutation.error, 'The unit could not be saved.')}
                         </Alert>
                     )}
 
@@ -223,25 +178,17 @@ export function UnitEditorDialog({
                     />
 
                     <FormControl>
-                        <InputLabel id="organization-unit-type-label">
-                            Unit type
-                        </InputLabel>
+                        <InputLabel id="organization-unit-type-label">Unit type</InputLabel>
                         <Select
                             label="Unit type"
                             labelId="organization-unit-type-label"
                             onChange={(event) => {
-                                setType(
-                                    event.target.value as
-                                        OrganizationalUnitType,
-                                )
+                                setType(event.target.value as OrganizationalUnitType)
                             }}
                             value={type}
                         >
                             {unitTypes.map((value) => (
-                                <MenuItem
-                                    key={value}
-                                    value={value}
-                                >
+                                <MenuItem key={value} value={value}>
                                     {unitTypeLabels[value]}
                                 </MenuItem>
                             ))}
@@ -250,10 +197,7 @@ export function UnitEditorDialog({
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button
-                    disabled={mutation.isPending}
-                    onClick={onClose}
-                >
+                <Button disabled={mutation.isPending} onClick={onClose}>
                     Cancel
                 </Button>
                 <Button
@@ -262,9 +206,7 @@ export function UnitEditorDialog({
                     type="submit"
                     variant="contained"
                 >
-                    {mode === 'create'
-                        ? 'Create unit'
-                        : 'Save unit'}
+                    {mode === 'create' ? 'Create unit' : 'Save unit'}
                 </Button>
             </DialogActions>
         </Dialog>
@@ -288,28 +230,21 @@ export function MoveUnitDialog({
     onClose,
     onSuccess,
 }: MoveUnitDialogProps) {
-    const [parentUnitId, setParentUnitId] =
-        useState(unit.parentUnitId ?? '')
-    const mutation =
-        useMoveOrganizationUnit(tenantId)
+    const [parentUnitId, setParentUnitId] = useState(unit.parentUnitId ?? '')
+    const mutation = useMoveOrganizationUnit(tenantId)
 
-    const submit = (
-        event: FormEvent<HTMLFormElement>,
-    ): void => {
+    const submit = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault()
         mutation.mutate(
             {
                 unitId: unit.id,
                 input: {
-                    parentUnitId:
-                        parentUnitId || null,
+                    parentUnitId: parentUnitId || null,
                 },
             },
             {
                 onSuccess: () => {
-                    onSuccess(
-                        'Organizational unit moved.',
-                    )
+                    onSuccess('Organizational unit moved.')
                     onClose()
                 },
             },
@@ -317,12 +252,7 @@ export function MoveUnitDialog({
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="sm"
-            onClose={onClose}
-            open
-        >
+        <Dialog fullWidth maxWidth="sm" onClose={onClose} open>
             <DialogTitle>Move {unit.name}</DialogTitle>
             <DialogContent>
                 <Stack
@@ -334,54 +264,33 @@ export function MoveUnitDialog({
                 >
                     {mutation.isError && (
                         <Alert severity="error">
-                            {getErrorMessage(
-                                mutation.error,
-                                'The unit could not be moved.',
-                            )}
+                            {getErrorMessage(mutation.error, 'The unit could not be moved.')}
                         </Alert>
                     )}
 
                     <FormControl>
-                        <InputLabel id="organization-parent-label">
-                            New parent
-                        </InputLabel>
+                        <InputLabel id="organization-parent-label">New parent</InputLabel>
                         <Select
                             label="New parent"
                             labelId="organization-parent-label"
                             onChange={(event) => {
-                                setParentUnitId(
-                                    event.target.value,
-                                )
+                                setParentUnitId(event.target.value)
                             }}
                             value={parentUnitId}
                         >
-                            {allowRoot && (
-                                <MenuItem value="">
-                                    Root level
+                            {allowRoot && <MenuItem value="">Root level</MenuItem>}
+                            {parentOptions.map((option) => (
+                                <MenuItem key={option.id} value={option.id}>
+                                    {'— '.repeat(option.depth)}
+                                    {option.name}
                                 </MenuItem>
-                            )}
-                            {parentOptions.map(
-                                (option) => (
-                                    <MenuItem
-                                        key={option.id}
-                                        value={option.id}
-                                    >
-                                        {'— '.repeat(
-                                            option.depth,
-                                        )}
-                                        {option.name}
-                                    </MenuItem>
-                                ),
-                            )}
+                            ))}
                         </Select>
                     </FormControl>
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button
-                    disabled={mutation.isPending}
-                    onClick={onClose}
-                >
+                <Button disabled={mutation.isPending} onClick={onClose}>
                     Cancel
                 </Button>
                 <Button
@@ -404,22 +313,11 @@ interface UnitStatusDialogProps {
     onSuccess: (message: string) => void
 }
 
-export function UnitStatusDialog({
-    tenantId,
-    unit,
-    onClose,
-    onSuccess,
-}: UnitStatusDialogProps) {
-    const [status, setStatus] =
-        useState<OrganizationalUnitStatus>(
-            unit.status,
-        )
-    const mutation =
-        useUpdateOrganizationUnitStatus(tenantId)
+export function UnitStatusDialog({ tenantId, unit, onClose, onSuccess }: UnitStatusDialogProps) {
+    const [status, setStatus] = useState<OrganizationalUnitStatus>(unit.status)
+    const mutation = useUpdateOrganizationUnitStatus(tenantId)
 
-    const submit = (
-        event: FormEvent<HTMLFormElement>,
-    ): void => {
+    const submit = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault()
         mutation.mutate(
             {
@@ -428,9 +326,7 @@ export function UnitStatusDialog({
             },
             {
                 onSuccess: () => {
-                    onSuccess(
-                        'Organizational unit status updated.',
-                    )
+                    onSuccess('Organizational unit status updated.')
                     onClose()
                 },
             },
@@ -439,9 +335,7 @@ export function UnitStatusDialog({
 
     return (
         <Dialog onClose={onClose} open>
-            <DialogTitle>
-                Change unit status
-            </DialogTitle>
+            <DialogTitle>Change unit status</DialogTitle>
             <DialogContent>
                 <Stack
                     component="form"
@@ -455,42 +349,27 @@ export function UnitStatusDialog({
                 >
                     {mutation.isError && (
                         <Alert severity="error">
-                            {getErrorMessage(
-                                mutation.error,
-                                'The status could not be updated.',
-                            )}
+                            {getErrorMessage(mutation.error, 'The status could not be updated.')}
                         </Alert>
                     )}
                     <FormControl>
-                        <InputLabel id="organization-status-label">
-                            Status
-                        </InputLabel>
+                        <InputLabel id="organization-status-label">Status</InputLabel>
                         <Select
                             label="Status"
                             labelId="organization-status-label"
                             onChange={(event) => {
-                                setStatus(
-                                    event.target.value as
-                                        OrganizationalUnitStatus,
-                                )
+                                setStatus(event.target.value as OrganizationalUnitStatus)
                             }}
                             value={status}
                         >
-                            <MenuItem value="ACTIVE">
-                                Active
-                            </MenuItem>
-                            <MenuItem value="INACTIVE">
-                                Inactive
-                            </MenuItem>
+                            <MenuItem value="ACTIVE">Active</MenuItem>
+                            <MenuItem value="INACTIVE">Inactive</MenuItem>
                         </Select>
                     </FormControl>
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button
-                    disabled={mutation.isPending}
-                    onClick={onClose}
-                >
+                <Button disabled={mutation.isPending} onClick={onClose}>
                     Cancel
                 </Button>
                 <Button
@@ -513,9 +392,7 @@ function toIsoOrNull(value: string): string | null {
 
     const date = new Date(value)
 
-    return Number.isNaN(date.getTime())
-        ? null
-        : date.toISOString()
+    return Number.isNaN(date.getTime()) ? null : date.toISOString()
 }
 
 interface CreateAssignmentDialogProps {
@@ -535,56 +412,28 @@ export function CreateAssignmentDialog({
     onClose,
     onSuccess,
 }: CreateAssignmentDialogProps) {
-    const [selectedUser, setSelectedUser] =
-        useState<OrganizationAssignmentUserOption | null>(
-            null,
-        )
-    const [
-        reportsToAssignmentId,
-        setReportsToAssignmentId,
-    ] = useState('')
-    const [positionTitle, setPositionTitle] =
-        useState('')
-    const [primaryAssignment, setPrimaryAssignment] =
-        useState(false)
+    const [selectedUser, setSelectedUser] = useState<OrganizationAssignmentUserOption | null>(null)
+    const [reportsToAssignmentId, setReportsToAssignmentId] = useState('')
+    const [positionTitle, setPositionTitle] = useState('')
+    const [primaryAssignment, setPrimaryAssignment] = useState(false)
     const [validFrom, setValidFrom] = useState('')
     const [validUntil, setValidUntil] = useState('')
-    const [validationError, setValidationError] =
-        useState<string | null>(null)
-    const userOptionsQuery =
-        useOrganizationAssignmentUserOptions(
-            tenantId,
-            unitId,
-        )
-    const mutation =
-        useCreateOrganizationAssignment(
-            tenantId,
-            unitId,
-        )
+    const [validationError, setValidationError] = useState<string | null>(null)
+    const userOptionsQuery = useOrganizationAssignmentUserOptions(tenantId, unitId)
+    const mutation = useCreateOrganizationAssignment(tenantId, unitId)
 
-    const submit = (
-        event: FormEvent<HTMLFormElement>,
-    ): void => {
+    const submit = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault()
         const from = toIsoOrNull(validFrom)
         const until = toIsoOrNull(validUntil)
 
         if (!selectedUser) {
-            setValidationError(
-                'Select a user.',
-            )
+            setValidationError('Select a user.')
             return
         }
 
-        if (
-            from &&
-            until &&
-            new Date(until).getTime() <=
-                new Date(from).getTime()
-        ) {
-            setValidationError(
-                'Valid until must be after valid from.',
-            )
+        if (from && until && new Date(until).getTime() <= new Date(from).getTime()) {
+            setValidationError('Valid until must be after valid from.')
             return
         }
 
@@ -593,19 +442,15 @@ export function CreateAssignmentDialog({
             {
                 userId: selectedUser.id,
                 organizationalUnitId: unitId,
-                reportsToAssignmentId:
-                    reportsToAssignmentId || null,
-                positionTitle:
-                    positionTitle.trim() || null,
+                reportsToAssignmentId: reportsToAssignmentId || null,
+                positionTitle: positionTitle.trim() || null,
                 primaryAssignment,
                 validFrom: from,
                 validUntil: until,
             },
             {
                 onSuccess: () => {
-                    onSuccess(
-                        `User assigned to ${unitName}.`,
-                    )
+                    onSuccess(`User assigned to ${unitName}.`)
                     onClose()
                 },
             },
@@ -613,15 +458,8 @@ export function CreateAssignmentDialog({
     }
 
     return (
-        <Dialog
-            fullWidth
-            maxWidth="sm"
-            onClose={onClose}
-            open
-        >
-            <DialogTitle>
-                Assign user to {unitName}
-            </DialogTitle>
+        <Dialog fullWidth maxWidth="sm" onClose={onClose} open>
+            <DialogTitle>Assign user to {unitName}</DialogTitle>
             <DialogContent>
                 <Stack
                     component="form"
@@ -630,48 +468,34 @@ export function CreateAssignmentDialog({
                     spacing={2}
                     sx={{ paddingTop: 1 }}
                 >
-                    {(validationError ||
-                        userOptionsQuery.isError ||
-                        mutation.isError) && (
+                    {(validationError || userOptionsQuery.isError || mutation.isError) && (
                         <Alert severity="error">
                             {validationError ??
                                 (userOptionsQuery.isError
                                     ? getErrorMessage(
-                                        userOptionsQuery.error,
-                                        'Assignable users could not be loaded.',
-                                    )
+                                          userOptionsQuery.error,
+                                          'Assignable users could not be loaded.',
+                                      )
                                     : getErrorMessage(
-                                        mutation.error,
-                                        'The assignment could not be created.',
-                                    ))}
+                                          mutation.error,
+                                          'The assignment could not be created.',
+                                      ))}
                         </Alert>
                     )}
 
                     <Autocomplete
                         autoHighlight
-                        disabled={
-                            userOptionsQuery.isError ||
-                            mutation.isPending
-                        }
-                        getOptionLabel={(option) =>
-                            `${option.fullName} — ${option.email}`
-                        }
-                        isOptionEqualToValue={(
-                            option,
-                            value,
-                        ) => option.id === value.id}
-                        loading={
-                            userOptionsQuery.isFetching
-                        }
+                        disabled={userOptionsQuery.isError || mutation.isPending}
+                        getOptionLabel={(option) => `${option.fullName} — ${option.email}`}
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
+                        loading={userOptionsQuery.isFetching}
                         loadingText="Loading users..."
                         noOptionsText="No active users found."
                         onChange={(_event, option) => {
                             setSelectedUser(option)
                             setValidationError(null)
                         }}
-                        options={
-                            userOptionsQuery.data ?? []
-                        }
+                        options={userOptionsQuery.data ?? []}
                         renderInput={(params) => (
                             <TextField
                                 {...params}
@@ -686,44 +510,27 @@ export function CreateAssignmentDialog({
                     <TextField
                         label="Position title"
                         onChange={(event) => {
-                            setPositionTitle(
-                                event.target.value,
-                            )
+                            setPositionTitle(event.target.value)
                         }}
                         value={positionTitle}
                     />
 
                     <FormControl>
-                        <InputLabel id="reports-to-assignment-label">
-                            Reports to
-                        </InputLabel>
+                        <InputLabel id="reports-to-assignment-label">Reports to</InputLabel>
                         <Select
                             label="Reports to"
                             labelId="reports-to-assignment-label"
                             onChange={(event) => {
-                                setReportsToAssignmentId(
-                                    event.target.value,
-                                )
+                                setReportsToAssignmentId(event.target.value)
                             }}
                             value={reportsToAssignmentId}
                         >
-                            <MenuItem value="">
-                                No manager
-                            </MenuItem>
+                            <MenuItem value="">No manager</MenuItem>
                             {managerOptions
-                                .filter(
-                                    (assignment) =>
-                                        assignment.status ===
-                                        'ACTIVE',
-                                )
+                                .filter((assignment) => assignment.status === 'ACTIVE')
                                 .map((assignment) => (
-                                    <MenuItem
-                                        key={assignment.id}
-                                        value={assignment.id}
-                                    >
-                                        {
-                                            assignment.userFullName
-                                        }
+                                    <MenuItem key={assignment.id} value={assignment.id}>
+                                        {assignment.userFullName}
                                         {assignment.positionTitle
                                             ? ` — ${assignment.positionTitle}`
                                             : ''}
@@ -737,9 +544,7 @@ export function CreateAssignmentDialog({
                             <Checkbox
                                 checked={primaryAssignment}
                                 onChange={(event) => {
-                                    setPrimaryAssignment(
-                                        event.target.checked,
-                                    )
+                                    setPrimaryAssignment(event.target.checked)
                                 }}
                             />
                         }
@@ -764,9 +569,7 @@ export function CreateAssignmentDialog({
                             inputLabel: { shrink: true },
                         }}
                         onChange={(event) => {
-                            setValidUntil(
-                                event.target.value,
-                            )
+                            setValidUntil(event.target.value)
                         }}
                         type="datetime-local"
                         value={validUntil}
@@ -774,18 +577,11 @@ export function CreateAssignmentDialog({
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button
-                    disabled={mutation.isPending}
-                    onClick={onClose}
-                >
+                <Button disabled={mutation.isPending} onClick={onClose}>
                     Cancel
                 </Button>
                 <Button
-                    disabled={
-                        mutation.isPending ||
-                        userOptionsQuery.isPending ||
-                        !selectedUser
-                    }
+                    disabled={mutation.isPending || userOptionsQuery.isPending || !selectedUser}
                     form="organization-assignment-form"
                     type="submit"
                     variant="contained"
@@ -812,18 +608,12 @@ export function DeactivateAssignmentDialog({
     onClose,
     onSuccess,
 }: DeactivateAssignmentDialogProps) {
-    const mutation =
-        useDeactivateOrganizationAssignment(
-            tenantId,
-            unitId,
-        )
+    const mutation = useDeactivateOrganizationAssignment(tenantId, unitId)
 
     const deactivate = (): void => {
         mutation.mutate(assignment.id, {
             onSuccess: () => {
-                onSuccess(
-                    `${assignment.userFullName}'s assignment was deactivated.`,
-                )
+                onSuccess(`${assignment.userFullName}'s assignment was deactivated.`)
                 onClose()
             },
         })
@@ -831,9 +621,7 @@ export function DeactivateAssignmentDialog({
 
     return (
         <Dialog onClose={onClose} open>
-            <DialogTitle>
-                Deactivate assignment
-            </DialogTitle>
+            <DialogTitle>Deactivate assignment</DialogTitle>
             <DialogContent>
                 <Stack spacing={2}>
                     {mutation.isError && (
@@ -844,19 +632,12 @@ export function DeactivateAssignmentDialog({
                             )}
                         </Alert>
                     )}
-                    Deactivate the organizational
-                    assignment for{' '}
-                    <strong>
-                        {assignment.userFullName}
-                    </strong>
-                    ?
+                    Deactivate the organizational assignment for{' '}
+                    <strong>{assignment.userFullName}</strong>?
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button
-                    disabled={mutation.isPending}
-                    onClick={onClose}
-                >
+                <Button disabled={mutation.isPending} onClick={onClose}>
                     Cancel
                 </Button>
                 <Button

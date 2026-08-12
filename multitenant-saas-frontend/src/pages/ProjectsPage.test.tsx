@@ -1,25 +1,10 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    fireEvent,
-    render,
-    screen,
-    waitFor,
-    within,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
 import { MemoryRouter } from 'react-router'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AuthContext } from '../features/auth/context/AuthContext'
 import type { AuthContextValue } from '../features/auth/context/AuthContext'
@@ -86,15 +71,14 @@ const authContextValue: AuthContextValue = {
     logout: vi.fn(),
 }
 
-const projectManagerAuthorization =
-    createTenantAuthorizationContext({
-        permissionCodes: [
-            authorizationPermissionCodes.PROJECT_READ,
-            authorizationPermissionCodes.PROJECT_CREATE,
-            authorizationPermissionCodes.PROJECT_UPDATE,
-            authorizationPermissionCodes.PROJECT_ARCHIVE,
-        ],
-    })
+const projectManagerAuthorization = createTenantAuthorizationContext({
+    permissionCodes: [
+        authorizationPermissionCodes.PROJECT_READ,
+        authorizationPermissionCodes.PROJECT_CREATE,
+        authorizationPermissionCodes.PROJECT_UPDATE,
+        authorizationPermissionCodes.PROJECT_ARCHIVE,
+    ],
+})
 
 function createTestQueryClient(): QueryClient {
     return new QueryClient({
@@ -108,18 +92,14 @@ function createTestQueryClient(): QueryClient {
 
 function renderProjectsPage(
     contextValue: AuthContextValue = authContextValue,
-    authorizationContext: CurrentAuthorizationContext =
-        projectManagerAuthorization,
+    authorizationContext: CurrentAuthorizationContext = projectManagerAuthorization,
 ) {
     const queryClient = createTestQueryClient()
     const tenantId = contextValue.session?.tenantId ?? ''
     const userId = contextValue.session?.userId ?? ''
 
     queryClient.setQueryData(
-        currentAuthorizationQueryKeys.current(
-            tenantId,
-            userId,
-        ),
+        currentAuthorizationQueryKeys.current(tenantId, userId),
         authorizationContext,
     )
 
@@ -128,9 +108,7 @@ function renderProjectsPage(
             <ThemeProvider theme={appTheme}>
                 <QueryClientProvider client={queryClient}>
                     <MemoryRouter>
-                        <AuthContext.Provider value={contextValue}>
-                            {children}
-                        </AuthContext.Provider>
+                        <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
                     </MemoryRouter>
                 </QueryClientProvider>
             </ThemeProvider>
@@ -148,9 +126,7 @@ describe('ProjectsPage', () => {
     })
 
     it('shows a loading state while projects are pending', () => {
-        vi.spyOn(projectsApi, 'getProjects').mockReturnValue(
-            new Promise(() => undefined),
-        )
+        vi.spyOn(projectsApi, 'getProjects').mockReturnValue(new Promise(() => undefined))
 
         renderProjectsPage()
 
@@ -162,41 +138,24 @@ describe('ProjectsPage', () => {
     })
 
     it('renders projects returned by the API', async () => {
-        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(
-            projectsPage,
-        )
+        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(projectsPage)
 
         renderProjectsPage()
 
-        expect(
-            await screen.findByText('Research workspace'),
-        ).toBeInTheDocument()
-        expect(
-            screen.getByText(
-                'Coordinate the research programme.',
-            ),
-        ).toBeInTheDocument()
-        expect(
-            screen.getAllByText('Ada Admin'),
-        ).toHaveLength(2)
-        expect(
-            screen.getByText('Archived'),
-        ).toBeInTheDocument()
+        expect(await screen.findByText('Research workspace')).toBeInTheDocument()
+        expect(screen.getByText('Coordinate the research programme.')).toBeInTheDocument()
+        expect(screen.getAllByText('Ada Admin')).toHaveLength(2)
+        expect(screen.getByText('Archived')).toBeInTheDocument()
     })
 
     it('submits server-side search and sorting', async () => {
         const user = userEvent.setup()
-        const getProjects = vi
-            .spyOn(projectsApi, 'getProjects')
-            .mockResolvedValue(projectsPage)
+        const getProjects = vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(projectsPage)
 
         renderProjectsPage()
         await screen.findByText('Research workspace')
 
-        await user.type(
-            screen.getByLabelText(/search projects/i),
-            '  research  ',
-        )
+        await user.type(screen.getByLabelText(/search projects/i), '  research  ')
         await user.click(
             screen.getByRole('button', {
                 name: /^search$/i,
@@ -223,18 +182,12 @@ describe('ProjectsPage', () => {
         const user = userEvent.setup()
 
         vi.spyOn(projectsApi, 'getProjects')
-            .mockRejectedValueOnce(
-                new Error('Projects service unavailable.'),
-            )
+            .mockRejectedValueOnce(new Error('Projects service unavailable.'))
             .mockResolvedValueOnce(projectsPage)
 
         renderProjectsPage()
 
-        expect(
-            await screen.findByText(
-                'Projects service unavailable.',
-            ),
-        ).toBeInTheDocument()
+        expect(await screen.findByText('Projects service unavailable.')).toBeInTheDocument()
 
         await user.click(
             screen.getByRole('button', {
@@ -242,15 +195,11 @@ describe('ProjectsPage', () => {
             }),
         )
 
-        expect(
-            await screen.findByText('Research workspace'),
-        ).toBeInTheDocument()
+        expect(await screen.findByText('Research workspace')).toBeInTheDocument()
     })
 
     it('keeps lifecycle controls hidden without V2 permissions', async () => {
-        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(
-            projectsPage,
-        )
+        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(projectsPage)
 
         renderProjectsPage(
             {
@@ -263,9 +212,7 @@ describe('ProjectsPage', () => {
             },
             createTenantAuthorizationContext({
                 userId: 'user-2',
-                permissionCodes: [
-                    authorizationPermissionCodes.PROJECT_READ,
-                ],
+                permissionCodes: [authorizationPermissionCodes.PROJECT_READ],
             }),
         )
 
@@ -284,20 +231,14 @@ describe('ProjectsPage', () => {
     })
 
     it('does not leak a scoped project action to another project', async () => {
-        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(
-            projectsPage,
-        )
+        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(projectsPage)
 
         renderProjectsPage(
             authContextValue,
             createProjectAuthorizationContext({
                 projectId: 'project-1',
-                tenantPermissionCodes: [
-                    authorizationPermissionCodes.PROJECT_READ,
-                ],
-                permissionCodes: [
-                    authorizationPermissionCodes.PROJECT_UPDATE,
-                ],
+                tenantPermissionCodes: [authorizationPermissionCodes.PROJECT_READ],
+                permissionCodes: [authorizationPermissionCodes.PROJECT_UPDATE],
             }),
         )
 
@@ -320,9 +261,7 @@ describe('ProjectsPage', () => {
         const createProject = vi
             .spyOn(projectsApi, 'createProject')
             .mockResolvedValue(tenantProject)
-        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(
-            projectsPage,
-        )
+        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(projectsPage)
 
         renderProjectsPage()
         await screen.findByText('Research workspace')
@@ -336,23 +275,16 @@ describe('ProjectsPage', () => {
             name: /create project/i,
         })
 
-        fireEvent.change(
-            within(dialog).getByLabelText(/project name/i),
-            {
-                target: {
-                    value: '  Research workspace  ',
-                },
+        fireEvent.change(within(dialog).getByLabelText(/project name/i), {
+            target: {
+                value: '  Research workspace  ',
             },
-        )
-        fireEvent.change(
-            within(dialog).getByLabelText(/description/i),
-            {
-                target: {
-                    value:
-                        '  Coordinate the research programme.  ',
-                },
+        })
+        fireEvent.change(within(dialog).getByLabelText(/description/i), {
+            target: {
+                value: '  Coordinate the research programme.  ',
             },
-        )
+        })
         fireEvent.click(
             within(dialog).getByRole('button', {
                 name: /create project/i,
@@ -360,28 +292,20 @@ describe('ProjectsPage', () => {
         )
 
         await waitFor(() => {
-            expect(createProject).toHaveBeenCalledWith(
-                'tenant-1',
-                {
-                    name: 'Research workspace',
-                    description:
-                        'Coordinate the research programme.',
-                },
-            )
+            expect(createProject).toHaveBeenCalledWith('tenant-1', {
+                name: 'Research workspace',
+                description: 'Coordinate the research programme.',
+            })
         })
     })
 
     it('edits a project as a tenant manager', async () => {
         const user = userEvent.setup()
-        const updateProject = vi
-            .spyOn(projectsApi, 'updateProject')
-            .mockResolvedValue({
-                ...tenantProject,
-                name: 'Research platform',
-            })
-        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(
-            projectsPage,
-        )
+        const updateProject = vi.spyOn(projectsApi, 'updateProject').mockResolvedValue({
+            ...tenantProject,
+            name: 'Research platform',
+        })
+        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(projectsPage)
 
         renderProjectsPage({
             ...authContextValue,
@@ -407,9 +331,7 @@ describe('ProjectsPage', () => {
         const dialog = screen.getByRole('dialog', {
             name: /edit project/i,
         })
-        const nameInput = within(dialog).getByLabelText(
-            /project name/i,
-        )
+        const nameInput = within(dialog).getByLabelText(/project name/i)
 
         fireEvent.change(nameInput, {
             target: { value: 'Research platform' },
@@ -421,29 +343,20 @@ describe('ProjectsPage', () => {
         )
 
         await waitFor(() => {
-            expect(updateProject).toHaveBeenCalledWith(
-                'tenant-1',
-                'project-1',
-                {
-                    name: 'Research platform',
-                    description:
-                        'Coordinate the research programme.',
-                },
-            )
+            expect(updateProject).toHaveBeenCalledWith('tenant-1', 'project-1', {
+                name: 'Research platform',
+                description: 'Coordinate the research programme.',
+            })
         })
     })
 
     it('changes a project status', async () => {
         const user = userEvent.setup()
-        const updateStatus = vi
-            .spyOn(projectsApi, 'updateProjectStatus')
-            .mockResolvedValue({
-                ...tenantProject,
-                status: 'ACTIVE',
-            })
-        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(
-            projectsPage,
-        )
+        const updateStatus = vi.spyOn(projectsApi, 'updateProjectStatus').mockResolvedValue({
+            ...tenantProject,
+            status: 'ACTIVE',
+        })
+        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(projectsPage)
 
         renderProjectsPage()
         await screen.findByText('Research workspace')
@@ -461,9 +374,7 @@ describe('ProjectsPage', () => {
         const dialog = screen.getByRole('dialog', {
             name: /change project status/i,
         })
-        await user.click(
-            within(dialog).getByLabelText(/^status$/i),
-        )
+        await user.click(within(dialog).getByLabelText(/^status$/i))
         await user.click(
             screen.getByRole('option', {
                 name: 'Active',
@@ -476,25 +387,17 @@ describe('ProjectsPage', () => {
         )
 
         await waitFor(() => {
-            expect(updateStatus).toHaveBeenCalledWith(
-                'tenant-1',
-                'project-1',
-                { status: 'ACTIVE' },
-            )
+            expect(updateStatus).toHaveBeenCalledWith('tenant-1', 'project-1', { status: 'ACTIVE' })
         })
     })
 
     it('archives a project through confirmation', async () => {
         const user = userEvent.setup()
-        const archiveProject = vi
-            .spyOn(projectsApi, 'archiveProject')
-            .mockResolvedValue({
-                ...tenantProject,
-                status: 'ARCHIVED',
-            })
-        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(
-            projectsPage,
-        )
+        const archiveProject = vi.spyOn(projectsApi, 'archiveProject').mockResolvedValue({
+            ...tenantProject,
+            status: 'ARCHIVED',
+        })
+        vi.spyOn(projectsApi, 'getProjects').mockResolvedValue(projectsPage)
 
         renderProjectsPage()
         await screen.findByText('Research workspace')
@@ -519,10 +422,7 @@ describe('ProjectsPage', () => {
         )
 
         await waitFor(() => {
-            expect(archiveProject).toHaveBeenCalledWith(
-                'tenant-1',
-                'project-1',
-            )
+            expect(archiveProject).toHaveBeenCalledWith('tenant-1', 'project-1')
         })
     })
 })

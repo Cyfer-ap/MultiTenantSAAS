@@ -1,21 +1,9 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    render,
-    screen,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { dashboardApi } from '../features/dashboard/api/dashboardApi'
 import type { TenantDashboardSummary } from '../features/dashboard/types/dashboard'
@@ -64,9 +52,7 @@ function renderDashboard() {
     function Wrapper({ children }: PropsWithChildren) {
         return (
             <ThemeProvider theme={appTheme}>
-                <QueryClientProvider client={queryClient}>
-                    {children}
-                </QueryClientProvider>
+                <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
             </ThemeProvider>
         )
     }
@@ -82,10 +68,7 @@ describe('DashboardPage', () => {
     })
 
     it('shows a loading state while the summary is pending', () => {
-        vi.spyOn(
-            dashboardApi,
-            'getSummary',
-        ).mockReturnValue(new Promise(() => undefined))
+        vi.spyOn(dashboardApi, 'getSummary').mockReturnValue(new Promise(() => undefined))
 
         renderDashboard()
 
@@ -97,10 +80,7 @@ describe('DashboardPage', () => {
     })
 
     it('renders the tenant dashboard metrics', async () => {
-        vi.spyOn(
-            dashboardApi,
-            'getSummary',
-        ).mockResolvedValue(dashboardSummary)
+        vi.spyOn(dashboardApi, 'getSummary').mockResolvedValue(dashboardSummary)
 
         renderDashboard()
 
@@ -110,35 +90,23 @@ describe('DashboardPage', () => {
             }),
         ).toBeInTheDocument()
 
-        expect(
-            screen.getByText('8'),
-        ).toBeInTheDocument()
+        expect(screen.getByText('8')).toBeInTheDocument()
 
-        expect(
-            screen.getByText('25.0%'),
-        ).toBeInTheDocument()
+        expect(screen.getByText('25.0%')).toBeInTheDocument()
 
-        expect(
-            screen.getByText('12 project memberships'),
-        ).toBeInTheDocument()
+        expect(screen.getByText('12 project memberships')).toBeInTheDocument()
     })
 
     it('retries after a dashboard request fails', async () => {
         const user = userEvent.setup()
 
         vi.spyOn(dashboardApi, 'getSummary')
-            .mockRejectedValueOnce(
-                new Error('Dashboard service unavailable.'),
-            )
+            .mockRejectedValueOnce(new Error('Dashboard service unavailable.'))
             .mockResolvedValueOnce(dashboardSummary)
 
         renderDashboard()
 
-        expect(
-            await screen.findByText(
-                'Dashboard service unavailable.',
-            ),
-        ).toBeInTheDocument()
+        expect(await screen.findByText('Dashboard service unavailable.')).toBeInTheDocument()
 
         await user.click(
             screen.getByRole('button', {

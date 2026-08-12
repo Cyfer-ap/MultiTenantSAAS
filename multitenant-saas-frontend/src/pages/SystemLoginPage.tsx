@@ -12,11 +12,7 @@ import {
     Typography,
 } from '@mui/material'
 import { useForm } from 'react-hook-form'
-import {
-    Link as RouterLink,
-    useLocation,
-    useNavigate,
-} from 'react-router'
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router'
 
 import { normalizeApiError } from '../api/apiError'
 import { useSystemAdmin } from '../features/system-admin/hooks/useSystemAdmin'
@@ -33,11 +29,7 @@ function resolveRedirectPath(state: unknown): string {
 
     const { from } = state as SystemLoginRouteState
 
-    if (
-        typeof from === 'string' &&
-        from.startsWith('/system/') &&
-        !from.startsWith('//')
-    ) {
+    if (typeof from === 'string' && from.startsWith('/system/') && !from.startsWith('//')) {
         return from
     }
 
@@ -61,9 +53,7 @@ export function SystemLoginPage() {
         },
     })
 
-    const submit = async (
-        input: SystemAdminLoginInput,
-    ): Promise<void> => {
+    const submit = async (input: SystemAdminLoginInput): Promise<void> => {
         clearErrors('root')
 
         try {
@@ -74,8 +64,7 @@ export function SystemLoginPage() {
             navigate(resolveRedirectPath(location.state), {
                 replace: true,
             })
-        }
-        catch (error: unknown) {
+        } catch (error: unknown) {
             setError('root', {
                 type: 'server',
                 message: normalizeApiError(error).message,
@@ -87,18 +76,14 @@ export function SystemLoginPage() {
         <Box
             sx={{
                 alignItems: 'center',
-                background:
-                    'linear-gradient(145deg, #eef2ff 0%, #f8fafc 48%, #e0f2fe 100%)',
+                background: 'linear-gradient(145deg, #eef2ff 0%, #f8fafc 48%, #e0f2fe 100%)',
                 display: 'flex',
                 minHeight: '100vh',
                 py: 4,
             }}
         >
             <Container maxWidth="xs">
-                <Paper
-                    elevation={8}
-                    sx={{ borderRadius: 4, p: { xs: 3, sm: 4 } }}
-                >
+                <Paper elevation={8} sx={{ borderRadius: 4, p: { xs: 3, sm: 4 } }}>
                     <Stack spacing={3} sx={{ alignItems: 'center' }}>
                         <Avatar
                             sx={{
@@ -114,10 +99,7 @@ export function SystemLoginPage() {
                             <Typography component="h1" variant="h4">
                                 System console
                             </Typography>
-                            <Typography
-                                color="text.secondary"
-                                sx={{ mt: 1 }}
-                            >
+                            <Typography color="text.secondary" sx={{ mt: 1 }}>
                                 Sign in as a platform administrator
                             </Typography>
                         </Box>
@@ -130,9 +112,7 @@ export function SystemLoginPage() {
                         >
                             <Stack spacing={2}>
                                 {errors.root?.message && (
-                                    <Alert severity="error">
-                                        {errors.root.message}
-                                    </Alert>
+                                    <Alert severity="error">{errors.root.message}</Alert>
                                 )}
 
                                 <TextField
@@ -173,9 +153,7 @@ export function SystemLoginPage() {
                                     type="submit"
                                     variant="contained"
                                 >
-                                    {isSubmitting
-                                        ? 'Signing in…'
-                                        : 'Sign in to system console'}
+                                    {isSubmitting ? 'Signing in…' : 'Sign in to system console'}
                                 </Button>
                             </Stack>
                         </Box>

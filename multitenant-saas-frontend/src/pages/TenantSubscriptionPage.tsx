@@ -26,17 +26,9 @@ import type {
     TenantSubscriptionStatus,
 } from '../features/subscriptions/types/subscriptions'
 
-type StatusColor =
-    | 'success'
-    | 'info'
-    | 'warning'
-    | 'error'
-    | 'default'
+type StatusColor = 'success' | 'info' | 'warning' | 'error' | 'default'
 
-function formatMoney(
-    value: number,
-    currency: string,
-): string {
+function formatMoney(value: number, currency: string): string {
     return new Intl.NumberFormat(undefined, {
         style: 'currency',
         currency,
@@ -60,18 +52,11 @@ function formatDate(value: string | null): string {
     }).format(date)
 }
 
-function formatLimit(
-    value: number | null,
-    suffix = '',
-): string {
-    return value === null
-        ? 'Unlimited'
-        : `${value.toLocaleString()}${suffix}`
+function formatLimit(value: number | null, suffix = ''): string {
+    return value === null ? 'Unlimited' : `${value.toLocaleString()}${suffix}`
 }
 
-function statusColor(
-    status: TenantSubscriptionStatus,
-): StatusColor {
+function statusColor(status: TenantSubscriptionStatus): StatusColor {
     if (status === 'ACTIVE') {
         return 'success'
     }
@@ -84,19 +69,14 @@ function statusColor(
         return 'warning'
     }
 
-    if (
-        status === 'CANCELLED' ||
-        status === 'EXPIRED'
-    ) {
+    if (status === 'CANCELLED' || status === 'EXPIRED') {
         return 'error'
     }
 
     return 'default'
 }
 
-function statusMessage(
-    status: TenantSubscriptionStatus,
-): string | null {
+function statusMessage(status: TenantSubscriptionStatus): string | null {
     if (status === 'TRIALING') {
         return 'Your workspace is currently using a trial subscription.'
     }
@@ -116,7 +96,6 @@ function statusMessage(
     return null
 }
 
-
 interface ResourceUsageCardProps {
     title: string
     configuredLimit: number | null
@@ -130,17 +109,15 @@ function ResourceUsageCard({
     entitlement,
     loading,
 }: ResourceUsageCardProps) {
-    const limit = entitlement
-        ? entitlement.limit
-        : configuredLimit
+    const limit = entitlement ? entitlement.limit : configuredLimit
     const unlimited = entitlement?.unlimited ?? limit === null
     const used = entitlement?.used
     const progress =
         used === undefined || unlimited
             ? 0
             : limit === null || limit <= 0
-                ? 100
-                : Math.min(100, (used / limit) * 100)
+              ? 100
+              : Math.min(100, (used / limit) * 100)
 
     let detail = 'Current usage is unavailable.'
 
@@ -162,19 +139,16 @@ function ResourceUsageCard({
         }
     }
 
-    const usageLabel = used === undefined
-        ? formatLimit(limit)
-        : unlimited
-            ? `${used.toLocaleString()} in use`
-            : `${used.toLocaleString()} / ${
-                (limit ?? 0).toLocaleString()
-            }`
+    const usageLabel =
+        used === undefined
+            ? formatLimit(limit)
+            : unlimited
+              ? `${used.toLocaleString()} in use`
+              : `${used.toLocaleString()} / ${(limit ?? 0).toLocaleString()}`
 
     return (
         <Paper sx={{ padding: 3 }} variant="outlined">
-            <Typography variant="h6">
-                {title}
-            </Typography>
+            <Typography variant="h6">{title}</Typography>
             <Typography
                 sx={{
                     fontWeight: 700,
@@ -194,11 +168,7 @@ function ResourceUsageCard({
                 />
             )}
 
-            <Typography
-                color="text.secondary"
-                sx={{ marginTop: 1 }}
-                variant="body2"
-            >
+            <Typography color="text.secondary" sx={{ marginTop: 1 }} variant="body2">
                 {detail}
             </Typography>
         </Paper>
@@ -208,24 +178,14 @@ function ResourceUsageCard({
 export function TenantSubscriptionPage() {
     const { session } = useAuth()
     const tenantId = session?.tenantId ?? ''
-    const subscriptionQuery =
-        useWorkspaceSubscription(tenantId)
-    const entitlementQuery =
-        useWorkspaceSubscriptionEntitlements(
-            tenantId,
-        )
+    const subscriptionQuery = useWorkspaceSubscription(tenantId)
+    const entitlementQuery = useWorkspaceSubscriptionEntitlements(tenantId)
     const noSubscription =
-        subscriptionQuery.error instanceof
-            ApiClientError &&
-        subscriptionQuery.error.status === 404
+        subscriptionQuery.error instanceof ApiClientError && subscriptionQuery.error.status === 404
     const subscription = subscriptionQuery.data
     const entitlements = entitlementQuery.data
-    const refreshing =
-        subscriptionQuery.isFetching ||
-        entitlementQuery.isFetching
-    const lifecycleMessage = subscription
-        ? statusMessage(subscription.status)
-        : null
+    const refreshing = subscriptionQuery.isFetching || entitlementQuery.isFetching
+    const lifecycleMessage = subscription ? statusMessage(subscription.status) : null
 
     return (
         <Box>
@@ -243,41 +203,25 @@ export function TenantSubscriptionPage() {
                 }}
             >
                 <Box>
-                    <Typography
-                        component="h1"
-                        variant="h4"
-                    >
+                    <Typography component="h1" variant="h4">
                         Subscription
                     </Typography>
-                    <Typography
-                        color="text.secondary"
-                        sx={{ marginTop: 0.5 }}
-                    >
-                        Review your workspace plan,
-                        billing period, and configured
-                        limits.
+                    <Typography color="text.secondary" sx={{ marginTop: 0.5 }}>
+                        Review your workspace plan, billing period, and configured limits.
                     </Typography>
                 </Box>
 
                 <Button
                     disabled={refreshing}
                     onClick={() => {
-                        void Promise.all([
-                            subscriptionQuery.refetch(),
-                            entitlementQuery.refetch(),
-                        ])
+                        void Promise.all([subscriptionQuery.refetch(), entitlementQuery.refetch()])
                     }}
                     startIcon={
-                        refreshing
-                            ? (
-                                <CircularProgress
-                                    color="inherit"
-                                    size={16}
-                                />
-                            )
-                            : (
-                                <RefreshRoundedIcon />
-                            )
+                        refreshing ? (
+                            <CircularProgress color="inherit" size={16} />
+                        ) : (
+                            <RefreshRoundedIcon />
+                        )
                     }
                     variant="outlined"
                 >
@@ -295,10 +239,7 @@ export function TenantSubscriptionPage() {
                     variant="outlined"
                 >
                     <CircularProgress />
-                    <Typography
-                        color="text.secondary"
-                        sx={{ marginTop: 2 }}
-                    >
+                    <Typography color="text.secondary" sx={{ marginTop: 2 }}>
                         Loading subscription…
                     </Typography>
                 </Paper>
@@ -313,14 +254,8 @@ export function TenantSubscriptionPage() {
                     }}
                     variant="outlined"
                 >
-                    <PaymentsRoundedIcon
-                        color="disabled"
-                        sx={{ fontSize: 52 }}
-                    />
-                    <Typography
-                        sx={{ marginTop: 1 }}
-                        variant="h6"
-                    >
+                    <PaymentsRoundedIcon color="disabled" sx={{ fontSize: 52 }} />
+                    <Typography sx={{ marginTop: 1 }} variant="h6">
                         No subscription assigned
                     </Typography>
                     <Typography
@@ -331,53 +266,43 @@ export function TenantSubscriptionPage() {
                             maxWidth: 560,
                         }}
                     >
-                        A platform administrator has not
-                        assigned a subscription plan to
-                        this workspace yet.
+                        A platform administrator has not assigned a subscription plan to this
+                        workspace yet.
                     </Typography>
                 </Paper>
             )}
 
-            {subscriptionQuery.isError &&
-                !noSubscription && (
-                    <Alert
-                        action={
-                            <Button
-                                color="inherit"
-                                onClick={() => {
-                                    void subscriptionQuery
-                                        .refetch()
-                                }}
-                            >
-                                Retry
-                            </Button>
-                        }
-                        severity="error"
-                        sx={{ marginTop: 3 }}
-                    >
-                        {subscriptionQuery.error
-                            instanceof Error
-                            ? subscriptionQuery.error
-                                .message
-                            : 'The subscription could not be loaded.'}
-                    </Alert>
-                )}
-
-            {subscription && (
-                <Stack
-                    spacing={2}
+            {subscriptionQuery.isError && !noSubscription && (
+                <Alert
+                    action={
+                        <Button
+                            color="inherit"
+                            onClick={() => {
+                                void subscriptionQuery.refetch()
+                            }}
+                        >
+                            Retry
+                        </Button>
+                    }
+                    severity="error"
                     sx={{ marginTop: 3 }}
                 >
+                    {subscriptionQuery.error instanceof Error
+                        ? subscriptionQuery.error.message
+                        : 'The subscription could not be loaded.'}
+                </Alert>
+            )}
+
+            {subscription && (
+                <Stack spacing={2} sx={{ marginTop: 3 }}>
                     {lifecycleMessage && (
                         <Alert
                             severity={
-                                subscription.status ===
-                                'TRIALING'
+                                subscription.status === 'TRIALING'
                                     ? 'info'
-                                    : subscription.status ===
-                                        'PAST_DUE'
-                                        ? 'warning'
-                                        : 'error'
+                                    : subscription.status === 'PAST_DUE'
+                                      ? 'warning'
+                                      : 'error'
                             }
                         >
                             {lifecycleMessage}
@@ -386,31 +311,19 @@ export function TenantSubscriptionPage() {
 
                     {subscription.cancelAtPeriodEnd && (
                         <Alert severity="warning">
-                            This subscription is scheduled
-                            to end when the current billing
-                            period finishes on{' '}
-                            {formatDate(
-                                subscription
-                                    .currentPeriodEnd,
-                            )}
-                            .
+                            This subscription is scheduled to end when the current billing period
+                            finishes on {formatDate(subscription.currentPeriodEnd)}.
                         </Alert>
                     )}
 
-                    {subscription.plan.status ===
-                        'INACTIVE' && (
+                    {subscription.plan.status === 'INACTIVE' && (
                         <Alert severity="warning">
-                            This plan is no longer offered
-                            to new subscriptions. Your
-                            current subscription details
-                            remain visible.
+                            This plan is no longer offered to new subscriptions. Your current
+                            subscription details remain visible.
                         </Alert>
                     )}
 
-                    <Paper
-                        sx={{ padding: 3 }}
-                        variant="outlined"
-                    >
+                    <Paper sx={{ padding: 3 }} variant="outlined">
                         <Stack
                             direction={{
                                 xs: 'column',
@@ -421,19 +334,12 @@ export function TenantSubscriptionPage() {
                                 alignItems: {
                                     sm: 'flex-start',
                                 },
-                                justifyContent:
-                                    'space-between',
+                                justifyContent: 'space-between',
                             }}
                         >
                             <Box>
-                                <Typography
-                                    component="h2"
-                                    variant="h5"
-                                >
-                                    {
-                                        subscription.plan
-                                            .name
-                                    }
+                                <Typography component="h2" variant="h5">
+                                    {subscription.plan.name}
                                 </Typography>
                                 <Typography
                                     color="text.secondary"
@@ -441,45 +347,29 @@ export function TenantSubscriptionPage() {
                                         marginTop: 0.5,
                                     }}
                                 >
-                                    {
-                                        subscription.plan
-                                            .code
-                                    }
+                                    {subscription.plan.code}
                                 </Typography>
-                                {subscription.plan
-                                    .description && (
+                                {subscription.plan.description && (
                                     <Typography
                                         sx={{
                                             marginTop: 1.5,
                                             maxWidth: 720,
                                         }}
                                     >
-                                        {
-                                            subscription
-                                                .plan
-                                                .description
-                                        }
+                                        {subscription.plan.description}
                                     </Typography>
                                 )}
                             </Box>
 
-                            <Stack
-                                direction="row"
-                                spacing={1}
-                            >
+                            <Stack direction="row" spacing={1}>
                                 <Chip
-                                    color={statusColor(
-                                        subscription.status,
-                                    )}
-                                    label={subscription.status
-                                        .replaceAll('_', ' ')}
+                                    color={statusColor(subscription.status)}
+                                    label={subscription.status.replaceAll('_', ' ')}
                                     variant="outlined"
                                 />
                                 <Chip
                                     label={
-                                        subscription.plan
-                                            .billingInterval ===
-                                        'MONTHLY'
+                                        subscription.plan.billingInterval === 'MONTHLY'
                                             ? 'Monthly'
                                             : 'Yearly'
                                     }
@@ -495,26 +385,12 @@ export function TenantSubscriptionPage() {
                             }}
                         />
 
-                        <Typography
-                            sx={{ fontWeight: 700 }}
-                            variant="h5"
-                        >
-                            {formatMoney(
-                                subscription.plan.price,
-                                subscription.plan.currency,
-                            )}
-                            <Typography
-                                color="text.secondary"
-                                component="span"
-                                variant="body1"
-                            >
+                        <Typography sx={{ fontWeight: 700 }} variant="h5">
+                            {formatMoney(subscription.plan.price, subscription.plan.currency)}
+                            <Typography color="text.secondary" component="span" variant="body1">
                                 {' '}
                                 /{' '}
-                                {subscription.plan
-                                    .billingInterval ===
-                                'MONTHLY'
-                                    ? 'month'
-                                    : 'year'}
+                                {subscription.plan.billingInterval === 'MONTHLY' ? 'month' : 'year'}
                             </Typography>
                         </Typography>
                     </Paper>
@@ -530,10 +406,7 @@ export function TenantSubscriptionPage() {
                             },
                         }}
                     >
-                        <Paper
-                            sx={{ padding: 3 }}
-                            variant="outlined"
-                        >
+                        <Paper sx={{ padding: 3 }} variant="outlined">
                             <Stack
                                 direction="row"
                                 spacing={1}
@@ -541,12 +414,8 @@ export function TenantSubscriptionPage() {
                                     alignItems: 'center',
                                 }}
                             >
-                                <CalendarMonthRoundedIcon
-                                    color="primary"
-                                />
-                                <Typography variant="h6">
-                                    Current period
-                                </Typography>
+                                <CalendarMonthRoundedIcon color="primary" />
+                                <Typography variant="h6">Current period</Typography>
                             </Stack>
                             <Typography
                                 color="text.secondary"
@@ -555,12 +424,7 @@ export function TenantSubscriptionPage() {
                             >
                                 Starts
                             </Typography>
-                            <Typography>
-                                {formatDate(
-                                    subscription
-                                        .currentPeriodStart,
-                                )}
-                            </Typography>
+                            <Typography>{formatDate(subscription.currentPeriodStart)}</Typography>
                             <Typography
                                 color="text.secondary"
                                 sx={{ marginTop: 1.5 }}
@@ -568,12 +432,7 @@ export function TenantSubscriptionPage() {
                             >
                                 Ends
                             </Typography>
-                            <Typography>
-                                {formatDate(
-                                    subscription
-                                        .currentPeriodEnd,
-                                )}
-                            </Typography>
+                            <Typography>{formatDate(subscription.currentPeriodEnd)}</Typography>
                             {subscription.trialEndsAt && (
                                 <>
                                     <Typography
@@ -585,38 +444,26 @@ export function TenantSubscriptionPage() {
                                     >
                                         Trial ends
                                     </Typography>
-                                    <Typography>
-                                        {formatDate(
-                                            subscription
-                                                .trialEndsAt,
-                                        )}
-                                    </Typography>
+                                    <Typography>{formatDate(subscription.trialEndsAt)}</Typography>
                                 </>
                             )}
                         </Paper>
 
                         <ResourceUsageCard
-                            configuredLimit={
-                                subscription.plan.maxUsers
-                            }
+                            configuredLimit={subscription.plan.maxUsers}
                             entitlement={entitlements?.users}
                             loading={entitlementQuery.isPending}
                             title="Active users"
                         />
 
                         <ResourceUsageCard
-                            configuredLimit={
-                                subscription.plan.maxProjects
-                            }
+                            configuredLimit={subscription.plan.maxProjects}
                             entitlement={entitlements?.projects}
                             loading={entitlementQuery.isPending}
                             title="Projects"
                         />
 
-                        <Paper
-                            sx={{ padding: 3 }}
-                            variant="outlined"
-                        >
+                        <Paper sx={{ padding: 3 }} variant="outlined">
                             <Stack
                                 direction="row"
                                 spacing={1}
@@ -624,12 +471,8 @@ export function TenantSubscriptionPage() {
                                     alignItems: 'center',
                                 }}
                             >
-                                <StorageRoundedIcon
-                                    color="primary"
-                                />
-                                <Typography variant="h6">
-                                    Storage
-                                </Typography>
+                                <StorageRoundedIcon color="primary" />
+                                <Typography variant="h6">Storage</Typography>
                             </Stack>
                             <Typography
                                 sx={{
@@ -638,28 +481,20 @@ export function TenantSubscriptionPage() {
                                 }}
                                 variant="h5"
                             >
-                                {formatLimit(
-                                    subscription.plan
-                                        .maxStorageMb,
-                                    ' MB',
-                                )}
+                                {formatLimit(subscription.plan.maxStorageMb, ' MB')}
                             </Typography>
                             <Typography
                                 color="text.secondary"
                                 sx={{ marginTop: 1 }}
                                 variant="body2"
                             >
-                                Configured plan capacity.
-                                Usage tracking will be added
-                                with the storage module.
+                                Configured plan capacity. Usage tracking will be added with the
+                                storage module.
                             </Typography>
                         </Paper>
                     </Box>
 
-                    <Paper
-                        sx={{ padding: 3 }}
-                        variant="outlined"
-                    >
+                    <Paper sx={{ padding: 3 }} variant="outlined">
                         <Stack
                             direction={{
                                 xs: 'column',
@@ -667,51 +502,26 @@ export function TenantSubscriptionPage() {
                             }}
                             spacing={2}
                             sx={{
-                                justifyContent:
-                                    'space-between',
+                                justifyContent: 'space-between',
                             }}
                         >
                             <Box>
-                                <Typography
-                                    color="text.secondary"
-                                    variant="body2"
-                                >
+                                <Typography color="text.secondary" variant="body2">
                                     Subscription started
                                 </Typography>
-                                <Typography>
-                                    {formatDate(
-                                        subscription
-                                            .startedAt,
-                                    )}
-                                </Typography>
+                                <Typography>{formatDate(subscription.startedAt)}</Typography>
                             </Box>
                             <Box>
-                                <Typography
-                                    color="text.secondary"
-                                    variant="body2"
-                                >
+                                <Typography color="text.secondary" variant="body2">
                                     Cancellation recorded
                                 </Typography>
-                                <Typography>
-                                    {formatDate(
-                                        subscription
-                                            .cancelledAt,
-                                    )}
-                                </Typography>
+                                <Typography>{formatDate(subscription.cancelledAt)}</Typography>
                             </Box>
                             <Box>
-                                <Typography
-                                    color="text.secondary"
-                                    variant="body2"
-                                >
+                                <Typography color="text.secondary" variant="body2">
                                     Last updated
                                 </Typography>
-                                <Typography>
-                                    {formatDate(
-                                        subscription
-                                            .updatedAt,
-                                    )}
-                                </Typography>
+                                <Typography>{formatDate(subscription.updatedAt)}</Typography>
                             </Box>
                         </Stack>
                     </Paper>

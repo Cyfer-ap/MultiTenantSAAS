@@ -1,21 +1,9 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    render,
-    screen,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { auditLogsApi } from '../features/audit-logs/api/auditLogsApi'
 import type { TenantAuditLog } from '../features/audit-logs/types/auditLogs'
@@ -85,9 +73,7 @@ function renderAuditLogsPage() {
         return (
             <ThemeProvider theme={appTheme}>
                 <QueryClientProvider client={queryClient}>
-                    <AuthContext.Provider value={authContextValue}>
-                        {children}
-                    </AuthContext.Provider>
+                    <AuthContext.Provider value={authContextValue}>{children}</AuthContext.Provider>
                 </QueryClientProvider>
             </ThemeProvider>
         )
@@ -104,10 +90,7 @@ describe('AuditLogsPage', () => {
     })
 
     it('shows a loading state while audit logs are pending', () => {
-        vi.spyOn(
-            auditLogsApi,
-            'getAuditLogs',
-        ).mockReturnValue(new Promise(() => undefined))
+        vi.spyOn(auditLogsApi, 'getAuditLogs').mockReturnValue(new Promise(() => undefined))
 
         renderAuditLogsPage()
 
@@ -119,37 +102,20 @@ describe('AuditLogsPage', () => {
     })
 
     it('renders tenant audit events', async () => {
-        vi.spyOn(
-            auditLogsApi,
-            'getAuditLogs',
-        ).mockResolvedValue(auditLogsPage)
+        vi.spyOn(auditLogsApi, 'getAuditLogs').mockResolvedValue(auditLogsPage)
 
         renderAuditLogsPage()
 
-        expect(
-            await screen.findByText('User role updated'),
-        ).toBeInTheDocument()
-        expect(
-            screen.getByText(
-                'User role updated from User to Manager.',
-            ),
-        ).toBeInTheDocument()
-        expect(
-            screen.getByText('ada@example.com'),
-        ).toBeInTheDocument()
-        expect(
-            screen.getByText('grace@example.com'),
-        ).toBeInTheDocument()
-        expect(
-            screen.getByText('Successful'),
-        ).toBeInTheDocument()
+        expect(await screen.findByText('User role updated')).toBeInTheDocument()
+        expect(screen.getByText('User role updated from User to Manager.')).toBeInTheDocument()
+        expect(screen.getByText('ada@example.com')).toBeInTheDocument()
+        expect(screen.getByText('grace@example.com')).toBeInTheDocument()
+        expect(screen.getByText('Successful')).toBeInTheDocument()
     })
 
     it('submits action, outcome, and sorting parameters', async () => {
         const user = userEvent.setup()
-        const getAuditLogs = vi
-            .spyOn(auditLogsApi, 'getAuditLogs')
-            .mockResolvedValue(auditLogsPage)
+        const getAuditLogs = vi.spyOn(auditLogsApi, 'getAuditLogs').mockResolvedValue(auditLogsPage)
 
         renderAuditLogsPage()
         await screen.findByText('User role updated')
@@ -187,18 +153,12 @@ describe('AuditLogsPage', () => {
         const user = userEvent.setup()
 
         vi.spyOn(auditLogsApi, 'getAuditLogs')
-            .mockRejectedValueOnce(
-                new Error('Audit service unavailable.'),
-            )
+            .mockRejectedValueOnce(new Error('Audit service unavailable.'))
             .mockResolvedValueOnce(auditLogsPage)
 
         renderAuditLogsPage()
 
-        expect(
-            await screen.findByText(
-                'Audit service unavailable.',
-            ),
-        ).toBeInTheDocument()
+        expect(await screen.findByText('Audit service unavailable.')).toBeInTheDocument()
 
         await user.click(
             screen.getByRole('button', {
@@ -206,8 +166,6 @@ describe('AuditLogsPage', () => {
             }),
         )
 
-        expect(
-            await screen.findByText('User role updated'),
-        ).toBeInTheDocument()
+        expect(await screen.findByText('User role updated')).toBeInTheDocument()
     })
 })

@@ -36,15 +36,9 @@ import {
     TextField,
     Typography,
 } from '@mui/material'
-import type {
-    FormEvent,
-    MouseEvent,
-} from 'react'
+import type { FormEvent, MouseEvent } from 'react'
 import { useState } from 'react'
-import {
-    Link,
-    useParams,
-} from 'react-router'
+import { Link, useParams } from 'react-router'
 
 import { useAuth } from '../features/auth/hooks/useAuth'
 import { hasProjectPermission } from '../features/authorization/access/authorizationAccess'
@@ -78,10 +72,7 @@ const projectStatusLabels: Record<ProjectStatus, string> = {
     ARCHIVED: 'Archived',
 }
 
-const projectRoleLabels: Record<
-    ProjectMemberRole,
-    string
-> = {
+const projectRoleLabels: Record<ProjectMemberRole, string> = {
     PROJECT_LEAD: 'Project lead',
     MEMBER: 'Member',
 }
@@ -104,10 +95,7 @@ function formatDate(value: string): string {
     }).format(date)
 }
 
-function getErrorMessage(
-    error: unknown,
-    fallback: string,
-): string {
+function getErrorMessage(error: unknown, fallback: string): string {
     return error instanceof Error ? error.message : fallback
 }
 
@@ -115,12 +103,7 @@ function MemberTableSkeleton() {
     return (
         <Box aria-label="Loading project members" role="status">
             {[0, 1, 2, 3].map((row) => (
-                <Stack
-                    direction="row"
-                    key={row}
-                    spacing={2}
-                    sx={{ padding: 2 }}
-                >
+                <Stack direction="row" key={row} spacing={2} sx={{ padding: 2 }}>
                     <Skeleton width="28%" />
                     <Skeleton width="17%" />
                     <Skeleton width="15%" />
@@ -139,20 +122,13 @@ export function ProjectDetailsPage() {
     const [searchDraft, setSearchDraft] = useState('')
     const [search, setSearch] = useState('')
     const [role, setRole] = useState<RoleFilter>('ALL')
-    const [sortBy, setSortBy] =
-        useState<ProjectMemberSortField>('assignedAt')
-    const [sortDir, setSortDir] =
-        useState<SortDirection>('asc')
-    const [addDialogOpen, setAddDialogOpen] =
-        useState(false)
-    const [menuAnchor, setMenuAnchor] =
-        useState<HTMLElement | null>(null)
-    const [selectedMember, setSelectedMember] =
-        useState<ProjectMember | null>(null)
-    const [activeDialog, setActiveDialog] =
-        useState<MemberDialog>(null)
-    const [feedback, setFeedback] =
-        useState<string | null>(null)
+    const [sortBy, setSortBy] = useState<ProjectMemberSortField>('assignedAt')
+    const [sortDir, setSortDir] = useState<SortDirection>('asc')
+    const [addDialogOpen, setAddDialogOpen] = useState(false)
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
+    const [selectedMember, setSelectedMember] = useState<ProjectMember | null>(null)
+    const [activeDialog, setActiveDialog] = useState<MemberDialog>(null)
+    const [feedback, setFeedback] = useState<string | null>(null)
 
     const tenantId = session?.tenantId ?? ''
     const authorizationQuery = useCurrentAuthorization()
@@ -173,10 +149,7 @@ export function ProjectDetailsPage() {
         projectId,
     )
 
-    const projectQuery = useProjectDetails(
-        tenantId,
-        projectId,
-    )
+    const projectQuery = useProjectDetails(tenantId, projectId)
 
     const queryParams: ProjectMembersQueryParams = {
         page,
@@ -187,25 +160,15 @@ export function ProjectDetailsPage() {
         ...(search ? { search } : {}),
     }
 
-    const membersQuery = useProjectMembers(
-        tenantId,
-        projectId,
-        queryParams,
-        projectQuery.isSuccess,
-    )
+    const membersQuery = useProjectMembers(tenantId, projectId, queryParams, projectQuery.isSuccess)
 
-    const projectArchived =
-        projectQuery.data?.status === 'ARCHIVED'
+    const projectArchived = projectQuery.data?.status === 'ARCHIVED'
     const hasFilters = search.length > 0 || role !== 'ALL'
     const currentMemberIds = new Set(
-        membersQuery.data?.content.map(
-            (member) => member.userId,
-        ) ?? [],
+        membersQuery.data?.content.map((member) => member.userId) ?? [],
     )
 
-    const submitSearch = (
-        event: FormEvent<HTMLFormElement>,
-    ): void => {
+    const submitSearch = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault()
         setPage(0)
         setSearch(searchDraft.trim())
@@ -218,15 +181,11 @@ export function ProjectDetailsPage() {
         setRole('ALL')
     }
 
-    const changeSort = (
-        nextSortBy: ProjectMemberSortField,
-    ): void => {
+    const changeSort = (nextSortBy: ProjectMemberSortField): void => {
         setPage(0)
 
         if (sortBy === nextSortBy) {
-            setSortDir((current) =>
-                current === 'asc' ? 'desc' : 'asc',
-            )
+            setSortDir((current) => (current === 'asc' ? 'desc' : 'asc'))
             return
         }
 
@@ -234,10 +193,7 @@ export function ProjectDetailsPage() {
         setSortDir('asc')
     }
 
-    const openMemberMenu = (
-        event: MouseEvent<HTMLButtonElement>,
-        member: ProjectMember,
-    ): void => {
+    const openMemberMenu = (event: MouseEvent<HTMLButtonElement>, member: ProjectMember): void => {
         setSelectedMember(member)
         setMenuAnchor(event.currentTarget)
     }
@@ -246,9 +202,7 @@ export function ProjectDetailsPage() {
         setMenuAnchor(null)
     }
 
-    const openMemberDialog = (
-        dialog: Exclude<MemberDialog, null>,
-    ): void => {
+    const openMemberDialog = (dialog: Exclude<MemberDialog, null>): void => {
         setActiveDialog(dialog)
         closeMemberMenu()
     }
@@ -260,11 +214,7 @@ export function ProjectDetailsPage() {
 
     if (projectQuery.isPending) {
         return (
-            <Stack
-                aria-label="Loading project details"
-                role="status"
-                spacing={2}
-            >
+            <Stack aria-label="Loading project details" role="status" spacing={2}>
                 <Skeleton height={48} width="45%" />
                 <Skeleton height={150} variant="rounded" />
                 <Skeleton height={320} variant="rounded" />
@@ -297,10 +247,7 @@ export function ProjectDetailsPage() {
                     }
                     severity="error"
                 >
-                    {getErrorMessage(
-                        projectQuery.error,
-                        'The project could not be loaded.',
-                    )}
+                    {getErrorMessage(projectQuery.error, 'The project could not be loaded.')}
                 </Alert>
             </Stack>
         )
@@ -310,18 +257,11 @@ export function ProjectDetailsPage() {
 
     return (
         <Box>
-            <Button
-                component={Link}
-                startIcon={<ArrowBackRoundedIcon />}
-                to="/projects"
-            >
+            <Button component={Link} startIcon={<ArrowBackRoundedIcon />} to="/projects">
                 Back to projects
             </Button>
 
-            <Paper
-                variant="outlined"
-                sx={{ marginTop: 1, padding: 3 }}
-            >
+            <Paper variant="outlined" sx={{ marginTop: 1, padding: 3 }}>
                 <Stack
                     direction={{ xs: 'column', sm: 'row' }}
                     spacing={2}
@@ -331,26 +271,17 @@ export function ProjectDetailsPage() {
                     }}
                 >
                     <Box>
-                        <Stack
-                            direction="row"
-                            spacing={1}
-                            sx={{ alignItems: 'center' }}
-                        >
+                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                             <Typography component="h1" variant="h4">
                                 {project.name}
                             </Typography>
                             <Chip
-                                label={
-                                    projectStatusLabels[project.status]
-                                }
+                                label={projectStatusLabels[project.status]}
                                 size="small"
                                 variant="outlined"
                             />
                         </Stack>
-                        <Typography
-                            color="text.secondary"
-                            sx={{ marginTop: 1 }}
-                        >
+                        <Typography color="text.secondary" sx={{ marginTop: 1 }}>
                             {project.description || 'No description'}
                         </Typography>
                     </Box>
@@ -359,9 +290,7 @@ export function ProjectDetailsPage() {
                         <Typography color="text.secondary" variant="caption">
                             Created by
                         </Typography>
-                        <Typography variant="body2">
-                            {project.createdByUserName}
-                        </Typography>
+                        <Typography variant="body2">{project.createdByUserName}</Typography>
                         <Typography color="text.secondary" variant="caption">
                             Updated {formatDate(project.updatedAt)}
                         </Typography>
@@ -371,7 +300,8 @@ export function ProjectDetailsPage() {
 
             {projectArchived && (
                 <Alert severity="info" sx={{ marginTop: 2 }}>
-                    This project is archived. Memberships and tasks remain visible but cannot be changed.
+                    This project is archived. Memberships and tasks remain visible but cannot be
+                    changed.
                 </Alert>
             )}
 
@@ -409,20 +339,14 @@ export function ProjectDetailsPage() {
                     <Button
                         disabled={membersQuery.isFetching}
                         onClick={() => {
-                            void Promise.all([
-                                projectQuery.refetch(),
-                                membersQuery.refetch(),
-                            ])
+                            void Promise.all([projectQuery.refetch(), membersQuery.refetch()])
                         }}
                         startIcon={
-                            membersQuery.isFetching
-                                ? (
-                                    <CircularProgress
-                                        color="inherit"
-                                        size={16}
-                                    />
-                                )
-                                : <RefreshRoundedIcon />
+                            membersQuery.isFetching ? (
+                                <CircularProgress color="inherit" size={16} />
+                            ) : (
+                                <RefreshRoundedIcon />
+                            )
                         }
                         size="small"
                         variant="outlined"
@@ -464,9 +388,7 @@ export function ProjectDetailsPage() {
                     />
 
                     <FormControl size="small" sx={{ minWidth: 170 }}>
-                        <InputLabel id="project-member-role-filter-label">
-                            Project role
-                        </InputLabel>
+                        <InputLabel id="project-member-role-filter-label">Project role</InputLabel>
                         <Select
                             label="Project role"
                             labelId="project-member-role-filter-label"
@@ -477,35 +399,25 @@ export function ProjectDetailsPage() {
                             value={role}
                         >
                             <MenuItem value="ALL">All roles</MenuItem>
-                            {Object.entries(projectRoleLabels).map(
-                                ([value, label]) => (
-                                    <MenuItem key={value} value={value}>
-                                        {label}
-                                    </MenuItem>
-                                ),
-                            )}
+                            {Object.entries(projectRoleLabels).map(([value, label]) => (
+                                <MenuItem key={value} value={value}>
+                                    {label}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
 
                     <Button type="submit" variant="contained">
                         Search
                     </Button>
-                    {hasFilters && (
-                        <Button onClick={clearFilters}>
-                            Clear filters
-                        </Button>
-                    )}
+                    {hasFilters && <Button onClick={clearFilters}>Clear filters</Button>}
                 </Stack>
             </Paper>
 
-            <Paper
-                variant="outlined"
-                sx={{ marginTop: 2, overflow: 'hidden' }}
-            >
-                {membersQuery.isFetching &&
-                    !membersQuery.isPending && (
-                        <LinearProgress aria-label="Updating project members" />
-                    )}
+            <Paper variant="outlined" sx={{ marginTop: 2, overflow: 'hidden' }}>
+                {membersQuery.isFetching && !membersQuery.isPending && (
+                    <LinearProgress aria-label="Updating project members" />
+                )}
 
                 {membersQuery.isPending && <MemberTableSkeleton />}
 
@@ -541,19 +453,11 @@ export function ProjectDetailsPage() {
                                         <TableCell>Member</TableCell>
                                         <TableCell>Tenant access</TableCell>
                                         <TableCell
-                                            sortDirection={
-                                                sortBy === 'role'
-                                                    ? sortDir
-                                                    : false
-                                            }
+                                            sortDirection={sortBy === 'role' ? sortDir : false}
                                         >
                                             <TableSortLabel
                                                 active={sortBy === 'role'}
-                                                direction={
-                                                    sortBy === 'role'
-                                                        ? sortDir
-                                                        : 'asc'
-                                                }
+                                                direction={sortBy === 'role' ? sortDir : 'asc'}
                                                 onClick={() => {
                                                     changeSort('role')
                                                 }}
@@ -564,19 +468,13 @@ export function ProjectDetailsPage() {
                                         <TableCell>Assigned by</TableCell>
                                         <TableCell
                                             sortDirection={
-                                                sortBy === 'assignedAt'
-                                                    ? sortDir
-                                                    : false
+                                                sortBy === 'assignedAt' ? sortDir : false
                                             }
                                         >
                                             <TableSortLabel
-                                                active={
-                                                    sortBy === 'assignedAt'
-                                                }
+                                                active={sortBy === 'assignedAt'}
                                                 direction={
-                                                    sortBy === 'assignedAt'
-                                                        ? sortDir
-                                                        : 'asc'
+                                                    sortBy === 'assignedAt' ? sortDir : 'asc'
                                                 }
                                                 onClick={() => {
                                                     changeSort('assignedAt')
@@ -586,87 +484,88 @@ export function ProjectDetailsPage() {
                                             </TableSortLabel>
                                         </TableCell>
                                         {canManageMembers && (
-                                            <TableCell align="right">
-                                                Actions
-                                            </TableCell>
+                                            <TableCell align="right">Actions</TableCell>
                                         )}
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {membersQuery.data.content.map(
-                                        (member) => (
-                                            <TableRow key={member.membershipId}>
-                                                <TableCell>
-                                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                        {member.fullName}
-                                                    </Typography>
-                                                    <Typography color="text.secondary" variant="caption">
-                                                        {member.email}
-                                                    </Typography>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Typography variant="body2">
-                                                        {tenantRoleLabels[member.tenantRole]}
-                                                    </Typography>
-                                                    <Chip
-                                                        color={
-                                                            member.userStatus === 'ACTIVE'
-                                                                ? 'success'
-                                                                : 'default'
-                                                        }
-                                                        label={member.userStatus.toLowerCase()}
+                                    {membersQuery.data.content.map((member) => (
+                                        <TableRow key={member.membershipId}>
+                                            <TableCell>
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{ fontWeight: 600 }}
+                                                >
+                                                    {member.fullName}
+                                                </Typography>
+                                                <Typography
+                                                    color="text.secondary"
+                                                    variant="caption"
+                                                >
+                                                    {member.email}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2">
+                                                    {tenantRoleLabels[member.tenantRole]}
+                                                </Typography>
+                                                <Chip
+                                                    color={
+                                                        member.userStatus === 'ACTIVE'
+                                                            ? 'success'
+                                                            : 'default'
+                                                    }
+                                                    label={member.userStatus.toLowerCase()}
+                                                    size="small"
+                                                    variant="outlined"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    color={
+                                                        member.projectRole === 'PROJECT_LEAD'
+                                                            ? 'primary'
+                                                            : 'default'
+                                                    }
+                                                    label={projectRoleLabels[member.projectRole]}
+                                                    size="small"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2">
+                                                    {member.assignedByUserName}
+                                                </Typography>
+                                                <Typography
+                                                    color="text.secondary"
+                                                    variant="caption"
+                                                >
+                                                    {member.assignedByUserEmail}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell>{formatDate(member.assignedAt)}</TableCell>
+                                            {canManageMembers && (
+                                                <TableCell align="right">
+                                                    <IconButton
+                                                        aria-label={`Manage ${member.fullName}`}
+                                                        disabled={projectArchived}
+                                                        onClick={(event) => {
+                                                            openMemberMenu(event, member)
+                                                        }}
                                                         size="small"
-                                                        variant="outlined"
-                                                    />
+                                                    >
+                                                        <MoreVertRoundedIcon />
+                                                    </IconButton>
                                                 </TableCell>
-                                                <TableCell>
-                                                    <Chip
-                                                        color={
-                                                            member.projectRole === 'PROJECT_LEAD'
-                                                                ? 'primary'
-                                                                : 'default'
-                                                        }
-                                                        label={projectRoleLabels[member.projectRole]}
-                                                        size="small"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Typography variant="body2">
-                                                        {member.assignedByUserName}
-                                                    </Typography>
-                                                    <Typography color="text.secondary" variant="caption">
-                                                        {member.assignedByUserEmail}
-                                                    </Typography>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {formatDate(member.assignedAt)}
-                                                </TableCell>
-                                                {canManageMembers && (
-                                                    <TableCell align="right">
-                                                        <IconButton
-                                                            aria-label={`Manage ${member.fullName}`}
-                                                            disabled={projectArchived}
-                                                            onClick={(event) => {
-                                                                openMemberMenu(event, member)
-                                                            }}
-                                                            size="small"
-                                                        >
-                                                            <MoreVertRoundedIcon />
-                                                        </IconButton>
-                                                    </TableCell>
-                                                )}
-                                            </TableRow>
-                                        ),
-                                    )}
+                                            )}
+                                        </TableRow>
+                                    ))}
                                 </TableBody>
                             </Table>
                         </TableContainer>
 
                         {membersQuery.data.content.length === 0 && (
                             <Box sx={{ padding: 4, textAlign: 'center' }}>
-                                <Typography variant="h6">
-                                    No project members found
-                                </Typography>
+                                <Typography variant="h6">No project members found</Typography>
                                 <Typography color="text.secondary" variant="body2">
                                     {hasFilters
                                         ? 'Try changing or clearing the current filters.'
@@ -695,12 +594,8 @@ export function ProjectDetailsPage() {
             </Paper>
 
             <ProjectTasksSection
-                canManageTasksByPermission={
-                    canManageTasksByPermission
-                }
-                canReadTasksByPermission={
-                    canReadTasksByPermission
-                }
+                canManageTasksByPermission={canManageTasksByPermission}
+                canReadTasksByPermission={canReadTasksByPermission}
                 onFeedback={setFeedback}
                 projectArchived={projectArchived}
                 projectId={projectId}
@@ -715,17 +610,21 @@ export function ProjectDetailsPage() {
                         onClose={closeMemberMenu}
                         open={Boolean(menuAnchor)}
                     >
-                        <MenuItem onClick={() => {
-                            openMemberDialog('role')
-                        }}>
+                        <MenuItem
+                            onClick={() => {
+                                openMemberDialog('role')
+                            }}
+                        >
                             <ListItemIcon>
                                 <EditOutlinedIcon fontSize="small" />
                             </ListItemIcon>
                             Change project role
                         </MenuItem>
-                        <MenuItem onClick={() => {
-                            openMemberDialog('remove')
-                        }}>
+                        <MenuItem
+                            onClick={() => {
+                                openMemberDialog('remove')
+                            }}
+                        >
                             <ListItemIcon>
                                 <PersonRemoveOutlinedIcon fontSize="small" />
                             </ListItemIcon>

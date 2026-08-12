@@ -15,11 +15,7 @@ import {
     useTheme,
 } from '@mui/material'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
-import {
-    Outlet,
-    useLocation,
-    useNavigate,
-} from 'react-router'
+import { Outlet, useLocation, useNavigate } from 'react-router'
 
 import { UserMenu } from '../features/auth/components/UserMenu'
 import { useAuth } from '../features/auth/hooks/useAuth'
@@ -32,31 +28,22 @@ const drawerWidth = 248
 
 export function AppShell() {
     const { session } = useAuth()
-    const authorization =
-        useCurrentAuthorization()
+    const authorization = useCurrentAuthorization()
     const tenantId = session?.tenantId ?? ''
-    const subscriptionAccessQuery =
-        useWorkspaceSubscriptionAccess(tenantId)
-    const subscriptionAccess =
-        subscriptionAccessQuery.data ?? null
+    const subscriptionAccessQuery = useWorkspaceSubscriptionAccess(tenantId)
+    const subscriptionAccess = subscriptionAccessQuery.data ?? null
 
     const theme = useTheme()
-    const isDesktop = useMediaQuery(
-        theme.breakpoints.up('md'),
-    )
+    const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
 
     const location = useLocation()
     const navigate = useNavigate()
 
-    const [mobileDrawerOpen, setMobileDrawerOpen] =
-        useState(false)
+    const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
 
-    const availableNavigationItems =
-        authorization.data
-            ? getAvailableWorkspaceNavigationItems(
-                authorization.data,
-            )
-            : []
+    const availableNavigationItems = authorization.data
+        ? getAvailableWorkspaceNavigationItems(authorization.data)
+        : []
 
     function navigateTo(path: string) {
         navigate(path)
@@ -67,10 +54,7 @@ export function AppShell() {
     }
 
     function isSelected(path: string) {
-        return (
-            location.pathname === path ||
-            location.pathname.startsWith(`${path}/`)
-        )
+        return location.pathname === path || location.pathname.startsWith(`${path}/`)
     }
 
     const drawerContent = (
@@ -132,8 +116,7 @@ export function AppShell() {
             <AppBar
                 position="fixed"
                 sx={{
-                    zIndex: (currentTheme) =>
-                        currentTheme.zIndex.drawer + 1,
+                    zIndex: (currentTheme) => currentTheme.zIndex.drawer + 1,
                     width: {
                         md: `calc(100% - ${drawerWidth}px)`,
                     },
@@ -239,9 +222,7 @@ export function AppShell() {
                     },
                 }}
             >
-                <WorkspaceSubscriptionAccessProvider
-                    access={subscriptionAccess}
-                >
+                <WorkspaceSubscriptionAccessProvider access={subscriptionAccess}>
                     <Outlet />
                 </WorkspaceSubscriptionAccessProvider>
             </Box>

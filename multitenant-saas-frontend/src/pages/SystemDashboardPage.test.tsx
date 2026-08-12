@@ -1,21 +1,9 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    render,
-    screen,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { systemAdminApi } from '../features/system-admin/api/systemAdminApi'
 import { appTheme } from '../theme/appTheme'
@@ -37,13 +25,19 @@ function renderDashboard() {
         defaultOptions: { queries: { retry: false } },
     })
     function Wrapper({ children }: PropsWithChildren) {
-        return <ThemeProvider theme={appTheme}><QueryClientProvider client={queryClient}>{children}</QueryClientProvider></ThemeProvider>
+        return (
+            <ThemeProvider theme={appTheme}>
+                <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+            </ThemeProvider>
+        )
     }
     return render(<SystemDashboardPage />, { wrapper: Wrapper })
 }
 
 describe('SystemDashboardPage', () => {
-    beforeEach(() => { vi.restoreAllMocks() })
+    beforeEach(() => {
+        vi.restoreAllMocks()
+    })
 
     it('renders global tenant and user metrics', async () => {
         vi.spyOn(systemAdminApi, 'getDashboardSummary').mockResolvedValue(summary)

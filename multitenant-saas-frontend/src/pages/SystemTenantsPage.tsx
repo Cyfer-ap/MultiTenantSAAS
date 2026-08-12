@@ -113,7 +113,7 @@ export function SystemTenantsPage() {
     const changeSort = (nextSortBy: SystemTenantSortField): void => {
         setPage(0)
         if (nextSortBy === sortBy) {
-            setSortDir((current) => current === 'asc' ? 'desc' : 'asc')
+            setSortDir((current) => (current === 'asc' ? 'desc' : 'asc'))
             return
         }
         setSortBy(nextSortBy)
@@ -129,31 +129,70 @@ export function SystemTenantsPage() {
 
     return (
         <Box>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { sm: 'flex-start' }, justifyContent: 'space-between' }}>
+            <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={2}
+                sx={{ alignItems: { sm: 'flex-start' }, justifyContent: 'space-between' }}
+            >
                 <Box>
-                    <Typography component="h1" variant="h4">Tenants</Typography>
+                    <Typography component="h1" variant="h4">
+                        Tenants
+                    </Typography>
                     <Typography color="text.secondary" sx={{ mt: 0.5 }}>
                         Search, onboard, and control tenant access across the platform.
                     </Typography>
                 </Box>
                 <Stack direction="row" spacing={1}>
-                    <Button onClick={() => { setOnboardingOpen(true) }} startIcon={<AddBusinessRoundedIcon />} variant="contained">
+                    <Button
+                        onClick={() => {
+                            setOnboardingOpen(true)
+                        }}
+                        startIcon={<AddBusinessRoundedIcon />}
+                        variant="contained"
+                    >
                         Onboard tenant
                     </Button>
-                    <Button disabled={query.isFetching} onClick={() => { void query.refetch() }} startIcon={query.isFetching ? <CircularProgress color="inherit" size={16} /> : <RefreshRoundedIcon />} variant="outlined">
+                    <Button
+                        disabled={query.isFetching}
+                        onClick={() => {
+                            void query.refetch()
+                        }}
+                        startIcon={
+                            query.isFetching ? (
+                                <CircularProgress color="inherit" size={16} />
+                            ) : (
+                                <RefreshRoundedIcon />
+                            )
+                        }
+                        variant="outlined"
+                    >
                         Refresh
                     </Button>
                 </Stack>
             </Stack>
 
             <Paper component="form" onSubmit={submitSearch} sx={{ mt: 3, p: 2 }} variant="outlined">
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ alignItems: { md: 'center' } }}>
+                <Stack
+                    direction={{ xs: 'column', md: 'row' }}
+                    spacing={2}
+                    sx={{ alignItems: { md: 'center' } }}
+                >
                     <TextField
                         label="Search tenants"
-                        onChange={(event) => { setSearchDraft(event.target.value) }}
+                        onChange={(event) => {
+                            setSearchDraft(event.target.value)
+                        }}
                         placeholder="Workspace name or slug"
                         size="small"
-                        slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> } }}
+                        slotProps={{
+                            input: {
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchRoundedIcon fontSize="small" />
+                                    </InputAdornment>
+                                ),
+                            },
+                        }}
                         sx={{ flexGrow: 1 }}
                         value={searchDraft}
                     />
@@ -162,7 +201,10 @@ export function SystemTenantsPage() {
                         <Select
                             label="Status"
                             labelId="tenant-status-filter-label"
-                            onChange={(event) => { setPage(0); setStatus(event.target.value as StatusFilter) }}
+                            onChange={(event) => {
+                                setPage(0)
+                                setStatus(event.target.value as StatusFilter)
+                            }}
                             value={status}
                         >
                             <MenuItem value="ALL">All statuses</MenuItem>
@@ -171,16 +213,39 @@ export function SystemTenantsPage() {
                             <MenuItem value="SUSPENDED">Suspended</MenuItem>
                         </Select>
                     </FormControl>
-                    <Button type="submit" variant="contained">Search</Button>
-                    <Button disabled={!hasFilters && !searchDraft} onClick={clearFilters} type="button">Clear</Button>
+                    <Button type="submit" variant="contained">
+                        Search
+                    </Button>
+                    <Button
+                        disabled={!hasFilters && !searchDraft}
+                        onClick={clearFilters}
+                        type="button"
+                    >
+                        Clear
+                    </Button>
                 </Stack>
             </Paper>
 
             <Paper sx={{ mt: 2 }} variant="outlined">
                 {query.isLoading && <TenantTableSkeleton />}
                 {query.isError && (
-                    <Alert action={<Button color="inherit" onClick={() => { void query.refetch() }}>Retry</Button>} severity="error" sx={{ m: 2 }}>
-                        {query.error instanceof Error ? query.error.message : 'The tenant directory could not be loaded.'}
+                    <Alert
+                        action={
+                            <Button
+                                color="inherit"
+                                onClick={() => {
+                                    void query.refetch()
+                                }}
+                            >
+                                Retry
+                            </Button>
+                        }
+                        severity="error"
+                        sx={{ m: 2 }}
+                    >
+                        {query.error instanceof Error
+                            ? query.error.message
+                            : 'The tenant directory could not be loaded.'}
                     </Alert>
                 )}
                 {query.data && (
@@ -190,17 +255,35 @@ export function SystemTenantsPage() {
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>
-                                            <TableSortLabel active={sortBy === 'name'} direction={sortBy === 'name' ? sortDir : 'asc'} onClick={() => { changeSort('name') }}>
+                                            <TableSortLabel
+                                                active={sortBy === 'name'}
+                                                direction={sortBy === 'name' ? sortDir : 'asc'}
+                                                onClick={() => {
+                                                    changeSort('name')
+                                                }}
+                                            >
                                                 Tenant
                                             </TableSortLabel>
                                         </TableCell>
                                         <TableCell>
-                                            <TableSortLabel active={sortBy === 'status'} direction={sortBy === 'status' ? sortDir : 'asc'} onClick={() => { changeSort('status') }}>
+                                            <TableSortLabel
+                                                active={sortBy === 'status'}
+                                                direction={sortBy === 'status' ? sortDir : 'asc'}
+                                                onClick={() => {
+                                                    changeSort('status')
+                                                }}
+                                            >
                                                 Status
                                             </TableSortLabel>
                                         </TableCell>
                                         <TableCell>
-                                            <TableSortLabel active={sortBy === 'createdAt'} direction={sortBy === 'createdAt' ? sortDir : 'asc'} onClick={() => { changeSort('createdAt') }}>
+                                            <TableSortLabel
+                                                active={sortBy === 'createdAt'}
+                                                direction={sortBy === 'createdAt' ? sortDir : 'asc'}
+                                                onClick={() => {
+                                                    changeSort('createdAt')
+                                                }}
+                                            >
                                                 Created
                                             </TableSortLabel>
                                         </TableCell>
@@ -212,26 +295,70 @@ export function SystemTenantsPage() {
                                     {query.data.content.map((tenant) => (
                                         <TableRow hover key={tenant.id}>
                                             <TableCell sx={{ minWidth: 280 }}>
-                                                <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-                                                    <Avatar sx={{ bgcolor: 'primary.50', color: 'primary.main', height: 40, width: 40 }}><BusinessRoundedIcon fontSize="small" /></Avatar>
+                                                <Stack
+                                                    direction="row"
+                                                    spacing={1.5}
+                                                    sx={{ alignItems: 'center' }}
+                                                >
+                                                    <Avatar
+                                                        sx={{
+                                                            bgcolor: 'primary.50',
+                                                            color: 'primary.main',
+                                                            height: 40,
+                                                            width: 40,
+                                                        }}
+                                                    >
+                                                        <BusinessRoundedIcon fontSize="small" />
+                                                    </Avatar>
                                                     <Box sx={{ minWidth: 0 }}>
-                                                        <Typography noWrap sx={{ fontWeight: 700 }}>{tenant.name}</Typography>
-                                                        <Typography color="text.secondary" noWrap variant="body2">{tenant.slug}</Typography>
+                                                        <Typography noWrap sx={{ fontWeight: 700 }}>
+                                                            {tenant.name}
+                                                        </Typography>
+                                                        <Typography
+                                                            color="text.secondary"
+                                                            noWrap
+                                                            variant="body2"
+                                                        >
+                                                            {tenant.slug}
+                                                        </Typography>
                                                     </Box>
                                                 </Stack>
                                             </TableCell>
-                                            <TableCell><Chip color={statusColor(tenant.status)} label={statusLabels[tenant.status]} size="small" variant="outlined" /></TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    color={statusColor(tenant.status)}
+                                                    label={statusLabels[tenant.status]}
+                                                    size="small"
+                                                    variant="outlined"
+                                                />
+                                            </TableCell>
                                             <TableCell>{formatDate(tenant.createdAt)}</TableCell>
                                             <TableCell>{formatDate(tenant.updatedAt)}</TableCell>
                                             <TableCell align="right">
-                                                <Button onClick={() => { setSelectedTenant(tenant) }} size="small" startIcon={<EditOutlinedIcon />} variant="text">
+                                                <Button
+                                                    onClick={() => {
+                                                        setSelectedTenant(tenant)
+                                                    }}
+                                                    size="small"
+                                                    startIcon={<EditOutlinedIcon />}
+                                                    variant="text"
+                                                >
                                                     Change status
                                                 </Button>
                                             </TableCell>
                                         </TableRow>
                                     ))}
                                     {query.data.content.length === 0 && (
-                                        <TableRow><TableCell colSpan={5} sx={{ py: 8, textAlign: 'center' }}><Typography color="text.secondary">No tenants match the current filters.</Typography></TableCell></TableRow>
+                                        <TableRow>
+                                            <TableCell
+                                                colSpan={5}
+                                                sx={{ py: 8, textAlign: 'center' }}
+                                            >
+                                                <Typography color="text.secondary">
+                                                    No tenants match the current filters.
+                                                </Typography>
+                                            </TableCell>
+                                        </TableRow>
                                     )}
                                 </TableBody>
                             </Table>
@@ -239,8 +366,13 @@ export function SystemTenantsPage() {
                         <TablePagination
                             component="div"
                             count={query.data.totalElements}
-                            onPageChange={(_event, nextPage) => { setPage(nextPage) }}
-                            onRowsPerPageChange={(event) => { setPage(0); setSize(Number(event.target.value)) }}
+                            onPageChange={(_event, nextPage) => {
+                                setPage(nextPage)
+                            }}
+                            onRowsPerPageChange={(event) => {
+                                setPage(0)
+                                setSize(Number(event.target.value))
+                            }}
                             page={Math.min(page, Math.max(query.data.totalPages - 1, 0))}
                             rowsPerPage={size}
                             rowsPerPageOptions={[5, 10, 25, 50]}
@@ -251,20 +383,31 @@ export function SystemTenantsPage() {
 
             {onboardingOpen && (
                 <OnboardSystemTenantDialog
-                    onClose={() => { setOnboardingOpen(false) }}
+                    onClose={() => {
+                        setOnboardingOpen(false)
+                    }}
                     onSuccess={setFeedback}
                     open
                 />
             )}
             {selectedTenant && (
                 <ChangeSystemTenantStatusDialog
-                    onClose={() => { setSelectedTenant(null) }}
+                    onClose={() => {
+                        setSelectedTenant(null)
+                    }}
                     onSuccess={setFeedback}
                     open
                     tenant={selectedTenant}
                 />
             )}
-            <Snackbar autoHideDuration={4000} message={feedback} onClose={() => { setFeedback(null) }} open={Boolean(feedback)} />
+            <Snackbar
+                autoHideDuration={4000}
+                message={feedback}
+                onClose={() => {
+                    setFeedback(null)
+                }}
+                open={Boolean(feedback)}
+            />
         </Box>
     )
 }

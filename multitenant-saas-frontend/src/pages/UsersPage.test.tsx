@@ -1,31 +1,15 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    render,
-    screen,
-    waitFor,
-    within,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AuthContext } from '../features/auth/context/AuthContext'
 import type { AuthContextValue } from '../features/auth/context/AuthContext'
 import { authorizationApi } from '../features/authorization/api/authorizationApi'
 import { createTenantAuthorizationContext } from '../features/authorization/test/authorizationTestData'
-import {
-    authorizationPermissionCodes,
-} from '../features/authorization/types/authorization'
+import { authorizationPermissionCodes } from '../features/authorization/types/authorization'
 import { usersApi } from '../features/users/api/usersApi'
 import type { TenantUser } from '../features/users/types/users'
 import { appTheme } from '../theme/appTheme'
@@ -64,23 +48,19 @@ const usersPage: PageResponse<TenantUser> = {
     last: true,
 }
 
-const fullUserManagementAuthorization =
-    createTenantAuthorizationContext({
-        permissionCodes: [
-            authorizationPermissionCodes.USER_READ,
-            authorizationPermissionCodes.USER_CREATE,
-            authorizationPermissionCodes.USER_UPDATE,
-            authorizationPermissionCodes.USER_STATUS_UPDATE,
-            authorizationPermissionCodes.AUTHORIZATION_MANAGE,
-        ],
-    })
+const fullUserManagementAuthorization = createTenantAuthorizationContext({
+    permissionCodes: [
+        authorizationPermissionCodes.USER_READ,
+        authorizationPermissionCodes.USER_CREATE,
+        authorizationPermissionCodes.USER_UPDATE,
+        authorizationPermissionCodes.USER_STATUS_UPDATE,
+        authorizationPermissionCodes.AUTHORIZATION_MANAGE,
+    ],
+})
 
-const readOnlyUserAuthorization =
-    createTenantAuthorizationContext({
-        permissionCodes: [
-            authorizationPermissionCodes.USER_READ,
-        ],
-    })
+const readOnlyUserAuthorization = createTenantAuthorizationContext({
+    permissionCodes: [authorizationPermissionCodes.USER_READ],
+})
 
 const authContextValue: AuthContextValue = {
     status: 'authenticated',
@@ -109,18 +89,14 @@ function createTestQueryClient(): QueryClient {
     })
 }
 
-function renderUsersPage(
-    contextValue: AuthContextValue = authContextValue,
-) {
+function renderUsersPage(contextValue: AuthContextValue = authContextValue) {
     const queryClient = createTestQueryClient()
 
     function Wrapper({ children }: PropsWithChildren) {
         return (
             <ThemeProvider theme={appTheme}>
                 <QueryClientProvider client={queryClient}>
-                    <AuthContext.Provider value={contextValue}>
-                        {children}
-                    </AuthContext.Provider>
+                    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
                 </QueryClientProvider>
             </ThemeProvider>
         )
@@ -135,22 +111,14 @@ describe('UsersPage', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
 
-        vi.spyOn(
-            authorizationApi,
-            'getCurrentAuthorizationContext',
-        ).mockResolvedValue(
+        vi.spyOn(authorizationApi, 'getCurrentAuthorizationContext').mockResolvedValue(
             fullUserManagementAuthorization,
         )
     })
 
     it('shows a loading state while users are pending', () => {
-        vi.spyOn(usersApi, 'getUsers').mockReturnValue(
-            new Promise(() => undefined),
-        )
-        vi.mocked(
-            authorizationApi
-                .getCurrentAuthorizationContext,
-        ).mockResolvedValue(
+        vi.spyOn(usersApi, 'getUsers').mockReturnValue(new Promise(() => undefined))
+        vi.mocked(authorizationApi.getCurrentAuthorizationContext).mockResolvedValue(
             createTenantAuthorizationContext({
                 permissionCodes: [
                     authorizationPermissionCodes.USER_READ,
@@ -169,43 +137,28 @@ describe('UsersPage', () => {
     })
 
     it('renders tenant users returned by the API', async () => {
-        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(
-            usersPage,
-        )
+        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(usersPage)
 
         renderUsersPage()
 
-        expect(
-            await screen.findByText('Ada Admin'),
-        ).toBeInTheDocument()
+        expect(await screen.findByText('Ada Admin')).toBeInTheDocument()
 
-        expect(
-            screen.getByText('ada@example.com'),
-        ).toBeInTheDocument()
+        expect(screen.getByText('ada@example.com')).toBeInTheDocument()
 
-        expect(
-            screen.getByText('Administrator'),
-        ).toBeInTheDocument()
+        expect(screen.getByText('Administrator')).toBeInTheDocument()
 
-        expect(
-            screen.getAllByText('Active'),
-        ).toHaveLength(2)
+        expect(screen.getAllByText('Active')).toHaveLength(2)
     })
 
     it('submits a server-side name or email search', async () => {
         const user = userEvent.setup()
-        const getUsers = vi
-            .spyOn(usersApi, 'getUsers')
-            .mockResolvedValue(usersPage)
+        const getUsers = vi.spyOn(usersApi, 'getUsers').mockResolvedValue(usersPage)
 
         renderUsersPage()
 
         await screen.findByText('Ada Admin')
 
-        await user.type(
-            screen.getByLabelText(/search users/i),
-            '  ada@example.com  ',
-        )
+        await user.type(screen.getByLabelText(/search users/i), '  ada@example.com  ')
         await user.click(
             screen.getByRole('button', {
                 name: /^search$/i,
@@ -223,9 +176,7 @@ describe('UsersPage', () => {
 
     it('requests server-side sorting from table headers', async () => {
         const user = userEvent.setup()
-        const getUsers = vi
-            .spyOn(usersApi, 'getUsers')
-            .mockResolvedValue(usersPage)
+        const getUsers = vi.spyOn(usersApi, 'getUsers').mockResolvedValue(usersPage)
 
         renderUsersPage()
 
@@ -251,18 +202,12 @@ describe('UsersPage', () => {
         const user = userEvent.setup()
 
         vi.spyOn(usersApi, 'getUsers')
-            .mockRejectedValueOnce(
-                new Error('Users service unavailable.'),
-            )
+            .mockRejectedValueOnce(new Error('Users service unavailable.'))
             .mockResolvedValueOnce(usersPage)
 
         renderUsersPage()
 
-        expect(
-            await screen.findByText(
-                'Users service unavailable.',
-            ),
-        ).toBeInTheDocument()
+        expect(await screen.findByText('Users service unavailable.')).toBeInTheDocument()
 
         await user.click(
             screen.getByRole('button', {
@@ -270,19 +215,12 @@ describe('UsersPage', () => {
             }),
         )
 
-        expect(
-            await screen.findByText('Ada Admin'),
-        ).toBeInTheDocument()
+        expect(await screen.findByText('Ada Admin')).toBeInTheDocument()
     })
 
     it('keeps user management controls hidden without V2 permissions', async () => {
-        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(
-            usersPage,
-        )
-        vi.mocked(
-            authorizationApi
-                .getCurrentAuthorizationContext,
-        ).mockResolvedValue(
+        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(usersPage)
+        vi.mocked(authorizationApi.getCurrentAuthorizationContext).mockResolvedValue(
             readOnlyUserAuthorization,
         )
 
@@ -304,9 +242,7 @@ describe('UsersPage', () => {
     })
 
     it('uses V2 create permission rather than the legacy role', async () => {
-        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(
-            usersPage,
-        )
+        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(usersPage)
 
         renderUsersPage({
             ...authContextValue,
@@ -323,7 +259,6 @@ describe('UsersPage', () => {
                 name: /add user/i,
             }),
         ).toBeInTheDocument()
-
     })
 
     it('creates a tenant user with normalized input', async () => {
@@ -335,12 +270,8 @@ describe('UsersPage', () => {
             email: 'lin@example.com',
         }
 
-        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(
-            usersPage,
-        )
-        const createUser = vi
-            .spyOn(usersApi, 'createUser')
-            .mockResolvedValue(createdUser)
+        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(usersPage)
+        const createUser = vi.spyOn(usersApi, 'createUser').mockResolvedValue(createdUser)
 
         renderUsersPage()
 
@@ -355,18 +286,9 @@ describe('UsersPage', () => {
             name: /add tenant user/i,
         })
 
-        await user.type(
-            within(dialog).getByLabelText(/full name/i),
-            '  Lin User  ',
-        )
-        await user.type(
-            within(dialog).getByLabelText(/^email/i),
-            '  LIN@EXAMPLE.COM  ',
-        )
-        await user.type(
-            within(dialog).getByLabelText(/initial password/i),
-            'Strong@123',
-        )
+        await user.type(within(dialog).getByLabelText(/full name/i), '  Lin User  ')
+        await user.type(within(dialog).getByLabelText(/^email/i), '  LIN@EXAMPLE.COM  ')
+        await user.type(within(dialog).getByLabelText(/initial password/i), 'Strong@123')
         await user.click(
             within(dialog).getByRole('button', {
                 name: /create user/i,
@@ -374,22 +296,15 @@ describe('UsersPage', () => {
         )
 
         await waitFor(() => {
-            expect(createUser).toHaveBeenCalledWith(
-                'tenant-1',
-                {
-                    fullName: 'Lin User',
-                    email: 'lin@example.com',
-                    password: 'Strong@123',
-                    role: 'TENANT_USER',
-                },
-            )
+            expect(createUser).toHaveBeenCalledWith('tenant-1', {
+                fullName: 'Lin User',
+                email: 'lin@example.com',
+                password: 'Strong@123',
+                role: 'TENANT_USER',
+            })
         })
 
-        expect(
-            await screen.findByText(
-                'Lin User was created successfully.',
-            ),
-        ).toBeInTheDocument()
+        expect(await screen.findByText('Lin User was created successfully.')).toBeInTheDocument()
     })
 
     it('updates a tenant user profile', async () => {
@@ -399,12 +314,8 @@ describe('UsersPage', () => {
             fullName: 'Grace Hopper',
         }
 
-        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(
-            usersPage,
-        )
-        const updateUser = vi
-            .spyOn(usersApi, 'updateUser')
-            .mockResolvedValue(updatedUser)
+        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(usersPage)
+        const updateUser = vi.spyOn(usersApi, 'updateUser').mockResolvedValue(updatedUser)
 
         renderUsersPage()
 
@@ -423,9 +334,7 @@ describe('UsersPage', () => {
         const dialog = screen.getByRole('dialog', {
             name: /edit user profile/i,
         })
-        const fullNameInput = within(dialog).getByLabelText(
-            /full name/i,
-        )
+        const fullNameInput = within(dialog).getByLabelText(/full name/i)
 
         await user.clear(fullNameInput)
         await user.type(fullNameInput, 'Grace Hopper')
@@ -436,35 +345,25 @@ describe('UsersPage', () => {
         )
 
         await waitFor(() => {
-            expect(updateUser).toHaveBeenCalledWith(
-                'tenant-1',
-                'user-2',
-                {
-                    fullName: 'Grace Hopper',
-                    email: 'grace@example.com',
-                },
-            )
+            expect(updateUser).toHaveBeenCalledWith('tenant-1', 'user-2', {
+                fullName: 'Grace Hopper',
+                email: 'grace@example.com',
+            })
         })
     })
 
     it('changes a tenant user role and status', async () => {
         const user = userEvent.setup()
 
-        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(
-            usersPage,
-        )
-        const updateRole = vi
-            .spyOn(usersApi, 'updateUserRole')
-            .mockResolvedValue({
-                ...memberUser,
-                role: 'TENANT_MANAGER',
-            })
-        const updateStatus = vi
-            .spyOn(usersApi, 'updateUserStatus')
-            .mockResolvedValue({
-                ...memberUser,
-                status: 'SUSPENDED',
-            })
+        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(usersPage)
+        const updateRole = vi.spyOn(usersApi, 'updateUserRole').mockResolvedValue({
+            ...memberUser,
+            role: 'TENANT_MANAGER',
+        })
+        const updateStatus = vi.spyOn(usersApi, 'updateUserStatus').mockResolvedValue({
+            ...memberUser,
+            status: 'SUSPENDED',
+        })
 
         renderUsersPage()
 
@@ -500,11 +399,9 @@ describe('UsersPage', () => {
         )
 
         await waitFor(() => {
-            expect(updateRole).toHaveBeenCalledWith(
-                'tenant-1',
-                'user-2',
-                { role: 'TENANT_MANAGER' },
-            )
+            expect(updateRole).toHaveBeenCalledWith('tenant-1', 'user-2', {
+                role: 'TENANT_MANAGER',
+            })
         })
 
         await user.click(
@@ -538,23 +435,15 @@ describe('UsersPage', () => {
         )
 
         await waitFor(() => {
-            expect(updateStatus).toHaveBeenCalledWith(
-                'tenant-1',
-                'user-2',
-                { status: 'SUSPENDED' },
-            )
+            expect(updateStatus).toHaveBeenCalledWith('tenant-1', 'user-2', { status: 'SUSPENDED' })
         })
     })
 
     it('unlocks tenant user login attempts', async () => {
         const user = userEvent.setup()
 
-        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(
-            usersPage,
-        )
-        const unlockUserLogin = vi
-            .spyOn(usersApi, 'unlockUserLogin')
-            .mockResolvedValue(memberUser)
+        vi.spyOn(usersApi, 'getUsers').mockResolvedValue(usersPage)
+        const unlockUserLogin = vi.spyOn(usersApi, 'unlockUserLogin').mockResolvedValue(memberUser)
 
         renderUsersPage()
 
@@ -580,10 +469,7 @@ describe('UsersPage', () => {
         )
 
         await waitFor(() => {
-            expect(unlockUserLogin).toHaveBeenCalledWith(
-                'tenant-1',
-                'user-2',
-            )
+            expect(unlockUserLogin).toHaveBeenCalledWith('tenant-1', 'user-2')
         })
     })
 })

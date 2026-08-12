@@ -1,16 +1,8 @@
 export type BillingInterval = 'MONTHLY' | 'YEARLY'
 export type SubscriptionPlanStatus = 'ACTIVE' | 'INACTIVE'
-export type TenantSubscriptionStatus =
-    | 'TRIALING'
-    | 'ACTIVE'
-    | 'PAST_DUE'
-    | 'CANCELLED'
-    | 'EXPIRED'
+export type TenantSubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED'
 
-export type SubscriptionAccessLevel =
-    | 'FULL_ACCESS'
-    | 'GRACE_ACCESS'
-    | 'BLOCKED'
+export type SubscriptionAccessLevel = 'FULL_ACCESS' | 'GRACE_ACCESS' | 'BLOCKED'
 
 export type SubscriptionAccessReason =
     | 'ACTIVE'
@@ -54,7 +46,6 @@ export interface TenantSubscription {
     createdAt: string
     updatedAt: string
 }
-
 
 export interface SubscriptionResourceEntitlement {
     used: number
@@ -114,8 +105,7 @@ export interface CreateSubscriptionPlanInput {
     maxStorageMb: number | null
 }
 
-export type UpdateSubscriptionPlanInput =
-    Omit<CreateSubscriptionPlanInput, 'code'>
+export type UpdateSubscriptionPlanInput = Omit<CreateSubscriptionPlanInput, 'code'>
 
 export interface UpdateSubscriptionPlanStatusInput {
     status: SubscriptionPlanStatus

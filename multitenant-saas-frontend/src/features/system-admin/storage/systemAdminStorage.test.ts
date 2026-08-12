@@ -3,8 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { SystemAdminSession } from '../types/systemAdmin'
 import { systemAdminStorage } from './systemAdminStorage'
 
-const SYSTEM_ADMIN_STORAGE_KEY =
-    'multitenant-saas.system-admin-session'
+const SYSTEM_ADMIN_STORAGE_KEY = 'multitenant-saas.system-admin-session'
 
 const session: SystemAdminSession = {
     systemAdminId: 'system-admin-id',
@@ -35,8 +34,7 @@ describe('systemAdminStorage cross-tab synchronization', () => {
 
             expect(listener).toHaveBeenCalledOnce()
             expect(listener).toHaveBeenCalledWith(session)
-        }
-        finally {
+        } finally {
             unsubscribe()
         }
     })
@@ -55,8 +53,7 @@ describe('systemAdminStorage cross-tab synchronization', () => {
 
             expect(listener).toHaveBeenCalledOnce()
             expect(listener).toHaveBeenCalledWith(null)
-        }
-        finally {
+        } finally {
             unsubscribe()
         }
     })
@@ -74,8 +71,7 @@ describe('systemAdminStorage cross-tab synchronization', () => {
             )
 
             expect(listener).not.toHaveBeenCalled()
-        }
-        finally {
+        } finally {
             unsubscribe()
         }
     })

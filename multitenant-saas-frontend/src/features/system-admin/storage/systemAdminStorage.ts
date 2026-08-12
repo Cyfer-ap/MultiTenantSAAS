@@ -1,28 +1,19 @@
 import type { SystemAdminSession } from '../types/systemAdmin'
 
-const SYSTEM_ADMIN_STORAGE_KEY =
-    'multitenant-saas.system-admin-session'
+const SYSTEM_ADMIN_STORAGE_KEY = 'multitenant-saas.system-admin-session'
 
-type SystemAdminStorageListener = (
-    session: SystemAdminSession | null,
-) => void
+type SystemAdminStorageListener = (session: SystemAdminSession | null) => void
 
 const listeners = new Set<SystemAdminStorageListener>()
 
 let storageListenerAttached = false
 
-function isSystemAdminSession(
-    value: unknown,
-): value is SystemAdminSession {
-    if (
-        typeof value !== 'object' ||
-        value === null
-    ) {
+function isSystemAdminSession(value: unknown): value is SystemAdminSession {
+    if (typeof value !== 'object' || value === null) {
         return false
     }
 
-    const candidate =
-        value as Partial<SystemAdminSession>
+    const candidate = value as Partial<SystemAdminSession>
 
     return (
         typeof candidate.systemAdminId === 'string' &&
@@ -35,9 +26,7 @@ function isSystemAdminSession(
     )
 }
 
-function notify(
-    session: SystemAdminSession | null,
-): void {
+function notify(session: SystemAdminSession | null): void {
     listeners.forEach((listener) => {
         listener(session)
     })
@@ -45,41 +34,30 @@ function notify(
 
 function read(): SystemAdminSession | null {
     try {
-        const storedValue = localStorage.getItem(
-            SYSTEM_ADMIN_STORAGE_KEY,
-        )
+        const storedValue = localStorage.getItem(SYSTEM_ADMIN_STORAGE_KEY)
 
         if (!storedValue) {
             return null
         }
 
-        const parsedValue: unknown =
-            JSON.parse(storedValue)
+        const parsedValue: unknown = JSON.parse(storedValue)
 
         if (!isSystemAdminSession(parsedValue)) {
-            localStorage.removeItem(
-                SYSTEM_ADMIN_STORAGE_KEY,
-            )
+            localStorage.removeItem(SYSTEM_ADMIN_STORAGE_KEY)
             notify(null)
             return null
         }
 
         return parsedValue
-    }
-    catch {
-        localStorage.removeItem(
-            SYSTEM_ADMIN_STORAGE_KEY,
-        )
+    } catch {
+        localStorage.removeItem(SYSTEM_ADMIN_STORAGE_KEY)
         notify(null)
         return null
     }
 }
 
 function write(session: SystemAdminSession): void {
-    localStorage.setItem(
-        SYSTEM_ADMIN_STORAGE_KEY,
-        JSON.stringify(session),
-    )
+    localStorage.setItem(SYSTEM_ADMIN_STORAGE_KEY, JSON.stringify(session))
     notify(session)
 }
 
@@ -88,22 +66,16 @@ function clear(): void {
     notify(null)
 }
 
-function parseStoredSession(
-    storedValue: string | null,
-): SystemAdminSession | null {
+function parseStoredSession(storedValue: string | null): SystemAdminSession | null {
     if (!storedValue) {
         return null
     }
 
     try {
-        const parsedValue: unknown =
-            JSON.parse(storedValue)
+        const parsedValue: unknown = JSON.parse(storedValue)
 
-        return isSystemAdminSession(parsedValue)
-            ? parsedValue
-            : null
-    }
-    catch {
+        return isSystemAdminSession(parsedValue) ? parsedValue : null
+    } catch {
         return null
     }
 }
@@ -117,38 +89,24 @@ function handleStorageEvent(event: StorageEvent): void {
 }
 
 function attachStorageListener(): void {
-    if (
-        storageListenerAttached ||
-        typeof window === 'undefined'
-    ) {
+    if (storageListenerAttached || typeof window === 'undefined') {
         return
     }
 
-    window.addEventListener(
-        'storage',
-        handleStorageEvent,
-    )
+    window.addEventListener('storage', handleStorageEvent)
     storageListenerAttached = true
 }
 
 function detachStorageListener(): void {
-    if (
-        !storageListenerAttached ||
-        typeof window === 'undefined'
-    ) {
+    if (!storageListenerAttached || typeof window === 'undefined') {
         return
     }
 
-    window.removeEventListener(
-        'storage',
-        handleStorageEvent,
-    )
+    window.removeEventListener('storage', handleStorageEvent)
     storageListenerAttached = false
 }
 
-function subscribe(
-    listener: SystemAdminStorageListener,
-): () => void {
+function subscribe(listener: SystemAdminStorageListener): () => void {
     listeners.add(listener)
     attachStorageListener()
 

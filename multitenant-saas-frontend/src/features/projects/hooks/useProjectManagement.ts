@@ -1,14 +1,8 @@
-import {
-    useMutation,
-    useQueryClient,
-} from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { workspaceSubscriptionQueryKeys } from '../../subscriptions/hooks/useWorkspaceSubscription'
 import { projectsApi } from '../api/projectsApi'
-import type {
-    ProjectDetailsInput,
-    UpdateProjectStatusInput,
-} from '../types/projects'
+import type { ProjectDetailsInput, UpdateProjectStatusInput } from '../types/projects'
 import { tenantProjectsQueryKeys } from './useTenantProjects'
 
 interface ProjectMutationInput<TInput> {
@@ -16,101 +10,64 @@ interface ProjectMutationInput<TInput> {
     input: TInput
 }
 
-export function useCreateTenantProject(
-    tenantId: string,
-) {
+export function useCreateTenantProject(tenantId: string) {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: (input: ProjectDetailsInput) =>
-            projectsApi.createProject(tenantId, input),
+        mutationFn: (input: ProjectDetailsInput) => projectsApi.createProject(tenantId, input),
         onSuccess: async () => {
             await Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey:
-                        tenantProjectsQueryKeys.tenant(tenantId),
+                    queryKey: tenantProjectsQueryKeys.tenant(tenantId),
                 }),
                 queryClient.invalidateQueries({
-                    queryKey:
-                        workspaceSubscriptionQueryKeys.tenant(
-                            tenantId,
-                        ),
+                    queryKey: workspaceSubscriptionQueryKeys.tenant(tenantId),
                 }),
             ])
         },
     })
 }
 
-export function useUpdateTenantProject(
-    tenantId: string,
-) {
+export function useUpdateTenantProject(tenantId: string) {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: ({
-            projectId,
-            input,
-        }: ProjectMutationInput<ProjectDetailsInput>) =>
-            projectsApi.updateProject(
-                tenantId,
-                projectId,
-                input,
-            ),
+        mutationFn: ({ projectId, input }: ProjectMutationInput<ProjectDetailsInput>) =>
+            projectsApi.updateProject(tenantId, projectId, input),
         onSuccess: async () => {
             await queryClient.invalidateQueries({
-                queryKey:
-                    tenantProjectsQueryKeys.tenant(tenantId),
+                queryKey: tenantProjectsQueryKeys.tenant(tenantId),
             })
         },
     })
 }
 
-export function useUpdateTenantProjectStatus(
-    tenantId: string,
-) {
+export function useUpdateTenantProjectStatus(tenantId: string) {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: ({
-            projectId,
-            input,
-        }: ProjectMutationInput<UpdateProjectStatusInput>) =>
-            projectsApi.updateProjectStatus(
-                tenantId,
-                projectId,
-                input,
-            ),
+        mutationFn: ({ projectId, input }: ProjectMutationInput<UpdateProjectStatusInput>) =>
+            projectsApi.updateProjectStatus(tenantId, projectId, input),
         onSuccess: async () => {
             await queryClient.invalidateQueries({
-                queryKey:
-                    tenantProjectsQueryKeys.tenant(tenantId),
+                queryKey: tenantProjectsQueryKeys.tenant(tenantId),
             })
         },
     })
 }
 
-export function useArchiveTenantProject(
-    tenantId: string,
-) {
+export function useArchiveTenantProject(tenantId: string) {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: (projectId: string) =>
-            projectsApi.archiveProject(
-                tenantId,
-                projectId,
-            ),
+        mutationFn: (projectId: string) => projectsApi.archiveProject(tenantId, projectId),
         onSuccess: async () => {
             await Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey:
-                        tenantProjectsQueryKeys.tenant(tenantId),
+                    queryKey: tenantProjectsQueryKeys.tenant(tenantId),
                 }),
                 queryClient.invalidateQueries({
-                    queryKey:
-                        workspaceSubscriptionQueryKeys.tenant(
-                            tenantId,
-                        ),
+                    queryKey: workspaceSubscriptionQueryKeys.tenant(tenantId),
                 }),
             ])
         },

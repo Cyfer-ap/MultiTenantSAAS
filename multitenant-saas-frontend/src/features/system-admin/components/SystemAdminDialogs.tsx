@@ -22,13 +22,9 @@ import {
     useUnlockSystemAdminLogin,
     useUpdateSystemAdminStatus,
 } from '../hooks/useSystemAdmins'
-import type {
-    SystemAdminRecord,
-    SystemAdminStatus,
-} from '../types/systemAdmin'
+import type { SystemAdminRecord, SystemAdminStatus } from '../types/systemAdmin'
 
-const passwordPattern =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,100}$/
+const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,100}$/
 
 const statusLabels: Record<SystemAdminStatus, string> = {
     ACTIVE: 'Active',
@@ -40,17 +36,10 @@ function getErrorMessage(error: unknown, fallback: string): string {
     return error instanceof Error ? error.message : fallback
 }
 
-function getFieldError(
-    error: unknown,
-    field: string,
-): string | undefined {
-    const detail = error instanceof ApiClientError
-        ? error.details?.[field]
-        : undefined
+function getFieldError(error: unknown, field: string): string | undefined {
+    const detail = error instanceof ApiClientError ? error.details?.[field] : undefined
 
-    return typeof detail === 'string'
-        ? detail
-        : undefined
+    return typeof detail === 'string' ? detail : undefined
 }
 
 export function CreateSystemAdminDialog({
@@ -67,31 +56,23 @@ export function CreateSystemAdminDialog({
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
-    const [validationError, setValidationError] =
-        useState<string | null>(null)
+    const [validationError, setValidationError] = useState<string | null>(null)
 
     const close = (): void => {
         if (!mutation.isPending) onClose()
     }
 
-    const submit = async (
-        event: FormEvent<HTMLFormElement>,
-    ): Promise<void> => {
+    const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault()
         const normalizedName = fullName.trim()
         const normalizedEmail = email.trim().toLowerCase()
 
         if (normalizedName.length < 2 || normalizedName.length > 150) {
-            setValidationError(
-                'Full name must be between 2 and 150 characters.',
-            )
+            setValidationError('Full name must be between 2 and 150 characters.')
             return
         }
 
-        if (
-            normalizedEmail.length > 150 ||
-            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
-        ) {
+        if (normalizedEmail.length > 150 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
             setValidationError('Enter a valid email address.')
             return
         }
@@ -118,8 +99,7 @@ export function CreateSystemAdminDialog({
             })
             onSuccess(`${created.email} was added as a system administrator.`)
             onClose()
-        }
-        catch {
+        } catch {
             // Mutation errors are displayed in the dialog.
         }
     }
@@ -131,16 +111,19 @@ export function CreateSystemAdminDialog({
                 <Stack
                     component="form"
                     id="create-system-admin-form"
-                    onSubmit={(event) => { void submit(event) }}
+                    onSubmit={(event) => {
+                        void submit(event)
+                    }}
                     spacing={2}
                     sx={{ pt: 1 }}
                 >
                     {(validationError || mutation.isError) && (
                         <Alert severity="error">
-                            {validationError ?? getErrorMessage(
-                                mutation.error,
-                                'The system administrator could not be created.',
-                            )}
+                            {validationError ??
+                                getErrorMessage(
+                                    mutation.error,
+                                    'The system administrator could not be created.',
+                                )}
                         </Alert>
                     )}
                     <TextField
@@ -149,7 +132,10 @@ export function CreateSystemAdminDialog({
                         error={Boolean(getFieldError(mutation.error, 'fullName'))}
                         helperText={getFieldError(mutation.error, 'fullName')}
                         label="Full name"
-                        onChange={(event) => { setFullName(event.target.value); setValidationError(null) }}
+                        onChange={(event) => {
+                            setFullName(event.target.value)
+                            setValidationError(null)
+                        }}
                         value={fullName}
                     />
                     <TextField
@@ -157,7 +143,10 @@ export function CreateSystemAdminDialog({
                         error={Boolean(getFieldError(mutation.error, 'email'))}
                         helperText={getFieldError(mutation.error, 'email')}
                         label="Email address"
-                        onChange={(event) => { setEmail(event.target.value); setValidationError(null) }}
+                        onChange={(event) => {
+                            setEmail(event.target.value)
+                            setValidationError(null)
+                        }}
                         type="email"
                         value={email}
                     />
@@ -166,14 +155,20 @@ export function CreateSystemAdminDialog({
                         error={Boolean(getFieldError(mutation.error, 'password'))}
                         helperText={getFieldError(mutation.error, 'password')}
                         label="Temporary password"
-                        onChange={(event) => { setPassword(event.target.value); setValidationError(null) }}
+                        onChange={(event) => {
+                            setPassword(event.target.value)
+                            setValidationError(null)
+                        }}
                         type="password"
                         value={password}
                     />
                     <TextField
                         disabled={mutation.isPending}
                         label="Confirm temporary password"
-                        onChange={(event) => { setConfirmPassword(event.target.value); setValidationError(null) }}
+                        onChange={(event) => {
+                            setConfirmPassword(event.target.value)
+                            setValidationError(null)
+                        }}
                         type="password"
                         value={confirmPassword}
                     />
@@ -210,9 +205,7 @@ export function ChangeSystemAdminStatusDialog({
     systemAdmin: SystemAdminRecord
 }) {
     const mutation = useUpdateSystemAdminStatus()
-    const [status, setStatus] = useState<SystemAdminStatus>(
-        systemAdmin.status,
-    )
+    const [status, setStatus] = useState<SystemAdminStatus>(systemAdmin.status)
     const isCurrentAccount = systemAdmin.id === currentSystemAdminId
 
     const submit = async (): Promise<void> => {
@@ -223,12 +216,9 @@ export function ChangeSystemAdminStatusDialog({
                 systemAdminId: systemAdmin.id,
                 input: { status },
             })
-            onSuccess(
-                `${systemAdmin.email} is now ${statusLabels[status].toLowerCase()}.`,
-            )
+            onSuccess(`${systemAdmin.email} is now ${statusLabels[status].toLowerCase()}.`)
             onClose()
-        }
-        catch {
+        } catch {
             // Mutation errors are displayed in the dialog.
         }
     }
@@ -260,7 +250,9 @@ export function ChangeSystemAdminStatusDialog({
                             disabled={mutation.isPending}
                             label="Status"
                             labelId="system-admin-status-label"
-                            onChange={(event) => { setStatus(event.target.value as SystemAdminStatus) }}
+                            onChange={(event) => {
+                                setStatus(event.target.value as SystemAdminStatus)
+                            }}
                             value={status}
                         >
                             {(Object.keys(statusLabels) as SystemAdminStatus[]).map((value) => (
@@ -282,14 +274,18 @@ export function ChangeSystemAdminStatusDialog({
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button disabled={mutation.isPending} onClick={onClose}>Cancel</Button>
+                <Button disabled={mutation.isPending} onClick={onClose}>
+                    Cancel
+                </Button>
                 <Button
                     disabled={
                         mutation.isPending ||
                         status === systemAdmin.status ||
                         (isCurrentAccount && status !== 'ACTIVE')
                     }
-                    onClick={() => { void submit() }}
+                    onClick={() => {
+                        void submit()
+                    }}
                     variant="contained"
                 >
                     {mutation.isPending ? 'Saving…' : 'Save status'}
@@ -317,8 +313,7 @@ export function UnlockSystemAdminDialog({
             await mutation.mutateAsync(systemAdmin.id)
             onSuccess(`Login access was unlocked for ${systemAdmin.email}.`)
             onClose()
-        }
-        catch {
+        } catch {
             // Mutation errors are displayed in the dialog.
         }
     }
@@ -329,7 +324,8 @@ export function UnlockSystemAdminDialog({
             <DialogContent>
                 <Stack spacing={2} sx={{ pt: 1 }}>
                     <Typography color="text.secondary">
-                        Reset failed login attempts and remove the current login lock for {systemAdmin.email}?
+                        Reset failed login attempts and remove the current login lock for{' '}
+                        {systemAdmin.email}?
                     </Typography>
                     {mutation.isError && (
                         <Alert severity="error">
@@ -342,10 +338,14 @@ export function UnlockSystemAdminDialog({
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button disabled={mutation.isPending} onClick={onClose}>Cancel</Button>
+                <Button disabled={mutation.isPending} onClick={onClose}>
+                    Cancel
+                </Button>
                 <Button
                     disabled={mutation.isPending}
-                    onClick={() => { void unlock() }}
+                    onClick={() => {
+                        void unlock()
+                    }}
                     variant="contained"
                 >
                     {mutation.isPending ? 'Unlocking…' : 'Unlock login'}

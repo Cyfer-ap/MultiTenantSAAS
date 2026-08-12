@@ -36,16 +36,10 @@ import {
     TextField,
     Typography,
 } from '@mui/material'
-import type {
-    FormEvent,
-    MouseEvent,
-} from 'react'
+import type { FormEvent, MouseEvent } from 'react'
 import { useState } from 'react'
 
-import {
-    useProjectMember,
-    useProjectMembers,
-} from '../hooks/useProjectMembers'
+import { useProjectMember, useProjectMembers } from '../hooks/useProjectMembers'
 import { useProjectTasks } from '../hooks/useProjectTasks'
 import type {
     ProjectTask,
@@ -54,10 +48,7 @@ import type {
     ProjectTaskStatus,
     ProjectTasksQueryParams,
 } from '../types/projectTasks'
-import type {
-    ProjectMembersQueryParams,
-    SortDirection,
-} from '../types/projects'
+import type { ProjectMembersQueryParams, SortDirection } from '../types/projects'
 import {
     AssignProjectTaskDialog,
     CancelProjectTaskDialog,
@@ -68,12 +59,7 @@ import {
 
 type StatusFilter = ProjectTaskStatus | 'ALL'
 type PriorityFilter = ProjectTaskPriority | 'ALL'
-type TaskDialog =
-    | 'edit'
-    | 'status'
-    | 'assignee'
-    | 'cancel'
-    | null
+type TaskDialog = 'edit' | 'status' | 'assignee' | 'cancel' | null
 
 interface ProjectTasksSectionProps {
     tenantId: string
@@ -141,10 +127,7 @@ function isOverdue(task: ProjectTask): boolean {
     )
 }
 
-function getErrorMessage(
-    error: unknown,
-    fallback: string,
-): string {
+function getErrorMessage(error: unknown, fallback: string): string {
     return error instanceof Error ? error.message : fallback
 }
 
@@ -152,12 +135,7 @@ function TaskTableSkeleton() {
     return (
         <Box aria-label="Loading project tasks" role="status">
             {[0, 1, 2, 3].map((row) => (
-                <Stack
-                    direction="row"
-                    key={row}
-                    spacing={2}
-                    sx={{ padding: 2 }}
-                >
+                <Stack direction="row" key={row} spacing={2} sx={{ padding: 2 }}>
                     <Skeleton width="30%" />
                     <Skeleton width="15%" />
                     <Skeleton width="12%" />
@@ -183,48 +161,25 @@ export function ProjectTasksSection({
     const [searchDraft, setSearchDraft] = useState('')
     const [search, setSearch] = useState('')
     const [status, setStatus] = useState<StatusFilter>('ALL')
-    const [priority, setPriority] =
-        useState<PriorityFilter>('ALL')
-    const [assigneeUserId, setAssigneeUserId] =
-        useState('ALL')
-    const [sortBy, setSortBy] =
-        useState<ProjectTaskSortField>('createdAt')
-    const [sortDir, setSortDir] =
-        useState<SortDirection>('desc')
-    const [createDialogOpen, setCreateDialogOpen] =
-        useState(false)
-    const [menuAnchor, setMenuAnchor] =
-        useState<HTMLElement | null>(null)
-    const [selectedTask, setSelectedTask] =
-        useState<ProjectTask | null>(null)
-    const [activeDialog, setActiveDialog] =
-        useState<TaskDialog>(null)
+    const [priority, setPriority] = useState<PriorityFilter>('ALL')
+    const [assigneeUserId, setAssigneeUserId] = useState('ALL')
+    const [sortBy, setSortBy] = useState<ProjectTaskSortField>('createdAt')
+    const [sortDir, setSortDir] = useState<SortDirection>('desc')
+    const [createDialogOpen, setCreateDialogOpen] = useState(false)
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
+    const [selectedTask, setSelectedTask] = useState<ProjectTask | null>(null)
+    const [activeDialog, setActiveDialog] = useState<TaskDialog>(null)
 
-    const needsMembershipLookup =
-        !canReadTasksByPermission ||
-        !canManageTasksByPermission
+    const needsMembershipLookup = !canReadTasksByPermission || !canManageTasksByPermission
 
-    const currentMemberQuery = useProjectMember(
-        tenantId,
-        projectId,
-        userId,
-        needsMembershipLookup,
-    )
+    const currentMemberQuery = useProjectMember(tenantId, projectId, userId, needsMembershipLookup)
 
-    const isCurrentUserProjectMember =
-        currentMemberQuery.isSuccess
-    const isCurrentUserProjectLead =
-        currentMemberQuery.data?.projectRole === 'PROJECT_LEAD'
-    const canReadTasks =
-        canReadTasksByPermission ||
-        isCurrentUserProjectMember
-    const canManageTasks =
-        canManageTasksByPermission ||
-        isCurrentUserProjectLead
+    const isCurrentUserProjectMember = currentMemberQuery.isSuccess
+    const isCurrentUserProjectLead = currentMemberQuery.data?.projectRole === 'PROJECT_LEAD'
+    const canReadTasks = canReadTasksByPermission || isCurrentUserProjectMember
+    const canManageTasks = canManageTasksByPermission || isCurrentUserProjectLead
     const taskAccessResolved =
-        canReadTasksByPermission ||
-        currentMemberQuery.isSuccess ||
-        currentMemberQuery.isError
+        canReadTasksByPermission || currentMemberQuery.isSuccess || currentMemberQuery.isError
 
     const memberOptionsParams: ProjectMembersQueryParams = {
         page: 0,
@@ -247,29 +202,17 @@ export function ProjectTasksSection({
         sortDir,
         ...(status === 'ALL' ? {} : { status }),
         ...(priority === 'ALL' ? {} : { priority }),
-        ...(assigneeUserId === 'ALL'
-            ? {}
-            : { assigneeUserId }),
+        ...(assigneeUserId === 'ALL' ? {} : { assigneeUserId }),
         ...(search ? { search } : {}),
     }
 
-    const tasksQuery = useProjectTasks(
-        tenantId,
-        projectId,
-        queryParams,
-        canReadTasks,
-    )
+    const tasksQuery = useProjectTasks(tenantId, projectId, queryParams, canReadTasks)
 
     const members = memberOptionsQuery.data?.content ?? []
     const hasFilters =
-        search.length > 0 ||
-        status !== 'ALL' ||
-        priority !== 'ALL' ||
-        assigneeUserId !== 'ALL'
+        search.length > 0 || status !== 'ALL' || priority !== 'ALL' || assigneeUserId !== 'ALL'
 
-    const submitSearch = (
-        event: FormEvent<HTMLFormElement>,
-    ): void => {
+    const submitSearch = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault()
         setPage(0)
         setSearch(searchDraft.trim())
@@ -284,15 +227,11 @@ export function ProjectTasksSection({
         setAssigneeUserId('ALL')
     }
 
-    const changeSort = (
-        nextSortBy: ProjectTaskSortField,
-    ): void => {
+    const changeSort = (nextSortBy: ProjectTaskSortField): void => {
         setPage(0)
 
         if (sortBy === nextSortBy) {
-            setSortDir((current) =>
-                current === 'asc' ? 'desc' : 'asc',
-            )
+            setSortDir((current) => (current === 'asc' ? 'desc' : 'asc'))
             return
         }
 
@@ -300,10 +239,7 @@ export function ProjectTasksSection({
         setSortDir('asc')
     }
 
-    const openTaskMenu = (
-        event: MouseEvent<HTMLButtonElement>,
-        task: ProjectTask,
-    ): void => {
+    const openTaskMenu = (event: MouseEvent<HTMLButtonElement>, task: ProjectTask): void => {
         setSelectedTask(task)
         setMenuAnchor(event.currentTarget)
     }
@@ -312,9 +248,7 @@ export function ProjectTasksSection({
         setMenuAnchor(null)
     }
 
-    const openTaskDialog = (
-        dialog: Exclude<TaskDialog, null>,
-    ): void => {
+    const openTaskDialog = (dialog: Exclude<TaskDialog, null>): void => {
         setActiveDialog(dialog)
         closeTaskMenu()
     }
@@ -325,8 +259,7 @@ export function ProjectTasksSection({
     }
 
     const selectedTaskCanUpdateStatus = Boolean(
-        selectedTask &&
-        (canManageTasks || selectedTask.assigneeUserId === userId),
+        selectedTask && (canManageTasks || selectedTask.assigneeUserId === userId),
     )
 
     if (!canReadTasks && taskAccessResolved) {
@@ -372,20 +305,14 @@ export function ProjectTasksSection({
                     <Button
                         disabled={tasksQuery.isFetching}
                         onClick={() => {
-                            void Promise.all([
-                                tasksQuery.refetch(),
-                                memberOptionsQuery.refetch(),
-                            ])
+                            void Promise.all([tasksQuery.refetch(), memberOptionsQuery.refetch()])
                         }}
                         startIcon={
-                            tasksQuery.isFetching
-                                ? (
-                                    <CircularProgress
-                                        color="inherit"
-                                        size={16}
-                                    />
-                                )
-                                : <RefreshRoundedIcon />
+                            tasksQuery.isFetching ? (
+                                <CircularProgress color="inherit" size={16} />
+                            ) : (
+                                <RefreshRoundedIcon />
+                            )
                         }
                         size="small"
                         variant="outlined"
@@ -427,61 +354,47 @@ export function ProjectTasksSection({
                     />
 
                     <FormControl size="small" sx={{ minWidth: 150 }}>
-                        <InputLabel id="task-status-filter-label">
-                            Status
-                        </InputLabel>
+                        <InputLabel id="task-status-filter-label">Status</InputLabel>
                         <Select
                             label="Status"
                             labelId="task-status-filter-label"
                             onChange={(event) => {
                                 setPage(0)
-                                setStatus(
-                                    event.target.value as StatusFilter,
-                                )
+                                setStatus(event.target.value as StatusFilter)
                             }}
                             value={status}
                         >
                             <MenuItem value="ALL">All statuses</MenuItem>
-                            {Object.entries(taskStatusLabels).map(
-                                ([value, label]) => (
-                                    <MenuItem key={value} value={value}>
-                                        {label}
-                                    </MenuItem>
-                                ),
-                            )}
+                            {Object.entries(taskStatusLabels).map(([value, label]) => (
+                                <MenuItem key={value} value={value}>
+                                    {label}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
 
                     <FormControl size="small" sx={{ minWidth: 140 }}>
-                        <InputLabel id="task-priority-filter-label">
-                            Priority
-                        </InputLabel>
+                        <InputLabel id="task-priority-filter-label">Priority</InputLabel>
                         <Select
                             label="Priority"
                             labelId="task-priority-filter-label"
                             onChange={(event) => {
                                 setPage(0)
-                                setPriority(
-                                    event.target.value as PriorityFilter,
-                                )
+                                setPriority(event.target.value as PriorityFilter)
                             }}
                             value={priority}
                         >
                             <MenuItem value="ALL">All priorities</MenuItem>
-                            {Object.entries(taskPriorityLabels).map(
-                                ([value, label]) => (
-                                    <MenuItem key={value} value={value}>
-                                        {label}
-                                    </MenuItem>
-                                ),
-                            )}
+                            {Object.entries(taskPriorityLabels).map(([value, label]) => (
+                                <MenuItem key={value} value={value}>
+                                    {label}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
 
                     <FormControl size="small" sx={{ minWidth: 190 }}>
-                        <InputLabel id="task-assignee-filter-label">
-                            Assignee
-                        </InputLabel>
+                        <InputLabel id="task-assignee-filter-label">Assignee</InputLabel>
                         <Select
                             label="Assignee"
                             labelId="task-assignee-filter-label"
@@ -493,10 +406,7 @@ export function ProjectTasksSection({
                         >
                             <MenuItem value="ALL">All assignees</MenuItem>
                             {members.map((member) => (
-                                <MenuItem
-                                    key={member.userId}
-                                    value={member.userId}
-                                >
+                                <MenuItem key={member.userId} value={member.userId}>
                                     {member.fullName}
                                 </MenuItem>
                             ))}
@@ -506,18 +416,11 @@ export function ProjectTasksSection({
                     <Button type="submit" variant="contained">
                         Search
                     </Button>
-                    {hasFilters && (
-                        <Button onClick={clearFilters}>
-                            Clear filters
-                        </Button>
-                    )}
+                    {hasFilters && <Button onClick={clearFilters}>Clear filters</Button>}
                 </Stack>
             </Paper>
 
-            <Paper
-                variant="outlined"
-                sx={{ marginTop: 2, overflow: 'hidden' }}
-            >
+            <Paper variant="outlined" sx={{ marginTop: 2, overflow: 'hidden' }}>
                 {tasksQuery.isFetching && !tasksQuery.isPending && (
                     <LinearProgress aria-label="Updating project tasks" />
                 )}
@@ -554,19 +457,11 @@ export function ProjectTasksSection({
                                 <TableHead>
                                     <TableRow>
                                         <TableCell
-                                            sortDirection={
-                                                sortBy === 'title'
-                                                    ? sortDir
-                                                    : false
-                                            }
+                                            sortDirection={sortBy === 'title' ? sortDir : false}
                                         >
                                             <TableSortLabel
                                                 active={sortBy === 'title'}
-                                                direction={
-                                                    sortBy === 'title'
-                                                        ? sortDir
-                                                        : 'asc'
-                                                }
+                                                direction={sortBy === 'title' ? sortDir : 'asc'}
                                                 onClick={() => {
                                                     changeSort('title')
                                                 }}
@@ -575,19 +470,11 @@ export function ProjectTasksSection({
                                             </TableSortLabel>
                                         </TableCell>
                                         <TableCell
-                                            sortDirection={
-                                                sortBy === 'status'
-                                                    ? sortDir
-                                                    : false
-                                            }
+                                            sortDirection={sortBy === 'status' ? sortDir : false}
                                         >
                                             <TableSortLabel
                                                 active={sortBy === 'status'}
-                                                direction={
-                                                    sortBy === 'status'
-                                                        ? sortDir
-                                                        : 'asc'
-                                                }
+                                                direction={sortBy === 'status' ? sortDir : 'asc'}
                                                 onClick={() => {
                                                     changeSort('status')
                                                 }}
@@ -596,21 +483,11 @@ export function ProjectTasksSection({
                                             </TableSortLabel>
                                         </TableCell>
                                         <TableCell
-                                            sortDirection={
-                                                sortBy === 'priority'
-                                                    ? sortDir
-                                                    : false
-                                            }
+                                            sortDirection={sortBy === 'priority' ? sortDir : false}
                                         >
                                             <TableSortLabel
-                                                active={
-                                                    sortBy === 'priority'
-                                                }
-                                                direction={
-                                                    sortBy === 'priority'
-                                                        ? sortDir
-                                                        : 'asc'
-                                                }
+                                                active={sortBy === 'priority'}
+                                                direction={sortBy === 'priority' ? sortDir : 'asc'}
                                                 onClick={() => {
                                                     changeSort('priority')
                                                 }}
@@ -620,19 +497,11 @@ export function ProjectTasksSection({
                                         </TableCell>
                                         <TableCell>Assignee</TableCell>
                                         <TableCell
-                                            sortDirection={
-                                                sortBy === 'dueAt'
-                                                    ? sortDir
-                                                    : false
-                                            }
+                                            sortDirection={sortBy === 'dueAt' ? sortDir : false}
                                         >
                                             <TableSortLabel
                                                 active={sortBy === 'dueAt'}
-                                                direction={
-                                                    sortBy === 'dueAt'
-                                                        ? sortDir
-                                                        : 'asc'
-                                                }
+                                                direction={sortBy === 'dueAt' ? sortDir : 'asc'}
                                                 onClick={() => {
                                                     changeSort('dueAt')
                                                 }}
@@ -640,16 +509,13 @@ export function ProjectTasksSection({
                                                 Due
                                             </TableSortLabel>
                                         </TableCell>
-                                        <TableCell align="right">
-                                            Actions
-                                        </TableCell>
+                                        <TableCell align="right">Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {tasksQuery.data.content.map((task) => {
                                         const canUpdateStatus =
-                                            canManageTasks ||
-                                            task.assigneeUserId === userId
+                                            canManageTasks || task.assigneeUserId === userId
                                         const hasActions =
                                             !projectArchived &&
                                             task.status !== 'CANCELLED' &&
@@ -736,9 +602,7 @@ export function ProjectTasksSection({
 
                         {tasksQuery.data.content.length === 0 && (
                             <Box sx={{ padding: 4, textAlign: 'center' }}>
-                                <Typography variant="h6">
-                                    No project tasks found
-                                </Typography>
+                                <Typography variant="h6">No project tasks found</Typography>
                                 <Typography color="text.secondary" variant="body2">
                                     {hasFilters
                                         ? 'Try changing or clearing the current filters.'
@@ -766,15 +630,13 @@ export function ProjectTasksSection({
                 )}
             </Paper>
 
-            <Menu
-                anchorEl={menuAnchor}
-                onClose={closeTaskMenu}
-                open={Boolean(menuAnchor)}
-            >
+            <Menu anchorEl={menuAnchor} onClose={closeTaskMenu} open={Boolean(menuAnchor)}>
                 {selectedTaskCanUpdateStatus && (
-                    <MenuItem onClick={() => {
-                        openTaskDialog('status')
-                    }}>
+                    <MenuItem
+                        onClick={() => {
+                            openTaskDialog('status')
+                        }}
+                    >
                         <ListItemIcon>
                             <SyncAltRoundedIcon fontSize="small" />
                         </ListItemIcon>
@@ -783,25 +645,31 @@ export function ProjectTasksSection({
                 )}
                 {canManageTasks && (
                     <>
-                        <MenuItem onClick={() => {
-                            openTaskDialog('edit')
-                        }}>
+                        <MenuItem
+                            onClick={() => {
+                                openTaskDialog('edit')
+                            }}
+                        >
                             <ListItemIcon>
                                 <EditOutlinedIcon fontSize="small" />
                             </ListItemIcon>
                             Edit task
                         </MenuItem>
-                        <MenuItem onClick={() => {
-                            openTaskDialog('assignee')
-                        }}>
+                        <MenuItem
+                            onClick={() => {
+                                openTaskDialog('assignee')
+                            }}
+                        >
                             <ListItemIcon>
                                 <AssignmentIndOutlinedIcon fontSize="small" />
                             </ListItemIcon>
                             Change assignee
                         </MenuItem>
-                        <MenuItem onClick={() => {
-                            openTaskDialog('cancel')
-                        }}>
+                        <MenuItem
+                            onClick={() => {
+                                openTaskDialog('cancel')
+                            }}
+                        >
                             <ListItemIcon>
                                 <BlockOutlinedIcon fontSize="small" />
                             </ListItemIcon>

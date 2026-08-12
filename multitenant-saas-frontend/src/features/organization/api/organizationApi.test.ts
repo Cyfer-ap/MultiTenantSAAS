@@ -1,10 +1,4 @@
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { httpClient } from '../../../api/httpClient'
 import { organizationApi } from './organizationApi'
@@ -35,9 +29,7 @@ describe('organizationApi', () => {
 
         await organizationApi.getTree('tenant-1')
 
-        expect(httpClient.get).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/organization/units/tree',
-        )
+        expect(httpClient.get).toHaveBeenCalledWith('/api/tenants/tenant-1/organization/units/tree')
     })
 
     it('loads readable user options for an organizational unit', async () => {
@@ -59,10 +51,7 @@ describe('organizationApi', () => {
         })
 
         await expect(
-            organizationApi.getAssignmentUserOptions(
-                'tenant-1',
-                'unit-1',
-            ),
+            organizationApi.getAssignmentUserOptions('tenant-1', 'unit-1'),
         ).resolves.toEqual(users)
 
         expect(httpClient.get).toHaveBeenCalledWith(
@@ -90,10 +79,7 @@ describe('organizationApi', () => {
             },
         })
 
-        await organizationApi.createAssignment(
-            'tenant-1',
-            input,
-        )
+        await organizationApi.createAssignment('tenant-1', input)
 
         expect(httpClient.post).toHaveBeenCalledWith(
             '/api/tenants/tenant-1/organization/assignments',

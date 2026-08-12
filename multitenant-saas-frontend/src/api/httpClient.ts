@@ -1,18 +1,10 @@
 import axios from 'axios'
-import type {
-    AxiosError,
-    AxiosInstance,
-    AxiosResponse,
-    InternalAxiosRequestConfig,
-} from 'axios'
+import type { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 
 import { env } from '../config/env'
 import { applyTokenRefresh } from '../features/auth/session/authSession'
 import { authStorage } from '../features/auth/storage/authStorage'
-import type {
-    AuthSession,
-    TokenRefreshResponse,
-} from '../features/auth/types/auth'
+import type { AuthSession, TokenRefreshResponse } from '../features/auth/types/auth'
 import type { ApiResponse } from '../types/api'
 import { normalizeApiError } from './apiError'
 
@@ -24,82 +16,54 @@ const clientConfiguration = {
     },
 }
 
-export const publicHttpClient =
-    axios.create(clientConfiguration)
+export const publicHttpClient = axios.create(clientConfiguration)
 
-export const httpClient =
-    axios.create(clientConfiguration)
+export const httpClient = axios.create(clientConfiguration)
 
-interface RetryableRequestConfig
-    extends InternalAxiosRequestConfig {
+interface RetryableRequestConfig extends InternalAxiosRequestConfig {
     retriedAfterUnauthorized?: boolean
 }
 
 let refreshPromise: Promise<AuthSession> | null = null
 
-httpClient.interceptors.request.use(
-    (config) => {
-        const session = authStorage.read()
+httpClient.interceptors.request.use((config) => {
+    const session = authStorage.read()
 
-        if (session) {
-            config.headers.set(
-                'Authorization',
-                `${session.tokenType} ${session.accessToken}`,
-            )
-        }
+    if (session) {
+        config.headers.set('Authorization', `${session.tokenType} ${session.accessToken}`)
+    }
 
-        return config
-    },
-)
+    return config
+})
 
-async function refreshSession(
-    session: AuthSession,
-): Promise<AuthSession> {
-    const response =
-        await publicHttpClient.post<
-            ApiResponse<TokenRefreshResponse>
-        >(
-            '/api/auth/refresh',
-            {
-                refreshToken: session.refreshToken,
-            },
-        )
+async function refreshSession(session: AuthSession): Promise<AuthSession> {
+    const response = await publicHttpClient.post<ApiResponse<TokenRefreshResponse>>(
+        '/api/auth/refresh',
+        {
+            refreshToken: session.refreshToken,
+        },
+    )
 
     const currentSession = authStorage.read()
 
-    if (
-        !currentSession ||
-        currentSession.refreshToken !==
-        session.refreshToken
-    ) {
-        throw new Error(
-            'The authentication session changed during token refresh.',
-        )
+    if (!currentSession || currentSession.refreshToken !== session.refreshToken) {
+        throw new Error('The authentication session changed during token refresh.')
     }
 
-    const refreshedSession = applyTokenRefresh(
-        currentSession,
-        response.data.data,
-    )
+    const refreshedSession = applyTokenRefresh(currentSession, response.data.data)
 
     authStorage.write(refreshedSession)
 
     return refreshedSession
 }
 
-function getRefreshPromise(
-    session: AuthSession,
-): Promise<AuthSession> {
+function getRefreshPromise(session: AuthSession): Promise<AuthSession> {
     if (!refreshPromise) {
         refreshPromise = refreshSession(session)
             .catch((error: unknown) => {
-                const normalizedError =
-                    normalizeApiError(error)
+                const normalizedError = normalizeApiError(error)
 
-                if (
-                    normalizedError.status === 401 ||
-                    normalizedError.status === 403
-                ) {
+                if (normalizedError.status === 401 || normalizedError.status === 403) {
                     authStorage.clear()
                 }
 
@@ -113,19 +77,10 @@ function getRefreshPromise(
     return refreshPromise
 }
 
-async function retryAfterUnauthorized(
-    error: AxiosError,
-): Promise<AxiosResponse> {
-    const request =
-        error.config as
-        | RetryableRequestConfig
-        | undefined
+async function retryAfterUnauthorized(error: AxiosError): Promise<AxiosResponse> {
+    const request = error.config as RetryableRequestConfig | undefined
 
-    if (
-        error.response?.status !== 401 ||
-        !request ||
-        request.retriedAfterUnauthorized
-    ) {
+    if (error.response?.status !== 401 || !request || request.retriedAfterUnauthorized) {
         throw error
     }
 
@@ -137,8 +92,7 @@ async function retryAfterUnauthorized(
 
     request.retriedAfterUnauthorized = true
 
-    const refreshedSession =
-        await getRefreshPromise(session)
+    const refreshedSession = await getRefreshPromise(session)
 
     request.headers.set(
         'Authorization',
@@ -148,18 +102,12 @@ async function retryAfterUnauthorized(
     return httpClient(request)
 }
 
-httpClient.interceptors.response.use(
-    (response) => response,
-    retryAfterUnauthorized,
-)
+httpClient.interceptors.response.use((response) => response, retryAfterUnauthorized)
 
-function configureErrorHandling(
-    client: AxiosInstance,
-): void {
+function configureErrorHandling(client: AxiosInstance): void {
     client.interceptors.response.use(
         (response) => response,
-        (error: unknown) =>
-            Promise.reject(normalizeApiError(error)),
+        (error: unknown) => Promise.reject(normalizeApiError(error)),
     )
 }
 

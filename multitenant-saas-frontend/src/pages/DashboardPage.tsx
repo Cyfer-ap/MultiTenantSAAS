@@ -35,13 +35,7 @@ interface BreakdownItemProps {
     value: number
 }
 
-function MetricCard({
-    label,
-    value,
-    detail,
-    icon,
-    tone,
-}: MetricCardProps) {
+function MetricCard({ label, value, detail, icon, tone }: MetricCardProps) {
     return (
         <Card variant="outlined">
             <CardContent>
@@ -54,18 +48,11 @@ function MetricCard({
                     }}
                 >
                     <Box>
-                        <Typography
-                            color="text.secondary"
-                            variant="body2"
-                        >
+                        <Typography color="text.secondary" variant="body2">
                             {label}
                         </Typography>
 
-                        <Typography
-                            component="p"
-                            variant="h4"
-                            sx={{ marginTop: 0.5 }}
-                        >
+                        <Typography component="p" variant="h4" sx={{ marginTop: 0.5 }}>
                             {value.toLocaleString()}
                         </Typography>
                     </Box>
@@ -98,10 +85,7 @@ function MetricCard({
     )
 }
 
-function BreakdownItem({
-    label,
-    value,
-}: BreakdownItemProps) {
+function BreakdownItem({ label, value }: BreakdownItemProps) {
     return (
         <Stack
             direction="row"
@@ -142,11 +126,7 @@ function DashboardSkeleton() {
                 }}
             >
                 {[0, 1, 2, 3].map((item) => (
-                    <Skeleton
-                        key={item}
-                        height={148}
-                        variant="rounded"
-                    />
+                    <Skeleton key={item} height={148} variant="rounded" />
                 ))}
             </Box>
         </Box>
@@ -154,20 +134,11 @@ function DashboardSkeleton() {
 }
 
 function getErrorMessage(error: unknown): string {
-    return error instanceof Error
-        ? error.message
-        : 'The dashboard could not be loaded.'
+    return error instanceof Error ? error.message : 'The dashboard could not be loaded.'
 }
 
-function DashboardContent({
-    summary,
-}: {
-    summary: TenantDashboardSummary
-}) {
-    const completionPercentage = Math.min(
-        100,
-        Math.max(0, summary.taskCompletionPercentage),
-    )
+function DashboardContent({ summary }: { summary: TenantDashboardSummary }) {
+    const completionPercentage = Math.min(100, Math.max(0, summary.taskCompletionPercentage))
 
     return (
         <>
@@ -187,20 +158,13 @@ function DashboardContent({
                         {summary.tenantName}
                     </Typography>
 
-                    <Typography
-                        color="text.secondary"
-                        sx={{ marginTop: 0.5 }}
-                    >
+                    <Typography color="text.secondary" sx={{ marginTop: 0.5 }}>
                         Tenant workspace overview
                     </Typography>
                 </Box>
 
                 <Chip
-                    color={
-                        summary.tenantStatus === 'ACTIVE'
-                            ? 'success'
-                            : 'default'
-                    }
+                    color={summary.tenantStatus === 'ACTIVE' ? 'success' : 'default'}
                     label={summary.tenantStatus.replace('_', ' ')}
                     size="small"
                     variant="outlined"
@@ -237,11 +201,7 @@ function DashboardContent({
 
                 <MetricCard
                     label="Open tasks"
-                    value={
-                        summary.todoTasks +
-                        summary.inProgressTasks +
-                        summary.blockedTasks
-                    }
+                    value={summary.todoTasks + summary.inProgressTasks + summary.blockedTasks}
                     detail={`${summary.totalTasks.toLocaleString()} tasks in total`}
                     icon={<TaskAltRoundedIcon />}
                     tone="warning"
@@ -281,18 +241,9 @@ function DashboardContent({
                             Current account status distribution
                         </Typography>
 
-                        <BreakdownItem
-                            label="Active"
-                            value={summary.activeUsers}
-                        />
-                        <BreakdownItem
-                            label="Inactive"
-                            value={summary.inactiveUsers}
-                        />
-                        <BreakdownItem
-                            label="Suspended"
-                            value={summary.suspendedUsers}
-                        />
+                        <BreakdownItem label="Active" value={summary.activeUsers} />
+                        <BreakdownItem label="Inactive" value={summary.inactiveUsers} />
+                        <BreakdownItem label="Suspended" value={summary.suspendedUsers} />
                     </CardContent>
                 </Card>
 
@@ -307,30 +258,14 @@ function DashboardContent({
                             variant="body2"
                             sx={{ marginBottom: 1, marginTop: 0.5 }}
                         >
-                            {summary.totalProjectMemberships.toLocaleString()}{' '}
-                            project memberships
+                            {summary.totalProjectMemberships.toLocaleString()} project memberships
                         </Typography>
 
-                        <BreakdownItem
-                            label="Planning"
-                            value={summary.planningProjects}
-                        />
-                        <BreakdownItem
-                            label="Active"
-                            value={summary.activeProjects}
-                        />
-                        <BreakdownItem
-                            label="On hold"
-                            value={summary.onHoldProjects}
-                        />
-                        <BreakdownItem
-                            label="Completed"
-                            value={summary.completedProjects}
-                        />
-                        <BreakdownItem
-                            label="Archived"
-                            value={summary.archivedProjects}
-                        />
+                        <BreakdownItem label="Planning" value={summary.planningProjects} />
+                        <BreakdownItem label="Active" value={summary.activeProjects} />
+                        <BreakdownItem label="On hold" value={summary.onHoldProjects} />
+                        <BreakdownItem label="Completed" value={summary.completedProjects} />
+                        <BreakdownItem label="Archived" value={summary.archivedProjects} />
                     </CardContent>
                 </Card>
 
@@ -348,19 +283,12 @@ function DashboardContent({
                                 Tasks
                             </Typography>
 
-                            <Typography
-                                color="primary.main"
-                                variant="h6"
-                            >
+                            <Typography color="primary.main" variant="h6">
                                 {completionPercentage.toFixed(1)}%
                             </Typography>
                         </Stack>
 
-                        <Typography
-                            color="text.secondary"
-                            variant="body2"
-                            sx={{ marginTop: 0.5 }}
-                        >
+                        <Typography color="text.secondary" variant="body2" sx={{ marginTop: 0.5 }}>
                             Completion excludes cancelled tasks
                         </Typography>
 
@@ -371,26 +299,11 @@ function DashboardContent({
                             sx={{ height: 8, marginY: 2, borderRadius: 4 }}
                         />
 
-                        <BreakdownItem
-                            label="To do"
-                            value={summary.todoTasks}
-                        />
-                        <BreakdownItem
-                            label="In progress"
-                            value={summary.inProgressTasks}
-                        />
-                        <BreakdownItem
-                            label="Blocked"
-                            value={summary.blockedTasks}
-                        />
-                        <BreakdownItem
-                            label="Completed"
-                            value={summary.completedTasks}
-                        />
-                        <BreakdownItem
-                            label="Cancelled"
-                            value={summary.cancelledTasks}
-                        />
+                        <BreakdownItem label="To do" value={summary.todoTasks} />
+                        <BreakdownItem label="In progress" value={summary.inProgressTasks} />
+                        <BreakdownItem label="Blocked" value={summary.blockedTasks} />
+                        <BreakdownItem label="Completed" value={summary.completedTasks} />
+                        <BreakdownItem label="Cancelled" value={summary.cancelledTasks} />
                     </CardContent>
                 </Card>
             </Box>
@@ -444,9 +357,11 @@ export function DashboardPage() {
             >
                 <Button
                     startIcon={
-                        dashboardQuery.isFetching
-                            ? <CircularProgress color="inherit" size={16} />
-                            : <RefreshRoundedIcon />
+                        dashboardQuery.isFetching ? (
+                            <CircularProgress color="inherit" size={16} />
+                        ) : (
+                            <RefreshRoundedIcon />
+                        )
                     }
                     disabled={dashboardQuery.isFetching}
                     onClick={() => {

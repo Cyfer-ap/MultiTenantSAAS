@@ -1,23 +1,9 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    fireEvent,
-    render,
-    screen,
-    within,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { systemAdminApi } from '../features/system-admin/api/systemAdminApi'
 import type { SystemTenant } from '../features/system-admin/types/systemAdmin'
@@ -55,9 +41,7 @@ function renderTenants() {
     function Wrapper({ children }: PropsWithChildren) {
         return (
             <ThemeProvider theme={appTheme}>
-                <QueryClientProvider client={queryClient}>
-                    {children}
-                </QueryClientProvider>
+                <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
             </ThemeProvider>
         )
     }
@@ -107,7 +91,8 @@ describe('SystemTenantsPage', () => {
 
     it('changes tenant status through the protected mutation', async () => {
         const user = userEvent.setup()
-        const updateStatus = vi.spyOn(systemAdminApi, 'updateTenantStatus')
+        const updateStatus = vi
+            .spyOn(systemAdminApi, 'updateTenantStatus')
             .mockResolvedValue({ ...tenant, status: 'SUSPENDED' })
         renderTenants()
         await screen.findByText('Research Lab')
@@ -118,41 +103,49 @@ describe('SystemTenantsPage', () => {
         await user.click(screen.getByRole('option', { name: 'Suspended' }))
         await user.click(within(dialog).getByRole('button', { name: /save status/i }))
 
-        expect(updateStatus).toHaveBeenCalledWith(
-            'tenant-1',
-            { status: 'SUSPENDED' },
-        )
+        expect(updateStatus).toHaveBeenCalledWith('tenant-1', { status: 'SUSPENDED' })
         expect(await screen.findByText(/research lab is now suspended/i)).toBeInTheDocument()
     })
 
     it('normalizes and submits administrative tenant onboarding', async () => {
         const user = userEvent.setup()
-        const onboard = vi.spyOn(systemAdminApi, 'onboardTenant')
-            .mockResolvedValue({
-                tenant,
-                adminUser: {
-                    id: 'user-1',
-                    tenantId: tenant.id,
-                    fullName: 'Grace Admin',
-                    email: 'grace@example.com',
-                    role: 'TENANT_ADMIN',
-                    status: 'ACTIVE',
-                    createdAt: tenant.createdAt,
-                    updatedAt: tenant.updatedAt,
-                },
-                message: 'Tenant onboarded successfully by system admin',
-            })
+        const onboard = vi.spyOn(systemAdminApi, 'onboardTenant').mockResolvedValue({
+            tenant,
+            adminUser: {
+                id: 'user-1',
+                tenantId: tenant.id,
+                fullName: 'Grace Admin',
+                email: 'grace@example.com',
+                role: 'TENANT_ADMIN',
+                status: 'ACTIVE',
+                createdAt: tenant.createdAt,
+                updatedAt: tenant.updatedAt,
+            },
+            message: 'Tenant onboarded successfully by system admin',
+        })
         renderTenants()
         await screen.findByText('Research Lab')
         await user.click(screen.getByRole('button', { name: /onboard tenant/i }))
 
         const dialog = screen.getByRole('dialog', { name: /onboard tenant/i })
-        fireEvent.change(within(dialog).getByLabelText(/workspace name/i), { target: { value: '  Research Lab  ' } })
-        fireEvent.change(within(dialog).getByLabelText(/workspace slug/i), { target: { value: '  Research-Lab  ' } })
-        fireEvent.change(within(dialog).getByLabelText(/administrator full name/i), { target: { value: '  Grace Admin  ' } })
-        fireEvent.change(within(dialog).getByLabelText(/administrator email address/i), { target: { value: '  GRACE@EXAMPLE.COM  ' } })
-        fireEvent.change(within(dialog).getByLabelText(/^administrator password$/i), { target: { value: 'Strong@123' } })
-        fireEvent.change(within(dialog).getByLabelText(/confirm administrator password/i), { target: { value: 'Strong@123' } })
+        fireEvent.change(within(dialog).getByLabelText(/workspace name/i), {
+            target: { value: '  Research Lab  ' },
+        })
+        fireEvent.change(within(dialog).getByLabelText(/workspace slug/i), {
+            target: { value: '  Research-Lab  ' },
+        })
+        fireEvent.change(within(dialog).getByLabelText(/administrator full name/i), {
+            target: { value: '  Grace Admin  ' },
+        })
+        fireEvent.change(within(dialog).getByLabelText(/administrator email address/i), {
+            target: { value: '  GRACE@EXAMPLE.COM  ' },
+        })
+        fireEvent.change(within(dialog).getByLabelText(/^administrator password$/i), {
+            target: { value: 'Strong@123' },
+        })
+        fireEvent.change(within(dialog).getByLabelText(/confirm administrator password/i), {
+            target: { value: 'Strong@123' },
+        })
         await user.click(within(dialog).getByRole('button', { name: /^onboard tenant$/i }))
 
         expect(onboard).toHaveBeenCalledWith({

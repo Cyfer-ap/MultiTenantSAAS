@@ -12,30 +12,22 @@ export const systemHttpClient = axios.create({
     },
 })
 
-systemHttpClient.interceptors.request.use(
-    (config) => {
-        const session = systemAdminStorage.read()
+systemHttpClient.interceptors.request.use((config) => {
+    const session = systemAdminStorage.read()
 
-        if (session) {
-            config.headers.set(
-                'Authorization',
-                `${session.tokenType} ${session.accessToken}`,
-            )
-        }
+    if (session) {
+        config.headers.set('Authorization', `${session.tokenType} ${session.accessToken}`)
+    }
 
-        return config
-    },
-)
+    return config
+})
 
 systemHttpClient.interceptors.response.use(
     (response) => response,
     (error: unknown) => {
         const normalizedError = normalizeApiError(error)
 
-        if (
-            normalizedError.status === 401 ||
-            normalizedError.status === 403
-        ) {
+        if (normalizedError.status === 401 || normalizedError.status === 403) {
             systemAdminStorage.clear()
         }
 

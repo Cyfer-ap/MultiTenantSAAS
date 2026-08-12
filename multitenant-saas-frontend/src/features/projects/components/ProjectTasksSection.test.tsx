@@ -1,24 +1,9 @@
 import { ThemeProvider } from '@mui/material'
-import {
-    QueryClient,
-    QueryClientProvider,
-} from '@tanstack/react-query'
-import {
-    fireEvent,
-    render,
-    screen,
-    waitFor,
-    within,
-} from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
-import {
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { appTheme } from '../../../theme/appTheme'
 import type { PageResponse } from '../../../types/api'
@@ -93,19 +78,13 @@ function createTestQueryClient(): QueryClient {
     })
 }
 
-function renderTasksSection(
-    props: Partial<
-        React.ComponentProps<typeof ProjectTasksSection>
-    > = {},
-) {
+function renderTasksSection(props: Partial<React.ComponentProps<typeof ProjectTasksSection>> = {}) {
     const queryClient = createTestQueryClient()
 
     function Wrapper({ children }: PropsWithChildren) {
         return (
             <ThemeProvider theme={appTheme}>
-                <QueryClientProvider client={queryClient}>
-                    {children}
-                </QueryClientProvider>
+                <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
             </ThemeProvider>
         )
     }
@@ -128,30 +107,17 @@ function renderTasksSection(
 describe('ProjectTasksSection', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
-        vi.spyOn(
-            projectMembersApi,
-            'getMembers',
-        ).mockResolvedValue(membersPage)
-        vi.spyOn(
-            projectMembersApi,
-            'getMember',
-        ).mockResolvedValue(member)
-        vi.spyOn(
-            projectTasksApi,
-            'getTasks',
-        ).mockResolvedValue(tasksPage)
+        vi.spyOn(projectMembersApi, 'getMembers').mockResolvedValue(membersPage)
+        vi.spyOn(projectMembersApi, 'getMember').mockResolvedValue(member)
+        vi.spyOn(projectTasksApi, 'getTasks').mockResolvedValue(tasksPage)
     })
 
     it('renders task data and management controls for an administrator', async () => {
         renderTasksSection()
 
-        expect(
-            await screen.findByText('Review access controls'),
-        ).toBeInTheDocument()
+        expect(await screen.findByText('Review access controls')).toBeInTheDocument()
         expect(screen.getByText('Grace User')).toBeInTheDocument()
-        expect(
-            screen.getByRole('button', { name: /create task/i }),
-        ).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /create task/i })).toBeInTheDocument()
         expect(
             screen.getByRole('button', {
                 name: /manage review access controls/i,
@@ -160,33 +126,22 @@ describe('ProjectTasksSection', () => {
     })
 
     it('submits server-side search, status, priority, and assignee filters', async () => {
-        const getTasks = vi
-            .spyOn(projectTasksApi, 'getTasks')
-            .mockResolvedValue(tasksPage)
+        const getTasks = vi.spyOn(projectTasksApi, 'getTasks').mockResolvedValue(tasksPage)
 
         renderTasksSection()
         await screen.findByText('Review access controls')
 
-        fireEvent.change(
-            screen.getByLabelText(/search project tasks/i),
-            { target: { value: '  access  ' } },
-        )
+        fireEvent.change(screen.getByLabelText(/search project tasks/i), {
+            target: { value: '  access  ' },
+        })
         fireEvent.mouseDown(screen.getByLabelText(/^status$/i))
-        fireEvent.click(
-            screen.getByRole('option', { name: 'To do' }),
-        )
+        fireEvent.click(screen.getByRole('option', { name: 'To do' }))
         fireEvent.mouseDown(screen.getByLabelText(/^priority$/i))
-        fireEvent.click(
-            screen.getByRole('option', { name: 'High' }),
-        )
+        fireEvent.click(screen.getByRole('option', { name: 'High' }))
         fireEvent.mouseDown(screen.getByLabelText(/^assignee$/i))
-        fireEvent.click(
-            screen.getByRole('option', { name: 'Grace User' }),
-        )
+        fireEvent.click(screen.getByRole('option', { name: 'Grace User' }))
 
-        const searchForm = screen
-            .getByLabelText(/search project tasks/i)
-            .closest('form')
+        const searchForm = screen.getByLabelText(/search project tasks/i).closest('form')
 
         fireEvent.click(
             within(searchForm!).getByRole('button', {
@@ -209,38 +164,26 @@ describe('ProjectTasksSection', () => {
 
     it('creates a normalized task with an optional assignee', async () => {
         const user = userEvent.setup()
-        const createTask = vi
-            .spyOn(projectTasksApi, 'createTask')
-            .mockResolvedValue(task)
+        const createTask = vi.spyOn(projectTasksApi, 'createTask').mockResolvedValue(task)
 
         renderTasksSection()
         await screen.findByText('Review access controls')
-        await user.click(
-            screen.getByRole('button', { name: /create task/i }),
-        )
+        await user.click(screen.getByRole('button', { name: /create task/i }))
 
         const dialog = screen.getByRole('dialog', {
             name: /create task/i,
         })
-        fireEvent.change(
-            within(dialog).getByLabelText(/task title/i),
-            {
-                target: {
-                    value: '  Audit refresh flow  ',
-                },
+        fireEvent.change(within(dialog).getByLabelText(/task title/i), {
+            target: {
+                value: '  Audit refresh flow  ',
             },
-        )
-        fireEvent.change(
-            within(dialog).getByLabelText(/description/i),
-            {
-                target: {
-                    value: '  Validate token rotation.  ',
-                },
+        })
+        fireEvent.change(within(dialog).getByLabelText(/description/i), {
+            target: {
+                value: '  Validate token rotation.  ',
             },
-        )
-        fireEvent.mouseDown(
-            within(dialog).getByLabelText(/^assignee$/i),
-        )
+        })
+        fireEvent.mouseDown(within(dialog).getByLabelText(/^assignee$/i))
         fireEvent.click(
             screen.getByRole('option', {
                 name: /grace user.*grace@example.com/i,
@@ -253,28 +196,22 @@ describe('ProjectTasksSection', () => {
         )
 
         await waitFor(() => {
-            expect(createTask).toHaveBeenCalledWith(
-                'tenant-1',
-                'project-1',
-                {
-                    title: 'Audit refresh flow',
-                    description: 'Validate token rotation.',
-                    priority: 'MEDIUM',
-                    dueAt: null,
-                    assigneeUserId: 'user-2',
-                },
-            )
+            expect(createTask).toHaveBeenCalledWith('tenant-1', 'project-1', {
+                title: 'Audit refresh flow',
+                description: 'Validate token rotation.',
+                priority: 'MEDIUM',
+                dueAt: null,
+                assigneeUserId: 'user-2',
+            })
         })
     })
 
     it('lets an assigned member change only task status', async () => {
         const user = userEvent.setup()
-        const updateStatus = vi
-            .spyOn(projectTasksApi, 'updateTaskStatus')
-            .mockResolvedValue({
-                ...task,
-                status: 'IN_PROGRESS',
-            })
+        const updateStatus = vi.spyOn(projectTasksApi, 'updateTaskStatus').mockResolvedValue({
+            ...task,
+            status: 'IN_PROGRESS',
+        })
 
         renderTasksSection({
             canManageTasksByPermission: false,
@@ -283,32 +220,22 @@ describe('ProjectTasksSection', () => {
         })
         await screen.findByText('Review access controls')
 
-        expect(
-            screen.queryByRole('button', { name: /create task/i }),
-        ).not.toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: /create task/i })).not.toBeInTheDocument()
 
         await user.click(
             screen.getByRole('button', {
                 name: /manage review access controls/i,
             }),
         )
-        expect(
-            screen.getByRole('menuitem', { name: /change status/i }),
-        ).toBeInTheDocument()
-        expect(
-            screen.queryByRole('menuitem', { name: /edit task/i }),
-        ).not.toBeInTheDocument()
-        await user.click(
-            screen.getByRole('menuitem', { name: /change status/i }),
-        )
+        expect(screen.getByRole('menuitem', { name: /change status/i })).toBeInTheDocument()
+        expect(screen.queryByRole('menuitem', { name: /edit task/i })).not.toBeInTheDocument()
+        await user.click(screen.getByRole('menuitem', { name: /change status/i }))
 
         const dialog = screen.getByRole('dialog', {
             name: /change task status/i,
         })
         await user.click(within(dialog).getByLabelText(/^status$/i))
-        await user.click(
-            screen.getByRole('option', { name: 'In progress' }),
-        )
+        await user.click(screen.getByRole('option', { name: 'In progress' }))
         await user.click(
             within(dialog).getByRole('button', {
                 name: /change status/i,
@@ -316,20 +243,14 @@ describe('ProjectTasksSection', () => {
         )
 
         await waitFor(() => {
-            expect(updateStatus).toHaveBeenCalledWith(
-                'tenant-1',
-                'project-1',
-                'task-1',
-                { status: 'IN_PROGRESS' },
-            )
+            expect(updateStatus).toHaveBeenCalledWith('tenant-1', 'project-1', 'task-1', {
+                status: 'IN_PROGRESS',
+            })
         })
     })
 
     it('gives a project lead complete task controls', async () => {
-        vi.spyOn(
-            projectMembersApi,
-            'getMember',
-        ).mockResolvedValue({
+        vi.spyOn(projectMembersApi, 'getMember').mockResolvedValue({
             ...member,
             projectRole: 'PROJECT_LEAD',
         })
@@ -356,9 +277,7 @@ describe('ProjectTasksSection', () => {
         renderTasksSection({ projectArchived: true })
         await screen.findByText('Review access controls')
 
-        expect(
-            screen.getByRole('button', { name: /create task/i }),
-        ).toBeDisabled()
+        expect(screen.getByRole('button', { name: /create task/i })).toBeDisabled()
         expect(
             screen.queryByRole('button', {
                 name: /manage review access controls/i,

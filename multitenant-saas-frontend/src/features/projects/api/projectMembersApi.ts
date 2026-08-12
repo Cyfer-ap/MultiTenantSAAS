@@ -1,8 +1,5 @@
 import { httpClient } from '../../../api/httpClient'
-import type {
-    ApiResponse,
-    PageResponse,
-} from '../../../types/api'
+import type { ApiResponse, PageResponse } from '../../../types/api'
 import type {
     AddProjectMemberInput,
     ProjectMember,
@@ -10,10 +7,7 @@ import type {
     UpdateProjectMemberRoleInput,
 } from '../types/projects'
 
-function membersPath(
-    tenantId: string,
-    projectId: string,
-): string {
+function membersPath(tenantId: string, projectId: string): string {
     return `/api/tenants/${tenantId}/projects/${projectId}/members`
 }
 
@@ -22,9 +16,10 @@ async function getMembers(
     projectId: string,
     params: ProjectMembersQueryParams,
 ): Promise<PageResponse<ProjectMember>> {
-    const response = await httpClient.get<
-        ApiResponse<PageResponse<ProjectMember>>
-    >(membersPath(tenantId, projectId), { params })
+    const response = await httpClient.get<ApiResponse<PageResponse<ProjectMember>>>(
+        membersPath(tenantId, projectId),
+        { params },
+    )
 
     return response.data.data
 }
@@ -34,9 +29,9 @@ async function getMember(
     projectId: string,
     userId: string,
 ): Promise<ProjectMember> {
-    const response = await httpClient.get<
-        ApiResponse<ProjectMember>
-    >(`${membersPath(tenantId, projectId)}/${userId}`)
+    const response = await httpClient.get<ApiResponse<ProjectMember>>(
+        `${membersPath(tenantId, projectId)}/${userId}`,
+    )
 
     return response.data.data
 }
@@ -46,9 +41,10 @@ async function addMember(
     projectId: string,
     input: AddProjectMemberInput,
 ): Promise<ProjectMember> {
-    const response = await httpClient.post<
-        ApiResponse<ProjectMember>
-    >(membersPath(tenantId, projectId), input)
+    const response = await httpClient.post<ApiResponse<ProjectMember>>(
+        membersPath(tenantId, projectId),
+        input,
+    )
 
     return response.data.data
 }
@@ -59,9 +55,7 @@ async function updateMemberRole(
     userId: string,
     input: UpdateProjectMemberRoleInput,
 ): Promise<ProjectMember> {
-    const response = await httpClient.patch<
-        ApiResponse<ProjectMember>
-    >(
+    const response = await httpClient.patch<ApiResponse<ProjectMember>>(
         `${membersPath(tenantId, projectId)}/${userId}/role`,
         input,
     )
@@ -74,9 +68,9 @@ async function removeMember(
     projectId: string,
     userId: string,
 ): Promise<ProjectMember> {
-    const response = await httpClient.delete<
-        ApiResponse<ProjectMember>
-    >(`${membersPath(tenantId, projectId)}/${userId}`)
+    const response = await httpClient.delete<ApiResponse<ProjectMember>>(
+        `${membersPath(tenantId, projectId)}/${userId}`,
+    )
 
     return response.data.data
 }
