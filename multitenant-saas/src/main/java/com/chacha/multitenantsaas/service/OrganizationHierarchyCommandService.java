@@ -7,59 +7,38 @@ import com.chacha.multitenantsaas.dto.OrganizationalUnitStatusUpdateRequest;
 import com.chacha.multitenantsaas.dto.OrganizationalUnitUpdateRequest;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.AuditAction;
+import java.util.UUID;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-
 @Service
 public class OrganizationHierarchyCommandService {
 
-    private final OrganizationHierarchyService
-            organizationHierarchyService;
+    private final OrganizationHierarchyService organizationHierarchyService;
 
-    private final CurrentActorService
-            currentActorService;
+    private final CurrentActorService currentActorService;
 
-    private final AuditLogService
-            auditLogService;
+    private final AuditLogService auditLogService;
 
     public OrganizationHierarchyCommandService(
-            OrganizationHierarchyService
-                    organizationHierarchyService,
+            OrganizationHierarchyService organizationHierarchyService,
             CurrentActorService currentActorService,
-            AuditLogService auditLogService
-    ) {
-        this.organizationHierarchyService =
-                organizationHierarchyService;
+            AuditLogService auditLogService) {
+        this.organizationHierarchyService = organizationHierarchyService;
 
-        this.currentActorService =
-                currentActorService;
+        this.currentActorService = currentActorService;
 
-        this.auditLogService =
-                auditLogService;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
     public OrganizationalUnitResponse createUnit(
-            UUID tenantId,
-            OrganizationalUnitCreateRequest request,
-            Jwt jwt
-    ) {
-        AppUser actor =
-                currentActorService
-                        .getRequiredActiveActor(
-                                tenantId,
-                                jwt
-                        );
+            UUID tenantId, OrganizationalUnitCreateRequest request, Jwt jwt) {
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
         OrganizationalUnitResponse createdUnit =
-                organizationHierarchyService
-                        .createUnit(
-                                tenantId,
-                                request
-                        );
+                organizationHierarchyService.createUnit(tenantId, request);
 
         auditLogService.recordSuccess(
                 actor.getTenant(),
@@ -71,16 +50,11 @@ public class OrganizationHierarchyCommandService {
                         + " - "
                         + createdUnit.name()
                         + "; code="
-                        + formatNullableValue(
-                        createdUnit.code()
-                )
+                        + formatNullableValue(createdUnit.code())
                         + "; type="
                         + createdUnit.type()
                         + "; parentUnitId="
-                        + formatNullableUuid(
-                        createdUnit.parentUnitId()
-                )
-        );
+                        + formatNullableUuid(createdUnit.parentUnitId()));
 
         return createdUnit;
     }
@@ -90,29 +64,14 @@ public class OrganizationHierarchyCommandService {
             UUID tenantId,
             UUID organizationalUnitId,
             OrganizationalUnitUpdateRequest request,
-            Jwt jwt
-    ) {
-        AppUser actor =
-                currentActorService
-                        .getRequiredActiveActor(
-                                tenantId,
-                                jwt
-                        );
+            Jwt jwt) {
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
         OrganizationalUnitResponse previousUnit =
-                organizationHierarchyService
-                        .getUnit(
-                                tenantId,
-                                organizationalUnitId
-                        );
+                organizationHierarchyService.getUnit(tenantId, organizationalUnitId);
 
         OrganizationalUnitResponse updatedUnit =
-                organizationHierarchyService
-                        .updateUnit(
-                                tenantId,
-                                organizationalUnitId,
-                                request
-                        );
+                organizationHierarchyService.updateUnit(tenantId, organizationalUnitId, request);
 
         auditLogService.recordSuccess(
                 actor.getTenant(),
@@ -126,18 +85,13 @@ public class OrganizationHierarchyCommandService {
                         + " -> "
                         + updatedUnit.name()
                         + "; code="
-                        + formatNullableValue(
-                        previousUnit.code()
-                )
+                        + formatNullableValue(previousUnit.code())
                         + " -> "
-                        + formatNullableValue(
-                        updatedUnit.code()
-                )
+                        + formatNullableValue(updatedUnit.code())
                         + "; type="
                         + previousUnit.type()
                         + " -> "
-                        + updatedUnit.type()
-        );
+                        + updatedUnit.type());
 
         return updatedUnit;
     }
@@ -147,29 +101,15 @@ public class OrganizationHierarchyCommandService {
             UUID tenantId,
             UUID organizationalUnitId,
             OrganizationalUnitStatusUpdateRequest request,
-            Jwt jwt
-    ) {
-        AppUser actor =
-                currentActorService
-                        .getRequiredActiveActor(
-                                tenantId,
-                                jwt
-                        );
+            Jwt jwt) {
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
         OrganizationalUnitResponse previousUnit =
-                organizationHierarchyService
-                        .getUnit(
-                                tenantId,
-                                organizationalUnitId
-                        );
+                organizationHierarchyService.getUnit(tenantId, organizationalUnitId);
 
         OrganizationalUnitResponse updatedUnit =
-                organizationHierarchyService
-                        .updateUnitStatus(
-                                tenantId,
-                                organizationalUnitId,
-                                request
-                        );
+                organizationHierarchyService.updateUnitStatus(
+                        tenantId, organizationalUnitId, request);
 
         auditLogService.recordSuccess(
                 actor.getTenant(),
@@ -183,8 +123,7 @@ public class OrganizationHierarchyCommandService {
                         + "; status="
                         + previousUnit.status()
                         + " -> "
-                        + updatedUnit.status()
-        );
+                        + updatedUnit.status());
 
         return updatedUnit;
     }
@@ -194,29 +133,14 @@ public class OrganizationHierarchyCommandService {
             UUID tenantId,
             UUID organizationalUnitId,
             OrganizationalUnitMoveRequest request,
-            Jwt jwt
-    ) {
-        AppUser actor =
-                currentActorService
-                        .getRequiredActiveActor(
-                                tenantId,
-                                jwt
-                        );
+            Jwt jwt) {
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
         OrganizationalUnitResponse previousUnit =
-                organizationHierarchyService
-                        .getUnit(
-                                tenantId,
-                                organizationalUnitId
-                        );
+                organizationHierarchyService.getUnit(tenantId, organizationalUnitId);
 
         OrganizationalUnitResponse movedUnit =
-                organizationHierarchyService
-                        .moveUnit(
-                                tenantId,
-                                organizationalUnitId,
-                                request
-                        );
+                organizationHierarchyService.moveUnit(tenantId, organizationalUnitId, request);
 
         auditLogService.recordSuccess(
                 actor.getTenant(),
@@ -228,27 +152,18 @@ public class OrganizationHierarchyCommandService {
                         + " - "
                         + movedUnit.name()
                         + "; parentUnitId="
-                        + formatNullableUuid(
-                        previousUnit.parentUnitId()
-                )
+                        + formatNullableUuid(previousUnit.parentUnitId())
                         + " -> "
-                        + formatNullableUuid(
-                        movedUnit.parentUnitId()
-                )
-        );
+                        + formatNullableUuid(movedUnit.parentUnitId()));
 
         return movedUnit;
     }
 
     private String formatNullableUuid(UUID value) {
-        return value == null
-                ? "ROOT"
-                : value.toString();
+        return value == null ? "ROOT" : value.toString();
     }
 
     private String formatNullableValue(String value) {
-        return value == null
-                ? "NONE"
-                : value;
+        return value == null ? "NONE" : value;
     }
 }

@@ -2,43 +2,30 @@ package com.chacha.multitenantsaas.repository;
 
 import com.chacha.multitenantsaas.entity.ProjectMember;
 import com.chacha.multitenantsaas.entity.ProjectMemberRole;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.Optional;
-import java.util.UUID;
+public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UUID> {
 
-public interface ProjectMemberRepository
-        extends JpaRepository<ProjectMember, UUID> {
+    boolean existsByProject_IdAndUser_Id(UUID projectId, UUID userId);
 
-    boolean existsByProject_IdAndUser_Id(
-            UUID projectId,
-            UUID userId
-    );
+    Optional<ProjectMember> findByProject_Tenant_IdAndProject_IdAndUser_Id(
+            UUID tenantId, UUID projectId, UUID userId);
 
-    Optional<ProjectMember>
-    findByProject_Tenant_IdAndProject_IdAndUser_Id(
-            UUID tenantId,
-            UUID projectId,
-            UUID userId
-    );
-
-    long countByProject_IdAndRole(
-            UUID projectId,
-            ProjectMemberRole role
-    );
+    long countByProject_IdAndRole(UUID projectId, ProjectMemberRole role);
 
     boolean existsByProject_Tenant_IdAndProject_IdAndUser_Id(
-            UUID tenantId,
-            UUID projectId,
-            UUID userId
-    );
+            UUID tenantId, UUID projectId, UUID userId);
 
     long countByProject_Tenant_Id(UUID tenantId);
-    @Query("""
+
+    @Query(
+            """
             SELECT membership
             FROM ProjectMember membership
             JOIN FETCH membership.user memberUser
@@ -62,6 +49,5 @@ public interface ProjectMemberRepository
             @Param("projectId") UUID projectId,
             @Param("role") ProjectMemberRole role,
             @Param("search") String search,
-            Pageable pageable
-    );
+            Pageable pageable);
 }

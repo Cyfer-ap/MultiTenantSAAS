@@ -1,5 +1,11 @@
 package com.chacha.multitenantsaas.integration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.chacha.multitenantsaas.dto.OrganizationAssignmentCreateRequest;
 import com.chacha.multitenantsaas.dto.OrganizationAssignmentResponse;
 import com.chacha.multitenantsaas.entity.AppUser;
@@ -16,67 +22,38 @@ import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import com.chacha.multitenantsaas.service.OrganizationAssignmentService;
 import com.chacha.multitenantsaas.service.OrganizationHierarchyService;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
 class OrganizationAssignmentServiceIntegrationTest {
 
-    @Autowired
-    private OrganizationAssignmentService
-            organizationAssignmentService;
+    @Autowired private OrganizationAssignmentService organizationAssignmentService;
 
-    @Autowired
-    private OrganizationHierarchyService
-            organizationHierarchyService;
+    @Autowired private OrganizationHierarchyService organizationHierarchyService;
 
-    @Autowired
-    private TenantRepository tenantRepository;
+    @Autowired private TenantRepository tenantRepository;
 
-    @Autowired
-    private AppUserRepository appUserRepository;
+    @Autowired private AppUserRepository appUserRepository;
 
     @Test
     void createsAndReadsPrimarySecondaryAndReportingAssignments() {
-        Tenant tenant =
-                createTenant("assignment-service");
+        Tenant tenant = createTenant("assignment-service");
 
-        AppUser administrator =
-                createUser(
-                        tenant,
-                        "Tenant Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+        AppUser administrator = createUser(tenant, "Tenant Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser manager =
-                createUser(
-                        tenant,
-                        "Engineering Manager",
-                        UserRole.TENANT_MANAGER
-                );
+        AppUser manager = createUser(tenant, "Engineering Manager", UserRole.TENANT_MANAGER);
 
-        AppUser engineer =
-                createUser(
-                        tenant,
-                        "Backend Engineer",
-                        UserRole.TENANT_USER
-                );
+        AppUser engineer = createUser(tenant, "Backend Engineer", UserRole.TENANT_USER);
 
         OrganizationalUnit engineering =
                 createUnit(
@@ -84,8 +61,7 @@ class OrganizationAssignmentServiceIntegrationTest {
                         null,
                         "Engineering",
                         "ENGINEERING",
-                        OrganizationalUnitType.DIVISION
-                );
+                        OrganizationalUnitType.DIVISION);
 
         OrganizationalUnit backend =
                 createUnit(
@@ -93,167 +69,87 @@ class OrganizationAssignmentServiceIntegrationTest {
                         engineering.getId(),
                         "Backend",
                         "BACKEND",
-                        OrganizationalUnitType.TEAM
-                );
+                        OrganizationalUnitType.TEAM);
 
-        Instant validFrom =
-                Instant.now()
-                        .minus(
-                                1,
-                                ChronoUnit.DAYS
-                        );
+        Instant validFrom = Instant.now().minus(1, ChronoUnit.DAYS);
 
-        OrganizationAssignmentResponse
-                managerAssignment =
-                organizationAssignmentService
-                        .createAssignment(
-                                tenant.getId(),
-                                administrator.getId(),
-                                request(
-                                        manager.getId(),
-                                        engineering.getId(),
-                                        null,
-                                        "Engineering Manager",
-                                        true,
-                                        validFrom,
-                                        null
-                                )
-                        );
+        OrganizationAssignmentResponse managerAssignment =
+                organizationAssignmentService.createAssignment(
+                        tenant.getId(),
+                        administrator.getId(),
+                        request(
+                                manager.getId(),
+                                engineering.getId(),
+                                null,
+                                "Engineering Manager",
+                                true,
+                                validFrom,
+                                null));
 
-        OrganizationAssignmentResponse
-                engineerPrimaryAssignment =
-                organizationAssignmentService
-                        .createAssignment(
-                                tenant.getId(),
-                                administrator.getId(),
-                                request(
-                                        engineer.getId(),
-                                        backend.getId(),
-                                        managerAssignment.id(),
-                                        "Backend Engineer",
-                                        true,
-                                        validFrom,
-                                        null
-                                )
-                        );
+        OrganizationAssignmentResponse engineerPrimaryAssignment =
+                organizationAssignmentService.createAssignment(
+                        tenant.getId(),
+                        administrator.getId(),
+                        request(
+                                engineer.getId(),
+                                backend.getId(),
+                                managerAssignment.id(),
+                                "Backend Engineer",
+                                true,
+                                validFrom,
+                                null));
 
-        OrganizationAssignmentResponse
-                engineerSecondaryAssignment =
-                organizationAssignmentService
-                        .createAssignment(
-                                tenant.getId(),
-                                administrator.getId(),
-                                request(
-                                        engineer.getId(),
-                                        engineering.getId(),
-                                        null,
-                                        "Architecture Contributor",
-                                        false,
-                                        validFrom,
-                                        null
-                                )
-                        );
+        OrganizationAssignmentResponse engineerSecondaryAssignment =
+                organizationAssignmentService.createAssignment(
+                        tenant.getId(),
+                        administrator.getId(),
+                        request(
+                                engineer.getId(),
+                                engineering.getId(),
+                                null,
+                                "Architecture Contributor",
+                                false,
+                                validFrom,
+                                null));
 
-        assertTrue(
-                engineerPrimaryAssignment
-                        .primaryAssignment()
-        );
+        assertTrue(engineerPrimaryAssignment.primaryAssignment());
 
-        assertFalse(
-                engineerSecondaryAssignment
-                        .primaryAssignment()
-        );
+        assertFalse(engineerSecondaryAssignment.primaryAssignment());
 
-        assertEquals(
-                managerAssignment.id(),
-                engineerPrimaryAssignment
-                        .reportsToAssignmentId()
-        );
+        assertEquals(managerAssignment.id(), engineerPrimaryAssignment.reportsToAssignmentId());
 
-        assertEquals(
-                manager.getId(),
-                engineerPrimaryAssignment
-                        .managerUserId()
-        );
+        assertEquals(manager.getId(), engineerPrimaryAssignment.managerUserId());
 
-        List<OrganizationAssignmentResponse>
-                userAssignments =
-                organizationAssignmentService
-                        .getUserAssignments(
-                                tenant.getId(),
-                                engineer.getId()
-                        );
+        List<OrganizationAssignmentResponse> userAssignments =
+                organizationAssignmentService.getUserAssignments(tenant.getId(), engineer.getId());
 
-        assertEquals(
-                2,
-                userAssignments.size()
-        );
+        assertEquals(2, userAssignments.size());
 
-        assertTrue(
-                userAssignments
-                        .getFirst()
-                        .primaryAssignment()
-        );
+        assertTrue(userAssignments.getFirst().primaryAssignment());
 
-        List<OrganizationAssignmentResponse>
-                backendAssignments =
-                organizationAssignmentService
-                        .getUnitAssignments(
-                                tenant.getId(),
-                                backend.getId()
-                        );
+        List<OrganizationAssignmentResponse> backendAssignments =
+                organizationAssignmentService.getUnitAssignments(tenant.getId(), backend.getId());
 
-        assertEquals(
-                1,
-                backendAssignments.size()
-        );
+        assertEquals(1, backendAssignments.size());
 
-        assertEquals(
-                engineer.getId(),
-                backendAssignments
-                        .getFirst()
-                        .userId()
-        );
+        assertEquals(engineer.getId(), backendAssignments.getFirst().userId());
 
-        List<OrganizationAssignmentResponse>
-                directReports =
-                organizationAssignmentService
-                        .getDirectReports(
-                                tenant.getId(),
-                                managerAssignment.id()
-                        );
+        List<OrganizationAssignmentResponse> directReports =
+                organizationAssignmentService.getDirectReports(
+                        tenant.getId(), managerAssignment.id());
 
-        assertEquals(
-                1,
-                directReports.size()
-        );
+        assertEquals(1, directReports.size());
 
-        assertEquals(
-                engineer.getId(),
-                directReports
-                        .getFirst()
-                        .userId()
-        );
+        assertEquals(engineer.getId(), directReports.getFirst().userId());
     }
 
     @Test
     void rejectsOverlappingPrimaryAndAllowsSequentialPrimary() {
-        Tenant tenant =
-                createTenant("assignment-primary");
+        Tenant tenant = createTenant("assignment-primary");
 
-        AppUser administrator =
-                createUser(
-                        tenant,
-                        "Primary Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+        AppUser administrator = createUser(tenant, "Primary Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Primary Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Primary Member", UserRole.TENANT_USER);
 
         OrganizationalUnit firstUnit =
                 createUnit(
@@ -261,8 +157,7 @@ class OrganizationAssignmentServiceIntegrationTest {
                         null,
                         "First Unit",
                         "FIRST-UNIT",
-                        OrganizationalUnitType.DEPARTMENT
-                );
+                        OrganizationalUnitType.DEPARTMENT);
 
         OrganizationalUnit secondUnit =
                 createUnit(
@@ -270,125 +165,72 @@ class OrganizationAssignmentServiceIntegrationTest {
                         null,
                         "Second Unit",
                         "SECOND-UNIT",
-                        OrganizationalUnitType.DEPARTMENT
-                );
+                        OrganizationalUnitType.DEPARTMENT);
 
-        Instant firstStart =
-                Instant.now()
-                        .minus(
-                                1,
-                                ChronoUnit.DAYS
-                        );
+        Instant firstStart = Instant.now().minus(1, ChronoUnit.DAYS);
 
-        Instant firstEnd =
-                Instant.now()
-                        .plus(
-                                5,
-                                ChronoUnit.DAYS
-                        )
-                        .truncatedTo(
-                                ChronoUnit.MICROS
-                        );
+        Instant firstEnd = Instant.now().plus(5, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MICROS);
 
-        organizationAssignmentService
-                .createAssignment(
-                        tenant.getId(),
-                        administrator.getId(),
-                        request(
-                                member.getId(),
-                                firstUnit.getId(),
-                                null,
-                                "First Position",
-                                true,
-                                firstStart,
-                                firstEnd
-                        )
-                );
+        organizationAssignmentService.createAssignment(
+                tenant.getId(),
+                administrator.getId(),
+                request(
+                        member.getId(),
+                        firstUnit.getId(),
+                        null,
+                        "First Position",
+                        true,
+                        firstStart,
+                        firstEnd));
 
         assertThrows(
                 DuplicateResourceException.class,
                 () ->
-                        organizationAssignmentService
-                                .createAssignment(
-                                        tenant.getId(),
-                                        administrator.getId(),
-                                        request(
-                                                member.getId(),
-                                                secondUnit.getId(),
-                                                null,
-                                                "Overlapping Position",
-                                                true,
-                                                Instant.now(),
-                                                firstEnd.plus(
-                                                        2,
-                                                        ChronoUnit.DAYS
-                                                )
-                                        )
-                                )
-        );
-
-        OrganizationAssignmentResponse
-                sequentialAssignment =
-                organizationAssignmentService
-                        .createAssignment(
+                        organizationAssignmentService.createAssignment(
                                 tenant.getId(),
                                 administrator.getId(),
                                 request(
                                         member.getId(),
                                         secondUnit.getId(),
                                         null,
-                                        "Sequential Position",
+                                        "Overlapping Position",
                                         true,
-                                        firstEnd,
-                                        null
-                                )
-                        );
+                                        Instant.now(),
+                                        firstEnd.plus(2, ChronoUnit.DAYS))));
 
-        assertNotNull(
-                sequentialAssignment.id()
-        );
+        OrganizationAssignmentResponse sequentialAssignment =
+                organizationAssignmentService.createAssignment(
+                        tenant.getId(),
+                        administrator.getId(),
+                        request(
+                                member.getId(),
+                                secondUnit.getId(),
+                                null,
+                                "Sequential Position",
+                                true,
+                                firstEnd,
+                                null));
 
-        assertEquals(
-                firstEnd,
-                sequentialAssignment.validFrom()
-        );
+        assertNotNull(sequentialAssignment.id());
+
+        assertEquals(firstEnd, sequentialAssignment.validFrom());
     }
 
     @Test
     void rejectsCrossTenantAssignmentReferences() {
-        Tenant firstTenant =
-                createTenant("assignment-first");
+        Tenant firstTenant = createTenant("assignment-first");
 
-        Tenant secondTenant =
-                createTenant("assignment-second");
+        Tenant secondTenant = createTenant("assignment-second");
 
         AppUser firstAdministrator =
-                createUser(
-                        firstTenant,
-                        "First Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+                createUser(firstTenant, "First Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser firstMember =
-                createUser(
-                        firstTenant,
-                        "First Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser firstMember = createUser(firstTenant, "First Member", UserRole.TENANT_USER);
 
         AppUser secondAdministrator =
-                createUser(
-                        secondTenant,
-                        "Second Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+                createUser(secondTenant, "Second Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser secondMember =
-                createUser(
-                        secondTenant,
-                        "Second Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser secondMember = createUser(secondTenant, "Second Member", UserRole.TENANT_USER);
 
         OrganizationalUnit firstUnit =
                 createUnit(
@@ -396,8 +238,7 @@ class OrganizationAssignmentServiceIntegrationTest {
                         null,
                         "First Tenant Unit",
                         "FIRST-TENANT-UNIT",
-                        OrganizationalUnitType.DEPARTMENT
-                );
+                        OrganizationalUnitType.DEPARTMENT);
 
         OrganizationalUnit secondUnit =
                 createUnit(
@@ -405,124 +246,92 @@ class OrganizationAssignmentServiceIntegrationTest {
                         null,
                         "Second Tenant Unit",
                         "SECOND-TENANT-UNIT",
-                        OrganizationalUnitType.DEPARTMENT
-                );
+                        OrganizationalUnitType.DEPARTMENT);
 
-        Instant validFrom =
-                Instant.now();
+        Instant validFrom = Instant.now();
 
-        OrganizationAssignmentResponse
-                secondManagerAssignment =
-                organizationAssignmentService
-                        .createAssignment(
-                                secondTenant.getId(),
+        OrganizationAssignmentResponse secondManagerAssignment =
+                organizationAssignmentService.createAssignment(
+                        secondTenant.getId(),
+                        secondAdministrator.getId(),
+                        request(
                                 secondAdministrator.getId(),
+                                secondUnit.getId(),
+                                null,
+                                "Second Tenant Manager",
+                                true,
+                                validFrom,
+                                null));
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () ->
+                        organizationAssignmentService.createAssignment(
+                                firstTenant.getId(),
+                                firstAdministrator.getId(),
                                 request(
-                                        secondAdministrator.getId(),
+                                        secondMember.getId(),
+                                        firstUnit.getId(),
+                                        null,
+                                        "Cross Tenant User",
+                                        false,
+                                        validFrom,
+                                        null)));
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () ->
+                        organizationAssignmentService.createAssignment(
+                                firstTenant.getId(),
+                                firstAdministrator.getId(),
+                                request(
+                                        firstMember.getId(),
                                         secondUnit.getId(),
                                         null,
-                                        "Second Tenant Manager",
-                                        true,
+                                        "Cross Tenant Unit",
+                                        false,
                                         validFrom,
-                                        null
-                                )
-                        );
+                                        null)));
 
         assertThrows(
                 ResourceNotFoundException.class,
                 () ->
-                        organizationAssignmentService
-                                .createAssignment(
-                                        firstTenant.getId(),
-                                        firstAdministrator.getId(),
-                                        request(
-                                                secondMember.getId(),
-                                                firstUnit.getId(),
-                                                null,
-                                                "Cross Tenant User",
-                                                false,
-                                                validFrom,
-                                                null
-                                        )
-                                )
-        );
+                        organizationAssignmentService.createAssignment(
+                                firstTenant.getId(),
+                                secondAdministrator.getId(),
+                                request(
+                                        firstMember.getId(),
+                                        firstUnit.getId(),
+                                        null,
+                                        "Cross Tenant Creator",
+                                        false,
+                                        validFrom,
+                                        null)));
 
         assertThrows(
                 ResourceNotFoundException.class,
                 () ->
-                        organizationAssignmentService
-                                .createAssignment(
-                                        firstTenant.getId(),
-                                        firstAdministrator.getId(),
-                                        request(
-                                                firstMember.getId(),
-                                                secondUnit.getId(),
-                                                null,
-                                                "Cross Tenant Unit",
-                                                false,
-                                                validFrom,
-                                                null
-                                        )
-                                )
-        );
-
-        assertThrows(
-                ResourceNotFoundException.class,
-                () ->
-                        organizationAssignmentService
-                                .createAssignment(
-                                        firstTenant.getId(),
-                                        secondAdministrator.getId(),
-                                        request(
-                                                firstMember.getId(),
-                                                firstUnit.getId(),
-                                                null,
-                                                "Cross Tenant Creator",
-                                                false,
-                                                validFrom,
-                                                null
-                                        )
-                                )
-        );
-
-        assertThrows(
-                ResourceNotFoundException.class,
-                () ->
-                        organizationAssignmentService
-                                .createAssignment(
-                                        firstTenant.getId(),
-                                        firstAdministrator.getId(),
-                                        request(
-                                                firstMember.getId(),
-                                                firstUnit.getId(),
-                                                secondManagerAssignment.id(),
-                                                "Cross Tenant Manager",
-                                                false,
-                                                validFrom,
-                                                null
-                                        )
-                                )
-        );
+                        organizationAssignmentService.createAssignment(
+                                firstTenant.getId(),
+                                firstAdministrator.getId(),
+                                request(
+                                        firstMember.getId(),
+                                        firstUnit.getId(),
+                                        secondManagerAssignment.id(),
+                                        "Cross Tenant Manager",
+                                        false,
+                                        validFrom,
+                                        null)));
     }
 
     @Test
     void rejectsInactiveUsersAndOrganizationalUnits() {
-        Tenant tenant =
-                createTenant("assignment-inactive");
+        Tenant tenant = createTenant("assignment-inactive");
 
         AppUser administrator =
-                createUser(
-                        tenant,
-                        "Inactive Test Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+                createUser(tenant, "Inactive Test Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Inactive Test Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Inactive Test Member", UserRole.TENANT_USER);
 
         OrganizationalUnit unit =
                 createUnit(
@@ -530,8 +339,7 @@ class OrganizationAssignmentServiceIntegrationTest {
                         null,
                         "Inactive Test Unit",
                         "INACTIVE-TEST-UNIT",
-                        OrganizationalUnitType.DEPARTMENT
-                );
+                        OrganizationalUnitType.DEPARTMENT);
 
         member.setStatus(UserStatus.INACTIVE);
 
@@ -540,75 +348,49 @@ class OrganizationAssignmentServiceIntegrationTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
-                        organizationAssignmentService
-                                .createAssignment(
-                                        tenant.getId(),
-                                        administrator.getId(),
-                                        request(
-                                                member.getId(),
-                                                unit.getId(),
-                                                null,
-                                                "Inactive User Position",
-                                                false,
-                                                Instant.now(),
-                                                null
-                                        )
-                                )
-        );
+                        organizationAssignmentService.createAssignment(
+                                tenant.getId(),
+                                administrator.getId(),
+                                request(
+                                        member.getId(),
+                                        unit.getId(),
+                                        null,
+                                        "Inactive User Position",
+                                        false,
+                                        Instant.now(),
+                                        null)));
 
         member.setStatus(UserStatus.ACTIVE);
 
         appUserRepository.saveAndFlush(member);
 
-        unit.setStatus(
-                OrganizationalUnitStatus.INACTIVE
-        );
+        unit.setStatus(OrganizationalUnitStatus.INACTIVE);
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
-                        organizationAssignmentService
-                                .createAssignment(
-                                        tenant.getId(),
-                                        administrator.getId(),
-                                        request(
-                                                member.getId(),
-                                                unit.getId(),
-                                                null,
-                                                "Inactive Unit Position",
-                                                false,
-                                                Instant.now(),
-                                                null
-                                        )
-                                )
-        );
+                        organizationAssignmentService.createAssignment(
+                                tenant.getId(),
+                                administrator.getId(),
+                                request(
+                                        member.getId(),
+                                        unit.getId(),
+                                        null,
+                                        "Inactive Unit Position",
+                                        false,
+                                        Instant.now(),
+                                        null)));
     }
 
     @Test
     void rejectsInvalidValidityAndInsufficientManagerCoverage() {
-        Tenant tenant =
-                createTenant("assignment-validity");
+        Tenant tenant = createTenant("assignment-validity");
 
-        AppUser administrator =
-                createUser(
-                        tenant,
-                        "Validity Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+        AppUser administrator = createUser(tenant, "Validity Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser manager =
-                createUser(
-                        tenant,
-                        "Validity Manager",
-                        UserRole.TENANT_MANAGER
-                );
+        AppUser manager = createUser(tenant, "Validity Manager", UserRole.TENANT_MANAGER);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Validity Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Validity Member", UserRole.TENANT_USER);
 
         OrganizationalUnit unit =
                 createUnit(
@@ -616,120 +398,79 @@ class OrganizationAssignmentServiceIntegrationTest {
                         null,
                         "Validity Unit",
                         "VALIDITY-UNIT",
-                        OrganizationalUnitType.DEPARTMENT
-                );
+                        OrganizationalUnitType.DEPARTMENT);
 
-        Instant start =
-                Instant.now();
+        Instant start = Instant.now();
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
-                        organizationAssignmentService
-                                .createAssignment(
-                                        tenant.getId(),
-                                        administrator.getId(),
-                                        request(
-                                                member.getId(),
-                                                unit.getId(),
-                                                null,
-                                                "Invalid Validity",
-                                                false,
-                                                start,
-                                                start
-                                        )
-                                )
-        );
-
-        Instant managerEnd =
-                start.plus(
-                        5,
-                        ChronoUnit.DAYS
-                );
-
-        OrganizationAssignmentResponse
-                managerAssignment =
-                organizationAssignmentService
-                        .createAssignment(
+                        organizationAssignmentService.createAssignment(
                                 tenant.getId(),
                                 administrator.getId(),
                                 request(
-                                        manager.getId(),
+                                        member.getId(),
                                         unit.getId(),
                                         null,
-                                        "Temporary Manager",
-                                        true,
+                                        "Invalid Validity",
+                                        false,
                                         start,
-                                        managerEnd
-                                )
-                        );
+                                        start)));
+
+        Instant managerEnd = start.plus(5, ChronoUnit.DAYS);
+
+        OrganizationAssignmentResponse managerAssignment =
+                organizationAssignmentService.createAssignment(
+                        tenant.getId(),
+                        administrator.getId(),
+                        request(
+                                manager.getId(),
+                                unit.getId(),
+                                null,
+                                "Temporary Manager",
+                                true,
+                                start,
+                                managerEnd));
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
-                        organizationAssignmentService
-                                .createAssignment(
-                                        tenant.getId(),
-                                        administrator.getId(),
-                                        request(
-                                                member.getId(),
-                                                unit.getId(),
-                                                managerAssignment.id(),
-                                                "Permanent Subordinate",
-                                                false,
-                                                start.plus(
-                                                        1,
-                                                        ChronoUnit.DAYS
-                                                ),
-                                                null
-                                        )
-                                )
-        );
+                        organizationAssignmentService.createAssignment(
+                                tenant.getId(),
+                                administrator.getId(),
+                                request(
+                                        member.getId(),
+                                        unit.getId(),
+                                        managerAssignment.id(),
+                                        "Permanent Subordinate",
+                                        false,
+                                        start.plus(1, ChronoUnit.DAYS),
+                                        null)));
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
-                        organizationAssignmentService
-                                .createAssignment(
-                                        tenant.getId(),
-                                        administrator.getId(),
-                                        request(
-                                                member.getId(),
-                                                unit.getId(),
-                                                managerAssignment.id(),
-                                                "Longer Subordinate",
-                                                false,
-                                                start.plus(
-                                                        1,
-                                                        ChronoUnit.DAYS
-                                                ),
-                                                managerEnd.plus(
-                                                        1,
-                                                        ChronoUnit.DAYS
-                                                )
-                                        )
-                                )
-        );
+                        organizationAssignmentService.createAssignment(
+                                tenant.getId(),
+                                administrator.getId(),
+                                request(
+                                        member.getId(),
+                                        unit.getId(),
+                                        managerAssignment.id(),
+                                        "Longer Subordinate",
+                                        false,
+                                        start.plus(1, ChronoUnit.DAYS),
+                                        managerEnd.plus(1, ChronoUnit.DAYS))));
     }
 
     @Test
     void rejectsSelfReportingAssignment() {
-        Tenant tenant =
-                createTenant("assignment-self-reporting");
+        Tenant tenant = createTenant("assignment-self-reporting");
 
         AppUser administrator =
-                createUser(
-                        tenant,
-                        "Self Reporting Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+                createUser(tenant, "Self Reporting Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Self Reporting Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Self Reporting Member", UserRole.TENANT_USER);
 
         OrganizationalUnit unit =
                 createUnit(
@@ -737,67 +478,47 @@ class OrganizationAssignmentServiceIntegrationTest {
                         null,
                         "Self Reporting Unit",
                         "SELF-REPORTING-UNIT",
-                        OrganizationalUnitType.DEPARTMENT
-                );
+                        OrganizationalUnitType.DEPARTMENT);
 
-        Instant validFrom =
-                Instant.now();
+        Instant validFrom = Instant.now();
 
-        OrganizationAssignmentResponse
-                existingAssignment =
-                organizationAssignmentService
-                        .createAssignment(
+        OrganizationAssignmentResponse existingAssignment =
+                organizationAssignmentService.createAssignment(
+                        tenant.getId(),
+                        administrator.getId(),
+                        request(
+                                member.getId(),
+                                unit.getId(),
+                                null,
+                                "Primary Position",
+                                true,
+                                validFrom,
+                                null));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        organizationAssignmentService.createAssignment(
                                 tenant.getId(),
                                 administrator.getId(),
                                 request(
                                         member.getId(),
                                         unit.getId(),
-                                        null,
-                                        "Primary Position",
-                                        true,
+                                        existingAssignment.id(),
+                                        "Self Reporting Position",
+                                        false,
                                         validFrom,
-                                        null
-                                )
-                        );
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () ->
-                        organizationAssignmentService
-                                .createAssignment(
-                                        tenant.getId(),
-                                        administrator.getId(),
-                                        request(
-                                                member.getId(),
-                                                unit.getId(),
-                                                existingAssignment.id(),
-                                                "Self Reporting Position",
-                                                false,
-                                                validFrom,
-                                                null
-                                        )
-                                )
-        );
+                                        null)));
     }
 
     @Test
     void deactivationRemovesAssignmentFromEffectiveResults() {
-        Tenant tenant =
-                createTenant("assignment-deactivation");
+        Tenant tenant = createTenant("assignment-deactivation");
 
         AppUser administrator =
-                createUser(
-                        tenant,
-                        "Deactivation Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+                createUser(tenant, "Deactivation Administrator", UserRole.TENANT_ADMIN);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Deactivation Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Deactivation Member", UserRole.TENANT_USER);
 
         OrganizationalUnit unit =
                 createUnit(
@@ -805,102 +526,54 @@ class OrganizationAssignmentServiceIntegrationTest {
                         null,
                         "Deactivation Unit",
                         "DEACTIVATION-UNIT",
-                        OrganizationalUnitType.DEPARTMENT
-                );
+                        OrganizationalUnitType.DEPARTMENT);
 
-        Instant validFrom =
-                Instant.now()
-                        .minus(
-                                1,
-                                ChronoUnit.DAYS
-                        );
+        Instant validFrom = Instant.now().minus(1, ChronoUnit.DAYS);
 
         OrganizationAssignmentResponse assignment =
-                organizationAssignmentService
-                        .createAssignment(
-                                tenant.getId(),
-                                administrator.getId(),
-                                request(
-                                        member.getId(),
-                                        unit.getId(),
-                                        null,
-                                        "Active Position",
-                                        true,
-                                        validFrom,
-                                        null
-                                )
-                        );
-
-        List<OrganizationAssignmentResponse>
-                effectiveBeforeDeactivation =
-                organizationAssignmentService
-                        .getEffectiveUserAssignments(
-                                tenant.getId(),
+                organizationAssignmentService.createAssignment(
+                        tenant.getId(),
+                        administrator.getId(),
+                        request(
                                 member.getId(),
-                                Instant.now()
-                        );
+                                unit.getId(),
+                                null,
+                                "Active Position",
+                                true,
+                                validFrom,
+                                null));
 
-        assertEquals(
-                1,
-                effectiveBeforeDeactivation.size()
-        );
+        List<OrganizationAssignmentResponse> effectiveBeforeDeactivation =
+                organizationAssignmentService.getEffectiveUserAssignments(
+                        tenant.getId(), member.getId(), Instant.now());
 
-        OrganizationAssignmentResponse
-                deactivatedAssignment =
-                organizationAssignmentService
-                        .deactivateAssignment(
-                                tenant.getId(),
-                                assignment.id()
-                        );
+        assertEquals(1, effectiveBeforeDeactivation.size());
 
-        assertEquals(
-                OrganizationAssignmentStatus.INACTIVE,
-                deactivatedAssignment.status()
-        );
+        OrganizationAssignmentResponse deactivatedAssignment =
+                organizationAssignmentService.deactivateAssignment(tenant.getId(), assignment.id());
 
-        assertNotNull(
-                deactivatedAssignment.validUntil()
-        );
+        assertEquals(OrganizationAssignmentStatus.INACTIVE, deactivatedAssignment.status());
 
-        List<OrganizationAssignmentResponse>
-                effectiveAfterDeactivation =
-                organizationAssignmentService
-                        .getEffectiveUserAssignments(
-                                tenant.getId(),
-                                member.getId(),
-                                Instant.now()
-                        );
+        assertNotNull(deactivatedAssignment.validUntil());
 
-        assertTrue(
-                effectiveAfterDeactivation.isEmpty()
-        );
+        List<OrganizationAssignmentResponse> effectiveAfterDeactivation =
+                organizationAssignmentService.getEffectiveUserAssignments(
+                        tenant.getId(), member.getId(), Instant.now());
+
+        assertTrue(effectiveAfterDeactivation.isEmpty());
     }
 
     @Test
     void preventsManagerDeactivationWithActiveDirectReports() {
-        Tenant tenant =
-                createTenant("assignment-manager-deactivation");
+        Tenant tenant = createTenant("assignment-manager-deactivation");
 
         AppUser administrator =
-                createUser(
-                        tenant,
-                        "Manager Deactivation Administrator",
-                        UserRole.TENANT_ADMIN
-                );
+                createUser(tenant, "Manager Deactivation Administrator", UserRole.TENANT_ADMIN);
 
         AppUser manager =
-                createUser(
-                        tenant,
-                        "Manager Deactivation Manager",
-                        UserRole.TENANT_MANAGER
-                );
+                createUser(tenant, "Manager Deactivation Manager", UserRole.TENANT_MANAGER);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Manager Deactivation Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Manager Deactivation Member", UserRole.TENANT_USER);
 
         OrganizationalUnit unit =
                 createUnit(
@@ -908,70 +581,45 @@ class OrganizationAssignmentServiceIntegrationTest {
                         null,
                         "Manager Deactivation Unit",
                         "MANAGER-DEACTIVATION-UNIT",
-                        OrganizationalUnitType.DEPARTMENT
-                );
+                        OrganizationalUnitType.DEPARTMENT);
 
-        Instant validFrom =
-                Instant.now()
-                        .minus(
-                                1,
-                                ChronoUnit.DAYS
-                        );
+        Instant validFrom = Instant.now().minus(1, ChronoUnit.DAYS);
 
-        OrganizationAssignmentResponse
-                managerAssignment =
-                organizationAssignmentService
-                        .createAssignment(
-                                tenant.getId(),
-                                administrator.getId(),
-                                request(
-                                        manager.getId(),
-                                        unit.getId(),
-                                        null,
-                                        "Manager",
-                                        true,
-                                        validFrom,
-                                        null
-                                )
-                        );
-
-        organizationAssignmentService
-                .createAssignment(
+        OrganizationAssignmentResponse managerAssignment =
+                organizationAssignmentService.createAssignment(
                         tenant.getId(),
                         administrator.getId(),
                         request(
-                                member.getId(),
+                                manager.getId(),
                                 unit.getId(),
-                                managerAssignment.id(),
-                                "Direct Report",
+                                null,
+                                "Manager",
                                 true,
                                 validFrom,
-                                null
-                        )
-                );
+                                null));
+
+        organizationAssignmentService.createAssignment(
+                tenant.getId(),
+                administrator.getId(),
+                request(
+                        member.getId(),
+                        unit.getId(),
+                        managerAssignment.id(),
+                        "Direct Report",
+                        true,
+                        validFrom,
+                        null));
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
-                        organizationAssignmentService
-                                .deactivateAssignment(
-                                        tenant.getId(),
-                                        managerAssignment.id()
-                                )
-        );
+                        organizationAssignmentService.deactivateAssignment(
+                                tenant.getId(), managerAssignment.id()));
 
-        OrganizationAssignmentResponse
-                unchangedManagerAssignment =
-                organizationAssignmentService
-                        .getAssignment(
-                                tenant.getId(),
-                                managerAssignment.id()
-                        );
+        OrganizationAssignmentResponse unchangedManagerAssignment =
+                organizationAssignmentService.getAssignment(tenant.getId(), managerAssignment.id());
 
-        assertEquals(
-                OrganizationAssignmentStatus.ACTIVE,
-                unchangedManagerAssignment.status()
-        );
+        assertEquals(OrganizationAssignmentStatus.ACTIVE, unchangedManagerAssignment.status());
     }
 
     private OrganizationAssignmentCreateRequest request(
@@ -981,8 +629,7 @@ class OrganizationAssignmentServiceIntegrationTest {
             String positionTitle,
             boolean primaryAssignment,
             Instant validFrom,
-            Instant validUntil
-    ) {
+            Instant validUntil) {
         return new OrganizationAssignmentCreateRequest(
                 userId,
                 organizationalUnitId,
@@ -990,8 +637,7 @@ class OrganizationAssignmentServiceIntegrationTest {
                 positionTitle,
                 primaryAssignment,
                 validFrom,
-                validUntil
-        );
+                validUntil);
     }
 
     private OrganizationalUnit createUnit(
@@ -999,57 +645,37 @@ class OrganizationAssignmentServiceIntegrationTest {
             UUID parentUnitId,
             String name,
             String code,
-            OrganizationalUnitType type
-    ) {
-        return organizationHierarchyService
-                .createUnit(
-                        tenant.getId(),
-                        parentUnitId,
-                        name,
-                        code,
-                        type
-                );
+            OrganizationalUnitType type) {
+        return organizationHierarchyService.createUnit(
+                tenant.getId(), parentUnitId, name, code, type);
     }
 
-    private AppUser createUser(
-            Tenant tenant,
-            String fullName,
-            UserRole role
-    ) {
+    private AppUser createUser(Tenant tenant, String fullName, UserRole role) {
         String suffix = uniqueSuffix();
 
-        AppUser user = new AppUser(
-                tenant,
-                fullName,
-                role.name()
-                        .toLowerCase()
-                        .replace('_', '.')
-                        + "."
-                        + suffix
-                        + "@example.test",
-                "test-password-hash",
-                role
-        );
+        AppUser user =
+                new AppUser(
+                        tenant,
+                        fullName,
+                        role.name().toLowerCase().replace('_', '.')
+                                + "."
+                                + suffix
+                                + "@example.test",
+                        "test-password-hash",
+                        role);
 
-        return appUserRepository
-                .saveAndFlush(user);
+        return appUserRepository.saveAndFlush(user);
     }
 
     private Tenant createTenant(String prefix) {
         String suffix = uniqueSuffix();
 
-        Tenant tenant = new Tenant(
-                prefix + " Tenant",
-                prefix + "-" + suffix
-        );
+        Tenant tenant = new Tenant(prefix + " Tenant", prefix + "-" + suffix);
 
-        return tenantRepository
-                .saveAndFlush(tenant);
+        return tenantRepository.saveAndFlush(tenant);
     }
 
     private String uniqueSuffix() {
-        return UUID.randomUUID()
-                .toString()
-                .substring(0, 8);
+        return UUID.randomUUID().toString().substring(0, 8);
     }
 }

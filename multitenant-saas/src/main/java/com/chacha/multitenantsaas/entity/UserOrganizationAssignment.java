@@ -15,7 +15,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -23,42 +22,22 @@ import java.util.UUID;
 @Table(
         name = "user_organization_assignments",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name =
-                                "uk_user_org_assignment_tenant_id",
-                        columnNames = {
-                                "tenant_id",
-                                "id"
-                        }
-                )
+            @UniqueConstraint(
+                    name = "uk_user_org_assignment_tenant_id",
+                    columnNames = {"tenant_id", "id"})
         },
         indexes = {
-                @Index(
-                        name =
-                                "idx_user_org_assignment_user",
-                        columnList =
-                                "tenant_id,user_id,status"
-                ),
-                @Index(
-                        name =
-                                "idx_user_org_assignment_unit",
-                        columnList =
-                                "tenant_id,organizational_unit_id,status"
-                ),
-                @Index(
-                        name =
-                                "idx_user_org_assignment_primary",
-                        columnList =
-                                "tenant_id,user_id,primary_assignment,status"
-                ),
-                @Index(
-                        name =
-                                "idx_user_org_assignment_reports_to",
-                        columnList =
-                                "tenant_id,reports_to_assignment_id"
-                )
-        }
-)
+            @Index(name = "idx_user_org_assignment_user", columnList = "tenant_id,user_id,status"),
+            @Index(
+                    name = "idx_user_org_assignment_unit",
+                    columnList = "tenant_id,organizational_unit_id,status"),
+            @Index(
+                    name = "idx_user_org_assignment_primary",
+                    columnList = "tenant_id,user_id,primary_assignment,status"),
+            @Index(
+                    name = "idx_user_org_assignment_reports_to",
+                    columnList = "tenant_id,reports_to_assignment_id")
+        })
 public class UserOrganizationAssignment {
 
     @Id
@@ -66,108 +45,66 @@ public class UserOrganizationAssignment {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "tenant_id",
-            nullable = false
-    )
+    @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "user_id",
-            nullable = false
-    )
+    @JoinColumn(name = "user_id", nullable = false)
     private AppUser user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "organizational_unit_id",
-            nullable = false
-    )
+    @JoinColumn(name = "organizational_unit_id", nullable = false)
     private OrganizationalUnit organizationalUnit;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "reports_to_assignment_id"
-    )
-    private UserOrganizationAssignment
-            reportsToAssignment;
+    @JoinColumn(name = "reports_to_assignment_id")
+    private UserOrganizationAssignment reportsToAssignment;
 
-    @Column(
-            name = "position_title",
-            length = 150
-    )
+    @Column(name = "position_title", length = 150)
     private String positionTitle;
 
-    @Column(
-            name = "primary_assignment",
-            nullable = false
-    )
+    @Column(name = "primary_assignment", nullable = false)
     private boolean primaryAssignment;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            nullable = false,
-            length = 30
-    )
-    private OrganizationAssignmentStatus status =
-            OrganizationAssignmentStatus.ACTIVE;
+    @Column(nullable = false, length = 30)
+    private OrganizationAssignmentStatus status = OrganizationAssignmentStatus.ACTIVE;
 
-    @Column(
-            name = "valid_from",
-            nullable = false
-    )
+    @Column(name = "valid_from", nullable = false)
     private Instant validFrom;
 
     @Column(name = "valid_until")
     private Instant validUntil;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "created_by_user_id",
-            nullable = false
-    )
+    @JoinColumn(name = "created_by_user_id", nullable = false)
     private AppUser createdByUser;
 
-    @Column(
-            name = "created_at",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(
-            name = "updated_at",
-            nullable = false
-    )
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    public UserOrganizationAssignment() {
-    }
+    public UserOrganizationAssignment() {}
 
     public UserOrganizationAssignment(
             Tenant tenant,
             AppUser user,
             OrganizationalUnit organizationalUnit,
-            UserOrganizationAssignment
-                    reportsToAssignment,
+            UserOrganizationAssignment reportsToAssignment,
             String positionTitle,
             boolean primaryAssignment,
             Instant validFrom,
             Instant validUntil,
-            AppUser createdByUser
-    ) {
+            AppUser createdByUser) {
         this.tenant = tenant;
         this.user = user;
-        this.organizationalUnit =
-                organizationalUnit;
-        this.reportsToAssignment =
-                reportsToAssignment;
+        this.organizationalUnit = organizationalUnit;
+        this.reportsToAssignment = reportsToAssignment;
         this.positionTitle = positionTitle;
-        this.primaryAssignment =
-                primaryAssignment;
-        this.status =
-                OrganizationAssignmentStatus.ACTIVE;
+        this.primaryAssignment = primaryAssignment;
+        this.status = OrganizationAssignmentStatus.ACTIVE;
         this.validFrom = validFrom;
         this.validUntil = validUntil;
         this.createdByUser = createdByUser;
@@ -182,8 +119,7 @@ public class UserOrganizationAssignment {
         }
 
         if (status == null) {
-            status =
-                    OrganizationAssignmentStatus.ACTIVE;
+            status = OrganizationAssignmentStatus.ACTIVE;
         }
 
         createdAt = now;
@@ -207,13 +143,11 @@ public class UserOrganizationAssignment {
         return user;
     }
 
-    public OrganizationalUnit
-    getOrganizationalUnit() {
+    public OrganizationalUnit getOrganizationalUnit() {
         return organizationalUnit;
     }
 
-    public UserOrganizationAssignment
-    getReportsToAssignment() {
+    public UserOrganizationAssignment getReportsToAssignment() {
         return reportsToAssignment;
     }
 
@@ -225,8 +159,7 @@ public class UserOrganizationAssignment {
         return primaryAssignment;
     }
 
-    public OrganizationAssignmentStatus
-    getStatus() {
+    public OrganizationAssignmentStatus getStatus() {
         return status;
     }
 
@@ -262,67 +195,43 @@ public class UserOrganizationAssignment {
         this.user = user;
     }
 
-    public void setOrganizationalUnit(
-            OrganizationalUnit organizationalUnit
-    ) {
-        this.organizationalUnit =
-                organizationalUnit;
+    public void setOrganizationalUnit(OrganizationalUnit organizationalUnit) {
+        this.organizationalUnit = organizationalUnit;
     }
 
-    public void setReportsToAssignment(
-            UserOrganizationAssignment
-                    reportsToAssignment
-    ) {
-        this.reportsToAssignment =
-                reportsToAssignment;
+    public void setReportsToAssignment(UserOrganizationAssignment reportsToAssignment) {
+        this.reportsToAssignment = reportsToAssignment;
     }
 
-    public void setPositionTitle(
-            String positionTitle
-    ) {
+    public void setPositionTitle(String positionTitle) {
         this.positionTitle = positionTitle;
     }
 
-    public void setPrimaryAssignment(
-            boolean primaryAssignment
-    ) {
-        this.primaryAssignment =
-                primaryAssignment;
+    public void setPrimaryAssignment(boolean primaryAssignment) {
+        this.primaryAssignment = primaryAssignment;
     }
 
-    public void setStatus(
-            OrganizationAssignmentStatus status
-    ) {
+    public void setStatus(OrganizationAssignmentStatus status) {
         this.status = status;
     }
 
-    public void setValidFrom(
-            Instant validFrom
-    ) {
+    public void setValidFrom(Instant validFrom) {
         this.validFrom = validFrom;
     }
 
-    public void setValidUntil(
-            Instant validUntil
-    ) {
+    public void setValidUntil(Instant validUntil) {
         this.validUntil = validUntil;
     }
 
-    public void setCreatedByUser(
-            AppUser createdByUser
-    ) {
+    public void setCreatedByUser(AppUser createdByUser) {
         this.createdByUser = createdByUser;
     }
 
-    public void setCreatedAt(
-            Instant createdAt
-    ) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
-    public void setUpdatedAt(
-            Instant updatedAt
-    ) {
+    public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
 }

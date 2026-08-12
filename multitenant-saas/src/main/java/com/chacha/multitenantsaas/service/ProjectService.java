@@ -6,13 +6,12 @@ import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.ProjectRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 public class ProjectService {
@@ -22,8 +21,7 @@ public class ProjectService {
     private final CurrentActorService currentActorService;
     private final ProjectMemberService projectMemberService;
     private final AuditLogService auditLogService;
-    private final SubscriptionQuotaGuardService
-            subscriptionQuotaGuardService;
+    private final SubscriptionQuotaGuardService subscriptionQuotaGuardService;
 
     public ProjectService(
             ProjectRepository projectRepository,
@@ -31,176 +29,110 @@ public class ProjectService {
             CurrentActorService currentActorService,
             ProjectMemberService projectMemberService,
             AuditLogService auditLogService,
-            SubscriptionQuotaGuardService
-                    subscriptionQuotaGuardService
-    ) {
+            SubscriptionQuotaGuardService subscriptionQuotaGuardService) {
         this.projectRepository = projectRepository;
         this.tenantRepository = tenantRepository;
         this.currentActorService = currentActorService;
         this.projectMemberService = projectMemberService;
         this.auditLogService = auditLogService;
-        this.subscriptionQuotaGuardService =
-                subscriptionQuotaGuardService;
+        this.subscriptionQuotaGuardService = subscriptionQuotaGuardService;
     }
 
     @Transactional
-    public ProjectResponse createProject(
-            UUID tenantId,
-            ProjectCreateRequest request,
-            Jwt jwt
-    ) {
+    public ProjectResponse createProject(UUID tenantId, ProjectCreateRequest request, Jwt jwt) {
         Tenant tenant = getRequiredActiveTenant(tenantId);
 
-        subscriptionQuotaGuardService.requireProjectSlot(
-                tenantId
-        );
+        subscriptionQuotaGuardService.requireProjectSlot(tenantId);
 
-        AppUser actor =
-                currentActorService.getRequiredActiveActor(
-                        tenantId,
-                        jwt
-                );
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
-        Project project = new Project(
-                tenant,
-                actor,
-                request.name().trim(),
-                normalizeDescription(request.description())
-        );
+        Project project =
+                new Project(
+                        tenant,
+                        actor,
+                        request.name().trim(),
+                        normalizeDescription(request.description()));
 
-        Project savedProject =
-                projectRepository.save(project);
+        Project savedProject = projectRepository.save(project);
 
-        projectMemberService.addCreatorAsProjectLead(
-                savedProject,
-                actor
-        );
+        projectMemberService.addCreatorAsProjectLead(savedProject, actor);
 
         auditLogService.recordSuccess(
                 tenant,
                 actor,
                 actor,
                 AuditAction.PROJECT_CREATED,
-                "Project created: "
-                        + savedProject.getId()
-                        + " - "
-                        + savedProject.getName()
-        );
+                "Project created: " + savedProject.getId() + " - " + savedProject.getName());
 
         return mapToResponse(savedProject);
     }
 
     @Transactional(readOnly = true)
     public PageResponse<ProjectResponse> getProjects(
-            UUID tenantId,
-            ProjectStatus status,
-            String search,
-            Pageable pageable
-    ) {
+            UUID tenantId, ProjectStatus status, String search, Pageable pageable) {
         getRequiredActiveTenant(tenantId);
 
         Page<Project> projects =
                 projectRepository.findTenantProjects(
-                        tenantId,
-                        status,
-                        normalizeSearch(search),
-                        pageable
-                );
+                        tenantId, status, normalizeSearch(search), pageable);
 
         return new PageResponse<>(
-                projects.getContent()
-                        .stream()
-                        .map(this::mapToResponse)
-                        .toList(),
+                projects.getContent().stream().map(this::mapToResponse).toList(),
                 projects.getNumber(),
                 projects.getSize(),
                 projects.getTotalElements(),
                 projects.getTotalPages(),
                 projects.isFirst(),
-                projects.isLast()
-        );
+                projects.isLast());
     }
 
     @Transactional(readOnly = true)
-    public ProjectResponse getProject(
-            UUID tenantId,
-            UUID projectId
-    ) {
-        return mapToResponse(
-                getProjectOrThrow(tenantId, projectId)
-        );
+    public ProjectResponse getProject(UUID tenantId, UUID projectId) {
+        return mapToResponse(getProjectOrThrow(tenantId, projectId));
     }
 
     @Transactional
     public ProjectResponse updateProject(
-            UUID tenantId,
-            UUID projectId,
-            ProjectUpdateRequest request,
-            Jwt jwt
-    ) {
-        Project project =
-                getProjectOrThrow(tenantId, projectId);
+            UUID tenantId, UUID projectId, ProjectUpdateRequest request, Jwt jwt) {
+        Project project = getProjectOrThrow(tenantId, projectId);
 
         ensureProjectIsNotArchived(project);
 
-        AppUser actor =
-                currentActorService.getRequiredActiveActor(
-                        tenantId,
-                        jwt
-                );
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
         project.setName(request.name().trim());
-        project.setDescription(
-                normalizeDescription(request.description())
-        );
+        project.setDescription(normalizeDescription(request.description()));
 
-        Project updatedProject =
-                projectRepository.save(project);
+        Project updatedProject = projectRepository.save(project);
 
         auditLogService.recordSuccess(
                 project.getTenant(),
                 actor,
                 actor,
                 AuditAction.PROJECT_UPDATED,
-                "Project updated: "
-                        + updatedProject.getId()
-                        + " - "
-                        + updatedProject.getName()
-        );
+                "Project updated: " + updatedProject.getId() + " - " + updatedProject.getName());
 
         return mapToResponse(updatedProject);
     }
 
     @Transactional
     public ProjectResponse updateProjectStatus(
-            UUID tenantId,
-            UUID projectId,
-            ProjectStatusUpdateRequest request,
-            Jwt jwt
-    ) {
-        Project project =
-                getProjectOrThrow(tenantId, projectId);
+            UUID tenantId, UUID projectId, ProjectStatusUpdateRequest request, Jwt jwt) {
+        Project project = getProjectOrThrow(tenantId, projectId);
 
         ensureProjectIsNotArchived(project);
 
         if (request.status() == ProjectStatus.ARCHIVED) {
-            throw new IllegalArgumentException(
-                    "Use the archive endpoint to archive a project"
-            );
+            throw new IllegalArgumentException("Use the archive endpoint to archive a project");
         }
 
-        AppUser actor =
-                currentActorService.getRequiredActiveActor(
-                        tenantId,
-                        jwt
-                );
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
         ProjectStatus previousStatus = project.getStatus();
 
         project.setStatus(request.status());
 
-        Project updatedProject =
-                projectRepository.save(project);
+        Project updatedProject = projectRepository.save(project);
 
         auditLogService.recordSuccess(
                 project.getTenant(),
@@ -212,89 +144,66 @@ public class ProjectService {
                         + " to "
                         + request.status()
                         + ": "
-                        + project.getId()
-        );
+                        + project.getId());
 
         return mapToResponse(updatedProject);
     }
 
     @Transactional
-    public ProjectResponse archiveProject(
-            UUID tenantId,
-            UUID projectId,
-            Jwt jwt
-    ) {
-        Project project =
-                getProjectOrThrow(tenantId, projectId);
+    public ProjectResponse archiveProject(UUID tenantId, UUID projectId, Jwt jwt) {
+        Project project = getProjectOrThrow(tenantId, projectId);
 
         if (project.getStatus() == ProjectStatus.ARCHIVED) {
-            throw new IllegalArgumentException(
-                    "Project is already archived"
-            );
+            throw new IllegalArgumentException("Project is already archived");
         }
 
-        AppUser actor =
-                currentActorService.getRequiredActiveActor(
-                        tenantId,
-                        jwt
-                );
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
         project.setStatus(ProjectStatus.ARCHIVED);
 
-        Project archivedProject =
-                projectRepository.save(project);
+        Project archivedProject = projectRepository.save(project);
 
         auditLogService.recordSuccess(
                 project.getTenant(),
                 actor,
                 actor,
                 AuditAction.PROJECT_ARCHIVED,
-                "Project archived: "
-                        + project.getId()
-                        + " - "
-                        + project.getName()
-        );
+                "Project archived: " + project.getId() + " - " + project.getName());
 
         return mapToResponse(archivedProject);
     }
 
     private Tenant getRequiredActiveTenant(UUID tenantId) {
-        Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Tenant not found with id: " + tenantId
-                ));
+        Tenant tenant =
+                tenantRepository
+                        .findById(tenantId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Tenant not found with id: " + tenantId));
 
         if (tenant.getStatus() != TenantStatus.ACTIVE) {
-            throw new AuthenticationFailedException(
-                    "Tenant is not active"
-            );
+            throw new AuthenticationFailedException("Tenant is not active");
         }
 
         return tenant;
     }
 
-    private Project getProjectOrThrow(
-            UUID tenantId,
-            UUID projectId
-    ) {
+    private Project getProjectOrThrow(UUID tenantId, UUID projectId) {
         return projectRepository
-                .findByTenant_IdAndId(
-                        tenantId,
-                        projectId
-                )
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Project not found with id: "
-                                + projectId
-                                + " for tenant: "
-                                + tenantId
-                ));
+                .findByTenant_IdAndId(tenantId, projectId)
+                .orElseThrow(
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Project not found with id: "
+                                                + projectId
+                                                + " for tenant: "
+                                                + tenantId));
     }
 
     private void ensureProjectIsNotArchived(Project project) {
         if (project.getStatus() == ProjectStatus.ARCHIVED) {
-            throw new IllegalArgumentException(
-                    "Archived project cannot be modified"
-            );
+            throw new IllegalArgumentException("Archived project cannot be modified");
         }
     }
 
@@ -305,9 +214,7 @@ public class ProjectService {
 
         String normalized = description.trim();
 
-        return normalized.isBlank()
-                ? null
-                : normalized;
+        return normalized.isBlank() ? null : normalized;
     }
 
     private String normalizeSearch(String search) {
@@ -317,9 +224,7 @@ public class ProjectService {
 
         String normalized = search.trim();
 
-        return normalized.isBlank()
-                ? null
-                : normalized;
+        return normalized.isBlank() ? null : normalized;
     }
 
     private ProjectResponse mapToResponse(Project project) {
@@ -335,7 +240,6 @@ public class ProjectService {
                 createdBy.getFullName(),
                 createdBy.getEmail(),
                 project.getCreatedAt(),
-                project.getUpdatedAt()
-        );
+                project.getUpdatedAt());
     }
 }

@@ -14,78 +14,50 @@ import jakarta.persistence.Table;
 @Table(
         name = "organizational_unit_closure",
         indexes = {
-                @Index(
-                        name = "idx_org_closure_ancestor",
-                        columnList =
-                                "tenant_id,ancestor_unit_id,depth"
-                ),
-                @Index(
-                        name = "idx_org_closure_descendant",
-                        columnList =
-                                "tenant_id,descendant_unit_id,depth"
-                )
-        }
-)
+            @Index(
+                    name = "idx_org_closure_ancestor",
+                    columnList = "tenant_id,ancestor_unit_id,depth"),
+            @Index(
+                    name = "idx_org_closure_descendant",
+                    columnList = "tenant_id,descendant_unit_id,depth")
+        })
 public class OrganizationalUnitClosure {
 
-    @EmbeddedId
-    private OrganizationalUnitClosureId id;
+    @EmbeddedId private OrganizationalUnitClosureId id;
 
     @MapsId("tenantId")
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = false
-    )
-    @JoinColumn(
-            name = "tenant_id",
-            nullable = false
-    )
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
 
     @MapsId("ancestorUnitId")
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = false
-    )
-    @JoinColumn(
-            name = "ancestor_unit_id",
-            nullable = false
-    )
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "ancestor_unit_id", nullable = false)
     private OrganizationalUnit ancestorUnit;
 
     @MapsId("descendantUnitId")
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = false
-    )
-    @JoinColumn(
-            name = "descendant_unit_id",
-            nullable = false
-    )
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "descendant_unit_id", nullable = false)
     private OrganizationalUnit descendantUnit;
 
     @Column(nullable = false)
     private int depth;
 
-    public OrganizationalUnitClosure() {
-    }
+    public OrganizationalUnitClosure() {}
 
     public OrganizationalUnitClosure(
             Tenant tenant,
             OrganizationalUnit ancestorUnit,
             OrganizationalUnit descendantUnit,
-            int depth
-    ) {
+            int depth) {
         this.tenant = tenant;
         this.ancestorUnit = ancestorUnit;
         this.descendantUnit = descendantUnit;
         this.depth = depth;
 
-        this.id = new OrganizationalUnitClosureId(
-                tenant.getId(),
-                ancestorUnit.getId(),
-                descendantUnit.getId()
-        );
+        this.id =
+                new OrganizationalUnitClosureId(
+                        tenant.getId(), ancestorUnit.getId(), descendantUnit.getId());
     }
 
     public OrganizationalUnitClosureId getId() {
@@ -108,9 +80,7 @@ public class OrganizationalUnitClosure {
         return depth;
     }
 
-    public void setId(
-            OrganizationalUnitClosureId id
-    ) {
+    public void setId(OrganizationalUnitClosureId id) {
         this.id = id;
     }
 
@@ -118,15 +88,11 @@ public class OrganizationalUnitClosure {
         this.tenant = tenant;
     }
 
-    public void setAncestorUnit(
-            OrganizationalUnit ancestorUnit
-    ) {
+    public void setAncestorUnit(OrganizationalUnit ancestorUnit) {
         this.ancestorUnit = ancestorUnit;
     }
 
-    public void setDescendantUnit(
-            OrganizationalUnit descendantUnit
-    ) {
+    public void setDescendantUnit(OrganizationalUnit descendantUnit) {
         this.descendantUnit = descendantUnit;
     }
 

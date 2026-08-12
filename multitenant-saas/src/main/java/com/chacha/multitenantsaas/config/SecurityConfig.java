@@ -2,6 +2,7 @@ package com.chacha.multitenantsaas.config;
 
 import com.chacha.multitenantsaas.security.JwtAccessDeniedHandler;
 import com.chacha.multitenantsaas.security.JwtAuthenticationEntryPoint;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -17,7 +18,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfigurationSource;
-import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
@@ -28,74 +28,74 @@ public class SecurityConfig {
 
     public SecurityConfig(
             JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-            JwtAccessDeniedHandler jwtAccessDeniedHandler
-    ) {
+            JwtAccessDeniedHandler jwtAccessDeniedHandler) {
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            CorsConfigurationSource corsConfigurationSource
-    ) throws Exception {
-        http
-                .cors(cors -> cors
-                        .configurationSource(corsConfigurationSource)
-                )
+            HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
-
-                .headers(headers -> headers
-                        .frameOptions(frameOptions -> frameOptions.sameOrigin())
-                )
-
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                        .accessDeniedHandler(jwtAccessDeniedHandler)
-                )
-
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/health").permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
-
-                        .requestMatchers("/swagger-ui/**").permitAll()
-                        .requestMatchers("/swagger-ui.html").permitAll()
-                        .requestMatchers("/v3/api-docs/**").permitAll()
-
-                        .requestMatchers(HttpMethod.POST, "/api/tenants/{tenantId}/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/tenants/{tenantId}/auth/forgot-password").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/onboarding/tenants").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/system/auth/login").permitAll()
-
-                        .requestMatchers("/api/dashboard/**").hasAuthority("SYSTEM_ADMIN")
-
-                        .requestMatchers(HttpMethod.POST, "/api/user-invitations/accept").permitAll()
-
-                        .requestMatchers("/api/**").authenticated()
-                        .anyRequest().permitAll()
-
-
-                )
-
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .authenticationEntryPoint(
-                                jwtAuthenticationEntryPoint
-                        )
-                        .accessDeniedHandler(
-                                jwtAccessDeniedHandler
-                        )
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(
-                                jwtAuthenticationConverter()
-                        ))
-                );
+                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
+                .sessionManagement(
+                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(
+                        exception ->
+                                exception
+                                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                                        .accessDeniedHandler(jwtAccessDeniedHandler))
+                .authorizeHttpRequests(
+                        auth ->
+                                auth.requestMatchers("/api/health")
+                                        .permitAll()
+                                        .requestMatchers("/actuator/**")
+                                        .permitAll()
+                                        .requestMatchers("/h2-console/**")
+                                        .permitAll()
+                                        .requestMatchers("/swagger-ui/**")
+                                        .permitAll()
+                                        .requestMatchers("/swagger-ui.html")
+                                        .permitAll()
+                                        .requestMatchers("/v3/api-docs/**")
+                                        .permitAll()
+                                        .requestMatchers(
+                                                HttpMethod.POST,
+                                                "/api/tenants/{tenantId}/auth/login")
+                                        .permitAll()
+                                        .requestMatchers(
+                                                HttpMethod.POST,
+                                                "/api/tenants/{tenantId}/auth/forgot-password")
+                                        .permitAll()
+                                        .requestMatchers(HttpMethod.POST, "/api/auth/refresh")
+                                        .permitAll()
+                                        .requestMatchers(HttpMethod.POST, "/api/auth/logout")
+                                        .permitAll()
+                                        .requestMatchers(
+                                                HttpMethod.POST, "/api/auth/reset-password")
+                                        .permitAll()
+                                        .requestMatchers(HttpMethod.POST, "/api/onboarding/tenants")
+                                        .permitAll()
+                                        .requestMatchers(HttpMethod.POST, "/api/system/auth/login")
+                                        .permitAll()
+                                        .requestMatchers("/api/dashboard/**")
+                                        .hasAuthority("SYSTEM_ADMIN")
+                                        .requestMatchers(
+                                                HttpMethod.POST, "/api/user-invitations/accept")
+                                        .permitAll()
+                                        .requestMatchers("/api/**")
+                                        .authenticated()
+                                        .anyRequest()
+                                        .permitAll())
+                .oauth2ResourceServer(
+                        oauth2 ->
+                                oauth2.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                                        .accessDeniedHandler(jwtAccessDeniedHandler)
+                                        .jwt(
+                                                jwt ->
+                                                        jwt.jwtAuthenticationConverter(
+                                                                jwtAuthenticationConverter())));
 
         return http.build();
     }
@@ -105,9 +105,7 @@ public class SecurityConfig {
         return jwt -> {
             String role = jwt.getClaimAsString("role");
 
-            List<SimpleGrantedAuthority> authorities = List.of(
-                    new SimpleGrantedAuthority(role)
-            );
+            List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
 
             return new JwtAuthenticationToken(jwt, authorities, jwt.getSubject());
         };

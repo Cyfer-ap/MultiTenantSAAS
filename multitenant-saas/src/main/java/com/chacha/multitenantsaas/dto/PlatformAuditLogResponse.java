@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.PlatformAuditAction;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -14,6 +13,4 @@ public record PlatformAuditLogResponse(
         PlatformAuditAction action,
         boolean success,
         String message,
-        Instant createdAt
-) {
-}
+        Instant createdAt) {}

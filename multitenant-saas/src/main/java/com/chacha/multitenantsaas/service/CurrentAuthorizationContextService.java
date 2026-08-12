@@ -1,8 +1,8 @@
 package com.chacha.multitenantsaas.service;
 
+import com.chacha.multitenantsaas.dto.AuthorizationUserRoleAssignmentResponse;
 import com.chacha.multitenantsaas.dto.CurrentAuthorizationContextResponse;
 import com.chacha.multitenantsaas.dto.CurrentAuthorizationGrantResponse;
-import com.chacha.multitenantsaas.dto.AuthorizationUserRoleAssignmentResponse;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.AuthorizationPermissionSource;
 import com.chacha.multitenantsaas.entity.AuthorizationPermissionStatus;
@@ -10,10 +10,6 @@ import com.chacha.multitenantsaas.entity.AuthorizationRolePermission;
 import com.chacha.multitenantsaas.entity.AuthorizationRoleStatus;
 import com.chacha.multitenantsaas.entity.AuthorizationScopeType;
 import com.chacha.multitenantsaas.repository.AuthorizationRolePermissionRepository;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
@@ -23,112 +19,61 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CurrentAuthorizationContextService {
 
-    private final CurrentActorService
-            currentActorService;
+    private final CurrentActorService currentActorService;
 
-    private final AuthorizationUserRoleAssignmentService
-            assignmentService;
+    private final AuthorizationUserRoleAssignmentService assignmentService;
 
-    private final AuthorizationRolePermissionRepository
-            rolePermissionRepository;
+    private final AuthorizationRolePermissionRepository rolePermissionRepository;
 
     public CurrentAuthorizationContextService(
             CurrentActorService currentActorService,
-            AuthorizationUserRoleAssignmentService
-                    assignmentService,
-            AuthorizationRolePermissionRepository
-                    rolePermissionRepository
-    ) {
-        this.currentActorService =
-                currentActorService;
+            AuthorizationUserRoleAssignmentService assignmentService,
+            AuthorizationRolePermissionRepository rolePermissionRepository) {
+        this.currentActorService = currentActorService;
 
-        this.assignmentService =
-                assignmentService;
+        this.assignmentService = assignmentService;
 
-        this.rolePermissionRepository =
-                rolePermissionRepository;
+        this.rolePermissionRepository = rolePermissionRepository;
     }
 
     @Transactional(readOnly = true)
-    public CurrentAuthorizationContextResponse
-    getCurrentAuthorizationContext(
-            UUID tenantId,
-            Jwt jwt
-    ) {
-        AppUser actor =
-                currentActorService
-                        .getRequiredActiveActor(
-                                tenantId,
-                                jwt
-                        );
+    public CurrentAuthorizationContextResponse getCurrentAuthorizationContext(
+            UUID tenantId, Jwt jwt) {
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
 
-        Instant evaluatedAt =
-                Instant.now()
-                        .truncatedTo(
-                                ChronoUnit.MICROS
-                        );
+        Instant evaluatedAt = Instant.now().truncatedTo(ChronoUnit.MICROS);
 
-        List<AuthorizationUserRoleAssignmentResponse>
-                assignments =
-                assignmentService
-                        .getEffectiveUserAssignments(
-                                tenantId,
-                                actor.getId(),
-                                evaluatedAt
-                        );
+        List<AuthorizationUserRoleAssignmentResponse> assignments =
+                assignmentService.getEffectiveUserAssignments(tenantId, actor.getId(), evaluatedAt);
 
         Set<UUID> roleIds =
-                assignments
-                        .stream()
-                        .map(
-                                AuthorizationUserRoleAssignmentResponse
-                                        ::roleId
-                        )
+                assignments.stream()
+                        .map(AuthorizationUserRoleAssignmentResponse::roleId)
                         .collect(Collectors.toSet());
 
-        Map<UUID, Set<String>>
-                permissionCodesByRole =
-                loadPermissionCodesByRole(
-                        tenantId,
-                        roleIds
-                );
+        Map<UUID, Set<String>> permissionCodesByRole = loadPermissionCodesByRole(tenantId, roleIds);
 
-        List<CurrentAuthorizationGrantResponse>
-                grants =
-                assignments
-                        .stream()
-                        .map(
-                                assignment ->
-                                        mapGrant(
-                                                assignment,
-                                                permissionCodesByRole
-                                        )
-                        )
+        List<CurrentAuthorizationGrantResponse> grants =
+                assignments.stream()
+                        .map(assignment -> mapGrant(assignment, permissionCodesByRole))
                         .toList();
 
-        TreeSet<String> allPermissionCodes =
-                new TreeSet<>();
+        TreeSet<String> allPermissionCodes = new TreeSet<>();
 
-        TreeSet<String> tenantPermissionCodes =
-                new TreeSet<>();
+        TreeSet<String> tenantPermissionCodes = new TreeSet<>();
 
-        for (
-                CurrentAuthorizationGrantResponse grant
-                : grants
-        ) {
-            allPermissionCodes.addAll(
-                    grant.permissionCodes()
-            );
+        for (CurrentAuthorizationGrantResponse grant : grants) {
+            allPermissionCodes.addAll(grant.permissionCodes());
 
-            if (grant.scopeType()
-                    == AuthorizationScopeType.TENANT) {
-                tenantPermissionCodes.addAll(
-                        grant.permissionCodes()
-                );
+            if (grant.scopeType() == AuthorizationScopeType.TENANT) {
+                tenantPermissionCodes.addAll(grant.permissionCodes());
             }
         }
 
@@ -138,73 +83,39 @@ public class CurrentAuthorizationContextService {
                 actor.getFullName(),
                 actor.getEmail(),
                 evaluatedAt,
-                List.copyOf(
-                        tenantPermissionCodes
-                ),
-                List.copyOf(
-                        allPermissionCodes
-                ),
-                grants
-        );
+                List.copyOf(tenantPermissionCodes),
+                List.copyOf(allPermissionCodes),
+                grants);
     }
 
-    private Map<UUID, Set<String>>
-    loadPermissionCodesByRole(
-            UUID tenantId,
-            Set<UUID> roleIds
-    ) {
+    private Map<UUID, Set<String>> loadPermissionCodesByRole(UUID tenantId, Set<UUID> roleIds) {
         if (roleIds.isEmpty()) {
             return Map.of();
         }
 
-        List<AuthorizationRolePermission>
-                mappings =
-                rolePermissionRepository
-                        .findActiveRolePermissions(
-                                tenantId,
-                                roleIds,
-                                AuthorizationRoleStatus.ACTIVE,
-                                AuthorizationPermissionStatus.ACTIVE,
-                                AuthorizationPermissionSource.PLATFORM
-                        );
+        List<AuthorizationRolePermission> mappings =
+                rolePermissionRepository.findActiveRolePermissions(
+                        tenantId,
+                        roleIds,
+                        AuthorizationRoleStatus.ACTIVE,
+                        AuthorizationPermissionStatus.ACTIVE,
+                        AuthorizationPermissionSource.PLATFORM);
 
-        Map<UUID, Set<String>> result =
-                new LinkedHashMap<>();
+        Map<UUID, Set<String>> result = new LinkedHashMap<>();
 
-        for (
-                AuthorizationRolePermission mapping
-                : mappings
-        ) {
-            result.computeIfAbsent(
-                            mapping
-                                    .getRole()
-                                    .getId(),
-                            ignored ->
-                                    new TreeSet<>()
-                    )
-                    .add(
-                            mapping
-                                    .getPermission()
-                                    .getCode()
-                    );
+        for (AuthorizationRolePermission mapping : mappings) {
+            result.computeIfAbsent(mapping.getRole().getId(), ignored -> new TreeSet<>())
+                    .add(mapping.getPermission().getCode());
         }
 
         return result;
     }
 
-    private CurrentAuthorizationGrantResponse
-    mapGrant(
-            AuthorizationUserRoleAssignmentResponse
-                    assignment,
-            Map<UUID, Set<String>>
-                    permissionCodesByRole
-    ) {
+    private CurrentAuthorizationGrantResponse mapGrant(
+            AuthorizationUserRoleAssignmentResponse assignment,
+            Map<UUID, Set<String>> permissionCodesByRole) {
         Set<String> permissionCodes =
-                permissionCodesByRole
-                        .getOrDefault(
-                                assignment.roleId(),
-                                Set.of()
-                        );
+                permissionCodesByRole.getOrDefault(assignment.roleId(), Set.of());
 
         return new CurrentAuthorizationGrantResponse(
                 assignment.id(),
@@ -216,7 +127,6 @@ public class CurrentAuthorizationContextService {
                 assignment.scopeTargetId(),
                 assignment.validFrom(),
                 assignment.validUntil(),
-                List.copyOf(permissionCodes)
-        );
+                List.copyOf(permissionCodes));
     }
 }

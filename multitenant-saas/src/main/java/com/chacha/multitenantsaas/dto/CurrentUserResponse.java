@@ -2,7 +2,6 @@ package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.entity.UserStatus;
-
 import java.util.UUID;
 
 public record CurrentUserResponse(
@@ -13,6 +12,4 @@ public record CurrentUserResponse(
         String fullName,
         String email,
         UserRole role,
-        UserStatus status
-) {
-}
+        UserStatus status) {}

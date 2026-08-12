@@ -9,24 +9,11 @@ public record ApiErrorResponse(
         int status,
         String path,
         Object details,
-        Instant timestamp
-) {
+        Instant timestamp) {
 
     public static ApiErrorResponse of(
-            String message,
-            ErrorCode errorCode,
-            int status,
-            String path,
-            Object details
-    ) {
+            String message, ErrorCode errorCode, int status, String path, Object details) {
         return new ApiErrorResponse(
-                false,
-                message,
-                errorCode,
-                status,
-                path,
-                details,
-                Instant.now()
-        );
+                false, message, errorCode, status, path, details, Instant.now());
     }
 }

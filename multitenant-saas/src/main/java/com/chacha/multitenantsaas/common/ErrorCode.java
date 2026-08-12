@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.common;
 
 public enum ErrorCode {
-
     VALIDATION_FAILED,
 
     INVALID_REQUEST,
