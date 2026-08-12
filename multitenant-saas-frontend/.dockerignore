@@ -1,0 +1,31 @@
+# Dependencies
+node_modules
+
+# Production build
+dist
+
+# Coverage
+coverage
+
+# Test/runtime output
+.vitest
+*.log
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Environment files
+.env
+.env.*
+*.env
+
+# OS files
+.DS_Store
+Thumbs.db
