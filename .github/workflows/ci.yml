@@ -72,7 +72,7 @@ jobs:
 
       - name: Upload backend test and coverage reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-test-and-coverage-reports
           path: |
@@ -83,7 +83,7 @@ jobs:
 
       - name: Upload backend application artifact
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-jar
           path: multitenant-saas/target/*.jar
@@ -126,7 +126,7 @@ jobs:
 
       - name: Upload PostgreSQL test report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: postgresql-flyway-test-report
           path: multitenant-saas/target/surefire-reports/
@@ -171,7 +171,7 @@ jobs:
 
       - name: Upload frontend coverage
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-coverage
           path: multitenant-saas-frontend/coverage/
@@ -180,7 +180,7 @@ jobs:
 
       - name: Upload frontend production build
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-dist
           path: multitenant-saas-frontend/dist/
