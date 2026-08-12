@@ -30,6 +30,9 @@ FROM eclipse-temurin:21-jre-ubi9-minimal AS runtime
 
 WORKDIR /app
 
+RUN microdnf install -y curl-minimal \
+    && microdnf clean all
+
 # Copy only the packaged application from the build stage.
 COPY --from=build --chown=10001:10001 \
     /workspace/target/*.jar \
