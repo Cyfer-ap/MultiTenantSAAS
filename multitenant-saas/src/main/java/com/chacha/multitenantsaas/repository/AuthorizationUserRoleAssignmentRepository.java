@@ -179,6 +179,40 @@ public interface AuthorizationUserRoleAssignmentRepository
             Instant effectiveAt
     );
 
+    default long countOverlappingActiveAssignments(
+            UUID tenantId,
+            UUID userId,
+            UUID roleId,
+            AuthorizationScopeType scopeType,
+            String scopeKey,
+            AuthorizationUserRoleAssignmentStatus activeStatus,
+            Instant validFrom,
+            Instant validUntil
+    ) {
+        if (validUntil == null) {
+            return countOpenEndedOverlappingActiveAssignments(
+                    tenantId,
+                    userId,
+                    roleId,
+                    scopeType,
+                    scopeKey,
+                    activeStatus,
+                    validFrom
+            );
+        }
+
+        return countBoundedOverlappingActiveAssignments(
+                tenantId,
+                userId,
+                roleId,
+                scopeType,
+                scopeKey,
+                activeStatus,
+                validFrom,
+                validUntil
+        );
+    }
+
     @Query("""
             SELECT COUNT(assignment)
             FROM AuthorizationUserRoleAssignment assignment
@@ -189,15 +223,50 @@ public interface AuthorizationUserRoleAssignmentRepository
               AND assignment.scopeKey = :scopeKey
               AND assignment.status = :activeStatus
               AND (
-                    :validUntil IS NULL
-                    OR assignment.validFrom < :validUntil
+                    assignment.validUntil IS NULL
+                    OR assignment.validUntil > :validFrom
               )
+            """)
+    long countOpenEndedOverlappingActiveAssignments(
+            @Param("tenantId")
+            UUID tenantId,
+
+            @Param("userId")
+            UUID userId,
+
+            @Param("roleId")
+            UUID roleId,
+
+            @Param("scopeType")
+            AuthorizationScopeType scopeType,
+
+            @Param("scopeKey")
+            String scopeKey,
+
+            @Param("activeStatus")
+            AuthorizationUserRoleAssignmentStatus
+                    activeStatus,
+
+            @Param("validFrom")
+            Instant validFrom
+    );
+
+    @Query("""
+            SELECT COUNT(assignment)
+            FROM AuthorizationUserRoleAssignment assignment
+            WHERE assignment.tenant.id = :tenantId
+              AND assignment.user.id = :userId
+              AND assignment.role.id = :roleId
+              AND assignment.scopeType = :scopeType
+              AND assignment.scopeKey = :scopeKey
+              AND assignment.status = :activeStatus
+              AND assignment.validFrom < :validUntil
               AND (
                     assignment.validUntil IS NULL
                     OR assignment.validUntil > :validFrom
               )
             """)
-    long countOverlappingActiveAssignments(
+    long countBoundedOverlappingActiveAssignments(
             @Param("tenantId")
             UUID tenantId,
 

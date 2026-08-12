@@ -32,8 +32,12 @@ function getFieldError(
     error: unknown,
     field: string,
 ): string | undefined {
-    return error instanceof ApiClientError
+    const detail = error instanceof ApiClientError
         ? error.details?.[field]
+        : undefined
+
+    return typeof detail === 'string'
+        ? detail
         : undefined
 }
 
