@@ -4,6 +4,9 @@ import com.chacha.multitenantsaas.entity.UserInvitation;
 import com.chacha.multitenantsaas.entity.UserInvitationStatus;
 import com.chacha.multitenantsaas.entity.UserRole;
 import jakarta.persistence.LockModeType;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,44 +14,35 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-public interface UserInvitationRepository
-        extends JpaRepository<UserInvitation, UUID> {
+public interface UserInvitationRepository extends JpaRepository<UserInvitation, UUID> {
 
     Optional<UserInvitation> findByTokenHash(String tokenHash);
 
-    Optional<UserInvitation> findByTenant_IdAndId(
-            UUID tenantId,
-            UUID invitationId
-    );
+    Optional<UserInvitation> findByTenant_IdAndId(UUID tenantId, UUID invitationId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
+    @Query(
+            """
             SELECT invitation
             FROM UserInvitation invitation
             WHERE invitation.tokenHash = :tokenHash
             """)
-    Optional<UserInvitation> findByTokenHashForUpdate(
-            @Param("tokenHash") String tokenHash
-    );
+    Optional<UserInvitation> findByTokenHashForUpdate(@Param("tokenHash") String tokenHash);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
+    @Query(
+            """
             SELECT invitation
             FROM UserInvitation invitation
             WHERE invitation.tenant.id = :tenantId
               AND invitation.id = :invitationId
             """)
     Optional<UserInvitation> findByTenantIdAndIdForUpdate(
-            @Param("tenantId") UUID tenantId,
-            @Param("invitationId") UUID invitationId
-    );
+            @Param("tenantId") UUID tenantId, @Param("invitationId") UUID invitationId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
+    @Query(
+            """
             SELECT invitation
             FROM UserInvitation invitation
             WHERE invitation.tenant.id = :tenantId
@@ -58,10 +52,10 @@ public interface UserInvitationRepository
     List<UserInvitation> findByTenantIdAndEmailAndStatusForUpdate(
             @Param("tenantId") UUID tenantId,
             @Param("email") String email,
-            @Param("status") UserInvitationStatus status
-    );
+            @Param("status") UserInvitationStatus status);
 
-    @Query("""
+    @Query(
+            """
             SELECT invitation
             FROM UserInvitation invitation
             WHERE invitation.tenant.id = :tenantId
@@ -80,6 +74,5 @@ public interface UserInvitationRepository
             @Param("status") UserInvitationStatus status,
             @Param("role") UserRole role,
             @Param("search") String search,
-            Pageable pageable
-    );
+            Pageable pageable);
 }

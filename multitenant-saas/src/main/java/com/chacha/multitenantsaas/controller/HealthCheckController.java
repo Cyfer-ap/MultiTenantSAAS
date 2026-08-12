@@ -13,8 +13,6 @@ public class HealthCheckController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Health check successful",
-                        "Multi-Tenant SaaS Backend is running on port 8081"
-                )
-        );
+                        "Multi-Tenant SaaS Backend is running on port 8081"));
     }
 }

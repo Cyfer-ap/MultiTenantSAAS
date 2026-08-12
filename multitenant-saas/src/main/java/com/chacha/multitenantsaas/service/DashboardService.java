@@ -14,9 +14,7 @@ public class DashboardService {
     private final AppUserRepository appUserRepository;
 
     public DashboardService(
-            TenantRepository tenantRepository,
-            AppUserRepository appUserRepository
-    ) {
+            TenantRepository tenantRepository, AppUserRepository appUserRepository) {
         this.tenantRepository = tenantRepository;
         this.appUserRepository = appUserRepository;
     }
@@ -27,11 +25,9 @@ public class DashboardService {
                 tenantRepository.countByStatus(TenantStatus.ACTIVE),
                 tenantRepository.countByStatus(TenantStatus.INACTIVE),
                 tenantRepository.countByStatus(TenantStatus.SUSPENDED),
-
                 appUserRepository.count(),
                 appUserRepository.countByStatus(UserStatus.ACTIVE),
                 appUserRepository.countByStatus(UserStatus.INACTIVE),
-                appUserRepository.countByStatus(UserStatus.SUSPENDED)
-        );
+                appUserRepository.countByStatus(UserStatus.SUSPENDED));
     }
 }

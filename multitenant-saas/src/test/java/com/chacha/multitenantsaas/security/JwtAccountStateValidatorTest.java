@@ -1,5 +1,10 @@
 package com.chacha.multitenantsaas.security;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.SystemAdmin;
 import com.chacha.multitenantsaas.entity.Tenant;
@@ -7,6 +12,9 @@ import com.chacha.multitenantsaas.entity.TenantStatus;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.SystemAdminRepository;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -14,23 +22,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
 
-import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
 @ExtendWith(MockitoExtension.class)
 class JwtAccountStateValidatorTest {
 
-    @Mock
-    private AppUserRepository appUserRepository;
+    @Mock private AppUserRepository appUserRepository;
 
-    @Mock
-    private SystemAdminRepository systemAdminRepository;
+    @Mock private SystemAdminRepository systemAdminRepository;
 
     @Test
     void activeTenantUserWithCurrentSessionIsAccepted() {
@@ -39,10 +36,8 @@ class JwtAccountStateValidatorTest {
 
         AppUser user = activeUser(TenantStatus.ACTIVE, 3L);
 
-        when(appUserRepository.findSessionUserByTenantIdAndId(
-                tenantId,
-                userId
-        )).thenReturn(Optional.of(user));
+        when(appUserRepository.findSessionUserByTenantIdAndId(tenantId, userId))
+                .thenReturn(Optional.of(user));
 
         OAuth2TokenValidatorResult result =
                 new TenantSessionJwtValidator(appUserRepository)
@@ -58,10 +53,8 @@ class JwtAccountStateValidatorTest {
 
         AppUser user = activeUser(TenantStatus.INACTIVE, 0L);
 
-        when(appUserRepository.findSessionUserByTenantIdAndId(
-                tenantId,
-                userId
-        )).thenReturn(Optional.of(user));
+        when(appUserRepository.findSessionUserByTenantIdAndId(tenantId, userId))
+                .thenReturn(Optional.of(user));
 
         OAuth2TokenValidatorResult result =
                 new TenantSessionJwtValidator(appUserRepository)
@@ -82,10 +75,8 @@ class JwtAccountStateValidatorTest {
         user.setTenant(tenant);
         user.setStatus(UserStatus.INACTIVE);
 
-        when(appUserRepository.findSessionUserByTenantIdAndId(
-                tenantId,
-                userId
-        )).thenReturn(Optional.of(user));
+        when(appUserRepository.findSessionUserByTenantIdAndId(tenantId, userId))
+                .thenReturn(Optional.of(user));
 
         OAuth2TokenValidatorResult result =
                 new TenantSessionJwtValidator(appUserRepository)
@@ -101,10 +92,8 @@ class JwtAccountStateValidatorTest {
 
         AppUser user = activeUser(TenantStatus.ACTIVE, 4L);
 
-        when(appUserRepository.findSessionUserByTenantIdAndId(
-                tenantId,
-                userId
-        )).thenReturn(Optional.of(user));
+        when(appUserRepository.findSessionUserByTenantIdAndId(tenantId, userId))
+                .thenReturn(Optional.of(user));
 
         OAuth2TokenValidatorResult result =
                 new TenantSessionJwtValidator(appUserRepository)
@@ -119,13 +108,11 @@ class JwtAccountStateValidatorTest {
         SystemAdmin systemAdmin = mock(SystemAdmin.class);
 
         when(systemAdmin.getStatus()).thenReturn(UserStatus.ACTIVE);
-        when(systemAdminRepository.findById(systemAdminId))
-                .thenReturn(Optional.of(systemAdmin));
+        when(systemAdminRepository.findById(systemAdminId)).thenReturn(Optional.of(systemAdmin));
 
         OAuth2TokenValidatorResult result =
-                new SystemAdminSessionJwtValidator(
-                        systemAdminRepository
-                ).validate(systemAdminJwt(systemAdminId));
+                new SystemAdminSessionJwtValidator(systemAdminRepository)
+                        .validate(systemAdminJwt(systemAdminId));
 
         assertThat(result.hasErrors()).isFalse();
     }
@@ -136,13 +123,11 @@ class JwtAccountStateValidatorTest {
         SystemAdmin systemAdmin = mock(SystemAdmin.class);
 
         when(systemAdmin.getStatus()).thenReturn(UserStatus.SUSPENDED);
-        when(systemAdminRepository.findById(systemAdminId))
-                .thenReturn(Optional.of(systemAdmin));
+        when(systemAdminRepository.findById(systemAdminId)).thenReturn(Optional.of(systemAdmin));
 
         OAuth2TokenValidatorResult result =
-                new SystemAdminSessionJwtValidator(
-                        systemAdminRepository
-                ).validate(systemAdminJwt(systemAdminId));
+                new SystemAdminSessionJwtValidator(systemAdminRepository)
+                        .validate(systemAdminJwt(systemAdminId));
 
         assertThat(result.hasErrors()).isTrue();
     }
@@ -153,18 +138,14 @@ class JwtAccountStateValidatorTest {
         UUID userId = UUID.randomUUID();
 
         OAuth2TokenValidatorResult result =
-                new SystemAdminSessionJwtValidator(
-                        systemAdminRepository
-                ).validate(tenantJwt(tenantId, userId, 0L));
+                new SystemAdminSessionJwtValidator(systemAdminRepository)
+                        .validate(tenantJwt(tenantId, userId, 0L));
 
         assertThat(result.hasErrors()).isFalse();
         verifyNoInteractions(systemAdminRepository);
     }
 
-    private AppUser activeUser(
-            TenantStatus tenantStatus,
-            long sessionVersion
-    ) {
+    private AppUser activeUser(TenantStatus tenantStatus, long sessionVersion) {
         Tenant tenant = new Tenant();
         tenant.setStatus(tenantStatus);
 
@@ -179,11 +160,7 @@ class JwtAccountStateValidatorTest {
         return user;
     }
 
-    private Jwt tenantJwt(
-            UUID tenantId,
-            UUID userId,
-            long sessionVersion
-    ) {
+    private Jwt tenantJwt(UUID tenantId, UUID userId, long sessionVersion) {
         Instant now = Instant.now();
 
         return Jwt.withTokenValue("tenant-token")

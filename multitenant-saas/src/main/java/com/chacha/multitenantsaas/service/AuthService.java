@@ -1,8 +1,16 @@
 package com.chacha.multitenantsaas.service;
 
+import com.chacha.multitenantsaas.dto.ChangePasswordRequest;
+import com.chacha.multitenantsaas.dto.ChangePasswordResponse;
+import com.chacha.multitenantsaas.dto.CurrentUserResponse;
 import com.chacha.multitenantsaas.dto.LoginRequest;
 import com.chacha.multitenantsaas.dto.LoginResponse;
+import com.chacha.multitenantsaas.dto.LogoutRequest;
+import com.chacha.multitenantsaas.dto.LogoutResponse;
+import com.chacha.multitenantsaas.dto.RefreshTokenRequest;
+import com.chacha.multitenantsaas.dto.TokenRefreshResponse;
 import com.chacha.multitenantsaas.entity.AppUser;
+import com.chacha.multitenantsaas.entity.AuditAction;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.TenantStatus;
 import com.chacha.multitenantsaas.entity.UserStatus;
@@ -10,22 +18,13 @@ import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import com.chacha.multitenantsaas.dto.CurrentUserResponse;
-import org.springframework.security.oauth2.jwt.Jwt;
 import com.chacha.multitenantsaas.security.AuthenticatedUserContext;
 import com.chacha.multitenantsaas.security.JwtContextService;
-import com.chacha.multitenantsaas.dto.RefreshTokenRequest;
-import com.chacha.multitenantsaas.dto.TokenRefreshResponse;
-import com.chacha.multitenantsaas.dto.LogoutRequest;
-import com.chacha.multitenantsaas.dto.LogoutResponse;
-import com.chacha.multitenantsaas.dto.ChangePasswordRequest;
-import com.chacha.multitenantsaas.dto.ChangePasswordResponse;
-import com.chacha.multitenantsaas.entity.AuditAction;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.UUID;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
@@ -47,8 +46,7 @@ public class AuthService {
             JwtContextService jwtContextService,
             RefreshTokenService refreshTokenService,
             AuditLogService auditLogService,
-            LoginAttemptService loginAttemptService
-    ) {
+            LoginAttemptService loginAttemptService) {
         this.tenantRepository = tenantRepository;
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
@@ -59,12 +57,15 @@ public class AuthService {
         this.loginAttemptService = loginAttemptService;
     }
 
-    @Transactional(
-            noRollbackFor = AuthenticationFailedException.class
-    )
+    @Transactional(noRollbackFor = AuthenticationFailedException.class)
     public LoginResponse login(UUID tenantId, LoginRequest request) {
-        Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+        Tenant tenant =
+                tenantRepository
+                        .findById(tenantId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Tenant not found with id: " + tenantId));
 
         if (tenant.getStatus() != TenantStatus.ACTIVE) {
             auditLogService.record(
@@ -72,29 +73,28 @@ public class AuthService {
                     null,
                     AuditAction.LOGIN_FAILED,
                     false,
-                    "Login failed because tenant is not active"
-            );
+                    "Login failed because tenant is not active");
 
             throw new AuthenticationFailedException("Tenant is not active");
         }
 
         String normalizedEmail = request.email().trim().toLowerCase();
 
-        AppUser user = appUserRepository.findByTenantIdAndEmailForUpdate(
-                tenantId,
-                normalizedEmail
-        )
-                .orElseThrow(() -> {
-                    auditLogService.record(
-                            tenant,
-                            null,
-                            AuditAction.LOGIN_FAILED,
-                            false,
-                            "Login failed due to invalid email"
-                    );
+        AppUser user =
+                appUserRepository
+                        .findByTenantIdAndEmailForUpdate(tenantId, normalizedEmail)
+                        .orElseThrow(
+                                () -> {
+                                    auditLogService.record(
+                                            tenant,
+                                            null,
+                                            AuditAction.LOGIN_FAILED,
+                                            false,
+                                            "Login failed due to invalid email");
 
-                    return new AuthenticationFailedException("Invalid email or password");
-                });
+                                    return new AuthenticationFailedException(
+                                            "Invalid email or password");
+                                });
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             auditLogService.record(
@@ -102,8 +102,7 @@ public class AuthService {
                     user,
                     AuditAction.LOGIN_FAILED,
                     false,
-                    "Login failed because user account is not active"
-            );
+                    "Login failed because user account is not active");
 
             throw new AuthenticationFailedException("User account is not active");
         }
@@ -114,18 +113,15 @@ public class AuthService {
                     user,
                     AuditAction.LOGIN_FAILED,
                     false,
-                    "Login failed because password is not set"
-            );
+                    "Login failed because password is not set");
 
             throw new AuthenticationFailedException("Password is not set for this user");
         }
 
         loginAttemptService.ensureNotLocked(user);
 
-        boolean passwordMatches = passwordEncoder.matches(
-                request.password(),
-                user.getPasswordHash()
-        );
+        boolean passwordMatches =
+                passwordEncoder.matches(request.password(), user.getPasswordHash());
 
         if (!passwordMatches) {
             loginAttemptService.recordFailedAttempt(user);
@@ -135,8 +131,7 @@ public class AuthService {
                     user,
                     AuditAction.LOGIN_FAILED,
                     false,
-                    "Login failed due to invalid password"
-            );
+                    "Login failed due to invalid password");
 
             throw new AuthenticationFailedException("Invalid email or password");
         }
@@ -147,12 +142,7 @@ public class AuthService {
         String refreshToken = refreshTokenService.createRefreshToken(user);
 
         auditLogService.record(
-                tenant,
-                user,
-                AuditAction.LOGIN_SUCCESS,
-                true,
-                "User logged in successfully"
-        );
+                tenant, user, AuditAction.LOGIN_SUCCESS, true, "User logged in successfully");
 
         return new LoginResponse(
                 tenant.getId(),
@@ -164,24 +154,25 @@ public class AuthService {
                 refreshToken,
                 "Bearer",
                 jwtService.getExpirationSeconds(),
-                "Login successful"
-        );
+                "Login successful");
     }
 
     public CurrentUserResponse getCurrentUser(Jwt jwt) {
         AuthenticatedUserContext currentUser = jwtContextService.getCurrentUser(jwt);
 
-        Tenant tenant = tenantRepository.findById(currentUser.tenantId())
-                .orElseThrow(() -> new AuthenticationFailedException("Tenant not found"));
+        Tenant tenant =
+                tenantRepository
+                        .findById(currentUser.tenantId())
+                        .orElseThrow(() -> new AuthenticationFailedException("Tenant not found"));
 
         if (tenant.getStatus() != TenantStatus.ACTIVE) {
             throw new AuthenticationFailedException("Tenant is not active");
         }
 
-        AppUser user = appUserRepository.findByTenantIdAndId(
-                currentUser.tenantId(),
-                currentUser.userId()
-        ).orElseThrow(() -> new AuthenticationFailedException("User not found"));
+        AppUser user =
+                appUserRepository
+                        .findByTenantIdAndId(currentUser.tenantId(), currentUser.userId())
+                        .orElseThrow(() -> new AuthenticationFailedException("User not found"));
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AuthenticationFailedException("User account is not active");
@@ -195,34 +186,29 @@ public class AuthService {
                 user.getFullName(),
                 user.getEmail(),
                 user.getRole(),
-                user.getStatus()
-        );
+                user.getStatus());
     }
 
     public TokenRefreshResponse refreshToken(RefreshTokenRequest request) {
         RefreshTokenService.RefreshTokenData refreshTokenData =
                 refreshTokenService.rotateRefreshToken(request.refreshToken());
 
-        String newAccessToken = jwtService.generateAccessToken(
-                refreshTokenData.tenant(),
-                refreshTokenData.user()
-        );
+        String newAccessToken =
+                jwtService.generateAccessToken(refreshTokenData.tenant(), refreshTokenData.user());
 
         auditLogService.record(
                 refreshTokenData.tenant(),
                 refreshTokenData.user(),
                 AuditAction.TOKEN_REFRESH,
                 true,
-                "Access token refreshed successfully"
-        );
+                "Access token refreshed successfully");
 
         return new TokenRefreshResponse(
                 newAccessToken,
                 refreshTokenData.refreshToken(),
                 "Bearer",
                 jwtService.getExpirationSeconds(),
-                "Token refreshed successfully"
-        );
+                "Token refreshed successfully");
     }
 
     public LogoutResponse logout(LogoutRequest request) {
@@ -234,8 +220,7 @@ public class AuthService {
                 refreshTokenData.user(),
                 AuditAction.LOGOUT,
                 true,
-                "User logged out successfully"
-        );
+                "User logged out successfully");
 
         return new LogoutResponse("Logout successful");
     }
@@ -244,13 +229,15 @@ public class AuthService {
     public LogoutResponse logoutAllDevices(Jwt jwt) {
         AuthenticatedUserContext currentUser = jwtContextService.getCurrentUser(jwt);
 
-        Tenant tenant = tenantRepository.findById(currentUser.tenantId())
-                .orElseThrow(() -> new AuthenticationFailedException("Tenant not found"));
+        Tenant tenant =
+                tenantRepository
+                        .findById(currentUser.tenantId())
+                        .orElseThrow(() -> new AuthenticationFailedException("Tenant not found"));
 
-        AppUser user = appUserRepository.findByTenantIdAndIdForUpdate(
-                currentUser.tenantId(),
-                currentUser.userId()
-        ).orElseThrow(() -> new AuthenticationFailedException("User not found"));
+        AppUser user =
+                appUserRepository
+                        .findByTenantIdAndIdForUpdate(currentUser.tenantId(), currentUser.userId())
+                        .orElseThrow(() -> new AuthenticationFailedException("User not found"));
 
         user.incrementSessionVersion();
         appUserRepository.save(user);
@@ -258,12 +245,7 @@ public class AuthService {
         refreshTokenService.revokeAllActiveTokensForUser(currentUser.userId());
 
         auditLogService.record(
-                tenant,
-                user,
-                AuditAction.LOGOUT_ALL,
-                true,
-                "User logged out from all devices"
-        );
+                tenant, user, AuditAction.LOGOUT_ALL, true, "User logged out from all devices");
 
         return new LogoutResponse("Logged out from all devices successfully");
     }
@@ -272,10 +254,10 @@ public class AuthService {
     public ChangePasswordResponse changePassword(Jwt jwt, ChangePasswordRequest request) {
         AuthenticatedUserContext currentUser = jwtContextService.getCurrentUser(jwt);
 
-        AppUser user = appUserRepository.findByTenantIdAndIdForUpdate(
-                currentUser.tenantId(),
-                currentUser.userId()
-        ).orElseThrow(() -> new AuthenticationFailedException("User not found"));
+        AppUser user =
+                appUserRepository
+                        .findByTenantIdAndIdForUpdate(currentUser.tenantId(), currentUser.userId())
+                        .orElseThrow(() -> new AuthenticationFailedException("User not found"));
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AuthenticationFailedException("User account is not active");
@@ -285,10 +267,8 @@ public class AuthService {
             throw new AuthenticationFailedException("Password is not set for this user");
         }
 
-        boolean currentPasswordMatches = passwordEncoder.matches(
-                request.currentPassword(),
-                user.getPasswordHash()
-        );
+        boolean currentPasswordMatches =
+                passwordEncoder.matches(request.currentPassword(), user.getPasswordHash());
 
         if (!currentPasswordMatches) {
             throw new AuthenticationFailedException("Current password is incorrect");
@@ -299,7 +279,8 @@ public class AuthService {
         }
 
         if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("New password must be different from current password");
+            throw new IllegalArgumentException(
+                    "New password must be different from current password");
         }
 
         String newPasswordHash = passwordEncoder.encode(request.newPassword());
@@ -310,19 +291,18 @@ public class AuthService {
 
         refreshTokenService.revokeAllActiveTokensForUser(user.getId());
 
-        Tenant tenant = tenantRepository.findById(currentUser.tenantId())
-                .orElseThrow(() -> new AuthenticationFailedException("Tenant not found"));
+        Tenant tenant =
+                tenantRepository
+                        .findById(currentUser.tenantId())
+                        .orElseThrow(() -> new AuthenticationFailedException("Tenant not found"));
 
         auditLogService.record(
                 tenant,
                 user,
                 AuditAction.PASSWORD_CHANGED,
                 true,
-                "User changed password successfully"
-        );
+                "User changed password successfully");
 
-        return new ChangePasswordResponse(
-                "Password changed successfully. Please login again."
-        );
+        return new ChangePasswordResponse("Password changed successfully. Please login again.");
     }
 }

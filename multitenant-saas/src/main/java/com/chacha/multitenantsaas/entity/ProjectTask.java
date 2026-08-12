@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.entity;
 
 import jakarta.persistence.*;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,32 +8,13 @@ import java.util.UUID;
 @Table(
         name = "project_tasks",
         indexes = {
-                @Index(
-                        name = "idx_project_task_tenant",
-                        columnList = "tenant_id"
-                ),
-                @Index(
-                        name = "idx_project_task_project",
-                        columnList = "project_id"
-                ),
-                @Index(
-                        name = "idx_project_task_assignee",
-                        columnList = "assignee_user_id"
-                ),
-                @Index(
-                        name = "idx_project_task_project_status",
-                        columnList = "project_id,status"
-                ),
-                @Index(
-                        name = "idx_project_task_project_priority",
-                        columnList = "project_id,priority"
-                ),
-                @Index(
-                        name = "idx_project_task_due_at",
-                        columnList = "due_at"
-                )
-        }
-)
+            @Index(name = "idx_project_task_tenant", columnList = "tenant_id"),
+            @Index(name = "idx_project_task_project", columnList = "project_id"),
+            @Index(name = "idx_project_task_assignee", columnList = "assignee_user_id"),
+            @Index(name = "idx_project_task_project_status", columnList = "project_id,status"),
+            @Index(name = "idx_project_task_project_priority", columnList = "project_id,priority"),
+            @Index(name = "idx_project_task_due_at", columnList = "due_at")
+        })
 public class ProjectTask {
 
     @Id
@@ -42,24 +22,15 @@ public class ProjectTask {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "tenant_id",
-            nullable = false
-    )
+    @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "project_id",
-            nullable = false
-    )
+    @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "created_by_user_id",
-            nullable = false
-    )
+    @JoinColumn(name = "created_by_user_id", nullable = false)
     private AppUser createdByUser;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -74,13 +45,11 @@ public class ProjectTask {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private ProjectTaskStatus status =
-            ProjectTaskStatus.TODO;
+    private ProjectTaskStatus status = ProjectTaskStatus.TODO;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private ProjectTaskPriority priority =
-            ProjectTaskPriority.MEDIUM;
+    private ProjectTaskPriority priority = ProjectTaskPriority.MEDIUM;
 
     private Instant dueAt;
 
@@ -92,8 +61,7 @@ public class ProjectTask {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    public ProjectTask() {
-    }
+    public ProjectTask() {}
 
     public ProjectTask(
             Tenant tenant,
@@ -103,8 +71,7 @@ public class ProjectTask {
             String title,
             String description,
             ProjectTaskPriority priority,
-            Instant dueAt
-    ) {
+            Instant dueAt) {
         this.tenant = tenant;
         this.project = project;
         this.createdByUser = createdByUser;

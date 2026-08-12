@@ -1,5 +1,12 @@
 package com.chacha.multitenantsaas.integration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.chacha.multitenantsaas.dto.SubscriptionPlanCreateRequest;
 import com.chacha.multitenantsaas.dto.SubscriptionPlanResponse;
 import com.chacha.multitenantsaas.dto.TenantSubscriptionLifecycleUpdateRequest;
@@ -14,42 +21,30 @@ import com.chacha.multitenantsaas.exception.DuplicateResourceException;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import com.chacha.multitenantsaas.service.SubscriptionPlanService;
 import com.chacha.multitenantsaas.service.TenantSubscriptionService;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
 class SubscriptionFoundationIntegrationTest {
 
-    @Autowired
-    private SubscriptionPlanService subscriptionPlanService;
+    @Autowired private SubscriptionPlanService subscriptionPlanService;
 
-    @Autowired
-    private TenantSubscriptionService tenantSubscriptionService;
+    @Autowired private TenantSubscriptionService tenantSubscriptionService;
 
-    @Autowired
-    private TenantRepository tenantRepository;
+    @Autowired private TenantRepository tenantRepository;
 
     @Test
     void createsAndNormalizesSubscriptionPlan() {
-        SubscriptionPlanResponse plan =
-                createPlan("starter-plan", "Starter", "usd");
+        SubscriptionPlanResponse plan = createPlan("starter-plan", "Starter", "usd");
 
         assertEquals("STARTER_PLAN", plan.code());
         assertEquals("USD", plan.currency());
@@ -60,24 +55,15 @@ class SubscriptionFoundationIntegrationTest {
 
         assertThrows(
                 DuplicateResourceException.class,
-                () -> createPlan(
-                        "starter_plan",
-                        "Duplicate Starter",
-                        "USD"
-                )
-        );
+                () -> createPlan("starter_plan", "Duplicate Starter", "USD"));
     }
 
     @Test
     void requiresAnActivePlanAndOneSubscriptionPerTenant() {
         Tenant tenant = createTenant("Acme Labs");
-        SubscriptionPlanResponse plan =
-                createPlan("trial", "Trial", "USD");
+        SubscriptionPlanResponse plan = createPlan("trial", "Trial", "USD");
 
-        subscriptionPlanService.changeStatus(
-                plan.id(),
-                SubscriptionPlanStatus.INACTIVE
-        );
+        subscriptionPlanService.changeStatus(plan.id(), SubscriptionPlanStatus.INACTIVE);
 
         Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
 
@@ -89,47 +75,31 @@ class SubscriptionFoundationIntegrationTest {
                         now,
                         now.plus(30, ChronoUnit.DAYS),
                         now.plus(14, ChronoUnit.DAYS),
-                        false
-                );
+                        false);
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> tenantSubscriptionService
-                        .startSubscription(tenant.getId(), request)
-        );
+                () -> tenantSubscriptionService.startSubscription(tenant.getId(), request));
 
-        subscriptionPlanService.changeStatus(
-                plan.id(),
-                SubscriptionPlanStatus.ACTIVE
-        );
+        subscriptionPlanService.changeStatus(plan.id(), SubscriptionPlanStatus.ACTIVE);
 
         TenantSubscriptionResponse subscription =
-                tenantSubscriptionService.startSubscription(
-                        tenant.getId(),
-                        request
-                );
+                tenantSubscriptionService.startSubscription(tenant.getId(), request);
 
-        assertEquals(
-                TenantSubscriptionStatus.TRIALING,
-                subscription.status()
-        );
+        assertEquals(TenantSubscriptionStatus.TRIALING, subscription.status());
         assertEquals("TRIAL", subscription.plan().code());
         assertFalse(subscription.cancelAtPeriodEnd());
 
         assertThrows(
                 DuplicateResourceException.class,
-                () -> tenantSubscriptionService
-                        .startSubscription(tenant.getId(), request)
-        );
+                () -> tenantSubscriptionService.startSubscription(tenant.getId(), request));
     }
 
     @Test
     void changesPlanAndUpdatesSubscriptionLifecycle() {
         Tenant tenant = createTenant("Orbit Systems");
-        SubscriptionPlanResponse monthly =
-                createPlan("monthly", "Monthly", "USD");
-        SubscriptionPlanResponse annual =
-                createPlan("annual", "Annual", "USD");
+        SubscriptionPlanResponse monthly = createPlan("monthly", "Monthly", "USD");
+        SubscriptionPlanResponse annual = createPlan("annual", "Annual", "USD");
 
         Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
 
@@ -142,9 +112,7 @@ class SubscriptionFoundationIntegrationTest {
                         now,
                         now.plus(30, ChronoUnit.DAYS),
                         null,
-                        false
-                )
-        );
+                        false));
 
         TenantSubscriptionResponse changed =
                 tenantSubscriptionService.changePlan(
@@ -152,9 +120,7 @@ class SubscriptionFoundationIntegrationTest {
                         new TenantSubscriptionPlanChangeRequest(
                                 annual.id(),
                                 now.plus(30, ChronoUnit.DAYS),
-                                now.plus(395, ChronoUnit.DAYS)
-                        )
-                );
+                                now.plus(395, ChronoUnit.DAYS)));
 
         assertEquals("ANNUAL", changed.plan().code());
 
@@ -162,38 +128,25 @@ class SubscriptionFoundationIntegrationTest {
                 tenantSubscriptionService.updateLifecycle(
                         tenant.getId(),
                         new TenantSubscriptionLifecycleUpdateRequest(
-                                TenantSubscriptionStatus.CANCELLED,
-                                true,
-                                null,
-                                null
-                        )
-                );
+                                TenantSubscriptionStatus.CANCELLED, true, null, null));
 
-        assertEquals(
-                TenantSubscriptionStatus.CANCELLED,
-                cancelled.status()
-        );
+        assertEquals(TenantSubscriptionStatus.CANCELLED, cancelled.status());
         assertFalse(cancelled.cancelAtPeriodEnd());
         assertNotNull(cancelled.cancelledAt());
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> tenantSubscriptionService.changePlan(
-                        tenant.getId(),
-                        new TenantSubscriptionPlanChangeRequest(
-                                monthly.id(),
-                                now,
-                                now.plus(30, ChronoUnit.DAYS)
-                        )
-                )
-        );
+                () ->
+                        tenantSubscriptionService.changePlan(
+                                tenant.getId(),
+                                new TenantSubscriptionPlanChangeRequest(
+                                        monthly.id(), now, now.plus(30, ChronoUnit.DAYS))));
     }
 
     @Test
     void supportsScheduledCancellationWithoutImmediateCancellation() {
         Tenant tenant = createTenant("Scheduled Labs");
-        SubscriptionPlanResponse plan =
-                createPlan("growth", "Growth", "USD");
+        SubscriptionPlanResponse plan = createPlan("growth", "Growth", "USD");
         Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
 
         tenantSubscriptionService.startSubscription(
@@ -205,30 +158,19 @@ class SubscriptionFoundationIntegrationTest {
                         now,
                         now.plus(30, ChronoUnit.DAYS),
                         null,
-                        false
-                )
-        );
+                        false));
 
         TenantSubscriptionResponse updated =
                 tenantSubscriptionService.updateLifecycle(
                         tenant.getId(),
                         new TenantSubscriptionLifecycleUpdateRequest(
-                                TenantSubscriptionStatus.ACTIVE,
-                                true,
-                                null,
-                                null
-                        )
-                );
+                                TenantSubscriptionStatus.ACTIVE, true, null, null));
 
         assertTrue(updated.cancelAtPeriodEnd());
         assertNull(updated.cancelledAt());
     }
 
-    private SubscriptionPlanResponse createPlan(
-            String code,
-            String name,
-            String currency
-    ) {
+    private SubscriptionPlanResponse createPlan(String code, String name, String currency) {
         return subscriptionPlanService.createPlan(
                 new SubscriptionPlanCreateRequest(
                         code,
@@ -239,24 +181,13 @@ class SubscriptionFoundationIntegrationTest {
                         currency,
                         10,
                         25,
-                        1024L
-                )
-        );
+                        1024L));
     }
 
     private Tenant createTenant(String name) {
-        String suffix = UUID.randomUUID()
-                .toString()
-                .substring(0, 8);
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
 
         return tenantRepository.saveAndFlush(
-                new Tenant(
-                        name,
-                        name.toLowerCase()
-                                .replace(' ', '-')
-                                + "-"
-                                + suffix
-                )
-        );
+                new Tenant(name, name.toLowerCase().replace(' ', '-') + "-" + suffix));
     }
 }

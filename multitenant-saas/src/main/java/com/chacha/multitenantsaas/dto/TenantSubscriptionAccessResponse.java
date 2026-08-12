@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -19,16 +18,12 @@ public record TenantSubscriptionAccessResponse(
         boolean cancelAtPeriodEnd,
         Instant currentPeriodEnd,
         Instant trialEndsAt,
-        Instant evaluatedAt
-) {
+        Instant evaluatedAt) {
 
     public static TenantSubscriptionAccessResponse from(
-            TenantSubscriptionEntitlementResponse entitlements
-    ) {
+            TenantSubscriptionEntitlementResponse entitlements) {
         if (entitlements == null) {
-            throw new IllegalArgumentException(
-                    "Subscription entitlements are required."
-            );
+            throw new IllegalArgumentException("Subscription entitlements are required.");
         }
 
         return new TenantSubscriptionAccessResponse(
@@ -45,7 +40,6 @@ public record TenantSubscriptionAccessResponse(
                 entitlements.cancelAtPeriodEnd(),
                 entitlements.currentPeriodEnd(),
                 entitlements.trialEndsAt(),
-                entitlements.evaluatedAt()
-        );
+                entitlements.evaluatedAt());
     }
 }

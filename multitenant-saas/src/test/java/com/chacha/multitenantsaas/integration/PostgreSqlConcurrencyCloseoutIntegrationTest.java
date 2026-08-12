@@ -1,5 +1,7 @@
 package com.chacha.multitenantsaas.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.chacha.multitenantsaas.dto.ForgotPasswordRequest;
 import com.chacha.multitenantsaas.dto.ForgotPasswordResponse;
 import com.chacha.multitenantsaas.dto.ResetPasswordRequest;
@@ -28,18 +30,6 @@ import com.chacha.multitenantsaas.service.SubscriptionPlanService;
 import com.chacha.multitenantsaas.service.TenantOnboardingService;
 import com.chacha.multitenantsaas.service.TenantSubscriptionService;
 import com.chacha.multitenantsaas.service.UserInvitationService;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.utility.DockerImageName;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -53,113 +43,78 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 class PostgreSqlConcurrencyCloseoutIntegrationTest {
 
-    private static final String ADMIN_PASSWORD =
-            "TenantAdmin@123";
+    private static final String ADMIN_PASSWORD = "TenantAdmin@123";
 
-    private static final String INVITED_PASSWORD =
-            "InvitedUser@123";
+    private static final String INVITED_PASSWORD = "InvitedUser@123";
 
-    private static final String RESET_PASSWORD =
-            "ResetPassword@456";
+    private static final String RESET_PASSWORD = "ResetPassword@456";
 
     @Container
     private static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer(
-                    DockerImageName.parse("postgres:17-alpine")
-            )
-                    .withDatabaseName(
-                            "multitenant_saas_concurrency_closeout"
-                    )
+            new PostgreSQLContainer(DockerImageName.parse("postgres:17-alpine"))
+                    .withDatabaseName("multitenant_saas_concurrency_closeout")
                     .withUsername("saas")
                     .withPassword("saas");
 
     @DynamicPropertySource
-    static void postgresProperties(
-            DynamicPropertyRegistry registry
-    ) {
+    static void postgresProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.datasource.username", POSTGRES::getUsername);
+        registry.add("spring.datasource.password", POSTGRES::getPassword);
+        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
+        registry.add("spring.datasource.hikari.maximum-pool-size", () -> "8");
         registry.add(
-                "spring.datasource.url",
-                POSTGRES::getJdbcUrl
-        );
-        registry.add(
-                "spring.datasource.username",
-                POSTGRES::getUsername
-        );
-        registry.add(
-                "spring.datasource.password",
-                POSTGRES::getPassword
-        );
-        registry.add(
-                "spring.datasource.driver-class-name",
-                () -> "org.postgresql.Driver"
-        );
-        registry.add(
-                "spring.datasource.hikari.maximum-pool-size",
-                () -> "8"
-        );
-        registry.add(
-                "spring.flyway.locations",
-                () -> "classpath:db/postgresql,classpath:db/common"
-        );
-        registry.add(
-                "app.subscription.enforcement.enabled",
-                () -> "true"
-        );
+                "spring.flyway.locations", () -> "classpath:db/postgresql,classpath:db/common");
+        registry.add("app.subscription.enforcement.enabled", () -> "true");
     }
 
-    @Autowired
-    private TenantOnboardingService tenantOnboardingService;
+    @Autowired private TenantOnboardingService tenantOnboardingService;
 
-    @Autowired
-    private TenantRepository tenantRepository;
+    @Autowired private TenantRepository tenantRepository;
 
-    @Autowired
-    private AppUserRepository appUserRepository;
+    @Autowired private AppUserRepository appUserRepository;
 
-    @Autowired
-    private SubscriptionPlanService subscriptionPlanService;
+    @Autowired private SubscriptionPlanService subscriptionPlanService;
 
-    @Autowired
-    private TenantSubscriptionService tenantSubscriptionService;
+    @Autowired private TenantSubscriptionService tenantSubscriptionService;
 
-    @Autowired
-    private SecureTokenService secureTokenService;
+    @Autowired private SecureTokenService secureTokenService;
 
-    @Autowired
-    private UserInvitationRepository userInvitationRepository;
+    @Autowired private UserInvitationRepository userInvitationRepository;
 
-    @Autowired
-    private UserInvitationService userInvitationService;
+    @Autowired private UserInvitationService userInvitationService;
 
-    @Autowired
-    private PasswordResetService passwordResetService;
+    @Autowired private PasswordResetService passwordResetService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @Autowired private PasswordEncoder passwordEncoder;
 
     @Test
-    void concurrentInvitationAcceptancesCannotExceedFinalUserSlot()
-            throws Exception {
-        TenantOnboardingResponse onboarding =
-                onboardTenant("quota-race");
+    void concurrentInvitationAcceptancesCannotExceedFinalUserSlot() throws Exception {
+        TenantOnboardingResponse onboarding = onboardTenant("quota-race");
 
         UUID tenantId = onboarding.tenant().id();
 
-        Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow();
+        Tenant tenant = tenantRepository.findById(tenantId).orElseThrow();
 
         AppUser administrator =
-                appUserRepository.findById(
-                        onboarding.adminUser().id()
-                ).orElseThrow();
+                appUserRepository.findById(onboarding.adminUser().id()).orElseThrow();
 
         SubscriptionPlanResponse plan =
                 subscriptionPlanService.createPlan(
@@ -172,12 +127,9 @@ class PostgreSqlConcurrencyCloseoutIntegrationTest {
                                 "USD",
                                 2,
                                 25,
-                                1024L
-                        )
-                );
+                                1024L));
 
-        Instant now =
-                Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
 
         tenantSubscriptionService.startSubscription(
                 tenantId,
@@ -188,151 +140,91 @@ class PostgreSqlConcurrencyCloseoutIntegrationTest {
                         now,
                         now.plus(30, ChronoUnit.DAYS),
                         null,
-                        false
-                )
-        );
+                        false));
 
         InvitationFixture firstInvitation =
-                createInvitation(
-                        tenant,
-                        administrator,
-                        "first-" + shortId() + "@example.test"
-                );
+                createInvitation(tenant, administrator, "first-" + shortId() + "@example.test");
 
         InvitationFixture secondInvitation =
-                createInvitation(
-                        tenant,
-                        administrator,
-                        "second-" + shortId() + "@example.test"
-                );
+                createInvitation(tenant, administrator, "second-" + shortId() + "@example.test");
 
-        List<Throwable> outcomes = runConcurrently(
-                () -> userInvitationService.acceptInvitation(
-                        new UserInvitationAcceptRequest(
-                                firstInvitation.rawToken(),
-                                INVITED_PASSWORD,
-                                INVITED_PASSWORD
-                        )
-                ),
-                () -> userInvitationService.acceptInvitation(
-                        new UserInvitationAcceptRequest(
-                                secondInvitation.rawToken(),
-                                INVITED_PASSWORD,
-                                INVITED_PASSWORD
-                        )
-                )
-        );
+        List<Throwable> outcomes =
+                runConcurrently(
+                        () ->
+                                userInvitationService.acceptInvitation(
+                                        new UserInvitationAcceptRequest(
+                                                firstInvitation.rawToken(),
+                                                INVITED_PASSWORD,
+                                                INVITED_PASSWORD)),
+                        () ->
+                                userInvitationService.acceptInvitation(
+                                        new UserInvitationAcceptRequest(
+                                                secondInvitation.rawToken(),
+                                                INVITED_PASSWORD,
+                                                INVITED_PASSWORD)));
 
         assertThat(successCount(outcomes)).isEqualTo(1);
-        assertThat(
-                errorCount(
-                        outcomes,
-                        SubscriptionRestrictionException.class
-                )
-        ).isEqualTo(1);
+        assertThat(errorCount(outcomes, SubscriptionRestrictionException.class)).isEqualTo(1);
 
         SubscriptionRestrictionException restriction =
                 outcomes.stream()
-                        .filter(
-                                SubscriptionRestrictionException.class
-                                        ::isInstance
-                        )
-                        .map(
-                                SubscriptionRestrictionException.class
-                                        ::cast
-                        )
+                        .filter(SubscriptionRestrictionException.class::isInstance)
+                        .map(SubscriptionRestrictionException.class::cast)
                         .findFirst()
                         .orElseThrow();
 
-        assertThat(
-                restriction.getRestrictionType()
-        ).isEqualTo(RestrictionType.USER_LIMIT_REACHED);
+        assertThat(restriction.getRestrictionType()).isEqualTo(RestrictionType.USER_LIMIT_REACHED);
 
-        assertThat(
-                appUserRepository.countByTenantId(tenantId)
-        ).isEqualTo(2);
+        assertThat(appUserRepository.countByTenantId(tenantId)).isEqualTo(2);
 
         List<UserInvitationStatus> statuses =
                 List.of(
                         userInvitationRepository
-                                .findByTenant_IdAndId(
-                                        tenantId,
-                                        firstInvitation.invitationId()
-                                )
+                                .findByTenant_IdAndId(tenantId, firstInvitation.invitationId())
                                 .orElseThrow()
                                 .getStatus(),
                         userInvitationRepository
-                                .findByTenant_IdAndId(
-                                        tenantId,
-                                        secondInvitation.invitationId()
-                                )
+                                .findByTenant_IdAndId(tenantId, secondInvitation.invitationId())
                                 .orElseThrow()
-                                .getStatus()
-                );
+                                .getStatus());
 
         assertThat(statuses)
                 .containsExactlyInAnyOrder(
-                        UserInvitationStatus.ACCEPTED,
-                        UserInvitationStatus.PENDING
-                );
+                        UserInvitationStatus.ACCEPTED, UserInvitationStatus.PENDING);
     }
 
     @Test
-    void concurrentPasswordResetConsumesTokenOnlyOnce()
-            throws Exception {
-        TenantOnboardingResponse onboarding =
-                onboardTenant("reset-race");
+    void concurrentPasswordResetConsumesTokenOnlyOnce() throws Exception {
+        TenantOnboardingResponse onboarding = onboardTenant("reset-race");
 
         UUID tenantId = onboarding.tenant().id();
         UUID userId = onboarding.adminUser().id();
 
         ForgotPasswordResponse forgotPassword =
                 passwordResetService.forgotPassword(
-                        tenantId,
-                        new ForgotPasswordRequest(
-                                onboarding.adminUser().email()
-                        )
-                );
+                        tenantId, new ForgotPasswordRequest(onboarding.adminUser().email()));
 
         ResetPasswordRequest request =
                 new ResetPasswordRequest(
-                        forgotPassword.devResetToken(),
-                        RESET_PASSWORD,
-                        RESET_PASSWORD
-                );
+                        forgotPassword.devResetToken(), RESET_PASSWORD, RESET_PASSWORD);
 
-        List<Throwable> outcomes = runConcurrently(
-                () -> passwordResetService.resetPassword(request),
-                () -> passwordResetService.resetPassword(request)
-        );
+        List<Throwable> outcomes =
+                runConcurrently(
+                        () -> passwordResetService.resetPassword(request),
+                        () -> passwordResetService.resetPassword(request));
 
         assertThat(successCount(outcomes)).isEqualTo(1);
-        assertThat(
-                errorCount(
-                        outcomes,
-                        AuthenticationFailedException.class
-                )
-        ).isEqualTo(1);
+        assertThat(errorCount(outcomes, AuthenticationFailedException.class)).isEqualTo(1);
 
-        AppUser reloadedUser =
-                appUserRepository.findById(userId)
-                        .orElseThrow();
+        AppUser reloadedUser = appUserRepository.findById(userId).orElseThrow();
 
-        assertThat(
-                reloadedUser.getSessionVersion()
-        ).isEqualTo(1L);
+        assertThat(reloadedUser.getSessionVersion()).isEqualTo(1L);
 
-        assertThat(
-                passwordEncoder.matches(
-                        RESET_PASSWORD,
-                        reloadedUser.getPasswordHash()
-                )
-        ).isTrue();
+        assertThat(passwordEncoder.matches(RESET_PASSWORD, reloadedUser.getPasswordHash()))
+                .isTrue();
     }
 
-    private TenantOnboardingResponse onboardTenant(
-            String prefix
-    ) {
+    private TenantOnboardingResponse onboardTenant(String prefix) {
         String suffix = shortId();
 
         return tenantOnboardingService.onboardTenant(
@@ -341,16 +233,10 @@ class PostgreSqlConcurrencyCloseoutIntegrationTest {
                         prefix + "-" + suffix,
                         "Concurrency Administrator",
                         "admin-" + suffix + "@example.test",
-                        ADMIN_PASSWORD
-                )
-        );
+                        ADMIN_PASSWORD));
     }
 
-    private InvitationFixture createInvitation(
-            Tenant tenant,
-            AppUser invitedBy,
-            String email
-    ) {
+    private InvitationFixture createInvitation(Tenant tenant, AppUser invitedBy, String email) {
         String rawToken = secureTokenService.generateToken();
 
         UserInvitation invitation =
@@ -362,79 +248,39 @@ class PostgreSqlConcurrencyCloseoutIntegrationTest {
                         email,
                         UserRole.TENANT_USER,
                         secureTokenService.hashToken(rawToken),
-                        Instant.now().plus(
-                                1,
-                                ChronoUnit.DAYS
-                        )
-                );
+                        Instant.now().plus(1, ChronoUnit.DAYS));
 
-        UserInvitation saved =
-                userInvitationRepository.saveAndFlush(
-                        invitation
-                );
+        UserInvitation saved = userInvitationRepository.saveAndFlush(invitation);
 
-        return new InvitationFixture(
-                saved.getId(),
-                rawToken
-        );
+        return new InvitationFixture(saved.getId(), rawToken);
     }
 
     private List<Throwable> runConcurrently(
-            ThrowingRunnable firstOperation,
-            ThrowingRunnable secondOperation
-    ) throws Exception {
-        ExecutorService executor =
-                Executors.newFixedThreadPool(2);
+            ThrowingRunnable firstOperation, ThrowingRunnable secondOperation) throws Exception {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
 
-        CyclicBarrier startBarrier =
-                new CyclicBarrier(2);
+        CyclicBarrier startBarrier = new CyclicBarrier(2);
 
         try {
-            Callable<Throwable> first = () ->
-                    runAfterBarrier(
-                            startBarrier,
-                            firstOperation
-                    );
+            Callable<Throwable> first = () -> runAfterBarrier(startBarrier, firstOperation);
 
-            Callable<Throwable> second = () ->
-                    runAfterBarrier(
-                            startBarrier,
-                            secondOperation
-                    );
+            Callable<Throwable> second = () -> runAfterBarrier(startBarrier, secondOperation);
 
-            Future<Throwable> firstFuture =
-                    executor.submit(first);
+            Future<Throwable> firstFuture = executor.submit(first);
 
-            Future<Throwable> secondFuture =
-                    executor.submit(second);
+            Future<Throwable> secondFuture = executor.submit(second);
 
             return Arrays.asList(
-                    firstFuture.get(
-                            15,
-                            TimeUnit.SECONDS
-                    ),
-                    secondFuture.get(
-                            15,
-                            TimeUnit.SECONDS
-                    )
-            );
+                    firstFuture.get(15, TimeUnit.SECONDS), secondFuture.get(15, TimeUnit.SECONDS));
         } finally {
             executor.shutdownNow();
-            executor.awaitTermination(
-                    5,
-                    TimeUnit.SECONDS
-            );
+            executor.awaitTermination(5, TimeUnit.SECONDS);
         }
     }
 
-    private Throwable runAfterBarrier(
-            CyclicBarrier startBarrier,
-            ThrowingRunnable operation
-    ) throws Exception {
-        startBarrier.await(
-                5,
-                TimeUnit.SECONDS
-        );
+    private Throwable runAfterBarrier(CyclicBarrier startBarrier, ThrowingRunnable operation)
+            throws Exception {
+        startBarrier.await(5, TimeUnit.SECONDS);
 
         try {
             operation.run();
@@ -444,34 +290,19 @@ class PostgreSqlConcurrencyCloseoutIntegrationTest {
         }
     }
 
-    private long successCount(
-            List<Throwable> outcomes
-    ) {
-        return outcomes.stream()
-                .filter(Objects::isNull)
-                .count();
+    private long successCount(List<Throwable> outcomes) {
+        return outcomes.stream().filter(Objects::isNull).count();
     }
 
-    private long errorCount(
-            List<Throwable> outcomes,
-            Class<? extends Throwable> errorType
-    ) {
-        return outcomes.stream()
-                .filter(errorType::isInstance)
-                .count();
+    private long errorCount(List<Throwable> outcomes, Class<? extends Throwable> errorType) {
+        return outcomes.stream().filter(errorType::isInstance).count();
     }
 
     private String shortId() {
-        return UUID.randomUUID()
-                .toString()
-                .substring(0, 8);
+        return UUID.randomUUID().toString().substring(0, 8);
     }
 
-    private record InvitationFixture(
-            UUID invitationId,
-            String rawToken
-    ) {
-    }
+    private record InvitationFixture(UUID invitationId, String rawToken) {}
 
     @FunctionalInterface
     private interface ThrowingRunnable {

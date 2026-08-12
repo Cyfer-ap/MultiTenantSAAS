@@ -11,6 +11,8 @@ import com.chacha.multitenantsaas.dto.OrganizationalUnitUpdateRequest;
 import com.chacha.multitenantsaas.service.OrganizationHierarchyCommandService;
 import com.chacha.multitenantsaas.service.OrganizationHierarchyService;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,32 +26,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.UUID;
-
 @RestController
-@RequestMapping(
-        "/api/tenants/{tenantId}/organization/units"
-)
+@RequestMapping("/api/tenants/{tenantId}/organization/units")
 public class OrganizationHierarchyController {
 
-    private final OrganizationHierarchyService
-            organizationHierarchyService;
+    private final OrganizationHierarchyService organizationHierarchyService;
 
-    private final OrganizationHierarchyCommandService
-            organizationHierarchyCommandService;
+    private final OrganizationHierarchyCommandService organizationHierarchyCommandService;
 
     public OrganizationHierarchyController(
-            OrganizationHierarchyService
-                    organizationHierarchyService,
-            OrganizationHierarchyCommandService
-                    organizationHierarchyCommandService
-    ) {
-        this.organizationHierarchyService =
-                organizationHierarchyService;
+            OrganizationHierarchyService organizationHierarchyService,
+            OrganizationHierarchyCommandService organizationHierarchyCommandService) {
+        this.organizationHierarchyService = organizationHierarchyService;
 
-        this.organizationHierarchyCommandService =
-                organizationHierarchyCommandService;
+        this.organizationHierarchyCommandService = organizationHierarchyCommandService;
     }
 
     @PreAuthorize(
@@ -58,38 +48,17 @@ public class OrganizationHierarchyController {
                     + "#tenantId,"
                     + "#request.parentUnitId(),"
                     + "'organization.unit.manage'"
-                    + ")"
-    )
+                    + ")")
     @PostMapping
-    public ResponseEntity<
-            ApiResponse<OrganizationalUnitResponse>
-            >
-    createUnit(
-            @PathVariable
-            UUID tenantId,
-
-            @Valid
-            @RequestBody
-            OrganizationalUnitCreateRequest request,
-
-            @AuthenticationPrincipal
-            Jwt jwt
-    ) {
+    public ResponseEntity<ApiResponse<OrganizationalUnitResponse>> createUnit(
+            @PathVariable UUID tenantId,
+            @Valid @RequestBody OrganizationalUnitCreateRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
         OrganizationalUnitResponse response =
-                organizationHierarchyCommandService
-                        .createUnit(
-                                tenantId,
-                                request,
-                                jwt
-                        );
+                organizationHierarchyCommandService.createUnit(tenantId, request, jwt);
 
         return ResponseEntity.ok(
-                ApiResponse.success(
-                        "Organizational unit created "
-                                + "successfully",
-                        response
-                )
-        );
+                ApiResponse.success("Organizational unit created " + "successfully", response));
     }
 
     @PreAuthorize(
@@ -97,29 +66,16 @@ public class OrganizationHierarchyController {
                     + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'organization.unit.read'"
-                    + ")"
-    )
+                    + ")")
     @GetMapping("/roots")
-    public ResponseEntity<
-            ApiResponse<
-                    List<OrganizationalUnitResponse>
-                    >
-            >
-    getRootUnits(
-            @PathVariable
-            UUID tenantId
-    ) {
+    public ResponseEntity<ApiResponse<List<OrganizationalUnitResponse>>> getRootUnits(
+            @PathVariable UUID tenantId) {
         List<OrganizationalUnitResponse> response =
-                organizationHierarchyService
-                        .getRootUnits(tenantId);
+                organizationHierarchyService.getRootUnits(tenantId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Root organizational units "
-                                + "fetched successfully",
-                        response
-                )
-        );
+                        "Root organizational units " + "fetched successfully", response));
     }
 
     @PreAuthorize(
@@ -127,29 +83,16 @@ public class OrganizationHierarchyController {
                     + ".hasTenantPermission("
                     + "#tenantId,"
                     + "'organization.unit.read'"
-                    + ")"
-    )
+                    + ")")
     @GetMapping("/tree")
-    public ResponseEntity<
-            ApiResponse<
-                    List<OrganizationalUnitTreeResponse>
-                    >
-            >
-    getTree(
-            @PathVariable
-            UUID tenantId
-    ) {
+    public ResponseEntity<ApiResponse<List<OrganizationalUnitTreeResponse>>> getTree(
+            @PathVariable UUID tenantId) {
         List<OrganizationalUnitTreeResponse> response =
-                organizationHierarchyService
-                        .getTree(tenantId);
+                organizationHierarchyService.getTree(tenantId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Organizational hierarchy "
-                                + "fetched successfully",
-                        response
-                )
-        );
+                        "Organizational hierarchy " + "fetched successfully", response));
     }
 
     @PreAuthorize(
@@ -158,33 +101,16 @@ public class OrganizationHierarchyController {
                     + "#tenantId,"
                     + "#unitId,"
                     + "'organization.unit.read'"
-                    + ")"
-    )
+                    + ")")
     @GetMapping("/{unitId}")
-    public ResponseEntity<
-            ApiResponse<OrganizationalUnitResponse>
-            >
-    getUnit(
-            @PathVariable
-            UUID tenantId,
+    public ResponseEntity<ApiResponse<OrganizationalUnitResponse>> getUnit(
+            @PathVariable UUID tenantId, @PathVariable UUID unitId) {
 
-            @PathVariable
-            UUID unitId
-    ) {
         OrganizationalUnitResponse response =
-                organizationHierarchyService
-                        .getUnit(
-                                tenantId,
-                                unitId
-                        );
+                organizationHierarchyService.getUnit(tenantId, unitId);
 
         return ResponseEntity.ok(
-                ApiResponse.success(
-                        "Organizational unit fetched "
-                                + "successfully",
-                        response
-                )
-        );
+                ApiResponse.success("Organizational unit fetched " + "successfully", response));
     }
 
     @PreAuthorize(
@@ -193,35 +119,16 @@ public class OrganizationHierarchyController {
                     + "#tenantId,"
                     + "#unitId,"
                     + "'organization.unit.read'"
-                    + ")"
-    )
+                    + ")")
     @GetMapping("/{unitId}/children")
-    public ResponseEntity<
-            ApiResponse<
-                    List<OrganizationalUnitResponse>
-                    >
-            >
-    getDirectChildren(
-            @PathVariable
-            UUID tenantId,
+    public ResponseEntity<ApiResponse<List<OrganizationalUnitResponse>>> getDirectChildren(
+            @PathVariable UUID tenantId, @PathVariable UUID unitId) {
 
-            @PathVariable
-            UUID unitId
-    ) {
         List<OrganizationalUnitResponse> response =
-                organizationHierarchyService
-                        .getDirectChildren(
-                                tenantId,
-                                unitId
-                        );
+                organizationHierarchyService.getDirectChildren(tenantId, unitId);
 
         return ResponseEntity.ok(
-                ApiResponse.success(
-                        "Direct child units fetched "
-                                + "successfully",
-                        response
-                )
-        );
+                ApiResponse.success("Direct child units fetched " + "successfully", response));
     }
 
     @PreAuthorize(
@@ -230,33 +137,16 @@ public class OrganizationHierarchyController {
                     + "#tenantId,"
                     + "#unitId,"
                     + "'organization.unit.read'"
-                    + ")"
-    )
+                    + ")")
     @GetMapping("/{unitId}/subtree")
-    public ResponseEntity<
-            ApiResponse<OrganizationalUnitTreeResponse>
-            >
-    getSubtree(
-            @PathVariable
-            UUID tenantId,
+    public ResponseEntity<ApiResponse<OrganizationalUnitTreeResponse>> getSubtree(
+            @PathVariable UUID tenantId, @PathVariable UUID unitId) {
 
-            @PathVariable
-            UUID unitId
-    ) {
         OrganizationalUnitTreeResponse response =
-                organizationHierarchyService
-                        .getSubtree(
-                                tenantId,
-                                unitId
-                        );
+                organizationHierarchyService.getSubtree(tenantId, unitId);
 
         return ResponseEntity.ok(
-                ApiResponse.success(
-                        "Organizational subtree fetched "
-                                + "successfully",
-                        response
-                )
-        );
+                ApiResponse.success("Organizational subtree fetched " + "successfully", response));
     }
 
     @PreAuthorize(
@@ -265,35 +155,17 @@ public class OrganizationHierarchyController {
                     + "#tenantId,"
                     + "#unitId,"
                     + "'organization.unit.read'"
-                    + ")"
-    )
+                    + ")")
     @GetMapping("/{unitId}/ancestors")
-    public ResponseEntity<
-            ApiResponse<
-                    List<OrganizationalUnitPathResponse>
-                    >
-            >
-    getAncestors(
-            @PathVariable
-            UUID tenantId,
+    public ResponseEntity<ApiResponse<List<OrganizationalUnitPathResponse>>> getAncestors(
+            @PathVariable UUID tenantId, @PathVariable UUID unitId) {
 
-            @PathVariable
-            UUID unitId
-    ) {
         List<OrganizationalUnitPathResponse> response =
-                organizationHierarchyService
-                        .getAncestors(
-                                tenantId,
-                                unitId
-                        );
+                organizationHierarchyService.getAncestors(tenantId, unitId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Organizational unit ancestors "
-                                + "fetched successfully",
-                        response
-                )
-        );
+                        "Organizational unit ancestors " + "fetched successfully", response));
     }
 
     @PreAuthorize(
@@ -302,35 +174,17 @@ public class OrganizationHierarchyController {
                     + "#tenantId,"
                     + "#unitId,"
                     + "'organization.unit.read'"
-                    + ")"
-    )
+                    + ")")
     @GetMapping("/{unitId}/descendants")
-    public ResponseEntity<
-            ApiResponse<
-                    List<OrganizationalUnitPathResponse>
-                    >
-            >
-    getDescendants(
-            @PathVariable
-            UUID tenantId,
+    public ResponseEntity<ApiResponse<List<OrganizationalUnitPathResponse>>> getDescendants(
+            @PathVariable UUID tenantId, @PathVariable UUID unitId) {
 
-            @PathVariable
-            UUID unitId
-    ) {
         List<OrganizationalUnitPathResponse> response =
-                organizationHierarchyService
-                        .getDescendants(
-                                tenantId,
-                                unitId
-                        );
+                organizationHierarchyService.getDescendants(tenantId, unitId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Organizational unit descendants "
-                                + "fetched successfully",
-                        response
-                )
-        );
+                        "Organizational unit descendants " + "fetched successfully", response));
     }
 
     @PreAuthorize(
@@ -339,42 +193,18 @@ public class OrganizationHierarchyController {
                     + "#tenantId,"
                     + "#unitId,"
                     + "'organization.unit.manage'"
-                    + ")"
-    )
+                    + ")")
     @PutMapping("/{unitId}")
-    public ResponseEntity<
-            ApiResponse<OrganizationalUnitResponse>
-            >
-    updateUnit(
-            @PathVariable
-            UUID tenantId,
-
-            @PathVariable
-            UUID unitId,
-
-            @Valid
-            @RequestBody
-            OrganizationalUnitUpdateRequest request,
-
-            @AuthenticationPrincipal
-            Jwt jwt
-    ) {
+    public ResponseEntity<ApiResponse<OrganizationalUnitResponse>> updateUnit(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID unitId,
+            @Valid @RequestBody OrganizationalUnitUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
         OrganizationalUnitResponse response =
-                organizationHierarchyCommandService
-                        .updateUnit(
-                                tenantId,
-                                unitId,
-                                request,
-                                jwt
-                        );
+                organizationHierarchyCommandService.updateUnit(tenantId, unitId, request, jwt);
 
         return ResponseEntity.ok(
-                ApiResponse.success(
-                        "Organizational unit updated "
-                                + "successfully",
-                        response
-                )
-        );
+                ApiResponse.success("Organizational unit updated " + "successfully", response));
     }
 
     @PreAuthorize(
@@ -383,42 +213,20 @@ public class OrganizationHierarchyController {
                     + "#tenantId,"
                     + "#unitId,"
                     + "'organization.unit.manage'"
-                    + ")"
-    )
+                    + ")")
     @PatchMapping("/{unitId}/status")
-    public ResponseEntity<
-            ApiResponse<OrganizationalUnitResponse>
-            >
-    updateUnitStatus(
-            @PathVariable
-            UUID tenantId,
-
-            @PathVariable
-            UUID unitId,
-
-            @Valid
-            @RequestBody
-            OrganizationalUnitStatusUpdateRequest request,
-
-            @AuthenticationPrincipal
-            Jwt jwt
-    ) {
+    public ResponseEntity<ApiResponse<OrganizationalUnitResponse>> updateUnitStatus(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID unitId,
+            @Valid @RequestBody OrganizationalUnitStatusUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
         OrganizationalUnitResponse response =
-                organizationHierarchyCommandService
-                        .updateUnitStatus(
-                                tenantId,
-                                unitId,
-                                request,
-                                jwt
-                        );
+                organizationHierarchyCommandService.updateUnitStatus(
+                        tenantId, unitId, request, jwt);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Organizational unit status "
-                                + "updated successfully",
-                        response
-                )
-        );
+                        "Organizational unit status " + "updated successfully", response));
     }
 
     @PreAuthorize(
@@ -428,40 +236,17 @@ public class OrganizationHierarchyController {
                     + "#unitId,"
                     + "#request.parentUnitId(),"
                     + "'organization.unit.manage'"
-                    + ")"
-    )
+                    + ")")
     @PatchMapping("/{unitId}/move")
-    public ResponseEntity<
-            ApiResponse<OrganizationalUnitResponse>
-            >
-    moveUnit(
-            @PathVariable
-            UUID tenantId,
-
-            @PathVariable
-            UUID unitId,
-
-            @RequestBody
-            OrganizationalUnitMoveRequest request,
-
-            @AuthenticationPrincipal
-            Jwt jwt
-    ) {
+    public ResponseEntity<ApiResponse<OrganizationalUnitResponse>> moveUnit(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID unitId,
+            @RequestBody OrganizationalUnitMoveRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
         OrganizationalUnitResponse response =
-                organizationHierarchyCommandService
-                        .moveUnit(
-                                tenantId,
-                                unitId,
-                                request,
-                                jwt
-                        );
+                organizationHierarchyCommandService.moveUnit(tenantId, unitId, request, jwt);
 
         return ResponseEntity.ok(
-                ApiResponse.success(
-                        "Organizational unit moved "
-                                + "successfully",
-                        response
-                )
-        );
+                ApiResponse.success("Organizational unit moved " + "successfully", response));
     }
 }

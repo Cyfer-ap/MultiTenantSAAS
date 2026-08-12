@@ -4,37 +4,29 @@ import com.chacha.multitenantsaas.entity.OrganizationAssignmentStatus;
 import com.chacha.multitenantsaas.entity.OrganizationalUnitStatus;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import jakarta.persistence.EntityManager;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthorizationScopeQueryService {
 
     private final EntityManager entityManager;
 
-    public AuthorizationScopeQueryService(
-            EntityManager entityManager
-    ) {
+    public AuthorizationScopeQueryService(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
-    public boolean isUnitInSubtree(
-            UUID tenantId,
-            UUID ancestorUnitId,
-            UUID descendantUnitId
-    ) {
-        if (tenantId == null
-                || ancestorUnitId == null
-                || descendantUnitId == null) {
+    public boolean isUnitInSubtree(UUID tenantId, UUID ancestorUnitId, UUID descendantUnitId) {
+        if (tenantId == null || ancestorUnitId == null || descendantUnitId == null) {
             return false;
         }
 
         Long matchingPathCount =
-                entityManager.createQuery(
+                entityManager
+                        .createQuery(
                                 """
                                 SELECT COUNT(closure)
                                 FROM OrganizationalUnitClosure
@@ -46,20 +38,10 @@ public class AuthorizationScopeQueryService {
                                   AND closure.descendantUnit.id =
                                         :descendantUnitId
                                 """,
-                                Long.class
-                        )
-                        .setParameter(
-                                "tenantId",
-                                tenantId
-                        )
-                        .setParameter(
-                                "ancestorUnitId",
-                                ancestorUnitId
-                        )
-                        .setParameter(
-                                "descendantUnitId",
-                                descendantUnitId
-                        )
+                                Long.class)
+                        .setParameter("tenantId", tenantId)
+                        .setParameter("ancestorUnitId", ancestorUnitId)
+                        .setParameter("descendantUnitId", descendantUnitId)
                         .getSingleResult();
 
         return matchingPathCount > 0;
@@ -67,11 +49,7 @@ public class AuthorizationScopeQueryService {
 
     @Transactional(readOnly = true)
     public boolean isDirectReportsAnchor(
-            UUID tenantId,
-            UUID managerUserId,
-            UUID managerAssignmentId,
-            Instant effectiveAt
-    ) {
+            UUID tenantId, UUID managerUserId, UUID managerAssignmentId, Instant effectiveAt) {
         if (tenantId == null
                 || managerUserId == null
                 || managerAssignmentId == null
@@ -80,7 +58,8 @@ public class AuthorizationScopeQueryService {
         }
 
         Long matchingAssignmentCount =
-                entityManager.createQuery(
+                entityManager
+                        .createQuery(
                                 """
                                 SELECT COUNT(assignment)
                                 FROM UserOrganizationAssignment
@@ -106,36 +85,14 @@ public class AuthorizationScopeQueryService {
                                         .organizationalUnit.status =
                                         :activeUnitStatus
                                 """,
-                                Long.class
-                        )
-                        .setParameter(
-                                "tenantId",
-                                tenantId
-                        )
-                        .setParameter(
-                                "managerUserId",
-                                managerUserId
-                        )
-                        .setParameter(
-                                "managerAssignmentId",
-                                managerAssignmentId
-                        )
-                        .setParameter(
-                                "effectiveAt",
-                                effectiveAt
-                        )
-                        .setParameter(
-                                "activeAssignmentStatus",
-                                OrganizationAssignmentStatus.ACTIVE
-                        )
-                        .setParameter(
-                                "activeUserStatus",
-                                UserStatus.ACTIVE
-                        )
-                        .setParameter(
-                                "activeUnitStatus",
-                                OrganizationalUnitStatus.ACTIVE
-                        )
+                                Long.class)
+                        .setParameter("tenantId", tenantId)
+                        .setParameter("managerUserId", managerUserId)
+                        .setParameter("managerAssignmentId", managerAssignmentId)
+                        .setParameter("effectiveAt", effectiveAt)
+                        .setParameter("activeAssignmentStatus", OrganizationAssignmentStatus.ACTIVE)
+                        .setParameter("activeUserStatus", UserStatus.ACTIVE)
+                        .setParameter("activeUnitStatus", OrganizationalUnitStatus.ACTIVE)
                         .getSingleResult();
 
         return matchingAssignmentCount > 0;
@@ -147,8 +104,7 @@ public class AuthorizationScopeQueryService {
             UUID managerUserId,
             UUID managerAssignmentId,
             UUID targetUserId,
-            Instant effectiveAt
-    ) {
+            Instant effectiveAt) {
         if (tenantId == null
                 || managerUserId == null
                 || managerAssignmentId == null
@@ -158,7 +114,8 @@ public class AuthorizationScopeQueryService {
         }
 
         Long matchingAssignmentCount =
-                entityManager.createQuery(
+                entityManager
+                        .createQuery(
                                 """
                                 SELECT COUNT(assignment)
                                 FROM UserOrganizationAssignment
@@ -204,40 +161,15 @@ public class AuthorizationScopeQueryService {
                                         .organizationalUnit.status =
                                         :activeUnitStatus
                                 """,
-                                Long.class
-                        )
-                        .setParameter(
-                                "tenantId",
-                                tenantId
-                        )
-                        .setParameter(
-                                "managerUserId",
-                                managerUserId
-                        )
-                        .setParameter(
-                                "managerAssignmentId",
-                                managerAssignmentId
-                        )
-                        .setParameter(
-                                "targetUserId",
-                                targetUserId
-                        )
-                        .setParameter(
-                                "effectiveAt",
-                                effectiveAt
-                        )
-                        .setParameter(
-                                "activeAssignmentStatus",
-                                OrganizationAssignmentStatus.ACTIVE
-                        )
-                        .setParameter(
-                                "activeUserStatus",
-                                UserStatus.ACTIVE
-                        )
-                        .setParameter(
-                                "activeUnitStatus",
-                                OrganizationalUnitStatus.ACTIVE
-                        )
+                                Long.class)
+                        .setParameter("tenantId", tenantId)
+                        .setParameter("managerUserId", managerUserId)
+                        .setParameter("managerAssignmentId", managerAssignmentId)
+                        .setParameter("targetUserId", targetUserId)
+                        .setParameter("effectiveAt", effectiveAt)
+                        .setParameter("activeAssignmentStatus", OrganizationAssignmentStatus.ACTIVE)
+                        .setParameter("activeUserStatus", UserStatus.ACTIVE)
+                        .setParameter("activeUnitStatus", OrganizationalUnitStatus.ACTIVE)
                         .getSingleResult();
 
         return matchingAssignmentCount > 0;

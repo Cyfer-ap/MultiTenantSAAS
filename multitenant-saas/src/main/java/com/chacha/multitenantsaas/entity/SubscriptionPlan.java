@@ -12,7 +12,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -21,29 +20,18 @@ import java.util.UUID;
 @Table(
         name = "subscription_plans",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_subscription_plan_code",
-                        columnNames = "code"
-                )
+            @UniqueConstraint(name = "uk_subscription_plan_code", columnNames = "code")
         },
         indexes = {
-                @Index(
-                        name = "idx_subscription_plan_status_price",
-                        columnList = "status,price"
-                )
-        }
-)
+            @Index(name = "idx_subscription_plan_status_price", columnList = "status,price")
+        })
 public class SubscriptionPlan {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(
-            nullable = false,
-            length = 60,
-            updatable = false
-    )
+    @Column(nullable = false, length = 60, updatable = false)
     private String code;
 
     @Column(nullable = false, length = 150)
@@ -53,18 +41,10 @@ public class SubscriptionPlan {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            name = "billing_interval",
-            nullable = false,
-            length = 20
-    )
+    @Column(name = "billing_interval", nullable = false, length = 20)
     private BillingInterval billingInterval;
 
-    @Column(
-            nullable = false,
-            precision = 19,
-            scale = 2
-    )
+    @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal price;
 
     @Column(nullable = false, length = 3)
@@ -81,21 +61,15 @@ public class SubscriptionPlan {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private SubscriptionPlanStatus status =
-            SubscriptionPlanStatus.ACTIVE;
+    private SubscriptionPlanStatus status = SubscriptionPlanStatus.ACTIVE;
 
-    @Column(
-            name = "created_at",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    public SubscriptionPlan() {
-    }
+    public SubscriptionPlan() {}
 
     public SubscriptionPlan(
             String code,
@@ -106,8 +80,7 @@ public class SubscriptionPlan {
             String currency,
             Integer maxUsers,
             Integer maxProjects,
-            Long maxStorageMb
-    ) {
+            Long maxStorageMb) {
         this.code = code;
         this.name = name;
         this.description = description;
@@ -200,9 +173,7 @@ public class SubscriptionPlan {
         this.description = description;
     }
 
-    public void setBillingInterval(
-            BillingInterval billingInterval
-    ) {
+    public void setBillingInterval(BillingInterval billingInterval) {
         this.billingInterval = billingInterval;
     }
 

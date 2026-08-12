@@ -2,42 +2,27 @@ package com.chacha.multitenantsaas.repository;
 
 import com.chacha.multitenantsaas.entity.OrganizationAssignmentStatus;
 import com.chacha.multitenantsaas.entity.UserOrganizationAssignment;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface UserOrganizationAssignmentRepository
-        extends JpaRepository<
-        UserOrganizationAssignment,
-        UUID
-        > {
+        extends JpaRepository<UserOrganizationAssignment, UUID> {
 
-    Optional<UserOrganizationAssignment>
-    findByTenant_IdAndId(
-            UUID tenantId,
-            UUID assignmentId
-    );
+    Optional<UserOrganizationAssignment> findByTenant_IdAndId(UUID tenantId, UUID assignmentId);
 
-    boolean
-    existsByTenant_IdAndUser_IdAndPrimaryAssignmentTrueAndStatus(
-            UUID tenantId,
-            UUID userId,
-            OrganizationAssignmentStatus status
-    );
+    boolean existsByTenant_IdAndUser_IdAndPrimaryAssignmentTrueAndStatus(
+            UUID tenantId, UUID userId, OrganizationAssignmentStatus status);
 
-    long
-    countByTenant_IdAndReportsToAssignment_IdAndStatus(
-            UUID tenantId,
-            UUID reportsToAssignmentId,
-            OrganizationAssignmentStatus status
-    );
+    long countByTenant_IdAndReportsToAssignment_IdAndStatus(
+            UUID tenantId, UUID reportsToAssignmentId, OrganizationAssignmentStatus status);
 
-    @Query("""
+    @Query(
+            """
             SELECT COUNT(assignment)
             FROM UserOrganizationAssignment assignment
             WHERE assignment.tenant.id = :tenantId
@@ -54,23 +39,14 @@ public interface UserOrganizationAssignmentRepository
               )
             """)
     long countOverlappingActivePrimaryAssignments(
-            @Param("tenantId")
-            UUID tenantId,
+            @Param("tenantId") UUID tenantId,
+            @Param("userId") UUID userId,
+            @Param("activeStatus") OrganizationAssignmentStatus activeStatus,
+            @Param("validFrom") Instant validFrom,
+            @Param("validUntil") Instant validUntil);
 
-            @Param("userId")
-            UUID userId,
-
-            @Param("activeStatus")
-            OrganizationAssignmentStatus activeStatus,
-
-            @Param("validFrom")
-            Instant validFrom,
-
-            @Param("validUntil")
-            Instant validUntil
-    );
-
-    @Query("""
+    @Query(
+            """
             SELECT assignment
             FROM UserOrganizationAssignment assignment
             JOIN FETCH assignment.user assignedUser
@@ -87,16 +63,11 @@ public interface UserOrganizationAssignmentRepository
                 assignment.validFrom DESC,
                 assignment.id ASC
             """)
-    List<UserOrganizationAssignment>
-    findUserAssignments(
-            @Param("tenantId")
-            UUID tenantId,
+    List<UserOrganizationAssignment> findUserAssignments(
+            @Param("tenantId") UUID tenantId, @Param("userId") UUID userId);
 
-            @Param("userId")
-            UUID userId
-    );
-
-    @Query("""
+    @Query(
+            """
             SELECT assignment
             FROM UserOrganizationAssignment assignment
             JOIN FETCH assignment.user assignedUser
@@ -114,16 +85,12 @@ public interface UserOrganizationAssignmentRepository
                 assignment.validFrom DESC,
                 assignment.id ASC
             """)
-    List<UserOrganizationAssignment>
-    findUnitAssignments(
-            @Param("tenantId")
-            UUID tenantId,
+    List<UserOrganizationAssignment> findUnitAssignments(
+            @Param("tenantId") UUID tenantId,
+            @Param("organizationalUnitId") UUID organizationalUnitId);
 
-            @Param("organizationalUnitId")
-            UUID organizationalUnitId
-    );
-
-    @Query("""
+    @Query(
+            """
             SELECT assignment
             FROM UserOrganizationAssignment assignment
             JOIN FETCH assignment.user assignedUser
@@ -139,16 +106,12 @@ public interface UserOrganizationAssignmentRepository
                 assignedUser.fullName ASC,
                 assignment.id ASC
             """)
-    List<UserOrganizationAssignment>
-    findDirectReports(
-            @Param("tenantId")
-            UUID tenantId,
+    List<UserOrganizationAssignment> findDirectReports(
+            @Param("tenantId") UUID tenantId,
+            @Param("managerAssignmentId") UUID managerAssignmentId);
 
-            @Param("managerAssignmentId")
-            UUID managerAssignmentId
-    );
-
-    @Query("""
+    @Query(
+            """
             SELECT assignment
             FROM UserOrganizationAssignment assignment
             JOIN FETCH assignment.user assignedUser
@@ -170,22 +133,14 @@ public interface UserOrganizationAssignmentRepository
                 assignment.validFrom DESC,
                 assignment.id ASC
             """)
-    List<UserOrganizationAssignment>
-    findEffectiveAssignmentsForUser(
-            @Param("tenantId")
-            UUID tenantId,
+    List<UserOrganizationAssignment> findEffectiveAssignmentsForUser(
+            @Param("tenantId") UUID tenantId,
+            @Param("userId") UUID userId,
+            @Param("activeStatus") OrganizationAssignmentStatus activeStatus,
+            @Param("effectiveAt") Instant effectiveAt);
 
-            @Param("userId")
-            UUID userId,
-
-            @Param("activeStatus")
-            OrganizationAssignmentStatus activeStatus,
-
-            @Param("effectiveAt")
-            Instant effectiveAt
-    );
-
-    @Query("""
+    @Query(
+            """
             SELECT assignment
             FROM UserOrganizationAssignment assignment
             JOIN FETCH assignment.user assignedUser
@@ -198,12 +153,6 @@ public interface UserOrganizationAssignmentRepository
                 unit.name ASC,
                 assignment.id ASC
             """)
-    List<UserOrganizationAssignment>
-    findTenantAssignmentsByStatus(
-            @Param("tenantId")
-            UUID tenantId,
-
-            @Param("status")
-            OrganizationAssignmentStatus status
-    );
+    List<UserOrganizationAssignment> findTenantAssignmentsByStatus(
+            @Param("tenantId") UUID tenantId, @Param("status") OrganizationAssignmentStatus status);
 }

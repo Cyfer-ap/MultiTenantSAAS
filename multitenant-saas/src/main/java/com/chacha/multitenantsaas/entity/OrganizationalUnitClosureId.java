@@ -2,14 +2,12 @@ package com.chacha.multitenantsaas.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 
 @Embeddable
-public class OrganizationalUnitClosureId
-        implements Serializable {
+public class OrganizationalUnitClosureId implements Serializable {
 
     @Column(name = "tenant_id")
     private UUID tenantId;
@@ -20,14 +18,9 @@ public class OrganizationalUnitClosureId
     @Column(name = "descendant_unit_id")
     private UUID descendantUnitId;
 
-    public OrganizationalUnitClosureId() {
-    }
+    public OrganizationalUnitClosureId() {}
 
-    public OrganizationalUnitClosureId(
-            UUID tenantId,
-            UUID ancestorUnitId,
-            UUID descendantUnitId
-    ) {
+    public OrganizationalUnitClosureId(UUID tenantId, UUID ancestorUnitId, UUID descendantUnitId) {
         this.tenantId = tenantId;
         this.ancestorUnitId = ancestorUnitId;
         this.descendantUnitId = descendantUnitId;
@@ -49,17 +42,12 @@ public class OrganizationalUnitClosureId
         this.tenantId = tenantId;
     }
 
-    public void setAncestorUnitId(
-            UUID ancestorUnitId
-    ) {
+    public void setAncestorUnitId(UUID ancestorUnitId) {
         this.ancestorUnitId = ancestorUnitId;
     }
 
-    public void setDescendantUnitId(
-            UUID descendantUnitId
-    ) {
-        this.descendantUnitId =
-                descendantUnitId;
+    public void setDescendantUnitId(UUID descendantUnitId) {
+        this.descendantUnitId = descendantUnitId;
     }
 
     @Override
@@ -68,29 +56,17 @@ public class OrganizationalUnitClosureId
             return true;
         }
 
-        if (!(object
-                instanceof OrganizationalUnitClosureId that)) {
+        if (!(object instanceof OrganizationalUnitClosureId that)) {
             return false;
         }
 
-        return Objects.equals(
-                tenantId,
-                that.tenantId
-        ) && Objects.equals(
-                ancestorUnitId,
-                that.ancestorUnitId
-        ) && Objects.equals(
-                descendantUnitId,
-                that.descendantUnitId
-        );
+        return Objects.equals(tenantId, that.tenantId)
+                && Objects.equals(ancestorUnitId, that.ancestorUnitId)
+                && Objects.equals(descendantUnitId, that.descendantUnitId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                tenantId,
-                ancestorUnitId,
-                descendantUnitId
-        );
+        return Objects.hash(tenantId, ancestorUnitId, descendantUnitId);
     }
 }

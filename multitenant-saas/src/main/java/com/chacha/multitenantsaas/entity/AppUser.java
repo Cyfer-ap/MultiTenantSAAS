@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.entity;
 
 import jakarta.persistence.*;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,12 +8,10 @@ import java.util.UUID;
 @Table(
         name = "app_users",
         uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_user_email_per_tenant",
-                        columnNames = {"tenant_id", "email"}
-                )
-        }
-)
+            @UniqueConstraint(
+                    name = "uk_user_email_per_tenant",
+                    columnNames = {"tenant_id", "email"})
+        })
 public class AppUser {
 
     @Id
@@ -55,10 +52,10 @@ public class AppUser {
 
     private Instant updatedAt;
 
-    public AppUser() {
-    }
+    public AppUser() {}
 
-    public AppUser(Tenant tenant, String fullName, String email, String passwordHash, UserRole role) {
+    public AppUser(
+            Tenant tenant, String fullName, String email, String passwordHash, UserRole role) {
         this.tenant = tenant;
         this.fullName = fullName;
         this.email = email;

@@ -1,5 +1,8 @@
 package com.chacha.multitenantsaas.integration;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.chacha.multitenantsaas.dto.AuthorizationPermissionResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationRoleCreateRequest;
 import com.chacha.multitenantsaas.dto.AuthorizationRoleResponse;
@@ -31,6 +34,10 @@ import com.chacha.multitenantsaas.service.AuthorizationRoleService;
 import com.chacha.multitenantsaas.service.AuthorizationUserRoleAssignmentService;
 import com.chacha.multitenantsaas.service.OrganizationAssignmentService;
 import com.chacha.multitenantsaas.service.OrganizationHierarchyService;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,59 +48,32 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Set;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
 class AuthorizationPermissionEvaluatorIntegrationTest {
 
-    @Autowired
-    private AuthorizationPermissionEvaluator
-            evaluator;
+    @Autowired private AuthorizationPermissionEvaluator evaluator;
 
-    @Autowired
-    private AuthorizationSecurityService
-            authorizationSecurityService;
+    @Autowired private AuthorizationSecurityService authorizationSecurityService;
 
-    @Autowired
-    private AuthorizationRoleService
-            authorizationRoleService;
+    @Autowired private AuthorizationRoleService authorizationRoleService;
 
-    @Autowired
-    private AuthorizationPermissionService
-            authorizationPermissionService;
+    @Autowired private AuthorizationPermissionService authorizationPermissionService;
 
-    @Autowired
-    private AuthorizationUserRoleAssignmentService
-            userRoleAssignmentService;
+    @Autowired private AuthorizationUserRoleAssignmentService userRoleAssignmentService;
 
-    @Autowired
-    private OrganizationHierarchyService
-            organizationHierarchyService;
+    @Autowired private OrganizationHierarchyService organizationHierarchyService;
 
-    @Autowired
-    private OrganizationAssignmentService
-            organizationAssignmentService;
+    @Autowired private OrganizationAssignmentService organizationAssignmentService;
 
-    @Autowired
-    private AuthorizationPermissionRepository
-            authorizationPermissionRepository;
+    @Autowired private AuthorizationPermissionRepository authorizationPermissionRepository;
 
-    @Autowired
-    private TenantRepository tenantRepository;
+    @Autowired private TenantRepository tenantRepository;
 
-    @Autowired
-    private AppUserRepository appUserRepository;
+    @Autowired private AppUserRepository appUserRepository;
 
-    @Autowired
-    private ProjectRepository projectRepository;
+    @Autowired private ProjectRepository projectRepository;
 
     @AfterEach
     void clearSecurityContext() {
@@ -102,38 +82,17 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
 
     @Test
     void tenantAndSelfScopesAreEvaluated() {
-        Tenant tenant =
-                createTenant("evaluator-tenant-self");
+        Tenant tenant = createTenant("evaluator-tenant-self");
 
-        AppUser creator =
-                createUser(
-                        tenant,
-                        "Tenant Scope Creator",
-                        UserRole.TENANT_ADMIN
-                );
+        AppUser creator = createUser(tenant, "Tenant Scope Creator", UserRole.TENANT_ADMIN);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Tenant Scope Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Tenant Scope Member", UserRole.TENANT_USER);
 
-        AppUser anotherUser =
-                createUser(
-                        tenant,
-                        "Another Tenant User",
-                        UserRole.TENANT_USER
-                );
+        AppUser anotherUser = createUser(tenant, "Another Tenant User", UserRole.TENANT_USER);
 
-        AuthorizationRoleResponse memberRole =
-                initializeAndGetRole(
-                        tenant,
-                        SystemRoleCodes.MEMBER
-                );
+        AuthorizationRoleResponse memberRole = initializeAndGetRole(tenant, SystemRoleCodes.MEMBER);
 
-        Instant validFrom =
-                effectiveStart();
+        Instant validFrom = effectiveStart();
 
         createRoleAssignment(
                 tenant,
@@ -143,39 +102,28 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
                 AuthorizationScopeType.SELF,
                 null,
                 validFrom,
-                null
-        );
+                null);
 
         assertTrue(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
                         PlatformPermissionCodes.USER_READ,
-                        AuthorizationEvaluationContext.user(
-                                member.getId()
-                        )
-                )
-        );
+                        AuthorizationEvaluationContext.user(member.getId())));
 
         assertFalse(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
                         PlatformPermissionCodes.USER_READ,
-                        AuthorizationEvaluationContext.user(
-                                anotherUser.getId()
-                        )
-                )
-        );
+                        AuthorizationEvaluationContext.user(anotherUser.getId())));
 
         assertFalse(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
                         PlatformPermissionCodes.PROJECT_READ,
-                        AuthorizationEvaluationContext.tenant()
-                )
-        );
+                        AuthorizationEvaluationContext.tenant()));
 
         createRoleAssignment(
                 tenant,
@@ -185,95 +133,51 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
                 AuthorizationScopeType.TENANT,
                 null,
                 validFrom,
-                null
-        );
+                null);
 
         assertTrue(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
                         PlatformPermissionCodes.PROJECT_READ,
-                        AuthorizationEvaluationContext.tenant()
-                )
-        );
+                        AuthorizationEvaluationContext.tenant()));
 
         assertTrue(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
                         PlatformPermissionCodes.USER_READ,
-                        AuthorizationEvaluationContext.user(
-                                anotherUser.getId()
-                        )
-                )
-        );
+                        AuthorizationEvaluationContext.user(anotherUser.getId())));
 
         assertFalse(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
-                        PlatformPermissionCodes
-                                .AUTHORIZATION_MANAGE,
-                        AuthorizationEvaluationContext.tenant()
-                )
-        );
+                        PlatformPermissionCodes.AUTHORIZATION_MANAGE,
+                        AuthorizationEvaluationContext.tenant()));
     }
 
     @Test
     void projectScopeRequiresExactActiveProject() {
-        Tenant tenant =
-                createTenant("evaluator-project");
+        Tenant tenant = createTenant("evaluator-project");
 
-        Tenant anotherTenant =
-                createTenant("evaluator-project-other");
+        Tenant anotherTenant = createTenant("evaluator-project-other");
 
-        AppUser creator =
-                createUser(
-                        tenant,
-                        "Project Scope Creator",
-                        UserRole.TENANT_ADMIN
-                );
+        AppUser creator = createUser(tenant, "Project Scope Creator", UserRole.TENANT_ADMIN);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Project Scope Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Project Scope Member", UserRole.TENANT_USER);
 
         AppUser anotherCreator =
-                createUser(
-                        anotherTenant,
-                        "Other Project Creator",
-                        UserRole.TENANT_ADMIN
-                );
+                createUser(anotherTenant, "Other Project Creator", UserRole.TENANT_ADMIN);
 
-        AuthorizationRoleResponse memberRole =
-                initializeAndGetRole(
-                        tenant,
-                        SystemRoleCodes.MEMBER
-                );
+        AuthorizationRoleResponse memberRole = initializeAndGetRole(tenant, SystemRoleCodes.MEMBER);
 
-        Project allowedProject =
-                createProject(
-                        tenant,
-                        creator,
-                        "Allowed Project"
-                );
+        Project allowedProject = createProject(tenant, creator, "Allowed Project");
 
-        Project anotherProject =
-                createProject(
-                        tenant,
-                        creator,
-                        "Another Project"
-                );
+        Project anotherProject = createProject(tenant, creator, "Another Project");
 
         Project crossTenantProject =
-                createProject(
-                        anotherTenant,
-                        anotherCreator,
-                        "Cross Tenant Project"
-                );
+                createProject(anotherTenant, anotherCreator, "Cross Tenant Project");
 
         createRoleAssignment(
                 tenant,
@@ -283,258 +187,133 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
                 AuthorizationScopeType.PROJECT,
                 allowedProject.getId(),
                 effectiveStart(),
-                null
-        );
+                null);
 
         assertTrue(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
                         PlatformPermissionCodes.PROJECT_READ,
-                        AuthorizationEvaluationContext.project(
-                                allowedProject.getId()
-                        )
-                )
-        );
+                        AuthorizationEvaluationContext.project(allowedProject.getId())));
 
         assertFalse(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
                         PlatformPermissionCodes.PROJECT_READ,
-                        AuthorizationEvaluationContext.project(
-                                anotherProject.getId()
-                        )
-                )
-        );
+                        AuthorizationEvaluationContext.project(anotherProject.getId())));
 
         assertFalse(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
                         PlatformPermissionCodes.PROJECT_READ,
-                        AuthorizationEvaluationContext.project(
-                                crossTenantProject.getId()
-                        )
-                )
-        );
+                        AuthorizationEvaluationContext.project(crossTenantProject.getId())));
 
-        allowedProject.setStatus(
-                ProjectStatus.ARCHIVED
-        );
+        allowedProject.setStatus(ProjectStatus.ARCHIVED);
 
-        projectRepository.saveAndFlush(
-                allowedProject
-        );
+        projectRepository.saveAndFlush(allowedProject);
 
         assertFalse(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
                         PlatformPermissionCodes.PROJECT_READ,
-                        AuthorizationEvaluationContext.project(
-                                allowedProject.getId()
-                        )
-                )
-        );
+                        AuthorizationEvaluationContext.project(allowedProject.getId())));
     }
 
     @Test
     void exactUnitAndSubtreeScopesAreEvaluated() {
-        Tenant tenant =
-                createTenant("evaluator-organization");
+        Tenant tenant = createTenant("evaluator-organization");
 
-        AppUser creator =
-                createUser(
-                        tenant,
-                        "Organization Scope Creator",
-                        UserRole.TENANT_ADMIN
-                );
+        AppUser creator = createUser(tenant, "Organization Scope Creator", UserRole.TENANT_ADMIN);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Organization Scope Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Organization Scope Member", UserRole.TENANT_USER);
 
-        AuthorizationRoleResponse memberRole =
-                initializeAndGetRole(
-                        tenant,
-                        SystemRoleCodes.MEMBER
-                );
+        AuthorizationRoleResponse memberRole = initializeAndGetRole(tenant, SystemRoleCodes.MEMBER);
 
-        OrganizationalUnit engineering =
-                createUnit(
-                        tenant,
-                        null,
-                        "Engineering",
-                        "ENGINEERING"
-                );
+        OrganizationalUnit engineering = createUnit(tenant, null, "Engineering", "ENGINEERING");
 
-        OrganizationalUnit backend =
-                createUnit(
-                        tenant,
-                        engineering.getId(),
-                        "Backend",
-                        "BACKEND"
-                );
+        OrganizationalUnit backend = createUnit(tenant, engineering.getId(), "Backend", "BACKEND");
 
-        OrganizationalUnit platform =
-                createUnit(
-                        tenant,
-                        backend.getId(),
-                        "Platform",
-                        "PLATFORM"
-                );
+        OrganizationalUnit platform = createUnit(tenant, backend.getId(), "Platform", "PLATFORM");
 
-        OrganizationalUnit finance =
-                createUnit(
-                        tenant,
-                        null,
-                        "Finance",
-                        "FINANCE"
-                );
+        OrganizationalUnit finance = createUnit(tenant, null, "Finance", "FINANCE");
 
         createRoleAssignment(
                 tenant,
                 creator,
                 member,
                 memberRole,
-                AuthorizationScopeType
-                        .ORGANIZATIONAL_UNIT,
+                AuthorizationScopeType.ORGANIZATIONAL_UNIT,
                 engineering.getId(),
                 effectiveStart(),
-                null
-        );
+                null);
 
         assertTrue(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
-                        PlatformPermissionCodes
-                                .ORGANIZATION_UNIT_READ,
-                        AuthorizationEvaluationContext
-                                .organizationalUnit(
-                                        engineering.getId()
-                                )
-                )
-        );
+                        PlatformPermissionCodes.ORGANIZATION_UNIT_READ,
+                        AuthorizationEvaluationContext.organizationalUnit(engineering.getId())));
 
         assertFalse(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
-                        PlatformPermissionCodes
-                                .ORGANIZATION_UNIT_READ,
-                        AuthorizationEvaluationContext
-                                .organizationalUnit(
-                                        backend.getId()
-                                )
-                )
-        );
+                        PlatformPermissionCodes.ORGANIZATION_UNIT_READ,
+                        AuthorizationEvaluationContext.organizationalUnit(backend.getId())));
 
         createRoleAssignment(
                 tenant,
                 creator,
                 member,
                 memberRole,
-                AuthorizationScopeType
-                        .ORGANIZATIONAL_SUBTREE,
+                AuthorizationScopeType.ORGANIZATIONAL_SUBTREE,
                 engineering.getId(),
                 effectiveStart(),
-                null
-        );
+                null);
 
         assertTrue(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
-                        PlatformPermissionCodes
-                                .ORGANIZATION_UNIT_READ,
-                        AuthorizationEvaluationContext
-                                .organizationalUnit(
-                                        backend.getId()
-                                )
-                )
-        );
+                        PlatformPermissionCodes.ORGANIZATION_UNIT_READ,
+                        AuthorizationEvaluationContext.organizationalUnit(backend.getId())));
 
         assertTrue(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
-                        PlatformPermissionCodes
-                                .ORGANIZATION_UNIT_READ,
-                        AuthorizationEvaluationContext
-                                .organizationalUnit(
-                                        platform.getId()
-                                )
-                )
-        );
+                        PlatformPermissionCodes.ORGANIZATION_UNIT_READ,
+                        AuthorizationEvaluationContext.organizationalUnit(platform.getId())));
 
         assertFalse(
                 evaluator.hasPermission(
                         tenant.getId(),
                         member.getId(),
-                        PlatformPermissionCodes
-                                .ORGANIZATION_UNIT_READ,
-                        AuthorizationEvaluationContext
-                                .organizationalUnit(
-                                        finance.getId()
-                                )
-                )
-        );
+                        PlatformPermissionCodes.ORGANIZATION_UNIT_READ,
+                        AuthorizationEvaluationContext.organizationalUnit(finance.getId())));
     }
 
     @Test
     void directReportsScopeMatchesOnlyImmediateReports() {
-        Tenant tenant =
-                createTenant("evaluator-reports");
+        Tenant tenant = createTenant("evaluator-reports");
 
-        AppUser creator =
-                createUser(
-                        tenant,
-                        "Reports Scope Creator",
-                        UserRole.TENANT_ADMIN
-                );
+        AppUser creator = createUser(tenant, "Reports Scope Creator", UserRole.TENANT_ADMIN);
 
-        AppUser manager =
-                createUser(
-                        tenant,
-                        "Reports Scope Manager",
-                        UserRole.TENANT_MANAGER
-                );
+        AppUser manager = createUser(tenant, "Reports Scope Manager", UserRole.TENANT_MANAGER);
 
-        AppUser directReport =
-                createUser(
-                        tenant,
-                        "Direct Report",
-                        UserRole.TENANT_USER
-                );
+        AppUser directReport = createUser(tenant, "Direct Report", UserRole.TENANT_USER);
 
-        AppUser indirectReport =
-                createUser(
-                        tenant,
-                        "Indirect Report",
-                        UserRole.TENANT_USER
-                );
+        AppUser indirectReport = createUser(tenant, "Indirect Report", UserRole.TENANT_USER);
 
         AuthorizationRoleResponse managerRole =
-                initializeAndGetRole(
-                        tenant,
-                        SystemRoleCodes.MANAGER
-                );
+                initializeAndGetRole(tenant, SystemRoleCodes.MANAGER);
 
-        OrganizationalUnit operations =
-                createUnit(
-                        tenant,
-                        null,
-                        "Operations",
-                        "OPERATIONS"
-                );
+        OrganizationalUnit operations = createUnit(tenant, null, "Operations", "OPERATIONS");
 
-        Instant validFrom =
-                effectiveStart();
+        Instant validFrom = effectiveStart();
 
         UUID managerAssignmentId =
                 createOrganizationAssignment(
@@ -544,8 +323,7 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
                         operations,
                         null,
                         "Operations Manager",
-                        validFrom
-                );
+                        validFrom);
 
         UUID directAssignmentId =
                 createOrganizationAssignment(
@@ -555,8 +333,7 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
                         operations,
                         managerAssignmentId,
                         "Operations Specialist",
-                        validFrom
-                );
+                        validFrom);
 
         createOrganizationAssignment(
                 tenant,
@@ -565,8 +342,7 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
                 operations,
                 directAssignmentId,
                 "Operations Associate",
-                validFrom
-        );
+                validFrom);
 
         createRoleAssignment(
                 tenant,
@@ -576,71 +352,42 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
                 AuthorizationScopeType.DIRECT_REPORTS,
                 managerAssignmentId,
                 validFrom,
-                null
-        );
+                null);
 
         assertTrue(
                 evaluator.hasPermission(
                         tenant.getId(),
                         manager.getId(),
                         PlatformPermissionCodes.USER_READ,
-                        AuthorizationEvaluationContext.user(
-                                directReport.getId()
-                        )
-                )
-        );
+                        AuthorizationEvaluationContext.user(directReport.getId())));
 
         assertFalse(
                 evaluator.hasPermission(
                         tenant.getId(),
                         manager.getId(),
                         PlatformPermissionCodes.USER_READ,
-                        AuthorizationEvaluationContext.user(
-                                indirectReport.getId()
-                        )
-                )
-        );
+                        AuthorizationEvaluationContext.user(indirectReport.getId())));
 
         assertFalse(
                 evaluator.hasPermission(
                         tenant.getId(),
                         manager.getId(),
                         PlatformPermissionCodes.USER_READ,
-                        AuthorizationEvaluationContext.user(
-                                manager.getId()
-                        )
-                )
-        );
+                        AuthorizationEvaluationContext.user(manager.getId())));
     }
 
     @Test
     void inactiveExpiredAndInactiveRoleGrantsDoNotAuthorize() {
-        Tenant tenant =
-                createTenant("evaluator-inactive");
+        Tenant tenant = createTenant("evaluator-inactive");
 
-        AppUser creator =
-                createUser(
-                        tenant,
-                        "Inactive Grant Creator",
-                        UserRole.TENANT_ADMIN
-                );
+        AppUser creator = createUser(tenant, "Inactive Grant Creator", UserRole.TENANT_ADMIN);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Inactive Grant Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Inactive Grant Member", UserRole.TENANT_USER);
 
         AuthorizationRoleResponse firstRole =
-                createCustomRole(
-                        tenant,
-                        "FIRST_VIEWER",
-                        PlatformPermissionCodes.PROJECT_READ
-                );
+                createCustomRole(tenant, "FIRST_VIEWER", PlatformPermissionCodes.PROJECT_READ);
 
-        AuthorizationUserRoleAssignmentResponse
-                firstAssignment =
+        AuthorizationUserRoleAssignmentResponse firstAssignment =
                 createRoleAssignment(
                         tenant,
                         creator,
@@ -649,37 +396,16 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
                         AuthorizationScopeType.TENANT,
                         null,
                         effectiveStart(),
-                        null
-                );
+                        null);
 
-        assertTrue(
-                hasTenantPermission(
-                        tenant,
-                        member,
-                        PlatformPermissionCodes.PROJECT_READ
-                )
-        );
+        assertTrue(hasTenantPermission(tenant, member, PlatformPermissionCodes.PROJECT_READ));
 
-        userRoleAssignmentService
-                .deactivateAssignment(
-                        tenant.getId(),
-                        firstAssignment.id()
-                );
+        userRoleAssignmentService.deactivateAssignment(tenant.getId(), firstAssignment.id());
 
-        assertFalse(
-                hasTenantPermission(
-                        tenant,
-                        member,
-                        PlatformPermissionCodes.PROJECT_READ
-                )
-        );
+        assertFalse(hasTenantPermission(tenant, member, PlatformPermissionCodes.PROJECT_READ));
 
         AuthorizationRoleResponse expiredRole =
-                createCustomRole(
-                        tenant,
-                        "EXPIRED_VIEWER",
-                        PlatformPermissionCodes.PROJECT_READ
-                );
+                createCustomRole(tenant, "EXPIRED_VIEWER", PlatformPermissionCodes.PROJECT_READ);
 
         createRoleAssignment(
                 tenant,
@@ -688,32 +414,13 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
                 expiredRole,
                 AuthorizationScopeType.TENANT,
                 null,
-                Instant.now()
-                        .minus(
-                                10,
-                                ChronoUnit.DAYS
-                        ),
-                Instant.now()
-                        .minus(
-                                5,
-                                ChronoUnit.DAYS
-                        )
-        );
+                Instant.now().minus(10, ChronoUnit.DAYS),
+                Instant.now().minus(5, ChronoUnit.DAYS));
 
-        assertFalse(
-                hasTenantPermission(
-                        tenant,
-                        member,
-                        PlatformPermissionCodes.PROJECT_READ
-                )
-        );
+        assertFalse(hasTenantPermission(tenant, member, PlatformPermissionCodes.PROJECT_READ));
 
         AuthorizationRoleResponse inactiveRole =
-                createCustomRole(
-                        tenant,
-                        "INACTIVE_VIEWER",
-                        PlatformPermissionCodes.PROJECT_READ
-                );
+                createCustomRole(tenant, "INACTIVE_VIEWER", PlatformPermissionCodes.PROJECT_READ);
 
         createRoleAssignment(
                 tenant,
@@ -723,77 +430,37 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
                 AuthorizationScopeType.TENANT,
                 null,
                 effectiveStart(),
-                null
-        );
+                null);
 
-        assertTrue(
-                hasTenantPermission(
-                        tenant,
-                        member,
-                        PlatformPermissionCodes.PROJECT_READ
-                )
-        );
+        assertTrue(hasTenantPermission(tenant, member, PlatformPermissionCodes.PROJECT_READ));
 
-        authorizationRoleService
-                .deactivateTenantRole(
-                        tenant.getId(),
-                        inactiveRole.id()
-                );
+        authorizationRoleService.deactivateTenantRole(tenant.getId(), inactiveRole.id());
 
-        assertFalse(
-                hasTenantPermission(
-                        tenant,
-                        member,
-                        PlatformPermissionCodes.PROJECT_READ
-                )
-        );
+        assertFalse(hasTenantPermission(tenant, member, PlatformPermissionCodes.PROJECT_READ));
     }
 
     @Test
     void inactiveCustomPermissionDoesNotAuthorize() {
-        Tenant tenant =
-                createTenant("evaluator-custom-permission");
+        Tenant tenant = createTenant("evaluator-custom-permission");
 
-        AppUser creator =
-                createUser(
-                        tenant,
-                        "Custom Permission Creator",
-                        UserRole.TENANT_ADMIN
-                );
+        AppUser creator = createUser(tenant, "Custom Permission Creator", UserRole.TENANT_ADMIN);
 
-        AppUser member =
-                createUser(
-                        tenant,
-                        "Custom Permission Member",
-                        UserRole.TENANT_USER
-                );
+        AppUser member = createUser(tenant, "Custom Permission Member", UserRole.TENANT_USER);
 
-        AuthorizationPermissionResponse
-                customPermission =
-                authorizationPermissionService
-                        .createTenantPermission(
-                                tenant.getId(),
-                                new TenantPermissionCreateRequest(
-                                        "custom.report.export",
-                                        "Export reports",
-                                        null,
-                                        "REPORTING"
-                                )
-                        );
+        AuthorizationPermissionResponse customPermission =
+                authorizationPermissionService.createTenantPermission(
+                        tenant.getId(),
+                        new TenantPermissionCreateRequest(
+                                "custom.report.export", "Export reports", null, "REPORTING"));
 
         AuthorizationRoleResponse customRole =
-                authorizationRoleService
-                        .createTenantRole(
-                                tenant.getId(),
-                                new AuthorizationRoleCreateRequest(
-                                        "REPORT_EXPORTER",
-                                        "Report Exporter",
-                                        null,
-                                        Set.of(
-                                                customPermission.id()
-                                        )
-                                )
-                        );
+                authorizationRoleService.createTenantRole(
+                        tenant.getId(),
+                        new AuthorizationRoleCreateRequest(
+                                "REPORT_EXPORTER",
+                                "Report Exporter",
+                                null,
+                                Set.of(customPermission.id())));
 
         createRoleAssignment(
                 tenant,
@@ -803,54 +470,25 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
                 AuthorizationScopeType.TENANT,
                 null,
                 effectiveStart(),
-                null
-        );
+                null);
 
-        assertTrue(
-                hasTenantPermission(
-                        tenant,
-                        member,
-                        "custom.report.export"
-                )
-        );
+        assertTrue(hasTenantPermission(tenant, member, "custom.report.export"));
 
-        authorizationPermissionService
-                .deactivateTenantPermission(
-                        tenant.getId(),
-                        customPermission.id()
-                );
+        authorizationPermissionService.deactivateTenantPermission(
+                tenant.getId(), customPermission.id());
 
-        assertFalse(
-                hasTenantPermission(
-                        tenant,
-                        member,
-                        "custom.report.export"
-                )
-        );
+        assertFalse(hasTenantPermission(tenant, member, "custom.report.export"));
     }
 
     @Test
     void springSecurityBeanUsesJwtIdentityAndDatabaseRoles() {
-        Tenant tenant =
-                createTenant("evaluator-security-bean");
+        Tenant tenant = createTenant("evaluator-security-bean");
 
-        Tenant anotherTenant =
-                createTenant(
-                        "evaluator-security-bean-other"
-                );
+        Tenant anotherTenant = createTenant("evaluator-security-bean-other");
 
-        AppUser user =
-                createUser(
-                        tenant,
-                        "Database Authorization User",
-                        UserRole.TENANT_USER
-                );
+        AppUser user = createUser(tenant, "Database Authorization User", UserRole.TENANT_USER);
 
-        AuthorizationRoleResponse adminRole =
-                initializeAndGetRole(
-                        tenant,
-                        SystemRoleCodes.ADMIN
-                );
+        AuthorizationRoleResponse adminRole = initializeAndGetRole(tenant, SystemRoleCodes.ADMIN);
 
         createRoleAssignment(
                 tenant,
@@ -860,45 +498,28 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
                 AuthorizationScopeType.TENANT,
                 null,
                 effectiveStart(),
-                null
-        );
+                null);
 
         setAuthenticatedJwt(user);
 
         assertTrue(
-                authorizationSecurityService
-                        .hasTenantPermission(
-                                tenant.getId(),
-                                PlatformPermissionCodes
-                                        .AUTHORIZATION_MANAGE
-                        )
-        );
+                authorizationSecurityService.hasTenantPermission(
+                        tenant.getId(), PlatformPermissionCodes.AUTHORIZATION_MANAGE));
 
         assertFalse(
-                authorizationSecurityService
-                        .hasTenantPermission(
-                                anotherTenant.getId(),
-                                PlatformPermissionCodes
-                                        .AUTHORIZATION_MANAGE
-                        )
-        );
+                authorizationSecurityService.hasTenantPermission(
+                        anotherTenant.getId(), PlatformPermissionCodes.AUTHORIZATION_MANAGE));
     }
 
-    private boolean hasTenantPermission(
-            Tenant tenant,
-            AppUser user,
-            String permissionCode
-    ) {
+    private boolean hasTenantPermission(Tenant tenant, AppUser user, String permissionCode) {
         return evaluator.hasPermission(
                 tenant.getId(),
                 user.getId(),
                 permissionCode,
-                AuthorizationEvaluationContext.tenant()
-        );
+                AuthorizationEvaluationContext.tenant());
     }
 
-    private AuthorizationUserRoleAssignmentResponse
-    createRoleAssignment(
+    private AuthorizationUserRoleAssignmentResponse createRoleAssignment(
             Tenant tenant,
             AppUser createdBy,
             AppUser assignedUser,
@@ -906,65 +527,36 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
             AuthorizationScopeType scopeType,
             UUID scopeTargetId,
             Instant validFrom,
-            Instant validUntil
-    ) {
-        return userRoleAssignmentService
-                .createAssignment(
-                        tenant.getId(),
-                        createdBy.getId(),
-                        new AuthorizationUserRoleAssignmentCreateRequest(
-                                assignedUser.getId(),
-                                role.id(),
-                                scopeType,
-                                scopeTargetId,
-                                validFrom,
-                                validUntil
-                        )
-                );
+            Instant validUntil) {
+        return userRoleAssignmentService.createAssignment(
+                tenant.getId(),
+                createdBy.getId(),
+                new AuthorizationUserRoleAssignmentCreateRequest(
+                        assignedUser.getId(),
+                        role.id(),
+                        scopeType,
+                        scopeTargetId,
+                        validFrom,
+                        validUntil));
     }
 
-    private AuthorizationRoleResponse
-    initializeAndGetRole(
-            Tenant tenant,
-            String roleCode
-    ) {
-        authorizationRoleService
-                .initializeDefaultRoles(
-                        tenant.getId()
-                );
+    private AuthorizationRoleResponse initializeAndGetRole(Tenant tenant, String roleCode) {
+        authorizationRoleService.initializeDefaultRoles(tenant.getId());
 
-        return authorizationRoleService
-                .getRoleByCode(
-                        tenant.getId(),
-                        roleCode
-                );
+        return authorizationRoleService.getRoleByCode(tenant.getId(), roleCode);
     }
 
     private AuthorizationRoleResponse createCustomRole(
-            Tenant tenant,
-            String roleCode,
-            String permissionCode
-    ) {
+            Tenant tenant, String roleCode, String permissionCode) {
         AuthorizationPermission permission =
                 authorizationPermissionRepository
-                        .findBySourceAndCode(
-                                AuthorizationPermissionSource.PLATFORM,
-                                permissionCode
-                        )
+                        .findBySourceAndCode(AuthorizationPermissionSource.PLATFORM, permissionCode)
                         .orElseThrow();
 
-        return authorizationRoleService
-                .createTenantRole(
-                        tenant.getId(),
-                        new AuthorizationRoleCreateRequest(
-                                roleCode,
-                                roleCode,
-                                null,
-                                Set.of(
-                                        permission.getId()
-                                )
-                        )
-                );
+        return authorizationRoleService.createTenantRole(
+                tenant.getId(),
+                new AuthorizationRoleCreateRequest(
+                        roleCode, roleCode, null, Set.of(permission.getId())));
     }
 
     private UUID createOrganizationAssignment(
@@ -974,8 +566,7 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
             OrganizationalUnit unit,
             UUID reportsToAssignmentId,
             String positionTitle,
-            Instant validFrom
-    ) {
+            Instant validFrom) {
         return organizationAssignmentService
                 .createAssignment(
                         tenant.getId(),
@@ -987,139 +578,69 @@ class AuthorizationPermissionEvaluatorIntegrationTest {
                                 positionTitle,
                                 true,
                                 validFrom,
-                                null
-                        )
-                )
+                                null))
                 .id();
     }
 
     private OrganizationalUnit createUnit(
-            Tenant tenant,
-            UUID parentUnitId,
-            String name,
-            String code
-    ) {
-        return organizationHierarchyService
-                .createUnit(
-                        tenant.getId(),
-                        parentUnitId,
-                        name,
-                        code,
-                        OrganizationalUnitType.DEPARTMENT
-                );
+            Tenant tenant, UUID parentUnitId, String name, String code) {
+        return organizationHierarchyService.createUnit(
+                tenant.getId(), parentUnitId, name, code, OrganizationalUnitType.DEPARTMENT);
     }
 
-    private Project createProject(
-            Tenant tenant,
-            AppUser createdBy,
-            String name
-    ) {
-        Project project = new Project(
-                tenant,
-                createdBy,
-                name,
-                "Authorization evaluator test project"
-        );
+    private Project createProject(Tenant tenant, AppUser createdBy, String name) {
+        Project project =
+                new Project(tenant, createdBy, name, "Authorization evaluator test project");
 
-        return projectRepository
-                .saveAndFlush(project);
+        return projectRepository.saveAndFlush(project);
     }
 
-    private AppUser createUser(
-            Tenant tenant,
-            String fullName,
-            UserRole legacyRole
-    ) {
-        AppUser user = new AppUser(
-                tenant,
-                fullName,
-                legacyRole.name()
-                        .toLowerCase()
-                        .replace('_', '.')
-                        + "."
-                        + uniqueSuffix()
-                        + "@example.test",
-                "test-password-hash",
-                legacyRole
-        );
+    private AppUser createUser(Tenant tenant, String fullName, UserRole legacyRole) {
+        AppUser user =
+                new AppUser(
+                        tenant,
+                        fullName,
+                        legacyRole.name().toLowerCase().replace('_', '.')
+                                + "."
+                                + uniqueSuffix()
+                                + "@example.test",
+                        "test-password-hash",
+                        legacyRole);
 
-        return appUserRepository
-                .saveAndFlush(user);
+        return appUserRepository.saveAndFlush(user);
     }
 
     private Tenant createTenant(String prefix) {
         String suffix = uniqueSuffix();
 
-        Tenant tenant = new Tenant(
-                prefix + " Tenant",
-                prefix + "-" + suffix
-        );
+        Tenant tenant = new Tenant(prefix + " Tenant", prefix + "-" + suffix);
 
-        return tenantRepository
-                .saveAndFlush(tenant);
+        return tenantRepository.saveAndFlush(tenant);
     }
 
     private Instant effectiveStart() {
-        return Instant.now()
-                .minus(
-                        1,
-                        ChronoUnit.DAYS
-                )
-                .truncatedTo(
-                        ChronoUnit.MICROS
-                );
+        return Instant.now().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MICROS);
     }
 
     private void setAuthenticatedJwt(AppUser user) {
         Instant now = Instant.now();
 
-        Jwt jwt = Jwt.withTokenValue(
-                        "authorization-evaluator-test"
-                )
-                .header(
-                        "alg",
-                        "none"
-                )
-                .subject(
-                        user.getId().toString()
-                )
-                .claim(
-                        "tenantId",
-                        user.getTenant()
-                                .getId()
-                                .toString()
-                )
-                .claim(
-                        "email",
-                        user.getEmail()
-                )
-                .claim(
-                        "fullName",
-                        user.getFullName()
-                )
-                .claim(
-                        "role",
-                        user.getRole().name()
-                )
-                .issuedAt(now)
-                .expiresAt(
-                        now.plus(
-                                1,
-                                ChronoUnit.HOURS
-                        )
-                )
-                .build();
+        Jwt jwt =
+                Jwt.withTokenValue("authorization-evaluator-test")
+                        .header("alg", "none")
+                        .subject(user.getId().toString())
+                        .claim("tenantId", user.getTenant().getId().toString())
+                        .claim("email", user.getEmail())
+                        .claim("fullName", user.getFullName())
+                        .claim("role", user.getRole().name())
+                        .issuedAt(now)
+                        .expiresAt(now.plus(1, ChronoUnit.HOURS))
+                        .build();
 
-        SecurityContextHolder
-                .getContext()
-                .setAuthentication(
-                        new JwtAuthenticationToken(jwt)
-                );
+        SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
     }
 
     private String uniqueSuffix() {
-        return UUID.randomUUID()
-                .toString()
-                .substring(0, 8);
+        return UUID.randomUUID().toString().substring(0, 8);
     }
 }

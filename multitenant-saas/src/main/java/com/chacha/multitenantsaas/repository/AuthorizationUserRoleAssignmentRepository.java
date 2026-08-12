@@ -6,29 +6,22 @@ import com.chacha.multitenantsaas.entity.AuthorizationRoleStatus;
 import com.chacha.multitenantsaas.entity.AuthorizationScopeType;
 import com.chacha.multitenantsaas.entity.AuthorizationUserRoleAssignment;
 import com.chacha.multitenantsaas.entity.AuthorizationUserRoleAssignmentStatus;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface AuthorizationUserRoleAssignmentRepository
-        extends JpaRepository<
-        AuthorizationUserRoleAssignment,
-        UUID
-        > {
+        extends JpaRepository<AuthorizationUserRoleAssignment, UUID> {
 
-    Optional<AuthorizationUserRoleAssignment>
-    findByTenant_IdAndId(
-            UUID tenantId,
-            UUID assignmentId
-    );
+    Optional<AuthorizationUserRoleAssignment> findByTenant_IdAndId(
+            UUID tenantId, UUID assignmentId);
 
-
-    @Query("""
+    @Query(
+            """
             SELECT assignment
             FROM AuthorizationUserRoleAssignment assignment
             JOIN FETCH assignment.user assignedUser
@@ -43,16 +36,11 @@ public interface AuthorizationUserRoleAssignmentRepository
                 assignment.validFrom DESC,
                 assignment.id ASC
             """)
-    List<AuthorizationUserRoleAssignment>
-    findUserAssignments(
-            @Param("tenantId")
-            UUID tenantId,
+    List<AuthorizationUserRoleAssignment> findUserAssignments(
+            @Param("tenantId") UUID tenantId, @Param("userId") UUID userId);
 
-            @Param("userId")
-            UUID userId
-    );
-
-    @Query("""
+    @Query(
+            """
             SELECT assignment
             FROM AuthorizationUserRoleAssignment assignment
             JOIN FETCH assignment.user assignedUser
@@ -66,16 +54,11 @@ public interface AuthorizationUserRoleAssignmentRepository
                 assignment.validFrom DESC,
                 assignment.id ASC
             """)
-    List<AuthorizationUserRoleAssignment>
-    findRoleAssignments(
-            @Param("tenantId")
-            UUID tenantId,
+    List<AuthorizationUserRoleAssignment> findRoleAssignments(
+            @Param("tenantId") UUID tenantId, @Param("roleId") UUID roleId);
 
-            @Param("roleId")
-            UUID roleId
-    );
-
-    @Query("""
+    @Query(
+            """
             SELECT assignment
             FROM AuthorizationUserRoleAssignment assignment
             JOIN FETCH assignment.user assignedUser
@@ -95,25 +78,15 @@ public interface AuthorizationUserRoleAssignmentRepository
                 assignment.scopeType ASC,
                 assignment.id ASC
             """)
-    List<AuthorizationUserRoleAssignment>
-    findEffectiveAssignmentsForUser(
-            @Param("tenantId")
-            UUID tenantId,
+    List<AuthorizationUserRoleAssignment> findEffectiveAssignmentsForUser(
+            @Param("tenantId") UUID tenantId,
+            @Param("userId") UUID userId,
+            @Param("activeStatus") AuthorizationUserRoleAssignmentStatus activeStatus,
+            @Param("activeRoleStatus") AuthorizationRoleStatus activeRoleStatus,
+            @Param("effectiveAt") Instant effectiveAt);
 
-            @Param("userId")
-            UUID userId,
-
-            @Param("activeStatus")
-            AuthorizationUserRoleAssignmentStatus activeStatus,
-
-            @Param("activeRoleStatus")
-            AuthorizationRoleStatus activeRoleStatus,
-
-            @Param("effectiveAt")
-            Instant effectiveAt
-    );
-
-    @Query("""
+    @Query(
+            """
             SELECT assignment
             FROM AuthorizationUserRoleAssignment assignment
             JOIN FETCH assignment.user assignedUser
@@ -149,35 +122,17 @@ public interface AuthorizationUserRoleAssignmentRepository
                 assignment.scopeType ASC,
                 assignment.id ASC
             """)
-    List<AuthorizationUserRoleAssignment>
-    findEffectiveAssignmentsGrantingPermission(
-            @Param("tenantId")
-            UUID tenantId,
-
-            @Param("userId")
-            UUID userId,
-
-            @Param("permissionCode")
-            String permissionCode,
-
+    List<AuthorizationUserRoleAssignment> findEffectiveAssignmentsGrantingPermission(
+            @Param("tenantId") UUID tenantId,
+            @Param("userId") UUID userId,
+            @Param("permissionCode") String permissionCode,
             @Param("activeAssignmentStatus")
-            AuthorizationUserRoleAssignmentStatus
-                    activeAssignmentStatus,
-
-            @Param("activeRoleStatus")
-            AuthorizationRoleStatus activeRoleStatus,
-
-            @Param("activePermissionStatus")
-            AuthorizationPermissionStatus
-                    activePermissionStatus,
-
+                    AuthorizationUserRoleAssignmentStatus activeAssignmentStatus,
+            @Param("activeRoleStatus") AuthorizationRoleStatus activeRoleStatus,
+            @Param("activePermissionStatus") AuthorizationPermissionStatus activePermissionStatus,
             @Param("platformPermissionSource")
-            AuthorizationPermissionSource
-                    platformPermissionSource,
-
-            @Param("effectiveAt")
-            Instant effectiveAt
-    );
+                    AuthorizationPermissionSource platformPermissionSource,
+            @Param("effectiveAt") Instant effectiveAt);
 
     default long countOverlappingActiveAssignments(
             UUID tenantId,
@@ -187,33 +142,18 @@ public interface AuthorizationUserRoleAssignmentRepository
             String scopeKey,
             AuthorizationUserRoleAssignmentStatus activeStatus,
             Instant validFrom,
-            Instant validUntil
-    ) {
+            Instant validUntil) {
         if (validUntil == null) {
             return countOpenEndedOverlappingActiveAssignments(
-                    tenantId,
-                    userId,
-                    roleId,
-                    scopeType,
-                    scopeKey,
-                    activeStatus,
-                    validFrom
-            );
+                    tenantId, userId, roleId, scopeType, scopeKey, activeStatus, validFrom);
         }
 
         return countBoundedOverlappingActiveAssignments(
-                tenantId,
-                userId,
-                roleId,
-                scopeType,
-                scopeKey,
-                activeStatus,
-                validFrom,
-                validUntil
-        );
+                tenantId, userId, roleId, scopeType, scopeKey, activeStatus, validFrom, validUntil);
     }
 
-    @Query("""
+    @Query(
+            """
             SELECT COUNT(assignment)
             FROM AuthorizationUserRoleAssignment assignment
             WHERE assignment.tenant.id = :tenantId
@@ -228,30 +168,16 @@ public interface AuthorizationUserRoleAssignmentRepository
               )
             """)
     long countOpenEndedOverlappingActiveAssignments(
-            @Param("tenantId")
-            UUID tenantId,
+            @Param("tenantId") UUID tenantId,
+            @Param("userId") UUID userId,
+            @Param("roleId") UUID roleId,
+            @Param("scopeType") AuthorizationScopeType scopeType,
+            @Param("scopeKey") String scopeKey,
+            @Param("activeStatus") AuthorizationUserRoleAssignmentStatus activeStatus,
+            @Param("validFrom") Instant validFrom);
 
-            @Param("userId")
-            UUID userId,
-
-            @Param("roleId")
-            UUID roleId,
-
-            @Param("scopeType")
-            AuthorizationScopeType scopeType,
-
-            @Param("scopeKey")
-            String scopeKey,
-
-            @Param("activeStatus")
-            AuthorizationUserRoleAssignmentStatus
-                    activeStatus,
-
-            @Param("validFrom")
-            Instant validFrom
-    );
-
-    @Query("""
+    @Query(
+            """
             SELECT COUNT(assignment)
             FROM AuthorizationUserRoleAssignment assignment
             WHERE assignment.tenant.id = :tenantId
@@ -267,29 +193,12 @@ public interface AuthorizationUserRoleAssignmentRepository
               )
             """)
     long countBoundedOverlappingActiveAssignments(
-            @Param("tenantId")
-            UUID tenantId,
-
-            @Param("userId")
-            UUID userId,
-
-            @Param("roleId")
-            UUID roleId,
-
-            @Param("scopeType")
-            AuthorizationScopeType scopeType,
-
-            @Param("scopeKey")
-            String scopeKey,
-
-            @Param("activeStatus")
-            AuthorizationUserRoleAssignmentStatus
-                    activeStatus,
-
-            @Param("validFrom")
-            Instant validFrom,
-
-            @Param("validUntil")
-            Instant validUntil
-    );
+            @Param("tenantId") UUID tenantId,
+            @Param("userId") UUID userId,
+            @Param("roleId") UUID roleId,
+            @Param("scopeType") AuthorizationScopeType scopeType,
+            @Param("scopeKey") String scopeKey,
+            @Param("activeStatus") AuthorizationUserRoleAssignmentStatus activeStatus,
+            @Param("validFrom") Instant validFrom,
+            @Param("validUntil") Instant validUntil);
 }
