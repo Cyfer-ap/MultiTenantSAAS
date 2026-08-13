@@ -5,16 +5,20 @@ import com.chacha.multitenantsaas.entity.UserInvitationStatus;
 import com.chacha.multitenantsaas.entity.UserRole;
 import jakarta.persistence.LockModeType;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface UserInvitationRepository extends JpaRepository<UserInvitation, UUID> {
+public interface UserInvitationRepository
+        extends JpaRepository<UserInvitation, UUID>, JpaSpecificationExecutor<UserInvitation> {
 
     Optional<UserInvitation> findByTokenHash(String tokenHash);
 
@@ -54,25 +58,49 @@ public interface UserInvitationRepository extends JpaRepository<UserInvitation, 
             @Param("email") String email,
             @Param("status") UserInvitationStatus status);
 
-    @Query(
-            """
-            SELECT invitation
-            FROM UserInvitation invitation
-            WHERE invitation.tenant.id = :tenantId
-              AND (:status IS NULL OR invitation.status = :status)
-              AND (:role IS NULL OR invitation.role = :role)
-              AND (
-                    :search IS NULL
-                    OR LOWER(invitation.fullName)
-                        LIKE LOWER(CONCAT('%', :search, '%'))
-                    OR LOWER(invitation.email)
-                        LIKE LOWER(CONCAT('%', :search, '%'))
-              )
-            """)
-    Page<UserInvitation> findTenantInvitations(
-            @Param("tenantId") UUID tenantId,
-            @Param("status") UserInvitationStatus status,
-            @Param("role") UserRole role,
-            @Param("search") String search,
-            Pageable pageable);
+    default Page<UserInvitation> findTenantInvitations(
+            UUID tenantId,
+            UserInvitationStatus status,
+            UserRole role,
+            String search,
+            Pageable pageable) {
+        Specification<UserInvitation> specification =
+                (root, query, criteriaBuilder) -> {
+                    var predicate = criteriaBuilder.equal(root.get("tenant").get("id"), tenantId);
+
+                    if (status != null) {
+                        predicate =
+                                criteriaBuilder.and(
+                                        predicate,
+                                        criteriaBuilder.equal(root.get("status"), status));
+                    }
+
+                    if (role != null) {
+                        predicate =
+                                criteriaBuilder.and(
+                                        predicate, criteriaBuilder.equal(root.get("role"), role));
+                    }
+
+                    if (search != null) {
+                        String pattern = "%" + search.toLowerCase(Locale.ROOT) + "%";
+
+                        predicate =
+                                criteriaBuilder.and(
+                                        predicate,
+                                        criteriaBuilder.or(
+                                                criteriaBuilder.like(
+                                                        criteriaBuilder.lower(
+                                                                root.<String>get("fullName")),
+                                                        pattern),
+                                                criteriaBuilder.like(
+                                                        criteriaBuilder.lower(
+                                                                root.<String>get("email")),
+                                                        pattern)));
+                    }
+
+                    return predicate;
+                };
+
+        return findAll(specification, pageable);
+    }
 }

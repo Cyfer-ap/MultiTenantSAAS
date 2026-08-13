@@ -5,16 +5,20 @@ import com.chacha.multitenantsaas.entity.UserRole;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import jakarta.persistence.LockModeType;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
+public interface AppUserRepository
+        extends JpaRepository<AppUser, UUID>, JpaSpecificationExecutor<AppUser> {
 
     List<AppUser> findByTenantId(UUID tenantId);
 
@@ -76,23 +80,45 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
 
     long countByTenantIdAndRoleAndStatus(UUID tenantId, UserRole role, UserStatus status);
 
-    @Query(
-            """
-            SELECT appUser
-            FROM AppUser appUser
-            WHERE appUser.tenant.id = :tenantId
-              AND (:role IS NULL OR appUser.role = :role)
-              AND (:status IS NULL OR appUser.status = :status)
-              AND (
-                    :search IS NULL
-                    OR LOWER(appUser.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
-                    OR LOWER(appUser.email) LIKE LOWER(CONCAT('%', :search, '%'))
-              )
-            """)
-    Page<AppUser> findTenantUsers(
-            @Param("tenantId") UUID tenantId,
-            @Param("role") UserRole role,
-            @Param("status") UserStatus status,
-            @Param("search") String search,
-            Pageable pageable);
+    default Page<AppUser> findTenantUsers(
+            UUID tenantId, UserRole role, UserStatus status, String search, Pageable pageable) {
+        Specification<AppUser> specification =
+                (root, query, criteriaBuilder) -> {
+                    var predicate = criteriaBuilder.equal(root.get("tenant").get("id"), tenantId);
+
+                    if (role != null) {
+                        predicate =
+                                criteriaBuilder.and(
+                                        predicate, criteriaBuilder.equal(root.get("role"), role));
+                    }
+
+                    if (status != null) {
+                        predicate =
+                                criteriaBuilder.and(
+                                        predicate,
+                                        criteriaBuilder.equal(root.get("status"), status));
+                    }
+
+                    if (search != null) {
+                        String pattern = "%" + search.toLowerCase(Locale.ROOT) + "%";
+
+                        predicate =
+                                criteriaBuilder.and(
+                                        predicate,
+                                        criteriaBuilder.or(
+                                                criteriaBuilder.like(
+                                                        criteriaBuilder.lower(
+                                                                root.<String>get("fullName")),
+                                                        pattern),
+                                                criteriaBuilder.like(
+                                                        criteriaBuilder.lower(
+                                                                root.<String>get("email")),
+                                                        pattern)));
+                    }
+
+                    return predicate;
+                };
+
+        return findAll(specification, pageable);
+    }
 }

@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuditLogService {
@@ -100,6 +101,7 @@ public class AuditLogService {
         recordSystemAdmin(tenant, actorSystemAdmin, targetUser, action, false, message);
     }
 
+    @Transactional(readOnly = true)
     public PageResponse<AuditLogResponse> getAuditLogsByTenant(
             UUID tenantId, AuditAction action, Boolean success, Pageable pageable) {
         Page<AuditLog> auditLogs =
@@ -108,6 +110,7 @@ public class AuditLogService {
         return mapToPageResponse(auditLogs);
     }
 
+    @Transactional(readOnly = true)
     public PageResponse<AuditLogResponse> getAuditLogsByTenantAndUser(
             UUID tenantId, UUID userId, AuditAction action, Boolean success, Pageable pageable) {
         Page<AuditLog> auditLogs =

@@ -9,6 +9,7 @@ import com.chacha.multitenantsaas.repository.PlatformAuditLogRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PlatformAuditLogService {
@@ -47,6 +48,7 @@ public class PlatformAuditLogService {
         record(actorSystemAdmin, targetSystemAdmin, action, false, message);
     }
 
+    @Transactional(readOnly = true)
     public PageResponse<PlatformAuditLogResponse> getPlatformAuditLogs(
             PlatformAuditAction action, Boolean success, String search, Pageable pageable) {
         Page<PlatformAuditLog> auditLogs =
