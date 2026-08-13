@@ -2,9 +2,20 @@ package com.chacha.multitenantsaas.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.chacha.multitenantsaas.repository.AppUserRepository;
+import com.chacha.multitenantsaas.repository.AuditLogRepository;
+import com.chacha.multitenantsaas.repository.PlatformAuditLogRepository;
+import com.chacha.multitenantsaas.repository.ProjectMemberRepository;
+import com.chacha.multitenantsaas.repository.ProjectRepository;
+import com.chacha.multitenantsaas.repository.ProjectTaskRepository;
+import com.chacha.multitenantsaas.repository.SystemAdminRepository;
+import com.chacha.multitenantsaas.repository.TenantRepository;
+import com.chacha.multitenantsaas.repository.UserInvitationRepository;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -37,6 +48,15 @@ class PostgreSqlSchemaIntegrationTest {
     }
 
     @Autowired private JdbcTemplate jdbcTemplate;
+    @Autowired private TenantRepository tenantRepository;
+    @Autowired private AppUserRepository appUserRepository;
+    @Autowired private ProjectRepository projectRepository;
+    @Autowired private UserInvitationRepository userInvitationRepository;
+    @Autowired private ProjectMemberRepository projectMemberRepository;
+    @Autowired private ProjectTaskRepository projectTaskRepository;
+    @Autowired private SystemAdminRepository systemAdminRepository;
+    @Autowired private AuditLogRepository auditLogRepository;
+    @Autowired private PlatformAuditLogRepository platformAuditLogRepository;
 
     @Test
     void postgresBaselineReachesV17AndMatchesJpaMappings() {
@@ -65,6 +85,39 @@ class PostgreSqlSchemaIntegrationTest {
         assertTableExists("authorization_user_role_assignments");
         assertTableExists("subscription_plans");
         assertTableExists("tenant_subscriptions");
+    }
+
+    @Test
+    void nullableListFiltersExecuteOnPostgreSql() {
+        var pageable = PageRequest.of(0, 20);
+        UUID tenantId = UUID.randomUUID();
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        assertThat(tenantRepository.findTenants(null, null, pageable)).isNotNull();
+        assertThat(appUserRepository.findTenantUsers(tenantId, null, null, null, pageable))
+                .isNotNull();
+        assertThat(projectRepository.findTenantProjects(tenantId, null, null, pageable))
+                .isNotNull();
+        assertThat(
+                        userInvitationRepository.findTenantInvitations(
+                                tenantId, null, null, null, pageable))
+                .isNotNull();
+        assertThat(
+                        projectMemberRepository.findProjectMembers(
+                                tenantId, projectId, null, null, pageable))
+                .isNotNull();
+        assertThat(
+                        projectTaskRepository.findProjectTasks(
+                                tenantId, projectId, null, null, null, null, pageable))
+                .isNotNull();
+        assertThat(systemAdminRepository.findSystemAdmins(null, null, pageable)).isNotNull();
+        assertThat(auditLogRepository.findTenantAuditLogs(tenantId, null, null, pageable))
+                .isNotNull();
+        assertThat(auditLogRepository.findUserAuditLogs(tenantId, userId, null, null, pageable))
+                .isNotNull();
+        assertThat(platformAuditLogRepository.findPlatformAuditLogs(null, null, null, pageable))
+                .isNotNull();
     }
 
     private void assertTableExists(String tableName) {
