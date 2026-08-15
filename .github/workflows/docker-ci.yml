@@ -69,6 +69,7 @@ jobs:
         with:
           scan-type: image
           image-ref: multitenant-saas-backend:ci
+          scanners: "vuln"
           format: table
           exit-code: "1"
           ignore-unfixed: true
@@ -104,6 +105,7 @@ jobs:
         with:
           scan-type: image
           image-ref: multitenant-saas-frontend:ci
+          scanners: "vuln"
           format: table
           exit-code: "1"
           ignore-unfixed: true
