@@ -51,6 +51,7 @@ spring.log
 .env.*
 *.env
 !.env.example
+!.env.production.example
 application-local.properties
 application-local.yml
 application-dev.properties
