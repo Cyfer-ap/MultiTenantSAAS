@@ -17,6 +17,7 @@ import com.chacha.multitenantsaas.repository.TenantSubscriptionRepository;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -71,15 +72,25 @@ class SubscriptionQuotaGuardServiceTest {
                                 resource(3L, 3L, false),
                                 resource(0L, 5L, true)));
 
+        AtomicReference<SubscriptionRestrictionException> recordedRestriction =
+                new AtomicReference<>();
+        SubscriptionQuotaGuardService recordingGuard =
+                new SubscriptionQuotaGuardService(
+                        entitlementService,
+                        tenantSubscriptionRepository,
+                        true,
+                        recordedRestriction::set);
+
         SubscriptionRestrictionException exception =
                 assertThrows(
                         SubscriptionRestrictionException.class,
-                        () -> guardService.requireUserSlot(TENANT_ID));
+                        () -> recordingGuard.requireUserSlot(TENANT_ID));
 
         assertThat(exception.getRestrictionType()).isEqualTo(RestrictionType.USER_LIMIT_REACHED);
         assertThat(exception.getResource()).isEqualTo("users");
         assertThat(exception.getUsed()).isEqualTo(3L);
         assertThat(exception.getLimit()).isEqualTo(3L);
+        assertThat(recordedRestriction.get()).isSameAs(exception);
     }
 
     @Test

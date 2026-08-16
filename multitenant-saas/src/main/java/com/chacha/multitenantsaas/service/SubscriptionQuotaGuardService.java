@@ -5,8 +5,10 @@ import com.chacha.multitenantsaas.dto.TenantSubscriptionEntitlementResponse;
 import com.chacha.multitenantsaas.dto.TenantSubscriptionEntitlementResponse.ResourceEntitlement;
 import com.chacha.multitenantsaas.exception.SubscriptionRestrictionException;
 import com.chacha.multitenantsaas.exception.SubscriptionRestrictionException.RestrictionType;
+import com.chacha.multitenantsaas.observability.SubscriptionMetrics;
 import com.chacha.multitenantsaas.repository.TenantSubscriptionRepository;
 import java.util.UUID;
+import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -18,25 +20,41 @@ public class SubscriptionQuotaGuardService {
     private final SubscriptionEntitlementService subscriptionEntitlementService;
     private final TenantSubscriptionRepository tenantSubscriptionRepository;
     private final boolean enforcementEnabled;
+    private final Consumer<SubscriptionRestrictionException> restrictionRecorder;
 
     @Autowired
     public SubscriptionQuotaGuardService(
             SubscriptionEntitlementService subscriptionEntitlementService,
             TenantSubscriptionRepository tenantSubscriptionRepository,
-            Environment environment) {
+            Environment environment,
+            SubscriptionMetrics subscriptionMetrics) {
         this(
                 subscriptionEntitlementService,
                 tenantSubscriptionRepository,
-                resolveEnforcementEnabled(environment));
+                resolveEnforcementEnabled(environment),
+                subscriptionMetrics::recordRestriction);
     }
 
     SubscriptionQuotaGuardService(
             SubscriptionEntitlementService subscriptionEntitlementService,
             TenantSubscriptionRepository tenantSubscriptionRepository,
             boolean enforcementEnabled) {
+        this(
+                subscriptionEntitlementService,
+                tenantSubscriptionRepository,
+                enforcementEnabled,
+                ignored -> {});
+    }
+
+    SubscriptionQuotaGuardService(
+            SubscriptionEntitlementService subscriptionEntitlementService,
+            TenantSubscriptionRepository tenantSubscriptionRepository,
+            boolean enforcementEnabled,
+            Consumer<SubscriptionRestrictionException> restrictionRecorder) {
         this.subscriptionEntitlementService = subscriptionEntitlementService;
         this.tenantSubscriptionRepository = tenantSubscriptionRepository;
         this.enforcementEnabled = enforcementEnabled;
+        this.restrictionRecorder = restrictionRecorder;
     }
 
     private static boolean resolveEnforcementEnabled(Environment environment) {
@@ -81,7 +99,7 @@ public class SubscriptionQuotaGuardService {
                 subscriptionEntitlementService.evaluate(tenantId);
 
         if (!entitlements.mutationsAllowed()) {
-            throw serviceUnavailable(entitlements.accessReason(), resourceType);
+            reject(serviceUnavailable(entitlements.accessReason(), resourceType));
         }
 
         ResourceEntitlement resourceEntitlement =
@@ -91,7 +109,12 @@ public class SubscriptionQuotaGuardService {
             return;
         }
 
-        throw quotaReached(entitlements.accessReason(), resourceType, resourceEntitlement);
+        reject(quotaReached(entitlements.accessReason(), resourceType, resourceEntitlement));
+    }
+
+    private void reject(SubscriptionRestrictionException exception) {
+        restrictionRecorder.accept(exception);
+        throw exception;
     }
 
     private SubscriptionRestrictionException serviceUnavailable(
