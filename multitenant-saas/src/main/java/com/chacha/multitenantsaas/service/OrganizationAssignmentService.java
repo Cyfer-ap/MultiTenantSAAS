@@ -233,13 +233,22 @@ public class OrganizationAssignmentService {
 
     private void validatePrimaryAssignmentAvailability(
             UUID tenantId, UUID userId, Instant validFrom, Instant validUntil) {
-        long overlappingAssignmentCount =
-                assignmentRepository.countOverlappingActivePrimaryAssignments(
-                        tenantId,
-                        userId,
-                        OrganizationAssignmentStatus.ACTIVE,
-                        validFrom,
-                        validUntil);
+
+        long overlappingAssignmentCount;
+
+        if (validUntil == null) {
+            overlappingAssignmentCount =
+                    assignmentRepository.countOverlappingOpenEndedPrimaryAssignments(
+                            tenantId, userId, OrganizationAssignmentStatus.ACTIVE, validFrom);
+        } else {
+            overlappingAssignmentCount =
+                    assignmentRepository.countOverlappingBoundedPrimaryAssignments(
+                            tenantId,
+                            userId,
+                            OrganizationAssignmentStatus.ACTIVE,
+                            validFrom,
+                            validUntil);
+        }
 
         if (overlappingAssignmentCount > 0) {
             throw new DuplicateResourceException(

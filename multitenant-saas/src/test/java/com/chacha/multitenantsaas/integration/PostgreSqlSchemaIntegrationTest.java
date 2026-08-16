@@ -11,6 +11,8 @@ import com.chacha.multitenantsaas.repository.ProjectTaskRepository;
 import com.chacha.multitenantsaas.repository.SystemAdminRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import com.chacha.multitenantsaas.repository.UserInvitationRepository;
+import com.chacha.multitenantsaas.entity.OrganizationAssignmentStatus;
+import com.chacha.multitenantsaas.repository.UserOrganizationAssignmentRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +59,8 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private SystemAdminRepository systemAdminRepository;
     @Autowired private AuditLogRepository auditLogRepository;
     @Autowired private PlatformAuditLogRepository platformAuditLogRepository;
+    @Autowired
+    private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
     void postgresBaselineReachesV17AndMatchesJpaMappings() {
@@ -118,6 +122,33 @@ class PostgreSqlSchemaIntegrationTest {
                 .isNotNull();
         assertThat(platformAuditLogRepository.findPlatformAuditLogs(null, null, null, pageable))
                 .isNotNull();
+    }
+
+    @Test
+    void primaryAssignmentOverlapQueriesExecuteOnPostgreSql() {
+        UUID tenantId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        var validFrom = java.time.Instant.now();
+        var validUntil = validFrom.plusSeconds(3600);
+
+        long openEndedCount =
+            userOrganizationAssignmentRepository.countOverlappingOpenEndedPrimaryAssignments(
+                tenantId,
+                userId,
+                OrganizationAssignmentStatus.ACTIVE,
+                validFrom);
+
+        long boundedCount =
+            userOrganizationAssignmentRepository.countOverlappingBoundedPrimaryAssignments(
+                tenantId,
+                userId,
+                OrganizationAssignmentStatus.ACTIVE,
+                validFrom,
+                validUntil);
+
+        assertThat(openEndedCount).isZero();
+        assertThat(boundedCount).isZero();
     }
 
     private void assertTableExists(String tableName) {
