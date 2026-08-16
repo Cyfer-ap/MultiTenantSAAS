@@ -1,5 +1,6 @@
 package com.chacha.multitenantsaas.config;
 
+import com.chacha.multitenantsaas.common.RequestCorrelationFilter;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,9 +27,15 @@ public class CorsConfig {
                 List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
         configuration.setAllowedHeaders(
-                List.of("Authorization", "Content-Type", "Accept", "Origin"));
+                List.of(
+                        "Authorization",
+                        "Content-Type",
+                        "Accept",
+                        "Origin",
+                        RequestCorrelationFilter.REQUEST_ID_HEADER));
 
-        configuration.setExposedHeaders(List.of("Location"));
+        configuration.setExposedHeaders(
+                List.of("Location", RequestCorrelationFilter.REQUEST_ID_HEADER));
 
         /*
          * JWTs are currently sent through the Authorization header,
