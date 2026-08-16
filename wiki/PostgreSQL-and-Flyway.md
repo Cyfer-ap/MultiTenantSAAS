@@ -1,51 +1,71 @@
 # PostgreSQL and Flyway
 
-## Database paths
+## Production database path
 
-Historical H2:
+PostgreSQL 17 is the production-readiness database target.
 
-```text
-db/migration
-```
+H2 remains part of the historical/local-test migration path, so the repository intentionally preserves two starting histories.
 
-PostgreSQL baseline:
+## Migration locations
 
-```text
-db/postgresql/V17__current_schema_baseline.sql
-```
-
-Future shared migrations:
+Historical H2 chain:
 
 ```text
-db/common
+multitenant-saas/src/main/resources/db/migration
 ```
 
-## Rule
-
-All new portable schema work starts at V18 in `db/common`.
-
-## Runtime locations
-
-H2:
+PostgreSQL current-schema baseline:
 
 ```text
-classpath:db/migration,classpath:db/common
+multitenant-saas/src/main/resources/db/postgresql
+V17__current_schema_baseline.sql
 ```
 
-PostgreSQL:
+Future portable migrations:
 
 ```text
-classpath:db/postgresql,classpath:db/common
+multitenant-saas/src/main/resources/db/common
 ```
 
-## Why this matters
+## Runtime mapping
 
-The project must not silently let PostgreSQL and H2 test schemas diverge.
+```text
+H2
+  -> classpath:db/migration
+  -> classpath:db/common
 
-## Testcontainers
+PostgreSQL
+  -> classpath:db/postgresql
+  -> classpath:db/common
+```
 
-The PostgreSQL integration path should verify that Flyway can build the expected schema and Hibernate can validate it.
+## Migration invariant
 
-## Non-negotiable migration rule
+All new portable schema changes begin at **V18+** under `db/common`.
 
 Never rewrite an already-applied migration.
+
+## Production schema ownership
+
+Production uses:
+
+```properties
+spring.jpa.hibernate.ddl-auto=validate
+spring.flyway.clean-disabled=true
+```
+
+Flyway owns schema evolution; Hibernate verifies the result.
+
+## PostgreSQL verification
+
+The Testcontainers path should verify:
+
+- PostgreSQL starts successfully
+- Flyway builds the expected schema
+- Hibernate validation succeeds
+- PostgreSQL-specific query semantics behave correctly
+- lock/concurrency behavior is exercised where relevant
+
+## Query portability note
+
+Avoid nullable static-JPQL guards whose parameter typing depends on H2 behavior, such as broad `:param IS NULL OR ...` patterns. PostgreSQL-sensitive optional filters should use query construction that produces correctly typed predicates.

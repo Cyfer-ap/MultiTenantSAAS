@@ -1,16 +1,20 @@
 # Subscriptions and Quotas
 
-## Model responsibilities
+## Separation of concerns
 
-Subscription code answers five independent questions:
+Subscription code answers distinct questions:
 
 1. which plan applies?
-2. what is the subscription lifecycle state?
+2. what lifecycle state is stored?
 3. what access does that state currently permit?
-4. what entitlements/limits apply?
-5. has resource capacity been consumed?
+4. what entitlements and limits apply?
+5. what usage has already been consumed?
+
+Do not collapse lifecycle status, evaluated access and quota usage into one boolean.
 
 ## Access reasons
+
+Current access-reason semantics include:
 
 ```text
 ACTIVE
@@ -24,11 +28,11 @@ PERIOD_EXPIRED
 TRIAL_EXPIRED
 ```
 
-## Workspace read-only mode
+## Workspace read-only enforcement
 
-The central mutation interceptor blocks ordinary business mutations when access evaluation says mutations are unavailable.
+When evaluated subscription access does not permit ordinary tenant mutations, the central mutation guard returns a business restriction rather than pretending the user lacks authorization.
 
-Standard contract:
+Typical contract:
 
 ```text
 HTTP 409
@@ -36,9 +40,11 @@ restriction = WORKSPACE_READ_ONLY
 resource = workspace
 ```
 
-## Quotas
+Read operations can remain available.
 
-When the workspace is writable, resource-specific capacity checks can still fail.
+## Resource quotas
+
+When the workspace is otherwise writable, resource capacity can independently reject growth.
 
 Examples:
 
@@ -47,10 +53,22 @@ USER_LIMIT_REACHED
 PROJECT_LIMIT_REACHED
 ```
 
+Quota-sensitive creation is transactionally serialized against tenant subscription state.
+
 ## Recovery
 
-Selected cleanup operations can remain enabled so customers can reduce usage.
+Selected cleanup/recovery operations may remain available so a tenant can reduce usage and return to compliance.
+
+## Metrics
+
+Blocked tenant growth is counted using:
+
+```text
+saas.subscription.restrictions
+```
+
+Tags are bounded categories such as restriction type, resource and access reason. Tenant IDs, user IDs and emails are intentionally not metric tags.
 
 ## Billing boundary
 
-Provider checkout, webhooks, invoices, and reconciliation are future/partial work until explicitly implemented and tested.
+Provider checkout, invoices, webhook reconciliation and payment-provider idempotency remain separate future production work until explicitly implemented and tested.

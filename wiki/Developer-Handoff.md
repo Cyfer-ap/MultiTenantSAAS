@@ -1,29 +1,32 @@
-# MultiTenantSAAS — Development Handoff
+# Developer Handoff
 
-Use this document to resume development in a new session without relying on chat history.
+Use this page to resume development without depending on prior chat/session history.
 
-## Repository checkpoint
+## Repository
 
 ```text
-Repository: Cyfer-ap/MultiTenantSAAS
-Branch: main
-Commit reviewed: 3808c0ddf95d075aed7114bf060518640c19d6c2
-Current engineering phase: Step 40
+Cyfer-ap/MultiTenantSAAS
+default branch: main
 ```
+
+Always sync `main` before starting a new branch.
 
 ## Read first
 
-1. `readme.md`
-2. `guides/README.md`
-3. `guides/current_architecture.md`
-4. `guides/authorization_model.md`
-5. `guides/subscription_billing.md`
-6. `guides/postgresql_and_migrations.md`
-7. `guides/step40_transaction_concurrency.md`
+1. [[Home]]
+2. [[Architecture]]
+3. [[Security-and-Authentication]]
+4. [[Authorization]]
+5. [[PostgreSQL-and-Flyway]]
+6. [[Transaction-and-Concurrency]]
+7. [[Operations-and-Observability]]
+8. [[Roadmap]]
+
+Repository-side focused notes remain under `guides/`.
 
 ## Architecture boundaries to preserve
 
-Do not collapse:
+Do not collapse these concepts:
 
 ```text
 authentication
@@ -31,48 +34,76 @@ tenant isolation
 authorization
 subscription lifecycle
 quota enforcement
+domain invariants
 ```
 
 System-admin identity must remain separate from tenant-user identity.
 
-## Database/migration rule
+## Completed hardening milestones
 
-H2 and PostgreSQL have different starting migration histories, but all new shared schema work starts at V18 in `db/common`.
+### Transaction/concurrency hardening
 
-Never edit V1-V17 merely to make a new implementation easier.
+Database-backed work covers:
 
-## Current concurrency work
+- subscription state serialization
+- invitation single-use/replacement races
+- failed-login/account-lock races
+- session and credential concurrency
+- account-state/session-version updates
+- PostgreSQL concurrency integration tests
+- integrity-race normalization and lock review
 
-Slice 40.1 established database locking for subscription invariants.
+### Operational observability
 
-Continue with invitation races, failed-login counters, session-version/password/logout-all lost updates, duplicate/integrity normalization, and PostgreSQL concurrency tests.
+Implemented capabilities include:
 
-Prefer database constraints/locks over JVM-local mutexes.
+- `X-Request-ID` correlation
+- correlated completion logs
+- secured Actuator metrics
+- subscription restriction counters
+- authentication/login counters
+- account-lock counters
+- public-auth rate-limit rejection counters
 
-## Production-profile state
-
-Latest main includes a `production` Spring profile and `.env.production.example`.
-
-Do not remove:
-
-- hidden error details
-- `open-in-view=false`
-- `ddl-auto=validate`
-- Flyway clean disabled
-- restricted Actuator exposure
-- health-detail suppression
-- production rate-limit configuration
-
-## Definition of a safe next change
-
-A change is not complete until:
+## Migration invariant
 
 ```text
-backend tests pass
-frontend lint/tests/build pass when affected
-PostgreSQL schema/integration path remains valid
-git diff --check passes
-tenant isolation is preserved
-authorization/subscription contracts are not conflated
-documentation is updated
+db/migration   -> historical H2 V1-V17
+db/postgresql  -> PostgreSQL V17 current-schema baseline
+db/common      -> future portable V18+
 ```
+
+Never rewrite an already-applied migration.
+
+## Safe change checklist
+
+Before a PR:
+
+```text
+backend:
+  .\mvnw.cmd spotless:apply
+  .\mvnw.cmd spotless:check
+  .\mvnw.cmd test
+  .\mvnw.cmd -DskipTests verify
+
+frontend when touched:
+  npm run format
+  npm run format:check
+  npm run lint
+  npm test
+  npm run build
+
+repository:
+  git diff --check
+  git status
+```
+
+For PowerShell targeted Maven tests with multiple classes, quote the entire property:
+
+```powershell
+.\mvnw.cmd "-Dtest=FirstTest,SecondTest" test
+```
+
+## Next priorities
+
+The immediate product issue is the Primary Organizational Assignment path. After that, high-value production work includes database backup/restore and recovery documentation, external monitoring/alerting, load/failure testing, background jobs/notifications, and provider billing/webhook integration.

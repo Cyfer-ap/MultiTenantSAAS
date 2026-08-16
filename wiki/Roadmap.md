@@ -2,32 +2,32 @@
 
 ## Current
 
-**Step 40 — Transaction & Concurrency Hardening**
+The platform foundation, PostgreSQL path, transaction/concurrency hardening, staging deployment, and initial observability work are in place.
 
-Completed first slice:
+The immediate product-level issue is:
 
-- subscription state serialization
-- tenant-row locking for subscription creation
+```text
+Primary Organizational Assignment
+```
 
-## Next
+Normal organization assignment and reporting-option population work; the primary-assignment path requires focused PostgreSQL/service-path verification.
 
-1. invitation race hardening
-2. failed-login counter hardening
-3. session-version/password/logout-all concurrency
-4. integrity-race API normalization
-5. PostgreSQL concurrency tests
-6. deadlock/lock-order review
+## Near term
 
-## After Step 40
+1. fix and regression-test Primary Organizational Assignment
+2. verify adjacent organization/reporting edge cases
+3. keep documentation and Wiki source synchronized
+4. add database backup/restore procedure and recovery drill
+5. add external monitoring/alerting
+6. perform focused load/failure-recovery verification
 
-Potential next production-focused areas:
+## Deferred until selected
 
-- payment-provider integration
-- provider webhook idempotency
-- operational observability
-- production database backup/restore
-- background jobs
-- notifications/email delivery
-- additional performance/load verification
+- real payment-provider checkout
+- provider webhook reconciliation/idempotency
+- production notification/email delivery
+- distributed rate limiting for horizontal scale
+- background jobs that are not yet required by a concrete feature
+- production-grade hosting/SLA work
 
-Large new feature areas should not be layered on unstable write semantics.
+New work should continue to preserve tenant isolation, stable API contracts, Flyway migration invariants, and transaction safety.

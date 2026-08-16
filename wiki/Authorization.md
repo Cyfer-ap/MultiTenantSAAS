@@ -1,21 +1,38 @@
 # Authorization
 
-## Authorization model
+## Model
 
-The application supports a permission-oriented authorization model.
+Authorization is permission-oriented rather than being limited to a single fixed role enum.
 
 Core concepts include:
 
 - permission catalogue
-- roles
-- role-permission mapping
-- user/subject role assignments
-- organization-aware or scoped decisions
+- authorization roles
+- role-to-permission mapping
+- user role assignments
+- assignment validity windows
+- target scopes
+- relationship-aware evaluation
 - policy/rule evaluation
+
+## Supported scope concepts
+
+Authorization assignments can target bounded scope types such as:
+
+```text
+TENANT
+ORGANIZATIONAL_UNIT
+ORGANIZATIONAL_SUBTREE
+DIRECT_REPORTS
+PROJECT
+SELF
+```
+
+The evaluator must validate both the permission and the requested target relationship.
 
 ## Compatibility roles
 
-Legacy tenant roles may remain during migration:
+Tenant compatibility roles remain available where required:
 
 ```text
 TENANT_ADMIN
@@ -23,32 +40,41 @@ TENANT_MANAGER
 TENANT_USER
 ```
 
-Project-specific roles include:
+Project membership roles include:
 
 ```text
 PROJECT_LEAD
 MEMBER
 ```
 
+These role names are not substitutes for tenant isolation.
+
 ## Evaluation order
 
+A useful mental model is:
+
 ```text
-identity
--> tenant boundary
--> permission/policy
--> target scope/relationship
--> subscription lifecycle
--> quota
+authenticated identity
+  -> tenant boundary
+  -> permission / role assignment
+  -> assignment validity
+  -> target scope / relationship
+  -> subscription lifecycle access
+  -> quota / domain invariant
 ```
 
 ## Authorization vs subscription
 
-Authorization answers whether a user is allowed to perform an action.
+Authorization answers:
 
-Subscription enforcement answers whether the workspace/account state permits that class of mutation.
+> Is this principal permitted to perform this operation on this target?
 
-A successful authorization decision must not bypass subscription restrictions, and a valid subscription must not grant missing authorization.
+Subscription enforcement answers:
 
-## Error semantics
+> Is this tenant currently entitled to perform this class of mutation?
 
-Permission denials and subscription/quota restrictions should remain distinguishable in API contracts.
+Both checks may be required. They intentionally produce different error semantics.
+
+## Frontend rule
+
+The frontend may hide routes/actions for usability, but backend security and authorization remain authoritative.

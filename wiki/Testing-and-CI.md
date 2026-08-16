@@ -1,55 +1,80 @@
 # Testing and CI
 
-## Backend
+## Backend local verification
 
-Run:
+Use the Maven Wrapper:
 
 ```powershell
 cd multitenant-saas
+
+.\mvnw.cmd spotless:apply
+.\mvnw.cmd spotless:check
 .\mvnw.cmd test
+.\mvnw.cmd -DskipTests verify
 ```
 
-Coverage should include:
+For multiple targeted tests in PowerShell, quote the property containing commas:
 
-- authentication
+```powershell
+.\mvnw.cmd "-Dtest=FirstTest,SecondTest" test
+```
+
+## Backend coverage priorities
+
+Tests should cover:
+
 - tenant isolation
-- authorization
-- sessions/passwords
-- invitations
+- authentication/session behavior
+- authorization scopes
+- account-state invariants
+- invitation lifecycle
 - projects/tasks
-- subscription access
-- quota enforcement
-- concurrency locks
-- PostgreSQL schema compatibility
+- subscription access and quota behavior
+- concurrency
+- PostgreSQL/Flyway compatibility
+- operational filters/metrics where behavior matters
 
-## Frontend
-
-Run:
+## Frontend verification
 
 ```powershell
 cd multitenant-saas-frontend
+
+npm run format
+npm run format:check
 npm run lint
-npm run test
+npm test
 npm run build
 ```
 
 ## PostgreSQL
 
-When Docker is available, the Testcontainers PostgreSQL path should execute rather than being silently ignored.
+PostgreSQL integration tests use Testcontainers. When Docker is available, the database path should execute rather than silently relying on H2 semantics.
 
-## CI quality
+## GitHub quality gates
 
-Repository CI includes backend/frontend/database/security-quality gates.
+Repository CI/security coverage includes:
 
-Qodana is configured at repository level.
+```text
+Repository Hygiene
+Backend
+PostgreSQL & Flyway
+Frontend
+Trivy filesystem/source scan
+Qodana
 
-## Hygiene
+Container CI:
+Compose Validation
+Backend Container
+Frontend Container
+```
 
-Always run:
+Qodana is useful as static analysis and can be treated as advisory unless repository policy deliberately makes it required.
+
+## Repository hygiene
+
+Before finalizing a change:
 
 ```powershell
 git diff --check
 git status --short
 ```
-
-before finalizing a documentation or code checkpoint.

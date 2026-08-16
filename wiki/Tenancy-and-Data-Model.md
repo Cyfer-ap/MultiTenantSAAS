@@ -1,34 +1,66 @@
 # Tenancy and Data Model
 
-## Isolation model
+## Isolation strategy
 
-The platform uses a shared application, shared database, and shared schema with tenant foreign keys and tenant-scoped access patterns.
+The platform uses:
 
-The tenant ID is an explicit security boundary.
+```text
+shared application
+shared database
+shared schema
+tenant foreign keys + tenant-scoped access patterns
+```
 
-## Tenant-scoped areas
+The tenant ID is a security boundary, not merely a filter convenience.
 
-- users
+## Tenant-owned domains
+
+Tenant-scoped data includes:
+
+- application users
 - invitations
-- organization and authorization data
+- organizational units and assignments
+- authorization assignments/policies
 - projects
 - project memberships
 - tasks
-- audit data
+- tenant audit data
 - tenant subscription state
 
-## Separate platform identity
+## Platform-owned domains
 
-System-administrator records belong to the platform control plane rather than tenant membership.
+System administrators and platform administration data belong to the system control plane rather than tenant membership.
 
-## Referential rules
+## Query rule
 
-Cross-tenant foreign/reference relationships must be rejected at service or database boundaries.
+Prefer tenant-qualified repository queries such as:
+
+```text
+tenant_id + entity_id
+```
+
+instead of an unscoped lookup followed by a tenant check after the entity is loaded.
+
+## Referential integrity
+
+Cross-tenant references must be rejected through the earliest reliable combination of:
+
+- tenant-scoped query design
+- service validation
+- foreign keys / unique constraints
+- transaction locking when invariants are concurrency sensitive
+
+## Organization model
+
+Authorization can be scoped through organizational units, subtrees, direct-report relationships, projects and self scope.
+
+Organizational reporting relationships and the separate `primaryAssignment` invariant should be validated explicitly rather than inferred from one another.
 
 ## Source of truth
 
-For exact fields, foreign keys, constraints, indexes, and enum mappings, use:
+For exact columns, indexes and constraints, use:
 
-1. entities
-2. Flyway migrations
-3. focused current guides
+1. Flyway migrations
+2. JPA entities
+3. repository/service tests
+4. focused documentation

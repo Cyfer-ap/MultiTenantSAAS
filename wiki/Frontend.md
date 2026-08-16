@@ -2,54 +2,79 @@
 
 ## Stack
 
-- React 19
-- TypeScript
-- Vite
-- Material UI
-- React Router
-- current state/data-access tooling used by the repository
+Current frontend dependencies include:
+
+- React 19.2
+- TypeScript 6
+- Vite 8
+- Material UI 9
+- React Router 7
+- TanStack React Query
+- Axios
+- React Hook Form
+- Zod
 - Vitest
 - Testing Library
 
 ## Responsibilities
 
-The frontend handles:
+The frontend provides:
 
-- authentication UX
-- protected routes
-- tenant and system shells
+- tenant and system-admin authentication UX
+- protected route shells
 - dashboards
-- users
-- invitations
-- projects
-- tasks
+- tenant/system administration screens
+- users and invitations
+- organization/authorization views
+- projects and tasks
 - audit logs
 - subscription state presentation
+- normalized API-error handling
+
+## Route loading
+
+Major routed pages and application shells are lazy-loaded at route boundaries. This reduces the initial JavaScript bundle and keeps route-level functionality split into smaller chunks.
 
 ## Security rule
 
-Route hiding is not authorization.
+Route hiding, button hiding and client-side role checks are UX controls only.
 
-The backend must reject unauthorized access independently.
+The backend must independently enforce:
+
+```text
+authentication
+tenant isolation
+authorization
+subscription access
+quota/domain rules
+```
 
 ## Session behavior
 
-Tenant and system-admin session stores remain isolated.
+Tenant and system-admin session stores are separate.
 
-Tenant flows include access-token refresh and session restoration.
+Tenant flows include:
 
-## Errors
+- access token usage
+- refresh-token rotation
+- session restoration
+- logout
+- logout-all invalidation
 
-The UI should distinguish:
+## API errors and support references
 
-- authentication failure
-- authorization failure
-- validation failure
-- conflict/business rule
-- subscription restriction
-- network/backend availability
-- unexpected failure
+The API client normalizes backend failures into `ApiClientError`.
 
-## Production API configuration
+When the backend returns `X-Request-ID`, the client preserves it as `requestId`, allowing an unexpected UI error to be correlated with backend logs.
 
-Use `VITE_API_BASE_URL` rather than hard-coding backend URLs.
+See [[API-and-Errors]] and [[Operations-and-Observability]].
+
+## Configuration
+
+Do not hard-code backend URLs. Use:
+
+```dotenv
+VITE_API_BASE_URL=http://localhost:8081
+```
+
+or the corresponding deployed API URL.

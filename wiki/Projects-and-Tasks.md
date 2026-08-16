@@ -2,7 +2,7 @@
 
 ## Projects
 
-Current project lifecycle includes:
+Project lifecycle:
 
 ```text
 PLANNING
@@ -12,16 +12,9 @@ COMPLETED
 ARCHIVED
 ```
 
-Project operations include:
+Project operations include creation, listing/reading, update, status transition, archive, and membership management.
 
-- create
-- list/read
-- update
-- status transition
-- archive
-- membership management
-
-Project data is tenant scoped.
+Every project lookup and mutation remains tenant scoped.
 
 ## Memberships
 
@@ -57,8 +50,17 @@ URGENT
 
 Task logic covers assignment/unassignment, completion timestamps, cancellation, and archived-project history.
 
-## Enforcement
+## Enforcement layers
 
-Project/task authorization must combine tenant isolation with role/permission/relationship rules.
+Project/task operations may require all of the following:
 
-Subscription lifecycle and quotas may independently restrict growth mutations.
+```text
+tenant boundary
+permission / project relationship
+resource-state invariant
+subscription mutation access
+resource quota where applicable
+transaction/database invariant
+```
+
+Frontend capability visibility is not a substitute for these backend checks.
