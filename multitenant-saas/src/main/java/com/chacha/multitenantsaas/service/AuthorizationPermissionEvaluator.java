@@ -165,9 +165,7 @@ public class AuthorizationPermissionEvaluator {
 
     private boolean matchesProjectScope(
             UUID tenantId, UUID grantedProjectId, UUID requestedProjectId) {
-        if (grantedProjectId == null
-                || requestedProjectId == null
-                || !grantedProjectId.equals(requestedProjectId)) {
+        if (grantedProjectId == null || !grantedProjectId.equals(requestedProjectId)) {
             return false;
         }
 
@@ -178,9 +176,7 @@ public class AuthorizationPermissionEvaluator {
     }
 
     private boolean matchesExactUnitScope(UUID tenantId, UUID grantedUnitId, UUID requestedUnitId) {
-        if (grantedUnitId == null
-                || requestedUnitId == null
-                || !grantedUnitId.equals(requestedUnitId)) {
+        if (grantedUnitId == null || !grantedUnitId.equals(requestedUnitId)) {
             return false;
         }
 

@@ -90,7 +90,6 @@ public class SubscriptionPlan {
         this.maxUsers = maxUsers;
         this.maxProjects = maxProjects;
         this.maxStorageMb = maxStorageMb;
-        this.status = SubscriptionPlanStatus.ACTIVE;
     }
 
     @PrePersist

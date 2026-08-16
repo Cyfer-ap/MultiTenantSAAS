@@ -80,7 +80,6 @@ public class ProjectTask {
         this.description = description;
         this.priority = priority;
         this.dueAt = dueAt;
-        this.status = ProjectTaskStatus.TODO;
     }
 
     @PrePersist

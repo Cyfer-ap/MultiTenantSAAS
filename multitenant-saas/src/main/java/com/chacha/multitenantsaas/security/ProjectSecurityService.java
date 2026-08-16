@@ -153,7 +153,7 @@ public class ProjectSecurityService {
 
         UUID tokenUserId = parseUuid(jwt.getSubject());
 
-        if (tokenTenantId == null || tokenUserId == null || !tenantId.equals(tokenTenantId)) {
+        if (tokenUserId == null || !tenantId.equals(tokenTenantId)) {
             return null;
         }
 
