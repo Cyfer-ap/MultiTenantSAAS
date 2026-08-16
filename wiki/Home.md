@@ -1,41 +1,55 @@
 # MultiTenantSAAS Wiki
 
-This wiki documents the architecture and development state of `Cyfer-ap/MultiTenantSAAS` at commit `3808c0ddf95d075aed7114bf060518640c19d6c2`.
+MultiTenantSAAS is a full-stack multi-tenant SaaS platform focused on tenant isolation, authentication, permission-oriented authorization, organization-aware access, projects/tasks, subscription enforcement, PostgreSQL correctness, and production hardening.
 
-## Platform at a glance
+This Wiki is the long-form technical reference for the repository. The version-controlled source for these pages lives in the main repository under `wiki/`; publishing is described in [[Wiki-Maintenance]].
 
-MultiTenantSAAS is a full-stack SaaS application with:
+## Current platform state
 
-- shared-database/shared-schema tenant isolation
-- tenant authentication and system-admin authentication
-- permission-oriented authorization
-- organization/scoped-access foundations
+Major foundations already implemented and hardened include:
+
+- tenant and system-administrator control planes
+- JWT authentication, refresh-token rotation, logout, logout-all, password change/reset, and account lockout
+- shared-schema tenant isolation
+- permission-oriented authorization with scoped assignments
+- organization hierarchy and reporting relationships
+- invitations
 - projects, memberships, and tasks
-- invitation lifecycle
-- tenant/platform dashboards
-- audit logs
-- subscription plans, lifecycle, access evaluation, and quotas
-- central workspace read-only enforcement
-- PostgreSQL 17 runtime path and Flyway baseline strategy
-- production Spring profile and production environment template
-- active transaction/concurrency hardening
+- tenant and platform audit logs
+- subscription plans, lifecycle evaluation, read-only enforcement, and resource quotas
+- PostgreSQL 17 + Flyway migration strategy
+- Docker/Compose development and deployment paths
+- PostgreSQL concurrency hardening and integration tests
+- request correlation IDs and completion logging
+- secured Actuator health/metrics access
+- SaaS-specific Micrometer counters
+- frontend route-level code splitting
+- CI, container/security checks, and Qodana analysis
 
-## Architecture map
+## Stack
+
+**Backend:** Java 21, Spring Boot 4.0.7, Spring Security, OAuth2 Resource Server/JWT, Spring Data JPA/Hibernate, Flyway, PostgreSQL, H2 test/history path, Testcontainers, Actuator.
+
+**Frontend:** React 19.2, TypeScript 6, Vite 8, Material UI 9, React Router 7, TanStack React Query, Axios, React Hook Form, Zod, Vitest and Testing Library.
+
+## Request path
 
 ```text
 Browser
   |
   v
-React / Vite frontend
+React / Vite
   |
   v
-Spring Security
+Spring Security + JWT
   |
   v
-Controllers
+Controller
   |
-  v
-Authorization + subscription enforcement
+  +--> tenant isolation
+  +--> authorization / scope evaluation
+  +--> subscription access
+  +--> quota enforcement
   |
   v
 Transactional services
@@ -44,27 +58,34 @@ Transactional services
 Tenant-scoped repositories
   |
   v
-PostgreSQL / H2 test path
+PostgreSQL
 ```
 
-## Wiki navigation
+These controls are deliberately separate. Authorization does not bypass subscription restrictions, and a valid subscription does not grant missing permissions.
 
+## Start here
+
+- [[Local-Development]]
 - [[Architecture]]
 - [[Security-and-Authentication]]
 - [[Authorization]]
 - [[Tenancy-and-Data-Model]]
-- [[Projects-and-Tasks]]
-- [[Subscriptions-and-Quotas]]
-- [[PostgreSQL-and-Flyway]]
-- [[Transaction-and-Concurrency]]
 - [[Frontend]]
 - [[Testing-and-CI]]
+
+For production and support work:
+
 - [[Production-Deployment]]
+- [[Operations-and-Observability]]
+- [[API-and-Errors]]
+- [[PostgreSQL-and-Flyway]]
+- [[Transaction-and-Concurrency]]
+
+For project status:
+
 - [[Roadmap]]
 - [[Developer-Handoff]]
 
-## Current milestone
+## Production-readiness boundary
 
-The active engineering milestone is **Step 40 — Transaction & Concurrency Hardening**.
-
-The latest `main` additionally includes the production configuration foundation.
+The application has a strong production-readiness foundation, but remaining operational work includes database backup/restore, external monitoring/alerting, provider billing/webhooks, background jobs/notifications, and additional load/failure-recovery verification.

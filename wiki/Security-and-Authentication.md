@@ -15,6 +15,7 @@ Important behaviors include:
 - password reset
 - account lockout
 - session-version invalidation
+- live database-backed account/tenant validation
 
 ## Session version
 
@@ -32,10 +33,24 @@ System administrators use their own authentication/control plane.
 
 System-admin identity must not be merged into tenant membership.
 
-## Production hardening
+## Public endpoint hardening
 
-Production configuration hides internal exception details, suppresses sensitive health details, disables Flyway clean, and limits operational endpoint exposure.
+Public authentication/recovery/onboarding paths use bounded process-local rate limiting. This is appropriate for the current single-instance staging model; horizontal production scale would require shared/distributed state.
+
+Password-reset responses are designed to avoid account enumeration, and raw reset-token exposure is disabled in production.
+
+## Observability
+
+Security-relevant counters include:
+
+```text
+saas.security.login.attempts
+saas.security.account.locks
+saas.security.rate_limit.rejections
+```
+
+See [[Operations-and-Observability]].
 
 ## Security principle
 
-Frontend guards improve UX, but the backend remains authoritative.
+The backend is authoritative. Frontend guards improve usability but never replace server-side authentication, tenant isolation or authorization.
