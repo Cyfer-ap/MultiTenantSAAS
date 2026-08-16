@@ -34,7 +34,6 @@ public class Tenant {
     public Tenant(String name, String slug) {
         this.name = name;
         this.slug = slug;
-        this.status = TenantStatus.ACTIVE;
     }
 
     @PrePersist

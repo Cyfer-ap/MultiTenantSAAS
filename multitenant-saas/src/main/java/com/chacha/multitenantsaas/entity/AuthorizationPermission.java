@@ -89,7 +89,6 @@ public class AuthorizationPermission {
                 tenant == null
                         ? AuthorizationPermissionSource.PLATFORM
                         : AuthorizationPermissionSource.TENANT;
-        this.status = AuthorizationPermissionStatus.ACTIVE;
 
         synchronizeCatalogIdentity();
     }

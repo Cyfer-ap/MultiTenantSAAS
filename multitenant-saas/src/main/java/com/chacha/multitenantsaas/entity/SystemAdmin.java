@@ -45,7 +45,6 @@ public class SystemAdmin {
         this.fullName = fullName;
         this.email = email;
         this.passwordHash = passwordHash;
-        this.status = UserStatus.ACTIVE;
     }
 
     @PrePersist

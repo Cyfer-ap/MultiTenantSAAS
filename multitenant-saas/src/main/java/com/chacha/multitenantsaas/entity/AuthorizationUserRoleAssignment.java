@@ -104,7 +104,6 @@ public class AuthorizationUserRoleAssignment {
         this.validFrom = validFrom;
         this.validUntil = validUntil;
         this.createdByUser = createdByUser;
-        this.status = AuthorizationUserRoleAssignmentStatus.ACTIVE;
     }
 
     @PrePersist

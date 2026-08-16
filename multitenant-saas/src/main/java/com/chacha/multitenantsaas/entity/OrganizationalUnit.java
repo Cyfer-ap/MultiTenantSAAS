@@ -82,7 +82,6 @@ public class OrganizationalUnit {
         this.name = name;
         this.code = code;
         this.type = type;
-        this.status = OrganizationalUnitStatus.ACTIVE;
     }
 
     @PrePersist

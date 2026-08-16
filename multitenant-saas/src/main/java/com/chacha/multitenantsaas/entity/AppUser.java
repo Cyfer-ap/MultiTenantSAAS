@@ -61,7 +61,6 @@ public class AppUser {
         this.email = email;
         this.passwordHash = passwordHash;
         this.role = role;
-        this.status = UserStatus.ACTIVE;
     }
 
     @PrePersist

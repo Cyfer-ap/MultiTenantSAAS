@@ -104,7 +104,6 @@ public class UserOrganizationAssignment {
         this.reportsToAssignment = reportsToAssignment;
         this.positionTitle = positionTitle;
         this.primaryAssignment = primaryAssignment;
-        this.status = OrganizationAssignmentStatus.ACTIVE;
         this.validFrom = validFrom;
         this.validUntil = validUntil;
         this.createdByUser = createdByUser;

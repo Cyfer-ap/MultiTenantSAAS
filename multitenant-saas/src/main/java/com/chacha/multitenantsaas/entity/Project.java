@@ -49,7 +49,6 @@ public class Project {
         this.createdByUser = createdByUser;
         this.name = name;
         this.description = description;
-        this.status = ProjectStatus.PLANNING;
     }
 
     @PrePersist

@@ -76,7 +76,6 @@ public class AuthorizationRole {
         this.name = name;
         this.description = description;
         this.source = source;
-        this.status = AuthorizationRoleStatus.ACTIVE;
     }
 
     @PrePersist

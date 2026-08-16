@@ -82,7 +82,6 @@ public class UserInvitation {
         this.role = role;
         this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;
-        this.status = UserInvitationStatus.PENDING;
     }
 
     @PrePersist
