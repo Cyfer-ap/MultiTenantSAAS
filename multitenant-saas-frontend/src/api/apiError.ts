@@ -9,6 +9,7 @@ interface ApiClientErrorOptions {
     path?: string
     details?: Record<string, unknown> | null
     timestamp?: string
+    requestId?: string
     networkError?: boolean
 }
 
@@ -18,6 +19,7 @@ export class ApiClientError extends Error {
     readonly path?: string
     readonly details: Record<string, unknown> | null
     readonly timestamp?: string
+    readonly requestId?: string
     readonly networkError: boolean
 
     constructor({
@@ -27,6 +29,7 @@ export class ApiClientError extends Error {
         path,
         details = null,
         timestamp,
+        requestId,
         networkError = false,
     }: ApiClientErrorOptions) {
         super(message)
@@ -37,6 +40,7 @@ export class ApiClientError extends Error {
         this.path = path
         this.details = details
         this.timestamp = timestamp
+        this.requestId = requestId
         this.networkError = networkError
     }
 }
@@ -63,6 +67,8 @@ export function normalizeApiError(error: unknown): ApiClientError {
 
     if (axios.isAxiosError(error)) {
         const responseBody: unknown = error.response?.data
+        const requestIdHeader = error.response?.headers?.['x-request-id']
+        const requestId = typeof requestIdHeader === 'string' ? requestIdHeader : undefined
 
         if (isApiErrorResponse(responseBody)) {
             return new ApiClientError({
@@ -72,6 +78,7 @@ export function normalizeApiError(error: unknown): ApiClientError {
                 path: responseBody.path,
                 details: responseBody.details,
                 timestamp: responseBody.timestamp,
+                requestId,
             })
         }
 
@@ -86,6 +93,7 @@ export function normalizeApiError(error: unknown): ApiClientError {
         return new ApiClientError({
             message: 'The server returned an unexpected response.',
             status: error.response.status,
+            requestId,
         })
     }
 
