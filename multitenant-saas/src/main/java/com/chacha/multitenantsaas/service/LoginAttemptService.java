@@ -3,6 +3,9 @@ package com.chacha.multitenantsaas.service;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.SystemAdmin;
 import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
+import com.chacha.multitenantsaas.observability.AuthenticationMetrics;
+import com.chacha.multitenantsaas.observability.AuthenticationMetrics.AccountType;
+import com.chacha.multitenantsaas.observability.AuthenticationMetrics.LoginOutcome;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.SystemAdminRepository;
 import java.time.Instant;
@@ -17,16 +20,19 @@ public class LoginAttemptService {
     private final SystemAdminRepository systemAdminRepository;
     private final int maxFailedAttempts;
     private final long lockMinutes;
+    private final AuthenticationMetrics authenticationMetrics;
 
     public LoginAttemptService(
             AppUserRepository appUserRepository,
             SystemAdminRepository systemAdminRepository,
             @Value("${app.security.max-failed-login-attempts:5}") int maxFailedAttempts,
-            @Value("${app.security.account-lock-minutes:15}") long lockMinutes) {
+            @Value("${app.security.account-lock-minutes:15}") long lockMinutes,
+            AuthenticationMetrics authenticationMetrics) {
         this.appUserRepository = appUserRepository;
         this.systemAdminRepository = systemAdminRepository;
         this.maxFailedAttempts = maxFailedAttempts;
         this.lockMinutes = lockMinutes;
+        this.authenticationMetrics = authenticationMetrics;
     }
 
     public void ensureNotLocked(AppUser user) {
@@ -35,6 +41,7 @@ public class LoginAttemptService {
         }
 
         if (user.getLockedUntil().isAfter(Instant.now())) {
+            authenticationMetrics.recordLoginAttempt(AccountType.TENANT_USER, LoginOutcome.BLOCKED);
             throw new AuthenticationFailedException(
                     "Account is temporarily locked. Please try again later.");
         }
@@ -50,6 +57,8 @@ public class LoginAttemptService {
         }
 
         if (systemAdmin.getLockedUntil().isAfter(Instant.now())) {
+            authenticationMetrics.recordLoginAttempt(
+                    AccountType.SYSTEM_ADMIN, LoginOutcome.BLOCKED);
             throw new AuthenticationFailedException(
                     "System admin account is temporarily locked. Please try again later.");
         }
@@ -61,26 +70,38 @@ public class LoginAttemptService {
 
     public void recordFailedAttempt(AppUser user) {
         int failedAttempts = user.getFailedLoginAttempts() + 1;
+        boolean accountLocked = failedAttempts >= maxFailedAttempts;
 
         user.setFailedLoginAttempts(failedAttempts);
 
-        if (failedAttempts >= maxFailedAttempts) {
+        if (accountLocked) {
             user.setLockedUntil(Instant.now().plus(lockMinutes, ChronoUnit.MINUTES));
         }
 
         appUserRepository.save(user);
+        authenticationMetrics.recordLoginAttempt(AccountType.TENANT_USER, LoginOutcome.FAILURE);
+
+        if (accountLocked) {
+            authenticationMetrics.recordAccountLock(AccountType.TENANT_USER);
+        }
     }
 
     public void recordFailedAttempt(SystemAdmin systemAdmin) {
         int failedAttempts = systemAdmin.getFailedLoginAttempts() + 1;
+        boolean accountLocked = failedAttempts >= maxFailedAttempts;
 
         systemAdmin.setFailedLoginAttempts(failedAttempts);
 
-        if (failedAttempts >= maxFailedAttempts) {
+        if (accountLocked) {
             systemAdmin.setLockedUntil(Instant.now().plus(lockMinutes, ChronoUnit.MINUTES));
         }
 
         systemAdminRepository.save(systemAdmin);
+        authenticationMetrics.recordLoginAttempt(AccountType.SYSTEM_ADMIN, LoginOutcome.FAILURE);
+
+        if (accountLocked) {
+            authenticationMetrics.recordAccountLock(AccountType.SYSTEM_ADMIN);
+        }
     }
 
     public void recordSuccessfulLogin(AppUser user) {
@@ -88,6 +109,7 @@ public class LoginAttemptService {
         user.setLockedUntil(null);
 
         appUserRepository.save(user);
+        authenticationMetrics.recordLoginAttempt(AccountType.TENANT_USER, LoginOutcome.SUCCESS);
     }
 
     public void recordSuccessfulLogin(SystemAdmin systemAdmin) {
@@ -95,6 +117,7 @@ public class LoginAttemptService {
         systemAdmin.setLockedUntil(null);
 
         systemAdminRepository.save(systemAdmin);
+        authenticationMetrics.recordLoginAttempt(AccountType.SYSTEM_ADMIN, LoginOutcome.SUCCESS);
     }
 
     public void unlockUser(AppUser user) {
