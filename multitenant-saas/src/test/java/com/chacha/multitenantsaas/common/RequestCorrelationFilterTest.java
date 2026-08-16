@@ -1,7 +1,9 @@
 package com.chacha.multitenantsaas.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import jakarta.servlet.ServletException;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
@@ -58,5 +60,28 @@ class RequestCorrelationFilterTest {
         String requestId = response.getHeader(RequestCorrelationFilter.REQUEST_ID_HEADER);
 
         assertThat(requestId).isNotBlank().isNotEqualTo("invalid request id");
+    }
+
+    @Test
+    void clearsRequestIdWhenDownstreamProcessingFails() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setMethod("GET");
+        request.setRequestURI("/api/test");
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        assertThatThrownBy(
+                        () ->
+                                filter.doFilter(
+                                        request,
+                                        response,
+                                        (servletRequest, servletResponse) -> {
+                                            throw new ServletException("boom");
+                                        }))
+                .isInstanceOf(ServletException.class)
+                .hasMessage("boom");
+
+        assertThat(response.getHeader(RequestCorrelationFilter.REQUEST_ID_HEADER)).isNotBlank();
+        assertThat(MDC.get(RequestCorrelationFilter.MDC_REQUEST_ID_KEY)).isNull();
     }
 }
