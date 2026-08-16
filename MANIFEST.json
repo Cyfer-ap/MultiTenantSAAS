@@ -1,0 +1,40 @@
+{
+  "repository": "Cyfer-ap/MultiTenantSAAS",
+  "branch": "main",
+  "reviewed_commit": "3808c0ddf95d075aed7114bf060518640c19d6c2",
+  "generated_date": "2026-08-16",
+  "contents": {
+    "root": [
+      "readme.md",
+      "CHECKPOINT.md",
+      "HANDOFF.md",
+      "MANIFEST.json"
+    ],
+    "guides": [
+      "README.md",
+      "authorization_model.md",
+      "current_architecture.md",
+      "data_model.md",
+      "postgresql_and_migrations.md",
+      "step39_closeout.md",
+      "step40_transaction_concurrency.md",
+      "subscription_billing.md"
+    ],
+    "wiki": [
+      "Architecture.md",
+      "Authorization.md",
+      "Developer-Handoff.md",
+      "Frontend.md",
+      "Home.md",
+      "PostgreSQL-and-Flyway.md",
+      "Production-Deployment.md",
+      "Projects-and-Tasks.md",
+      "Roadmap.md",
+      "Security-and-Authentication.md",
+      "Subscriptions-and-Quotas.md",
+      "Tenancy-and-Data-Model.md",
+      "Testing-and-CI.md",
+      "Transaction-and-Concurrency.md"
+    ]
+  }
+}
