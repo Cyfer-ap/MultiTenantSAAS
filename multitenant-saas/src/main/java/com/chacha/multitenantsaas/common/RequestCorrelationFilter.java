@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -20,6 +22,8 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
     public static final String REQUEST_ID_HEADER = "X-Request-ID";
     public static final String MDC_REQUEST_ID_KEY = "requestId";
 
+    private static final Logger log = LoggerFactory.getLogger(RequestCorrelationFilter.class);
+
     private static final Pattern VALID_REQUEST_ID = Pattern.compile("[A-Za-z0-9._-]{1,128}");
 
     @Override
@@ -28,6 +32,7 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String requestId = resolveRequestId(request);
+        long startedAtNanos = System.nanoTime();
 
         MDC.put(MDC_REQUEST_ID_KEY, requestId);
         response.setHeader(REQUEST_ID_HEADER, requestId);
@@ -35,7 +40,11 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
         try {
             filterChain.doFilter(request, response);
         } finally {
-            MDC.remove(MDC_REQUEST_ID_KEY);
+            try {
+                logRequestCompletion(request, response, startedAtNanos);
+            } finally {
+                MDC.remove(MDC_REQUEST_ID_KEY);
+            }
         }
     }
 
@@ -47,5 +56,41 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
         }
 
         return UUID.randomUUID().toString();
+    }
+
+    private void logRequestCompletion(
+            HttpServletRequest request, HttpServletResponse response, long startedAtNanos) {
+
+        if (isOperationalProbe(request.getRequestURI())) {
+            return;
+        }
+
+        long durationMillis = (System.nanoTime() - startedAtNanos) / 1_000_000L;
+        int status = response.getStatus();
+
+        if (status >= 500) {
+            log.warn(
+                    "HTTP {} {} completed with status {} in {} ms",
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    status,
+                    durationMillis);
+            return;
+        }
+
+        log.info(
+                "HTTP {} {} completed with status {} in {} ms",
+                request.getMethod(),
+                request.getRequestURI(),
+                status,
+                durationMillis);
+    }
+
+    private boolean isOperationalProbe(String requestUri) {
+        return requestUri.equals("/api/health")
+                || requestUri.equals("/actuator/health")
+                || requestUri.startsWith("/actuator/health/")
+                || requestUri.equals("/livez")
+                || requestUri.equals("/readyz");
     }
 }
