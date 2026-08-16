@@ -50,8 +50,10 @@ public class SecurityConfig {
                         auth ->
                                 auth.requestMatchers("/api/health")
                                         .permitAll()
-                                        .requestMatchers("/actuator/**")
+                                        .requestMatchers("/actuator/health/**", "/livez", "/readyz")
                                         .permitAll()
+                                        .requestMatchers("/actuator/**")
+                                        .hasAuthority("SYSTEM_ADMIN")
                                         .requestMatchers("/h2-console/**")
                                         .permitAll()
                                         .requestMatchers("/swagger-ui/**")
