@@ -1,8 +1,8 @@
 # MultiTenantSAAS — Checkpoint
 
-Repository: `Cyfer-ap/MultiTenantSAAS`  
-Branch: `main`  
-Reviewed commit: `3808c0ddf95d075aed7114bf060518640c19d6c2`  
+Repository: `Cyfer-ap/MultiTenantSAAS`
+Branch: `main`
+Reviewed commit: `3808c0ddf95d075aed7114bf060518640c19d6c2`
 Date: 2026-08-16
 
 ## Current phase

@@ -4,10 +4,10 @@ A full-stack multi-tenant SaaS platform focused on secure tenant isolation, perm
 
 > **Documentation snapshot**
 >
-> Repository: `Cyfer-ap/MultiTenantSAAS`  
-> Reviewed branch: `main`  
-> Reviewed commit: `3808c0ddf95d075aed7114bf060518640c19d6c2`  
-> Current engineering phase: **Step 40 — Transaction & Concurrency Hardening**  
+> Repository: `Cyfer-ap/MultiTenantSAAS`
+> Reviewed branch: `main`
+> Reviewed commit: `3808c0ddf95d075aed7114bf060518640c19d6c2`
+> Current engineering phase: **Step 40 — Transaction & Concurrency Hardening**
 > Production configuration foundation: **implemented**
 
 ---
