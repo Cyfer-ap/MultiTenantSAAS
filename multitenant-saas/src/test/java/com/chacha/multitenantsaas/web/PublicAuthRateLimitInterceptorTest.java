@@ -4,10 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.chacha.multitenantsaas.config.PublicAuthRateLimitProperties;
 import com.chacha.multitenantsaas.exception.RateLimitExceededException;
+import com.chacha.multitenantsaas.observability.PublicAuthRateLimitMetrics;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +19,7 @@ class PublicAuthRateLimitInterceptorTest {
 
     private PublicAuthRateLimitInterceptor interceptor;
     private HttpServletResponse response;
+    private PublicAuthRateLimitMetrics rateLimitMetrics;
 
     @BeforeEach
     void setUp() {
@@ -28,7 +31,8 @@ class PublicAuthRateLimitInterceptorTest {
         properties.setTokenMaxRequests(1);
         properties.setOnboardingMaxRequests(1);
 
-        interceptor = new PublicAuthRateLimitInterceptor(properties);
+        rateLimitMetrics = mock(PublicAuthRateLimitMetrics.class);
+        interceptor = new PublicAuthRateLimitInterceptor(properties, rateLimitMetrics);
         response = mock(HttpServletResponse.class);
     }
 
@@ -47,6 +51,7 @@ class PublicAuthRateLimitInterceptorTest {
         assertEquals("login", exception.getScope());
         assertTrue(exception.getRetryAfterSeconds() >= 1L);
         assertTrue(exception.getRetryAfterSeconds() <= 60L);
+        verify(rateLimitMetrics).recordRejection("login");
     }
 
     @Test
