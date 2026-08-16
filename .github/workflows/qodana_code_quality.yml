@@ -35,5 +35,6 @@ jobs:
           use-caches: true
           post-pr-comment: true
           use-annotations: true
-          upload-result: false
+          upload-result: ${{ github.ref_name == 'main' }}
+          artifact-name: qodana-report
           push-fixes: 'none'
