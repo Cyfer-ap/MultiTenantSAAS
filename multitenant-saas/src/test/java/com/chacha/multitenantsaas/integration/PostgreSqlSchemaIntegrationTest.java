@@ -2,6 +2,7 @@ package com.chacha.multitenantsaas.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.chacha.multitenantsaas.entity.OrganizationAssignmentStatus;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.AuditLogRepository;
 import com.chacha.multitenantsaas.repository.PlatformAuditLogRepository;
@@ -11,7 +12,6 @@ import com.chacha.multitenantsaas.repository.ProjectTaskRepository;
 import com.chacha.multitenantsaas.repository.SystemAdminRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import com.chacha.multitenantsaas.repository.UserInvitationRepository;
-import com.chacha.multitenantsaas.entity.OrganizationAssignmentStatus;
 import com.chacha.multitenantsaas.repository.UserOrganizationAssignmentRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -59,8 +59,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private SystemAdminRepository systemAdminRepository;
     @Autowired private AuditLogRepository auditLogRepository;
     @Autowired private PlatformAuditLogRepository platformAuditLogRepository;
-    @Autowired
-    private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
+    @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
     void postgresBaselineReachesV17AndMatchesJpaMappings() {
@@ -133,19 +132,16 @@ class PostgreSqlSchemaIntegrationTest {
         var validUntil = validFrom.plusSeconds(3600);
 
         long openEndedCount =
-            userOrganizationAssignmentRepository.countOverlappingOpenEndedPrimaryAssignments(
-                tenantId,
-                userId,
-                OrganizationAssignmentStatus.ACTIVE,
-                validFrom);
+                userOrganizationAssignmentRepository.countOverlappingOpenEndedPrimaryAssignments(
+                        tenantId, userId, OrganizationAssignmentStatus.ACTIVE, validFrom);
 
         long boundedCount =
-            userOrganizationAssignmentRepository.countOverlappingBoundedPrimaryAssignments(
-                tenantId,
-                userId,
-                OrganizationAssignmentStatus.ACTIVE,
-                validFrom,
-                validUntil);
+                userOrganizationAssignmentRepository.countOverlappingBoundedPrimaryAssignments(
+                        tenantId,
+                        userId,
+                        OrganizationAssignmentStatus.ACTIVE,
+                        validFrom,
+                        validUntil);
 
         assertThat(openEndedCount).isZero();
         assertThat(boundedCount).isZero();
