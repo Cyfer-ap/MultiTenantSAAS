@@ -23,22 +23,38 @@ public interface UserOrganizationAssignmentRepository
 
     @Query(
             """
-            SELECT COUNT(assignment)
-            FROM UserOrganizationAssignment assignment
-            WHERE assignment.tenant.id = :tenantId
-              AND assignment.user.id = :userId
-              AND assignment.primaryAssignment = true
-              AND assignment.status = :activeStatus
-              AND (
-                    :validUntil IS NULL
-                    OR assignment.validFrom < :validUntil
-              )
-              AND (
-                    assignment.validUntil IS NULL
-                    OR assignment.validUntil > :validFrom
-              )
-            """)
-    long countOverlappingActivePrimaryAssignments(
+        SELECT COUNT(assignment)
+        FROM UserOrganizationAssignment assignment
+        WHERE assignment.tenant.id = :tenantId
+          AND assignment.user.id = :userId
+          AND assignment.primaryAssignment = true
+          AND assignment.status = :activeStatus
+          AND (
+                assignment.validUntil IS NULL
+                OR assignment.validUntil > :validFrom
+          )
+        """)
+    long countOverlappingOpenEndedPrimaryAssignments(
+            @Param("tenantId") UUID tenantId,
+            @Param("userId") UUID userId,
+            @Param("activeStatus") OrganizationAssignmentStatus activeStatus,
+            @Param("validFrom") Instant validFrom);
+
+    @Query(
+            """
+        SELECT COUNT(assignment)
+        FROM UserOrganizationAssignment assignment
+        WHERE assignment.tenant.id = :tenantId
+          AND assignment.user.id = :userId
+          AND assignment.primaryAssignment = true
+          AND assignment.status = :activeStatus
+          AND assignment.validFrom < :validUntil
+          AND (
+                assignment.validUntil IS NULL
+                OR assignment.validUntil > :validFrom
+          )
+        """)
+    long countOverlappingBoundedPrimaryAssignments(
             @Param("tenantId") UUID tenantId,
             @Param("userId") UUID userId,
             @Param("activeStatus") OrganizationAssignmentStatus activeStatus,
