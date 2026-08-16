@@ -2,6 +2,7 @@ package com.chacha.multitenantsaas.web;
 
 import com.chacha.multitenantsaas.config.PublicAuthRateLimitProperties;
 import com.chacha.multitenantsaas.exception.RateLimitExceededException;
+import com.chacha.multitenantsaas.observability.PublicAuthRateLimitMetrics;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Instant;
@@ -24,11 +25,14 @@ public class PublicAuthRateLimitInterceptor implements HandlerInterceptor {
     private static final long CLEANUP_INTERVAL = 256L;
 
     private final PublicAuthRateLimitProperties properties;
+    private final PublicAuthRateLimitMetrics rateLimitMetrics;
     private final ConcurrentMap<RateLimitKey, RateLimitWindow> windows = new ConcurrentHashMap<>();
     private final AtomicLong requestSequence = new AtomicLong();
 
-    public PublicAuthRateLimitInterceptor(PublicAuthRateLimitProperties properties) {
+    public PublicAuthRateLimitInterceptor(
+            PublicAuthRateLimitProperties properties, PublicAuthRateLimitMetrics rateLimitMetrics) {
         this.properties = properties;
+        this.rateLimitMetrics = rateLimitMetrics;
     }
 
     @Override
@@ -86,8 +90,10 @@ public class PublicAuthRateLimitInterceptor implements HandlerInterceptor {
             long retryAfterSeconds =
                     Math.max(1L, windowStartEpochSecond + windowSeconds - nowEpochSecond);
 
-            throw new RateLimitExceededException(
-                    scope.name().toLowerCase(Locale.ROOT), retryAfterSeconds);
+            String scopeName = scope.name().toLowerCase(Locale.ROOT);
+            rateLimitMetrics.recordRejection(scopeName);
+
+            throw new RateLimitExceededException(scopeName, retryAfterSeconds);
         }
 
         return true;
