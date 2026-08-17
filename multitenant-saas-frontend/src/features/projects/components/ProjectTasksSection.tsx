@@ -45,11 +45,15 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material'
-import type { DragEvent, FormEvent, MouseEvent } from 'react'
-import { useMemo, useState } from 'react'
+import type { DragEvent, FormEvent, KeyboardEvent, MouseEvent } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { useProjectMember, useProjectMembers } from '../hooks/useProjectMembers'
-import { useProjectTasks, useUpdateProjectTaskStatus } from '../hooks/useProjectTasks'
+import {
+    useProjectTask,
+    useProjectTasks,
+    useUpdateProjectTaskStatus,
+} from '../hooks/useProjectTasks'
 import type {
     ProjectTask,
     ProjectTaskPriority,
@@ -58,6 +62,7 @@ import type {
     ProjectTasksQueryParams,
 } from '../types/projectTasks'
 import type { ProjectMembersQueryParams, SortDirection } from '../types/projects'
+import { ProjectTaskCollaborationDrawer } from './ProjectTaskCollaborationDrawer'
 import {
     AssignProjectTaskDialog,
     CancelProjectTaskDialog,
@@ -116,10 +121,8 @@ const priorityColors = {
 
 function formatDateTime(value: string | null): string {
     if (!value) return 'No due date'
-
     const date = new Date(value)
     if (Number.isNaN(date.getTime())) return '—'
-
     return new Intl.DateTimeFormat(undefined, {
         dateStyle: 'medium',
         timeStyle: 'short',
@@ -128,19 +131,17 @@ function formatDateTime(value: string | null): string {
 
 function formatDueDate(value: string | null): string {
     if (!value) return 'No due'
-
     const date = new Date(value)
     if (Number.isNaN(date.getTime())) return '—'
-
     return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(date)
 }
 
 function isOverdue(task: ProjectTask): boolean {
     return Boolean(
         task.dueAt &&
-        task.status !== 'COMPLETED' &&
-        task.status !== 'CANCELLED' &&
-        new Date(task.dueAt).getTime() < Date.now(),
+            task.status !== 'COMPLETED' &&
+            task.status !== 'CANCELLED' &&
+            new Date(task.dueAt).getTime() < Date.now(),
     )
 }
 
@@ -150,13 +151,17 @@ function getErrorMessage(error: unknown, fallback: string): string {
 
 function getInitials(name: string | null): string {
     if (!name) return '?'
-
     return name
         .split(/\s+/)
         .filter(Boolean)
         .slice(0, 2)
         .map((part) => part[0]?.toUpperCase())
         .join('')
+}
+
+function readTaskIdFromLocation(): string {
+    if (typeof window === 'undefined') return ''
+    return new URL(window.location.href).searchParams.get('task')?.trim() ?? ''
 }
 
 function TaskTableSkeleton() {
@@ -179,11 +184,7 @@ function TaskBoardSkeleton() {
     return (
         <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', paddingBottom: 1 }}>
             {activeStatuses.map((status) => (
-                <Paper
-                    key={status}
-                    variant="outlined"
-                    sx={{ minWidth: 280, padding: 2, width: 320 }}
-                >
+                <Paper key={status} variant="outlined" sx={{ minWidth: 280, padding: 2, width: 320 }}>
                     <Skeleton width="45%" />
                     <Skeleton height={130} sx={{ marginTop: 2 }} variant="rounded" />
                     <Skeleton height={110} sx={{ marginTop: 1 }} variant="rounded" />
@@ -220,6 +221,7 @@ export function ProjectTasksSection({
     const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
     const [movingTaskId, setMovingTaskId] = useState<string | null>(null)
     const [boardError, setBoardError] = useState<string | null>(null)
+    const [collaborationTaskId, setCollaborationTaskId] = useState(readTaskIdFromLocation)
 
     const needsMembershipLookup = !canReadTasksByPermission || !canManageTasksByPermission
     const currentMemberQuery = useProjectMember(tenantId, projectId, userId, needsMembershipLookup)
@@ -236,7 +238,6 @@ export function ProjectTasksSection({
         sortBy: 'assignedAt',
         sortDir: 'asc',
     }
-
     const memberOptionsQuery = useProjectMembers(
         tenantId,
         projectId,
@@ -254,12 +255,23 @@ export function ProjectTasksSection({
         ...(assigneeUserId === 'ALL' ? {} : { assigneeUserId }),
         ...(search ? { search } : {}),
     }
-
     const tasksQuery = useProjectTasks(tenantId, projectId, queryParams, canReadTasks)
+    const taskDetailsQuery = useProjectTask(
+        tenantId,
+        projectId,
+        collaborationTaskId,
+        canReadTasks && Boolean(collaborationTaskId),
+    )
     const updateStatusMutation = useUpdateProjectTaskStatus(tenantId, projectId)
     const members = memberOptionsQuery.data?.content ?? []
     const hasFilters =
         search.length > 0 || status !== 'ALL' || priority !== 'ALL' || assigneeUserId !== 'ALL'
+
+    useEffect(() => {
+        const handlePopState = () => setCollaborationTaskId(readTaskIdFromLocation())
+        window.addEventListener('popstate', handlePopState)
+        return () => window.removeEventListener('popstate', handlePopState)
+    }, [])
 
     const tasksByStatus = useMemo(() => {
         const grouped: Record<ProjectTaskStatus, ProjectTask[]> = {
@@ -269,10 +281,14 @@ export function ProjectTasksSection({
             COMPLETED: [],
             CANCELLED: [],
         }
-
         for (const task of tasksQuery.data?.content ?? []) grouped[task.status].push(task)
         return grouped
     }, [tasksQuery.data?.content])
+
+    const listedCollaborationTask = tasksQuery.data?.content.find(
+        (task) => task.id === collaborationTaskId,
+    )
+    const collaborationTask = taskDetailsQuery.data ?? listedCollaborationTask
 
     const submitSearch = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault()
@@ -300,6 +316,7 @@ export function ProjectTasksSection({
     }
 
     const openTaskMenu = (event: MouseEvent<HTMLButtonElement>, task: ProjectTask): void => {
+        event.stopPropagation()
         setSelectedTask(task)
         setMenuAnchor(event.currentTarget)
     }
@@ -314,6 +331,28 @@ export function ProjectTasksSection({
     const closeTaskDialog = (): void => {
         setActiveDialog(null)
         setSelectedTask(null)
+    }
+
+    const openCollaboration = (task: ProjectTask): void => {
+        const url = new URL(window.location.href)
+        url.searchParams.set('task', task.id)
+        window.history.pushState({ taskId: task.id }, '', url)
+        setCollaborationTaskId(task.id)
+    }
+
+    const closeCollaboration = (): void => {
+        const url = new URL(window.location.href)
+        url.searchParams.delete('task')
+        window.history.replaceState({}, '', url)
+        setCollaborationTaskId('')
+    }
+
+    const handleTaskKeyDown = (event: KeyboardEvent<HTMLElement>, task: ProjectTask): void => {
+        if (event.target !== event.currentTarget) return
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            openCollaboration(task)
+        }
     }
 
     const canUpdateTaskStatus = (task: ProjectTask): boolean =>
@@ -340,16 +379,12 @@ export function ProjectTasksSection({
         const taskId = draggedTaskId || event.dataTransfer.getData('text/plain')
         const task = tasksQuery.data?.content.find((candidate) => candidate.id === taskId)
         setDraggedTaskId(null)
-
         if (!task || !canUpdateTaskStatus(task) || task.status === nextStatus) return
 
         setMovingTaskId(task.id)
         setBoardError(null)
         try {
-            await updateStatusMutation.mutateAsync({
-                taskId: task.id,
-                input: { status: nextStatus },
-            })
+            await updateStatusMutation.mutateAsync({ taskId: task.id, input: { status: nextStatus } })
             onFeedback(`Moved “${task.title}” to ${taskStatusLabels[nextStatus]}.`)
         } catch (error) {
             setBoardError(getErrorMessage(error, 'The task could not be moved.'))
@@ -381,15 +416,29 @@ export function ProjectTasksSection({
                 aria-label={`${task.title} task card`}
                 draggable={canMove}
                 key={task.id}
+                onClick={() => openCollaboration(task)}
                 onDragEnd={() => setDraggedTaskId(null)}
                 onDragStart={(event) => handleDragStart(event, task)}
+                onKeyDown={(event) => handleTaskKeyDown(event, task)}
+                role="button"
+                tabIndex={0}
                 variant="outlined"
                 sx={{
-                    cursor: canMove ? 'grab' : 'default',
+                    cursor: canMove ? 'grab' : 'pointer',
                     opacity: movingTaskId === task.id ? 0.55 : 1,
                     padding: 1.5,
-                    transition: 'box-shadow 120ms ease, opacity 120ms ease',
-                    '&:hover': { boxShadow: 2 },
+                    transition:
+                        'box-shadow 150ms ease, opacity 120ms ease, transform 150ms ease, border-color 150ms ease',
+                    '&:hover': {
+                        borderColor: 'text.disabled',
+                        boxShadow: 2,
+                        transform: 'translateY(-1px)',
+                    },
+                    '&:focus-visible': {
+                        outline: 2,
+                        outlineColor: 'primary.main',
+                        outlineOffset: 2,
+                    },
                     '&:active': canMove ? { cursor: 'grabbing' } : undefined,
                 }}
             >
@@ -438,12 +487,7 @@ export function ProjectTasksSection({
                         <Avatar sx={{ fontSize: 11, height: 26, width: 26 }}>
                             {getInitials(task.assigneeName)}
                         </Avatar>
-                        <Typography
-                            color="text.secondary"
-                            noWrap
-                            variant="caption"
-                            sx={{ flexGrow: 1 }}
-                        >
+                        <Typography color="text.secondary" noWrap variant="caption" sx={{ flexGrow: 1 }}>
                             {task.assigneeName || 'Unassigned'}
                         </Typography>
                         <Tooltip title={formatDateTime(task.dueAt)}>
@@ -478,7 +522,7 @@ export function ProjectTasksSection({
                         Project tasks
                     </Typography>
                     <Typography color="text.secondary" variant="body2">
-                        Move work across the board, manage assignments, and keep delivery visible.
+                        Move work across the board, open a task to collaborate, and keep delivery visible.
                     </Typography>
                 </Box>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
@@ -530,12 +574,7 @@ export function ProjectTasksSection({
                 </Stack>
             </Stack>
 
-            <Paper
-                component="form"
-                onSubmit={submitSearch}
-                variant="outlined"
-                sx={{ marginTop: 2, padding: 2 }}
-            >
+            <Paper component="form" onSubmit={submitSearch} variant="outlined" sx={{ marginTop: 2, padding: 2 }}>
                 <Stack
                     direction={{ xs: 'column', lg: 'row' }}
                     spacing={2}
@@ -627,17 +666,18 @@ export function ProjectTasksSection({
                     {boardError}
                 </Alert>
             )}
+            {collaborationTaskId && taskDetailsQuery.isError && !listedCollaborationTask && (
+                <Alert onClose={closeCollaboration} severity="error" sx={{ marginTop: 2 }}>
+                    {getErrorMessage(taskDetailsQuery.error, 'The linked task could not be loaded.')}
+                </Alert>
+            )}
             {tasksQuery.isFetching && !tasksQuery.isPending && (
                 <LinearProgress aria-label="Updating project tasks" sx={{ marginTop: 2 }} />
             )}
             {tasksQuery.isError && (
                 <Alert
                     action={
-                        <Button
-                            color="inherit"
-                            onClick={() => void tasksQuery.refetch()}
-                            size="small"
-                        >
+                        <Button color="inherit" onClick={() => void tasksQuery.refetch()} size="small">
                             Retry
                         </Button>
                     }
@@ -662,8 +702,7 @@ export function ProjectTasksSection({
                 <Box sx={{ marginTop: 2 }}>
                     {tasksQuery.data.totalElements > tasksQuery.data.content.length && (
                         <Alert severity="info" sx={{ marginBottom: 2 }}>
-                            This board shows the first 100 matching tasks. Refine the filters to
-                            narrow the workspace.
+                            This board shows the first 100 matching tasks. Refine the filters to narrow the workspace.
                         </Alert>
                     )}
                     <Box
@@ -710,15 +749,8 @@ export function ProjectTasksSection({
                                             marginBottom: 1.5,
                                         }}
                                     >
-                                        <Stack
-                                            direction="row"
-                                            spacing={1}
-                                            sx={{ alignItems: 'center' }}
-                                        >
-                                            <Typography
-                                                sx={{ fontWeight: 700 }}
-                                                variant="subtitle2"
-                                            >
+                                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                                            <Typography sx={{ fontWeight: 700 }} variant="subtitle2">
                                                 {taskStatusLabels[laneStatus]}
                                             </Typography>
                                             <Chip label={laneTasks.length} size="small" />
@@ -747,11 +779,7 @@ export function ProjectTasksSection({
                                                     padding: 2,
                                                 }}
                                             >
-                                                <Typography
-                                                    color="text.secondary"
-                                                    variant="caption"
-                                                    sx={{ textAlign: 'center' }}
-                                                >
+                                                <Typography color="text.secondary" variant="caption" sx={{ textAlign: 'center' }}>
                                                     {draggedTaskId
                                                         ? `Drop here to move to ${taskStatusLabels[laneStatus]}`
                                                         : 'No tasks in this lane'}
@@ -775,10 +803,7 @@ export function ProjectTasksSection({
                     />
                     {showCancelled && (
                         <Paper variant="outlined" sx={{ marginTop: 1.5, padding: 2 }}>
-                            <Typography
-                                sx={{ fontWeight: 700, marginBottom: 1 }}
-                                variant="subtitle2"
-                            >
+                            <Typography sx={{ fontWeight: 700, marginBottom: 1 }} variant="subtitle2">
                                 Cancelled · read only
                             </Typography>
                             {tasksByStatus.CANCELLED.length === 0 ? (
@@ -797,9 +822,7 @@ export function ProjectTasksSection({
                                         },
                                     }}
                                 >
-                                    {tasksByStatus.CANCELLED.map((task) =>
-                                        renderTaskCard(task, true),
-                                    )}
+                                    {tasksByStatus.CANCELLED.map((task) => renderTaskCard(task, true))}
                                 </Box>
                             )}
                         </Paper>
@@ -822,9 +845,7 @@ export function ProjectTasksSection({
                                             Task
                                         </TableSortLabel>
                                     </TableCell>
-                                    <TableCell
-                                        sortDirection={sortBy === 'status' ? sortDir : false}
-                                    >
+                                    <TableCell sortDirection={sortBy === 'status' ? sortDir : false}>
                                         <TableSortLabel
                                             active={sortBy === 'status'}
                                             direction={sortBy === 'status' ? sortDir : 'asc'}
@@ -833,9 +854,7 @@ export function ProjectTasksSection({
                                             Status
                                         </TableSortLabel>
                                     </TableCell>
-                                    <TableCell
-                                        sortDirection={sortBy === 'priority' ? sortDir : false}
-                                    >
+                                    <TableCell sortDirection={sortBy === 'priority' ? sortDir : false}>
                                         <TableSortLabel
                                             active={sortBy === 'priority'}
                                             direction={sortBy === 'priority' ? sortDir : 'asc'}
@@ -864,18 +883,17 @@ export function ProjectTasksSection({
                                         task.status !== 'CANCELLED' &&
                                         (canManageTasks || canUpdateTaskStatus(task))
                                     return (
-                                        <TableRow key={task.id}>
+                                        <TableRow
+                                            hover
+                                            key={task.id}
+                                            onClick={() => openCollaboration(task)}
+                                            sx={{ cursor: 'pointer' }}
+                                        >
                                             <TableCell>
-                                                <Typography
-                                                    sx={{ fontWeight: 600 }}
-                                                    variant="body2"
-                                                >
+                                                <Typography sx={{ fontWeight: 600 }} variant="body2">
                                                     {task.title}
                                                 </Typography>
-                                                <Typography
-                                                    color="text.secondary"
-                                                    variant="caption"
-                                                >
+                                                <Typography color="text.secondary" variant="caption">
                                                     {task.description || 'No description'}
                                                 </Typography>
                                             </TableCell>
@@ -899,10 +917,7 @@ export function ProjectTasksSection({
                                                     {task.assigneeName || 'Unassigned'}
                                                 </Typography>
                                                 {task.assigneeEmail && (
-                                                    <Typography
-                                                        color="text.secondary"
-                                                        variant="caption"
-                                                    >
+                                                    <Typography color="text.secondary" variant="caption">
                                                         {task.assigneeEmail}
                                                     </Typography>
                                                 )}
@@ -926,9 +941,7 @@ export function ProjectTasksSection({
                                                 {hasActions && (
                                                     <IconButton
                                                         aria-label={`Manage ${task.title}`}
-                                                        onClick={(event) =>
-                                                            openTaskMenu(event, task)
-                                                        }
+                                                        onClick={(event) => openTaskMenu(event, task)}
                                                         size="small"
                                                     >
                                                         <MoreVertRoundedIcon />
@@ -1043,6 +1056,20 @@ export function ProjectTasksSection({
                     onSuccess={onFeedback}
                     projectId={projectId}
                     task={selectedTask}
+                    tenantId={tenantId}
+                />
+            )}
+
+            {collaborationTask && (
+                <ProjectTaskCollaborationDrawer
+                    currentUserId={userId}
+                    members={members}
+                    onClose={closeCollaboration}
+                    onFeedback={onFeedback}
+                    open={Boolean(collaborationTaskId)}
+                    projectId={projectId}
+                    readOnly={projectArchived || collaborationTask.status === 'CANCELLED'}
+                    task={collaborationTask}
                     tenantId={tenantId}
                 />
             )}
