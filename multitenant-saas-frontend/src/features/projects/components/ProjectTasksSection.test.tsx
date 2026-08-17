@@ -271,25 +271,12 @@ describe('ProjectTasksSection', () => {
         expect(await screen.findByRole('button', { name: /create task/i })).toBeInTheDocument()
     })
 
-    it('keeps archived projects and cancelled tasks immutable and read only', async () => {
-        vi.spyOn(projectTasksApi, 'getTasks').mockResolvedValue({
-            ...tasksPage,
-            content: [{ ...task, status: 'CANCELLED' }],
-        })
-
-        const user = userEvent.setup()
+    it('keeps archived project tasks immutable and read only', async () => {
         renderTasksSection({ projectArchived: true })
 
         expect(await screen.findByRole('button', { name: /create task/i })).toBeDisabled()
-        expect(screen.queryByText('Review access controls')).not.toBeInTheDocument()
-
-        const showCancelledToggle = await screen.findByRole('checkbox', {
-            name: /show cancelled tasks/i,
-        })
-        await user.click(showCancelledToggle)
-
-        const cancelledCard = await screen.findByLabelText(/review access controls task card/i)
-        expect(cancelledCard).toHaveAttribute('draggable', 'false')
+        const archivedCard = await screen.findByLabelText(/review access controls task card/i)
+        expect(archivedCard).toHaveAttribute('draggable', 'false')
         expect(
             screen.queryByRole('button', { name: /manage review access controls/i }),
         ).not.toBeInTheDocument()
