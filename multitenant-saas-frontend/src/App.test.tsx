@@ -202,7 +202,8 @@ describe('App authentication routes', () => {
             }),
         ).toBeInTheDocument()
 
-        expect(screen.getByLabelText(/tenant id/i)).toBeInTheDocument()
+        expect(screen.getByLabelText(/email address/i)).toBeInTheDocument()
+        expect(screen.queryByLabelText(/tenant id/i)).not.toBeInTheDocument()
     })
 
     it('returns to login when the active session is cleared', async () => {
@@ -225,9 +226,7 @@ describe('App authentication routes', () => {
         )
 
         expect(
-            await screen.findByRole('heading', {
-                name: /example tenant/i,
-            }),
+            await screen.findByRole('button', { name: /tenant admin/i }),
         ).toBeInTheDocument()
 
         act(() => {

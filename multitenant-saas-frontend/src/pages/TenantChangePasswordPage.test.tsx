@@ -127,7 +127,7 @@ describe('TenantChangePasswordPage', () => {
         expect(
             screen.getByText(/password changed successfully\. sign in with your new password/i),
         ).toBeInTheDocument()
-        expect(screen.getByLabelText(/tenant id/i)).toHaveValue('tenant-1')
+        expect(screen.queryByLabelText(/tenant id/i)).not.toBeInTheDocument()
         expect(screen.getByLabelText(/email address/i)).toHaveValue('grace@example.com')
         expect(authStorage.read()).toBeNull()
         expect(systemAdminStorage.read()).toEqual(systemSession)
