@@ -60,57 +60,23 @@ export function createAppTheme(mode: AppColorMode) {
                 light: colors.primaryLight,
                 contrastText: colors.primaryContrast,
             },
-            secondary: {
-                main: dark ? '#8895a4' : '#596573',
-            },
-            success: {
-                main: dark ? '#6fa47e' : '#39744a',
-            },
-            warning: {
-                main: dark ? '#c59b52' : '#986c22',
-            },
-            error: {
-                main: dark ? '#c9666d' : '#a64049',
-            },
-            info: {
-                main: dark ? '#7199b7' : '#416f91',
-            },
-            background: {
-                default: colors.background,
-                paper: colors.paper,
-            },
-            text: {
-                primary: colors.text,
-                secondary: colors.textSecondary,
-            },
+            secondary: { main: dark ? '#8895a4' : '#596573' },
+            success: { main: dark ? '#6fa47e' : '#39744a' },
+            warning: { main: dark ? '#c59b52' : '#986c22' },
+            error: { main: dark ? '#c9666d' : '#a64049' },
+            info: { main: dark ? '#7199b7' : '#416f91' },
+            background: { default: colors.background, paper: colors.paper },
+            text: { primary: colors.text, secondary: colors.textSecondary },
             divider: colors.divider,
-            action: {
-                hover: colors.hover,
-                selected: colors.selected,
-            },
+            action: { hover: colors.hover, selected: colors.selected },
         },
-        shape: {
-            borderRadius: 13,
-        },
+        shape: { borderRadius: 13 },
         typography: {
             fontFamily: 'Inter, Roboto, Arial, sans-serif',
-            h4: {
-                fontWeight: 760,
-                letterSpacing: '-0.035em',
-            },
-            h5: {
-                fontWeight: 730,
-                letterSpacing: '-0.025em',
-            },
-            h6: {
-                fontWeight: 680,
-                letterSpacing: '-0.015em',
-            },
-            button: {
-                fontWeight: 700,
-                letterSpacing: '-0.01em',
-                textTransform: 'none',
-            },
+            h4: { fontWeight: 760, letterSpacing: '-0.035em' },
+            h5: { fontWeight: 730, letterSpacing: '-0.025em' },
+            h6: { fontWeight: 680, letterSpacing: '-0.015em' },
+            button: { fontWeight: 700, letterSpacing: '-0.01em', textTransform: 'none' },
         },
         components: {
             MuiCssBaseline: {
@@ -148,9 +114,7 @@ export function createAppTheme(mode: AppColorMode) {
                         },
                     },
                     '@media (prefers-reduced-motion: reduce)': {
-                        '::view-transition-new(root)': {
-                            animation: 'none',
-                        },
+                        '::view-transition-new(root)': { animation: 'none' },
                         '*': {
                             scrollBehavior: 'auto !important',
                             transitionDuration: '0.01ms !important',
@@ -221,9 +185,7 @@ export function createAppTheme(mode: AppColorMode) {
                 },
             },
             MuiButton: {
-                defaultProps: {
-                    disableElevation: true,
-                },
+                defaultProps: { disableElevation: true },
                 styleOverrides: {
                     root: {
                         borderRadius: 10,
@@ -252,9 +214,7 @@ export function createAppTheme(mode: AppColorMode) {
                                 : 'linear-gradient(180deg, #4a545f 0%, #303840 100%)',
                             transform: 'translateY(-1px)',
                         },
-                        '&:active': {
-                            transform: 'translateY(0)',
-                        },
+                        '&:active': { transform: 'translateY(0)' },
                     },
                     outlined: {
                         backgroundColor: dark ? 'rgba(15,18,22,0.54)' : 'rgba(255,255,255,0.5)',
@@ -323,22 +283,15 @@ export function createAppTheme(mode: AppColorMode) {
             },
             MuiTableCell: {
                 styleOverrides: {
-                    root: {
-                        borderColor: colors.divider,
-                    },
-                    head: {
-                        color: colors.textSecondary,
-                        fontWeight: 700,
-                    },
+                    root: { borderColor: colors.divider },
+                    head: { color: colors.textSecondary, fontWeight: 700 },
                 },
             },
             MuiTableRow: {
                 styleOverrides: {
                     root: {
                         transition: 'background-color 150ms ease',
-                        '&:hover': {
-                            backgroundColor: colors.hover,
-                        },
+                        '&:hover': { backgroundColor: colors.hover },
                     },
                 },
             },
@@ -380,13 +333,7 @@ export function createAppTheme(mode: AppColorMode) {
                     },
                 },
             },
-            MuiChip: {
-                styleOverrides: {
-                    root: {
-                        borderColor: colors.divider,
-                    },
-                },
-            },
+            MuiChip: { styleOverrides: { root: { borderColor: colors.divider } } },
             MuiTooltip: {
                 styleOverrides: {
                     tooltip: {
@@ -407,3 +354,5 @@ export function createAppTheme(mode: AppColorMode) {
         },
     })
 }
+
+export const appTheme = createAppTheme('light')
