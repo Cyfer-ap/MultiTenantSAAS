@@ -38,4 +38,4 @@ This file tracks platform work that is intentionally being postponed while produ
 
 ## Revisit rule
 
-Revisit an item when a product feature starts depending on it, before relevant external integrations are considered production-ready, or when scale/reliability makes the current synchronous path unsafe. When an item is taken up, link the implementing PR here until the debt is fully retired.
+Revisit an item when a product feature starts depending on it, before relevant external integrations are considered production-ready, or when scale/reliability makes the current synchronous path unsafe. When an item is taken up, link the implementing PR here until the debt is fully retired. Review this file alongside major product milestones so intentionally deferred work does not become invisible.
