@@ -1,6 +1,6 @@
 # Deferred Platform Work
 
-This file tracks platform work that is intentionally being postponed while product-facing UX features are developed. These items are debt to be paid, not discarded roadmap ideas.
+This file tracks platform work that is intentionally being postponed while product-facing UX features are developed. These items are debt to be paid, not discarded roadmap ideas. Keep this list visible during feature planning and retire entries only when the underlying platform capability is actually delivered.
 
 ## Priority platform debt
 
