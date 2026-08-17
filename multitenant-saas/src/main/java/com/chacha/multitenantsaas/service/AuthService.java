@@ -71,7 +71,10 @@ public class AuthService {
                         request.workspaceGrantId(), normalizedEmail);
 
         LoginResponse response =
-                login(tenantId, new LoginRequest(request.email(), request.password()));
+                loginInternal(
+                        tenantId,
+                        new LoginRequest(request.email(), request.password()),
+                        Boolean.TRUE.equals(request.keepSignedIn()));
 
         emailWorkspaceDiscoveryService.consumeLoginGrant(loginGrant);
         return response;
@@ -79,6 +82,11 @@ public class AuthService {
 
     @Transactional(noRollbackFor = AuthenticationFailedException.class)
     public LoginResponse login(UUID tenantId, LoginRequest request) {
+        return loginInternal(tenantId, request, false);
+    }
+
+    private LoginResponse loginInternal(
+            UUID tenantId, LoginRequest request, boolean persistentSession) {
         Tenant tenant =
                 tenantRepository
                         .findById(tenantId)
@@ -159,7 +167,8 @@ public class AuthService {
         loginAttemptService.recordSuccessfulLogin(user);
 
         String accessToken = jwtService.generateAccessToken(tenant, user);
-        String refreshToken = refreshTokenService.createRefreshToken(user);
+        RefreshTokenService.IssuedRefreshToken issuedRefreshToken =
+                refreshTokenService.createIssuedRefreshToken(user, persistentSession);
 
         auditLogService.record(
                 tenant, user, AuditAction.LOGIN_SUCCESS, true, "User logged in successfully");
@@ -171,9 +180,11 @@ public class AuthService {
                 user.getEmail(),
                 user.getRole(),
                 accessToken,
-                refreshToken,
+                issuedRefreshToken.refreshToken(),
+                issuedRefreshToken.csrfToken(),
                 "Bearer",
                 jwtService.getExpirationSeconds(),
+                issuedRefreshToken.persistentSession(),
                 "Login successful");
     }
 
@@ -210,9 +221,17 @@ public class AuthService {
     }
 
     public TokenRefreshResponse refreshToken(RefreshTokenRequest request) {
-        RefreshTokenService.RefreshTokenData refreshTokenData =
-                refreshTokenService.rotateRefreshToken(request.refreshToken());
+        return createRefreshResponse(
+                refreshTokenService.rotateRefreshToken(request.refreshToken()));
+    }
 
+    public TokenRefreshResponse refreshToken(String rawRefreshToken, String rawCsrfToken) {
+        return createRefreshResponse(
+                refreshTokenService.rotateRefreshToken(rawRefreshToken, rawCsrfToken));
+    }
+
+    private TokenRefreshResponse createRefreshResponse(
+            RefreshTokenService.RefreshTokenData refreshTokenData) {
         String newAccessToken =
                 jwtService.generateAccessToken(refreshTokenData.tenant(), refreshTokenData.user());
 
@@ -226,15 +245,23 @@ public class AuthService {
         return new TokenRefreshResponse(
                 newAccessToken,
                 refreshTokenData.refreshToken(),
+                refreshTokenData.csrfToken(),
                 "Bearer",
                 jwtService.getExpirationSeconds(),
+                refreshTokenData.persistentSession(),
                 "Token refreshed successfully");
     }
 
     public LogoutResponse logout(LogoutRequest request) {
-        RefreshTokenService.RefreshTokenData refreshTokenData =
-                refreshTokenService.revokeRefreshTokenAndReturnData(request.refreshToken());
+        return logout(refreshTokenService.revokeRefreshTokenAndReturnData(request.refreshToken()));
+    }
 
+    public LogoutResponse logout(String rawRefreshToken, String rawCsrfToken) {
+        return logout(
+                refreshTokenService.revokeRefreshTokenAndReturnData(rawRefreshToken, rawCsrfToken));
+    }
+
+    private LogoutResponse logout(RefreshTokenService.RefreshTokenData refreshTokenData) {
         auditLogService.record(
                 refreshTokenData.tenant(),
                 refreshTokenData.user(),

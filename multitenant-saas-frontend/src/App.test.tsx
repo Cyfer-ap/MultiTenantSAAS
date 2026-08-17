@@ -34,9 +34,10 @@ function createTestQueryClient(): QueryClient {
 
 const storedSession: AuthSession = {
     accessToken: 'access-token',
-    refreshToken: 'refresh-token',
+    csrfToken: 'csrf-token',
     tokenType: 'Bearer',
     accessTokenExpiresAt: Date.now() + 60_000,
+    persistentSession: true,
     tenantId: 'tenant-id',
     userId: 'user-id',
     fullName: 'Tenant Admin',
@@ -173,6 +174,7 @@ describe('App authentication routes', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
         localStorage.clear()
+        sessionStorage.clear()
 
         vi.spyOn(dashboardApi, 'getSummary').mockResolvedValue(dashboardSummary)
 

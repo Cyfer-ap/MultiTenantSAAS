@@ -9,9 +9,10 @@ import { httpClient, publicHttpClient } from './httpClient'
 
 const initialSession: AuthSession = {
     accessToken: 'expired-access-token',
-    refreshToken: 'valid-refresh-token',
+    csrfToken: 'csrf-token',
     tokenType: 'Bearer',
     accessTokenExpiresAt: 0,
+    persistentSession: true,
     tenantId: 'tenant-id',
     userId: 'user-id',
     fullName: 'Tenant Admin',
@@ -21,9 +22,11 @@ const initialSession: AuthSession = {
 
 const refreshedTokenData: TokenRefreshResponse = {
     accessToken: 'new-access-token',
-    refreshToken: 'new-refresh-token',
+    refreshToken: null,
+    csrfToken: 'new-csrf-token',
     tokenType: 'Bearer',
     expiresInSeconds: 900,
+    persistentSession: true,
 }
 
 function createUnauthorizedError(config: InternalAxiosRequestConfig): AxiosError<ApiErrorResponse> {
@@ -75,11 +78,12 @@ function protectedResourceAdapter(
 describe('authenticated HTTP client', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
-        authStorage.clear()
+        localStorage.clear()
+        sessionStorage.clear()
         authStorage.write(initialSession)
     })
 
-    it('shares one refresh request across concurrent 401 responses', async () => {
+    it('shares one cookie-backed refresh request across concurrent 401 responses', async () => {
         const refreshResponse: AxiosResponse<ApiResponse<TokenRefreshResponse>> = {
             data: {
                 success: true,
@@ -107,10 +111,19 @@ describe('authenticated HTTP client', () => {
         ])
 
         expect(refreshSpy).toHaveBeenCalledTimes(1)
+        expect(refreshSpy).toHaveBeenCalledWith(
+            '/api/auth/refresh',
+            undefined,
+            expect.objectContaining({
+                headers: {
+                    'X-CSRF-Token': 'csrf-token',
+                },
+            }),
+        )
         expect(firstResponse.data.value).toBe('protected data')
         expect(secondResponse.data.value).toBe('protected data')
         expect(authStorage.read()?.accessToken).toBe('new-access-token')
-        expect(authStorage.read()?.refreshToken).toBe('new-refresh-token')
+        expect(authStorage.read()?.csrfToken).toBe('new-csrf-token')
     })
 
     it('clears the session when refresh-token validation fails', async () => {

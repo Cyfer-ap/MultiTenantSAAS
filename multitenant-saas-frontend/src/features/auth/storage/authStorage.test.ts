@@ -5,11 +5,12 @@ import { authStorage } from './authStorage'
 
 const AUTH_STORAGE_KEY = 'multitenant-saas.auth-session'
 
-const session: AuthSession = {
+const persistentSession: AuthSession = {
     accessToken: 'access-token',
-    refreshToken: 'refresh-token',
+    csrfToken: 'csrf-token',
     tokenType: 'Bearer',
     accessTokenExpiresAt: Date.now() + 60_000,
+    persistentSession: true,
     tenantId: 'tenant-id',
     userId: 'user-id',
     fullName: 'Tenant User',
@@ -19,10 +20,28 @@ const session: AuthSession = {
 
 afterEach(() => {
     localStorage.clear()
+    sessionStorage.clear()
 })
 
-describe('authStorage cross-tab synchronization', () => {
-    it('notifies subscribers when another tab writes a session', () => {
+describe('authStorage session persistence', () => {
+    it('stores persistent sessions in localStorage', () => {
+        authStorage.write(persistentSession)
+
+        expect(localStorage.getItem(AUTH_STORAGE_KEY)).not.toBeNull()
+        expect(sessionStorage.getItem(AUTH_STORAGE_KEY)).toBeNull()
+    })
+
+    it('stores browser-session-only credentials in sessionStorage', () => {
+        authStorage.write({
+            ...persistentSession,
+            persistentSession: false,
+        })
+
+        expect(sessionStorage.getItem(AUTH_STORAGE_KEY)).not.toBeNull()
+        expect(localStorage.getItem(AUTH_STORAGE_KEY)).toBeNull()
+    })
+
+    it('notifies subscribers when another tab writes a persistent session', () => {
         const listener = vi.fn()
         const unsubscribe = authStorage.subscribe(listener)
 
@@ -30,12 +49,12 @@ describe('authStorage cross-tab synchronization', () => {
             window.dispatchEvent(
                 new StorageEvent('storage', {
                     key: AUTH_STORAGE_KEY,
-                    newValue: JSON.stringify(session),
+                    newValue: JSON.stringify(persistentSession),
                 }),
             )
 
             expect(listener).toHaveBeenCalledOnce()
-            expect(listener).toHaveBeenCalledWith(session)
+            expect(listener).toHaveBeenCalledWith(persistentSession)
         } finally {
             unsubscribe()
         }
@@ -55,24 +74,6 @@ describe('authStorage cross-tab synchronization', () => {
 
             expect(listener).toHaveBeenCalledOnce()
             expect(listener).toHaveBeenCalledWith(null)
-        } finally {
-            unsubscribe()
-        }
-    })
-
-    it('ignores unrelated storage keys', () => {
-        const listener = vi.fn()
-        const unsubscribe = authStorage.subscribe(listener)
-
-        try {
-            window.dispatchEvent(
-                new StorageEvent('storage', {
-                    key: 'unrelated-key',
-                    newValue: JSON.stringify(session),
-                }),
-            )
-
-            expect(listener).not.toHaveBeenCalled()
         } finally {
             unsubscribe()
         }

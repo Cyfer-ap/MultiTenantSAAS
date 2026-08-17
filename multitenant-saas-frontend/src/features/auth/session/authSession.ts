@@ -12,9 +12,10 @@ function calculateExpirationTime(expiresInSeconds: number): number {
 export function createAuthSession(response: LoginResponse): AuthSession {
     return {
         accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
+        csrfToken: response.csrfToken,
         tokenType: response.tokenType,
         accessTokenExpiresAt: calculateExpirationTime(response.expiresInSeconds),
+        persistentSession: response.persistentSession,
         tenantId: response.tenantId,
         userId: response.userId,
         fullName: response.fullName,
@@ -30,9 +31,10 @@ export function applyTokenRefresh(
     return {
         ...session,
         accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
+        csrfToken: response.csrfToken,
         tokenType: response.tokenType,
         accessTokenExpiresAt: calculateExpirationTime(response.expiresInSeconds),
+        persistentSession: response.persistentSession,
     }
 }
 

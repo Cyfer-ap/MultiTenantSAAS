@@ -85,8 +85,6 @@ describe('LoginPage', () => {
     it('skips the code step for a trusted browser and shows the password for one workspace', async () => {
         const user = userEvent.setup()
 
-        window.localStorage.setItem('multitenant-saas.trusted-email-browser', 'trusted-token')
-
         vi.spyOn(authApi, 'startWorkspaceDiscovery').mockResolvedValue({
             verificationRequired: false,
             challengeId: null,
@@ -108,5 +106,6 @@ describe('LoginPage', () => {
 
         expect(await screen.findByLabelText(/password/i)).toBeInTheDocument()
         expect(screen.getByText(/workspace: research lab/i)).toBeInTheDocument()
+        expect(screen.getByRole('checkbox', { name: /keep me signed in/i })).not.toBeChecked()
     })
 })

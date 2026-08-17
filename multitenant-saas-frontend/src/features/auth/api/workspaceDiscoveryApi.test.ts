@@ -22,7 +22,6 @@ describe('authApi workspace discovery', () => {
     it('starts workspace discovery through the public endpoint', async () => {
         const request = {
             email: 'grace@example.com',
-            trustedBrowserToken: 'trusted-token',
         }
         const response = {
             verificationRequired: true,

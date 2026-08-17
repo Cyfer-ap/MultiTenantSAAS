@@ -23,56 +23,16 @@ function isAuthSession(value: unknown): value is AuthSession {
 
     return (
         typeof candidate.accessToken === 'string' &&
-        typeof candidate.refreshToken === 'string' &&
+        typeof candidate.csrfToken === 'string' &&
         typeof candidate.tokenType === 'string' &&
         typeof candidate.accessTokenExpiresAt === 'number' &&
+        typeof candidate.persistentSession === 'boolean' &&
         typeof candidate.tenantId === 'string' &&
         typeof candidate.userId === 'string' &&
         typeof candidate.fullName === 'string' &&
         typeof candidate.email === 'string' &&
         isTenantRole(candidate.role)
     )
-}
-
-function read(): AuthSession | null {
-    try {
-        const storedValue = localStorage.getItem(AUTH_STORAGE_KEY)
-
-        if (!storedValue) {
-            return null
-        }
-
-        const parsedValue: unknown = JSON.parse(storedValue)
-
-        if (!isAuthSession(parsedValue)) {
-            localStorage.removeItem(AUTH_STORAGE_KEY)
-            notify(null)
-            return null
-        }
-
-        return parsedValue
-    } catch {
-        localStorage.removeItem(AUTH_STORAGE_KEY)
-        notify(null)
-        return null
-    }
-}
-
-function write(session: AuthSession): void {
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session))
-
-    notify(session)
-}
-
-function clear(): void {
-    localStorage.removeItem(AUTH_STORAGE_KEY)
-    notify(null)
-}
-
-function notify(session: AuthSession | null): void {
-    listeners.forEach((listener) => {
-        listener(session)
-    })
 }
 
 function parseStoredSession(storedValue: string | null): AuthSession | null {
@@ -89,9 +49,83 @@ function parseStoredSession(storedValue: string | null): AuthSession | null {
     }
 }
 
+function read(): AuthSession | null {
+    try {
+        const sessionValue = sessionStorage.getItem(AUTH_STORAGE_KEY)
+        const session = parseStoredSession(sessionValue)
+
+        if (session) {
+            return session
+        }
+
+        if (sessionValue) {
+            sessionStorage.removeItem(AUTH_STORAGE_KEY)
+        }
+
+        const persistentValue = localStorage.getItem(AUTH_STORAGE_KEY)
+        const persistentSession = parseStoredSession(persistentValue)
+
+        if (persistentSession) {
+            return persistentSession
+        }
+
+        if (persistentValue) {
+            localStorage.removeItem(AUTH_STORAGE_KEY)
+        }
+
+        return null
+    } catch {
+        clearStorageOnly()
+        return null
+    }
+}
+
+function write(session: AuthSession): void {
+    try {
+        sessionStorage.removeItem(AUTH_STORAGE_KEY)
+        localStorage.removeItem(AUTH_STORAGE_KEY)
+
+        const targetStorage = session.persistentSession ? localStorage : sessionStorage
+        targetStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session))
+    } finally {
+        notify(session)
+    }
+}
+
+function clearStorageOnly(): void {
+    try {
+        sessionStorage.removeItem(AUTH_STORAGE_KEY)
+    } catch {
+        // Ignore unavailable browser storage.
+    }
+
+    try {
+        localStorage.removeItem(AUTH_STORAGE_KEY)
+    } catch {
+        // Ignore unavailable browser storage.
+    }
+}
+
+function clear(): void {
+    clearStorageOnly()
+    notify(null)
+}
+
+function notify(session: AuthSession | null): void {
+    listeners.forEach((listener) => {
+        listener(session)
+    })
+}
+
 function handleStorageEvent(event: StorageEvent): void {
     if (event.key !== AUTH_STORAGE_KEY) {
         return
+    }
+
+    try {
+        sessionStorage.removeItem(AUTH_STORAGE_KEY)
+    } catch {
+        // Ignore unavailable browser storage.
     }
 
     notify(parseStoredSession(event.newValue))

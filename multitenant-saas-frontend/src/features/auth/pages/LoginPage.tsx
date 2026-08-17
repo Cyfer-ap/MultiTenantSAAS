@@ -12,7 +12,7 @@ import {
     TextField,
     Typography,
 } from '@mui/material'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 
 import { normalizeApiError } from '../../../api/apiError'
@@ -20,7 +20,7 @@ import { authApi } from '../api/authApi'
 import { useAuth } from '../hooks/useAuth'
 import type { WorkspaceLoginOption } from '../types/auth'
 
-const TRUSTED_BROWSER_TOKEN_KEY = 'multitenant-saas.trusted-email-browser'
+const LEGACY_TRUSTED_BROWSER_TOKEN_KEY = 'multitenant-saas.trusted-email-browser'
 
 type LoginStep = 'email' | 'code' | 'workspace' | 'password'
 
@@ -49,22 +49,6 @@ function resolveRedirectPath(state: unknown): string {
     return '/dashboard'
 }
 
-function readTrustedBrowserToken(): string | undefined {
-    try {
-        return window.localStorage.getItem(TRUSTED_BROWSER_TOKEN_KEY) ?? undefined
-    } catch {
-        return undefined
-    }
-}
-
-function writeTrustedBrowserToken(token: string): void {
-    try {
-        window.localStorage.setItem(TRUSTED_BROWSER_TOKEN_KEY, token)
-    } catch {
-        // Email verification still works when browser storage is unavailable.
-    }
-}
-
 function isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
@@ -78,6 +62,14 @@ export function LoginPage() {
             ? (location.state as LoginRouteState)
             : {}
 
+    useEffect(() => {
+        try {
+            window.localStorage.removeItem(LEGACY_TRUSTED_BROWSER_TOKEN_KEY)
+        } catch {
+            // Ignore unavailable browser storage.
+        }
+    }, [])
+
     const [step, setStep] = useState<LoginStep>('email')
     const [email, setEmail] = useState(resolvePrefillValue(routeState.email))
     const [code, setCode] = useState('')
@@ -87,6 +79,7 @@ export function LoginPage() {
     const [workspaces, setWorkspaces] = useState<WorkspaceLoginOption[]>([])
     const [selectedWorkspace, setSelectedWorkspace] = useState<WorkspaceLoginOption | null>(null)
     const [trustBrowser, setTrustBrowser] = useState(true)
+    const [keepSignedIn, setKeepSignedIn] = useState(false)
     const [busy, setBusy] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [infoMessage, setInfoMessage] = useState<string | null>(null)
@@ -122,7 +115,7 @@ export function LoginPage() {
         setStep('workspace')
     }
 
-    const startDiscovery = async (forceCode = false): Promise<void> => {
+    const startDiscovery = async (): Promise<void> => {
         const normalizedEmail = email.trim().toLowerCase()
 
         setErrorMessage(null)
@@ -138,7 +131,6 @@ export function LoginPage() {
         try {
             const response = await authApi.startWorkspaceDiscovery({
                 email: normalizedEmail,
-                trustedBrowserToken: forceCode ? undefined : readTrustedBrowserToken(),
             })
 
             setEmail(normalizedEmail)
@@ -187,10 +179,6 @@ export function LoginPage() {
                 trustBrowser,
             })
 
-            if (response.trustedBrowserToken) {
-                writeTrustedBrowserToken(response.trustedBrowserToken)
-            }
-
             setInfoMessage(null)
             moveToWorkspaces(response.workspaces, response.workspaceGrantId)
         } catch (error: unknown) {
@@ -227,6 +215,7 @@ export function LoginPage() {
                 email,
                 password,
                 workspaceGrantId,
+                keepSignedIn,
             })
 
             navigate(resolveRedirectPath(location.state), {
@@ -247,6 +236,7 @@ export function LoginPage() {
         setWorkspaceGrantId(null)
         setWorkspaces([])
         setSelectedWorkspace(null)
+        setKeepSignedIn(false)
         setErrorMessage(null)
         setInfoMessage(null)
     }
@@ -431,7 +421,7 @@ export function LoginPage() {
                                         fullWidth
                                         disabled={busy}
                                         onClick={() => {
-                                            void startDiscovery(true)
+                                            void startDiscovery()
                                         }}
                                     >
                                         Send a new code
@@ -497,6 +487,19 @@ export function LoginPage() {
                                                 void submitPassword()
                                             }
                                         }}
+                                    />
+
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={keepSignedIn}
+                                                disabled={busy}
+                                                onChange={(event) => {
+                                                    setKeepSignedIn(event.target.checked)
+                                                }}
+                                            />
+                                        }
+                                        label="Keep me signed in"
                                     />
 
                                     <Button
