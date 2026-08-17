@@ -42,8 +42,7 @@ export function useProjectTask(
     return useQuery({
         queryKey: projectTasksQueryKeys.detail(tenantId, projectId, taskId),
         queryFn: () => projectTasksApi.getTask(tenantId, projectId, taskId),
-        enabled:
-            enabled && tenantId.length > 0 && projectId.length > 0 && taskId.length > 0,
+        enabled: enabled && tenantId.length > 0 && projectId.length > 0 && taskId.length > 0,
     })
 }
 

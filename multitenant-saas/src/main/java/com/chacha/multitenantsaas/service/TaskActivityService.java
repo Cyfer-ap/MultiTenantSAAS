@@ -33,12 +33,7 @@ public class TaskActivityService {
             ProjectTask task, AppUser actor, TaskActivityType activityType, String summary) {
         TaskActivity activity =
                 new TaskActivity(
-                        task.getTenant(),
-                        task.getProject(),
-                        task,
-                        actor,
-                        activityType,
-                        summary);
+                        task.getTenant(), task.getProject(), task, actor, activityType, summary);
         taskActivityRepository.save(activity);
     }
 

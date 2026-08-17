@@ -227,7 +227,11 @@ function CommentComposer({
                     <Button
                         disabled={disabled || !body.trim() || submitting}
                         endIcon={
-                            submitting ? <CircularProgress color="inherit" size={15} /> : <SendRoundedIcon />
+                            submitting ? (
+                                <CircularProgress color="inherit" size={15} />
+                            ) : (
+                                <SendRoundedIcon />
+                            )
                         }
                         type="submit"
                         variant="contained"
@@ -362,7 +366,10 @@ export function ProjectTaskCollaborationDrawer({
                                 </Typography>
                             </Box>
                             <Tooltip title="Copy task link">
-                                <IconButton aria-label="Copy task link" onClick={() => void copyDeepLink()}>
+                                <IconButton
+                                    aria-label="Copy task link"
+                                    onClick={() => void copyDeepLink()}
+                                >
                                     <ContentCopyRoundedIcon />
                                 </IconButton>
                             </Tooltip>
@@ -376,7 +383,11 @@ export function ProjectTaskCollaborationDrawer({
                             spacing={0.75}
                             sx={{ flexWrap: 'wrap', gap: 0.75, marginTop: 1.5 }}
                         >
-                            <Chip label={statusLabels[task.status]} size="small" variant="outlined" />
+                            <Chip
+                                label={statusLabels[task.status]}
+                                size="small"
+                                variant="outlined"
+                            />
                             <Chip label={priorityLabels[task.priority]} size="small" />
                             <Chip
                                 icon={<AssignmentIndOutlinedIcon />}
@@ -387,7 +398,11 @@ export function ProjectTaskCollaborationDrawer({
                         </Stack>
 
                         {task.description && (
-                            <Typography color="text.secondary" sx={{ marginTop: 1.5 }} variant="body2">
+                            <Typography
+                                color="text.secondary"
+                                sx={{ marginTop: 1.5 }}
+                                variant="body2"
+                            >
                                 {task.description}
                             </Typography>
                         )}
@@ -433,7 +448,8 @@ export function ProjectTaskCollaborationDrawer({
                             <Stack spacing={2}>
                                 {readOnly ? (
                                     <Alert severity="info">
-                                        This task is read-only. Existing discussion remains available for history.
+                                        This task is read-only. Existing discussion remains
+                                        available for history.
                                     </Alert>
                                 ) : (
                                     <CommentComposer
@@ -445,7 +461,11 @@ export function ProjectTaskCollaborationDrawer({
                                 )}
 
                                 {commentsQuery.isPending && (
-                                    <Stack spacing={1.5} aria-label="Loading task comments" role="status">
+                                    <Stack
+                                        spacing={1.5}
+                                        aria-label="Loading task comments"
+                                        role="status"
+                                    >
                                         <Skeleton height={112} variant="rounded" />
                                         <Skeleton height={90} variant="rounded" />
                                     </Stack>
@@ -458,68 +478,94 @@ export function ProjectTaskCollaborationDrawer({
                                         )}
                                     </Alert>
                                 )}
-                                {commentsQuery.isSuccess && commentsQuery.data.content.length === 0 && (
-                                    <Box sx={{ padding: 3, textAlign: 'center' }}>
-                                        <ChatBubbleOutlineRoundedIcon color="disabled" />
-                                        <Typography sx={{ marginTop: 1 }} variant="subtitle2">
-                                            No comments yet
-                                        </Typography>
-                                        <Typography color="text.secondary" variant="body2">
-                                            Start the conversation with context the whole project can keep.
-                                        </Typography>
-                                    </Box>
-                                )}
+                                {commentsQuery.isSuccess &&
+                                    commentsQuery.data.content.length === 0 && (
+                                        <Box sx={{ padding: 3, textAlign: 'center' }}>
+                                            <ChatBubbleOutlineRoundedIcon color="disabled" />
+                                            <Typography sx={{ marginTop: 1 }} variant="subtitle2">
+                                                No comments yet
+                                            </Typography>
+                                            <Typography color="text.secondary" variant="body2">
+                                                Start the conversation with context the whole
+                                                project can keep.
+                                            </Typography>
+                                        </Box>
+                                    )}
 
                                 {commentsQuery.data?.content.map((comment) => {
                                     const ownComment = comment.authorUserId === currentUserId
                                     const isEditing = editingComment?.id === comment.id
 
                                     return (
-                                        <Paper key={comment.id} variant="outlined" sx={{ padding: 2 }}>
+                                        <Paper
+                                            key={comment.id}
+                                            variant="outlined"
+                                            sx={{ padding: 2 }}
+                                        >
                                             <Stack spacing={1.25}>
                                                 <Stack
                                                     direction="row"
                                                     spacing={1}
                                                     sx={{ alignItems: 'flex-start' }}
                                                 >
-                                                    <Avatar sx={{ height: 34, width: 34, fontSize: 12 }}>
+                                                    <Avatar
+                                                        sx={{ height: 34, width: 34, fontSize: 12 }}
+                                                    >
                                                         {getInitials(comment.authorName)}
                                                     </Avatar>
                                                     <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                                                        <Typography sx={{ fontWeight: 700 }} variant="body2">
+                                                        <Typography
+                                                            sx={{ fontWeight: 700 }}
+                                                            variant="body2"
+                                                        >
                                                             {comment.authorName}
                                                         </Typography>
-                                                        <Typography color="text.secondary" variant="caption">
+                                                        <Typography
+                                                            color="text.secondary"
+                                                            variant="caption"
+                                                        >
                                                             {formatDateTime(comment.createdAt)}
                                                             {comment.editedAt ? ' · edited' : ''}
                                                         </Typography>
                                                     </Box>
-                                                    {ownComment && !comment.deleted && !readOnly && (
-                                                        <Stack direction="row">
-                                                            <Tooltip title="Edit comment">
-                                                                <IconButton
-                                                                    aria-label={`Edit comment by ${comment.authorName}`}
-                                                                    onClick={() => startEditing(comment)}
-                                                                    size="small"
-                                                                >
-                                                                    <EditOutlinedIcon fontSize="small" />
-                                                                </IconButton>
-                                                            </Tooltip>
-                                                            <Tooltip title="Delete comment">
-                                                                <IconButton
-                                                                    aria-label={`Delete comment by ${comment.authorName}`}
-                                                                    onClick={() => setDeleteComment(comment)}
-                                                                    size="small"
-                                                                >
-                                                                    <DeleteOutlineRoundedIcon fontSize="small" />
-                                                                </IconButton>
-                                                            </Tooltip>
-                                                        </Stack>
-                                                    )}
+                                                    {ownComment &&
+                                                        !comment.deleted &&
+                                                        !readOnly && (
+                                                            <Stack direction="row">
+                                                                <Tooltip title="Edit comment">
+                                                                    <IconButton
+                                                                        aria-label={`Edit comment by ${comment.authorName}`}
+                                                                        onClick={() =>
+                                                                            startEditing(comment)
+                                                                        }
+                                                                        size="small"
+                                                                    >
+                                                                        <EditOutlinedIcon fontSize="small" />
+                                                                    </IconButton>
+                                                                </Tooltip>
+                                                                <Tooltip title="Delete comment">
+                                                                    <IconButton
+                                                                        aria-label={`Delete comment by ${comment.authorName}`}
+                                                                        onClick={() =>
+                                                                            setDeleteComment(
+                                                                                comment,
+                                                                            )
+                                                                        }
+                                                                        size="small"
+                                                                    >
+                                                                        <DeleteOutlineRoundedIcon fontSize="small" />
+                                                                    </IconButton>
+                                                                </Tooltip>
+                                                            </Stack>
+                                                        )}
                                                 </Stack>
 
                                                 {comment.deleted ? (
-                                                    <Typography color="text.secondary" fontStyle="italic" variant="body2">
+                                                    <Typography
+                                                        color="text.secondary"
+                                                        fontStyle="italic"
+                                                        variant="body2"
+                                                    >
                                                         Comment deleted
                                                     </Typography>
                                                 ) : isEditing ? (
@@ -528,7 +574,9 @@ export function ProjectTaskCollaborationDrawer({
                                                             label="Edit comment"
                                                             multiline
                                                             minRows={3}
-                                                            onChange={(event) => setEditBody(event.target.value)}
+                                                            onChange={(event) =>
+                                                                setEditBody(event.target.value)
+                                                            }
                                                             value={editBody}
                                                         />
                                                         <MemberMentionPicker
@@ -536,13 +584,22 @@ export function ProjectTaskCollaborationDrawer({
                                                             onChange={setEditMentions}
                                                             value={editMentions}
                                                         />
-                                                        <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-                                                            <Button onClick={() => setEditingComment(null)}>
+                                                        <Stack
+                                                            direction="row"
+                                                            spacing={1}
+                                                            sx={{ justifyContent: 'flex-end' }}
+                                                        >
+                                                            <Button
+                                                                onClick={() =>
+                                                                    setEditingComment(null)
+                                                                }
+                                                            >
                                                                 Cancel
                                                             </Button>
                                                             <Button
                                                                 disabled={
-                                                                    !editBody.trim() || updateCommentMutation.isPending
+                                                                    !editBody.trim() ||
+                                                                    updateCommentMutation.isPending
                                                                 }
                                                                 onClick={() => void saveEdit()}
                                                                 variant="contained"
@@ -552,28 +609,34 @@ export function ProjectTaskCollaborationDrawer({
                                                         </Stack>
                                                     </Stack>
                                                 ) : (
-                                                    <Typography sx={{ whiteSpace: 'pre-wrap' }} variant="body2">
+                                                    <Typography
+                                                        sx={{ whiteSpace: 'pre-wrap' }}
+                                                        variant="body2"
+                                                    >
                                                         {comment.body}
                                                     </Typography>
                                                 )}
 
-                                                {!comment.deleted && comment.mentions.length > 0 && (
-                                                    <Stack
-                                                        direction="row"
-                                                        spacing={0.75}
-                                                        sx={{ flexWrap: 'wrap', gap: 0.75 }}
-                                                    >
-                                                        {comment.mentions.map((mention) => (
-                                                            <Chip
-                                                                icon={<AlternateEmailRoundedIcon />}
-                                                                key={mention.userId}
-                                                                label={mention.fullName}
-                                                                size="small"
-                                                                variant="outlined"
-                                                            />
-                                                        ))}
-                                                    </Stack>
-                                                )}
+                                                {!comment.deleted &&
+                                                    comment.mentions.length > 0 && (
+                                                        <Stack
+                                                            direction="row"
+                                                            spacing={0.75}
+                                                            sx={{ flexWrap: 'wrap', gap: 0.75 }}
+                                                        >
+                                                            {comment.mentions.map((mention) => (
+                                                                <Chip
+                                                                    icon={
+                                                                        <AlternateEmailRoundedIcon />
+                                                                    }
+                                                                    key={mention.userId}
+                                                                    label={mention.fullName}
+                                                                    size="small"
+                                                                    variant="outlined"
+                                                                />
+                                                            ))}
+                                                        </Stack>
+                                                    )}
                                             </Stack>
                                         </Paper>
                                     )
@@ -581,7 +644,8 @@ export function ProjectTaskCollaborationDrawer({
 
                                 {commentsQuery.data && !commentsQuery.data.last && (
                                     <Alert severity="info">
-                                        Showing the latest {commentsQuery.data.content.length} comments.
+                                        Showing the latest {commentsQuery.data.content.length}{' '}
+                                        comments.
                                     </Alert>
                                 )}
                             </Stack>
@@ -590,7 +654,11 @@ export function ProjectTaskCollaborationDrawer({
                         {tab === 'activity' && (
                             <Stack spacing={0}>
                                 {activityQuery.isPending && (
-                                    <Stack spacing={1.5} aria-label="Loading task activity" role="status">
+                                    <Stack
+                                        spacing={1.5}
+                                        aria-label="Loading task activity"
+                                        role="status"
+                                    >
                                         <Skeleton height={70} />
                                         <Skeleton height={70} />
                                         <Skeleton height={70} />
@@ -626,7 +694,8 @@ export function ProjectTaskCollaborationDrawer({
                                             >
                                                 <HistoryRoundedIcon sx={{ fontSize: 16 }} />
                                             </Box>
-                                            {index < (activityQuery.data?.content.length ?? 0) - 1 && (
+                                            {index <
+                                                (activityQuery.data?.content.length ?? 0) - 1 && (
                                                 <Box
                                                     sx={{
                                                         bgcolor: 'divider',
@@ -645,19 +714,22 @@ export function ProjectTaskCollaborationDrawer({
                                                 {activity.summary}
                                             </Typography>
                                             <Typography color="text.secondary" variant="caption">
-                                                {activity.actorName} · {formatDateTime(activity.createdAt)}
+                                                {activity.actorName} ·{' '}
+                                                {formatDateTime(activity.createdAt)}
                                             </Typography>
                                         </Box>
                                     </Stack>
                                 ))}
-                                {activityQuery.isSuccess && activityQuery.data.content.length === 0 && (
-                                    <Typography color="text.secondary" variant="body2">
-                                        No task activity has been recorded yet.
-                                    </Typography>
-                                )}
+                                {activityQuery.isSuccess &&
+                                    activityQuery.data.content.length === 0 && (
+                                        <Typography color="text.secondary" variant="body2">
+                                            No task activity has been recorded yet.
+                                        </Typography>
+                                    )}
                                 {activityQuery.data && !activityQuery.data.last && (
                                     <Alert severity="info">
-                                        Showing the latest {activityQuery.data.content.length} activity entries.
+                                        Showing the latest {activityQuery.data.content.length}{' '}
+                                        activity entries.
                                     </Alert>
                                 )}
                             </Stack>
@@ -670,7 +742,8 @@ export function ProjectTaskCollaborationDrawer({
                 <DialogTitle>Delete comment?</DialogTitle>
                 <DialogContent>
                     <Typography color="text.secondary" variant="body2">
-                        The comment text will be removed, but a deleted marker will remain in the task history.
+                        The comment text will be removed, but a deleted marker will remain in the
+                        task history.
                     </Typography>
                 </DialogContent>
                 <DialogActions>

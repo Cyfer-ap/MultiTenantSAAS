@@ -139,9 +139,9 @@ function formatDueDate(value: string | null): string {
 function isOverdue(task: ProjectTask): boolean {
     return Boolean(
         task.dueAt &&
-            task.status !== 'COMPLETED' &&
-            task.status !== 'CANCELLED' &&
-            new Date(task.dueAt).getTime() < Date.now(),
+        task.status !== 'COMPLETED' &&
+        task.status !== 'CANCELLED' &&
+        new Date(task.dueAt).getTime() < Date.now(),
     )
 }
 
@@ -184,7 +184,11 @@ function TaskBoardSkeleton() {
     return (
         <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', paddingBottom: 1 }}>
             {activeStatuses.map((status) => (
-                <Paper key={status} variant="outlined" sx={{ minWidth: 280, padding: 2, width: 320 }}>
+                <Paper
+                    key={status}
+                    variant="outlined"
+                    sx={{ minWidth: 280, padding: 2, width: 320 }}
+                >
                     <Skeleton width="45%" />
                     <Skeleton height={130} sx={{ marginTop: 2 }} variant="rounded" />
                     <Skeleton height={110} sx={{ marginTop: 1 }} variant="rounded" />
@@ -384,7 +388,10 @@ export function ProjectTasksSection({
         setMovingTaskId(task.id)
         setBoardError(null)
         try {
-            await updateStatusMutation.mutateAsync({ taskId: task.id, input: { status: nextStatus } })
+            await updateStatusMutation.mutateAsync({
+                taskId: task.id,
+                input: { status: nextStatus },
+            })
             onFeedback(`Moved “${task.title}” to ${taskStatusLabels[nextStatus]}.`)
         } catch (error) {
             setBoardError(getErrorMessage(error, 'The task could not be moved.'))
@@ -487,7 +494,12 @@ export function ProjectTasksSection({
                         <Avatar sx={{ fontSize: 11, height: 26, width: 26 }}>
                             {getInitials(task.assigneeName)}
                         </Avatar>
-                        <Typography color="text.secondary" noWrap variant="caption" sx={{ flexGrow: 1 }}>
+                        <Typography
+                            color="text.secondary"
+                            noWrap
+                            variant="caption"
+                            sx={{ flexGrow: 1 }}
+                        >
                             {task.assigneeName || 'Unassigned'}
                         </Typography>
                         <Tooltip title={formatDateTime(task.dueAt)}>
@@ -522,7 +534,8 @@ export function ProjectTasksSection({
                         Project tasks
                     </Typography>
                     <Typography color="text.secondary" variant="body2">
-                        Move work across the board, open a task to collaborate, and keep delivery visible.
+                        Move work across the board, open a task to collaborate, and keep delivery
+                        visible.
                     </Typography>
                 </Box>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
@@ -574,7 +587,12 @@ export function ProjectTasksSection({
                 </Stack>
             </Stack>
 
-            <Paper component="form" onSubmit={submitSearch} variant="outlined" sx={{ marginTop: 2, padding: 2 }}>
+            <Paper
+                component="form"
+                onSubmit={submitSearch}
+                variant="outlined"
+                sx={{ marginTop: 2, padding: 2 }}
+            >
                 <Stack
                     direction={{ xs: 'column', lg: 'row' }}
                     spacing={2}
@@ -668,7 +686,10 @@ export function ProjectTasksSection({
             )}
             {collaborationTaskId && taskDetailsQuery.isError && !listedCollaborationTask && (
                 <Alert onClose={closeCollaboration} severity="error" sx={{ marginTop: 2 }}>
-                    {getErrorMessage(taskDetailsQuery.error, 'The linked task could not be loaded.')}
+                    {getErrorMessage(
+                        taskDetailsQuery.error,
+                        'The linked task could not be loaded.',
+                    )}
                 </Alert>
             )}
             {tasksQuery.isFetching && !tasksQuery.isPending && (
@@ -677,7 +698,11 @@ export function ProjectTasksSection({
             {tasksQuery.isError && (
                 <Alert
                     action={
-                        <Button color="inherit" onClick={() => void tasksQuery.refetch()} size="small">
+                        <Button
+                            color="inherit"
+                            onClick={() => void tasksQuery.refetch()}
+                            size="small"
+                        >
                             Retry
                         </Button>
                     }
@@ -702,7 +727,8 @@ export function ProjectTasksSection({
                 <Box sx={{ marginTop: 2 }}>
                     {tasksQuery.data.totalElements > tasksQuery.data.content.length && (
                         <Alert severity="info" sx={{ marginBottom: 2 }}>
-                            This board shows the first 100 matching tasks. Refine the filters to narrow the workspace.
+                            This board shows the first 100 matching tasks. Refine the filters to
+                            narrow the workspace.
                         </Alert>
                     )}
                     <Box
@@ -749,8 +775,15 @@ export function ProjectTasksSection({
                                             marginBottom: 1.5,
                                         }}
                                     >
-                                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                                            <Typography sx={{ fontWeight: 700 }} variant="subtitle2">
+                                        <Stack
+                                            direction="row"
+                                            spacing={1}
+                                            sx={{ alignItems: 'center' }}
+                                        >
+                                            <Typography
+                                                sx={{ fontWeight: 700 }}
+                                                variant="subtitle2"
+                                            >
                                                 {taskStatusLabels[laneStatus]}
                                             </Typography>
                                             <Chip label={laneTasks.length} size="small" />
@@ -779,7 +812,11 @@ export function ProjectTasksSection({
                                                     padding: 2,
                                                 }}
                                             >
-                                                <Typography color="text.secondary" variant="caption" sx={{ textAlign: 'center' }}>
+                                                <Typography
+                                                    color="text.secondary"
+                                                    variant="caption"
+                                                    sx={{ textAlign: 'center' }}
+                                                >
                                                     {draggedTaskId
                                                         ? `Drop here to move to ${taskStatusLabels[laneStatus]}`
                                                         : 'No tasks in this lane'}
@@ -803,7 +840,10 @@ export function ProjectTasksSection({
                     />
                     {showCancelled && (
                         <Paper variant="outlined" sx={{ marginTop: 1.5, padding: 2 }}>
-                            <Typography sx={{ fontWeight: 700, marginBottom: 1 }} variant="subtitle2">
+                            <Typography
+                                sx={{ fontWeight: 700, marginBottom: 1 }}
+                                variant="subtitle2"
+                            >
                                 Cancelled · read only
                             </Typography>
                             {tasksByStatus.CANCELLED.length === 0 ? (
@@ -822,7 +862,9 @@ export function ProjectTasksSection({
                                         },
                                     }}
                                 >
-                                    {tasksByStatus.CANCELLED.map((task) => renderTaskCard(task, true))}
+                                    {tasksByStatus.CANCELLED.map((task) =>
+                                        renderTaskCard(task, true),
+                                    )}
                                 </Box>
                             )}
                         </Paper>
@@ -845,7 +887,9 @@ export function ProjectTasksSection({
                                             Task
                                         </TableSortLabel>
                                     </TableCell>
-                                    <TableCell sortDirection={sortBy === 'status' ? sortDir : false}>
+                                    <TableCell
+                                        sortDirection={sortBy === 'status' ? sortDir : false}
+                                    >
                                         <TableSortLabel
                                             active={sortBy === 'status'}
                                             direction={sortBy === 'status' ? sortDir : 'asc'}
@@ -854,7 +898,9 @@ export function ProjectTasksSection({
                                             Status
                                         </TableSortLabel>
                                     </TableCell>
-                                    <TableCell sortDirection={sortBy === 'priority' ? sortDir : false}>
+                                    <TableCell
+                                        sortDirection={sortBy === 'priority' ? sortDir : false}
+                                    >
                                         <TableSortLabel
                                             active={sortBy === 'priority'}
                                             direction={sortBy === 'priority' ? sortDir : 'asc'}
@@ -890,10 +936,16 @@ export function ProjectTasksSection({
                                             sx={{ cursor: 'pointer' }}
                                         >
                                             <TableCell>
-                                                <Typography sx={{ fontWeight: 600 }} variant="body2">
+                                                <Typography
+                                                    sx={{ fontWeight: 600 }}
+                                                    variant="body2"
+                                                >
                                                     {task.title}
                                                 </Typography>
-                                                <Typography color="text.secondary" variant="caption">
+                                                <Typography
+                                                    color="text.secondary"
+                                                    variant="caption"
+                                                >
                                                     {task.description || 'No description'}
                                                 </Typography>
                                             </TableCell>
@@ -917,7 +969,10 @@ export function ProjectTasksSection({
                                                     {task.assigneeName || 'Unassigned'}
                                                 </Typography>
                                                 {task.assigneeEmail && (
-                                                    <Typography color="text.secondary" variant="caption">
+                                                    <Typography
+                                                        color="text.secondary"
+                                                        variant="caption"
+                                                    >
                                                         {task.assigneeEmail}
                                                     </Typography>
                                                 )}
@@ -941,7 +996,9 @@ export function ProjectTasksSection({
                                                 {hasActions && (
                                                     <IconButton
                                                         aria-label={`Manage ${task.title}`}
-                                                        onClick={(event) => openTaskMenu(event, task)}
+                                                        onClick={(event) =>
+                                                            openTaskMenu(event, task)
+                                                        }
                                                         size="small"
                                                     >
                                                         <MoreVertRoundedIcon />

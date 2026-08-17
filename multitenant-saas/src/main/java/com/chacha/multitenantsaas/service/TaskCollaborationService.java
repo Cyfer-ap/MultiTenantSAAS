@@ -84,11 +84,7 @@ public class TaskCollaborationService {
 
     @Transactional
     public TaskCommentResponse createComment(
-            UUID tenantId,
-            UUID projectId,
-            UUID taskId,
-            TaskCommentCreateRequest request,
-            Jwt jwt) {
+            UUID tenantId, UUID projectId, UUID taskId, TaskCommentCreateRequest request, Jwt jwt) {
         Project project = getProjectOrThrow(tenantId, projectId);
         ProjectTask task = getTaskOrThrow(tenantId, projectId, taskId);
         ensureCollaborationCanBeModified(project, task);
@@ -141,7 +137,8 @@ public class TaskCollaborationService {
         comment.edit(normalizeBody(request.body()), mentionedUsers);
         TaskComment saved = taskCommentRepository.save(comment);
 
-        taskActivityService.record(task, actor, TaskActivityType.COMMENT_EDITED, "Edited a comment");
+        taskActivityService.record(
+                task, actor, TaskActivityType.COMMENT_EDITED, "Edited a comment");
         recordAudit(
                 project,
                 task,
@@ -171,7 +168,8 @@ public class TaskCollaborationService {
         comment.markDeleted();
         TaskComment saved = taskCommentRepository.save(comment);
 
-        taskActivityService.record(task, actor, TaskActivityType.COMMENT_DELETED, "Deleted a comment");
+        taskActivityService.record(
+                task, actor, TaskActivityType.COMMENT_DELETED, "Deleted a comment");
         recordAudit(
                 project,
                 task,
@@ -241,8 +239,7 @@ public class TaskCollaborationService {
     private TaskComment getCommentOrThrow(
             UUID tenantId, UUID projectId, UUID taskId, UUID commentId) {
         return taskCommentRepository
-                .findByTenant_IdAndProject_IdAndTask_IdAndId(
-                        tenantId, projectId, taskId, commentId)
+                .findByTenant_IdAndProject_IdAndTask_IdAndId(tenantId, projectId, taskId, commentId)
                 .orElseThrow(
                         () ->
                                 new ResourceNotFoundException(
@@ -284,11 +281,7 @@ public class TaskCollaborationService {
             AuditAction action,
             String message) {
         auditLogService.recordSuccess(
-                project.getTenant(),
-                actor,
-                target,
-                action,
-                message + " for task " + task.getId());
+                project.getTenant(), actor, target, action, message + " for task " + task.getId());
     }
 
     private TaskCommentResponse mapToResponse(TaskComment comment) {

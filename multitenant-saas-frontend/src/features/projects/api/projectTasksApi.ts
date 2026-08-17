@@ -26,11 +26,7 @@ async function getTasks(
     return response.data.data
 }
 
-async function getTask(
-    tenantId: string,
-    projectId: string,
-    taskId: string,
-): Promise<ProjectTask> {
+async function getTask(tenantId: string, projectId: string, taskId: string): Promise<ProjectTask> {
     const response = await httpClient.get<ApiResponse<ProjectTask>>(
         `${tasksPath(tenantId, projectId)}/${taskId}`,
     )

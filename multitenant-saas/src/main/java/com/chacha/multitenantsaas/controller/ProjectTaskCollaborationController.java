@@ -54,7 +54,8 @@ public class ProjectTaskCollaborationController {
 
         PageResponse<TaskCommentResponse> response =
                 taskCollaborationService.getComments(tenantId, projectId, taskId, pageable);
-        return ResponseEntity.ok(ApiResponse.success("Task comments fetched successfully", response));
+        return ResponseEntity.ok(
+                ApiResponse.success("Task comments fetched successfully", response));
     }
 
     @PreAuthorize(
@@ -69,7 +70,8 @@ public class ProjectTaskCollaborationController {
             @AuthenticationPrincipal Jwt jwt) {
         TaskCommentResponse response =
                 taskCollaborationService.createComment(tenantId, projectId, taskId, request, jwt);
-        return ResponseEntity.ok(ApiResponse.success("Task comment created successfully", response));
+        return ResponseEntity.ok(
+                ApiResponse.success("Task comment created successfully", response));
     }
 
     @PreAuthorize(
@@ -86,7 +88,8 @@ public class ProjectTaskCollaborationController {
         TaskCommentResponse response =
                 taskCollaborationService.updateComment(
                         tenantId, projectId, taskId, commentId, request, jwt);
-        return ResponseEntity.ok(ApiResponse.success("Task comment updated successfully", response));
+        return ResponseEntity.ok(
+                ApiResponse.success("Task comment updated successfully", response));
     }
 
     @PreAuthorize(
@@ -100,9 +103,9 @@ public class ProjectTaskCollaborationController {
             @PathVariable UUID commentId,
             @AuthenticationPrincipal Jwt jwt) {
         TaskCommentResponse response =
-                taskCollaborationService.deleteComment(
-                        tenantId, projectId, taskId, commentId, jwt);
-        return ResponseEntity.ok(ApiResponse.success("Task comment deleted successfully", response));
+                taskCollaborationService.deleteComment(tenantId, projectId, taskId, commentId, jwt);
+        return ResponseEntity.ok(
+                ApiResponse.success("Task comment deleted successfully", response));
     }
 
     @PreAuthorize(
@@ -125,6 +128,7 @@ public class ProjectTaskCollaborationController {
 
         PageResponse<TaskActivityResponse> response =
                 taskActivityService.getActivities(tenantId, projectId, taskId, pageable);
-        return ResponseEntity.ok(ApiResponse.success("Task activity fetched successfully", response));
+        return ResponseEntity.ok(
+                ApiResponse.success("Task activity fetched successfully", response));
     }
 }

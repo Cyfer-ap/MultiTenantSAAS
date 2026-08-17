@@ -12,13 +12,23 @@ export const taskCollaborationQueryKeys = {
         projectId: string,
         taskId: string,
         params: TaskCollaborationPageParams,
-    ) => [...taskCollaborationQueryKeys.task(tenantId, projectId, taskId), 'comments', params] as const,
+    ) =>
+        [
+            ...taskCollaborationQueryKeys.task(tenantId, projectId, taskId),
+            'comments',
+            params,
+        ] as const,
     activity: (
         tenantId: string,
         projectId: string,
         taskId: string,
         params: TaskCollaborationPageParams,
-    ) => [...taskCollaborationQueryKeys.task(tenantId, projectId, taskId), 'activity', params] as const,
+    ) =>
+        [
+            ...taskCollaborationQueryKeys.task(tenantId, projectId, taskId),
+            'activity',
+            params,
+        ] as const,
 }
 
 export function useTaskComments(

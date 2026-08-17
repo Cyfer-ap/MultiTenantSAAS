@@ -70,7 +70,8 @@ class TaskCollaborationIntegrationTest {
                                                 """
                                                         .formatted(tenant.adminUserId())))
                         .andExpect(status().isOk())
-                        .andExpect(jsonPath("$.data.authorUserId").value(member.userId().toString()))
+                        .andExpect(
+                                jsonPath("$.data.authorUserId").value(member.userId().toString()))
                         .andExpect(
                                 jsonPath("$.data.body")
                                         .value("Please review this with the administrator."))
@@ -104,7 +105,9 @@ class TaskCollaborationIntegrationTest {
                                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + memberToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content[0].type").value("COMMENT_ADDED"))
-                .andExpect(jsonPath("$.data.content[0].actorUserId").value(member.userId().toString()));
+                .andExpect(
+                        jsonPath("$.data.content[0].actorUserId")
+                                .value(member.userId().toString()));
 
         mockMvc.perform(
                         put(
@@ -192,9 +195,7 @@ class TaskCollaborationIntegrationTest {
 
         mockMvc.perform(
                         put(commentPath)
-                                .header(
-                                        HttpHeaders.AUTHORIZATION,
-                                        "Bearer " + projectMemberToken)
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + projectMemberToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
@@ -286,8 +287,7 @@ class TaskCollaborationIntegrationTest {
                                 .content(commentRequest("No new discussion.")))
                 .andExpect(status().isBadRequest())
                 .andExpect(
-                        jsonPath("$.message")
-                                .value("Cancelled task collaboration is read-only"));
+                        jsonPath("$.message").value("Cancelled task collaboration is read-only"));
 
         mockMvc.perform(
                         delete(
@@ -310,8 +310,7 @@ class TaskCollaborationIntegrationTest {
                                 .content(commentRequest("Archived discussion.")))
                 .andExpect(status().isBadRequest())
                 .andExpect(
-                        jsonPath("$.message")
-                                .value("Archived project collaboration is read-only"));
+                        jsonPath("$.message").value("Archived project collaboration is read-only"));
 
         mockMvc.perform(
                         get(
@@ -326,11 +325,7 @@ class TaskCollaborationIntegrationTest {
     }
 
     private UUID createComment(
-            UUID tenantId,
-            UUID projectId,
-            UUID taskId,
-            String accessToken,
-            String body)
+            UUID tenantId, UUID projectId, UUID taskId, String accessToken, String body)
             throws Exception {
         MvcResult result =
                 mockMvc.perform(
@@ -433,11 +428,7 @@ class TaskCollaborationIntegrationTest {
     }
 
     private UUID createTask(
-            UUID tenantId,
-            UUID projectId,
-            String accessToken,
-            String title,
-            UUID assigneeUserId)
+            UUID tenantId, UUID projectId, String accessToken, String title, UUID assigneeUserId)
             throws Exception {
         MvcResult result =
                 mockMvc.perform(

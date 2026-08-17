@@ -68,18 +68,8 @@ describe('projectTaskCollaborationApi', () => {
         const input = { body: 'Please review this with Grace.', mentionedUserIds: ['user-2'] }
         const base = '/api/tenants/tenant-1/projects/project-1/tasks/task-1'
 
-        await projectTaskCollaborationApi.getComments(
-            'tenant-1',
-            'project-1',
-            'task-1',
-            params,
-        )
-        await projectTaskCollaborationApi.createComment(
-            'tenant-1',
-            'project-1',
-            'task-1',
-            input,
-        )
+        await projectTaskCollaborationApi.getComments('tenant-1', 'project-1', 'task-1', params)
+        await projectTaskCollaborationApi.createComment('tenant-1', 'project-1', 'task-1', input)
         await projectTaskCollaborationApi.updateComment(
             'tenant-1',
             'project-1',
@@ -93,12 +83,7 @@ describe('projectTaskCollaborationApi', () => {
             'task-1',
             'comment-1',
         )
-        await projectTaskCollaborationApi.getActivity(
-            'tenant-1',
-            'project-1',
-            'task-1',
-            params,
-        )
+        await projectTaskCollaborationApi.getActivity('tenant-1', 'project-1', 'task-1', params)
 
         expect(get).toHaveBeenNthCalledWith(1, `${base}/comments`, { params })
         expect(post).toHaveBeenCalledWith(`${base}/comments`, input)

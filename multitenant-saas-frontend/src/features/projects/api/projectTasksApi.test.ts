@@ -78,9 +78,7 @@ describe('projectTasksApi', () => {
             task,
         )
 
-        expect(get).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/projects/project-1/tasks/task-1',
-        )
+        expect(get).toHaveBeenCalledWith('/api/tenants/tenant-1/projects/project-1/tasks/task-1')
     })
 
     it('uses the exact task lifecycle endpoints', async () => {
