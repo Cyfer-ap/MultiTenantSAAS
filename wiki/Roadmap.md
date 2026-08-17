@@ -2,21 +2,15 @@
 
 ## Current
 
-The platform foundation, PostgreSQL path, transaction/concurrency hardening, staging deployment, and initial observability work are in place.
+The platform foundation, PostgreSQL path, transaction/concurrency hardening, staging deployment, initial observability work, and GitHub Wiki publication flow are in place.
 
-The immediate product-level issue is:
-
-```text
-Primary Organizational Assignment
-```
-
-Normal organization assignment and reporting-option population work; the primary-assignment path requires focused PostgreSQL/service-path verification.
+The PostgreSQL Primary Organizational Assignment issue has been fixed and regression-tested. The current phase is feature selection and incremental platform expansion rather than another broad hardening pass.
 
 ## Near term
 
-1. fix and regression-test Primary Organizational Assignment
-2. verify adjacent organization/reporting edge cases
-3. keep documentation and Wiki source synchronized
+1. keep documentation and Wiki source synchronized
+2. select the next product/platform feature
+3. harden tenant isolation, authorization, concurrency, and observability at each new feature boundary
 4. add database backup/restore procedure and recovery drill
 5. add external monitoring/alerting
 6. perform focused load/failure-recovery verification
