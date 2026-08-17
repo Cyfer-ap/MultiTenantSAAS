@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { ThemeModeProvider, useThemeMode } from './themeMode'
+import { useThemeMode } from './themeMode'
+import { ThemeModeProvider } from './ThemeModeProvider'
 
 function ThemeProbe() {
     const { mode, toggleMode } = useThemeMode()
