@@ -2,6 +2,7 @@ package com.chacha.multitenantsaas.entity;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -80,9 +81,23 @@ public class TaskComment {
     }
 
     public void replaceMentions(Set<AppUser> mentionedUsers) {
-        mentions.clear();
+        Set<UUID> requestedUserIds = new HashSet<>();
         for (AppUser user : mentionedUsers) {
-            mentions.add(new TaskCommentMention(tenant, this, user));
+            requestedUserIds.add(user.getId());
+        }
+
+        mentions.removeIf(
+                mention -> !requestedUserIds.contains(mention.getMentionedUser().getId()));
+
+        Set<UUID> existingUserIds = new HashSet<>();
+        for (TaskCommentMention mention : mentions) {
+            existingUserIds.add(mention.getMentionedUser().getId());
+        }
+
+        for (AppUser user : mentionedUsers) {
+            if (existingUserIds.add(user.getId())) {
+                mentions.add(new TaskCommentMention(tenant, this, user));
+            }
         }
     }
 
