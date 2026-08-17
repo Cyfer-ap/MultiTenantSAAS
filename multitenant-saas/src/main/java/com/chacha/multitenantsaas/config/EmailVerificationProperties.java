@@ -11,6 +11,7 @@ public class EmailVerificationProperties {
     private int maxAttempts = 5;
     private long trustedBrowserDays = 30L;
     private String secret;
+    private boolean requireLoginGrant = true;
 
     public long getExpirationMinutes() {
         return expirationMinutes;
@@ -42,5 +43,13 @@ public class EmailVerificationProperties {
 
     public void setSecret(String secret) {
         this.secret = secret;
+    }
+
+    public boolean isRequireLoginGrant() {
+        return requireLoginGrant;
+    }
+
+    public void setRequireLoginGrant(boolean requireLoginGrant) {
+        this.requireLoginGrant = requireLoginGrant;
     }
 }

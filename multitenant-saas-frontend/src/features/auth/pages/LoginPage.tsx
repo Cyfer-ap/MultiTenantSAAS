@@ -83,6 +83,7 @@ export function LoginPage() {
     const [code, setCode] = useState('')
     const [password, setPassword] = useState('')
     const [challengeId, setChallengeId] = useState<string | null>(null)
+    const [workspaceGrantId, setWorkspaceGrantId] = useState<string | null>(null)
     const [workspaces, setWorkspaces] = useState<WorkspaceLoginOption[]>([])
     const [selectedWorkspace, setSelectedWorkspace] = useState<WorkspaceLoginOption | null>(null)
     const [trustBrowser, setTrustBrowser] = useState(true)
@@ -90,7 +91,10 @@ export function LoginPage() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [infoMessage, setInfoMessage] = useState<string | null>(null)
 
-    const moveToWorkspaces = (availableWorkspaces: WorkspaceLoginOption[]): void => {
+    const moveToWorkspaces = (
+        availableWorkspaces: WorkspaceLoginOption[],
+        grantId: string | null,
+    ): void => {
         setWorkspaces(availableWorkspaces)
 
         if (availableWorkspaces.length === 0) {
@@ -98,6 +102,15 @@ export function LoginPage() {
             setStep('email')
             return
         }
+
+        if (!grantId) {
+            setErrorMessage('Email verification expired. Verify your email again.')
+            setWorkspaceGrantId(null)
+            setStep('email')
+            return
+        }
+
+        setWorkspaceGrantId(grantId)
 
         if (availableWorkspaces.length === 1) {
             setSelectedWorkspace(availableWorkspaces[0])
@@ -131,7 +144,7 @@ export function LoginPage() {
             setEmail(normalizedEmail)
 
             if (!response.verificationRequired) {
-                moveToWorkspaces(response.workspaces)
+                moveToWorkspaces(response.workspaces, response.workspaceGrantId)
                 return
             }
 
@@ -179,7 +192,7 @@ export function LoginPage() {
             }
 
             setInfoMessage(null)
-            moveToWorkspaces(response.workspaces)
+            moveToWorkspaces(response.workspaces, response.workspaceGrantId)
         } catch (error: unknown) {
             setErrorMessage(normalizeApiError(error).message)
         } finally {
@@ -195,6 +208,12 @@ export function LoginPage() {
             return
         }
 
+        if (!workspaceGrantId) {
+            setErrorMessage('Email verification expired. Verify your email again.')
+            setStep('email')
+            return
+        }
+
         if (!password) {
             setErrorMessage('Password is required.')
             return
@@ -207,6 +226,7 @@ export function LoginPage() {
                 tenantId: selectedWorkspace.tenantId,
                 email,
                 password,
+                workspaceGrantId,
             })
 
             navigate(resolveRedirectPath(location.state), {
@@ -224,6 +244,7 @@ export function LoginPage() {
         setCode('')
         setPassword('')
         setChallengeId(null)
+        setWorkspaceGrantId(null)
         setWorkspaces([])
         setSelectedWorkspace(null)
         setErrorMessage(null)

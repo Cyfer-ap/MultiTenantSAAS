@@ -88,10 +88,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }, [clearSession, commitSession])
 
     const login = useCallback(
-        async ({ tenantId, email, password }: LoginInput): Promise<void> => {
+        async ({ tenantId, email, password, workspaceGrantId }: LoginInput): Promise<void> => {
             const response = await authApi.login(tenantId, {
                 email,
                 password,
+                workspaceGrantId,
             })
 
             commitSession(createAuthSession(response))

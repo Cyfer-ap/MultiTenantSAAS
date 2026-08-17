@@ -2,6 +2,7 @@ package com.chacha.multitenantsaas.repository;
 
 import com.chacha.multitenantsaas.entity.EmailVerificationChallenge;
 import jakarta.persistence.LockModeType;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,4 +21,14 @@ public interface EmailVerificationChallengeRepository
             WHERE challenge.id = :challengeId
             """)
     Optional<EmailVerificationChallenge> findByIdForUpdate(@Param("challengeId") UUID challengeId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query(
+            """
+            SELECT challenge
+            FROM EmailVerificationChallenge challenge
+            WHERE challenge.email = :email
+              AND challenge.usedAt IS NULL
+            """)
+    List<EmailVerificationChallenge> findUnusedByEmailForUpdate(@Param("email") String email);
 }

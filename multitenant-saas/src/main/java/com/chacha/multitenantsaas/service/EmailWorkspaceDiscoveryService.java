@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class EmailWorkspaceDiscoveryService {
 
     private static final String VERIFICATION_ALGORITHM = "HmacSHA256";
+    private static final long RESEND_COOLDOWN_SECONDS = 60L;
     private static final String GENERIC_START_MESSAGE =
             "If an active account exists for that email, a verification code has been sent.";
 
@@ -47,6 +48,7 @@ public class EmailWorkspaceDiscoveryService {
     private final int maxAttempts;
     private final long trustedBrowserDays;
     private final byte[] verificationSecret;
+    private final boolean requireLoginGrant;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public EmailWorkspaceDiscoveryService(
@@ -76,6 +78,7 @@ public class EmailWorkspaceDiscoveryService {
         this.maxAttempts = properties.getMaxAttempts();
         this.trustedBrowserDays = properties.getTrustedBrowserDays();
         this.verificationSecret = properties.getSecret().getBytes(StandardCharsets.UTF_8);
+        this.requireLoginGrant = properties.isRequireLoginGrant();
     }
 
     @Transactional
@@ -90,10 +93,14 @@ public class EmailWorkspaceDiscoveryService {
             trustedBrowser.setLastUsedAt(now);
             trustedEmailBrowserRepository.save(trustedBrowser);
 
+            List<WorkspaceLoginOptionResponse> workspaces = findWorkspaceOptions(normalizedEmail);
+            EmailVerificationChallenge loginGrant = createVerifiedLoginGrant(normalizedEmail, now);
+
             return new WorkspaceDiscoveryStartResponse(
                     false,
                     null,
-                    findWorkspaceOptions(normalizedEmail),
+                    workspaces,
+                    loginGrant.getId(),
                     0L,
                     "This browser is already trusted for email verification.");
         }
@@ -106,9 +113,35 @@ public class EmailWorkspaceDiscoveryService {
                     true,
                     publicChallengeId,
                     List.of(),
+                    null,
                     expirationMinutes * 60L,
                     GENERIC_START_MESSAGE);
         }
+
+        List<EmailVerificationChallenge> unusedChallenges =
+                challengeRepository.findUnusedByEmailForUpdate(normalizedEmail);
+
+        EmailVerificationChallenge recentChallenge =
+                unusedChallenges.stream()
+                        .filter(challenge -> !challenge.isExpired(now))
+                        .max((left, right) -> left.getCreatedAt().compareTo(right.getCreatedAt()))
+                        .orElse(null);
+
+        if (recentChallenge != null
+                && recentChallenge
+                        .getCreatedAt()
+                        .isAfter(now.minus(RESEND_COOLDOWN_SECONDS, ChronoUnit.SECONDS))) {
+            return new WorkspaceDiscoveryStartResponse(
+                    true,
+                    recentChallenge.getId(),
+                    List.of(),
+                    null,
+                    expirationMinutes * 60L,
+                    GENERIC_START_MESSAGE);
+        }
+
+        unusedChallenges.forEach(challenge -> challenge.markUsed(now));
+        challengeRepository.saveAll(unusedChallenges);
 
         String verificationCode = generateVerificationCode();
         String codeHash = hashVerificationCode(normalizedEmail, verificationCode);
@@ -120,7 +153,12 @@ public class EmailWorkspaceDiscoveryService {
         sendVerificationEmail(normalizedEmail, verificationCode);
 
         return new WorkspaceDiscoveryStartResponse(
-                true, challenge.getId(), List.of(), expirationMinutes * 60L, GENERIC_START_MESSAGE);
+                true,
+                challenge.getId(),
+                List.of(),
+                null,
+                expirationMinutes * 60L,
+                GENERIC_START_MESSAGE);
     }
 
     @Transactional(noRollbackFor = AuthenticationFailedException.class)
@@ -163,7 +201,68 @@ public class EmailWorkspaceDiscoveryService {
         }
 
         return new WorkspaceDiscoveryVerifyResponse(
-                workspaces, trustedBrowserToken, "Email verified successfully.");
+                workspaces,
+                workspaces.isEmpty() ? null : challenge.getId(),
+                trustedBrowserToken,
+                "Email verified successfully.");
+    }
+
+    @Transactional(noRollbackFor = AuthenticationFailedException.class)
+    public EmailVerificationChallenge requireActiveLoginGrant(UUID workspaceGrantId, String email) {
+        if (!requireLoginGrant) {
+            return null;
+        }
+
+        if (workspaceGrantId == null) {
+            throw invalidLoginGrant();
+        }
+
+        String normalizedEmail = normalizeEmail(email);
+        EmailVerificationChallenge challenge =
+                challengeRepository
+                        .findByIdForUpdate(workspaceGrantId)
+                        .orElseThrow(this::invalidLoginGrant);
+
+        Instant now = Instant.now();
+
+        if (!challenge.isUsed()
+                || challenge.getUsedAt() == null
+                || challenge.isLoginConsumed()
+                || !challenge.getEmail().equals(normalizedEmail)
+                || !now.isBefore(
+                        challenge.getUsedAt().plus(expirationMinutes, ChronoUnit.MINUTES))) {
+            throw invalidLoginGrant();
+        }
+
+        return challenge;
+    }
+
+    public void consumeLoginGrant(EmailVerificationChallenge challenge) {
+        if (!requireLoginGrant) {
+            return;
+        }
+
+        if (challenge == null || challenge.isLoginConsumed()) {
+            throw invalidLoginGrant();
+        }
+
+        challenge.markLoginConsumed(Instant.now());
+        challengeRepository.save(challenge);
+    }
+
+    private EmailVerificationChallenge createVerifiedLoginGrant(
+            String normalizedEmail, Instant now) {
+        String syntheticCodeHash =
+                hashVerificationCode(normalizedEmail, generateVerificationCode());
+
+        EmailVerificationChallenge challenge =
+                new EmailVerificationChallenge(
+                        normalizedEmail,
+                        syntheticCodeHash,
+                        now.plus(expirationMinutes, ChronoUnit.MINUTES));
+
+        challenge.markUsed(now);
+        return challengeRepository.save(challenge);
     }
 
     private TrustedEmailBrowser findActiveTrustedBrowser(
@@ -256,5 +355,10 @@ public class EmailWorkspaceDiscoveryService {
 
     private AuthenticationFailedException invalidCode() {
         return new AuthenticationFailedException("Verification code is invalid or expired");
+    }
+
+    private AuthenticationFailedException invalidLoginGrant() {
+        return new AuthenticationFailedException(
+                "Email verification is required before workspace login");
     }
 }

@@ -9,8 +9,10 @@ import com.chacha.multitenantsaas.dto.LogoutRequest;
 import com.chacha.multitenantsaas.dto.LogoutResponse;
 import com.chacha.multitenantsaas.dto.RefreshTokenRequest;
 import com.chacha.multitenantsaas.dto.TokenRefreshResponse;
+import com.chacha.multitenantsaas.dto.VerifiedTenantLoginRequest;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.AuditAction;
+import com.chacha.multitenantsaas.entity.EmailVerificationChallenge;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.TenantStatus;
 import com.chacha.multitenantsaas.entity.UserStatus;
@@ -37,6 +39,7 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final AuditLogService auditLogService;
     private final LoginAttemptService loginAttemptService;
+    private final EmailWorkspaceDiscoveryService emailWorkspaceDiscoveryService;
 
     public AuthService(
             TenantRepository tenantRepository,
@@ -46,7 +49,8 @@ public class AuthService {
             JwtContextService jwtContextService,
             RefreshTokenService refreshTokenService,
             AuditLogService auditLogService,
-            LoginAttemptService loginAttemptService) {
+            LoginAttemptService loginAttemptService,
+            EmailWorkspaceDiscoveryService emailWorkspaceDiscoveryService) {
         this.tenantRepository = tenantRepository;
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
@@ -55,6 +59,22 @@ public class AuthService {
         this.refreshTokenService = refreshTokenService;
         this.auditLogService = auditLogService;
         this.loginAttemptService = loginAttemptService;
+        this.emailWorkspaceDiscoveryService = emailWorkspaceDiscoveryService;
+    }
+
+    @Transactional(noRollbackFor = AuthenticationFailedException.class)
+    public LoginResponse loginVerified(UUID tenantId, VerifiedTenantLoginRequest request) {
+        String normalizedEmail = request.email().trim().toLowerCase();
+
+        EmailVerificationChallenge loginGrant =
+                emailWorkspaceDiscoveryService.requireActiveLoginGrant(
+                        request.workspaceGrantId(), normalizedEmail);
+
+        LoginResponse response =
+                login(tenantId, new LoginRequest(request.email(), request.password()));
+
+        emailWorkspaceDiscoveryService.consumeLoginGrant(loginGrant);
+        return response;
     }
 
     @Transactional(noRollbackFor = AuthenticationFailedException.class)

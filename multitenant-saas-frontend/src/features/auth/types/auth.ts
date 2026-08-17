@@ -5,6 +5,7 @@ export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 export interface LoginRequest {
     email: string
     password: string
+    workspaceGrantId: string
 }
 
 export interface LoginInput extends LoginRequest {
@@ -26,6 +27,7 @@ export interface WorkspaceDiscoveryStartResponse {
     verificationRequired: boolean
     challengeId: string | null
     workspaces: WorkspaceLoginOption[]
+    workspaceGrantId: string | null
     expiresInSeconds: number
     message: string
 }
@@ -38,6 +40,7 @@ export interface WorkspaceDiscoveryVerifyRequest {
 
 export interface WorkspaceDiscoveryVerifyResponse {
     workspaces: WorkspaceLoginOption[]
+    workspaceGrantId: string | null
     trustedBrowserToken: string | null
     message: string
 }
