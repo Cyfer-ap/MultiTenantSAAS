@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
+import LayersRoundedIcon from '@mui/icons-material/LayersRounded'
+import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
 import {
     AppBar,
     Box,
@@ -9,12 +12,14 @@ import {
     ListItemButton,
     ListItemIcon,
     ListItemText,
+    Stack,
     Toolbar,
+    Tooltip,
     Typography,
     useMediaQuery,
     useTheme,
 } from '@mui/material'
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
+import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 
 import { UserMenu } from '../features/auth/components/UserMenu'
@@ -22,9 +27,13 @@ import { useAuth } from '../features/auth/hooks/useAuth'
 import { useCurrentAuthorization } from '../features/authorization/hooks/useCurrentAuthorization'
 import { WorkspaceSubscriptionAccessProvider } from '../features/subscriptions/context/WorkspaceSubscriptionAccessContext'
 import { useWorkspaceSubscriptionAccess } from '../features/subscriptions/hooks/useWorkspaceSubscription'
+import { ThemeModeToggle } from '../theme/ThemeModeToggle'
+import { useSidebarCollapse } from './useSidebarCollapse'
 import { getAvailableWorkspaceNavigationItems } from './workspaceNavigation'
 
-const drawerWidth = 248
+const expandedDrawerWidth = 264
+const collapsedDrawerWidth = 82
+const mobileDrawerWidth = 280
 
 export function AppShell() {
     const { session } = useAuth()
@@ -35,10 +44,11 @@ export function AppShell() {
 
     const theme = useTheme()
     const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
+    const { collapsed, toggleCollapsed } = useSidebarCollapse('workspace-sidebar-collapsed')
+    const desktopDrawerWidth = collapsed ? collapsedDrawerWidth : expandedDrawerWidth
 
     const location = useLocation()
     const navigate = useNavigate()
-
     const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
 
     const availableNavigationItems = authorization.data
@@ -57,100 +67,185 @@ export function AppShell() {
         return location.pathname === path || location.pathname.startsWith(`${path}/`)
     }
 
-    const drawerContent = (
+    const activeNavigationItem = availableNavigationItems.find((item) => isSelected(item.path))
+
+    const renderDrawerContent = (compact: boolean, allowCollapse: boolean) => (
         <Box
             sx={{
-                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
+                height: '100%',
+                overflow: 'hidden',
             }}
         >
-            <Toolbar>
-                <Typography
-                    variant="h6"
-                    sx={{
-                        color: 'primary.main',
-                        fontWeight: 700,
-                    }}
+            <Toolbar
+                sx={{
+                    minHeight: 70,
+                    px: compact ? 1.4 : 2,
+                    transition: 'padding 220ms ease',
+                }}
+            >
+                <Stack
+                    direction="row"
+                    spacing={compact ? 0 : 1.25}
+                    sx={{ alignItems: 'center', minWidth: 0 }}
                 >
-                    Multi-Tenant SaaS
-                </Typography>
+                    <Box
+                        aria-hidden="true"
+                        sx={{
+                            alignItems: 'center',
+                            background: (currentTheme) =>
+                                currentTheme.palette.mode === 'dark'
+                                    ? 'linear-gradient(145deg, #343a42, #171b20)'
+                                    : 'linear-gradient(145deg, #4c5661, #2d343c)',
+                            border: 1,
+                            borderColor: 'divider',
+                            borderRadius: 2.25,
+                            boxShadow: (currentTheme) =>
+                                currentTheme.palette.mode === 'dark'
+                                    ? 'inset 0 1px rgba(255,255,255,0.12), 0 9px 22px rgba(0,0,0,0.22)'
+                                    : 'inset 0 1px rgba(255,255,255,0.24), 0 9px 20px rgba(29,36,44,0.14)',
+                            color: '#eef1f4',
+                            display: 'flex',
+                            flexShrink: 0,
+                            height: 38,
+                            justifyContent: 'center',
+                            width: 38,
+                        }}
+                    >
+                        <LayersRoundedIcon fontSize="small" />
+                    </Box>
+
+                    <Box
+                        sx={{
+                            maxWidth: compact ? 0 : 180,
+                            opacity: compact ? 0 : 1,
+                            overflow: 'hidden',
+                            transition:
+                                'max-width 220ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 130ms ease',
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
+                        <Typography sx={{ fontWeight: 800, lineHeight: 1.15 }}>
+                            Multi-Tenant SaaS
+                        </Typography>
+                        <Typography color="text.secondary" variant="caption">
+                            Workspace
+                        </Typography>
+                    </Box>
+                </Stack>
             </Toolbar>
 
             <Divider />
 
-            <List sx={{ paddingX: 1.5, paddingY: 2 }}>
+            <List sx={{ px: compact ? 1.1 : 1.5, py: 1.75 }}>
                 {availableNavigationItems.map((item) => (
-                    <ListItemButton
+                    <Tooltip
                         key={item.path}
-                        selected={isSelected(item.path)}
-                        onClick={() => navigateTo(item.path)}
-                        sx={{
-                            marginBottom: 0.5,
-                            borderRadius: 2,
-                        }}
+                        placement="right"
+                        title={compact ? item.label : ''}
                     >
-                        <ListItemIcon
+                        <ListItemButton
+                            aria-label={compact ? item.label : undefined}
+                            selected={isSelected(item.path)}
+                            onClick={() => navigateTo(item.path)}
                             sx={{
-                                minWidth: 40,
-                                color: 'inherit',
+                                justifyContent: compact ? 'center' : 'flex-start',
+                                mb: 0.55,
+                                minHeight: 46,
+                                px: compact ? 1 : 1.35,
                             }}
                         >
-                            {item.icon}
-                        </ListItemIcon>
+                            <ListItemIcon
+                                sx={{
+                                    color: 'inherit',
+                                    justifyContent: 'center',
+                                    minWidth: compact ? 0 : 40,
+                                    transition: 'min-width 220ms ease',
+                                }}
+                            >
+                                {item.icon}
+                            </ListItemIcon>
 
-                        <ListItemText primary={item.label} />
-                    </ListItemButton>
+                            {!compact && <ListItemText primary={item.label} />}
+                        </ListItemButton>
+                    </Tooltip>
                 ))}
             </List>
+
+            {allowCollapse && (
+                <Box sx={{ mt: 'auto', p: 1.25 }}>
+                    <Divider sx={{ mb: 1.25 }} />
+                    <Tooltip
+                        placement="right"
+                        title={compact ? 'Expand navigation' : ''}
+                    >
+                        <ListItemButton
+                            aria-label={compact ? 'Expand navigation' : 'Collapse navigation'}
+                            onClick={toggleCollapsed}
+                            sx={{
+                                justifyContent: compact ? 'center' : 'flex-start',
+                                minHeight: 44,
+                                px: compact ? 1 : 1.35,
+                            }}
+                        >
+                            <ListItemIcon
+                                sx={{
+                                    color: 'text.secondary',
+                                    justifyContent: 'center',
+                                    minWidth: compact ? 0 : 40,
+                                }}
+                            >
+                                {compact ? (
+                                    <ChevronRightRoundedIcon />
+                                ) : (
+                                    <ChevronLeftRoundedIcon />
+                                )}
+                            </ListItemIcon>
+                            {!compact && <ListItemText primary="Collapse navigation" />}
+                        </ListItemButton>
+                    </Tooltip>
+                </Box>
+            )}
         </Box>
     )
 
     return (
-        <Box
-            sx={{
-                display: 'flex',
-                minHeight: '100vh',
-            }}
-        >
+        <Box sx={{ display: 'flex', minHeight: '100vh' }}>
             <AppBar
                 position="fixed"
                 sx={{
+                    ml: { md: `${desktopDrawerWidth}px` },
+                    width: { md: `calc(100% - ${desktopDrawerWidth}px)` },
                     zIndex: (currentTheme) => currentTheme.zIndex.drawer + 1,
-                    width: {
-                        md: `calc(100% - ${drawerWidth}px)`,
-                    },
-                    marginLeft: {
-                        md: `${drawerWidth}px`,
-                    },
+                    transition:
+                        'width 260ms cubic-bezier(0.2, 0.8, 0.2, 1), margin-left 260ms cubic-bezier(0.2, 0.8, 0.2, 1)',
                 }}
             >
-                <Toolbar>
+                <Toolbar sx={{ minHeight: 70, gap: 1 }}>
                     <IconButton
-                        color="inherit"
                         aria-label="Open navigation"
                         edge="start"
                         onClick={() => setMobileDrawerOpen(true)}
-                        sx={{
-                            marginRight: 2,
-                            display: {
-                                md: 'none',
-                            },
-                        }}
+                        sx={{ display: { md: 'none' }, mr: 0.5 }}
                     >
                         <MenuRoundedIcon />
                     </IconButton>
 
-                    <Typography
-                        variant="h6"
-                        component="div"
-                        sx={{
-                            flexGrow: 1,
-                        }}
-                    >
-                        Workspace
-                    </Typography>
+                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                        <Typography
+                            color="text.secondary"
+                            variant="caption"
+                            sx={{ display: { xs: 'none', sm: 'block' }, lineHeight: 1.1 }}
+                        >
+                            Workspace
+                        </Typography>
+                        <Typography noWrap sx={{ fontWeight: 760, lineHeight: 1.25 }}>
+                            {activeNavigationItem?.label ?? 'Workspace'}
+                        </Typography>
+                    </Box>
 
+                    <ThemeModeToggle size="small" />
                     <UserMenu />
                 </Toolbar>
             </AppBar>
@@ -159,52 +254,39 @@ export function AppShell() {
                 component="nav"
                 aria-label="Primary navigation"
                 sx={{
-                    width: {
-                        md: drawerWidth,
-                    },
-                    flexShrink: {
-                        md: 0,
-                    },
+                    flexShrink: { md: 0 },
+                    width: { md: desktopDrawerWidth },
+                    transition: 'width 260ms cubic-bezier(0.2, 0.8, 0.2, 1)',
                 }}
             >
                 <Drawer
                     variant="temporary"
                     open={mobileDrawerOpen}
                     onClose={() => setMobileDrawerOpen(false)}
-                    ModalProps={{
-                        keepMounted: true,
-                    }}
+                    ModalProps={{ keepMounted: true }}
                     sx={{
-                        display: {
-                            xs: 'block',
-                            md: 'none',
-                        },
-
+                        display: { xs: 'block', md: 'none' },
                         '& .MuiDrawer-paper': {
-                            width: drawerWidth,
                             boxSizing: 'border-box',
+                            width: mobileDrawerWidth,
                         },
                     }}
                 >
-                    {drawerContent}
+                    {renderDrawerContent(false, false)}
                 </Drawer>
 
                 <Drawer
                     variant="permanent"
                     open
                     sx={{
-                        display: {
-                            xs: 'none',
-                            md: 'block',
-                        },
-
+                        display: { xs: 'none', md: 'block' },
                         '& .MuiDrawer-paper': {
-                            width: drawerWidth,
                             boxSizing: 'border-box',
+                            width: desktopDrawerWidth,
                         },
                     }}
                 >
-                    {drawerContent}
+                    {renderDrawerContent(collapsed, true)}
                 </Drawer>
             </Box>
 
@@ -212,19 +294,18 @@ export function AppShell() {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    width: {
-                        md: `calc(100% - ${drawerWidth}px)`,
-                    },
-                    marginTop: 8,
-                    padding: {
-                        xs: 2,
-                        sm: 3,
-                    },
+                    mt: 8.75,
+                    minWidth: 0,
+                    p: { xs: 2, sm: 3 },
+                    width: { md: `calc(100% - ${desktopDrawerWidth}px)` },
+                    transition: 'width 260ms cubic-bezier(0.2, 0.8, 0.2, 1)',
                 }}
             >
-                <WorkspaceSubscriptionAccessProvider access={subscriptionAccess}>
-                    <Outlet />
-                </WorkspaceSubscriptionAccessProvider>
+                <Box sx={{ mx: 'auto', maxWidth: 1600 }}>
+                    <WorkspaceSubscriptionAccessProvider access={subscriptionAccess}>
+                        <Outlet />
+                    </WorkspaceSubscriptionAccessProvider>
+                </Box>
             </Box>
         </Box>
     )
