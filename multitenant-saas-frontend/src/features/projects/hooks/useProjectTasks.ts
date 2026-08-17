@@ -14,7 +14,9 @@ export const projectTasksQueryKeys = {
     project: (tenantId: string, projectId: string) =>
         [...projectTasksQueryKeys.all, tenantId, projectId] as const,
     list: (tenantId: string, projectId: string, params: ProjectTasksQueryParams) =>
-        [...projectTasksQueryKeys.project(tenantId, projectId), params] as const,
+        [...projectTasksQueryKeys.project(tenantId, projectId), 'list', params] as const,
+    detail: (tenantId: string, projectId: string, taskId: string) =>
+        [...projectTasksQueryKeys.project(tenantId, projectId), 'detail', taskId] as const,
 }
 
 export function useProjectTasks(
@@ -28,6 +30,20 @@ export function useProjectTasks(
         queryFn: () => projectTasksApi.getTasks(tenantId, projectId, params),
         enabled: enabled && tenantId.length > 0 && projectId.length > 0,
         placeholderData: keepPreviousData,
+    })
+}
+
+export function useProjectTask(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+    enabled = true,
+) {
+    return useQuery({
+        queryKey: projectTasksQueryKeys.detail(tenantId, projectId, taskId),
+        queryFn: () => projectTasksApi.getTask(tenantId, projectId, taskId),
+        enabled:
+            enabled && tenantId.length > 0 && projectId.length > 0 && taskId.length > 0,
     })
 }
 
