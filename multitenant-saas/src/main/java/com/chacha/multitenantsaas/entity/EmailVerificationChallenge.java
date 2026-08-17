@@ -37,6 +37,9 @@ public class EmailVerificationChallenge {
     @Column(name = "used_at")
     private Instant usedAt;
 
+    @Column(name = "login_consumed_at")
+    private Instant loginConsumedAt;
+
     public EmailVerificationChallenge() {}
 
     public EmailVerificationChallenge(String email, String codeHash, Instant expiresAt) {
@@ -76,6 +79,10 @@ public class EmailVerificationChallenge {
         return usedAt;
     }
 
+    public Instant getLoginConsumedAt() {
+        return loginConsumedAt;
+    }
+
     public void setId(UUID id) {
         this.id = id;
     }
@@ -104,12 +111,24 @@ public class EmailVerificationChallenge {
         this.usedAt = usedAt;
     }
 
+    public void setLoginConsumedAt(Instant loginConsumedAt) {
+        this.loginConsumedAt = loginConsumedAt;
+    }
+
     public void recordFailedAttempt() {
         this.failedAttempts++;
     }
 
     public void markUsed(Instant now) {
         this.usedAt = now;
+    }
+
+    public void markLoginConsumed(Instant now) {
+        this.loginConsumedAt = now;
+    }
+
+    public boolean isLoginConsumed() {
+        return loginConsumedAt != null;
     }
 
     public boolean isExpired(Instant now) {

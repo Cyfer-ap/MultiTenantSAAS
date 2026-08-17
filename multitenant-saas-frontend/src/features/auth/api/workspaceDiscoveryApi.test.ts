@@ -28,6 +28,7 @@ describe('authApi workspace discovery', () => {
             verificationRequired: true,
             challengeId: 'challenge-1',
             workspaces: [],
+            workspaceGrantId: null,
             expiresInSeconds: 600,
             message: 'Check your email.',
         }
@@ -53,6 +54,7 @@ describe('authApi workspace discovery', () => {
                     slug: 'research-lab',
                 },
             ],
+            workspaceGrantId: 'grant-1',
             trustedBrowserToken: 'new-trusted-token',
             message: 'Email verified successfully.',
         }

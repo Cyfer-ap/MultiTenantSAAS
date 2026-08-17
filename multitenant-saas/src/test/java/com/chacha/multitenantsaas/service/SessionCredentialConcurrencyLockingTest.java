@@ -53,6 +53,7 @@ class SessionCredentialConcurrencyLockingTest {
     @Mock JwtContextService jwtContextService;
     @Mock AuditLogService auditLogService;
     @Mock LoginAttemptService loginAttemptService;
+    @Mock EmailWorkspaceDiscoveryService emailWorkspaceDiscoveryService;
     @Mock Jwt jwt;
 
     private RefreshTokenService refreshTokenService;
@@ -72,7 +73,8 @@ class SessionCredentialConcurrencyLockingTest {
                         jwtContextService,
                         refreshTokenService,
                         auditLogService,
-                        loginAttemptService);
+                        loginAttemptService,
+                        emailWorkspaceDiscoveryService);
         passwordResetService =
                 new PasswordResetService(
                         tenantRepository,

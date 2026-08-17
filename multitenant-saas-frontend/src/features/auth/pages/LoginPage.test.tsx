@@ -68,6 +68,7 @@ describe('LoginPage', () => {
             verificationRequired: true,
             challengeId: 'challenge-1',
             workspaces: [],
+            workspaceGrantId: null,
             expiresInSeconds: 600,
             message: 'Check your email.',
         })
@@ -96,6 +97,7 @@ describe('LoginPage', () => {
                     slug: 'research-lab',
                 },
             ],
+            workspaceGrantId: 'grant-1',
             expiresInSeconds: 0,
             message: 'Trusted browser.',
         })

@@ -107,8 +107,19 @@ class EmailWorkspaceDiscoveryServiceTest {
         assertThat(verified.workspaces()).hasSize(1);
         assertThat(verified.workspaces().getFirst().tenantId()).isEqualTo(user.getTenant().getId());
         assertThat(verified.workspaces().getFirst().name()).isEqualTo("Research Lab");
+        assertThat(verified.workspaceGrantId()).isEqualTo(challenge.getId());
         assertThat(verified.trustedBrowserToken()).isNotBlank();
         assertThat(challenge.isUsed()).isTrue();
+
+        EmailVerificationChallenge loginGrant =
+                service.requireActiveLoginGrant(verified.workspaceGrantId(), EMAIL);
+
+        service.consumeLoginGrant(loginGrant);
+
+        assertThat(challenge.isLoginConsumed()).isTrue();
+        assertThrows(
+                AuthenticationFailedException.class,
+                () -> service.requireActiveLoginGrant(verified.workspaceGrantId(), EMAIL));
     }
 
     @Test
@@ -173,6 +184,8 @@ class EmailWorkspaceDiscoveryServiceTest {
         when(trustedEmailBrowserRepository.findByTokenHash(secureTokenService.hashToken(rawToken)))
                 .thenReturn(Optional.of(browser));
         when(trustedEmailBrowserRepository.save(browser)).thenReturn(browser);
+        when(challengeRepository.save(any(EmailVerificationChallenge.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         WorkspaceDiscoveryStartResponse response =
                 service.start(new WorkspaceDiscoveryStartRequest(EMAIL, rawToken));
@@ -180,8 +193,9 @@ class EmailWorkspaceDiscoveryServiceTest {
         assertThat(response.verificationRequired()).isFalse();
         assertThat(response.challengeId()).isNull();
         assertThat(response.workspaces()).hasSize(1);
+        assertThat(response.workspaceGrantId()).isNotNull();
         verify(emailSender, never()).send(any());
-        verify(challengeRepository, never()).save(any());
+        verify(challengeRepository).save(any(EmailVerificationChallenge.class));
     }
 
     private AppUser activeUser() {

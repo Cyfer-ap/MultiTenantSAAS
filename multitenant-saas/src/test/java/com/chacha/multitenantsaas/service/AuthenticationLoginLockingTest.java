@@ -52,6 +52,8 @@ class AuthenticationLoginLockingTest {
 
     @Mock private LoginAttemptService loginAttemptService;
 
+    @Mock private EmailWorkspaceDiscoveryService emailWorkspaceDiscoveryService;
+
     private AuthService authService;
     private SystemAuthService systemAuthService;
 
@@ -66,7 +68,8 @@ class AuthenticationLoginLockingTest {
                         jwtContextService,
                         refreshTokenService,
                         auditLogService,
-                        loginAttemptService);
+                        loginAttemptService,
+                        emailWorkspaceDiscoveryService);
 
         systemAuthService =
                 new SystemAuthService(
