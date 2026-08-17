@@ -167,13 +167,14 @@ export const authTheme = createTheme({
                     '& input': {
                         caretColor: '#d9dde3',
                     },
-                    '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active': {
-                        WebkitTextFillColor: '#eef1f4',
-                        WebkitBoxShadow: '0 0 0 1000px #191d21 inset',
-                        caretColor: '#d9dde3',
-                        borderRadius: 'inherit',
-                        transition: 'background-color 9999s ease-out 0s',
-                    },
+                    '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active':
+                        {
+                            WebkitTextFillColor: '#eef1f4',
+                            WebkitBoxShadow: '0 0 0 1000px #191d21 inset',
+                            caretColor: '#d9dde3',
+                            borderRadius: 'inherit',
+                            transition: 'background-color 9999s ease-out 0s',
+                        },
                 },
             },
         },
