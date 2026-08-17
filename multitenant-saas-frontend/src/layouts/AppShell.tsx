@@ -68,6 +68,9 @@ export function AppShell() {
     }
 
     const activeNavigationItem = availableNavigationItems.find((item) => isSelected(item.path))
+    const headerTitle = location.pathname.startsWith('/account')
+        ? 'Account settings'
+        : (activeNavigationItem?.label ?? 'Workspace')
 
     const renderDrawerContent = (compact: boolean, allowCollapse: boolean) => (
         <Box
@@ -230,7 +233,7 @@ export function AppShell() {
                             Workspace
                         </Typography>
                         <Typography noWrap sx={{ fontWeight: 760, lineHeight: 1.25 }}>
-                            {activeNavigationItem?.label ?? 'Workspace'}
+                            {headerTitle}
                         </Typography>
                     </Box>
 
