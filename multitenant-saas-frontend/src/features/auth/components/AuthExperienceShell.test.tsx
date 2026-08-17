@@ -13,6 +13,8 @@ describe('AuthExperienceShell', () => {
 
         expect(screen.getAllByText(/multi-tenant saas/i).length).toBeGreaterThan(0)
         expect(screen.getByText(/secure access, without the clutter/i)).toBeInTheDocument()
+        expect(screen.getByText(/tenant-aware access/i)).toBeInTheDocument()
+        expect(screen.getByText(/verified identity/i)).toBeInTheDocument()
         expect(screen.getByText(/authentication form/i)).toBeInTheDocument()
     })
 
