@@ -78,30 +78,52 @@ export const authTheme = createTheme({
                     transition:
                         'transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease',
                     '&:focus-visible': {
-                        outline: '2px solid rgba(217, 221, 227, 0.78)',
+                        outline: '2px solid rgba(217, 221, 227, 0.72)',
                         outlineOffset: 3,
                     },
                 },
                 contained: {
-                    backgroundColor: '#d9dde3',
-                    color: '#08090b',
-                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.72)',
+                    color: '#edf0f3',
+                    backgroundColor: '#1b1f24',
+                    backgroundImage: 'linear-gradient(180deg, #24282e 0%, #181b1f 100%)',
+                    border: '1px solid rgba(255, 255, 255, 0.13)',
+                    boxShadow:
+                        '0 10px 26px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.07)',
                     '&:hover': {
-                        backgroundColor: '#f0f2f4',
-                        boxShadow: '0 10px 28px rgba(0, 0, 0, 0.3)',
+                        backgroundColor: '#252a30',
+                        backgroundImage: 'linear-gradient(180deg, #2a2f35 0%, #1c2025 100%)',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        boxShadow:
+                            '0 13px 30px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.09)',
                         transform: 'translateY(-1px)',
                     },
                     '&:active': {
+                        backgroundColor: '#15181c',
+                        backgroundImage: 'linear-gradient(180deg, #191d21 0%, #14171a 100%)',
+                        boxShadow:
+                            '0 5px 16px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.045)',
                         transform: 'translateY(0)',
+                    },
+                    '&.Mui-disabled': {
+                        color: 'rgba(226, 230, 235, 0.42)',
+                        backgroundColor: '#14171a',
+                        backgroundImage: 'none',
+                        borderColor: 'rgba(255, 255, 255, 0.07)',
                     },
                 },
                 outlined: {
-                    borderColor: 'rgba(255, 255, 255, 0.16)',
                     color: '#dfe3e8',
+                    backgroundColor: 'rgba(12, 14, 17, 0.72)',
+                    borderColor: 'rgba(255, 255, 255, 0.14)',
+                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.025)',
                     '&:hover': {
-                        backgroundColor: 'rgba(255, 255, 255, 0.055)',
-                        borderColor: 'rgba(255, 255, 255, 0.28)',
+                        backgroundColor: 'rgba(24, 28, 32, 0.82)',
+                        borderColor: 'rgba(255, 255, 255, 0.24)',
                         transform: 'translateY(-1px)',
+                    },
+                    '&:active': {
+                        backgroundColor: 'rgba(17, 20, 24, 0.9)',
+                        transform: 'translateY(0)',
                     },
                 },
                 text: {
@@ -116,23 +138,41 @@ export const authTheme = createTheme({
         MuiOutlinedInput: {
             styleOverrides: {
                 root: {
-                    backgroundColor: 'rgba(255, 255, 255, 0.025)',
+                    color: '#eef1f4',
+                    backgroundColor: '#171a1f',
+                    backgroundImage: 'linear-gradient(180deg, #1b1e23 0%, #15181c 100%)',
                     borderRadius: 11,
+                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.035)',
                     transition:
-                        'background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
+                        'background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
                     '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255, 255, 255, 0.13)',
+                        borderColor: 'rgba(255, 255, 255, 0.17)',
+                    },
+                    '&:hover': {
+                        backgroundColor: '#1a1e23',
                     },
                     '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255, 255, 255, 0.25)',
+                        borderColor: 'rgba(255, 255, 255, 0.27)',
                     },
                     '&.Mui-focused': {
-                        backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                        boxShadow: '0 0 0 3px rgba(217, 221, 227, 0.07)',
+                        backgroundColor: '#1d2126',
+                        backgroundImage: 'linear-gradient(180deg, #20242a 0%, #191d21 100%)',
+                        boxShadow:
+                            '0 0 0 3px rgba(197, 203, 211, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
                     },
                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#aeb5bf',
+                        borderColor: '#858e99',
                         borderWidth: 1,
+                    },
+                    '& input': {
+                        caretColor: '#d9dde3',
+                    },
+                    '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active': {
+                        WebkitTextFillColor: '#eef1f4',
+                        WebkitBoxShadow: '0 0 0 1000px #191d21 inset',
+                        caretColor: '#d9dde3',
+                        borderRadius: 'inherit',
+                        transition: 'background-color 9999s ease-out 0s',
                     },
                 },
             },
@@ -140,7 +180,7 @@ export const authTheme = createTheme({
         MuiInputLabel: {
             styleOverrides: {
                 root: {
-                    color: '#8f98a4',
+                    color: '#9ba4af',
                     '&.Mui-focused': {
                         color: '#cfd4db',
                     },
