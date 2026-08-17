@@ -146,7 +146,7 @@ export const authTheme = createTheme({
                     transition:
                         'background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
                     '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255, 255, 255, 0.17)',
+                        borderColor: 'rgba(255, 255, 255, 0.18)',
                     },
                     '&:hover': {
                         backgroundColor: '#1a1e23',
