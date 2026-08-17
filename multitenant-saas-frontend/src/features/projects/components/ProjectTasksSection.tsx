@@ -134,9 +134,9 @@ function formatDateTime(value: string | null): string {
 function isOverdue(task: ProjectTask): boolean {
     return Boolean(
         task.dueAt &&
-            task.status !== 'COMPLETED' &&
-            task.status !== 'CANCELLED' &&
-            new Date(task.dueAt).getTime() < Date.now(),
+        task.status !== 'COMPLETED' &&
+        task.status !== 'CANCELLED' &&
+        new Date(task.dueAt).getTime() < Date.now(),
     )
 }
 
@@ -177,7 +177,11 @@ function TaskBoardSkeleton() {
     return (
         <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', paddingBottom: 1 }}>
             {activeStatuses.map((status) => (
-                <Paper key={status} variant="outlined" sx={{ minWidth: 280, padding: 2, width: 320 }}>
+                <Paper
+                    key={status}
+                    variant="outlined"
+                    sx={{ minWidth: 280, padding: 2, width: 320 }}
+                >
                     <Skeleton width="45%" />
                     <Skeleton height={130} sx={{ marginTop: 2 }} variant="rounded" />
                     <Skeleton height={110} sx={{ marginTop: 1 }} variant="rounded" />
@@ -348,7 +352,10 @@ export function ProjectTasksSection({
         setBoardError(null)
 
         try {
-            await updateStatusMutation.mutateAsync({ taskId: task.id, input: { status: nextStatus } })
+            await updateStatusMutation.mutateAsync({
+                taskId: task.id,
+                input: { status: nextStatus },
+            })
             onFeedback(`Moved “${task.title}” to ${taskStatusLabels[nextStatus]}.`)
         } catch (error) {
             setBoardError(getErrorMessage(error, 'The task could not be moved.'))
@@ -430,24 +437,38 @@ export function ProjectTasksSection({
                             label={taskPriorityLabels[task.priority]}
                             size="small"
                         />
-                        {overdue && <Chip color="error" label="Overdue" size="small" variant="outlined" />}
+                        {overdue && (
+                            <Chip color="error" label="Overdue" size="small" variant="outlined" />
+                        )}
                     </Stack>
 
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         <Avatar sx={{ height: 26, width: 26, fontSize: 11 }}>
                             {getInitials(task.assigneeName)}
                         </Avatar>
-                        <Typography color="text.secondary" noWrap variant="caption" sx={{ flexGrow: 1 }}>
+                        <Typography
+                            color="text.secondary"
+                            noWrap
+                            variant="caption"
+                            sx={{ flexGrow: 1 }}
+                        >
                             {task.assigneeName || 'Unassigned'}
                         </Typography>
                         <Tooltip title={formatDateTime(task.dueAt)}>
                             <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-                                <CalendarTodayOutlinedIcon color={overdue ? 'error' : 'inherit'} fontSize="inherit" />
-                                <Typography color={overdue ? 'error' : 'text.secondary'} variant="caption">
+                                <CalendarTodayOutlinedIcon
+                                    color={overdue ? 'error' : 'inherit'}
+                                    fontSize="inherit"
+                                />
+                                <Typography
+                                    color={overdue ? 'error' : 'text.secondary'}
+                                    variant="caption"
+                                >
                                     {task.dueAt
-                                        ? new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(
-                                              new Date(task.dueAt),
-                                          )
+                                        ? new Intl.DateTimeFormat(undefined, {
+                                              month: 'short',
+                                              day: 'numeric',
+                                          }).format(new Date(task.dueAt))
                                         : 'No due'}
                                 </Typography>
                             </Stack>
@@ -507,7 +528,9 @@ export function ProjectTasksSection({
                     )}
                     <Button
                         disabled={tasksQuery.isFetching}
-                        onClick={() => void Promise.all([tasksQuery.refetch(), memberOptionsQuery.refetch()])}
+                        onClick={() =>
+                            void Promise.all([tasksQuery.refetch(), memberOptionsQuery.refetch()])
+                        }
                         startIcon={
                             tasksQuery.isFetching ? (
                                 <CircularProgress color="inherit" size={16} />
@@ -523,8 +546,17 @@ export function ProjectTasksSection({
                 </Stack>
             </Stack>
 
-            <Paper component="form" onSubmit={submitSearch} variant="outlined" sx={{ marginTop: 2, padding: 2 }}>
-                <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} sx={{ alignItems: { lg: 'center' } }}>
+            <Paper
+                component="form"
+                onSubmit={submitSearch}
+                variant="outlined"
+                sx={{ marginTop: 2, padding: 2 }}
+            >
+                <Stack
+                    direction={{ xs: 'column', lg: 'row' }}
+                    spacing={2}
+                    sx={{ alignItems: { lg: 'center' } }}
+                >
                     <TextField
                         label="Search project tasks"
                         onChange={(event) => setSearchDraft(event.target.value)}
@@ -616,12 +648,18 @@ export function ProjectTasksSection({
                 </Alert>
             )}
 
-            {tasksQuery.isFetching && !tasksQuery.isPending && <LinearProgress aria-label="Updating project tasks" sx={{ marginTop: 2 }} />}
+            {tasksQuery.isFetching && !tasksQuery.isPending && (
+                <LinearProgress aria-label="Updating project tasks" sx={{ marginTop: 2 }} />
+            )}
 
             {tasksQuery.isError && (
                 <Alert
                     action={
-                        <Button color="inherit" onClick={() => void tasksQuery.refetch()} size="small">
+                        <Button
+                            color="inherit"
+                            onClick={() => void tasksQuery.refetch()}
+                            size="small"
+                        >
                             Retry
                         </Button>
                     }
@@ -632,14 +670,23 @@ export function ProjectTasksSection({
                 </Alert>
             )}
 
-            {view === 'board' && tasksQuery.isPending && <Box sx={{ marginTop: 2 }}><TaskBoardSkeleton /></Box>}
-            {view === 'table' && tasksQuery.isPending && <Paper variant="outlined" sx={{ marginTop: 2 }}><TaskTableSkeleton /></Paper>}
+            {view === 'board' && tasksQuery.isPending && (
+                <Box sx={{ marginTop: 2 }}>
+                    <TaskBoardSkeleton />
+                </Box>
+            )}
+            {view === 'table' && tasksQuery.isPending && (
+                <Paper variant="outlined" sx={{ marginTop: 2 }}>
+                    <TaskTableSkeleton />
+                </Paper>
+            )}
 
             {view === 'board' && tasksQuery.isSuccess && (
                 <Box sx={{ marginTop: 2 }}>
                     {tasksQuery.data.totalElements > tasksQuery.data.content.length && (
                         <Alert severity="info" sx={{ marginBottom: 2 }}>
-                            This board shows the first 100 matching tasks. Refine the filters to narrow the workspace.
+                            This board shows the first 100 matching tasks. Refine the filters to
+                            narrow the workspace.
                         </Alert>
                     )}
 
@@ -680,14 +727,33 @@ export function ProjectTasksSection({
                                         width: { xs: '82vw', sm: 320 },
                                     }}
                                 >
-                                    <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: 1.5 }}>
-                                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                                            <Typography sx={{ fontWeight: 700 }} variant="subtitle2">
+                                    <Stack
+                                        direction="row"
+                                        sx={{
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            marginBottom: 1.5,
+                                        }}
+                                    >
+                                        <Stack
+                                            direction="row"
+                                            spacing={1}
+                                            sx={{ alignItems: 'center' }}
+                                        >
+                                            <Typography
+                                                sx={{ fontWeight: 700 }}
+                                                variant="subtitle2"
+                                            >
                                                 {taskStatusLabels[laneStatus]}
                                             </Typography>
                                             <Chip label={laneTasks.length} size="small" />
                                         </Stack>
-                                        <Chip color={statusColors[laneStatus]} label=" " size="small" sx={{ minWidth: 12, width: 12 }} />
+                                        <Chip
+                                            color={statusColors[laneStatus]}
+                                            label=" "
+                                            size="small"
+                                            sx={{ minWidth: 12, width: 12 }}
+                                        />
                                     </Stack>
 
                                     <Stack spacing={1} sx={{ flexGrow: 1 }}>
@@ -707,8 +773,14 @@ export function ProjectTasksSection({
                                                     padding: 2,
                                                 }}
                                             >
-                                                <Typography color="text.secondary" textAlign="center" variant="caption">
-                                                    {draggedTaskId ? `Drop here to move to ${taskStatusLabels[laneStatus]}` : 'No tasks in this lane'}
+                                                <Typography
+                                                    color="text.secondary"
+                                                    textAlign="center"
+                                                    variant="caption"
+                                                >
+                                                    {draggedTaskId
+                                                        ? `Drop here to move to ${taskStatusLabels[laneStatus]}`
+                                                        : 'No tasks in this lane'}
                                                 </Typography>
                                             </Box>
                                         )}
@@ -731,14 +803,31 @@ export function ProjectTasksSection({
 
                     {showCancelled && (
                         <Paper variant="outlined" sx={{ marginTop: 1.5, padding: 2 }}>
-                            <Typography sx={{ fontWeight: 700, marginBottom: 1 }} variant="subtitle2">
+                            <Typography
+                                sx={{ fontWeight: 700, marginBottom: 1 }}
+                                variant="subtitle2"
+                            >
                                 Cancelled · read only
                             </Typography>
                             {tasksByStatus.CANCELLED.length === 0 ? (
-                                <Typography color="text.secondary" variant="body2">No cancelled tasks match the current filters.</Typography>
+                                <Typography color="text.secondary" variant="body2">
+                                    No cancelled tasks match the current filters.
+                                </Typography>
                             ) : (
-                                <Box sx={{ display: 'grid', gap: 1, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' } }}>
-                                    {tasksByStatus.CANCELLED.map((task) => renderTaskCard(task, true))}
+                                <Box
+                                    sx={{
+                                        display: 'grid',
+                                        gap: 1,
+                                        gridTemplateColumns: {
+                                            xs: '1fr',
+                                            md: 'repeat(2, minmax(0, 1fr))',
+                                            xl: 'repeat(3, minmax(0, 1fr))',
+                                        },
+                                    }}
+                                >
+                                    {tasksByStatus.CANCELLED.map((task) =>
+                                        renderTaskCard(task, true),
+                                    )}
                                 </Box>
                             )}
                         </Paper>
@@ -753,46 +842,124 @@ export function ProjectTasksSection({
                             <TableHead>
                                 <TableRow>
                                     <TableCell sortDirection={sortBy === 'title' ? sortDir : false}>
-                                        <TableSortLabel active={sortBy === 'title'} direction={sortBy === 'title' ? sortDir : 'asc'} onClick={() => changeSort('title')}>Task</TableSortLabel>
+                                        <TableSortLabel
+                                            active={sortBy === 'title'}
+                                            direction={sortBy === 'title' ? sortDir : 'asc'}
+                                            onClick={() => changeSort('title')}
+                                        >
+                                            Task
+                                        </TableSortLabel>
                                     </TableCell>
-                                    <TableCell sortDirection={sortBy === 'status' ? sortDir : false}>
-                                        <TableSortLabel active={sortBy === 'status'} direction={sortBy === 'status' ? sortDir : 'asc'} onClick={() => changeSort('status')}>Status</TableSortLabel>
+                                    <TableCell
+                                        sortDirection={sortBy === 'status' ? sortDir : false}
+                                    >
+                                        <TableSortLabel
+                                            active={sortBy === 'status'}
+                                            direction={sortBy === 'status' ? sortDir : 'asc'}
+                                            onClick={() => changeSort('status')}
+                                        >
+                                            Status
+                                        </TableSortLabel>
                                     </TableCell>
-                                    <TableCell sortDirection={sortBy === 'priority' ? sortDir : false}>
-                                        <TableSortLabel active={sortBy === 'priority'} direction={sortBy === 'priority' ? sortDir : 'asc'} onClick={() => changeSort('priority')}>Priority</TableSortLabel>
+                                    <TableCell
+                                        sortDirection={sortBy === 'priority' ? sortDir : false}
+                                    >
+                                        <TableSortLabel
+                                            active={sortBy === 'priority'}
+                                            direction={sortBy === 'priority' ? sortDir : 'asc'}
+                                            onClick={() => changeSort('priority')}
+                                        >
+                                            Priority
+                                        </TableSortLabel>
                                     </TableCell>
                                     <TableCell>Assignee</TableCell>
                                     <TableCell sortDirection={sortBy === 'dueAt' ? sortDir : false}>
-                                        <TableSortLabel active={sortBy === 'dueAt'} direction={sortBy === 'dueAt' ? sortDir : 'asc'} onClick={() => changeSort('dueAt')}>Due</TableSortLabel>
+                                        <TableSortLabel
+                                            active={sortBy === 'dueAt'}
+                                            direction={sortBy === 'dueAt' ? sortDir : 'asc'}
+                                            onClick={() => changeSort('dueAt')}
+                                        >
+                                            Due
+                                        </TableSortLabel>
                                     </TableCell>
                                     <TableCell align="right">Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {tasksQuery.data.content.map((task) => {
-                                    const hasActions = !projectArchived && task.status !== 'CANCELLED' && (canManageTasks || canUpdateTaskStatus(task))
+                                    const hasActions =
+                                        !projectArchived &&
+                                        task.status !== 'CANCELLED' &&
+                                        (canManageTasks || canUpdateTaskStatus(task))
 
                                     return (
                                         <TableRow key={task.id}>
                                             <TableCell>
-                                                <Typography sx={{ fontWeight: 600 }} variant="body2">{task.title}</Typography>
-                                                <Typography color="text.secondary" variant="caption">{task.description || 'No description'}</Typography>
+                                                <Typography
+                                                    sx={{ fontWeight: 600 }}
+                                                    variant="body2"
+                                                >
+                                                    {task.title}
+                                                </Typography>
+                                                <Typography
+                                                    color="text.secondary"
+                                                    variant="caption"
+                                                >
+                                                    {task.description || 'No description'}
+                                                </Typography>
                                             </TableCell>
-                                            <TableCell><Chip color={statusColors[task.status]} label={taskStatusLabels[task.status]} size="small" variant="outlined" /></TableCell>
-                                            <TableCell><Chip color={priorityColors[task.priority]} label={taskPriorityLabels[task.priority]} size="small" /></TableCell>
                                             <TableCell>
-                                                <Typography variant="body2">{task.assigneeName || 'Unassigned'}</Typography>
-                                                {task.assigneeEmail && <Typography color="text.secondary" variant="caption">{task.assigneeEmail}</Typography>}
+                                                <Chip
+                                                    color={statusColors[task.status]}
+                                                    label={taskStatusLabels[task.status]}
+                                                    size="small"
+                                                    variant="outlined"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    color={priorityColors[task.priority]}
+                                                    label={taskPriorityLabels[task.priority]}
+                                                    size="small"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2">
+                                                    {task.assigneeName || 'Unassigned'}
+                                                </Typography>
+                                                {task.assigneeEmail && (
+                                                    <Typography
+                                                        color="text.secondary"
+                                                        variant="caption"
+                                                    >
+                                                        {task.assigneeEmail}
+                                                    </Typography>
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 <Stack spacing={0.5}>
-                                                    <Typography variant="body2">{formatDateTime(task.dueAt)}</Typography>
-                                                    {isOverdue(task) && <Chip color="error" label="Overdue" size="small" sx={{ alignSelf: 'flex-start' }} />}
+                                                    <Typography variant="body2">
+                                                        {formatDateTime(task.dueAt)}
+                                                    </Typography>
+                                                    {isOverdue(task) && (
+                                                        <Chip
+                                                            color="error"
+                                                            label="Overdue"
+                                                            size="small"
+                                                            sx={{ alignSelf: 'flex-start' }}
+                                                        />
+                                                    )}
                                                 </Stack>
                                             </TableCell>
                                             <TableCell align="right">
                                                 {hasActions && (
-                                                    <IconButton aria-label={`Manage ${task.title}`} onClick={(event) => openTaskMenu(event, task)} size="small">
+                                                    <IconButton
+                                                        aria-label={`Manage ${task.title}`}
+                                                        onClick={(event) =>
+                                                            openTaskMenu(event, task)
+                                                        }
+                                                        size="small"
+                                                    >
                                                         <MoreVertRoundedIcon />
                                                     </IconButton>
                                                 )}
@@ -808,7 +975,9 @@ export function ProjectTasksSection({
                         <Box sx={{ padding: 4, textAlign: 'center' }}>
                             <Typography variant="h6">No project tasks found</Typography>
                             <Typography color="text.secondary" variant="body2">
-                                {hasFilters ? 'Try changing or clearing the current filters.' : 'This project does not have any tasks.'}
+                                {hasFilters
+                                    ? 'Try changing or clearing the current filters.'
+                                    : 'This project does not have any tasks.'}
                             </Typography>
                         </Box>
                     )}
@@ -832,22 +1001,30 @@ export function ProjectTasksSection({
             <Menu anchorEl={menuAnchor} onClose={closeTaskMenu} open={Boolean(menuAnchor)}>
                 {selectedTaskCanUpdateStatus && (
                     <MenuItem onClick={() => openTaskDialog('status')}>
-                        <ListItemIcon><SyncAltRoundedIcon fontSize="small" /></ListItemIcon>
+                        <ListItemIcon>
+                            <SyncAltRoundedIcon fontSize="small" />
+                        </ListItemIcon>
                         Change status
                     </MenuItem>
                 )}
                 {canManageTasks && selectedTask?.status !== 'CANCELLED' && (
                     <>
                         <MenuItem onClick={() => openTaskDialog('edit')}>
-                            <ListItemIcon><EditOutlinedIcon fontSize="small" /></ListItemIcon>
+                            <ListItemIcon>
+                                <EditOutlinedIcon fontSize="small" />
+                            </ListItemIcon>
                             Edit task
                         </MenuItem>
                         <MenuItem onClick={() => openTaskDialog('assignee')}>
-                            <ListItemIcon><AssignmentIndOutlinedIcon fontSize="small" /></ListItemIcon>
+                            <ListItemIcon>
+                                <AssignmentIndOutlinedIcon fontSize="small" />
+                            </ListItemIcon>
                             Change assignee
                         </MenuItem>
                         <MenuItem onClick={() => openTaskDialog('cancel')}>
-                            <ListItemIcon><BlockOutlinedIcon fontSize="small" /></ListItemIcon>
+                            <ListItemIcon>
+                                <BlockOutlinedIcon fontSize="small" />
+                            </ListItemIcon>
                             Cancel task
                         </MenuItem>
                     </>
@@ -863,10 +1040,43 @@ export function ProjectTasksSection({
                     tenantId={tenantId}
                 />
             )}
-            {activeDialog === 'edit' && selectedTask && <EditProjectTaskDialog onClose={closeTaskDialog} onSuccess={onFeedback} projectId={projectId} task={selectedTask} tenantId={tenantId} />}
-            {activeDialog === 'status' && selectedTask && <ChangeProjectTaskStatusDialog onClose={closeTaskDialog} onSuccess={onFeedback} projectId={projectId} task={selectedTask} tenantId={tenantId} />}
-            {activeDialog === 'assignee' && selectedTask && <AssignProjectTaskDialog members={members} onClose={closeTaskDialog} onSuccess={onFeedback} projectId={projectId} task={selectedTask} tenantId={tenantId} />}
-            {activeDialog === 'cancel' && selectedTask && <CancelProjectTaskDialog onClose={closeTaskDialog} onSuccess={onFeedback} projectId={projectId} task={selectedTask} tenantId={tenantId} />}
+            {activeDialog === 'edit' && selectedTask && (
+                <EditProjectTaskDialog
+                    onClose={closeTaskDialog}
+                    onSuccess={onFeedback}
+                    projectId={projectId}
+                    task={selectedTask}
+                    tenantId={tenantId}
+                />
+            )}
+            {activeDialog === 'status' && selectedTask && (
+                <ChangeProjectTaskStatusDialog
+                    onClose={closeTaskDialog}
+                    onSuccess={onFeedback}
+                    projectId={projectId}
+                    task={selectedTask}
+                    tenantId={tenantId}
+                />
+            )}
+            {activeDialog === 'assignee' && selectedTask && (
+                <AssignProjectTaskDialog
+                    members={members}
+                    onClose={closeTaskDialog}
+                    onSuccess={onFeedback}
+                    projectId={projectId}
+                    task={selectedTask}
+                    tenantId={tenantId}
+                />
+            )}
+            {activeDialog === 'cancel' && selectedTask && (
+                <CancelProjectTaskDialog
+                    onClose={closeTaskDialog}
+                    onSuccess={onFeedback}
+                    projectId={projectId}
+                    task={selectedTask}
+                    tenantId={tenantId}
+                />
+            )}
         </Box>
     )
 }

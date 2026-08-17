@@ -115,7 +115,9 @@ describe('ProjectTasksSection', () => {
     it('renders the Kanban board by default with task data and management controls', async () => {
         renderTasksSection()
 
-        expect(await screen.findByRole('region', { name: /project task kanban board/i })).toBeInTheDocument()
+        expect(
+            await screen.findByRole('region', { name: /project task kanban board/i }),
+        ).toBeInTheDocument()
         expect(screen.getByText('Review access controls')).toBeInTheDocument()
         expect(screen.getByText('Grace User')).toBeInTheDocument()
         expect(screen.getByText('To do')).toBeInTheDocument()
@@ -123,7 +125,9 @@ describe('ProjectTasksSection', () => {
         expect(screen.getByText('Blocked')).toBeInTheDocument()
         expect(screen.getByText('Completed')).toBeInTheDocument()
         expect(screen.getByRole('button', { name: /create task/i })).toBeInTheDocument()
-        expect(screen.getByRole('button', { name: /manage review access controls/i })).toBeInTheDocument()
+        expect(
+            screen.getByRole('button', { name: /manage review access controls/i }),
+        ).toBeInTheDocument()
     })
 
     it('moves an authorized task between Kanban lanes', async () => {
@@ -285,7 +289,9 @@ describe('ProjectTasksSection', () => {
 
         const cancelledCard = await screen.findByLabelText(/review access controls task card/i)
         expect(cancelledCard).toHaveAttribute('draggable', 'false')
-        expect(screen.queryByRole('button', { name: /manage review access controls/i })).not.toBeInTheDocument()
+        expect(
+            screen.queryByRole('button', { name: /manage review access controls/i }),
+        ).not.toBeInTheDocument()
     })
 
     it('switches back to the paginated table when requested', async () => {
