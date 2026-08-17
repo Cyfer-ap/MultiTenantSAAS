@@ -145,7 +145,10 @@ export function AuthExperienceShell({
                             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
                                 <Chip icon={<ShieldRoundedIcon />} label="Tenant-aware access" />
                                 <Chip icon={<LockRoundedIcon />} label="Verified identity" />
-                                <Chip icon={<AutoAwesomeRoundedIcon />} label="Fast workspace entry" />
+                                <Chip
+                                    icon={<AutoAwesomeRoundedIcon />}
+                                    label="Fast workspace entry"
+                                />
                             </Stack>
                             <Typography color="text.secondary" variant="caption">
                                 Designed for focused teams. Built around isolation, least privilege,
@@ -202,8 +205,7 @@ export function AuthExperienceShell({
                                 boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07)',
                             },
                             '& .MuiTypography-h4': {
-                                background:
-                                    'linear-gradient(180deg, #ffffff 0%, #c5cbd3 100%)',
+                                background: 'linear-gradient(180deg, #ffffff 0%, #c5cbd3 100%)',
                                 backgroundClip: 'text',
                                 WebkitBackgroundClip: 'text',
                                 color: 'transparent',
