@@ -13,6 +13,7 @@ import com.chacha.multitenantsaas.entity.ProjectStatus;
 import com.chacha.multitenantsaas.entity.ProjectTask;
 import com.chacha.multitenantsaas.entity.ProjectTaskPriority;
 import com.chacha.multitenantsaas.entity.ProjectTaskStatus;
+import com.chacha.multitenantsaas.entity.TaskActivityType;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
@@ -36,6 +37,7 @@ public class ProjectTaskService {
     private final AppUserRepository appUserRepository;
     private final CurrentActorService currentActorService;
     private final AuditLogService auditLogService;
+    private final TaskActivityService taskActivityService;
 
     public ProjectTaskService(
             ProjectTaskRepository projectTaskRepository,
@@ -43,13 +45,15 @@ public class ProjectTaskService {
             ProjectMemberRepository projectMemberRepository,
             AppUserRepository appUserRepository,
             CurrentActorService currentActorService,
-            AuditLogService auditLogService) {
+            AuditLogService auditLogService,
+            TaskActivityService taskActivityService) {
         this.projectTaskRepository = projectTaskRepository;
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
         this.appUserRepository = appUserRepository;
         this.currentActorService = currentActorService;
         this.auditLogService = auditLogService;
+        this.taskActivityService = taskActivityService;
     }
 
     @Transactional
@@ -75,6 +79,9 @@ public class ProjectTaskService {
                         request.dueAt());
 
         ProjectTask savedTask = projectTaskRepository.save(task);
+
+        taskActivityService.record(
+                savedTask, creator, TaskActivityType.TASK_CREATED, "Task created");
 
         auditLogService.recordSuccess(
                 project.getTenant(),
@@ -149,6 +156,9 @@ public class ProjectTaskService {
 
         ProjectTask updatedTask = projectTaskRepository.save(task);
 
+        taskActivityService.record(
+                updatedTask, actor, TaskActivityType.TASK_UPDATED, "Updated task details");
+
         auditLogService.recordSuccess(
                 project.getTenant(),
                 actor,
@@ -192,6 +202,12 @@ public class ProjectTaskService {
 
         ProjectTask updatedTask = projectTaskRepository.save(task);
 
+        taskActivityService.record(
+                updatedTask,
+                actor,
+                TaskActivityType.STATUS_CHANGED,
+                "Changed status from " + previousStatus + " to " + request.status());
+
         auditLogService.recordSuccess(
                 project.getTenant(),
                 actor,
@@ -233,9 +249,11 @@ public class ProjectTaskService {
         ProjectTask updatedTask = projectTaskRepository.save(task);
 
         String auditMessage;
+        String activityMessage;
 
         if (newAssignee == null) {
             auditMessage = "Task unassigned from " + emailOrNone(previousAssignee) + ": " + taskId;
+            activityMessage = "Unassigned task";
         } else {
             auditMessage =
                     "Task assignee changed from "
@@ -244,7 +262,11 @@ public class ProjectTaskService {
                             + newAssignee.getEmail()
                             + ": "
                             + taskId;
+            activityMessage = "Assigned task to " + newAssignee.getFullName();
         }
+
+        taskActivityService.record(
+                updatedTask, actor, TaskActivityType.ASSIGNEE_CHANGED, activityMessage);
 
         auditLogService.recordSuccess(
                 project.getTenant(),
@@ -272,6 +294,9 @@ public class ProjectTaskService {
         task.setCompletedAt(null);
 
         ProjectTask cancelledTask = projectTaskRepository.save(task);
+
+        taskActivityService.record(
+                cancelledTask, actor, TaskActivityType.TASK_CANCELLED, "Cancelled task");
 
         auditLogService.recordSuccess(
                 project.getTenant(),
