@@ -198,25 +198,25 @@ export function createAppTheme(mode: AppColorMode) {
                             outline: `2px solid ${dark ? 'rgba(203,211,220,0.7)' : 'rgba(45,52,60,0.55)'}`,
                             outlineOffset: 3,
                         },
-                    },
-                    containedPrimary: {
-                        color: dark ? '#eef1f4' : '#ffffff',
-                        backgroundColor: dark ? '#252a30' : '#2d343c',
-                        backgroundImage: dark
-                            ? 'linear-gradient(180deg, #30363d 0%, #20252a 100%)'
-                            : 'linear-gradient(180deg, #414a54 0%, #282f36 100%)',
-                        border: `1px solid ${dark ? 'rgba(255,255,255,0.14)' : 'rgba(16,20,24,0.32)'}`,
-                        boxShadow: dark
-                            ? 'inset 0 1px rgba(255,255,255,0.09), 0 8px 22px rgba(0,0,0,0.2)'
-                            : 'inset 0 1px rgba(255,255,255,0.2), 0 8px 20px rgba(33,40,48,0.16)',
-                        '&:hover': {
-                            backgroundColor: dark ? '#30363d' : '#39424b',
+                        '&.MuiButton-containedPrimary': {
+                            color: dark ? '#eef1f4' : '#ffffff',
+                            backgroundColor: dark ? '#252a30' : '#2d343c',
                             backgroundImage: dark
-                                ? 'linear-gradient(180deg, #383f47 0%, #252a30 100%)'
-                                : 'linear-gradient(180deg, #4a545f 0%, #303840 100%)',
-                            transform: 'translateY(-1px)',
+                                ? 'linear-gradient(180deg, #30363d 0%, #20252a 100%)'
+                                : 'linear-gradient(180deg, #414a54 0%, #282f36 100%)',
+                            border: `1px solid ${dark ? 'rgba(255,255,255,0.14)' : 'rgba(16,20,24,0.32)'}`,
+                            boxShadow: dark
+                                ? 'inset 0 1px rgba(255,255,255,0.09), 0 8px 22px rgba(0,0,0,0.2)'
+                                : 'inset 0 1px rgba(255,255,255,0.2), 0 8px 20px rgba(33,40,48,0.16)',
+                            '&:hover': {
+                                backgroundColor: dark ? '#30363d' : '#39424b',
+                                backgroundImage: dark
+                                    ? 'linear-gradient(180deg, #383f47 0%, #252a30 100%)'
+                                    : 'linear-gradient(180deg, #4a545f 0%, #303840 100%)',
+                                transform: 'translateY(-1px)',
+                            },
+                            '&:active': { transform: 'translateY(0)' },
                         },
-                        '&:active': { transform: 'translateY(0)' },
                     },
                     outlined: {
                         backgroundColor: dark ? 'rgba(15,18,22,0.54)' : 'rgba(255,255,255,0.5)',
