@@ -116,7 +116,7 @@ describe('ProjectTasksSection', () => {
         renderTasksSection()
 
         expect(
-            await screen.findByRole('region', { name: /project task kanban board/i }),
+            await screen.findByLabelText(/project task kanban board/i),
         ).toBeInTheDocument()
         expect(screen.getByText('Review access controls')).toBeInTheDocument()
         expect(screen.getByText('Grace User')).toBeInTheDocument()
@@ -285,7 +285,10 @@ describe('ProjectTasksSection', () => {
         expect(await screen.findByRole('button', { name: /create task/i })).toBeDisabled()
         expect(screen.queryByText('Review access controls')).not.toBeInTheDocument()
 
-        await user.click(screen.getByRole('checkbox', { name: /show cancelled tasks/i }))
+        const showCancelledToggle = await screen.findByRole('checkbox', {
+            name: /show cancelled tasks/i,
+        })
+        await user.click(showCancelledToggle)
 
         const cancelledCard = await screen.findByLabelText(/review access controls task card/i)
         expect(cancelledCard).toHaveAttribute('draggable', 'false')
