@@ -6,7 +6,7 @@ import { MemoryRouter, Route, Routes } from 'react-router'
 
 import { SystemAdminContext } from '../features/system-admin/context/SystemAdminContext'
 import { appTheme } from '../theme/appTheme'
-import { ThemeModeProvider } from '../theme/themeMode'
+import { ThemeModeProvider } from '../theme/ThemeModeProvider'
 import { SystemAdminShell } from './SystemAdminShell'
 
 const session = {
