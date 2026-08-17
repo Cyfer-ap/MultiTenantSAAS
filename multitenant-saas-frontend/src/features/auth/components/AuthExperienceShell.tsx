@@ -159,6 +159,7 @@ export function AuthExperienceShell({
                         sx={{
                             minWidth: 0,
                             display: 'flex',
+                            flexDirection: 'column',
                             alignItems: 'center',
                             justifyContent: 'center',
                             px: {
@@ -172,6 +173,8 @@ export function AuthExperienceShell({
                             },
                             '& > .MuiBox-root': {
                                 width: '100%',
+                                background: 'transparent !important',
+                                backgroundColor: 'transparent !important',
                             },
                             '& .MuiContainer-root': {
                                 px: {
@@ -220,6 +223,41 @@ export function AuthExperienceShell({
                             },
                         }}
                     >
+                        <Stack
+                            direction="row"
+                            spacing={1}
+                            sx={{
+                                display: {
+                                    xs: 'flex',
+                                    lg: 'none',
+                                },
+                                alignItems: 'center',
+                                alignSelf: 'stretch',
+                                px: 1,
+                                pb: 1,
+                            }}
+                        >
+                            <Box
+                                aria-hidden="true"
+                                sx={{
+                                    width: 7,
+                                    height: 7,
+                                    borderRadius: '50%',
+                                    bgcolor: '#d9dde3',
+                                    boxShadow: '0 0 16px rgba(217,221,227,0.55)',
+                                }}
+                            />
+                            <Typography
+                                variant="overline"
+                                sx={{
+                                    color: '#aeb5bf',
+                                    letterSpacing: '0.16em',
+                                    fontWeight: 800,
+                                }}
+                            >
+                                {eyebrow}
+                            </Typography>
+                        </Stack>
                         {children}
                     </Box>
                 </Box>
