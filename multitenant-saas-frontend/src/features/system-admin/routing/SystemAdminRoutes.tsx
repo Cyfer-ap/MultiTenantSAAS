@@ -1,6 +1,7 @@
 import { Box, CircularProgress } from '@mui/material'
 import { Navigate, Outlet, useLocation } from 'react-router'
 
+import { AuthExperienceShell } from '../../auth/components/AuthExperienceShell'
 import { useSystemAdmin } from '../hooks/useSystemAdmin'
 
 function SystemAuthenticationLoadingScreen() {
@@ -51,7 +52,15 @@ export function SystemPublicOnlyRoute() {
         return <Navigate replace to="/system/dashboard" />
     }
 
-    return <Outlet />
+    return (
+        <AuthExperienceShell
+            eyebrow="System console"
+            title="Control the platform from one secure surface."
+            description="Administrative access is deliberately separated from tenant workspaces and protected by its own session boundary."
+        >
+            <Outlet />
+        </AuthExperienceShell>
+    )
 }
 
 export function SystemHomeRedirect() {
