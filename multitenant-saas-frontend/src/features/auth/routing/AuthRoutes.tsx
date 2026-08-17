@@ -1,6 +1,7 @@
 import { Box, CircularProgress } from '@mui/material'
 import { Navigate, Outlet, useLocation } from 'react-router'
 
+import { AuthExperienceShell } from '../components/AuthExperienceShell'
 import { useAuth } from '../hooks/useAuth'
 
 function AuthenticationLoadingScreen() {
@@ -53,5 +54,9 @@ export function PublicOnlyRoute() {
         return <Navigate to="/" replace />
     }
 
-    return <Outlet />
+    return (
+        <AuthExperienceShell>
+            <Outlet />
+        </AuthExperienceShell>
+    )
 }
