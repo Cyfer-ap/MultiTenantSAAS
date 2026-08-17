@@ -8,12 +8,10 @@ param(
 $ErrorActionPreference = "Stop"
 
 function Invoke-Git {
-    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments)
-
-    & git @Arguments
+    & git @args
 
     if ($LASTEXITCODE -ne 0) {
-        throw "git $($Arguments -join ' ') failed with exit code $LASTEXITCODE."
+        throw "git $($args -join ' ') failed with exit code $LASTEXITCODE."
     }
 }
 
