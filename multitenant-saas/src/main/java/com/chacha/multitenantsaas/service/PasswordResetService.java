@@ -57,7 +57,8 @@ public class PasswordResetService {
         this.expirationMinutes = expirationMinutes;
     }
 
-    @Transactional
+    @Transactional(
+            noRollbackFor = {ResourceNotFoundException.class, AuthenticationFailedException.class})
     public ForgotPasswordResponse forgotPassword(UUID tenantId, ForgotPasswordRequest request) {
         Tenant tenant =
                 tenantRepository

@@ -1,9 +1,7 @@
-export interface ForgotPasswordInput {
-    email: string
-}
-
-export interface ForgotPasswordMutationInput extends ForgotPasswordInput {
+export interface ForgotPasswordMutationInput {
     tenantId: string
+    email: string
+    workspaceGrantId: string
 }
 
 export interface ForgotPasswordResponse {

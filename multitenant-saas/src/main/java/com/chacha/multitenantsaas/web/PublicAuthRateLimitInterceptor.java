@@ -19,8 +19,6 @@ public class PublicAuthRateLimitInterceptor implements HandlerInterceptor {
 
     private static final Pattern TENANT_LOGIN_PATTERN =
             Pattern.compile("^/api/tenants/[^/]+/auth/login/?$");
-    private static final Pattern TENANT_FORGOT_PASSWORD_PATTERN =
-            Pattern.compile("^/api/tenants/[^/]+/auth/forgot-password/?$");
 
     private static final long CLEANUP_INTERVAL = 256L;
 
@@ -106,13 +104,14 @@ public class PublicAuthRateLimitInterceptor implements HandlerInterceptor {
             return RateLimitScope.LOGIN;
         }
 
-        if (TENANT_FORGOT_PASSWORD_PATTERN.matcher(path).matches()
-                || "/api/auth/workspaces/start".equals(path)
+        if ("/api/auth/workspaces/start".equals(path)
                 || "/api/auth/workspaces/start/".equals(path)
                 || "/api/auth/workspaces/verify".equals(path)
                 || "/api/auth/workspaces/verify/".equals(path)
-                || "/api/auth/reset-password".equals(path)
-                || "/api/auth/reset-password/".equals(path)
+                || "/api/auth/password-reset/request".equals(path)
+                || "/api/auth/password-reset/request/".equals(path)
+                || "/api/auth/password-reset/complete".equals(path)
+                || "/api/auth/password-reset/complete/".equals(path)
                 || "/api/user-invitations/accept".equals(path)
                 || "/api/user-invitations/accept/".equals(path)) {
             return RateLimitScope.RECOVERY;

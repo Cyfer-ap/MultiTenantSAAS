@@ -67,8 +67,9 @@ class PublicAuthRateLimitInterceptorTest {
     @Test
     void recoveryRoutesShareOneBucketPerAddress() {
         HttpServletRequest forgotPassword =
-                request("/api/tenants/tenant-1/auth/forgot-password", "203.0.113.30");
-        HttpServletRequest resetPassword = request("/api/auth/reset-password", "203.0.113.30");
+                request("/api/auth/password-reset/request", "203.0.113.30");
+        HttpServletRequest resetPassword =
+                request("/api/auth/password-reset/complete", "203.0.113.30");
 
         assertTrue(interceptor.preHandle(forgotPassword, response, new Object()));
 

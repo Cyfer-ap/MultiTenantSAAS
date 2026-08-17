@@ -9,7 +9,7 @@ function successfulResponse<T>(data: T) {
             success: true,
             message: 'Success',
             data,
-            timestamp: '2026-08-01T12:00:00Z',
+            timestamp: '2026-08-18T00:00:00Z',
         },
     }
 }
@@ -19,25 +19,26 @@ describe('passwordResetApi', () => {
         vi.restoreAllMocks()
     })
 
-    it('requests a reset token through the tenant endpoint', async () => {
+    it('requests a reset link through the verified public endpoint', async () => {
         const response = {
-            message: 'Reset token generated.',
-            devResetToken: 'reset-token',
+            message: 'Password reset instructions will be sent.',
+            devResetToken: null,
+        }
+        const input = {
+            tenantId: 'tenant-1',
+            email: 'grace@example.com',
+            workspaceGrantId: 'grant-1',
         }
         const post = vi
             .spyOn(publicHttpClient, 'post')
             .mockResolvedValue(successfulResponse(response))
 
-        await expect(
-            passwordResetApi.forgotPassword('tenant-1', { email: 'grace@example.com' }),
-        ).resolves.toEqual(response)
+        await expect(passwordResetApi.forgotPassword(input)).resolves.toEqual(response)
 
-        expect(post).toHaveBeenCalledWith('/api/tenants/tenant-1/auth/forgot-password', {
-            email: 'grace@example.com',
-        })
+        expect(post).toHaveBeenCalledWith('/api/auth/password-reset/request', input)
     })
 
-    it('resets a password through the public endpoint', async () => {
+    it('completes a reset through the token-only public endpoint', async () => {
         const response = {
             message: 'Password reset successfully.',
         }
@@ -52,6 +53,6 @@ describe('passwordResetApi', () => {
 
         await expect(passwordResetApi.resetPassword(input)).resolves.toEqual(response)
 
-        expect(post).toHaveBeenCalledWith('/api/auth/reset-password', input)
+        expect(post).toHaveBeenCalledWith('/api/auth/password-reset/complete', input)
     })
 })
