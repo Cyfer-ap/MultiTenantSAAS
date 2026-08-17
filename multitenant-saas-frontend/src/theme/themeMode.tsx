@@ -23,13 +23,12 @@ function readInitialMode(): AppColorMode {
 function prefersReducedMotion(): boolean {
     return (
         typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches
     )
 }
 
-interface ViewTransitionDocument extends Document {
-    startViewTransition?: (updateCallback: () => void) => { finished: Promise<void> }
-}
+type ViewTransitionStarter = (updateCallback: () => void) => unknown
 
 export function ThemeModeProvider({ children }: PropsWithChildren) {
     const [mode, setMode] = useState<AppColorMode>(readInitialMode)
@@ -52,9 +51,12 @@ export function ThemeModeProvider({ children }: PropsWithChildren) {
                 root.style.colorScheme = nextMode
             }
 
-            const transitionDocument = document as ViewTransitionDocument
-            if (transitionDocument.startViewTransition && !prefersReducedMotion()) {
-                transitionDocument.startViewTransition(applyMode)
+            const startViewTransition = (
+                document as unknown as { startViewTransition?: ViewTransitionStarter }
+            ).startViewTransition
+
+            if (startViewTransition && !prefersReducedMotion()) {
+                startViewTransition.call(document, applyMode)
                 return
             }
 
