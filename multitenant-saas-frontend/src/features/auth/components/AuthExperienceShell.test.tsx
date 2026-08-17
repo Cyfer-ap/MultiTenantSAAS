@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { describe, expect, it } from 'vitest'
 
-import { ThemeModeProvider } from '../../../theme/themeMode'
+import { ThemeModeProvider } from '../../../theme/ThemeModeProvider'
 import { AuthExperienceShell } from './AuthExperienceShell'
 
 function renderShell(element: ReactElement) {
