@@ -10,11 +10,37 @@ import type {
     LogoutResponse,
     RefreshTokenRequest,
     TokenRefreshResponse,
+    WorkspaceDiscoveryStartRequest,
+    WorkspaceDiscoveryStartResponse,
+    WorkspaceDiscoveryVerifyRequest,
+    WorkspaceDiscoveryVerifyResponse,
 } from '../types/auth'
 
 async function login(tenantId: string, request: LoginRequest): Promise<LoginResponse> {
     const response = await publicHttpClient.post<ApiResponse<LoginResponse>>(
         `/api/tenants/${encodeURIComponent(tenantId)}/auth/login`,
+        request,
+    )
+
+    return response.data.data
+}
+
+async function startWorkspaceDiscovery(
+    request: WorkspaceDiscoveryStartRequest,
+): Promise<WorkspaceDiscoveryStartResponse> {
+    const response = await publicHttpClient.post<ApiResponse<WorkspaceDiscoveryStartResponse>>(
+        '/api/auth/workspaces/start',
+        request,
+    )
+
+    return response.data.data
+}
+
+async function verifyWorkspaceDiscovery(
+    request: WorkspaceDiscoveryVerifyRequest,
+): Promise<WorkspaceDiscoveryVerifyResponse> {
+    const response = await publicHttpClient.post<ApiResponse<WorkspaceDiscoveryVerifyResponse>>(
+        '/api/auth/workspaces/verify',
         request,
     )
 
@@ -65,6 +91,8 @@ async function changePassword(request: ChangePasswordInput): Promise<ChangePassw
 
 export const authApi = {
     login,
+    startWorkspaceDiscovery,
+    verifyWorkspaceDiscovery,
     refreshToken,
     getCurrentUser,
     logout,

@@ -11,6 +11,37 @@ export interface LoginInput extends LoginRequest {
     tenantId: string
 }
 
+export interface WorkspaceLoginOption {
+    tenantId: string
+    name: string
+    slug: string
+}
+
+export interface WorkspaceDiscoveryStartRequest {
+    email: string
+    trustedBrowserToken?: string
+}
+
+export interface WorkspaceDiscoveryStartResponse {
+    verificationRequired: boolean
+    challengeId: string | null
+    workspaces: WorkspaceLoginOption[]
+    expiresInSeconds: number
+    message: string
+}
+
+export interface WorkspaceDiscoveryVerifyRequest {
+    challengeId: string
+    code: string
+    trustBrowser: boolean
+}
+
+export interface WorkspaceDiscoveryVerifyResponse {
+    workspaces: WorkspaceLoginOption[]
+    trustedBrowserToken: string | null
+    message: string
+}
+
 export interface TokenPairResponse {
     accessToken: string
     refreshToken: string

@@ -4,22 +4,28 @@ import {
     Avatar,
     Box,
     Button,
+    Checkbox,
     Container,
+    FormControlLabel,
     Paper,
     Stack,
     TextField,
     Typography,
 } from '@mui/material'
-import { useForm } from 'react-hook-form'
+import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 
 import { normalizeApiError } from '../../../api/apiError'
+import { authApi } from '../api/authApi'
 import { useAuth } from '../hooks/useAuth'
-import type { LoginInput } from '../types/auth'
+import type { WorkspaceLoginOption } from '../types/auth'
+
+const TRUSTED_BROWSER_TOKEN_KEY = 'multitenant-saas.trusted-email-browser'
+
+type LoginStep = 'email' | 'code' | 'workspace' | 'password'
 
 interface LoginRouteState {
     from?: unknown
-    tenantId?: unknown
     email?: unknown
     passwordChanged?: unknown
     allDevicesSignedOut?: unknown
@@ -43,6 +49,26 @@ function resolveRedirectPath(state: unknown): string {
     return '/dashboard'
 }
 
+function readTrustedBrowserToken(): string | undefined {
+    try {
+        return window.localStorage.getItem(TRUSTED_BROWSER_TOKEN_KEY) ?? undefined
+    } catch {
+        return undefined
+    }
+}
+
+function writeTrustedBrowserToken(token: string): void {
+    try {
+        window.localStorage.setItem(TRUSTED_BROWSER_TOKEN_KEY, token)
+    } catch {
+        // Email verification still works when browser storage is unavailable.
+    }
+}
+
+function isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
 export function LoginPage() {
     const { login } = useAuth()
     const navigate = useNavigate()
@@ -52,41 +78,156 @@ export function LoginPage() {
             ? (location.state as LoginRouteState)
             : {}
 
-    const {
-        register,
-        handleSubmit,
-        clearErrors,
-        setError,
-        formState: { errors, isSubmitting },
-    } = useForm<LoginInput>({
-        defaultValues: {
-            tenantId: resolvePrefillValue(routeState.tenantId),
-            email: resolvePrefillValue(routeState.email),
-            password: '',
-        },
-    })
+    const [step, setStep] = useState<LoginStep>('email')
+    const [email, setEmail] = useState(resolvePrefillValue(routeState.email))
+    const [code, setCode] = useState('')
+    const [password, setPassword] = useState('')
+    const [challengeId, setChallengeId] = useState<string | null>(null)
+    const [workspaces, setWorkspaces] = useState<WorkspaceLoginOption[]>([])
+    const [selectedWorkspace, setSelectedWorkspace] = useState<WorkspaceLoginOption | null>(null)
+    const [trustBrowser, setTrustBrowser] = useState(true)
+    const [busy, setBusy] = useState(false)
+    const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [infoMessage, setInfoMessage] = useState<string | null>(null)
 
-    const submitLogin = async (input: LoginInput): Promise<void> => {
-        clearErrors('root')
+    const moveToWorkspaces = (availableWorkspaces: WorkspaceLoginOption[]): void => {
+        setWorkspaces(availableWorkspaces)
+
+        if (availableWorkspaces.length === 0) {
+            setErrorMessage('No active workspaces are available for this email.')
+            setStep('email')
+            return
+        }
+
+        if (availableWorkspaces.length === 1) {
+            setSelectedWorkspace(availableWorkspaces[0])
+            setStep('password')
+            return
+        }
+
+        setSelectedWorkspace(null)
+        setStep('workspace')
+    }
+
+    const startDiscovery = async (forceCode = false): Promise<void> => {
+        const normalizedEmail = email.trim().toLowerCase()
+
+        setErrorMessage(null)
+        setInfoMessage(null)
+
+        if (!isValidEmail(normalizedEmail)) {
+            setErrorMessage('Enter a valid email address.')
+            return
+        }
+
+        setBusy(true)
+
+        try {
+            const response = await authApi.startWorkspaceDiscovery({
+                email: normalizedEmail,
+                trustedBrowserToken: forceCode ? undefined : readTrustedBrowserToken(),
+            })
+
+            setEmail(normalizedEmail)
+
+            if (!response.verificationRequired) {
+                moveToWorkspaces(response.workspaces)
+                return
+            }
+
+            if (!response.challengeId) {
+                setErrorMessage('Could not start email verification. Please try again.')
+                return
+            }
+
+            setChallengeId(response.challengeId)
+            setCode('')
+            setInfoMessage(response.message)
+            setStep('code')
+        } catch (error: unknown) {
+            setErrorMessage(normalizeApiError(error).message)
+        } finally {
+            setBusy(false)
+        }
+    }
+
+    const verifyCode = async (): Promise<void> => {
+        setErrorMessage(null)
+
+        if (!challengeId) {
+            setErrorMessage('Email verification expired. Request a new code.')
+            setStep('email')
+            return
+        }
+
+        if (!/^\d{6}$/.test(code)) {
+            setErrorMessage('Enter the 6-digit verification code.')
+            return
+        }
+
+        setBusy(true)
+
+        try {
+            const response = await authApi.verifyWorkspaceDiscovery({
+                challengeId,
+                code,
+                trustBrowser,
+            })
+
+            if (response.trustedBrowserToken) {
+                writeTrustedBrowserToken(response.trustedBrowserToken)
+            }
+
+            setInfoMessage(null)
+            moveToWorkspaces(response.workspaces)
+        } catch (error: unknown) {
+            setErrorMessage(normalizeApiError(error).message)
+        } finally {
+            setBusy(false)
+        }
+    }
+
+    const submitPassword = async (): Promise<void> => {
+        setErrorMessage(null)
+
+        if (!selectedWorkspace) {
+            setStep('workspace')
+            return
+        }
+
+        if (!password) {
+            setErrorMessage('Password is required.')
+            return
+        }
+
+        setBusy(true)
 
         try {
             await login({
-                tenantId: input.tenantId.trim(),
-                email: input.email.trim(),
-                password: input.password,
+                tenantId: selectedWorkspace.tenantId,
+                email,
+                password,
             })
 
             navigate(resolveRedirectPath(location.state), {
                 replace: true,
             })
         } catch (error: unknown) {
-            const apiError = normalizeApiError(error)
-
-            setError('root', {
-                type: 'server',
-                message: apiError.message,
-            })
+            setErrorMessage(normalizeApiError(error).message)
+        } finally {
+            setBusy(false)
         }
+    }
+
+    const restart = (): void => {
+        setStep('email')
+        setCode('')
+        setPassword('')
+        setChallengeId(null)
+        setWorkspaces([])
+        setSelectedWorkspace(null)
+        setErrorMessage(null)
+        setInfoMessage(null)
     }
 
     return (
@@ -110,12 +251,7 @@ export function LoginPage() {
                         },
                     }}
                 >
-                    <Stack
-                        spacing={3}
-                        sx={{
-                            alignItems: 'center',
-                        }}
-                    >
+                    <Stack spacing={3} sx={{ alignItems: 'center' }}>
                         <Avatar
                             sx={{
                                 backgroundColor: 'primary.main',
@@ -126,130 +262,254 @@ export function LoginPage() {
                             <LockOutlinedIcon />
                         </Avatar>
 
-                        <Box
-                            sx={{
-                                textAlign: 'center',
-                            }}
-                        >
+                        <Box sx={{ textAlign: 'center' }}>
                             <Typography component="h1" variant="h4">
                                 Sign in
                             </Typography>
 
-                            <Typography
-                                sx={{
-                                    color: 'text.secondary',
-                                    mt: 1,
-                                }}
-                            >
-                                Access your tenant workspace
+                            <Typography sx={{ color: 'text.secondary', mt: 1 }}>
+                                {step === 'email' && 'Start with your work email'}
+                                {step === 'code' && 'Verify your email address'}
+                                {step === 'workspace' && 'Choose a workspace'}
+                                {step === 'password' &&
+                                    `Sign in to ${selectedWorkspace?.name ?? 'your workspace'}`}
                             </Typography>
                         </Box>
 
-                        <Box
-                            component="form"
-                            noValidate
-                            onSubmit={handleSubmit(submitLogin)}
-                            sx={{
-                                width: '100%',
-                            }}
-                        >
-                            <Stack spacing={2}>
-                                {errors.root?.message && (
-                                    <Alert severity="error">{errors.root.message}</Alert>
-                                )}
+                        <Stack spacing={2} sx={{ width: '100%' }}>
+                            {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+                            {infoMessage && <Alert severity="info">{infoMessage}</Alert>}
 
-                                {routeState.passwordChanged === true && (
-                                    <Alert severity="success">
-                                        Password changed successfully. Sign in with your new
-                                        password.
+                            {routeState.passwordChanged === true && step === 'email' && (
+                                <Alert severity="success">
+                                    Password changed successfully. Sign in with your new password.
+                                </Alert>
+                            )}
+
+                            {routeState.allDevicesSignedOut === true && step === 'email' && (
+                                <Alert severity="success">
+                                    All device refresh sessions were revoked. Sign in again to
+                                    continue.
+                                </Alert>
+                            )}
+
+                            {step === 'email' && (
+                                <>
+                                    <TextField
+                                        autoFocus
+                                        fullWidth
+                                        label="Email address"
+                                        type="email"
+                                        autoComplete="email"
+                                        value={email}
+                                        disabled={busy}
+                                        onChange={(event) => {
+                                            setEmail(event.target.value)
+                                        }}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter') {
+                                                event.preventDefault()
+                                                void startDiscovery()
+                                            }
+                                        }}
+                                    />
+
+                                    <Button
+                                        fullWidth
+                                        variant="contained"
+                                        size="large"
+                                        disabled={busy}
+                                        onClick={() => {
+                                            void startDiscovery()
+                                        }}
+                                    >
+                                        {busy ? 'Checking...' : 'Continue'}
+                                    </Button>
+
+                                    <Button
+                                        disabled={busy}
+                                        fullWidth
+                                        onClick={() => {
+                                            navigate('/forgot-password')
+                                        }}
+                                    >
+                                        Forgot password?
+                                    </Button>
+
+                                    <Button
+                                        disabled={busy}
+                                        fullWidth
+                                        onClick={() => {
+                                            navigate('/register')
+                                        }}
+                                        variant="outlined"
+                                    >
+                                        Create a workspace
+                                    </Button>
+                                </>
+                            )}
+
+                            {step === 'code' && (
+                                <>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                        Enter the code sent to <strong>{email}</strong>.
+                                    </Typography>
+
+                                    <TextField
+                                        autoFocus
+                                        fullWidth
+                                        label="Verification code"
+                                        autoComplete="one-time-code"
+                                        slotProps={{
+                                            htmlInput: {
+                                                inputMode: 'numeric',
+                                                maxLength: 6,
+                                            },
+                                        }}
+                                        value={code}
+                                        disabled={busy}
+                                        onChange={(event) => {
+                                            setCode(
+                                                event.target.value.replace(/\D/g, '').slice(0, 6),
+                                            )
+                                        }}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter') {
+                                                event.preventDefault()
+                                                void verifyCode()
+                                            }
+                                        }}
+                                    />
+
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={trustBrowser}
+                                                disabled={busy}
+                                                onChange={(event) => {
+                                                    setTrustBrowser(event.target.checked)
+                                                }}
+                                            />
+                                        }
+                                        label="Trust this browser for 30 days"
+                                    />
+
+                                    <Button
+                                        fullWidth
+                                        variant="contained"
+                                        size="large"
+                                        disabled={busy}
+                                        onClick={() => {
+                                            void verifyCode()
+                                        }}
+                                    >
+                                        {busy ? 'Verifying...' : 'Verify email'}
+                                    </Button>
+
+                                    <Button
+                                        fullWidth
+                                        disabled={busy}
+                                        onClick={() => {
+                                            void startDiscovery(true)
+                                        }}
+                                    >
+                                        Send a new code
+                                    </Button>
+
+                                    <Button fullWidth disabled={busy} onClick={restart}>
+                                        Use a different email
+                                    </Button>
+                                </>
+                            )}
+
+                            {step === 'workspace' && (
+                                <>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                        Select the organization you want to access.
+                                    </Typography>
+
+                                    {workspaces.map((workspace) => (
+                                        <Button
+                                            key={workspace.tenantId}
+                                            fullWidth
+                                            variant="outlined"
+                                            disabled={busy}
+                                            onClick={() => {
+                                                setSelectedWorkspace(workspace)
+                                                setPassword('')
+                                                setStep('password')
+                                            }}
+                                            sx={{ justifyContent: 'flex-start', py: 1.5 }}
+                                        >
+                                            {workspace.name}
+                                        </Button>
+                                    ))}
+
+                                    <Button fullWidth disabled={busy} onClick={restart}>
+                                        Use a different email
+                                    </Button>
+                                </>
+                            )}
+
+                            {step === 'password' && selectedWorkspace && (
+                                <>
+                                    <Alert severity="info">
+                                        {email}
+                                        <br />
+                                        Workspace: {selectedWorkspace.name}
                                     </Alert>
-                                )}
 
-                                {routeState.allDevicesSignedOut === true && (
-                                    <Alert severity="success">
-                                        All device refresh sessions were revoked. Sign in again to
-                                        continue.
-                                    </Alert>
-                                )}
+                                    <TextField
+                                        autoFocus
+                                        fullWidth
+                                        label="Password"
+                                        type="password"
+                                        autoComplete="current-password"
+                                        value={password}
+                                        disabled={busy}
+                                        onChange={(event) => {
+                                            setPassword(event.target.value)
+                                        }}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter') {
+                                                event.preventDefault()
+                                                void submitPassword()
+                                            }
+                                        }}
+                                    />
 
-                                <TextField
-                                    autoFocus
-                                    fullWidth
-                                    label="Tenant ID"
-                                    autoComplete="organization"
-                                    disabled={isSubmitting}
-                                    error={Boolean(errors.tenantId)}
-                                    helperText={errors.tenantId?.message}
-                                    {...register('tenantId', {
-                                        validate: (value) =>
-                                            value.trim().length > 0 || 'Tenant ID is required.',
-                                    })}
-                                />
+                                    <Button
+                                        fullWidth
+                                        variant="contained"
+                                        size="large"
+                                        disabled={busy}
+                                        onClick={() => {
+                                            void submitPassword()
+                                        }}
+                                    >
+                                        {busy ? 'Signing in...' : 'Sign in'}
+                                    </Button>
 
-                                <TextField
-                                    fullWidth
-                                    label="Email address"
-                                    type="email"
-                                    autoComplete="email"
-                                    disabled={isSubmitting}
-                                    error={Boolean(errors.email)}
-                                    helperText={errors.email?.message}
-                                    {...register('email', {
-                                        required: 'Email address is required.',
-                                        pattern: {
-                                            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                                            message: 'Enter a valid email address.',
-                                        },
-                                    })}
-                                />
+                                    {workspaces.length > 1 && (
+                                        <Button
+                                            fullWidth
+                                            disabled={busy}
+                                            onClick={() => {
+                                                setPassword('')
+                                                setSelectedWorkspace(null)
+                                                setStep('workspace')
+                                            }}
+                                        >
+                                            Choose another workspace
+                                        </Button>
+                                    )}
 
-                                <TextField
-                                    fullWidth
-                                    label="Password"
-                                    type="password"
-                                    autoComplete="current-password"
-                                    disabled={isSubmitting}
-                                    error={Boolean(errors.password)}
-                                    helperText={errors.password?.message}
-                                    {...register('password', {
-                                        required: 'Password is required.',
-                                    })}
-                                />
-
-                                <Button
-                                    fullWidth
-                                    type="submit"
-                                    variant="contained"
-                                    size="large"
-                                    disabled={isSubmitting}
-                                >
-                                    {isSubmitting ? 'Signing in...' : 'Sign in'}
-                                </Button>
-
-                                <Button
-                                    disabled={isSubmitting}
-                                    fullWidth
-                                    onClick={() => {
-                                        navigate('/forgot-password')
-                                    }}
-                                    type="button"
-                                >
-                                    Forgot password?
-                                </Button>
-
-                                <Button
-                                    disabled={isSubmitting}
-                                    fullWidth
-                                    onClick={() => {
-                                        navigate('/register')
-                                    }}
-                                    type="button"
-                                    variant="outlined"
-                                >
-                                    Create a workspace
-                                </Button>
-                            </Stack>
-                        </Box>
+                                    <Button fullWidth disabled={busy} onClick={restart}>
+                                        Use a different email
+                                    </Button>
+                                </>
+                            )}
+                        </Stack>
                     </Stack>
                 </Paper>
             </Container>
