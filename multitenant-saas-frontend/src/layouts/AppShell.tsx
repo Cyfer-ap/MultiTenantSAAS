@@ -140,11 +140,7 @@ export function AppShell() {
 
             <List sx={{ px: compact ? 1.1 : 1.5, py: 1.75 }}>
                 {availableNavigationItems.map((item) => (
-                    <Tooltip
-                        key={item.path}
-                        placement="right"
-                        title={compact ? item.label : ''}
-                    >
+                    <Tooltip key={item.path} placement="right" title={compact ? item.label : ''}>
                         <ListItemButton
                             aria-label={compact ? item.label : undefined}
                             selected={isSelected(item.path)}
@@ -176,10 +172,7 @@ export function AppShell() {
             {allowCollapse && (
                 <Box sx={{ mt: 'auto', p: 1.25 }}>
                     <Divider sx={{ mb: 1.25 }} />
-                    <Tooltip
-                        placement="right"
-                        title={compact ? 'Expand navigation' : ''}
-                    >
+                    <Tooltip placement="right" title={compact ? 'Expand navigation' : ''}>
                         <ListItemButton
                             aria-label={compact ? 'Expand navigation' : 'Collapse navigation'}
                             onClick={toggleCollapsed}
@@ -196,11 +189,7 @@ export function AppShell() {
                                     minWidth: compact ? 0 : 40,
                                 }}
                             >
-                                {compact ? (
-                                    <ChevronRightRoundedIcon />
-                                ) : (
-                                    <ChevronLeftRoundedIcon />
-                                )}
+                                {compact ? <ChevronRightRoundedIcon /> : <ChevronLeftRoundedIcon />}
                             </ListItemIcon>
                             {!compact && <ListItemText primary="Collapse navigation" />}
                         </ListItemButton>

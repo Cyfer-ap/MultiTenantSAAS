@@ -169,7 +169,9 @@ export function SystemAdminShell() {
                             whiteSpace: 'nowrap',
                         }}
                     >
-                        <Typography sx={{ fontWeight: 800, lineHeight: 1.15 }}>SaaS Control</Typography>
+                        <Typography sx={{ fontWeight: 800, lineHeight: 1.15 }}>
+                            SaaS Control
+                        </Typography>
                         <Typography color="text.secondary" variant="caption">
                             System administration
                         </Typography>
@@ -226,11 +228,7 @@ export function SystemAdminShell() {
                                     minWidth: compact ? 0 : 40,
                                 }}
                             >
-                                {compact ? (
-                                    <ChevronRightRoundedIcon />
-                                ) : (
-                                    <ChevronLeftRoundedIcon />
-                                )}
+                                {compact ? <ChevronRightRoundedIcon /> : <ChevronLeftRoundedIcon />}
                             </ListItemIcon>
                             {!compact && <ListItemText primary="Collapse navigation" />}
                         </ListItemButton>

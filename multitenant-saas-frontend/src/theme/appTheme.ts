@@ -11,7 +11,8 @@ export function createAppTheme(mode: AppColorMode) {
               backgroundGradient:
                   'radial-gradient(circle at 12% 0%, rgba(124, 138, 154, 0.09), transparent 30%), linear-gradient(145deg, #07090b 0%, #0b0e11 50%, #07090b 100%)',
               paper: '#101317',
-              paperGradient: 'linear-gradient(145deg, rgba(22, 26, 31, 0.97), rgba(13, 16, 20, 0.98))',
+              paperGradient:
+                  'linear-gradient(145deg, rgba(22, 26, 31, 0.97), rgba(13, 16, 20, 0.98))',
               raised: '#171b20',
               text: '#edf0f3',
               textSecondary: '#9ca6b2',
@@ -33,7 +34,8 @@ export function createAppTheme(mode: AppColorMode) {
               backgroundGradient:
                   'radial-gradient(circle at 10% 0%, rgba(75, 86, 99, 0.075), transparent 31%), linear-gradient(145deg, #f1f3f5 0%, #e9edf1 54%, #f3f5f7 100%)',
               paper: '#f9fafb',
-              paperGradient: 'linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(241, 244, 247, 0.98))',
+              paperGradient:
+                  'linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(241, 244, 247, 0.98))',
               raised: '#ffffff',
               text: '#171b20',
               textSecondary: '#606a76',
@@ -265,12 +267,13 @@ export function createAppTheme(mode: AppColorMode) {
                             borderColor: dark ? '#7f8a96' : '#616b76',
                             borderWidth: 1,
                         },
-                        '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active': {
-                            WebkitTextFillColor: colors.text,
-                            WebkitBoxShadow: `0 0 0 1000px ${colors.fieldFocus} inset`,
-                            caretColor: colors.text,
-                            transition: 'background-color 9999s ease-out 0s',
-                        },
+                        '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active':
+                            {
+                                WebkitTextFillColor: colors.text,
+                                WebkitBoxShadow: `0 0 0 1000px ${colors.fieldFocus} inset`,
+                                caretColor: colors.text,
+                                transition: 'background-color 9999s ease-out 0s',
+                            },
                     },
                 },
             },

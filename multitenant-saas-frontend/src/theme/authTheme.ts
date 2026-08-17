@@ -136,10 +136,10 @@ export function createAuthTheme(mode: AppColorMode) {
                             ? 'inset 0 1px 0 rgba(255, 255, 255, 0.025)'
                             : 'inset 0 1px rgba(255,255,255,0.85)',
                         '&:hover': {
-                            backgroundColor: dark ? 'rgba(24, 28, 32, 0.82)' : 'rgba(225,229,233,0.9)',
-                            borderColor: dark
-                                ? 'rgba(255, 255, 255, 0.24)'
-                                : 'rgba(30,36,43,0.24)',
+                            backgroundColor: dark
+                                ? 'rgba(24, 28, 32, 0.82)'
+                                : 'rgba(225,229,233,0.9)',
+                            borderColor: dark ? 'rgba(255, 255, 255, 0.24)' : 'rgba(30,36,43,0.24)',
                             transform: 'translateY(-1px)',
                         },
                     },
@@ -169,14 +169,10 @@ export function createAuthTheme(mode: AppColorMode) {
                         transition:
                             'background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
                         '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: dark
-                                ? 'rgba(255, 255, 255, 0.18)'
-                                : 'rgba(33,40,47,0.17)',
+                            borderColor: dark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(33,40,47,0.17)',
                         },
                         '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: dark
-                                ? 'rgba(255, 255, 255, 0.27)'
-                                : 'rgba(33,40,47,0.28)',
+                            borderColor: dark ? 'rgba(255, 255, 255, 0.27)' : 'rgba(33,40,47,0.28)',
                         },
                         '&.Mui-focused': {
                             backgroundColor: fieldFocus,
@@ -191,13 +187,14 @@ export function createAuthTheme(mode: AppColorMode) {
                         '& input': {
                             caretColor: text,
                         },
-                        '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active': {
-                            WebkitTextFillColor: text,
-                            WebkitBoxShadow: `0 0 0 1000px ${fieldFocus} inset`,
-                            caretColor: text,
-                            borderRadius: 'inherit',
-                            transition: 'background-color 9999s ease-out 0s',
-                        },
+                        '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus, & input:-webkit-autofill:active':
+                            {
+                                WebkitTextFillColor: text,
+                                WebkitBoxShadow: `0 0 0 1000px ${fieldFocus} inset`,
+                                caretColor: text,
+                                borderRadius: 'inherit',
+                                transition: 'background-color 9999s ease-out 0s',
+                            },
                     },
                 },
             },
