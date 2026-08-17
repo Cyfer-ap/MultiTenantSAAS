@@ -7,7 +7,8 @@ import { BrowserRouter } from 'react-router'
 import { AuthProvider } from '../features/auth/context/AuthProvider'
 import { SystemAdminProvider } from '../features/system-admin/context/SystemAdminProvider'
 import { createAppTheme } from '../theme/appTheme'
-import { ThemeModeProvider, useThemeMode } from '../theme/themeMode'
+import { useThemeMode } from '../theme/themeMode'
+import { ThemeModeProvider } from '../theme/ThemeModeProvider'
 import { queryClient } from './queryClient'
 
 function ApplicationTheme({ children }: PropsWithChildren) {
