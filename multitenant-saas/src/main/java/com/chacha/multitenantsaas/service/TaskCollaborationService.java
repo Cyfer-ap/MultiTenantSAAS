@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,7 +105,13 @@ public class TaskCollaborationService {
         TaskComment saved = taskCommentRepository.save(comment);
 
         taskActivityService.record(task, actor, TaskActivityType.COMMENT_ADDED, "Added a comment");
-        recordAudit(project, task, actor, firstMentionOrActor(mentionedUsers, actor), AuditAction.TASK_COMMENT_CREATED, "Task comment created");
+        recordAudit(
+                project,
+                task,
+                actor,
+                firstMentionOrActor(mentionedUsers, actor),
+                AuditAction.TASK_COMMENT_CREATED,
+                "Task comment created");
 
         return mapToResponse(saved);
     }
@@ -135,7 +142,13 @@ public class TaskCollaborationService {
         TaskComment saved = taskCommentRepository.save(comment);
 
         taskActivityService.record(task, actor, TaskActivityType.COMMENT_EDITED, "Edited a comment");
-        recordAudit(project, task, actor, firstMentionOrActor(mentionedUsers, actor), AuditAction.TASK_COMMENT_UPDATED, "Task comment updated");
+        recordAudit(
+                project,
+                task,
+                actor,
+                firstMentionOrActor(mentionedUsers, actor),
+                AuditAction.TASK_COMMENT_UPDATED,
+                "Task comment updated");
 
         return mapToResponse(saved);
     }
@@ -159,7 +172,13 @@ public class TaskCollaborationService {
         TaskComment saved = taskCommentRepository.save(comment);
 
         taskActivityService.record(task, actor, TaskActivityType.COMMENT_DELETED, "Deleted a comment");
-        recordAudit(project, task, actor, actor, AuditAction.TASK_COMMENT_DELETED, "Task comment deleted");
+        recordAudit(
+                project,
+                task,
+                actor,
+                actor,
+                AuditAction.TASK_COMMENT_DELETED,
+                "Task comment deleted");
 
         return mapToResponse(saved);
     }
@@ -241,7 +260,7 @@ public class TaskCollaborationService {
 
     private void ensureCommentAuthor(TaskComment comment, AppUser actor) {
         if (!comment.getAuthorUser().getId().equals(actor.getId())) {
-            throw new IllegalArgumentException("Only the comment author can modify this comment");
+            throw new AccessDeniedException("Only the comment author can modify this comment");
         }
     }
 
@@ -277,7 +296,9 @@ public class TaskCollaborationService {
         var mentions =
                 comment.getMentions().stream()
                         .map(TaskCommentMention::getMentionedUser)
-                        .sorted(Comparator.comparing(AppUser::getFullName, String.CASE_INSENSITIVE_ORDER))
+                        .sorted(
+                                Comparator.comparing(
+                                        AppUser::getFullName, String.CASE_INSENSITIVE_ORDER))
                         .map(
                                 user ->
                                         new TaskCommentMentionResponse(
