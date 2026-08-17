@@ -1,5 +1,5 @@
 import type { MouseEvent, PropsWithChildren } from 'react'
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { flushSync } from 'react-dom'
 
 export type AppColorMode = 'dark' | 'light'
@@ -33,6 +33,10 @@ type ViewTransitionStarter = (updateCallback: () => void) => unknown
 export function ThemeModeProvider({ children }: PropsWithChildren) {
     const [mode, setMode] = useState<AppColorMode>(readInitialMode)
 
+    useEffect(() => {
+        document.documentElement.style.colorScheme = mode
+    }, [mode])
+
     const toggleMode = useCallback(
         (event?: MouseEvent<HTMLElement>) => {
             const nextMode: AppColorMode = mode === 'dark' ? 'light' : 'dark'
@@ -48,7 +52,6 @@ export function ThemeModeProvider({ children }: PropsWithChildren) {
                     setMode(nextMode)
                 })
                 window.localStorage.setItem(STORAGE_KEY, nextMode)
-                root.style.colorScheme = nextMode
             }
 
             const startViewTransition = (
