@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
@@ -38,7 +39,16 @@ public class SecurityConfig {
             HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
-                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
+                .headers(
+                        headers ->
+                                headers.frameOptions(frameOptions -> frameOptions.deny())
+                                        .addHeaderWriter(
+                                                new StaticHeadersWriter(
+                                                        "Referrer-Policy", "no-referrer"))
+                                        .addHeaderWriter(
+                                                new StaticHeadersWriter(
+                                                        "Permissions-Policy",
+                                                        "camera=(), microphone=(), geolocation=()")))
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(
@@ -55,13 +65,12 @@ public class SecurityConfig {
                                         .requestMatchers("/actuator/**")
                                         .hasAuthority("SYSTEM_ADMIN")
                                         .requestMatchers("/h2-console/**")
-                                        .permitAll()
-                                        .requestMatchers("/swagger-ui/**")
-                                        .permitAll()
-                                        .requestMatchers("/swagger-ui.html")
-                                        .permitAll()
-                                        .requestMatchers("/v3/api-docs/**")
-                                        .permitAll()
+                                        .denyAll()
+                                        .requestMatchers(
+                                                "/swagger-ui/**",
+                                                "/swagger-ui.html",
+                                                "/v3/api-docs/**")
+                                        .hasAuthority("SYSTEM_ADMIN")
                                         .requestMatchers(
                                                 HttpMethod.POST,
                                                 "/api/tenants/{tenantId}/auth/login")
@@ -92,7 +101,7 @@ public class SecurityConfig {
                                         .requestMatchers("/api/**")
                                         .authenticated()
                                         .anyRequest()
-                                        .permitAll())
+                                        .denyAll())
                 .oauth2ResourceServer(
                         oauth2 ->
                                 oauth2.authenticationEntryPoint(jwtAuthenticationEntryPoint)

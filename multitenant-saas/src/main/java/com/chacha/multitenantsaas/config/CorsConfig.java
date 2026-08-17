@@ -2,6 +2,7 @@ package com.chacha.multitenantsaas.config;
 
 import com.chacha.multitenantsaas.common.RequestCorrelationFilter;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
@@ -21,7 +22,20 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
+        List<String> allowedOrigins =
+                corsProperties.getAllowedOrigins().stream()
+                        .filter(Objects::nonNull)
+                        .map(String::trim)
+                        .filter(origin -> !origin.isEmpty())
+                        .distinct()
+                        .toList();
+
+        if (allowedOrigins.contains("*")) {
+            throw new IllegalStateException(
+                    "Credentialed CORS must use explicit allowed origins; wildcard '*' is forbidden");
+        }
+
+        configuration.setAllowedOrigins(allowedOrigins);
 
         configuration.setAllowedMethods(
                 List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));

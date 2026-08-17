@@ -44,6 +44,7 @@ public class EmailWorkspaceDiscoveryService {
     private final TrustedEmailBrowserRepository trustedEmailBrowserRepository;
     private final EmailSender emailSender;
     private final SecureTokenService secureTokenService;
+    private final PublicAuthIdentityRateLimiter publicAuthIdentityRateLimiter;
     private final long expirationMinutes;
     private final int maxAttempts;
     private final long trustedBrowserDays;
@@ -57,12 +58,14 @@ public class EmailWorkspaceDiscoveryService {
             TrustedEmailBrowserRepository trustedEmailBrowserRepository,
             EmailSender emailSender,
             SecureTokenService secureTokenService,
+            PublicAuthIdentityRateLimiter publicAuthIdentityRateLimiter,
             EmailVerificationProperties properties) {
         this.appUserRepository = appUserRepository;
         this.challengeRepository = challengeRepository;
         this.trustedEmailBrowserRepository = trustedEmailBrowserRepository;
         this.emailSender = emailSender;
         this.secureTokenService = secureTokenService;
+        this.publicAuthIdentityRateLimiter = publicAuthIdentityRateLimiter;
 
         if (properties.getExpirationMinutes() <= 0L
                 || properties.getMaxAttempts() <= 0
@@ -84,6 +87,7 @@ public class EmailWorkspaceDiscoveryService {
     @Transactional
     public WorkspaceDiscoveryStartResponse start(WorkspaceDiscoveryStartRequest request) {
         String normalizedEmail = normalizeEmail(request.email());
+        publicAuthIdentityRateLimiter.checkWorkspaceDiscovery(normalizedEmail);
         Instant now = Instant.now();
 
         TrustedEmailBrowser trustedBrowser =

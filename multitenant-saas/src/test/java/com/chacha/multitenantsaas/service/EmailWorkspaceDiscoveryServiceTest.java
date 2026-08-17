@@ -47,6 +47,7 @@ class EmailWorkspaceDiscoveryServiceTest {
     @Mock private EmailVerificationChallengeRepository challengeRepository;
     @Mock private TrustedEmailBrowserRepository trustedEmailBrowserRepository;
     @Mock private EmailSender emailSender;
+    @Mock private PublicAuthIdentityRateLimiter publicAuthIdentityRateLimiter;
 
     private SecureTokenService secureTokenService;
     private EmailWorkspaceDiscoveryService service;
@@ -67,6 +68,7 @@ class EmailWorkspaceDiscoveryServiceTest {
                         trustedEmailBrowserRepository,
                         emailSender,
                         secureTokenService,
+                        publicAuthIdentityRateLimiter,
                         properties);
     }
 
@@ -144,6 +146,7 @@ class EmailWorkspaceDiscoveryServiceTest {
                         trustedEmailBrowserRepository,
                         emailSender,
                         secureTokenService,
+                        publicAuthIdentityRateLimiter,
                         properties);
 
         when(appUserRepository.findByEmailWithTenant(EMAIL)).thenReturn(List.of(activeUser()));
