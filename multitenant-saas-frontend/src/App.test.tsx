@@ -225,9 +225,7 @@ describe('App authentication routes', () => {
             </ThemeProvider>,
         )
 
-        expect(
-            await screen.findByRole('button', { name: /tenant admin/i }),
-        ).toBeInTheDocument()
+        expect(await screen.findByRole('button', { name: /tenant admin/i })).toBeInTheDocument()
 
         act(() => {
             authStorage.clear()
