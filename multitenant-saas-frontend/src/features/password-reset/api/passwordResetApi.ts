@@ -1,18 +1,15 @@
 import { publicHttpClient } from '../../../api/httpClient'
 import type { ApiResponse } from '../../../types/api'
 import type {
-    ForgotPasswordInput,
+    ForgotPasswordMutationInput,
     ForgotPasswordResponse,
     ResetPasswordInput,
     ResetPasswordResponse,
 } from '../types/passwordReset'
 
-async function forgotPassword(
-    tenantId: string,
-    input: ForgotPasswordInput,
-): Promise<ForgotPasswordResponse> {
+async function forgotPassword(input: ForgotPasswordMutationInput): Promise<ForgotPasswordResponse> {
     const response = await publicHttpClient.post<ApiResponse<ForgotPasswordResponse>>(
-        `/api/tenants/${tenantId}/auth/forgot-password`,
+        '/api/auth/password-reset/request',
         input,
     )
 
@@ -21,7 +18,7 @@ async function forgotPassword(
 
 async function resetPassword(input: ResetPasswordInput): Promise<ResetPasswordResponse> {
     const response = await publicHttpClient.post<ApiResponse<ResetPasswordResponse>>(
-        '/api/auth/reset-password',
+        '/api/auth/password-reset/complete',
         input,
     )
 

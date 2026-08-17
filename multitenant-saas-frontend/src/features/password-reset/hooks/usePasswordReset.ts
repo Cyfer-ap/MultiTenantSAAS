@@ -5,8 +5,7 @@ import type { ForgotPasswordMutationInput, ResetPasswordInput } from '../types/p
 
 export function useForgotPassword() {
     return useMutation({
-        mutationFn: ({ tenantId, email }: ForgotPasswordMutationInput) =>
-            passwordResetApi.forgotPassword(tenantId, { email }),
+        mutationFn: (input: ForgotPasswordMutationInput) => passwordResetApi.forgotPassword(input),
     })
 }
 
