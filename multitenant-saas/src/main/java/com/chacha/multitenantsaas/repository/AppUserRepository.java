@@ -59,6 +59,16 @@ public interface AppUserRepository
 
     Optional<AppUser> findByTenantIdAndEmail(UUID tenantId, String email);
 
+    @Query(
+            """
+            SELECT appUser
+            FROM AppUser appUser
+            JOIN FETCH appUser.tenant tenant
+            WHERE appUser.email = :email
+            ORDER BY tenant.name
+            """)
+    List<AppUser> findByEmailWithTenant(@Param("email") String email);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query(
             """

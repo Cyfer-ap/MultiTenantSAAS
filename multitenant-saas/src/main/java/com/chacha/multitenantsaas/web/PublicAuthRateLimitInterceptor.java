@@ -107,6 +107,10 @@ public class PublicAuthRateLimitInterceptor implements HandlerInterceptor {
         }
 
         if (TENANT_FORGOT_PASSWORD_PATTERN.matcher(path).matches()
+                || "/api/auth/workspaces/start".equals(path)
+                || "/api/auth/workspaces/start/".equals(path)
+                || "/api/auth/workspaces/verify".equals(path)
+                || "/api/auth/workspaces/verify/".equals(path)
                 || "/api/auth/reset-password".equals(path)
                 || "/api/auth/reset-password/".equals(path)
                 || "/api/user-invitations/accept".equals(path)

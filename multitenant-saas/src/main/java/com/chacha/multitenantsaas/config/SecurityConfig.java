@@ -75,6 +75,11 @@ public class SecurityConfig {
                                         .requestMatchers(HttpMethod.POST, "/api/auth/logout")
                                         .permitAll()
                                         .requestMatchers(
+                                                HttpMethod.POST,
+                                                "/api/auth/workspaces/start",
+                                                "/api/auth/workspaces/verify")
+                                        .permitAll()
+                                        .requestMatchers(
                                                 HttpMethod.POST, "/api/auth/reset-password")
                                         .permitAll()
                                         .requestMatchers(HttpMethod.POST, "/api/onboarding/tenants")
