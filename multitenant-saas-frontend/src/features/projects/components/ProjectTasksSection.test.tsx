@@ -115,9 +115,7 @@ describe('ProjectTasksSection', () => {
     it('renders the Kanban board by default with task data and management controls', async () => {
         renderTasksSection()
 
-        expect(
-            await screen.findByLabelText(/project task kanban board/i),
-        ).toBeInTheDocument()
+        expect(await screen.findByLabelText(/project task kanban board/i)).toBeInTheDocument()
         expect(screen.getByText('Review access controls')).toBeInTheDocument()
         expect(screen.getByText('Grace User')).toBeInTheDocument()
         expect(screen.getByText('To do')).toBeInTheDocument()
