@@ -26,6 +26,18 @@ async function getTasks(
     return response.data.data
 }
 
+async function getTask(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+): Promise<ProjectTask> {
+    const response = await httpClient.get<ApiResponse<ProjectTask>>(
+        `${tasksPath(tenantId, projectId)}/${taskId}`,
+    )
+
+    return response.data.data
+}
+
 async function createTask(
     tenantId: string,
     projectId: string,
@@ -95,6 +107,7 @@ async function cancelTask(
 
 export const projectTasksApi = {
     getTasks,
+    getTask,
     createTask,
     updateTask,
     updateTaskStatus,
