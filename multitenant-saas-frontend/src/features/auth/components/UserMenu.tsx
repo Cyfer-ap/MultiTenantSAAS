@@ -37,9 +37,7 @@ function getInitials(fullName: string): string {
 export function UserMenu() {
     const { session, logout } = useAuth()
     const navigate = useNavigate()
-
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
-
     const [isLoggingOut, setIsLoggingOut] = useState(false)
 
     if (!session) {
@@ -63,8 +61,6 @@ export function UserMenu() {
         try {
             await logout()
         } catch {
-            // The provider clears local authentication
-            // state even if the server logout request fails.
             setIsLoggingOut(false)
         }
     }
@@ -80,16 +76,33 @@ export function UserMenu() {
                 disabled={isLoggingOut}
                 onClick={openMenu}
                 sx={{
-                    borderRadius: 2,
+                    border: 1,
+                    borderColor: 'transparent',
+                    borderRadius: 2.25,
                     gap: 1,
                     minWidth: 0,
-                    px: 1,
+                    px: 0.75,
+                    py: 0.45,
                     textTransform: 'none',
+                    '&:hover': {
+                        bgcolor: 'action.hover',
+                        borderColor: 'divider',
+                    },
                 }}
             >
                 <Avatar
                     sx={{
-                        backgroundColor: 'primary.dark',
+                        background: (theme) =>
+                            theme.palette.mode === 'dark'
+                                ? 'linear-gradient(145deg, #4a535e, #242a30)'
+                                : 'linear-gradient(145deg, #58636f, #313941)',
+                        border: 1,
+                        borderColor: 'divider',
+                        boxShadow: (theme) =>
+                            theme.palette.mode === 'dark'
+                                ? 'inset 0 1px rgba(255,255,255,0.13), 0 7px 18px rgba(0,0,0,0.2)'
+                                : 'inset 0 1px rgba(255,255,255,0.22), 0 7px 16px rgba(31,38,46,0.12)',
+                        color: '#f4f6f8',
                         height: 34,
                         width: 34,
                     }}
@@ -97,35 +110,20 @@ export function UserMenu() {
                     {getInitials(session.fullName)}
                 </Avatar>
 
-                <Box
-                    sx={{
-                        display: {
-                            xs: 'none',
-                            sm: 'block',
-                        },
-                        textAlign: 'left',
-                    }}
-                >
+                <Box sx={{ display: { xs: 'none', sm: 'block' }, textAlign: 'left' }}>
                     <Typography
                         component="span"
                         variant="body2"
-                        sx={{
-                            display: 'block',
-                            fontWeight: 600,
-                            lineHeight: 1.2,
-                        }}
+                        sx={{ display: 'block', fontWeight: 650, lineHeight: 1.2 }}
                     >
                         {session.fullName}
                     </Typography>
 
                     <Typography
+                        color="text.secondary"
                         component="span"
                         variant="caption"
-                        sx={{
-                            display: 'block',
-                            lineHeight: 1.2,
-                            opacity: 0.8,
-                        }}
+                        sx={{ display: 'block', lineHeight: 1.2 }}
                     >
                         {roleLabels[session.role]}
                     </Typography>
@@ -137,44 +135,19 @@ export function UserMenu() {
                 anchorEl={menuAnchor}
                 open={menuOpen}
                 onClose={closeMenu}
-                anchorOrigin={{
-                    horizontal: 'right',
-                    vertical: 'bottom',
-                }}
-                transformOrigin={{
-                    horizontal: 'right',
-                    vertical: 'top',
-                }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 slotProps={{
-                    list: {
-                        'aria-labelledby': 'user-menu-button',
-                    },
-                    paper: {
-                        sx: {
-                            minWidth: 260,
-                            mt: 1,
-                        },
-                    },
+                    list: { 'aria-labelledby': 'user-menu-button' },
+                    paper: { sx: { minWidth: 260, mt: 1 } },
                 }}
             >
                 <MenuItem disabled>
                     <Box>
-                        <Typography
-                            variant="body2"
-                            sx={{
-                                color: 'text.primary',
-                                fontWeight: 600,
-                            }}
-                        >
+                        <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 650 }}>
                             {session.fullName}
                         </Typography>
-
-                        <Typography
-                            variant="caption"
-                            sx={{
-                                color: 'text.secondary',
-                            }}
-                        >
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                             {session.email}
                         </Typography>
                     </Box>
@@ -205,7 +178,6 @@ export function UserMenu() {
                     <ListItemIcon>
                         <LogoutOutlinedIcon fontSize="small" />
                     </ListItemIcon>
-
                     {isLoggingOut ? 'Signing out...' : 'Sign out'}
                 </MenuItem>
             </Menu>
