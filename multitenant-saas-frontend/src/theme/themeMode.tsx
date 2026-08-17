@@ -73,8 +73,12 @@ export function ThemeModeProvider({ children }: PropsWithChildren) {
     return <ThemeModeContext.Provider value={value}>{children}</ThemeModeContext.Provider>
 }
 
+export function useOptionalThemeMode(): ThemeModeContextValue | null {
+    return useContext(ThemeModeContext)
+}
+
 export function useThemeMode(): ThemeModeContextValue {
-    const context = useContext(ThemeModeContext)
+    const context = useOptionalThemeMode()
     if (!context) {
         throw new Error('useThemeMode must be used inside ThemeModeProvider')
     }
