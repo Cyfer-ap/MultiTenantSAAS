@@ -170,18 +170,7 @@ export const authTheme = createTheme({
                     border: '1px solid rgba(255, 255, 255, 0.08)',
                     borderRadius: 11,
                     backgroundImage: 'none',
-                },
-                standardInfo: {
-                    backgroundColor: 'rgba(120, 144, 168, 0.1)',
-                },
-                standardSuccess: {
-                    backgroundColor: 'rgba(77, 145, 112, 0.1)',
-                },
-                standardWarning: {
-                    backgroundColor: 'rgba(171, 133, 71, 0.1)',
-                },
-                standardError: {
-                    backgroundColor: 'rgba(178, 78, 78, 0.1)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.045)',
                 },
             },
         },
