@@ -7,7 +7,7 @@ import { useMemo } from 'react'
 
 import { createAuthTheme } from '../../../theme/authTheme'
 import { ThemeModeToggle } from '../../../theme/ThemeModeToggle'
-import { useThemeMode } from '../../../theme/themeMode'
+import { useOptionalThemeMode } from '../../../theme/themeMode'
 
 interface AuthExperienceShellProps {
     children: ReactNode
@@ -22,7 +22,8 @@ export function AuthExperienceShell({
     title = 'Secure access, without the clutter.',
     description = 'A focused workspace experience with verified identity, tenant-aware access, and secure session controls.',
 }: AuthExperienceShellProps) {
-    const { mode } = useThemeMode()
+    const themeMode = useOptionalThemeMode()
+    const mode = themeMode?.mode ?? 'dark'
     const dark = mode === 'dark'
     const authTheme = useMemo(() => createAuthTheme(mode), [mode])
 
