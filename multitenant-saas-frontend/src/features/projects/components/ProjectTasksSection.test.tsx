@@ -62,7 +62,7 @@ const membersPage: PageResponse<ProjectMember> = {
 const tasksPage: PageResponse<ProjectTask> = {
     content: [task],
     page: 0,
-    size: 10,
+    size: 100,
     totalElements: 1,
     totalPages: 1,
     first: true,
@@ -112,17 +112,50 @@ describe('ProjectTasksSection', () => {
         vi.spyOn(projectTasksApi, 'getTasks').mockResolvedValue(tasksPage)
     })
 
-    it('renders task data and management controls for an administrator', async () => {
+    it('renders the Kanban board by default with task data and management controls', async () => {
         renderTasksSection()
 
-        expect(await screen.findByText('Review access controls')).toBeInTheDocument()
+        expect(await screen.findByLabelText(/project task kanban board/i)).toBeInTheDocument()
+        expect(screen.getByText('Review access controls')).toBeInTheDocument()
         expect(screen.getByText('Grace User')).toBeInTheDocument()
+        expect(screen.getByText('To do')).toBeInTheDocument()
+        expect(screen.getByText('In progress')).toBeInTheDocument()
+        expect(screen.getByText('Blocked')).toBeInTheDocument()
+        expect(screen.getByText('Completed')).toBeInTheDocument()
         expect(screen.getByRole('button', { name: /create task/i })).toBeInTheDocument()
         expect(
-            screen.getByRole('button', {
-                name: /manage review access controls/i,
-            }),
+            screen.getByRole('button', { name: /manage review access controls/i }),
         ).toBeInTheDocument()
+    })
+
+    it('moves an authorized task between Kanban lanes', async () => {
+        const updateStatus = vi.spyOn(projectTasksApi, 'updateTaskStatus').mockResolvedValue({
+            ...task,
+            status: 'IN_PROGRESS',
+        })
+
+        renderTasksSection()
+        const card = await screen.findByLabelText(/review access controls task card/i)
+        const lane = screen.getByLabelText(/in progress lane/i)
+
+        fireEvent.dragStart(card, {
+            dataTransfer: {
+                effectAllowed: 'move',
+                setData: vi.fn(),
+            },
+        })
+        fireEvent.dragOver(lane, {
+            dataTransfer: { dropEffect: 'move' },
+        })
+        fireEvent.drop(lane, {
+            dataTransfer: { getData: () => 'task-1' },
+        })
+
+        await waitFor(() => {
+            expect(updateStatus).toHaveBeenCalledWith('tenant-1', 'project-1', 'task-1', {
+                status: 'IN_PROGRESS',
+            })
+        })
     })
 
     it('submits server-side search, status, priority, and assignee filters', async () => {
@@ -142,24 +175,22 @@ describe('ProjectTasksSection', () => {
         fireEvent.click(screen.getByRole('option', { name: 'Grace User' }))
 
         const searchForm = screen.getByLabelText(/search project tasks/i).closest('form')
+        fireEvent.click(within(searchForm!).getByRole('button', { name: /^search$/i }))
 
-        fireEvent.click(
-            within(searchForm!).getByRole('button', {
-                name: /^search$/i,
-            }),
-        )
-
-        expect(getTasks).toHaveBeenLastCalledWith(
-            'tenant-1',
-            'project-1',
-            expect.objectContaining({
-                page: 0,
-                status: 'TODO',
-                priority: 'HIGH',
-                assigneeUserId: 'user-2',
-                search: 'access',
-            }),
-        )
+        await waitFor(() => {
+            expect(getTasks).toHaveBeenLastCalledWith(
+                'tenant-1',
+                'project-1',
+                expect.objectContaining({
+                    page: 0,
+                    size: 100,
+                    status: 'TODO',
+                    priority: 'HIGH',
+                    assigneeUserId: 'user-2',
+                    search: 'access',
+                }),
+            )
+        })
     })
 
     it('creates a normalized task with an optional assignee', async () => {
@@ -170,30 +201,16 @@ describe('ProjectTasksSection', () => {
         await screen.findByText('Review access controls')
         await user.click(screen.getByRole('button', { name: /create task/i }))
 
-        const dialog = screen.getByRole('dialog', {
-            name: /create task/i,
-        })
+        const dialog = screen.getByRole('dialog', { name: /create task/i })
         fireEvent.change(within(dialog).getByLabelText(/task title/i), {
-            target: {
-                value: '  Audit refresh flow  ',
-            },
+            target: { value: '  Audit refresh flow  ' },
         })
         fireEvent.change(within(dialog).getByLabelText(/description/i), {
-            target: {
-                value: '  Validate token rotation.  ',
-            },
+            target: { value: '  Validate token rotation.  ' },
         })
         fireEvent.mouseDown(within(dialog).getByLabelText(/^assignee$/i))
-        fireEvent.click(
-            screen.getByRole('option', {
-                name: /grace user.*grace@example.com/i,
-            }),
-        )
-        fireEvent.click(
-            within(dialog).getByRole('button', {
-                name: /^create task$/i,
-            }),
-        )
+        fireEvent.click(screen.getByRole('option', { name: /grace user.*grace@example.com/i }))
+        fireEvent.click(within(dialog).getByRole('button', { name: /^create task$/i }))
 
         await waitFor(() => {
             expect(createTask).toHaveBeenCalledWith('tenant-1', 'project-1', {
@@ -222,25 +239,15 @@ describe('ProjectTasksSection', () => {
 
         expect(screen.queryByRole('button', { name: /create task/i })).not.toBeInTheDocument()
 
-        await user.click(
-            screen.getByRole('button', {
-                name: /manage review access controls/i,
-            }),
-        )
+        await user.click(screen.getByRole('button', { name: /manage review access controls/i }))
         expect(screen.getByRole('menuitem', { name: /change status/i })).toBeInTheDocument()
         expect(screen.queryByRole('menuitem', { name: /edit task/i })).not.toBeInTheDocument()
         await user.click(screen.getByRole('menuitem', { name: /change status/i }))
 
-        const dialog = screen.getByRole('dialog', {
-            name: /change task status/i,
-        })
+        const dialog = screen.getByRole('dialog', { name: /change task status/i })
         await user.click(within(dialog).getByLabelText(/^status$/i))
         await user.click(screen.getByRole('option', { name: 'In progress' }))
-        await user.click(
-            within(dialog).getByRole('button', {
-                name: /change status/i,
-            }),
-        )
+        await user.click(within(dialog).getByRole('button', { name: /change status/i }))
 
         await waitFor(() => {
             expect(updateStatus).toHaveBeenCalledWith('tenant-1', 'project-1', 'task-1', {
@@ -261,27 +268,28 @@ describe('ProjectTasksSection', () => {
             userId: 'user-2',
         })
 
-        expect(
-            await screen.findByRole('button', {
-                name: /create task/i,
-            }),
-        ).toBeInTheDocument()
+        expect(await screen.findByRole('button', { name: /create task/i })).toBeInTheDocument()
     })
 
-    it('keeps archived projects and cancelled tasks immutable', async () => {
-        vi.spyOn(projectTasksApi, 'getTasks').mockResolvedValue({
-            ...tasksPage,
-            content: [{ ...task, status: 'CANCELLED' }],
-        })
-
+    it('keeps archived project tasks immutable and read only', async () => {
         renderTasksSection({ projectArchived: true })
+
+        expect(await screen.findByRole('button', { name: /create task/i })).toBeDisabled()
+        const archivedCard = await screen.findByLabelText(/review access controls task card/i)
+        expect(archivedCard).toHaveAttribute('draggable', 'false')
+        expect(
+            screen.queryByRole('button', { name: /manage review access controls/i }),
+        ).not.toBeInTheDocument()
+    })
+
+    it('switches back to the paginated table when requested', async () => {
+        const user = userEvent.setup()
+        renderTasksSection()
         await screen.findByText('Review access controls')
 
-        expect(screen.getByRole('button', { name: /create task/i })).toBeDisabled()
-        expect(
-            screen.queryByRole('button', {
-                name: /manage review access controls/i,
-            }),
-        ).not.toBeInTheDocument()
+        await user.click(screen.getByRole('button', { name: /table view/i }))
+
+        expect(screen.getByRole('table', { name: /project tasks/i })).toBeInTheDocument()
+        expect(screen.getByText('Review access controls')).toBeInTheDocument()
     })
 })
