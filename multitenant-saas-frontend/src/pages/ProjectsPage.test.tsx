@@ -58,7 +58,8 @@ const authContextValue: AuthContextValue = {
     status: 'authenticated',
     session: {
         accessToken: 'access-token',
-        refreshToken: 'refresh-token',
+        csrfToken: 'csrf-token',
+        persistentSession: true,
         tokenType: 'Bearer',
         accessTokenExpiresAt: Date.now() + 60_000,
         tenantId: 'tenant-1',

@@ -19,7 +19,8 @@ const systemSession = {
 
 const tenantSession = {
     accessToken: 'tenant-access-token',
-    refreshToken: 'tenant-refresh-token',
+    csrfToken: 'csrf-token',
+    persistentSession: true,
     tokenType: 'Bearer',
     accessTokenExpiresAt: Date.now() + 60_000,
     tenantId: 'tenant-1',

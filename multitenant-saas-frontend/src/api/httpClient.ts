@@ -8,9 +8,12 @@ import type { AuthSession, TokenRefreshResponse } from '../features/auth/types/a
 import type { ApiResponse } from '../types/api'
 import { normalizeApiError } from './apiError'
 
+const CSRF_HEADER = 'X-CSRF-Token'
+
 const clientConfiguration = {
     baseURL: env.apiBaseUrl,
     timeout: 15_000,
+    withCredentials: true,
     headers: {
         Accept: 'application/json',
     },
@@ -39,14 +42,17 @@ httpClient.interceptors.request.use((config) => {
 async function refreshSession(session: AuthSession): Promise<AuthSession> {
     const response = await publicHttpClient.post<ApiResponse<TokenRefreshResponse>>(
         '/api/auth/refresh',
+        undefined,
         {
-            refreshToken: session.refreshToken,
+            headers: {
+                [CSRF_HEADER]: session.csrfToken,
+            },
         },
     )
 
     const currentSession = authStorage.read()
 
-    if (!currentSession || currentSession.refreshToken !== session.refreshToken) {
+    if (!currentSession || currentSession.csrfToken !== session.csrfToken) {
         throw new Error('The authentication session changed during token refresh.')
     }
 

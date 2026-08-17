@@ -35,8 +35,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
                     return
                 }
 
-                // Prevent cached data belonging to one
-                // tenant from surviving sign-out.
                 queryClient.clear()
                 setSession(null)
                 setStatus('unauthenticated')
@@ -78,8 +76,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
                     return
                 }
 
-                // Retain the locally stored session during a
-                // temporary network or backend failure.
                 commitSession(storedSession)
             }
         }
@@ -88,11 +84,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }, [clearSession, commitSession])
 
     const login = useCallback(
-        async ({ tenantId, email, password, workspaceGrantId }: LoginInput): Promise<void> => {
+        async ({
+            tenantId,
+            email,
+            password,
+            workspaceGrantId,
+            keepSignedIn,
+        }: LoginInput): Promise<void> => {
             const response = await authApi.login(tenantId, {
                 email,
                 password,
                 workspaceGrantId,
+                keepSignedIn,
             })
 
             commitSession(createAuthSession(response))
@@ -105,7 +108,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
         try {
             if (currentSession) {
-                await authApi.logout(currentSession.refreshToken)
+                await authApi.logout(currentSession.csrfToken)
             }
         } finally {
             clearSession()

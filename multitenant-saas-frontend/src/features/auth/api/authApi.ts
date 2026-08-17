@@ -6,15 +6,15 @@ import type {
     CurrentUserResponse,
     LoginRequest,
     LoginResponse,
-    LogoutRequest,
     LogoutResponse,
-    RefreshTokenRequest,
     TokenRefreshResponse,
     WorkspaceDiscoveryStartRequest,
     WorkspaceDiscoveryStartResponse,
     WorkspaceDiscoveryVerifyRequest,
     WorkspaceDiscoveryVerifyResponse,
 } from '../types/auth'
+
+const CSRF_HEADER = 'X-CSRF-Token'
 
 async function login(tenantId: string, request: LoginRequest): Promise<LoginResponse> {
     const response = await publicHttpClient.post<ApiResponse<LoginResponse>>(
@@ -47,14 +47,15 @@ async function verifyWorkspaceDiscovery(
     return response.data.data
 }
 
-async function refreshToken(refreshTokenValue: string): Promise<TokenRefreshResponse> {
-    const request: RefreshTokenRequest = {
-        refreshToken: refreshTokenValue,
-    }
-
+async function refreshToken(csrfToken: string): Promise<TokenRefreshResponse> {
     const response = await publicHttpClient.post<ApiResponse<TokenRefreshResponse>>(
         '/api/auth/refresh',
-        request,
+        undefined,
+        {
+            headers: {
+                [CSRF_HEADER]: csrfToken,
+            },
+        },
     )
 
     return response.data.data
@@ -66,12 +67,12 @@ async function getCurrentUser(): Promise<CurrentUserResponse> {
     return response.data.data
 }
 
-async function logout(refreshTokenValue: string): Promise<void> {
-    const request: LogoutRequest = {
-        refreshToken: refreshTokenValue,
-    }
-
-    await publicHttpClient.post('/api/auth/logout', request)
+async function logout(csrfToken: string): Promise<void> {
+    await publicHttpClient.post('/api/auth/logout', undefined, {
+        headers: {
+            [CSRF_HEADER]: csrfToken,
+        },
+    })
 }
 
 async function logoutAllDevices(): Promise<LogoutResponse> {

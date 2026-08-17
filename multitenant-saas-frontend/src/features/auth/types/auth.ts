@@ -6,6 +6,7 @@ export interface LoginRequest {
     email: string
     password: string
     workspaceGrantId: string
+    keepSignedIn: boolean
 }
 
 export interface LoginInput extends LoginRequest {
@@ -20,7 +21,6 @@ export interface WorkspaceLoginOption {
 
 export interface WorkspaceDiscoveryStartRequest {
     email: string
-    trustedBrowserToken?: string
 }
 
 export interface WorkspaceDiscoveryStartResponse {
@@ -47,9 +47,11 @@ export interface WorkspaceDiscoveryVerifyResponse {
 
 export interface TokenPairResponse {
     accessToken: string
-    refreshToken: string
+    refreshToken: string | null
+    csrfToken: string
     tokenType: string
     expiresInSeconds: number
+    persistentSession: boolean
 }
 
 export interface LoginResponse extends TokenPairResponse {
@@ -62,14 +64,6 @@ export interface LoginResponse extends TokenPairResponse {
 }
 
 export type TokenRefreshResponse = TokenPairResponse
-
-export interface RefreshTokenRequest {
-    refreshToken: string
-}
-
-export interface LogoutRequest {
-    refreshToken: string
-}
 
 export interface LogoutResponse {
     message: string
@@ -98,9 +92,10 @@ export interface CurrentUserResponse {
 
 export interface AuthSession {
     accessToken: string
-    refreshToken: string
+    csrfToken: string
     tokenType: string
     accessTokenExpiresAt: number
+    persistentSession: boolean
     tenantId: string
     userId: string
     fullName: string

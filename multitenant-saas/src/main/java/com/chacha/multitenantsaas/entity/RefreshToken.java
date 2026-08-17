@@ -27,6 +27,12 @@ public class RefreshToken {
     @Column(name = "token_hash", nullable = false, length = 255)
     private String tokenHash;
 
+    @Column(name = "csrf_token_hash", length = 64)
+    private String csrfTokenHash;
+
+    @Column(name = "persistent_session", nullable = false)
+    private boolean persistentSession = false;
+
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
@@ -41,8 +47,19 @@ public class RefreshToken {
     public RefreshToken() {}
 
     public RefreshToken(AppUser user, String tokenHash, Instant expiresAt) {
+        this(user, tokenHash, null, false, expiresAt);
+    }
+
+    public RefreshToken(
+            AppUser user,
+            String tokenHash,
+            String csrfTokenHash,
+            boolean persistentSession,
+            Instant expiresAt) {
         this.user = user;
         this.tokenHash = tokenHash;
+        this.csrfTokenHash = csrfTokenHash;
+        this.persistentSession = persistentSession;
         this.expiresAt = expiresAt;
         this.revoked = false;
     }
@@ -62,6 +79,14 @@ public class RefreshToken {
 
     public String getTokenHash() {
         return tokenHash;
+    }
+
+    public String getCsrfTokenHash() {
+        return csrfTokenHash;
+    }
+
+    public boolean isPersistentSession() {
+        return persistentSession;
     }
 
     public Instant getExpiresAt() {
@@ -92,6 +117,14 @@ public class RefreshToken {
         this.tokenHash = tokenHash;
     }
 
+    public void setCsrfTokenHash(String csrfTokenHash) {
+        this.csrfTokenHash = csrfTokenHash;
+    }
+
+    public void setPersistentSession(boolean persistentSession) {
+        this.persistentSession = persistentSession;
+    }
+
     public void setExpiresAt(Instant expiresAt) {
         this.expiresAt = expiresAt;
     }
@@ -109,7 +142,7 @@ public class RefreshToken {
     }
 
     public boolean isExpired() {
-        return Instant.now().isAfter(this.expiresAt);
+        return !Instant.now().isBefore(this.expiresAt);
     }
 
     public boolean isActive() {

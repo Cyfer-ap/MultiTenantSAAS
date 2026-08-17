@@ -32,16 +32,17 @@ public class CorsConfig {
                         "Content-Type",
                         "Accept",
                         "Origin",
+                        "X-CSRF-Token",
                         RequestCorrelationFilter.REQUEST_ID_HEADER));
 
         configuration.setExposedHeaders(
                 List.of("Location", RequestCorrelationFilter.REQUEST_ID_HEADER));
 
         /*
-         * JWTs are currently sent through the Authorization header,
-         * not through browser cookies.
+         * Refresh and trusted-browser credentials are HttpOnly cookies.
+         * allowedOrigins must remain an explicit finite allow-list.
          */
-        configuration.setAllowCredentials(false);
+        configuration.setAllowCredentials(true);
 
         /*
          * Browser may cache a successful preflight response for one hour.

@@ -11,6 +11,35 @@ public record LoginResponse(
         UserRole role,
         String accessToken,
         String refreshToken,
+        String csrfToken,
         String tokenType,
         long expiresInSeconds,
-        String message) {}
+        boolean persistentSession,
+        String message) {
+
+    public LoginResponse(
+            UUID tenantId,
+            UUID userId,
+            String fullName,
+            String email,
+            UserRole role,
+            String accessToken,
+            String refreshToken,
+            String tokenType,
+            long expiresInSeconds,
+            String message) {
+        this(
+                tenantId,
+                userId,
+                fullName,
+                email,
+                role,
+                accessToken,
+                refreshToken,
+                "",
+                tokenType,
+                expiresInSeconds,
+                false,
+                message);
+    }
+}
