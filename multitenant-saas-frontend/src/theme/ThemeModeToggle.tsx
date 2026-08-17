@@ -2,14 +2,20 @@ import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded'
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
 import { IconButton, Tooltip } from '@mui/material'
 
-import { useThemeMode } from './themeMode'
+import { useOptionalThemeMode } from './themeMode'
 
 interface ThemeModeToggleProps {
     size?: 'small' | 'medium'
 }
 
 export function ThemeModeToggle({ size = 'medium' }: ThemeModeToggleProps) {
-    const { mode, toggleMode } = useThemeMode()
+    const themeMode = useOptionalThemeMode()
+
+    if (!themeMode) {
+        return null
+    }
+
+    const { mode, toggleMode } = themeMode
     const targetMode = mode === 'dark' ? 'light' : 'dark'
 
     return (
