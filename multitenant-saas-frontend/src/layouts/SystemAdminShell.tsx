@@ -1,8 +1,10 @@
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded'
 import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded'
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
-import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
 import PasswordRoundedIcon from '@mui/icons-material/PasswordRounded'
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded'
@@ -32,8 +34,12 @@ import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 
 import { useSystemAdmin } from '../features/system-admin/hooks/useSystemAdmin'
+import { ThemeModeToggle } from '../theme/ThemeModeToggle'
+import { useSidebarCollapse } from './useSidebarCollapse'
 
-const drawerWidth = 256
+const expandedDrawerWidth = 272
+const collapsedDrawerWidth = 82
+const mobileDrawerWidth = 288
 
 interface NavigationItem {
     label: string
@@ -86,8 +92,15 @@ export function SystemAdminShell() {
     const navigate = useNavigate()
     const theme = useTheme()
     const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
+    const { collapsed, toggleCollapsed } = useSidebarCollapse('system-sidebar-collapsed')
+    const desktopDrawerWidth = collapsed ? collapsedDrawerWidth : expandedDrawerWidth
     const [mobileOpen, setMobileOpen] = useState(false)
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
+
+    const isSelected = (path: string): boolean =>
+        location.pathname === path || location.pathname.startsWith(`${path}/`)
+
+    const activeNavigationItem = navigationItems.find((item) => isSelected(item.path))
 
     const navigateTo = (path: string): void => {
         navigate(path)
@@ -107,69 +120,160 @@ export function SystemAdminShell() {
         navigate('/system/change-password')
     }
 
-    const drawer = (
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Toolbar sx={{ gap: 1.5 }}>
-                <AdminPanelSettingsRoundedIcon color="primary" />
-                <Box>
-                    <Typography sx={{ fontWeight: 800 }}>SaaS Control</Typography>
-                    <Typography color="text.secondary" variant="caption">
-                        System administration
-                    </Typography>
-                </Box>
+    const renderDrawer = (compact: boolean, allowCollapse: boolean) => (
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+            <Toolbar
+                sx={{
+                    minHeight: 70,
+                    px: compact ? 1.4 : 2,
+                    transition: 'padding 220ms ease',
+                }}
+            >
+                <Stack
+                    direction="row"
+                    spacing={compact ? 0 : 1.25}
+                    sx={{ alignItems: 'center', minWidth: 0 }}
+                >
+                    <Box
+                        aria-hidden="true"
+                        sx={{
+                            alignItems: 'center',
+                            background: (currentTheme) =>
+                                currentTheme.palette.mode === 'dark'
+                                    ? 'linear-gradient(145deg, #3c424a, #171b20)'
+                                    : 'linear-gradient(145deg, #505b66, #2c333b)',
+                            border: 1,
+                            borderColor: 'divider',
+                            borderRadius: 2.25,
+                            boxShadow: (currentTheme) =>
+                                currentTheme.palette.mode === 'dark'
+                                    ? 'inset 0 1px rgba(255,255,255,0.12), 0 9px 22px rgba(0,0,0,0.22)'
+                                    : 'inset 0 1px rgba(255,255,255,0.24), 0 9px 20px rgba(29,36,44,0.14)',
+                            color: '#eef1f4',
+                            display: 'flex',
+                            flexShrink: 0,
+                            height: 38,
+                            justifyContent: 'center',
+                            width: 38,
+                        }}
+                    >
+                        <AdminPanelSettingsRoundedIcon fontSize="small" />
+                    </Box>
+                    <Box
+                        sx={{
+                            maxWidth: compact ? 0 : 190,
+                            opacity: compact ? 0 : 1,
+                            overflow: 'hidden',
+                            transition:
+                                'max-width 220ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 130ms ease',
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
+                        <Typography sx={{ fontWeight: 800, lineHeight: 1.15 }}>
+                            SaaS Control
+                        </Typography>
+                        <Typography color="text.secondary" variant="caption">
+                            System administration
+                        </Typography>
+                    </Box>
+                </Stack>
             </Toolbar>
             <Divider />
-            <List sx={{ px: 1.5, py: 2 }}>
+            <List sx={{ px: compact ? 1.1 : 1.5, py: 1.75 }}>
                 {navigationItems.map((item) => (
-                    <ListItemButton
-                        key={item.path}
-                        onClick={() => {
-                            navigateTo(item.path)
-                        }}
-                        selected={
-                            location.pathname === item.path ||
-                            location.pathname.startsWith(item.path + '/')
-                        }
-                        sx={{ borderRadius: 2, mb: 0.5 }}
-                    >
-                        <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
-                            {item.icon}
-                        </ListItemIcon>
-                        <ListItemText primary={item.label} />
-                    </ListItemButton>
+                    <Tooltip key={item.path} placement="right" title={compact ? item.label : ''}>
+                        <ListItemButton
+                            aria-label={compact ? item.label : undefined}
+                            onClick={() => navigateTo(item.path)}
+                            selected={isSelected(item.path)}
+                            sx={{
+                                justifyContent: compact ? 'center' : 'flex-start',
+                                mb: 0.55,
+                                minHeight: 46,
+                                px: compact ? 1 : 1.35,
+                            }}
+                        >
+                            <ListItemIcon
+                                sx={{
+                                    color: 'inherit',
+                                    justifyContent: 'center',
+                                    minWidth: compact ? 0 : 40,
+                                }}
+                            >
+                                {item.icon}
+                            </ListItemIcon>
+                            {!compact && <ListItemText primary={item.label} />}
+                        </ListItemButton>
+                    </Tooltip>
                 ))}
             </List>
+
+            {allowCollapse && (
+                <Box sx={{ mt: 'auto', p: 1.25 }}>
+                    <Divider sx={{ mb: 1.25 }} />
+                    <Tooltip placement="right" title={compact ? 'Expand navigation' : ''}>
+                        <ListItemButton
+                            aria-label={compact ? 'Expand navigation' : 'Collapse navigation'}
+                            onClick={toggleCollapsed}
+                            sx={{
+                                justifyContent: compact ? 'center' : 'flex-start',
+                                minHeight: 44,
+                                px: compact ? 1 : 1.35,
+                            }}
+                        >
+                            <ListItemIcon
+                                sx={{
+                                    color: 'text.secondary',
+                                    justifyContent: 'center',
+                                    minWidth: compact ? 0 : 40,
+                                }}
+                            >
+                                {compact ? <ChevronRightRoundedIcon /> : <ChevronLeftRoundedIcon />}
+                            </ListItemIcon>
+                            {!compact && <ListItemText primary="Collapse navigation" />}
+                        </ListItemButton>
+                    </Tooltip>
+                </Box>
+            )}
         </Box>
     )
 
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh' }}>
             <AppBar
-                color="inherit"
                 position="fixed"
                 sx={{
-                    borderBottom: 1,
-                    borderColor: 'divider',
-                    boxShadow: 'none',
-                    ml: { md: drawerWidth + 'px' },
-                    width: { md: 'calc(100% - ' + drawerWidth + 'px)' },
+                    ml: { md: `${desktopDrawerWidth}px` },
+                    width: { md: `calc(100% - ${desktopDrawerWidth}px)` },
                     zIndex: (currentTheme) => currentTheme.zIndex.drawer + 1,
+                    transition:
+                        'width 260ms cubic-bezier(0.2, 0.8, 0.2, 1), margin-left 260ms cubic-bezier(0.2, 0.8, 0.2, 1)',
                 }}
             >
-                <Toolbar>
+                <Toolbar sx={{ minHeight: 70, gap: 1 }}>
                     <IconButton
                         aria-label="Open system navigation"
                         edge="start"
-                        onClick={() => {
-                            setMobileOpen(true)
-                        }}
-                        sx={{ display: { md: 'none' }, mr: 2 }}
+                        onClick={() => setMobileOpen(true)}
+                        sx={{ display: { md: 'none' }, mr: 0.5 }}
                     >
                         <MenuRoundedIcon />
                     </IconButton>
-                    <Typography sx={{ flexGrow: 1, fontWeight: 700 }}>
-                        Platform administration
-                    </Typography>
+
+                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                        <Typography
+                            color="text.secondary"
+                            variant="caption"
+                            sx={{ display: { xs: 'none', sm: 'block' }, lineHeight: 1.1 }}
+                        >
+                            Platform administration
+                        </Typography>
+                        <Typography noWrap sx={{ fontWeight: 760, lineHeight: 1.25 }}>
+                            {activeNavigationItem?.label ?? 'System console'}
+                        </Typography>
+                    </Box>
+
+                    <ThemeModeToggle size="small" />
                     <Tooltip title="System administrator menu">
                         <IconButton
                             aria-label="System administrator menu"
@@ -177,16 +281,22 @@ export function SystemAdminShell() {
                                 setMenuAnchor(event.currentTarget)
                             }}
                         >
-                            <Avatar sx={{ height: 36, width: 36 }}>
+                            <Avatar
+                                sx={{
+                                    bgcolor: 'primary.dark',
+                                    border: 1,
+                                    borderColor: 'divider',
+                                    height: 36,
+                                    width: 36,
+                                }}
+                            >
                                 {initials(session?.fullName ?? '')}
                             </Avatar>
                         </IconButton>
                     </Tooltip>
                     <Menu
                         anchorEl={menuAnchor}
-                        onClose={() => {
-                            setMenuAnchor(null)
-                        }}
+                        onClose={() => setMenuAnchor(null)}
                         open={Boolean(menuAnchor)}
                     >
                         <Box sx={{ maxWidth: 280, px: 2, py: 1 }}>
@@ -217,31 +327,39 @@ export function SystemAdminShell() {
             <Box
                 component="nav"
                 aria-label="System navigation"
-                sx={{ flexShrink: { md: 0 }, width: { md: drawerWidth } }}
+                sx={{
+                    flexShrink: { md: 0 },
+                    width: { md: desktopDrawerWidth },
+                    transition: 'width 260ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+                }}
             >
                 <Drawer
                     ModalProps={{ keepMounted: true }}
-                    onClose={() => {
-                        setMobileOpen(false)
-                    }}
+                    onClose={() => setMobileOpen(false)}
                     open={mobileOpen}
                     sx={{
                         display: { xs: 'block', md: 'none' },
-                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                        '& .MuiDrawer-paper': {
+                            boxSizing: 'border-box',
+                            width: mobileDrawerWidth,
+                        },
                     }}
                     variant="temporary"
                 >
-                    {drawer}
+                    {renderDrawer(false, false)}
                 </Drawer>
                 <Drawer
                     open
                     sx={{
                         display: { xs: 'none', md: 'block' },
-                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                        '& .MuiDrawer-paper': {
+                            boxSizing: 'border-box',
+                            width: desktopDrawerWidth,
+                        },
                     }}
                     variant="permanent"
                 >
-                    {drawer}
+                    {renderDrawer(collapsed, true)}
                 </Drawer>
             </Box>
 
@@ -249,12 +367,14 @@ export function SystemAdminShell() {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    mt: 8,
+                    minWidth: 0,
+                    mt: 8.75,
                     p: { xs: 2, sm: 3 },
-                    width: { md: 'calc(100% - ' + drawerWidth + 'px)' },
+                    width: { md: `calc(100% - ${desktopDrawerWidth}px)` },
+                    transition: 'width 260ms cubic-bezier(0.2, 0.8, 0.2, 1)',
                 }}
             >
-                <Stack sx={{ mx: 'auto', maxWidth: 1440 }}>
+                <Stack sx={{ mx: 'auto', maxWidth: 1600 }}>
                     <Outlet />
                 </Stack>
             </Box>

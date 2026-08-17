@@ -1,11 +1,17 @@
 import { render, screen } from '@testing-library/react'
+import type { ReactElement } from 'react'
 import { describe, expect, it } from 'vitest'
 
+import { ThemeModeProvider } from '../../../theme/ThemeModeProvider'
 import { AuthExperienceShell } from './AuthExperienceShell'
 
+function renderShell(element: ReactElement) {
+    return render(<ThemeModeProvider>{element}</ThemeModeProvider>)
+}
+
 describe('AuthExperienceShell', () => {
-    it('renders the shared auth identity and child surface', () => {
-        render(
+    it('renders the shared auth identity, theme control, and child surface', () => {
+        renderShell(
             <AuthExperienceShell>
                 <div>Authentication form</div>
             </AuthExperienceShell>,
@@ -15,11 +21,12 @@ describe('AuthExperienceShell', () => {
         expect(screen.getByText(/secure access, without the clutter/i)).toBeInTheDocument()
         expect(screen.getByText(/^tenant-aware access$/i)).toBeInTheDocument()
         expect(screen.getByText(/^verified identity$/i)).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /switch to light theme/i })).toBeInTheDocument()
         expect(screen.getByText(/authentication form/i)).toBeInTheDocument()
     })
 
     it('supports system-console messaging without changing the shared shell', () => {
-        render(
+        renderShell(
             <AuthExperienceShell
                 eyebrow="System console"
                 title="Control the platform from one secure surface."
