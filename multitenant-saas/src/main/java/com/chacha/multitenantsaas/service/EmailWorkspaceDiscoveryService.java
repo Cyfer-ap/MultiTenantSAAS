@@ -48,6 +48,7 @@ public class EmailWorkspaceDiscoveryService {
     private final int maxAttempts;
     private final long trustedBrowserDays;
     private final byte[] verificationSecret;
+    private final boolean requireLoginGrant;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public EmailWorkspaceDiscoveryService(
@@ -77,6 +78,7 @@ public class EmailWorkspaceDiscoveryService {
         this.maxAttempts = properties.getMaxAttempts();
         this.trustedBrowserDays = properties.getTrustedBrowserDays();
         this.verificationSecret = properties.getSecret().getBytes(StandardCharsets.UTF_8);
+        this.requireLoginGrant = properties.isRequireLoginGrant();
     }
 
     @Transactional
@@ -207,6 +209,10 @@ public class EmailWorkspaceDiscoveryService {
 
     @Transactional(noRollbackFor = AuthenticationFailedException.class)
     public EmailVerificationChallenge requireActiveLoginGrant(UUID workspaceGrantId, String email) {
+        if (!requireLoginGrant) {
+            return null;
+        }
+
         if (workspaceGrantId == null) {
             throw invalidLoginGrant();
         }
@@ -232,6 +238,10 @@ public class EmailWorkspaceDiscoveryService {
     }
 
     public void consumeLoginGrant(EmailVerificationChallenge challenge) {
+        if (!requireLoginGrant) {
+            return;
+        }
+
         if (challenge == null || challenge.isLoginConsumed()) {
             throw invalidLoginGrant();
         }

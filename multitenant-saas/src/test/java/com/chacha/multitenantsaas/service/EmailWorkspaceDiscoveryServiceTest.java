@@ -123,6 +123,13 @@ class EmailWorkspaceDiscoveryServiceTest {
     }
 
     @Test
+    void loginGrantIsRequiredByDefault() {
+        assertThrows(
+                AuthenticationFailedException.class,
+                () -> service.requireActiveLoginGrant(null, EMAIL));
+    }
+
+    @Test
     void wrongCodeConsumesChallengeAfterConfiguredAttemptLimit() {
         EmailVerificationProperties properties = new EmailVerificationProperties();
         properties.setExpirationMinutes(10L);
