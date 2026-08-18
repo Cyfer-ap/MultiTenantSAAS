@@ -711,9 +711,11 @@ export function ProjectTaskCollaborationDrawer({
                                             <Typography sx={{ fontWeight: 650 }} variant="body2">
                                                 {activityLabels[activity.type]}
                                             </Typography>
-                                            <Typography color="text.secondary" variant="body2">
-                                                {activity.summary}
-                                            </Typography>
+                                            {activity.summary !== activityLabels[activity.type] && (
+                                                <Typography color="text.secondary" variant="body2">
+                                                    {activity.summary}
+                                                </Typography>
+                                            )}
                                             <Typography color="text.secondary" variant="caption">
                                                 {activity.actorName} ·{' '}
                                                 {formatDateTime(activity.createdAt)}
