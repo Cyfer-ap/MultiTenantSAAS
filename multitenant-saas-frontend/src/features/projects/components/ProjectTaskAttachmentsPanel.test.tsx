@@ -113,7 +113,32 @@ describe('ProjectTaskAttachmentsPanel', () => {
         })
     })
 
-    it('keeps attachment mutation controls hidden in read-only mode', async () => {
+    it('requires confirmation before deleting an attachment', async () => {
+        const user = userEvent.setup()
+        const remove = vi
+            .spyOn(projectTaskCollaborationApi, 'deleteAttachment')
+            .mockResolvedValue({ ...attachment, status: 'DELETED' })
+
+        renderPanel()
+        expect(await screen.findByText('evidence.pdf')).toBeInTheDocument()
+
+        await user.click(screen.getByRole('button', { name: /delete evidence.pdf/i }))
+        expect(screen.getByRole('dialog')).toBeInTheDocument()
+        expect(screen.getByText(/action cannot be undone/i)).toBeInTheDocument()
+        expect(remove).not.toHaveBeenCalled()
+
+        await user.click(screen.getByRole('button', { name: /delete file/i }))
+        await waitFor(() => {
+            expect(remove).toHaveBeenCalledWith(
+                'tenant-1',
+                'project-1',
+                'task-1',
+                'attachment-1',
+            )
+        })
+    })
+
+    it('keeps mutation controls hidden in read-only mode while view and download stay available', async () => {
         renderPanel(true)
 
         expect(
@@ -125,6 +150,7 @@ describe('ProjectTaskAttachmentsPanel', () => {
         expect(
             screen.queryByRole('button', { name: /delete evidence.pdf/i }),
         ).not.toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /view evidence.pdf/i })).toBeInTheDocument()
         expect(screen.getByRole('button', { name: /download evidence.pdf/i })).toBeInTheDocument()
     })
 })
