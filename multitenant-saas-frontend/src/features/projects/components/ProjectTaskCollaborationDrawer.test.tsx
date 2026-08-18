@@ -187,7 +187,7 @@ describe('ProjectTaskCollaborationDrawer', () => {
         await screen.findByText('Please validate this before release.')
 
         await user.click(screen.getByRole('button', { name: /edit comment by ada admin/i }))
-        const editField = screen.getByLabelText(/edit comment/i)
+        const editField = screen.getByRole('textbox', { name: /^edit comment$/i })
         await user.clear(editField)
         await user.type(editField, 'Updated release context.')
         await user.click(screen.getByRole('button', { name: /^save$/i }))
