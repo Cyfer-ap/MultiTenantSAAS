@@ -142,15 +142,16 @@ function MemberMentionPicker({
                     placeholder={value.length === 0 ? 'Add @mentions' : undefined}
                     size="small"
                     slotProps={{
+                        ...params.slotProps,
                         input: {
-                            ...params.InputProps,
+                            ...params.slotProps.input,
                             startAdornment: (
                                 <>
                                     <AlternateEmailRoundedIcon
                                         fontSize="small"
                                         sx={{ color: 'text.secondary', marginRight: 0.5 }}
                                     />
-                                    {params.InputProps.startAdornment}
+                                    {params.slotProps.input?.startAdornment}
                                 </>
                             ),
                         },
@@ -563,7 +564,7 @@ export function ProjectTaskCollaborationDrawer({
                                                 {comment.deleted ? (
                                                     <Typography
                                                         color="text.secondary"
-                                                        fontStyle="italic"
+                                                        sx={{ fontStyle: 'italic' }}
                                                         variant="body2"
                                                     >
                                                         Comment deleted
