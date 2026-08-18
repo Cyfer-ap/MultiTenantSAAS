@@ -29,6 +29,9 @@ export const auditActions = [
     'TASK_STATUS_UPDATED',
     'TASK_ASSIGNEE_UPDATED',
     'TASK_CANCELLED',
+    'TASK_COMMENT_CREATED',
+    'TASK_COMMENT_UPDATED',
+    'TASK_COMMENT_DELETED',
 ] as const
 
 export type AuditAction = (typeof auditActions)[number]

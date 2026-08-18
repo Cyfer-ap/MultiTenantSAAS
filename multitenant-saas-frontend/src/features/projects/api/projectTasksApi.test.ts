@@ -71,6 +71,16 @@ describe('projectTasksApi', () => {
         })
     })
 
+    it('loads one task from the exact tenant and project scoped endpoint', async () => {
+        const get = vi.spyOn(httpClient, 'get').mockResolvedValue(successfulResponse(task))
+
+        await expect(projectTasksApi.getTask('tenant-1', 'project-1', 'task-1')).resolves.toEqual(
+            task,
+        )
+
+        expect(get).toHaveBeenCalledWith('/api/tenants/tenant-1/projects/project-1/tasks/task-1')
+    })
+
     it('uses the exact task lifecycle endpoints', async () => {
         const post = vi.spyOn(httpClient, 'post').mockResolvedValue(successfulResponse(task))
         const put = vi.spyOn(httpClient, 'put').mockResolvedValue(successfulResponse(task))

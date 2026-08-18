@@ -62,7 +62,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV20AndMatchesJpaMappings() {
+    void postgresSchemaReachesV21AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -74,7 +74,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("20");
+        assertThat(version).isEqualTo("21");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -90,6 +90,9 @@ class PostgreSqlSchemaIntegrationTest {
         assertTableExists("tenant_subscriptions");
         assertTableExists("email_verification_challenges");
         assertTableExists("trusted_email_browsers");
+        assertTableExists("task_comments");
+        assertTableExists("task_comment_mentions");
+        assertTableExists("task_activities");
     }
 
     @Test

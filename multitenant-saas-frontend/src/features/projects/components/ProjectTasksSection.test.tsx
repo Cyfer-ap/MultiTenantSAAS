@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { appTheme } from '../../../theme/appTheme'
 import type { PageResponse } from '../../../types/api'
 import { projectMembersApi } from '../api/projectMembersApi'
+import { projectTaskCollaborationApi } from '../api/projectTaskCollaborationApi'
 import { projectTasksApi } from '../api/projectTasksApi'
 import type { ProjectTask } from '../types/projectTasks'
 import type { ProjectMember } from '../types/projects'
@@ -69,6 +70,18 @@ const tasksPage: PageResponse<ProjectTask> = {
     last: true,
 }
 
+function emptyPage<T>(): PageResponse<T> {
+    return {
+        content: [],
+        page: 0,
+        size: 50,
+        totalElements: 0,
+        totalPages: 0,
+        first: true,
+        last: true,
+    }
+}
+
 function createTestQueryClient(): QueryClient {
     return new QueryClient({
         defaultOptions: {
@@ -107,9 +120,13 @@ function renderTasksSection(props: Partial<React.ComponentProps<typeof ProjectTa
 describe('ProjectTasksSection', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
+        window.history.replaceState({}, '', '/')
         vi.spyOn(projectMembersApi, 'getMembers').mockResolvedValue(membersPage)
         vi.spyOn(projectMembersApi, 'getMember').mockResolvedValue(member)
         vi.spyOn(projectTasksApi, 'getTasks').mockResolvedValue(tasksPage)
+        vi.spyOn(projectTasksApi, 'getTask').mockResolvedValue(task)
+        vi.spyOn(projectTaskCollaborationApi, 'getComments').mockResolvedValue(emptyPage())
+        vi.spyOn(projectTaskCollaborationApi, 'getActivity').mockResolvedValue(emptyPage())
     })
 
     it('renders the Kanban board by default with task data and management controls', async () => {
@@ -126,6 +143,17 @@ describe('ProjectTasksSection', () => {
         expect(
             screen.getByRole('button', { name: /manage review access controls/i }),
         ).toBeInTheDocument()
+    })
+
+    it('opens task collaboration from a Kanban card and creates a deep link', async () => {
+        const user = userEvent.setup()
+        renderTasksSection()
+
+        await user.click(await screen.findByLabelText(/review access controls task card/i))
+
+        expect(await screen.findByText(/^task collaboration$/i)).toBeInTheDocument()
+        expect(new URL(window.location.href).searchParams.get('task')).toBe('task-1')
+        expect(projectTasksApi.getTask).toHaveBeenCalledWith('tenant-1', 'project-1', 'task-1')
     })
 
     it('moves an authorized task between Kanban lanes', async () => {
