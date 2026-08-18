@@ -22,6 +22,22 @@ export const taskCollaborationQueryKeys = {
             'comments',
             params,
         ] as const,
+    pinnedComments: (tenantId: string, projectId: string, taskId: string) =>
+        [...taskCollaborationQueryKeys.task(tenantId, projectId, taskId), 'comments', 'pinned'] as const,
+    replies: (
+        tenantId: string,
+        projectId: string,
+        taskId: string,
+        commentId: string,
+        params: TaskCollaborationPageParams,
+    ) =>
+        [
+            ...taskCollaborationQueryKeys.task(tenantId, projectId, taskId),
+            'comments',
+            commentId,
+            'replies',
+            params,
+        ] as const,
     attachments: (
         tenantId: string,
         projectId: string,
@@ -57,6 +73,52 @@ export function useTaskComments(
         queryKey: taskCollaborationQueryKeys.comments(tenantId, projectId, taskId, params),
         queryFn: () => projectTaskCollaborationApi.getComments(tenantId, projectId, taskId, params),
         enabled: enabled && tenantId.length > 0 && projectId.length > 0 && taskId.length > 0,
+    })
+}
+
+export function usePinnedTaskComments(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+    enabled = true,
+) {
+    return useQuery({
+        queryKey: taskCollaborationQueryKeys.pinnedComments(tenantId, projectId, taskId),
+        queryFn: () => projectTaskCollaborationApi.getPinnedComments(tenantId, projectId, taskId),
+        enabled: enabled && tenantId.length > 0 && projectId.length > 0 && taskId.length > 0,
+    })
+}
+
+export function useTaskCommentReplies(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+    commentId: string,
+    params: TaskCollaborationPageParams,
+    enabled = true,
+) {
+    return useQuery({
+        queryKey: taskCollaborationQueryKeys.replies(
+            tenantId,
+            projectId,
+            taskId,
+            commentId,
+            params,
+        ),
+        queryFn: () =>
+            projectTaskCollaborationApi.getReplies(
+                tenantId,
+                projectId,
+                taskId,
+                commentId,
+                params,
+            ),
+        enabled:
+            enabled &&
+            tenantId.length > 0 &&
+            projectId.length > 0 &&
+            taskId.length > 0 &&
+            commentId.length > 0,
     })
 }
 
@@ -114,6 +176,22 @@ export function useCreateTaskComment(tenantId: string, projectId: string, taskId
     })
 }
 
+export function useCreateTaskCommentReply(tenantId: string, projectId: string, taskId: string) {
+    const invalidate = useInvalidateTaskCollaboration(tenantId, projectId, taskId)
+
+    return useMutation({
+        mutationFn: ({ commentId, input }: CommentMutationInput) =>
+            projectTaskCollaborationApi.createReply(
+                tenantId,
+                projectId,
+                taskId,
+                commentId,
+                input,
+            ),
+        onSuccess: invalidate,
+    })
+}
+
 export function useUpdateTaskComment(tenantId: string, projectId: string, taskId: string) {
     const invalidate = useInvalidateTaskCollaboration(tenantId, projectId, taskId)
 
@@ -136,6 +214,26 @@ export function useDeleteTaskComment(tenantId: string, projectId: string, taskId
     return useMutation({
         mutationFn: (commentId: string) =>
             projectTaskCollaborationApi.deleteComment(tenantId, projectId, taskId, commentId),
+        onSuccess: invalidate,
+    })
+}
+
+export function usePinTaskComment(tenantId: string, projectId: string, taskId: string) {
+    const invalidate = useInvalidateTaskCollaboration(tenantId, projectId, taskId)
+
+    return useMutation({
+        mutationFn: (commentId: string) =>
+            projectTaskCollaborationApi.pinComment(tenantId, projectId, taskId, commentId),
+        onSuccess: invalidate,
+    })
+}
+
+export function useUnpinTaskComment(tenantId: string, projectId: string, taskId: string) {
+    const invalidate = useInvalidateTaskCollaboration(tenantId, projectId, taskId)
+
+    return useMutation({
+        mutationFn: (commentId: string) =>
+            projectTaskCollaborationApi.unpinComment(tenantId, projectId, taskId, commentId),
         onSuccess: invalidate,
     })
 }
