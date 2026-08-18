@@ -73,11 +73,9 @@ public class TaskCollaborationService {
     public PageResponse<TaskCommentResponse> getComments(
             UUID tenantId, UUID projectId, UUID taskId, Pageable pageable) {
         getTaskOrThrow(tenantId, projectId, taskId);
-
         Page<TaskComment> comments =
                 taskCommentRepository.findByTenant_IdAndProject_IdAndTask_IdAndParentCommentIsNull(
                         tenantId, projectId, taskId, pageable);
-
         return mapPage(comments);
     }
 
@@ -87,7 +85,6 @@ public class TaskCollaborationService {
         getTaskOrThrow(tenantId, projectId, taskId);
         TaskComment parent = getCommentOrThrow(tenantId, projectId, taskId, commentId);
         ensureTopLevelComment(parent);
-
         Page<TaskComment> replies =
                 taskCommentRepository.findByTenant_IdAndProject_IdAndTask_IdAndParentComment_Id(
                         tenantId, projectId, taskId, commentId, pageable);
@@ -95,7 +92,8 @@ public class TaskCollaborationService {
     }
 
     @Transactional(readOnly = true)
-    public List<TaskCommentResponse> getPinnedComments(UUID tenantId, UUID projectId, UUID taskId) {
+    public List<TaskCommentResponse> getPinnedComments(
+            UUID tenantId, UUID projectId, UUID taskId) {
         getTaskOrThrow(tenantId, projectId, taskId);
         return taskCommentRepository
                 .findTop5ByTenant_IdAndProject_IdAndTask_IdAndParentCommentIsNullAndDeletedFalseAndPinnedAtIsNotNullOrderByPinnedAtDesc(
@@ -120,7 +118,6 @@ public class TaskCollaborationService {
                 new TaskComment(
                         project.getTenant(), project, task, actor, normalizeBody(request.body()));
         comment.replaceMentions(mentionedUsers);
-
         TaskComment saved = taskCommentRepository.save(comment);
 
         taskActivityService.record(task, actor, TaskActivityType.COMMENT_ADDED, "Added a comment");
@@ -131,7 +128,6 @@ public class TaskCollaborationService {
                 firstMentionOrActor(mentionedUsers, actor),
                 AuditAction.TASK_COMMENT_CREATED,
                 "Task comment created");
-
         return mapToResponse(saved);
     }
 
@@ -180,7 +176,6 @@ public class TaskCollaborationService {
                 parent.getAuthorUser(),
                 AuditAction.TASK_COMMENT_REPLIED,
                 "Task comment reply created");
-
         return mapToResponse(saved);
     }
 
@@ -199,7 +194,6 @@ public class TaskCollaborationService {
         AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
         TaskComment comment = getCommentOrThrow(tenantId, projectId, taskId, commentId);
         ensureCommentAuthor(comment, actor);
-
         if (comment.isDeleted()) {
             throw new IllegalArgumentException("Deleted comments cannot be edited");
         }
@@ -218,7 +212,6 @@ public class TaskCollaborationService {
                 firstMentionOrActor(mentionedUsers, actor),
                 AuditAction.TASK_COMMENT_UPDATED,
                 "Task comment updated");
-
         return mapToResponse(saved);
     }
 
@@ -232,7 +225,6 @@ public class TaskCollaborationService {
         AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
         TaskComment comment = getCommentOrThrow(tenantId, projectId, taskId, commentId);
         ensureCommentAuthor(comment, actor);
-
         if (comment.isDeleted()) {
             return mapToResponse(comment);
         }
@@ -251,7 +243,6 @@ public class TaskCollaborationService {
                 actor,
                 AuditAction.TASK_COMMENT_DELETED,
                 "Task comment deleted");
-
         return mapToResponse(saved);
     }
 
@@ -338,17 +329,14 @@ public class TaskCollaborationService {
                                     () ->
                                             new ResourceNotFoundException(
                                                     "Mentioned user not found with id: " + userId));
-
             if (user.getStatus() != UserStatus.ACTIVE) {
                 throw new IllegalArgumentException("Only active project members can be mentioned");
             }
-
             if (!projectMemberRepository.existsByProject_Tenant_IdAndProject_IdAndUser_Id(
                     tenantId, projectId, userId)) {
                 throw new IllegalArgumentException(
                         "Mentioned users must be members of the current project");
             }
-
             users.add(user);
         }
         return users;
@@ -456,7 +444,7 @@ public class TaskCollaborationService {
 
     private TaskCommentResponse mapToResponse(TaskComment comment) {
         AppUser author = comment.getAuthorUser();
-        var mentions =
+        List<TaskCommentMentionResponse> mentions =
                 comment.getMentions().stream()
                         .map(TaskCommentMention::getMentionedUser)
                         .sorted(
