@@ -10,7 +10,6 @@ import com.chacha.multitenantsaas.repository.TaskAttachmentRepository;
 import com.chacha.multitenantsaas.storage.ObjectStorageService;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -26,9 +25,7 @@ class TaskAttachmentCleanupServiceTest {
 
     @Test
     void removesStalePendingAndRetriesDeferredStorageDeletion() {
-        when(stalePending.getId()).thenReturn(UUID.randomUUID());
         when(stalePending.getObjectKey()).thenReturn("tenants/t/tasks/task/attachments/pending");
-        when(deferredDelete.getId()).thenReturn(UUID.randomUUID());
         when(deferredDelete.getObjectKey()).thenReturn("tenants/t/tasks/task/attachments/deleted");
         when(taskAttachmentRepository.findTop100ByStatusAndCreatedAtBeforeOrderByCreatedAtAsc(
                         any(TaskAttachmentStatus.class), any(Instant.class)))
