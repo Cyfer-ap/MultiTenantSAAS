@@ -117,19 +117,54 @@ async function uploadTaskAttachment(
     taskId: string,
     input: TaskAttachmentUploadInput,
 ): Promise<TaskAttachment> {
-    const initiated = await initiateAttachmentUpload(tenantId, projectId, taskId, input)
+    let initiated: TaskAttachmentUploadResponse | null = null
+    let objectUploaded = false
 
-    const uploadResponse = await fetch(initiated.uploadUrl, {
-        method: 'PUT',
-        headers: initiated.requiredHeaders,
-        body: input.file,
-    })
+    try {
+        initiated = await initiateAttachmentUpload(tenantId, projectId, taskId, input)
 
-    if (!uploadResponse.ok) {
-        throw new Error(`Attachment upload failed with status ${uploadResponse.status}.`)
+        const uploadResponse = await fetch(initiated.uploadUrl, {
+            method: 'PUT',
+            headers: initiated.requiredHeaders,
+            body: input.file,
+        })
+
+        if (!uploadResponse.ok) {
+            throw new Error(`Attachment upload failed with status ${uploadResponse.status}.`)
+        }
+
+        objectUploaded = true
+        return await completeAttachmentUpload(
+            tenantId,
+            projectId,
+            taskId,
+            initiated.attachment.id,
+        )
+    } catch (error) {
+        if (initiated) {
+            if (objectUploaded) {
+                try {
+                    return await completeAttachmentUpload(
+                        tenantId,
+                        projectId,
+                        taskId,
+                        initiated.attachment.id,
+                    )
+                } catch {
+                    // Completion is retried once because the first response can be lost after
+                    // the backend has already committed the AVAILABLE state.
+                }
+            }
+
+            try {
+                await deleteAttachment(tenantId, projectId, taskId, initiated.attachment.id)
+            } catch {
+                // The backend cleanup job handles any remaining stale PENDING/deferred object.
+            }
+        }
+
+        throw error
     }
-
-    return completeAttachmentUpload(tenantId, projectId, taskId, initiated.attachment.id)
 }
 
 async function getAttachmentDownload(
