@@ -118,12 +118,7 @@ describe('projectTaskCollaborationApi', () => {
             'task-1',
             'comment-1',
         )
-        await projectTaskCollaborationApi.pinComment(
-            'tenant-1',
-            'project-1',
-            'task-1',
-            'comment-1',
-        )
+        await projectTaskCollaborationApi.pinComment('tenant-1', 'project-1', 'task-1', 'comment-1')
         await projectTaskCollaborationApi.unpinComment(
             'tenant-1',
             'project-1',

@@ -245,7 +245,9 @@ function CommentComposer({
                 />
                 <MemberMentionPicker
                     disabled={disabled}
-                    helperText={compact ? 'Optionally mention a teammate in this reply.' : undefined}
+                    helperText={
+                        compact ? 'Optionally mention a teammate in this reply.' : undefined
+                    }
                     members={members}
                     onChange={setMentions}
                     value={mentions}
@@ -421,7 +423,9 @@ function CommentCard({
                     </Alert>
                 )}
                 <Stack direction="row" spacing={1.25} sx={{ alignItems: 'flex-start' }}>
-                    <Avatar sx={{ height: 34, width: 34 }}>{getInitials(comment.authorName)}</Avatar>
+                    <Avatar sx={{ height: 34, width: 34 }}>
+                        {getInitials(comment.authorName)}
+                    </Avatar>
                     <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                         <Stack
                             direction="row"
@@ -819,7 +823,11 @@ export function ProjectTaskCollaborationDrawer({
 
                             {(pinnedCommentsQuery.data?.length ?? 0) > 0 && (
                                 <Stack spacing={1.25}>
-                                    <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+                                    <Stack
+                                        direction="row"
+                                        spacing={0.75}
+                                        sx={{ alignItems: 'center' }}
+                                    >
                                         <PushPinRoundedIcon color="primary" fontSize="small" />
                                         <Typography variant="subtitle2">Pinned comments</Typography>
                                     </Stack>
@@ -859,19 +867,18 @@ export function ProjectTaskCollaborationDrawer({
                                     )}
                                 </Alert>
                             )}
-                            {commentsQuery.isSuccess &&
-                                commentsQuery.data.content.length === 0 && (
-                                    <Box sx={{ padding: 3, textAlign: 'center' }}>
-                                        <ChatBubbleOutlineRoundedIcon color="disabled" />
-                                        <Typography sx={{ marginTop: 1 }} variant="subtitle2">
-                                            No comments yet
-                                        </Typography>
-                                        <Typography color="text.secondary" variant="body2">
-                                            Start the conversation with context the whole project can
-                                            keep.
-                                        </Typography>
-                                    </Box>
-                                )}
+                            {commentsQuery.isSuccess && commentsQuery.data.content.length === 0 && (
+                                <Box sx={{ padding: 3, textAlign: 'center' }}>
+                                    <ChatBubbleOutlineRoundedIcon color="disabled" />
+                                    <Typography sx={{ marginTop: 1 }} variant="subtitle2">
+                                        No comments yet
+                                    </Typography>
+                                    <Typography color="text.secondary" variant="body2">
+                                        Start the conversation with context the whole project can
+                                        keep.
+                                    </Typography>
+                                </Box>
+                            )}
 
                             {regularComments.length > 0 && (
                                 <Stack spacing={1.5}>
@@ -915,7 +922,11 @@ export function ProjectTaskCollaborationDrawer({
                     {tab === 'activity' && (
                         <Stack spacing={1.25}>
                             {activityQuery.isPending && (
-                                <Stack spacing={1.25} aria-label="Loading task activity" role="status">
+                                <Stack
+                                    spacing={1.25}
+                                    aria-label="Loading task activity"
+                                    role="status"
+                                >
                                     <Skeleton height={74} variant="rounded" />
                                     <Skeleton height={74} variant="rounded" />
                                 </Stack>
@@ -935,7 +946,11 @@ export function ProjectTaskCollaborationDrawer({
                             )}
                             {activityQuery.data?.content.map((activity) => (
                                 <Paper key={activity.id} sx={{ padding: 1.5 }} variant="outlined">
-                                    <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
+                                    <Stack
+                                        direction="row"
+                                        spacing={1.25}
+                                        sx={{ alignItems: 'center' }}
+                                    >
                                         <Avatar sx={{ height: 32, width: 32 }}>
                                             {getInitials(activity.actorName)}
                                         </Avatar>
@@ -947,7 +962,8 @@ export function ProjectTaskCollaborationDrawer({
                                                 {activity.summary}
                                             </Typography>
                                             <Typography color="text.secondary" variant="caption">
-                                                {activity.actorName} · {formatDateTime(activity.createdAt)}
+                                                {activity.actorName} ·{' '}
+                                                {formatDateTime(activity.createdAt)}
                                             </Typography>
                                         </Box>
                                     </Stack>

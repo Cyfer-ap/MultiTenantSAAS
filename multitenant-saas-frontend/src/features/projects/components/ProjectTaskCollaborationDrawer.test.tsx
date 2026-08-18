@@ -216,15 +216,15 @@ describe('ProjectTaskCollaborationDrawer', () => {
             pinnedAt: '2026-08-18T02:00:00Z',
             pinnedByUserId: 'user-1',
         }
-        vi.spyOn(projectTaskCollaborationApi, 'getPinnedComments').mockResolvedValue([pinnedComment])
-        const unpin = vi
-            .spyOn(projectTaskCollaborationApi, 'unpinComment')
-            .mockResolvedValue({
-                ...pinnedComment,
-                pinned: false,
-                pinnedAt: null,
-                pinnedByUserId: null,
-            })
+        vi.spyOn(projectTaskCollaborationApi, 'getPinnedComments').mockResolvedValue([
+            pinnedComment,
+        ])
+        const unpin = vi.spyOn(projectTaskCollaborationApi, 'unpinComment').mockResolvedValue({
+            ...pinnedComment,
+            pinned: false,
+            pinnedAt: null,
+            pinnedByUserId: null,
+        })
 
         renderDrawer()
 

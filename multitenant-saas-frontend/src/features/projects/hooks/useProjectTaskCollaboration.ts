@@ -23,7 +23,11 @@ export const taskCollaborationQueryKeys = {
             params,
         ] as const,
     pinnedComments: (tenantId: string, projectId: string, taskId: string) =>
-        [...taskCollaborationQueryKeys.task(tenantId, projectId, taskId), 'comments', 'pinned'] as const,
+        [
+            ...taskCollaborationQueryKeys.task(tenantId, projectId, taskId),
+            'comments',
+            'pinned',
+        ] as const,
     replies: (
         tenantId: string,
         projectId: string,
@@ -106,13 +110,7 @@ export function useTaskCommentReplies(
             params,
         ),
         queryFn: () =>
-            projectTaskCollaborationApi.getReplies(
-                tenantId,
-                projectId,
-                taskId,
-                commentId,
-                params,
-            ),
+            projectTaskCollaborationApi.getReplies(tenantId, projectId, taskId, commentId, params),
         enabled:
             enabled &&
             tenantId.length > 0 &&
@@ -181,13 +179,7 @@ export function useCreateTaskCommentReply(tenantId: string, projectId: string, t
 
     return useMutation({
         mutationFn: ({ commentId, input }: CommentMutationInput) =>
-            projectTaskCollaborationApi.createReply(
-                tenantId,
-                projectId,
-                taskId,
-                commentId,
-                input,
-            ),
+            projectTaskCollaborationApi.createReply(tenantId, projectId, taskId, commentId, input),
         onSuccess: invalidate,
     })
 }
