@@ -50,6 +50,7 @@ export function AppShell() {
     const location = useLocation()
     const navigate = useNavigate()
     const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
+    const isProjectWorkspace = /^\/projects\/[^/]+/.test(location.pathname)
 
     const availableNavigationItems = authorization.data
         ? getAvailableWorkspaceNavigationItems(authorization.data)
@@ -209,7 +210,7 @@ export function AppShell() {
                 sx={{
                     ml: { md: `${desktopDrawerWidth}px` },
                     width: { md: `calc(100% - ${desktopDrawerWidth}px)` },
-                    zIndex: (currentTheme) => currentTheme.zIndex.drawer + 1,
+                    zIndex: (currentTheme) => currentTheme.zIndex.appBar,
                     transition:
                         'width 260ms cubic-bezier(0.2, 0.8, 0.2, 1), margin-left 260ms cubic-bezier(0.2, 0.8, 0.2, 1)',
                 }}
@@ -284,14 +285,35 @@ export function AppShell() {
 
             <Box
                 component="main"
-                sx={{
+                sx={(currentTheme) => ({
+                    background: isProjectWorkspace
+                        ? currentTheme.palette.mode === 'dark'
+                            ? 'radial-gradient(circle at 18% 7%, rgba(53,110,145,0.16), transparent 31%), radial-gradient(circle at 88% 22%, rgba(119,76,151,0.13), transparent 29%), linear-gradient(180deg, rgba(30,38,48,0.30), rgba(8,10,13,0.04) 34%)'
+                            : 'radial-gradient(circle at 18% 7%, rgba(88,145,180,0.10), transparent 31%), radial-gradient(circle at 88% 22%, rgba(145,108,171,0.08), transparent 29%)'
+                        : undefined,
+                    backgroundAttachment: isProjectWorkspace ? 'fixed' : undefined,
                     flexGrow: 1,
                     mt: 8.75,
                     minWidth: 0,
                     p: { xs: 2, sm: 3 },
                     width: { md: `calc(100% - ${desktopDrawerWidth}px)` },
-                    transition: 'width 260ms cubic-bezier(0.2, 0.8, 0.2, 1)',
-                }}
+                    transition:
+                        'width 260ms cubic-bezier(0.2, 0.8, 0.2, 1), background 220ms ease',
+                    ...(isProjectWorkspace
+                        ? {
+                              '& .MuiPaper-root': {
+                                  backgroundImage:
+                                      currentTheme.palette.mode === 'dark'
+                                          ? 'linear-gradient(145deg, rgba(255,255,255,0.026), rgba(52,74,96,0.025) 52%, rgba(102,73,125,0.018))'
+                                          : undefined,
+                                  borderColor:
+                                      currentTheme.palette.mode === 'dark'
+                                          ? 'rgba(142,164,185,0.18)'
+                                          : undefined,
+                              },
+                          }
+                        : {}),
+                })}
             >
                 <Box sx={{ mx: 'auto', maxWidth: 1600 }}>
                     <WorkspaceSubscriptionAccessProvider access={subscriptionAccess}>
