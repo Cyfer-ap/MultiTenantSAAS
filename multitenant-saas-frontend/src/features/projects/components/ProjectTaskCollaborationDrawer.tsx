@@ -1,5 +1,6 @@
 import AlternateEmailRoundedIcon from '@mui/icons-material/AlternateEmailRounded'
 import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined'
+import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded'
 import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded'
@@ -44,6 +45,7 @@ import {
 import type { TaskActivityType, TaskComment } from '../types/taskCollaboration'
 import type { ProjectTask } from '../types/projectTasks'
 import type { ProjectMember } from '../types/projects'
+import { ProjectTaskAttachmentsPanel } from './ProjectTaskAttachmentsPanel'
 
 interface ProjectTaskCollaborationDrawerProps {
     open: boolean
@@ -57,7 +59,7 @@ interface ProjectTaskCollaborationDrawerProps {
     onFeedback: (message: string) => void
 }
 
-type CollaborationTab = 'comments' | 'activity'
+type CollaborationTab = 'comments' | 'attachments' | 'activity'
 
 const statusLabels: Record<ProjectTask['status'], string> = {
     TODO: 'To do',
@@ -83,6 +85,8 @@ const activityLabels: Record<TaskActivityType, string> = {
     COMMENT_ADDED: 'Comment added',
     COMMENT_EDITED: 'Comment edited',
     COMMENT_DELETED: 'Comment deleted',
+    ATTACHMENT_ADDED: 'Attachment added',
+    ATTACHMENT_DELETED: 'Attachment deleted',
 }
 
 function getInitials(name: string): string {
@@ -426,6 +430,12 @@ export function ProjectTaskCollaborationDrawer({
                             value="comments"
                         />
                         <Tab
+                            icon={<AttachFileRoundedIcon fontSize="small" />}
+                            iconPosition="start"
+                            label="Attachments"
+                            value="attachments"
+                        />
+                        <Tab
                             icon={<HistoryRoundedIcon fontSize="small" />}
                             iconPosition="start"
                             label="Activity"
@@ -650,6 +660,18 @@ export function ProjectTaskCollaborationDrawer({
                                     </Alert>
                                 )}
                             </Stack>
+                        )}
+
+                        {tab === 'attachments' && (
+                            <ProjectTaskAttachmentsPanel
+                                comments={commentsQuery.data?.content ?? []}
+                                currentUserId={currentUserId}
+                                onFeedback={onFeedback}
+                                projectId={projectId}
+                                readOnly={readOnly}
+                                taskId={task.id}
+                                tenantId={tenantId}
+                            />
                         )}
 
                         {tab === 'activity' && (

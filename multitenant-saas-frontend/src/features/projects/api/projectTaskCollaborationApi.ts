@@ -2,6 +2,10 @@ import { httpClient } from '../../../api/httpClient'
 import type { ApiResponse, PageResponse } from '../../../types/api'
 import type {
     TaskActivity,
+    TaskAttachment,
+    TaskAttachmentDownloadResponse,
+    TaskAttachmentUploadInput,
+    TaskAttachmentUploadResponse,
     TaskCollaborationPageParams,
     TaskComment,
     TaskCommentInput,
@@ -63,6 +67,95 @@ async function deleteComment(
     return response.data.data
 }
 
+async function getAttachments(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+    params: TaskCollaborationPageParams,
+): Promise<PageResponse<TaskAttachment>> {
+    const response = await httpClient.get<ApiResponse<PageResponse<TaskAttachment>>>(
+        `${taskPath(tenantId, projectId, taskId)}/attachments`,
+        { params },
+    )
+    return response.data.data
+}
+
+async function initiateAttachmentUpload(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+    input: TaskAttachmentUploadInput,
+): Promise<TaskAttachmentUploadResponse> {
+    const contentType = input.file.type || 'application/octet-stream'
+    const response = await httpClient.post<ApiResponse<TaskAttachmentUploadResponse>>(
+        `${taskPath(tenantId, projectId, taskId)}/attachments/uploads`,
+        {
+            filename: input.file.name,
+            contentType,
+            sizeBytes: input.file.size,
+            commentId: input.commentId ?? null,
+        },
+    )
+    return response.data.data
+}
+
+async function completeAttachmentUpload(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+    attachmentId: string,
+): Promise<TaskAttachment> {
+    const response = await httpClient.post<ApiResponse<TaskAttachment>>(
+        `${taskPath(tenantId, projectId, taskId)}/attachments/${attachmentId}/complete`,
+    )
+    return response.data.data
+}
+
+async function uploadTaskAttachment(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+    input: TaskAttachmentUploadInput,
+): Promise<TaskAttachment> {
+    const initiated = await initiateAttachmentUpload(tenantId, projectId, taskId, input)
+
+    const uploadResponse = await fetch(initiated.uploadUrl, {
+        method: 'PUT',
+        headers: initiated.requiredHeaders,
+        body: input.file,
+    })
+
+    if (!uploadResponse.ok) {
+        throw new Error(`Attachment upload failed with status ${uploadResponse.status}.`)
+    }
+
+    return completeAttachmentUpload(tenantId, projectId, taskId, initiated.attachment.id)
+}
+
+async function getAttachmentDownload(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+    attachmentId: string,
+): Promise<TaskAttachmentDownloadResponse> {
+    const response = await httpClient.get<ApiResponse<TaskAttachmentDownloadResponse>>(
+        `${taskPath(tenantId, projectId, taskId)}/attachments/${attachmentId}/download`,
+    )
+    return response.data.data
+}
+
+async function deleteAttachment(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+    attachmentId: string,
+): Promise<TaskAttachment> {
+    const response = await httpClient.delete<ApiResponse<TaskAttachment>>(
+        `${taskPath(tenantId, projectId, taskId)}/attachments/${attachmentId}`,
+    )
+    return response.data.data
+}
+
 async function getActivity(
     tenantId: string,
     projectId: string,
@@ -81,5 +174,11 @@ export const projectTaskCollaborationApi = {
     createComment,
     updateComment,
     deleteComment,
+    getAttachments,
+    initiateAttachmentUpload,
+    completeAttachmentUpload,
+    uploadTaskAttachment,
+    getAttachmentDownload,
+    deleteAttachment,
     getActivity,
 }
