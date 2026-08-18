@@ -29,6 +29,7 @@ public interface TaskCommentRepository extends JpaRepository<TaskComment, UUID> 
             findTop5ByTenant_IdAndProject_IdAndTask_IdAndParentCommentIsNullAndDeletedFalseAndPinnedAtIsNotNullOrderByPinnedAtDesc(
                     UUID tenantId, UUID projectId, UUID taskId);
 
-    long countByTenant_IdAndProject_IdAndTask_IdAndParentCommentIsNullAndDeletedFalseAndPinnedAtIsNotNull(
-            UUID tenantId, UUID projectId, UUID taskId);
+    long
+            countByTenant_IdAndProject_IdAndTask_IdAndParentCommentIsNullAndDeletedFalseAndPinnedAtIsNotNull(
+                    UUID tenantId, UUID projectId, UUID taskId);
 }

@@ -157,8 +157,7 @@ class TaskCollaborationThreadingServiceTest {
                                 tenantId, projectId, taskId))
                 .thenReturn(5L);
 
-        assertThatThrownBy(
-                        () -> service.pinComment(tenantId, projectId, taskId, commentId, jwt))
+        assertThatThrownBy(() -> service.pinComment(tenantId, projectId, taskId, commentId, jwt))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("A task can have at most 5 pinned comments");
         verify(parent, never()).pin(any(AppUser.class));

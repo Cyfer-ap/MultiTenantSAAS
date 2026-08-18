@@ -95,8 +95,7 @@ public class TaskCollaborationService {
     }
 
     @Transactional(readOnly = true)
-    public List<TaskCommentResponse> getPinnedComments(
-            UUID tenantId, UUID projectId, UUID taskId) {
+    public List<TaskCommentResponse> getPinnedComments(UUID tenantId, UUID projectId, UUID taskId) {
         getTaskOrThrow(tenantId, projectId, taskId);
         return taskCommentRepository
                 .findTop5ByTenant_IdAndProject_IdAndTask_IdAndParentCommentIsNullAndDeletedFalseAndPinnedAtIsNotNullOrderByPinnedAtDesc(

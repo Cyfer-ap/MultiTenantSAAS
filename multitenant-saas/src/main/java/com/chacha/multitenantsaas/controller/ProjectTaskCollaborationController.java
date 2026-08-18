@@ -66,9 +66,7 @@ public class ProjectTaskCollaborationController {
                     + "#tenantId,#projectId,'project.task.read')")
     @GetMapping("/comments/pinned")
     public ResponseEntity<ApiResponse<List<TaskCommentResponse>>> getPinnedComments(
-            @PathVariable UUID tenantId,
-            @PathVariable UUID projectId,
-            @PathVariable UUID taskId) {
+            @PathVariable UUID tenantId, @PathVariable UUID projectId, @PathVariable UUID taskId) {
         List<TaskCommentResponse> response =
                 taskCollaborationService.getPinnedComments(tenantId, projectId, taskId);
         return ResponseEntity.ok(
