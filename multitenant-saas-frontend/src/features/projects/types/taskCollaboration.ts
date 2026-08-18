@@ -5,8 +5,11 @@ export type TaskActivityType =
     | 'ASSIGNEE_CHANGED'
     | 'TASK_CANCELLED'
     | 'COMMENT_ADDED'
+    | 'COMMENT_REPLIED'
     | 'COMMENT_EDITED'
     | 'COMMENT_DELETED'
+    | 'COMMENT_PINNED'
+    | 'COMMENT_UNPINNED'
     | 'ATTACHMENT_ADDED'
     | 'ATTACHMENT_DELETED'
 
@@ -19,11 +22,16 @@ export interface TaskCommentMention {
 export interface TaskComment {
     id: string
     taskId: string
+    parentCommentId: string | null
     authorUserId: string
     authorName: string
     authorEmail: string
     body: string | null
     deleted: boolean
+    replyCount: number
+    pinned: boolean
+    pinnedAt: string | null
+    pinnedByUserId: string | null
     editedAt: string | null
     deletedAt: string | null
     createdAt: string
