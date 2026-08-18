@@ -23,6 +23,7 @@ import com.chacha.multitenantsaas.repository.ProjectTaskRepository;
 import com.chacha.multitenantsaas.repository.TaskCommentRepository;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -34,6 +35,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TaskCollaborationService {
+
+    private static final int MAX_PINNED_COMMENTS = 5;
 
     private final TaskCommentRepository taskCommentRepository;
     private final ProjectRepository projectRepository;
@@ -72,17 +75,35 @@ public class TaskCollaborationService {
         getTaskOrThrow(tenantId, projectId, taskId);
 
         Page<TaskComment> comments =
-                taskCommentRepository.findByTenant_IdAndProject_IdAndTask_Id(
+                taskCommentRepository.findByTenant_IdAndProject_IdAndTask_IdAndParentCommentIsNull(
                         tenantId, projectId, taskId, pageable);
 
-        return new PageResponse<>(
-                comments.getContent().stream().map(this::mapToResponse).toList(),
-                comments.getNumber(),
-                comments.getSize(),
-                comments.getTotalElements(),
-                comments.getTotalPages(),
-                comments.isFirst(),
-                comments.isLast());
+        return mapPage(comments);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<TaskCommentResponse> getReplies(
+            UUID tenantId, UUID projectId, UUID taskId, UUID commentId, Pageable pageable) {
+        getTaskOrThrow(tenantId, projectId, taskId);
+        TaskComment parent = getCommentOrThrow(tenantId, projectId, taskId, commentId);
+        ensureTopLevelComment(parent);
+
+        Page<TaskComment> replies =
+                taskCommentRepository.findByTenant_IdAndProject_IdAndTask_IdAndParentComment_Id(
+                        tenantId, projectId, taskId, commentId, pageable);
+        return mapPage(replies);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskCommentResponse> getPinnedComments(
+            UUID tenantId, UUID projectId, UUID taskId) {
+        getTaskOrThrow(tenantId, projectId, taskId);
+        return taskCommentRepository
+                .findTop5ByTenant_IdAndProject_IdAndTask_IdAndParentCommentIsNullAndDeletedFalseAndPinnedAtIsNotNullOrderByPinnedAtDesc(
+                        tenantId, projectId, taskId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     @Transactional
@@ -111,6 +132,55 @@ public class TaskCollaborationService {
                 firstMentionOrActor(mentionedUsers, actor),
                 AuditAction.TASK_COMMENT_CREATED,
                 "Task comment created");
+
+        return mapToResponse(saved);
+    }
+
+    @Transactional
+    public TaskCommentResponse createReply(
+            UUID tenantId,
+            UUID projectId,
+            UUID taskId,
+            UUID parentCommentId,
+            TaskCommentCreateRequest request,
+            Jwt jwt) {
+        Project project = getProjectOrThrow(tenantId, projectId);
+        ProjectTask task = getTaskOrThrow(tenantId, projectId, taskId);
+        ensureCollaborationCanBeModified(project, task);
+
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
+        TaskComment parent =
+                getCommentForUpdateOrThrow(tenantId, projectId, taskId, parentCommentId);
+        ensureTopLevelComment(parent);
+        if (parent.isDeleted()) {
+            throw new IllegalArgumentException("Deleted comments cannot receive new replies");
+        }
+
+        Set<AppUser> mentionedUsers =
+                resolveMentionedUsers(tenantId, projectId, request.mentionedUserIds());
+        TaskComment reply =
+                new TaskComment(
+                        project.getTenant(),
+                        project,
+                        task,
+                        actor,
+                        normalizeBody(request.body()),
+                        parent);
+        reply.replaceMentions(mentionedUsers);
+
+        parent.incrementReplyCount();
+        taskCommentRepository.save(parent);
+        TaskComment saved = taskCommentRepository.save(reply);
+
+        taskActivityService.record(
+                task, actor, TaskActivityType.COMMENT_REPLIED, "Replied to a comment");
+        recordAudit(
+                project,
+                task,
+                actor,
+                parent.getAuthorUser(),
+                AuditAction.TASK_COMMENT_REPLIED,
+                "Task comment reply created");
 
         return mapToResponse(saved);
     }
@@ -186,6 +256,74 @@ public class TaskCollaborationService {
         return mapToResponse(saved);
     }
 
+    @Transactional
+    public TaskCommentResponse pinComment(
+            UUID tenantId, UUID projectId, UUID taskId, UUID commentId, Jwt jwt) {
+        Project project = getProjectOrThrow(tenantId, projectId);
+        ProjectTask task = getTaskOrThrow(tenantId, projectId, taskId);
+        ensureCollaborationCanBeModified(project, task);
+
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
+        TaskComment comment = getCommentForUpdateOrThrow(tenantId, projectId, taskId, commentId);
+        ensureTopLevelComment(comment);
+        if (comment.isDeleted()) {
+            throw new IllegalArgumentException("Deleted comments cannot be pinned");
+        }
+        if (comment.isPinned()) {
+            return mapToResponse(comment);
+        }
+
+        long pinnedCount =
+                taskCommentRepository
+                        .countByTenant_IdAndProject_IdAndTask_IdAndParentCommentIsNullAndDeletedFalseAndPinnedAtIsNotNull(
+                                tenantId, projectId, taskId);
+        if (pinnedCount >= MAX_PINNED_COMMENTS) {
+            throw new IllegalArgumentException(
+                    "A task can have at most " + MAX_PINNED_COMMENTS + " pinned comments");
+        }
+
+        comment.pin(actor);
+        TaskComment saved = taskCommentRepository.save(comment);
+        taskActivityService.record(
+                task, actor, TaskActivityType.COMMENT_PINNED, "Pinned a comment");
+        recordAudit(
+                project,
+                task,
+                actor,
+                comment.getAuthorUser(),
+                AuditAction.TASK_COMMENT_PINNED,
+                "Task comment pinned");
+        return mapToResponse(saved);
+    }
+
+    @Transactional
+    public TaskCommentResponse unpinComment(
+            UUID tenantId, UUID projectId, UUID taskId, UUID commentId, Jwt jwt) {
+        Project project = getProjectOrThrow(tenantId, projectId);
+        ProjectTask task = getTaskOrThrow(tenantId, projectId, taskId);
+        ensureCollaborationCanBeModified(project, task);
+
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
+        TaskComment comment = getCommentForUpdateOrThrow(tenantId, projectId, taskId, commentId);
+        ensureTopLevelComment(comment);
+        if (!comment.isPinned()) {
+            return mapToResponse(comment);
+        }
+
+        comment.unpin();
+        TaskComment saved = taskCommentRepository.save(comment);
+        taskActivityService.record(
+                task, actor, TaskActivityType.COMMENT_UNPINNED, "Unpinned a comment");
+        recordAudit(
+                project,
+                task,
+                actor,
+                comment.getAuthorUser(),
+                AuditAction.TASK_COMMENT_UNPINNED,
+                "Task comment unpinned");
+        return mapToResponse(saved);
+    }
+
     private Set<AppUser> resolveMentionedUsers(
             UUID tenantId, UUID projectId, Set<UUID> mentionedUserIds) {
         if (mentionedUserIds == null || mentionedUserIds.isEmpty()) {
@@ -251,6 +389,23 @@ public class TaskCollaborationService {
                                         "Task comment not found with id: " + commentId));
     }
 
+    private TaskComment getCommentForUpdateOrThrow(
+            UUID tenantId, UUID projectId, UUID taskId, UUID commentId) {
+        return taskCommentRepository
+                .findForUpdateByTenant_IdAndProject_IdAndTask_IdAndId(
+                        tenantId, projectId, taskId, commentId)
+                .orElseThrow(
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Task comment not found with id: " + commentId));
+    }
+
+    private void ensureTopLevelComment(TaskComment comment) {
+        if (comment.getParentComment() != null) {
+            throw new IllegalArgumentException("Replies cannot contain nested replies");
+        }
+    }
+
     private void ensureCollaborationCanBeModified(Project project, ProjectTask task) {
         if (project.getStatus() == ProjectStatus.ARCHIVED) {
             throw new IllegalArgumentException("Archived project collaboration is read-only");
@@ -289,6 +444,17 @@ public class TaskCollaborationService {
                 project.getTenant(), actor, target, action, message + " for task " + task.getId());
     }
 
+    private PageResponse<TaskCommentResponse> mapPage(Page<TaskComment> comments) {
+        return new PageResponse<>(
+                comments.getContent().stream().map(this::mapToResponse).toList(),
+                comments.getNumber(),
+                comments.getSize(),
+                comments.getTotalElements(),
+                comments.getTotalPages(),
+                comments.isFirst(),
+                comments.isLast());
+    }
+
     private TaskCommentResponse mapToResponse(TaskComment comment) {
         AppUser author = comment.getAuthorUser();
         var mentions =
@@ -302,15 +468,21 @@ public class TaskCollaborationService {
                                         new TaskCommentMentionResponse(
                                                 user.getId(), user.getFullName(), user.getEmail()))
                         .toList();
+        TaskComment parent = comment.getParentComment();
 
         return new TaskCommentResponse(
                 comment.getId(),
                 comment.getTask().getId(),
+                parent == null ? null : parent.getId(),
                 author.getId(),
                 author.getFullName(),
                 author.getEmail(),
                 comment.isDeleted() ? null : comment.getBody(),
                 comment.isDeleted(),
+                comment.getReplyCount(),
+                comment.isPinned(),
+                comment.getPinnedAt(),
+                comment.getPinnedByUserId(),
                 comment.getEditedAt(),
                 comment.getDeletedAt(),
                 comment.getCreatedAt(),

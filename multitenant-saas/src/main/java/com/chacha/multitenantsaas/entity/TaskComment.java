@@ -38,11 +38,22 @@ public class TaskComment {
     @JoinColumn(name = "author_user_id", nullable = false)
     private AppUser authorUser;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    private TaskComment parentComment;
+
     @Column(length = 4000)
     private String body;
 
     @Column(nullable = false)
     private boolean deleted;
+
+    @Column(nullable = false)
+    private int replyCount;
+
+    private Instant pinnedAt;
+
+    private UUID pinnedByUserId;
 
     private Instant editedAt;
 
@@ -61,11 +72,22 @@ public class TaskComment {
 
     public TaskComment(
             Tenant tenant, Project project, ProjectTask task, AppUser authorUser, String body) {
+        this(tenant, project, task, authorUser, body, null);
+    }
+
+    public TaskComment(
+            Tenant tenant,
+            Project project,
+            ProjectTask task,
+            AppUser authorUser,
+            String body,
+            TaskComment parentComment) {
         this.tenant = tenant;
         this.project = project;
         this.task = task;
         this.authorUser = authorUser;
         this.body = body;
+        this.parentComment = parentComment;
     }
 
     @PrePersist
@@ -107,11 +129,29 @@ public class TaskComment {
         replaceMentions(mentionedUsers);
     }
 
+    public void incrementReplyCount() {
+        replyCount++;
+    }
+
+    public void pin(AppUser actor) {
+        if (parentComment != null) {
+            throw new IllegalArgumentException("Replies cannot be pinned");
+        }
+        pinnedAt = Instant.now();
+        pinnedByUserId = actor.getId();
+    }
+
+    public void unpin() {
+        pinnedAt = null;
+        pinnedByUserId = null;
+    }
+
     public void markDeleted() {
         this.deleted = true;
         this.deletedAt = Instant.now();
         this.body = null;
         this.mentions.clear();
+        unpin();
     }
 
     public UUID getId() {
@@ -134,12 +174,32 @@ public class TaskComment {
         return authorUser;
     }
 
+    public TaskComment getParentComment() {
+        return parentComment;
+    }
+
     public String getBody() {
         return body;
     }
 
     public boolean isDeleted() {
         return deleted;
+    }
+
+    public int getReplyCount() {
+        return replyCount;
+    }
+
+    public Instant getPinnedAt() {
+        return pinnedAt;
+    }
+
+    public UUID getPinnedByUserId() {
+        return pinnedByUserId;
+    }
+
+    public boolean isPinned() {
+        return pinnedAt != null;
     }
 
     public Instant getEditedAt() {
