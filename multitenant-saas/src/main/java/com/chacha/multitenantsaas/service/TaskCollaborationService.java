@@ -43,6 +43,7 @@ public class TaskCollaborationService {
     private final CurrentActorService currentActorService;
     private final TaskActivityService taskActivityService;
     private final AuditLogService auditLogService;
+    private final TaskAttachmentService taskAttachmentService;
 
     public TaskCollaborationService(
             TaskCommentRepository taskCommentRepository,
@@ -52,7 +53,8 @@ public class TaskCollaborationService {
             AppUserRepository appUserRepository,
             CurrentActorService currentActorService,
             TaskActivityService taskActivityService,
-            AuditLogService auditLogService) {
+            AuditLogService auditLogService,
+            TaskAttachmentService taskAttachmentService) {
         this.taskCommentRepository = taskCommentRepository;
         this.projectRepository = projectRepository;
         this.projectTaskRepository = projectTaskRepository;
@@ -61,6 +63,7 @@ public class TaskCollaborationService {
         this.currentActorService = currentActorService;
         this.taskActivityService = taskActivityService;
         this.auditLogService = auditLogService;
+        this.taskAttachmentService = taskAttachmentService;
     }
 
     @Transactional(readOnly = true)
@@ -167,6 +170,8 @@ public class TaskCollaborationService {
 
         comment.markDeleted();
         TaskComment saved = taskCommentRepository.save(comment);
+        taskAttachmentService.deleteAttachmentsForComment(
+                tenantId, projectId, taskId, commentId, project, task, actor);
 
         taskActivityService.record(
                 task, actor, TaskActivityType.COMMENT_DELETED, "Deleted a comment");

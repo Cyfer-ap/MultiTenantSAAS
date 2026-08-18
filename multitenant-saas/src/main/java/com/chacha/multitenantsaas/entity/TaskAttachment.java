@@ -14,7 +14,10 @@ import java.util.UUID;
             @Index(
                     name = "idx_task_attachment_comment",
                     columnList = "tenant_id,project_id,task_id,comment_id"),
-            @Index(name = "idx_task_attachment_uploader", columnList = "tenant_id,uploader_user_id")
+            @Index(
+                    name = "idx_task_attachment_uploader",
+                    columnList = "tenant_id,uploader_user_id"),
+            @Index(name = "idx_task_attachment_cleanup", columnList = "status,created_at")
         })
 public class TaskAttachment {
 
@@ -71,6 +74,9 @@ public class TaskAttachment {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
+    @Column(name = "storage_deleted_at")
+    private Instant storageDeletedAt;
+
     public TaskAttachment() {}
 
     public TaskAttachment(
@@ -111,7 +117,15 @@ public class TaskAttachment {
 
     public void markDeleted() {
         this.status = TaskAttachmentStatus.DELETED;
-        this.deletedAt = Instant.now();
+        if (this.deletedAt == null) {
+            this.deletedAt = Instant.now();
+        }
+    }
+
+    public void markStorageDeleted() {
+        if (this.storageDeletedAt == null) {
+            this.storageDeletedAt = Instant.now();
+        }
     }
 
     public UUID getId() {
@@ -176,5 +190,9 @@ public class TaskAttachment {
 
     public Instant getDeletedAt() {
         return deletedAt;
+    }
+
+    public Instant getStorageDeletedAt() {
+        return storageDeletedAt;
     }
 }

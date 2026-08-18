@@ -21,7 +21,10 @@ import com.chacha.multitenantsaas.repository.ProjectTaskRepository;
 import com.chacha.multitenantsaas.repository.TaskAttachmentRepository;
 import com.chacha.multitenantsaas.repository.TaskCommentRepository;
 import com.chacha.multitenantsaas.storage.ObjectStorageService;
+import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +36,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TaskAttachmentService {
+
+    private static final Logger log = LoggerFactory.getLogger(TaskAttachmentService.class);
 
     private final TaskAttachmentRepository taskAttachmentRepository;
     private final ProjectRepository projectRepository;
@@ -138,7 +143,8 @@ public class TaskAttachmentService {
         ProjectTask task = getTaskOrThrow(tenantId, projectId, taskId);
         ensureCollaborationCanBeModified(project, task);
         AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
-        TaskAttachment attachment = getAttachmentOrThrow(tenantId, projectId, taskId, attachmentId);
+        TaskAttachment attachment =
+                getAttachmentForUpdateOrThrow(tenantId, projectId, taskId, attachmentId);
         ensureUploader(attachment, actor);
 
         if (attachment.getStatus() == TaskAttachmentStatus.AVAILABLE) {
@@ -189,7 +195,8 @@ public class TaskAttachmentService {
         ProjectTask task = getTaskOrThrow(tenantId, projectId, taskId);
         ensureCollaborationCanBeModified(project, task);
         AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
-        TaskAttachment attachment = getAttachmentOrThrow(tenantId, projectId, taskId, attachmentId);
+        TaskAttachment attachment =
+                getAttachmentForUpdateOrThrow(tenantId, projectId, taskId, attachmentId);
         ensureUploader(attachment, actor);
 
         if (attachment.getStatus() == TaskAttachmentStatus.DELETED) {
@@ -199,23 +206,56 @@ public class TaskAttachmentService {
         boolean wasAvailable = attachment.getStatus() == TaskAttachmentStatus.AVAILABLE;
         requiredStorageService().deleteObject(attachment.getObjectKey());
         attachment.markDeleted();
+        attachment.markStorageDeleted();
         TaskAttachment saved = taskAttachmentRepository.save(attachment);
 
         if (wasAvailable) {
-            taskActivityService.record(
-                    task,
-                    actor,
-                    TaskActivityType.ATTACHMENT_DELETED,
-                    "Deleted attachment " + attachment.getOriginalFilename());
-            auditLogService.recordSuccess(
-                    project.getTenant(),
-                    actor,
-                    actor,
-                    AuditAction.TASK_ATTACHMENT_DELETED,
-                    "Task attachment deleted for task " + task.getId());
+            recordAttachmentDeleted(project, task, actor, attachment);
         }
 
         return mapToResponse(saved);
+    }
+
+    @Transactional
+    public void deleteAttachmentsForComment(
+            UUID tenantId,
+            UUID projectId,
+            UUID taskId,
+            UUID commentId,
+            Project project,
+            ProjectTask task,
+            AppUser actor) {
+        List<TaskAttachment> attachments =
+                taskAttachmentRepository
+                        .findByTenant_IdAndProject_IdAndTask_IdAndComment_IdAndStatusNot(
+                                tenantId,
+                                projectId,
+                                taskId,
+                                commentId,
+                                TaskAttachmentStatus.DELETED);
+
+        ObjectStorageService storageService = objectStorageServiceProvider.getIfAvailable();
+        for (TaskAttachment attachment : attachments) {
+            boolean wasAvailable = attachment.getStatus() == TaskAttachmentStatus.AVAILABLE;
+            attachment.markDeleted();
+
+            if (storageService != null) {
+                try {
+                    storageService.deleteObject(attachment.getObjectKey());
+                    attachment.markStorageDeleted();
+                } catch (RuntimeException exception) {
+                    log.warn(
+                            "Deferred storage cleanup for attachment {} after comment deletion",
+                            attachment.getId(),
+                            exception);
+                }
+            }
+
+            taskAttachmentRepository.save(attachment);
+            if (wasAvailable) {
+                recordAttachmentDeleted(project, task, actor, attachment);
+            }
+        }
     }
 
     private Project getProjectOrThrow(UUID tenantId, UUID projectId) {
@@ -257,6 +297,16 @@ public class TaskAttachmentService {
         return taskAttachmentRepository
                 .findByTenant_IdAndProject_IdAndTask_IdAndId(
                         tenantId, projectId, taskId, attachmentId)
+                .orElseThrow(
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Task attachment not found with id: " + attachmentId));
+    }
+
+    private TaskAttachment getAttachmentForUpdateOrThrow(
+            UUID tenantId, UUID projectId, UUID taskId, UUID attachmentId) {
+        return taskAttachmentRepository
+                .findScopedForUpdate(tenantId, projectId, taskId, attachmentId)
                 .orElseThrow(
                         () ->
                                 new ResourceNotFoundException(
@@ -351,6 +401,21 @@ public class TaskAttachmentService {
                 + taskId
                 + "/attachments/"
                 + attachmentId;
+    }
+
+    private void recordAttachmentDeleted(
+            Project project, ProjectTask task, AppUser actor, TaskAttachment attachment) {
+        taskActivityService.record(
+                task,
+                actor,
+                TaskActivityType.ATTACHMENT_DELETED,
+                "Deleted attachment " + attachment.getOriginalFilename());
+        auditLogService.recordSuccess(
+                project.getTenant(),
+                actor,
+                actor,
+                AuditAction.TASK_ATTACHMENT_DELETED,
+                "Task attachment deleted for task " + task.getId());
     }
 
     private TaskAttachmentResponse mapToResponse(TaskAttachment attachment) {
