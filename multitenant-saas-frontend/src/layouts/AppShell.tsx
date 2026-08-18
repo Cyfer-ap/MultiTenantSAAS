@@ -297,8 +297,7 @@ export function AppShell() {
                     minWidth: 0,
                     p: { xs: 2, sm: 3 },
                     width: { md: `calc(100% - ${desktopDrawerWidth}px)` },
-                    transition:
-                        'width 260ms cubic-bezier(0.2, 0.8, 0.2, 1), background 220ms ease',
+                    transition: 'width 260ms cubic-bezier(0.2, 0.8, 0.2, 1), background 220ms ease',
                     ...(isProjectWorkspace
                         ? {
                               '& .MuiPaper-root': {

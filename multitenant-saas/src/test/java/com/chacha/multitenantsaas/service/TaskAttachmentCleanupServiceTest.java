@@ -33,8 +33,9 @@ class TaskAttachmentCleanupServiceTest {
         when(taskAttachmentRepository.findTop100ByStatusAndCreatedAtBeforeOrderByCreatedAtAsc(
                         any(TaskAttachmentStatus.class), any(Instant.class)))
                 .thenReturn(List.of(stalePending));
-        when(taskAttachmentRepository.findTop100ByStatusAndStorageDeletedAtIsNullOrderByDeletedAtAsc(
-                        TaskAttachmentStatus.DELETED))
+        when(taskAttachmentRepository
+                        .findTop100ByStatusAndStorageDeletedAtIsNullOrderByDeletedAtAsc(
+                                TaskAttachmentStatus.DELETED))
                 .thenReturn(List.of(deferredDelete));
 
         TaskAttachmentCleanupService service =

@@ -134,12 +134,7 @@ async function uploadTaskAttachment(
         }
 
         objectUploaded = true
-        return await completeAttachmentUpload(
-            tenantId,
-            projectId,
-            taskId,
-            initiated.attachment.id,
-        )
+        return await completeAttachmentUpload(tenantId, projectId, taskId, initiated.attachment.id)
     } catch (error) {
         if (initiated) {
             if (objectUploaded) {

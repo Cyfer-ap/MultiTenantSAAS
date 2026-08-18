@@ -129,12 +129,7 @@ describe('ProjectTaskAttachmentsPanel', () => {
 
         await user.click(screen.getByRole('button', { name: /delete file/i }))
         await waitFor(() => {
-            expect(remove).toHaveBeenCalledWith(
-                'tenant-1',
-                'project-1',
-                'task-1',
-                'attachment-1',
-            )
+            expect(remove).toHaveBeenCalledWith('tenant-1', 'project-1', 'task-1', 'attachment-1')
         })
     })
 

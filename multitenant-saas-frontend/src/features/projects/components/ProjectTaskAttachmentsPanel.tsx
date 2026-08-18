@@ -320,7 +320,8 @@ export function ProjectTaskAttachmentsPanel({
                                         {attachment.filename}
                                     </Typography>
                                     <Typography color="text.secondary" variant="caption">
-                                        {formatBytes(attachment.sizeBytes)} · {attachment.uploaderName}
+                                        {formatBytes(attachment.sizeBytes)} ·{' '}
+                                        {attachment.uploaderName}
                                         {' · '}
                                         {formatDateTime(attachment.createdAt)}
                                     </Typography>

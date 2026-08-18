@@ -14,7 +14,9 @@ import java.util.UUID;
             @Index(
                     name = "idx_task_attachment_comment",
                     columnList = "tenant_id,project_id,task_id,comment_id"),
-            @Index(name = "idx_task_attachment_uploader", columnList = "tenant_id,uploader_user_id"),
+            @Index(
+                    name = "idx_task_attachment_uploader",
+                    columnList = "tenant_id,uploader_user_id"),
             @Index(name = "idx_task_attachment_cleanup", columnList = "status,created_at")
         })
 public class TaskAttachment {
