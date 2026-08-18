@@ -7,6 +7,8 @@ export type TaskActivityType =
     | 'COMMENT_ADDED'
     | 'COMMENT_EDITED'
     | 'COMMENT_DELETED'
+    | 'ATTACHMENT_ADDED'
+    | 'ATTACHMENT_DELETED'
 
 export interface TaskCommentMention {
     userId: string
@@ -38,6 +40,40 @@ export interface TaskActivity {
     actorEmail: string
     summary: string
     createdAt: string
+}
+
+export type TaskAttachmentStatus = 'PENDING' | 'AVAILABLE' | 'DELETED'
+
+export interface TaskAttachment {
+    id: string
+    taskId: string
+    commentId: string | null
+    uploaderUserId: string
+    uploaderName: string
+    filename: string
+    contentType: string
+    sizeBytes: number
+    status: TaskAttachmentStatus
+    createdAt: string
+    completedAt: string | null
+    deletedAt: string | null
+}
+
+export interface TaskAttachmentUploadInput {
+    file: File
+    commentId?: string | null
+}
+
+export interface TaskAttachmentUploadResponse {
+    attachment: TaskAttachment
+    uploadUrl: string
+    expiresAt: string
+    requiredHeaders: Record<string, string>
+}
+
+export interface TaskAttachmentDownloadResponse {
+    downloadUrl: string
+    expiresAt: string
 }
 
 export interface TaskCollaborationPageParams {
