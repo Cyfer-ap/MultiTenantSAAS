@@ -18,11 +18,12 @@ public interface TaskAttachmentRepository extends JpaRepository<TaskAttachment, 
     @Query(
             """
             select attachment from TaskAttachment attachment
+            left join attachment.comment comment
             where attachment.tenant.id = :tenantId
               and attachment.project.id = :projectId
               and attachment.task.id = :taskId
               and attachment.status = :status
-              and (attachment.comment is null or attachment.comment.deleted = false)
+              and (comment.id is null or comment.deleted = false)
             """)
     Page<TaskAttachment> findVisibleTaskAttachments(
             @Param("tenantId") UUID tenantId,
