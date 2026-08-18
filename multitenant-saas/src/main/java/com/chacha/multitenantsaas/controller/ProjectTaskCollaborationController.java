@@ -5,10 +5,15 @@ import com.chacha.multitenantsaas.common.PaginationUtils;
 import com.chacha.multitenantsaas.common.SortingUtils;
 import com.chacha.multitenantsaas.dto.PageResponse;
 import com.chacha.multitenantsaas.dto.TaskActivityResponse;
+import com.chacha.multitenantsaas.dto.TaskAttachmentDownloadResponse;
+import com.chacha.multitenantsaas.dto.TaskAttachmentInitiateRequest;
+import com.chacha.multitenantsaas.dto.TaskAttachmentResponse;
+import com.chacha.multitenantsaas.dto.TaskAttachmentUploadResponse;
 import com.chacha.multitenantsaas.dto.TaskCommentCreateRequest;
 import com.chacha.multitenantsaas.dto.TaskCommentResponse;
 import com.chacha.multitenantsaas.dto.TaskCommentUpdateRequest;
 import com.chacha.multitenantsaas.service.TaskActivityService;
+import com.chacha.multitenantsaas.service.TaskAttachmentService;
 import com.chacha.multitenantsaas.service.TaskCollaborationService;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -26,12 +31,15 @@ public class ProjectTaskCollaborationController {
 
     private final TaskCollaborationService taskCollaborationService;
     private final TaskActivityService taskActivityService;
+    private final TaskAttachmentService taskAttachmentService;
 
     public ProjectTaskCollaborationController(
             TaskCollaborationService taskCollaborationService,
-            TaskActivityService taskActivityService) {
+            TaskActivityService taskActivityService,
+            TaskAttachmentService taskAttachmentService) {
         this.taskCollaborationService = taskCollaborationService;
         this.taskActivityService = taskActivityService;
+        this.taskAttachmentService = taskAttachmentService;
     }
 
     @PreAuthorize(
@@ -106,6 +114,94 @@ public class ProjectTaskCollaborationController {
                 taskCollaborationService.deleteComment(tenantId, projectId, taskId, commentId, jwt);
         return ResponseEntity.ok(
                 ApiResponse.success("Task comment deleted successfully", response));
+    }
+
+    @PreAuthorize(
+            "@authorizationSecurity.canReadProjectTasks("
+                    + "#tenantId,#projectId,'project.task.read')")
+    @GetMapping("/attachments")
+    public ResponseEntity<ApiResponse<PageResponse<TaskAttachmentResponse>>> getAttachments(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID projectId,
+            @PathVariable UUID taskId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        Pageable pageable =
+                PageRequest.of(
+                        PaginationUtils.validatePage(page),
+                        PaginationUtils.validateSize(size),
+                        SortingUtils.getDirection(sortDir),
+                        "createdAt");
+
+        PageResponse<TaskAttachmentResponse> response =
+                taskAttachmentService.getAttachments(tenantId, projectId, taskId, pageable);
+        return ResponseEntity.ok(
+                ApiResponse.success("Task attachments fetched successfully", response));
+    }
+
+    @PreAuthorize(
+            "@authorizationSecurity.canReadProjectTasks("
+                    + "#tenantId,#projectId,'project.task.read')")
+    @PostMapping("/attachments/uploads")
+    public ResponseEntity<ApiResponse<TaskAttachmentUploadResponse>> initiateAttachmentUpload(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID projectId,
+            @PathVariable UUID taskId,
+            @Valid @RequestBody TaskAttachmentInitiateRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
+        TaskAttachmentUploadResponse response =
+                taskAttachmentService.initiateUpload(tenantId, projectId, taskId, request, jwt);
+        return ResponseEntity.ok(
+                ApiResponse.success("Attachment upload initiated successfully", response));
+    }
+
+    @PreAuthorize(
+            "@authorizationSecurity.canReadProjectTasks("
+                    + "#tenantId,#projectId,'project.task.read')")
+    @PostMapping("/attachments/{attachmentId}/complete")
+    public ResponseEntity<ApiResponse<TaskAttachmentResponse>> completeAttachmentUpload(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID projectId,
+            @PathVariable UUID taskId,
+            @PathVariable UUID attachmentId,
+            @AuthenticationPrincipal Jwt jwt) {
+        TaskAttachmentResponse response =
+                taskAttachmentService.completeUpload(
+                        tenantId, projectId, taskId, attachmentId, jwt);
+        return ResponseEntity.ok(
+                ApiResponse.success("Attachment upload completed successfully", response));
+    }
+
+    @PreAuthorize(
+            "@authorizationSecurity.canReadProjectTasks("
+                    + "#tenantId,#projectId,'project.task.read')")
+    @GetMapping("/attachments/{attachmentId}/download")
+    public ResponseEntity<ApiResponse<TaskAttachmentDownloadResponse>> getAttachmentDownload(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID projectId,
+            @PathVariable UUID taskId,
+            @PathVariable UUID attachmentId) {
+        TaskAttachmentDownloadResponse response =
+                taskAttachmentService.getDownload(tenantId, projectId, taskId, attachmentId);
+        return ResponseEntity.ok(
+                ApiResponse.success("Attachment download URL created successfully", response));
+    }
+
+    @PreAuthorize(
+            "@authorizationSecurity.canReadProjectTasks("
+                    + "#tenantId,#projectId,'project.task.read')")
+    @DeleteMapping("/attachments/{attachmentId}")
+    public ResponseEntity<ApiResponse<TaskAttachmentResponse>> deleteAttachment(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID projectId,
+            @PathVariable UUID taskId,
+            @PathVariable UUID attachmentId,
+            @AuthenticationPrincipal Jwt jwt) {
+        TaskAttachmentResponse response =
+                taskAttachmentService.deleteAttachment(
+                        tenantId, projectId, taskId, attachmentId, jwt);
+        return ResponseEntity.ok(ApiResponse.success("Attachment deleted successfully", response));
     }
 
     @PreAuthorize(

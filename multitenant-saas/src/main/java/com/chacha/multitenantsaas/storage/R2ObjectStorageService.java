@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -80,12 +81,20 @@ public class R2ObjectStorageService implements ObjectStorageService {
     public ObjectMetadata getObjectMetadata(String objectKey) {
         validateObjectKey(objectKey);
 
-        HeadObjectResponse response =
-                s3Client.headObject(
-                        HeadObjectRequest.builder()
-                                .bucket(properties.getBucket())
-                                .key(objectKey)
-                                .build());
+        HeadObjectResponse response;
+        try {
+            response =
+                    s3Client.headObject(
+                            HeadObjectRequest.builder()
+                                    .bucket(properties.getBucket())
+                                    .key(objectKey)
+                                    .build());
+        } catch (S3Exception exception) {
+            if (exception.statusCode() == 404) {
+                throw new IllegalArgumentException("Uploaded object was not found in storage");
+            }
+            throw exception;
+        }
 
         return new ObjectMetadata(
                 response.contentLength(),

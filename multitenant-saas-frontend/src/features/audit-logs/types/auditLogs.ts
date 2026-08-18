@@ -32,6 +32,8 @@ export const auditActions = [
     'TASK_COMMENT_CREATED',
     'TASK_COMMENT_UPDATED',
     'TASK_COMMENT_DELETED',
+    'TASK_ATTACHMENT_CREATED',
+    'TASK_ATTACHMENT_DELETED',
 ] as const
 
 export type AuditAction = (typeof auditActions)[number]
