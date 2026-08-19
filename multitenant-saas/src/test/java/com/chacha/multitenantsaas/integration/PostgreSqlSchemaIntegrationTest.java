@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.chacha.multitenantsaas.entity.OrganizationAssignmentStatus;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.AuditLogRepository;
+import com.chacha.multitenantsaas.repository.NotificationDeliveryRepository;
+import com.chacha.multitenantsaas.repository.NotificationRepository;
 import com.chacha.multitenantsaas.repository.PlatformAuditLogRepository;
 import com.chacha.multitenantsaas.repository.ProjectMemberRepository;
 import com.chacha.multitenantsaas.repository.ProjectRepository;
@@ -13,6 +15,8 @@ import com.chacha.multitenantsaas.repository.SystemAdminRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import com.chacha.multitenantsaas.repository.UserInvitationRepository;
 import com.chacha.multitenantsaas.repository.UserOrganizationAssignmentRepository;
+import com.chacha.multitenantsaas.service.NotificationDeliveryService;
+import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,10 +63,13 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private SystemAdminRepository systemAdminRepository;
     @Autowired private AuditLogRepository auditLogRepository;
     @Autowired private PlatformAuditLogRepository platformAuditLogRepository;
+    @Autowired private NotificationRepository notificationRepository;
+    @Autowired private NotificationDeliveryRepository notificationDeliveryRepository;
+    @Autowired private NotificationDeliveryService notificationDeliveryService;
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV24AndMatchesJpaMappings() {
+    void postgresSchemaReachesV26AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -74,7 +81,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("24");
+        assertThat(version).isEqualTo("26");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -94,11 +101,19 @@ class PostgreSqlSchemaIntegrationTest {
         assertTableExists("task_comment_mentions");
         assertTableExists("task_activities");
         assertTableExists("task_attachments");
+        assertTableExists("notifications");
+        assertTableExists("notification_deliveries");
         assertColumnExists("task_attachments", "storage_deleted_at");
         assertColumnExists("task_comments", "parent_comment_id");
         assertColumnExists("task_comments", "reply_count");
         assertColumnExists("task_comments", "pinned_at");
         assertColumnExists("task_comments", "pinned_by_user_id");
+        assertColumnExists("notifications", "recipient_user_id");
+        assertColumnExists("notifications", "target_url");
+        assertColumnExists("notifications", "read_at");
+        assertColumnExists("notification_deliveries", "lease_token");
+        assertColumnExists("notification_deliveries", "next_attempt_at");
+        assertColumnExists("notification_deliveries", "attempt_count");
     }
 
     @Test
@@ -132,6 +147,13 @@ class PostgreSqlSchemaIntegrationTest {
                 .isNotNull();
         assertThat(platformAuditLogRepository.findPlatformAuditLogs(null, null, null, pageable))
                 .isNotNull();
+        assertThat(
+                        notificationRepository
+                                .findByTenant_IdAndRecipientUser_IdOrderByCreatedAtDesc(
+                                        tenantId, userId, pageable))
+                .isNotNull();
+        assertThat(notificationDeliveryRepository.count()).isZero();
+        assertThat(notificationDeliveryService.claimBatch(Instant.now())).isEmpty();
     }
 
     @Test

@@ -52,16 +52,33 @@ const member: ProjectMember = {
 const comment: TaskComment = {
     id: 'comment-1',
     taskId: 'task-1',
+    parentCommentId: null,
     authorUserId: 'user-1',
     authorName: 'Ada Admin',
     authorEmail: 'ada@example.com',
     body: 'Please validate this before release.',
     deleted: false,
+    replyCount: 1,
+    pinned: false,
+    pinnedAt: null,
+    pinnedByUserId: null,
     editedAt: null,
     deletedAt: null,
     createdAt: '2026-08-18T01:00:00Z',
     updatedAt: '2026-08-18T01:00:00Z',
     mentions: [],
+}
+
+const reply: TaskComment = {
+    ...comment,
+    id: 'reply-1',
+    parentCommentId: 'comment-1',
+    authorUserId: 'user-2',
+    authorName: 'Grace User',
+    authorEmail: 'grace@example.com',
+    body: 'I checked it and the scope looks correct.',
+    replyCount: 0,
+    pinned: false,
 }
 
 const activity: TaskActivity = {
@@ -123,6 +140,8 @@ describe('ProjectTaskCollaborationDrawer', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
         vi.spyOn(projectTaskCollaborationApi, 'getComments').mockResolvedValue(page([comment]))
+        vi.spyOn(projectTaskCollaborationApi, 'getPinnedComments').mockResolvedValue([])
+        vi.spyOn(projectTaskCollaborationApi, 'getReplies').mockResolvedValue(page([reply]))
         vi.spyOn(projectTaskCollaborationApi, 'getActivity').mockResolvedValue(page([activity]))
     })
 
@@ -132,6 +151,7 @@ describe('ProjectTaskCollaborationDrawer', () => {
             .spyOn(projectTaskCollaborationApi, 'createComment')
             .mockResolvedValue({
                 ...comment,
+                replyCount: 0,
                 body: 'Grace, can you review this?',
                 mentions: [
                     {
@@ -159,6 +179,64 @@ describe('ProjectTaskCollaborationDrawer', () => {
         })
     })
 
+    it('loads a one-level thread and creates a reply', async () => {
+        const user = userEvent.setup()
+        const createReply = vi
+            .spyOn(projectTaskCollaborationApi, 'createReply')
+            .mockResolvedValue(reply)
+
+        renderDrawer()
+        await screen.findByText('Please validate this before release.')
+
+        await user.click(screen.getByRole('button', { name: /view 1 reply/i }))
+        expect(
+            await screen.findByText('I checked it and the scope looks correct.'),
+        ).toBeInTheDocument()
+
+        await user.click(screen.getByRole('button', { name: /^reply$/i }))
+        await user.type(screen.getByLabelText(/write a reply/i), 'Thanks, that resolves it.')
+        await user.click(screen.getByRole('button', { name: /post reply/i }))
+
+        await waitFor(() => {
+            expect(createReply).toHaveBeenCalledWith(
+                'tenant-1',
+                'project-1',
+                'task-1',
+                'comment-1',
+                { body: 'Thanks, that resolves it.', mentionedUserIds: [] },
+            )
+        })
+    })
+
+    it('shows pinned comments separately and can unpin them', async () => {
+        const user = userEvent.setup()
+        const pinnedComment: TaskComment = {
+            ...comment,
+            pinned: true,
+            pinnedAt: '2026-08-18T02:00:00Z',
+            pinnedByUserId: 'user-1',
+        }
+        vi.spyOn(projectTaskCollaborationApi, 'getPinnedComments').mockResolvedValue([
+            pinnedComment,
+        ])
+        const unpin = vi.spyOn(projectTaskCollaborationApi, 'unpinComment').mockResolvedValue({
+            ...pinnedComment,
+            pinned: false,
+            pinnedAt: null,
+            pinnedByUserId: null,
+        })
+
+        renderDrawer()
+
+        expect(await screen.findByText('Pinned comments')).toBeInTheDocument()
+        expect(screen.getAllByText('Please validate this before release.')).toHaveLength(1)
+        await user.click(screen.getByRole('button', { name: /unpin comment by ada admin/i }))
+
+        await waitFor(() => {
+            expect(unpin).toHaveBeenCalledWith('tenant-1', 'project-1', 'task-1', 'comment-1')
+        })
+    })
+
     it('shows domain activity and keeps archived or cancelled collaboration read only', async () => {
         const user = userEvent.setup()
         renderDrawer(true)
@@ -170,7 +248,7 @@ describe('ProjectTaskCollaborationDrawer', () => {
 
         await user.click(screen.getByRole('tab', { name: /activity/i }))
 
-        expect(await screen.findByText('Task created')).toBeInTheDocument()
+        expect(await screen.findByRole('heading', { name: 'Task created' })).toBeInTheDocument()
         expect(screen.getByText(/ada admin/i)).toBeInTheDocument()
     })
 

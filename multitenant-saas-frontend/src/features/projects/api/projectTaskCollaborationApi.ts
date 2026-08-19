@@ -28,6 +28,31 @@ async function getComments(
     return response.data.data
 }
 
+async function getPinnedComments(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+): Promise<TaskComment[]> {
+    const response = await httpClient.get<ApiResponse<TaskComment[]>>(
+        `${taskPath(tenantId, projectId, taskId)}/comments/pinned`,
+    )
+    return response.data.data
+}
+
+async function getReplies(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+    commentId: string,
+    params: TaskCollaborationPageParams,
+): Promise<PageResponse<TaskComment>> {
+    const response = await httpClient.get<ApiResponse<PageResponse<TaskComment>>>(
+        `${taskPath(tenantId, projectId, taskId)}/comments/${commentId}/replies`,
+        { params },
+    )
+    return response.data.data
+}
+
 async function createComment(
     tenantId: string,
     projectId: string,
@@ -36,6 +61,20 @@ async function createComment(
 ): Promise<TaskComment> {
     const response = await httpClient.post<ApiResponse<TaskComment>>(
         `${taskPath(tenantId, projectId, taskId)}/comments`,
+        input,
+    )
+    return response.data.data
+}
+
+async function createReply(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+    commentId: string,
+    input: TaskCommentInput,
+): Promise<TaskComment> {
+    const response = await httpClient.post<ApiResponse<TaskComment>>(
+        `${taskPath(tenantId, projectId, taskId)}/comments/${commentId}/replies`,
         input,
     )
     return response.data.data
@@ -63,6 +102,30 @@ async function deleteComment(
 ): Promise<TaskComment> {
     const response = await httpClient.delete<ApiResponse<TaskComment>>(
         `${taskPath(tenantId, projectId, taskId)}/comments/${commentId}`,
+    )
+    return response.data.data
+}
+
+async function pinComment(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+    commentId: string,
+): Promise<TaskComment> {
+    const response = await httpClient.post<ApiResponse<TaskComment>>(
+        `${taskPath(tenantId, projectId, taskId)}/comments/${commentId}/pin`,
+    )
+    return response.data.data
+}
+
+async function unpinComment(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+    commentId: string,
+): Promise<TaskComment> {
+    const response = await httpClient.delete<ApiResponse<TaskComment>>(
+        `${taskPath(tenantId, projectId, taskId)}/comments/${commentId}/pin`,
     )
     return response.data.data
 }
@@ -201,9 +264,14 @@ async function getActivity(
 
 export const projectTaskCollaborationApi = {
     getComments,
+    getPinnedComments,
+    getReplies,
     createComment,
+    createReply,
     updateComment,
     deleteComment,
+    pinComment,
+    unpinComment,
     getAttachments,
     initiateAttachmentUpload,
     completeAttachmentUpload,

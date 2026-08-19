@@ -25,6 +25,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router'
 import { UserMenu } from '../features/auth/components/UserMenu'
 import { useAuth } from '../features/auth/hooks/useAuth'
 import { useCurrentAuthorization } from '../features/authorization/hooks/useCurrentAuthorization'
+import { NotificationCenter } from '../features/notifications/components/NotificationCenter'
 import { WorkspaceSubscriptionAccessProvider } from '../features/subscriptions/context/WorkspaceSubscriptionAccessContext'
 import { useWorkspaceSubscriptionAccess } from '../features/subscriptions/hooks/useWorkspaceSubscription'
 import { ThemeModeToggle } from '../theme/ThemeModeToggle'
@@ -238,6 +239,7 @@ export function AppShell() {
                         </Typography>
                     </Box>
 
+                    <NotificationCenter tenantId={tenantId} />
                     <ThemeModeToggle size="small" />
                     <UserMenu />
                 </Toolbar>
