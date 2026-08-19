@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router'
 import { SessionSecurityCard } from '../features/auth/components/SessionSecurityCard'
 import { useCurrentUser } from '../features/auth/hooks/useAccount'
 import type { TenantRole, UserStatus } from '../features/auth/types/auth'
+import { NotificationPreferencesCard } from '../features/notifications/components/NotificationPreferencesCard'
 
 const roleLabels: Record<TenantRole, string> = {
     TENANT_ADMIN: 'Tenant administrator',
@@ -103,7 +104,7 @@ export function AccountSettingsPage() {
                         Account settings
                     </Typography>
                     <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                        Review your workspace identity and manage account security.
+                        Review your workspace identity, notification delivery, and account security.
                     </Typography>
                 </Box>
 
@@ -306,6 +307,8 @@ export function AccountSettingsPage() {
                                 </Stack>
                             </CardContent>
                         </Card>
+
+                        <NotificationPreferencesCard tenantId={currentUser.tenantId} />
 
                         <Card variant="outlined">
                             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
