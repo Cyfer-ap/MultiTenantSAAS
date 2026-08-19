@@ -54,6 +54,7 @@ export function NotificationCenter({ tenantId }: NotificationCenterProps) {
         setAnchorElement(null)
         if (notification.targetUrl?.startsWith('/') && !notification.targetUrl.startsWith('//')) {
             navigate(notification.targetUrl)
+            window.dispatchEvent(new PopStateEvent('popstate'))
         }
     }
 
