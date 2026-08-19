@@ -23,6 +23,7 @@ import com.chacha.multitenantsaas.service.NotificationDeliveryWorker;
 import com.chacha.multitenantsaas.service.NotificationService;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -48,6 +49,12 @@ class NotificationEmailDeliveryIntegrationTest {
     @Autowired private NotificationDeliveryWorker deliveryWorker;
 
     @MockitoBean private EmailSender emailSender;
+
+    @BeforeEach
+    void clearDeliveryOutbox() {
+        deliveryRepository.deleteAll();
+        deliveryRepository.flush();
+    }
 
     @Test
     void processesAnEmailOutboxRecordToSent() {

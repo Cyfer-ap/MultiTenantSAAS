@@ -79,6 +79,7 @@ class NotificationPersistenceIntegrationTest {
         AppUser firstRecipient = createUser(firstTenant, "scope-first");
         Tenant secondTenant = createTenant("notification-scope-second");
         AppUser secondRecipient = createUser(secondTenant, "scope-second");
+        long existingNotificationCount = notificationRepository.count();
 
         assertThatThrownBy(
                         () ->
@@ -91,7 +92,7 @@ class NotificationPersistenceIntegrationTest {
                                         "/projects/project-1?task=task-1"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Notification recipient must belong to the notification tenant");
-        assertThat(notificationRepository.count()).isZero();
+        assertThat(notificationRepository.count()).isEqualTo(existingNotificationCount);
 
         NotificationResponse created =
                 notificationService.create(
@@ -127,6 +128,7 @@ class NotificationPersistenceIntegrationTest {
     void rejectsExternalNotificationTargets() {
         Tenant tenant = createTenant("notification-target");
         AppUser recipient = createUser(tenant, "target");
+        long existingNotificationCount = notificationRepository.count();
 
         assertThatThrownBy(
                         () ->
@@ -139,7 +141,7 @@ class NotificationPersistenceIntegrationTest {
                                         "https://example.test/phishing"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Notification target URL must be an application-relative path");
-        assertThat(notificationRepository.count()).isZero();
+        assertThat(notificationRepository.count()).isEqualTo(existingNotificationCount);
     }
 
     @Test
