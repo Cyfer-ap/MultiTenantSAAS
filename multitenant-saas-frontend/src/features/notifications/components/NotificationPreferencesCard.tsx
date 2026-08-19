@@ -165,8 +165,10 @@ export function NotificationPreferencesCard({ tenantId }: { tenantId: string }) 
                                                         !preference.emailConfigurable ||
                                                         updatePreference.isPending
                                                     }
-                                                    inputProps={{
-                                                        'aria-label': `${copy.title} email notifications`,
+                                                    slotProps={{
+                                                        input: {
+                                                            'aria-label': `${copy.title} email notifications`,
+                                                        },
                                                     }}
                                                     onChange={(event) => {
                                                         void toggleEmail(
