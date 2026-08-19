@@ -195,7 +195,7 @@ describe('ProjectTaskCollaborationDrawer', () => {
 
         await user.click(screen.getByRole('button', { name: /^reply$/i }))
         await user.type(screen.getByLabelText(/write a reply/i), 'Thanks, that resolves it.')
-        await user.click(screen.getByRole('button', { name: /^reply$/i }))
+        await user.click(screen.getByRole('button', { name: /post reply/i }))
 
         await waitFor(() => {
             expect(createReply).toHaveBeenCalledWith(
@@ -248,7 +248,7 @@ describe('ProjectTaskCollaborationDrawer', () => {
 
         await user.click(screen.getByRole('tab', { name: /activity/i }))
 
-        expect(await screen.findByText('Task created')).toBeInTheDocument()
+        expect(await screen.findByRole('heading', { name: 'Task created' })).toBeInTheDocument()
         expect(screen.getByText(/ada admin/i)).toBeInTheDocument()
     })
 

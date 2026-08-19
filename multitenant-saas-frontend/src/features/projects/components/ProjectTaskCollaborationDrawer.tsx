@@ -266,7 +266,7 @@ function CommentComposer({
                         type="submit"
                         variant="contained"
                     >
-                        {compact ? 'Reply' : 'Comment'}
+                        {compact ? 'Post reply' : 'Comment'}
                     </Button>
                 </Stack>
             </Stack>
