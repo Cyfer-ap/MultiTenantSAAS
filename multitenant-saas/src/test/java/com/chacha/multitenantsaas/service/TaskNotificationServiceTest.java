@@ -1,6 +1,7 @@
 package com.chacha.multitenantsaas.service;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -59,7 +60,7 @@ class TaskNotificationServiceTest {
         when(task.getId()).thenReturn(taskId);
         when(task.getTitle()).thenReturn("Review access controls");
         when(project.getId()).thenReturn(projectId);
-        when(project.getName()).thenReturn("Security Project");
+        lenient().when(project.getName()).thenReturn("Security Project");
         when(actor.getId()).thenReturn(actorId);
         when(actor.getFullName()).thenReturn("Ada Admin");
     }
@@ -109,7 +110,7 @@ class TaskNotificationServiceTest {
     }
 
     @Test
-    void replyAuthorAndMentionRecipientsAreDeduplicated() {
+    void replyNotifiesDistinctMentionRecipientAndParentAuthor() {
         UUID parentId = UUID.randomUUID();
         UUID replyId = UUID.randomUUID();
         UUID parentAuthorId = UUID.randomUUID();
