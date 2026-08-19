@@ -3,6 +3,9 @@ import type { ApiResponse, PageResponse } from '../../../types/api'
 import type {
     Notification,
     NotificationMarkAllReadResult,
+    NotificationPreference,
+    NotificationPreferenceUpdateInput,
+    NotificationType,
     NotificationUnreadCount,
 } from '../types/notifications'
 
@@ -31,6 +34,27 @@ async function getUnreadCount(tenantId: string): Promise<NotificationUnreadCount
     return response.data.data
 }
 
+async function getPreferences(tenantId: string): Promise<NotificationPreference[]> {
+    const response = await httpClient.get<ApiResponse<NotificationPreference[]>>(
+        `${notificationsPath(tenantId)}/preferences`,
+    )
+
+    return response.data.data
+}
+
+async function updatePreference(
+    tenantId: string,
+    type: NotificationType,
+    input: NotificationPreferenceUpdateInput,
+): Promise<NotificationPreference> {
+    const response = await httpClient.patch<ApiResponse<NotificationPreference>>(
+        `${notificationsPath(tenantId)}/preferences/${type}`,
+        input,
+    )
+
+    return response.data.data
+}
+
 async function markRead(tenantId: string, notificationId: string): Promise<Notification> {
     const response = await httpClient.patch<ApiResponse<Notification>>(
         `${notificationsPath(tenantId)}/${notificationId}/read`,
@@ -50,6 +74,8 @@ async function markAllRead(tenantId: string): Promise<NotificationMarkAllReadRes
 export const notificationsApi = {
     getNotifications,
     getUnreadCount,
+    getPreferences,
+    updatePreference,
     markRead,
     markAllRead,
 }
