@@ -179,8 +179,7 @@ public class TaskCollaborationService {
                 parent.getAuthorUser(),
                 AuditAction.TASK_COMMENT_REPLIED,
                 "Task comment reply created");
-        taskNotificationService.notifyReplyCreated(
-                task, saved, parent, actor, mentionedUsers);
+        taskNotificationService.notifyReplyCreated(task, saved, parent, actor, mentionedUsers);
         return mapToResponse(saved);
     }
 

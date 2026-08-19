@@ -99,12 +99,7 @@ class TaskNotificationServiceTest {
                         NotificationType.TASK_COMMENT_MENTIONED,
                         "You were mentioned in a task comment",
                         "Ada Admin mentioned you on \"Review access controls\" in Security Project.",
-                        "/projects/"
-                                + projectId
-                                + "?task="
-                                + taskId
-                                + "&comment="
-                                + commentId,
+                        "/projects/" + projectId + "?task=" + taskId + "&comment=" + commentId,
                         Set.of(NotificationDeliveryChannel.EMAIL));
         verifyNoMoreInteractions(notificationService);
     }

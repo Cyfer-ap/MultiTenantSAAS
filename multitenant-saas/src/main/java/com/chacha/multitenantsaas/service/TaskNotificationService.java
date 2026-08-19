@@ -44,10 +44,7 @@ public class TaskNotificationService {
     }
 
     public void notifyCommentCreated(
-            ProjectTask task,
-            TaskComment comment,
-            AppUser actor,
-            Set<AppUser> mentionedUsers) {
+            ProjectTask task, TaskComment comment, AppUser actor, Set<AppUser> mentionedUsers) {
         Set<UUID> notifiedUserIds = notifyMentions(task, comment, actor, mentionedUsers);
         AppUser assignee = task.getAssigneeUser();
 
@@ -77,8 +74,7 @@ public class TaskNotificationService {
         Set<UUID> notifiedUserIds = notifyMentions(task, reply, actor, mentionedUsers);
         AppUser parentAuthor = parent.getAuthorUser();
 
-        if (shouldNotify(parentAuthor, actor)
-                && !notifiedUserIds.contains(parentAuthor.getId())) {
+        if (shouldNotify(parentAuthor, actor) && !notifiedUserIds.contains(parentAuthor.getId())) {
             notificationService.create(
                     task.getTenant(),
                     parentAuthor,
@@ -129,7 +125,8 @@ public class TaskNotificationService {
             ProjectTask task, TaskComment comment, AppUser actor, Set<AppUser> mentionedUsers) {
         Set<UUID> notifiedUserIds = new LinkedHashSet<>();
         for (AppUser mentionedUser : mentionedUsers) {
-            if (!shouldNotify(mentionedUser, actor) || !notifiedUserIds.add(mentionedUser.getId())) {
+            if (!shouldNotify(mentionedUser, actor)
+                    || !notifiedUserIds.add(mentionedUser.getId())) {
                 continue;
             }
 
@@ -167,11 +164,7 @@ public class TaskNotificationService {
         if (parent == null) {
             return taskTarget(task) + "&comment=" + comment.getId();
         }
-        return taskTarget(task)
-                + "&comment="
-                + parent.getId()
-                + "&reply="
-                + comment.getId();
+        return taskTarget(task) + "&comment=" + parent.getId() + "&reply=" + comment.getId();
     }
 
     private String displayStatus(ProjectTaskStatus status) {

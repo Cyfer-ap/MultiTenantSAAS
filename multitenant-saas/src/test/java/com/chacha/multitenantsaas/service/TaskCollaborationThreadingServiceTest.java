@@ -113,8 +113,7 @@ class TaskCollaborationThreadingServiceTest {
         assertThat(response.parentCommentId()).isEqualTo(parentId);
         verify(taskActivityService)
                 .record(task, actor, TaskActivityType.COMMENT_REPLIED, "Replied to a comment");
-        verify(taskNotificationService)
-                .notifyReplyCreated(task, reply, parent, actor, Set.of());
+        verify(taskNotificationService).notifyReplyCreated(task, reply, parent, actor, Set.of());
     }
 
     @Test
