@@ -45,6 +45,7 @@ class TaskCollaborationThreadingServiceTest {
     @Mock private TaskActivityService taskActivityService;
     @Mock private AuditLogService auditLogService;
     @Mock private TaskAttachmentService taskAttachmentService;
+    @Mock private TaskNotificationService taskNotificationService;
     @Mock private Jwt jwt;
     @Mock private Project project;
     @Mock private ProjectTask task;
@@ -67,7 +68,8 @@ class TaskCollaborationThreadingServiceTest {
                         currentActorService,
                         taskActivityService,
                         auditLogService,
-                        taskAttachmentService);
+                        taskAttachmentService,
+                        taskNotificationService);
     }
 
     @Test
@@ -111,6 +113,8 @@ class TaskCollaborationThreadingServiceTest {
         assertThat(response.parentCommentId()).isEqualTo(parentId);
         verify(taskActivityService)
                 .record(task, actor, TaskActivityType.COMMENT_REPLIED, "Replied to a comment");
+        verify(taskNotificationService)
+                .notifyReplyCreated(task, reply, parent, actor, Set.of());
     }
 
     @Test
