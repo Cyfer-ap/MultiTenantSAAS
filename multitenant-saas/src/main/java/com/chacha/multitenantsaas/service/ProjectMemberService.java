@@ -25,18 +25,21 @@ public class ProjectMemberService {
     private final AppUserRepository appUserRepository;
     private final CurrentActorService currentActorService;
     private final AuditLogService auditLogService;
+    private final ProjectMembershipNotificationService projectMembershipNotificationService;
 
     public ProjectMemberService(
             ProjectMemberRepository projectMemberRepository,
             ProjectRepository projectRepository,
             AppUserRepository appUserRepository,
             CurrentActorService currentActorService,
-            AuditLogService auditLogService) {
+            AuditLogService auditLogService,
+            ProjectMembershipNotificationService projectMembershipNotificationService) {
         this.projectMemberRepository = projectMemberRepository;
         this.projectRepository = projectRepository;
         this.appUserRepository = appUserRepository;
         this.currentActorService = currentActorService;
         this.auditLogService = auditLogService;
+        this.projectMembershipNotificationService = projectMembershipNotificationService;
     }
 
     @Transactional
@@ -69,6 +72,8 @@ public class ProjectMemberService {
                         + request.role()
                         + ": "
                         + user.getEmail());
+
+        projectMembershipNotificationService.notifyAdded(project, assignedBy, user, request.role());
 
         return mapToResponse(savedMembership);
     }
@@ -145,6 +150,9 @@ public class ProjectMemberService {
                         + ": "
                         + membership.getUser().getEmail());
 
+        projectMembershipNotificationService.notifyRoleChanged(
+                project, actor, membership.getUser(), previousRole, request.role());
+
         return mapToResponse(updatedMembership);
     }
 
@@ -174,6 +182,8 @@ public class ProjectMemberService {
                 removedUser,
                 AuditAction.PROJECT_MEMBER_REMOVED,
                 "User removed from project " + projectId + ": " + removedUser.getEmail());
+
+        projectMembershipNotificationService.notifyRemoved(project, actor, removedUser);
 
         return response;
     }
