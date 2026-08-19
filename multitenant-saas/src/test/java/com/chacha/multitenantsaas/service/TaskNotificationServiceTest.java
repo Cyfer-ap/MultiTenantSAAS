@@ -83,6 +83,27 @@ class TaskNotificationServiceTest {
     }
 
     @Test
+    void notifiesAssigneeForTopLevelCommentWhenTheyAreNotMentioned() {
+        UUID commentId = UUID.randomUUID();
+        when(assignee.getId()).thenReturn(assigneeId);
+        when(task.getAssigneeUser()).thenReturn(assignee);
+        when(comment.getId()).thenReturn(commentId);
+        when(comment.getParentComment()).thenReturn(null);
+
+        service.notifyCommentCreated(task, comment, actor, Set.of());
+
+        verify(notificationService)
+                .create(
+                        tenant,
+                        assignee,
+                        NotificationType.TASK_COMMENT_ADDED,
+                        "New comment on your task",
+                        "Ada Admin commented on \"Review access controls\" in Security Project.",
+                        "/projects/" + projectId + "?task=" + taskId + "&comment=" + commentId,
+                        Set.of(NotificationDeliveryChannel.EMAIL));
+    }
+
+    @Test
     void mentionTakesPrecedenceOverGenericAssigneeCommentNotification() {
         UUID commentId = UUID.randomUUID();
         when(mentionedUser.getId()).thenReturn(assigneeId);
