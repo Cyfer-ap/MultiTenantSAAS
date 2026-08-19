@@ -17,12 +17,19 @@ Always sync `main` before starting a new branch.
 2. [[Architecture]]
 3. [[Security-and-Authentication]]
 4. [[Authorization]]
-5. [[PostgreSQL-and-Flyway]]
-6. [[Transaction-and-Concurrency]]
-7. [[Operations-and-Observability]]
-8. [[Roadmap]]
+5. [[Collaboration-and-Attachments]]
+6. [[Notifications]]
+7. [[PostgreSQL-and-Flyway]]
+8. [[Operations-and-Observability]]
+9. [[Roadmap]]
 
 Repository-side focused notes remain under `guides/`.
+
+## Current phase
+
+**Product expansion + production/platform completion**
+
+The previous Step 40 transaction/concurrency phase is historical. Major database-backed hardening and PostgreSQL concurrency regression coverage are already present.
 
 ## Architecture boundaries to preserve
 
@@ -37,73 +44,75 @@ quota enforcement
 domain invariants
 ```
 
-System-admin identity must remain separate from tenant-user identity.
+System-admin identity remains separate from tenant-user identity.
 
-## Completed hardening milestones
+## Current feature baseline
 
-### Transaction/concurrency hardening
+Implemented product capabilities include:
 
-Database-backed work covers:
-
-- subscription state serialization
-- invitation single-use/replacement races
-- failed-login/account-lock races
-- session and credential concurrency
-- account-state/session-version updates
-- PostgreSQL concurrency integration tests
-- integrity-race normalization and lock review
-
-### Operational observability
-
-Implemented capabilities include:
-
-- `X-Request-ID` correlation
-- correlated completion logs
-- secured Actuator metrics
-- subscription restriction counters
-- authentication/login counters
-- account-lock counters
-- public-auth rate-limit rejection counters
+- tenant/system-admin control planes
+- hardened browser authentication/session lifecycle
+- scoped authorization and organization hierarchy
+- subscription lifecycle/read-only/quota enforcement
+- projects, memberships and Kanban/table task workspace
+- comments, mentions, activity, replies and pinned comments
+- R2/S3-compatible task attachments
+- notification persistence/read state
+- durable notification delivery records/outbox processing
+- email notification delivery
+- in-app task-assignment notifications
 
 ## Migration invariant
 
 ```text
 db/migration   -> historical H2 V1-V17
 db/postgresql  -> PostgreSQL V17 current-schema baseline
-db/common      -> future portable V18+
+db/common      -> portable V18+
 ```
 
-Never rewrite an already-applied migration.
+Current common migrations extend through V26. Never rewrite an already-applied migration.
 
-## Safe change checklist
+## Verification checklist
 
-Before a PR:
+Backend:
 
-```text
-backend:
-  .\mvnw.cmd spotless:apply
-  .\mvnw.cmd spotless:check
-  .\mvnw.cmd test
-  .\mvnw.cmd -DskipTests verify
-
-frontend when touched:
-  npm run format
-  npm run format:check
-  npm run lint
-  npm test
-  npm run build
-
-repository:
-  git diff --check
-  git status
+```powershell
+.\mvnw.cmd spotless:check
+.\mvnw.cmd test
+.\mvnw.cmd verify
 ```
 
-For PowerShell targeted Maven tests with multiple classes, quote the entire property:
+Frontend when touched:
+
+```powershell
+npm run format:check
+npm run lint
+npm test
+npm run build
+```
+
+For PowerShell targeted Maven tests with multiple classes:
 
 ```powershell
 .\mvnw.cmd "-Dtest=FirstTest,SecondTest" test
 ```
 
+Keep required GitHub checks green before merge.
+
 ## Next priorities
 
-The immediate product issue is the Primary Organizational Assignment path. After that, high-value production work includes database backup/restore and recovery documentation, external monitoring/alerting, load/failure testing, background jobs/notifications, and provider billing/webhook integration.
+Product:
+
+1. comment/reply/mention/task-event notifications
+2. more precise collaboration deep links
+3. notification preferences/channel controls
+
+Platform:
+
+- external billing + webhook reconciliation
+- usage metering/accounting
+- tenant webhooks
+- API keys/service accounts
+- backup/restore, alerts and runbooks
+- enterprise SSO
+- authorization delegation/explain-access
