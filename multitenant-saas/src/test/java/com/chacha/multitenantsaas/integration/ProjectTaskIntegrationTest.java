@@ -244,7 +244,7 @@ class ProjectTaskIntegrationTest {
                                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + memberToken))
                         .andExpect(status().isOk())
                         .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "no-store"))
-                        .andExpect(jsonPath("$.data.totalElements").value(1))
+                        .andExpect(jsonPath("$.data.totalElements").value(2))
                         .andExpect(jsonPath("$.data.content[0].type").value("TASK_ASSIGNED"))
                         .andExpect(
                                 jsonPath("$.data.content[0].title")
@@ -266,7 +266,7 @@ class ProjectTaskIntegrationTest {
                         get("/api/tenants/{tenantId}/notifications/unread-count", tenant.tenantId())
                                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + memberToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.unreadCount").value(1));
+                .andExpect(jsonPath("$.data.unreadCount").value(2));
 
         mockMvc.perform(
                         patch(
@@ -289,7 +289,7 @@ class ProjectTaskIntegrationTest {
                         patch("/api/tenants/{tenantId}/notifications/read-all", tenant.tenantId())
                                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + memberToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.markedReadCount").value(0));
+                .andExpect(jsonPath("$.data.markedReadCount").value(1));
 
         mockMvc.perform(
                         get(
