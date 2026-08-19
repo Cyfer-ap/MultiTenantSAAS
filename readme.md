@@ -1,108 +1,74 @@
 # Multi-Tenant SaaS Platform
 
-A full-stack multi-tenant SaaS platform focused on secure tenant isolation, permission-oriented authorization, project/workforce management, subscription enforcement, PostgreSQL readiness, and production deployment hardening.
+A full-stack multi-tenant SaaS platform focused on secure tenant isolation, permission-oriented authorization, project collaboration, subscription enforcement, PostgreSQL correctness, and production-oriented engineering.
 
-> **Documentation snapshot**
+> **Current documentation snapshot**
 >
-> Repository: `Cyfer-ap/MultiTenantSAAS`
-> Reviewed branch: `main`
-> Reviewed commit: `3808c0ddf95d075aed7114bf060518640c19d6c2`
-> Current engineering phase: **Step 40 — Transaction & Concurrency Hardening**
-> Production configuration foundation: **implemented**
+> Repository: `Cyfer-ap/MultiTenantSAAS`  
+> Branch: `main`  
+> Base reviewed state: post-PR #59 feature state, with Dependabot PRs #53/#54 intentionally skipped/reverted  
+> Current phase: **product expansion + production/platform completion**
 
----
-
-## 1. What the platform provides
-
-The application has two deliberately separated administration planes.
+## Platform capabilities
 
 ### Tenant plane
 
-Tenant-scoped functionality includes:
-
 - tenant onboarding and lifecycle
-- tenant authentication and session restoration
-- refresh-token rotation and revocation
-- password change and password recovery
-- account lockout and administrative unlock
-- tenant users
-- invitations
-- organizational/authorization capabilities
-- projects
-- project memberships
-- tasks
-- dashboards
+- JWT authentication and session restoration
+- hashed refresh tokens, rotation, revocation, logout and logout-all
+- verified password recovery and account lockout/unlock
+- tenant users and invitations
+- organization hierarchy and scoped authorization
+- projects, memberships and tasks
+- Kanban/table task workspace
+- task comments, mentions, activity history, one-level replies and pinned comments
+- R2/S3-compatible task attachments with presigned upload/download flows
+- tenant-scoped notifications, unread state and in-app notification center
+- task-assignment notifications
 - tenant audit logs
-- subscription visibility and restrictions
+- subscription visibility, lifecycle restrictions and quotas
 
 ### System plane
 
-System-administrator functionality includes:
-
-- system-admin authentication
+- separate system-admin authentication/control plane
 - platform dashboard
-- tenant listing and management
-- tenant onboarding
+- tenant administration and onboarding
 - tenant-user administration
 - system-admin management
 - platform audit logs
 - subscription plan and lifecycle administration
 
-System administrators are a separate identity/control plane; they are not tenant users with a stronger tenant role.
+System administrators remain a separate identity domain; they are not tenant users with an elevated tenant role.
 
----
-
-## 2. Repository layout
-
-```text
-MultiTenantSAAS/
-├── .github/
-├── guides/
-├── multitenant-saas/                 Spring Boot backend
-├── multitenant-saas-frontend/        React/Vite frontend
-├── compose.yaml
-├── docker-compose.postgres.yml
-├── .env.example
-├── .env.production.example
-├── qodana.yaml
-└── readme.md
-```
-
----
-
-## 3. Technology stack
+## Technology stack
 
 ### Backend
 
 - Java 21
-- Spring Boot 4.0.6
-- Spring Web MVC
-- Spring Security
-- OAuth2 Resource Server / JWT
+- Spring Boot 4.0.7
+- Spring Security / OAuth2 Resource Server / JWT
 - Spring Data JPA / Hibernate
 - Flyway
-- H2 for the historical local/test path
-- PostgreSQL 17 for the production-readiness path
-- Testcontainers for PostgreSQL integration verification
-- Maven
-- JUnit 5 / MockMvc
-- Springdoc OpenAPI
-- Actuator
+- PostgreSQL 17
+- H2 historical/test migration path
+- Testcontainers PostgreSQL integration testing
+- AWS SDK v2 for S3-compatible object storage / Cloudflare R2
+- Spring Boot Actuator and Micrometer
+- Maven Wrapper (`.\mvnw.cmd`)
 
 ### Frontend
 
-- React 19
-- TypeScript
-- Vite
-- Material UI
-- React Router
-- Redux Toolkit / RTK Query in the current architecture
-- Vitest
-- Testing Library
+- React 19.2
+- TypeScript 6
+- Vite 8
+- Material UI 9
+- React Router 7
+- TanStack React Query
+- Axios
+- React Hook Form + Zod
+- Vitest + Testing Library
 
----
-
-## 4. Security model
+## Security and request enforcement
 
 Business requests pass through distinct enforcement layers:
 
@@ -111,498 +77,212 @@ authentication
     ↓
 tenant isolation
     ↓
-authorization / permission policy
+authorization / scoped permission evaluation
     ↓
 subscription lifecycle access
     ↓
 resource quota enforcement
+    ↓
+domain invariants
 ```
 
-These layers intentionally remain separate because they have different semantics, error contracts, and recovery paths.
+These controls intentionally remain separate. Authorization never bypasses subscription restrictions, and a valid subscription never grants a missing permission.
 
-### Tenant isolation
+## Collaboration and storage
 
-Tenant IDs must be carried through controller, service, repository, and security flows. A privileged role never permits cross-tenant data access.
+Task collaboration is implemented as a tenant/project/task-scoped subsystem:
 
-### Authentication and sessions
+- comments and mentions
+- activity timeline
+- one-level comment replies
+- pinned comments
+- attachment metadata and lifecycle cleanup
+- presigned object-storage uploads/downloads
+- Cloudflare R2 through the S3-compatible AWS SDK
 
-The tenant authentication model includes:
+Relevant schema migrations:
 
-- JWT access tokens
-- hashed refresh-token storage
-- refresh-token rotation
-- single-session revocation
-- logout-all / multi-device revocation
-- password change
-- password reset
-- account lockout
-- session-version based invalidation
+```text
+V21  task collaboration
+V22  task attachments
+V23  attachment cleanup hardening
+V24  comment replies and pins
+```
 
-System-admin identity remains separate from tenant authentication.
+See `guides/collaboration_and_notifications.md` and the Wiki pages `Collaboration-and-Attachments` and `Notifications`.
 
----
+## Notifications
 
-## 5. Authorization
+The notification foundation now includes:
 
-The application has evolved beyond a purely coarse fixed-role model.
+- tenant- and recipient-scoped notification persistence
+- unread count and read/read-all mutations
+- durable PostgreSQL-backed delivery records
+- retry/backoff/lease/idempotency-oriented delivery processing
+- email delivery through the existing email-provider abstraction
+- in-app notification bell and deep links
+- task-assignment notification generation
 
-Authorization concepts include:
+Relevant migrations:
+
+```text
+V25  notifications
+V26  notification deliveries
+```
+
+The next notification work is product expansion rather than foundation work: comments/replies/mentions, task-status events, finer deep links and user/channel preferences.
+
+## Authorization
+
+Authorization has evolved beyond the legacy coarse tenant roles. Current concepts include:
 
 - permission catalogue
 - authorization roles
-- role-to-permission assignments
-- subject/user role assignments
-- authorization policies/rules
-- tenant-aware and organization-aware decisions
-- Spring method-security checks where appropriate
+- role-permission mappings
+- user role assignments
+- organization hierarchy and assignments
+- scoped authorization evaluation
+- backend-authoritative permission checks
 
-Legacy roles may still be retained for compatibility:
+Legacy roles such as `TENANT_ADMIN`, `TENANT_MANAGER` and `TENANT_USER` remain where required for compatibility.
 
-```text
-TENANT_ADMIN
-TENANT_MANAGER
-TENANT_USER
-```
+Advanced authorization still worth adding later includes temporary delegation and an explain-access capability.
 
-Project roles include:
+## Subscription and quota model
 
-```text
-PROJECT_LEAD
-MEMBER
-```
+The platform separates:
 
-The design rule is that backend authorization is authoritative. Frontend route/action visibility is a usability layer only.
-
----
-
-## 6. Subscription and quota model
-
-The subscription foundation separates:
-
-- subscription plans
-- plan entitlements and limits
+- plans and entitlements
 - tenant subscription lifecycle
 - evaluated access state
-- quota usage/enforcement
+- workspace read-only enforcement
+- resource quotas
 
-Lifecycle states represented by the current model include states such as:
+The current subscription model is internal. A production external billing provider, signed webhook reconciliation and payment-state synchronization are still future work.
 
-```text
-TRIALING
-ACTIVE
-PAST_DUE
-CANCELLED
-EXPIRED
-```
+## PostgreSQL and Flyway
 
-Access evaluation uses its own reason model:
+Migration layout:
 
 ```text
-ACTIVE
-TRIAL_ACTIVE
-PAST_DUE_GRACE
-NO_SUBSCRIPTION
-PLAN_INACTIVE
-CANCELLED
-EXPIRED
-PERIOD_EXPIRED
-TRIAL_EXPIRED
+multitenant-saas/src/main/resources/db/migration    historical H2 V1-V17
+multitenant-saas/src/main/resources/db/postgresql  PostgreSQL V17 baseline
+multitenant-saas/src/main/resources/db/common      portable V18+
 ```
 
-Do not use lifecycle status names as substitutes for evaluated access reasons.
-
-### Central read-only enforcement
-
-Ordinary tenant business mutations pass through the central subscription mutation guard.
-
-When workspace mutation is not allowed, the standard restriction is:
-
-```text
-HTTP 409
-restriction = WORKSPACE_READ_ONLY
-resource = workspace
-```
-
-Read operations remain available.
-
-Explicit cleanup/recovery operations can be allowed so the tenant can reduce usage or restore compliance.
-
-### Resource quotas
-
-When workspace mutation is otherwise permitted, resource-specific quota checks may still reject growth, for example:
-
-```text
-USER_LIMIT_REACHED
-PROJECT_LIMIT_REACHED
-```
-
----
-
-## 7. Core business modules
-
-### Tenant users
-
-Implemented concerns include:
-
-- create/read/update lifecycle
-- status changes
-- tenant-scoped uniqueness
-- password validation
-- account lock/unlock
-- role and permission interactions
-- self-protection
-- last-active-admin protection
-
-### Invitations
-
-The invitation lifecycle includes:
-
-- create
-- list/read
-- revoke
-- accept
-- secure random raw tokens
-- hashed persisted tokens
-- expiration
-- one-time acceptance
-- replacement invitation behavior
-- audit events
-
-Invitation acceptance/replacement is one of the remaining Step 40 concurrency-hardening areas.
-
-### Projects
-
-Project states include:
-
-```text
-PLANNING
-ACTIVE
-ON_HOLD
-COMPLETED
-ARCHIVED
-```
-
-Capabilities include:
-
-- create/list/read/update
-- status transitions
-- archive
-- tenant isolation
-- project membership
-- project lead assignment
-- audit events
-
-### Tasks
-
-Task states include:
-
-```text
-TODO
-IN_PROGRESS
-BLOCKED
-COMPLETED
-CANCELLED
-```
-
-Priorities include:
-
-```text
-LOW
-MEDIUM
-HIGH
-URGENT
-```
-
-Capabilities include creation, update, assignment, status changes, completion handling, cancellation, and archived-project history.
-
----
-
-## 8. Audit logging
-
-The system keeps tenant and platform administration audit surfaces separate.
-
-Tenant audit activity covers areas such as:
-
-- tenants/users
-- authentication/session events
-- password operations
-- invitations
-- projects
-- memberships
-- tasks
-- authorization-sensitive actions
-
-Platform audit logs cover system-administration actions.
-
----
-
-## 9. PostgreSQL and Flyway strategy
-
-The repository preserves two migration histories.
-
-### Historical H2 chain
-
-```text
-multitenant-saas/src/main/resources/db/migration
-```
-
-This contains the established historical V1-V17 development migrations.
-
-### PostgreSQL current-schema baseline
-
-```text
-multitenant-saas/src/main/resources/db/postgresql
-```
-
-PostgreSQL starts from:
-
-```text
-V17__current_schema_baseline.sql
-```
-
-### Future shared migrations
-
-```text
-multitenant-saas/src/main/resources/db/common
-```
-
-All new portable migrations begin at:
-
-```text
-V18+
-```
-
-Required rule:
-
-```text
-H2        -> db/migration + db/common
-PostgreSQL -> db/postgresql + db/common
-```
+Current shared migrations have advanced through **V26**.
 
 Never rewrite an already-applied migration.
 
----
+## Concurrency hardening
 
-## 10. Transaction and concurrency hardening — Step 40
+The former Step 40 transaction/concurrency phase is no longer the active project phase. Database-backed protections and regression coverage now include, among other paths:
 
-Step 40 addresses write paths that are correct sequentially but can fail under concurrent requests.
+- subscription state serialization
+- one-subscription-per-tenant creation races
+- invitation single-use/replacement behavior
+- failed-login/account-lock races
+- refresh-token rotation races
+- session/credential concurrency
+- PostgreSQL pessimistic-lock integration coverage
 
-### Slice 40.1 — subscription state serialization
+`guides/step40_transaction_concurrency.md` is retained as a historical closeout/reference page.
 
-Completed protections include:
+## Production and operations
 
-- pessimistic locking for mutable tenant subscription state
-- locked subscription reads before plan/lifecycle mutations
-- tenant-row locking before one-and-only subscription creation checks
-- database-backed locking rather than process-local mutexes
+Implemented foundation:
 
-Locking rule:
+- `postgres,production` execution path
+- production environment template
+- Docker/Compose paths
+- request correlation IDs and completion logging
+- secured Actuator access
+- SaaS-specific metrics
+- CI, security scanning, container validation and Qodana
 
-```text
-Existing subscription invariant
-    -> lock tenant_subscription row
+Still not production-complete:
 
-One-and-only subscription creation
-    -> lock tenant row before check/insert
-```
+- external billing provider and reconciliation
+- durable usage metering/accounting
+- tenant webhook platform
+- API keys/service accounts
+- backup/restore drills, alerts and operational runbooks
+- enterprise SSO
+- broader load/failure-recovery verification
 
-### Remaining Step 40 areas
+See `guides/DEFERRED_PLATFORM_WORK.md` for the current platform backlog.
 
-- invitation acceptance/replacement races
-- tenant/system-admin failed-login counter races
-- session-version/password/logout-all lost-update protection
-- normalization of duplicate/integrity races into stable API errors
-- targeted PostgreSQL concurrency integration tests
-- lock-order/deadlock review
+## Local development
 
----
-
-## 11. Production deployment foundation
-
-The latest `main` includes a dedicated production configuration profile and production environment template.
-
-Production activation:
-
-```text
-SPRING_PROFILES_ACTIVE=postgres,production
-```
-
-Important production defaults include:
-
-- no internal exception details in HTTP responses
-- `spring.jpa.open-in-view=false`
-- `spring.jpa.hibernate.ddl-auto=validate`
-- Flyway clean disabled
-- Actuator exposure limited to health/info
-- health details/components hidden
-- health probes enabled
-- restrained Hibernate/security logging
-- public endpoint rate limiting configuration
-- password-reset token exposure disabled
-- system-admin bootstrap disabled by default
-
-The repository includes:
-
-```text
-.env.production.example
-multitenant-saas/src/main/resources/application-production.properties
-```
-
----
-
-## 12. Local development
-
-### Option A — full Docker Compose
-
-Copy:
-
-```text
-.env.example
-```
-
-to:
-
-```text
-.env
-```
-
-then configure local secrets and run the project Compose stack.
-
-### Option B — PostgreSQL only
-
-From the repository root:
+### PostgreSQL
 
 ```powershell
 docker compose -f .\docker-compose.postgres.yml up -d
 ```
-
-Then run the backend with the PostgreSQL profile.
-
-### Backend
-
-Typical local API port:
-
-```text
-8081
-```
-
-Useful endpoints include the application health/Actuator/OpenAPI endpoints exposed by the selected profile.
-
-### Frontend
-
-Configure:
-
-```dotenv
-VITE_API_BASE_URL=http://localhost:8081
-```
-
-Then:
-
-```powershell
-cd multitenant-saas-frontend
-npm install
-npm run dev
-```
-
----
-
-## 13. Verification
 
 ### Backend
 
 ```powershell
 cd multitenant-saas
 .\mvnw.cmd test
+.\mvnw.cmd verify
 ```
-
-PostgreSQL/Testcontainers integration verification should run when Docker is available.
 
 ### Frontend
 
 ```powershell
 cd multitenant-saas-frontend
+npm install
 npm run lint
-npm run test
+npm test
 npm run build
 ```
 
-### Repository hygiene
+Typical local configuration:
 
-```powershell
-git diff --check
-git status --short
+```dotenv
+BACKEND_PORT=8081
+FRONTEND_PORT=8080
+VITE_API_BASE_URL=http://localhost:8081
+CORS_ALLOWED_ORIGINS=http://localhost:8080
 ```
 
-CI additionally includes repository/backend/frontend/PostgreSQL/security-quality checks configured in GitHub Actions and Qodana.
+## Documentation
 
----
-
-## 14. Documentation source-of-truth
-
-When documentation and implementation disagree, use this order:
+Documentation source-of-truth order:
 
 1. current application code and tests
 2. current Flyway migrations
-3. focused current guides
-4. historical workflow/planning guides
+3. focused guides under `guides/`
+4. historical planning/progress notes
 
-Current focused guides:
+Primary entry points:
 
-```text
-guides/current_architecture.md
-guides/data_model.md
-guides/authorization_model.md
-guides/subscription_billing.md
-guides/postgresql_and_migrations.md
-guides/step39_closeout.md
-guides/step40_transaction_concurrency.md
+- `CHECKPOINT.md`
+- `guides/README.md`
+- `guides/HANDOFF.md`
+- `guides/DEFERRED_PLATFORM_WORK.md`
+- `wiki/Home.md`
+- `wiki/Roadmap.md`
+
+The version-controlled Wiki source lives under `wiki/`. Publish it with:
+
+```powershell
+.\scripts\publish-wiki.ps1
 ```
 
-Additional architectural/history references include:
+Use `-NoPush` to preview the Wiki diff without publishing.
 
-```text
-guides/frontend_architecture.md
-guides/frontend_testing.md
-guides/authorization_v2_plan.md
-guides/postman_tests.md
-guides/progress.md
-guides/Plan.txt
-guides/Details.txt
-guides/sb_difficulties.txt
-```
+## Current roadmap
 
----
+Near-term order:
 
-## 15. Engineering principles
+1. keep repository docs and Wiki synchronized with current `main`
+2. expand collaboration notifications to replies/mentions/comments/task updates
+3. add notification preferences/channel controls and improve deep links
+4. complete external billing integration when selected
+5. add usage metering, webhooks and API keys/service accounts
+6. add recovery/alerting/runbooks and broader operational verification
+7. add advanced authorization delegation/explain-access when needed
 
-```text
-Every schema change uses Flyway.
-Never rewrite an already-applied migration.
-Every tenant business query remains tenant scoped.
-Authorization stays backend authoritative.
-Subscription access never grants authorization.
-Authorization never bypasses subscription lifecycle constraints.
-Collection APIs support pagination.
-Sensitive mutations are auditable.
-Secrets are environment controlled.
-Production schema ownership belongs to Flyway.
-Concurrency invariants must be database-backed.
-New features require regression tests.
-```
-
----
-
-## 16. Current roadmap
-
-Immediate order:
-
-```text
-1. Complete Step 40 transaction/concurrency hardening.
-2. Add targeted PostgreSQL concurrency tests.
-3. Normalize integrity-race API behavior.
-4. Review lock ordering/deadlock behavior.
-5. Keep production profile and deployment configuration green.
-6. Only then expand payment-provider integration and additional production services.
-```
-
-The application has a production-readiness foundation, but it should not be described as fully production-complete until concurrency, deployment, observability, provider integration, backup/restore, and operational verification are finished.
+The platform has a strong production-readiness foundation, but it should not be described as fully production-complete until the remaining provider, recovery, observability and operational gaps are closed.
