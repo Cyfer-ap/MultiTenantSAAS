@@ -79,6 +79,7 @@ class NotificationPersistenceIntegrationTest {
         AppUser firstRecipient = createUser(firstTenant, "scope-first");
         Tenant secondTenant = createTenant("notification-scope-second");
         AppUser secondRecipient = createUser(secondTenant, "scope-second");
+        long existingNotificationCount = notificationRepository.count();
 
         assertThatThrownBy(
                         () ->
@@ -91,7 +92,7 @@ class NotificationPersistenceIntegrationTest {
                                         "/projects/project-1?task=task-1"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Notification recipient must belong to the notification tenant");
-        assertThat(notificationRepository.count()).isZero();
+        assertThat(notificationRepository.count()).isEqualTo(existingNotificationCount);
 
         NotificationResponse created =
                 notificationService.create(
@@ -127,6 +128,7 @@ class NotificationPersistenceIntegrationTest {
     void rejectsExternalNotificationTargets() {
         Tenant tenant = createTenant("notification-target");
         AppUser recipient = createUser(tenant, "target");
+        long existingNotificationCount = notificationRepository.count();
 
         assertThatThrownBy(
                         () ->
@@ -139,7 +141,44 @@ class NotificationPersistenceIntegrationTest {
                                         "https://example.test/phishing"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Notification target URL must be an application-relative path");
-        assertThat(notificationRepository.count()).isZero();
+        assertThat(notificationRepository.count()).isEqualTo(existingNotificationCount);
+    }
+
+    @Test
+    void marksEveryUnreadNotificationForOnlyTheScopedRecipient() {
+        Tenant tenant = createTenant("notification-read-all");
+        AppUser firstRecipient = createUser(tenant, "read-all-first");
+        AppUser secondRecipient = createUser(tenant, "read-all-second");
+
+        notificationService.create(
+                tenant,
+                firstRecipient,
+                NotificationType.TASK_ASSIGNED,
+                "First task",
+                "A task was assigned to you.",
+                "/projects/project-1?task=task-1");
+        notificationService.create(
+                tenant,
+                firstRecipient,
+                NotificationType.TASK_ASSIGNED,
+                "Second task",
+                "Another task was assigned to you.",
+                "/projects/project-1?task=task-2");
+        notificationService.create(
+                tenant,
+                secondRecipient,
+                NotificationType.TASK_ASSIGNED,
+                "Other recipient task",
+                "This belongs to another recipient.",
+                "/projects/project-1?task=task-3");
+
+        int markedRead = notificationService.markAllRead(tenant.getId(), firstRecipient.getId());
+
+        assertThat(markedRead).isEqualTo(2);
+        assertThat(notificationService.countUnread(tenant.getId(), firstRecipient.getId()))
+                .isZero();
+        assertThat(notificationService.countUnread(tenant.getId(), secondRecipient.getId()))
+                .isEqualTo(1);
     }
 
     private Tenant createTenant(String prefix) {

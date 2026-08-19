@@ -111,6 +111,11 @@ public class NotificationService {
         return mapToResponse(notification);
     }
 
+    @Transactional
+    public int markAllRead(UUID tenantId, UUID recipientUserId) {
+        return notificationRepository.markAllRead(tenantId, recipientUserId, Instant.now());
+    }
+
     private void validateRecipientScope(Tenant tenant, AppUser recipientUser) {
         Objects.requireNonNull(tenant, "Notification tenant is required");
         Objects.requireNonNull(recipientUser, "Notification recipient is required");

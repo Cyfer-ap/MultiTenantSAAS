@@ -8,6 +8,8 @@ import com.chacha.multitenantsaas.dto.ProjectTaskStatusUpdateRequest;
 import com.chacha.multitenantsaas.dto.ProjectTaskUpdateRequest;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.AuditAction;
+import com.chacha.multitenantsaas.entity.NotificationDeliveryChannel;
+import com.chacha.multitenantsaas.entity.NotificationType;
 import com.chacha.multitenantsaas.entity.Project;
 import com.chacha.multitenantsaas.entity.ProjectStatus;
 import com.chacha.multitenantsaas.entity.ProjectTask;
@@ -21,6 +23,7 @@ import com.chacha.multitenantsaas.repository.ProjectMemberRepository;
 import com.chacha.multitenantsaas.repository.ProjectRepository;
 import com.chacha.multitenantsaas.repository.ProjectTaskRepository;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +41,7 @@ public class ProjectTaskService {
     private final CurrentActorService currentActorService;
     private final AuditLogService auditLogService;
     private final TaskActivityService taskActivityService;
+    private final NotificationService notificationService;
 
     public ProjectTaskService(
             ProjectTaskRepository projectTaskRepository,
@@ -46,7 +50,8 @@ public class ProjectTaskService {
             AppUserRepository appUserRepository,
             CurrentActorService currentActorService,
             AuditLogService auditLogService,
-            TaskActivityService taskActivityService) {
+            TaskActivityService taskActivityService,
+            NotificationService notificationService) {
         this.projectTaskRepository = projectTaskRepository;
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
@@ -54,6 +59,7 @@ public class ProjectTaskService {
         this.currentActorService = currentActorService;
         this.auditLogService = auditLogService;
         this.taskActivityService = taskActivityService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -94,6 +100,8 @@ public class ProjectTaskService {
                         + savedTask.getId()
                         + " - "
                         + savedTask.getTitle());
+
+        notifyTaskAssignment(savedTask, creator, assignee);
 
         return mapToResponse(savedTask);
     }
@@ -275,6 +283,10 @@ public class ProjectTaskService {
                 AuditAction.TASK_ASSIGNEE_UPDATED,
                 auditMessage);
 
+        if (!sameUser(previousAssignee, newAssignee)) {
+            notifyTaskAssignment(updatedTask, actor, newAssignee);
+        }
+
         return mapToResponse(updatedTask);
     }
 
@@ -394,6 +406,33 @@ public class ProjectTaskService {
 
     private String emailOrNone(AppUser user) {
         return user == null ? "unassigned" : user.getEmail();
+    }
+
+    private void notifyTaskAssignment(ProjectTask task, AppUser actor, AppUser assignee) {
+        if (assignee == null || sameUser(actor, assignee)) {
+            return;
+        }
+
+        notificationService.create(
+                task.getTenant(),
+                assignee,
+                NotificationType.TASK_ASSIGNED,
+                "You were assigned a task",
+                actor.getFullName()
+                        + " assigned \""
+                        + task.getTitle()
+                        + "\" to you in "
+                        + task.getProject().getName()
+                        + ".",
+                "/projects/" + task.getProject().getId() + "?task=" + task.getId(),
+                Set.of(NotificationDeliveryChannel.EMAIL));
+    }
+
+    private boolean sameUser(AppUser first, AppUser second) {
+        return first != null
+                && second != null
+                && first.getId() != null
+                && first.getId().equals(second.getId());
     }
 
     private ProjectTaskResponse mapToResponse(ProjectTask task) {
