@@ -238,6 +238,59 @@ class ProjectTaskIntegrationTest {
 
         String memberToken = login(tenant.tenantId(), member.email(), MEMBER_PASSWORD);
 
+        MvcResult notificationResult =
+                mockMvc.perform(
+                                get("/api/tenants/{tenantId}/notifications", tenant.tenantId())
+                                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + memberToken))
+                        .andExpect(status().isOk())
+                        .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "no-store"))
+                        .andExpect(jsonPath("$.data.totalElements").value(1))
+                        .andExpect(jsonPath("$.data.content[0].type").value("TASK_ASSIGNED"))
+                        .andExpect(
+                                jsonPath("$.data.content[0].title")
+                                        .value("You were assigned a task"))
+                        .andExpect(
+                                jsonPath("$.data.content[0].targetUrl")
+                                        .value("/projects/" + projectId + "?task=" + taskId))
+                        .andExpect(jsonPath("$.data.content[0].readAt").value(nullValue()))
+                        .andReturn();
+
+        UUID notificationId =
+                UUID.fromString(
+                        jsonMapper
+                                .readTree(notificationResult.getResponse().getContentAsString())
+                                .at("/data/content/0/id")
+                                .asString());
+
+        mockMvc.perform(
+                        get("/api/tenants/{tenantId}/notifications/unread-count", tenant.tenantId())
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + memberToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.unreadCount").value(1));
+
+        mockMvc.perform(
+                        patch(
+                                        "/api/tenants/{tenantId}/notifications/{notificationId}/read",
+                                        tenant.tenantId(),
+                                        notificationId)
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(
+                        patch(
+                                        "/api/tenants/{tenantId}/notifications/{notificationId}/read",
+                                        tenant.tenantId(),
+                                        notificationId)
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + memberToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.readAt").isNotEmpty());
+
+        mockMvc.perform(
+                        patch("/api/tenants/{tenantId}/notifications/read-all", tenant.tenantId())
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + memberToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.markedReadCount").value(0));
+
         mockMvc.perform(
                         get(
                                         "/api/tenants/{tenantId}" + "/projects/{projectId}/tasks",

@@ -17,6 +17,7 @@ import {
     type CurrentAuthorizationContext,
 } from './features/authorization/types/authorization'
 import { invitationsApi } from './features/invitations/api/invitationsApi'
+import { notificationsApi } from './features/notifications/api/notificationsApi'
 import { appTheme } from './theme/appTheme'
 
 function createTestQueryClient(): QueryClient {
@@ -177,6 +178,7 @@ describe('App authentication routes', () => {
         sessionStorage.clear()
 
         vi.spyOn(dashboardApi, 'getSummary').mockResolvedValue(dashboardSummary)
+        vi.spyOn(notificationsApi, 'getUnreadCount').mockResolvedValue({ unreadCount: 0 })
 
         vi.spyOn(authorizationApi, 'getCurrentAuthorizationContext').mockResolvedValue(
             createAuthorizationContext('TENANT_ADMIN'),
