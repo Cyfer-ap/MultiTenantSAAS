@@ -139,7 +139,13 @@ function renderDrawer(readOnly = false) {
 describe('ProjectTaskCollaborationDrawer', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
+        window.history.replaceState({}, '', '/projects/project-1?task=task-1')
+        Element.prototype.scrollIntoView = vi.fn()
         vi.spyOn(projectTaskCollaborationApi, 'getComments').mockResolvedValue(page([comment]))
+        vi.spyOn(projectTaskCollaborationApi, 'getComment').mockImplementation(
+            async (_tenantId, _projectId, _taskId, commentId) =>
+                commentId === reply.id ? reply : comment,
+        )
         vi.spyOn(projectTaskCollaborationApi, 'getPinnedComments').mockResolvedValue([])
         vi.spyOn(projectTaskCollaborationApi, 'getReplies').mockResolvedValue(page([reply]))
         vi.spyOn(projectTaskCollaborationApi, 'getActivity').mockResolvedValue(page([activity]))
@@ -206,6 +212,89 @@ describe('ProjectTaskCollaborationDrawer', () => {
                 { body: 'Thanks, that resolves it.', mentionedUserIds: [] },
             )
         })
+    })
+
+    it('opens and highlights a top-level comment deep link', async () => {
+        window.history.replaceState(
+            {},
+            '',
+            '/projects/project-1?task=task-1&comment=comment-1',
+        )
+
+        renderDrawer()
+
+        expect(await screen.findByText('Please validate this before release.')).toBeInTheDocument()
+        await waitFor(() => {
+            expect(
+                document.querySelector('[data-comment-id="comment-1"]'),
+            ).toHaveAttribute('data-deep-link-target', 'true')
+        })
+        expect(projectTaskCollaborationApi.getComment).toHaveBeenCalledWith(
+            'tenant-1',
+            'project-1',
+            'task-1',
+            'comment-1',
+        )
+    })
+
+    it('expands a linked thread and highlights the exact reply', async () => {
+        window.history.replaceState(
+            {},
+            '',
+            '/projects/project-1?task=task-1&comment=comment-1&reply=reply-1',
+        )
+
+        renderDrawer()
+
+        expect(
+            await screen.findByText('I checked it and the scope looks correct.'),
+        ).toBeInTheDocument()
+        await waitFor(() => {
+            expect(document.querySelector('[data-comment-id="reply-1"]')).toHaveAttribute(
+                'data-deep-link-target',
+                'true',
+            )
+        })
+    })
+
+    it('renders a referenced comment even when it is outside the first comment page', async () => {
+        const historicalComment: TaskComment = {
+            ...comment,
+            id: 'comment-old',
+            body: 'Historical context from an older page.',
+            replyCount: 0,
+        }
+        vi.spyOn(projectTaskCollaborationApi, 'getComments').mockResolvedValue(page([]))
+        vi.spyOn(projectTaskCollaborationApi, 'getComment').mockResolvedValue(historicalComment)
+        window.history.replaceState(
+            {},
+            '',
+            '/projects/project-1?task=task-1&comment=comment-old',
+        )
+
+        renderDrawer()
+
+        expect(await screen.findByText('Referenced comment')).toBeInTheDocument()
+        expect(await screen.findByText('Historical context from an older page.')).toBeInTheDocument()
+        expect(document.querySelector('[data-comment-id="comment-old"]')).toHaveAttribute(
+            'data-deep-link-target',
+            'true',
+        )
+    })
+
+    it('cleans comment and reply parameters when the drawer closes', async () => {
+        const user = userEvent.setup()
+        window.history.replaceState(
+            {},
+            '',
+            '/projects/project-1?task=task-1&comment=comment-1&reply=reply-1',
+        )
+        renderDrawer()
+
+        await screen.findByText('I checked it and the scope looks correct.')
+        await user.click(screen.getByRole('button', { name: /close task details/i }))
+
+        expect(window.location.search).toBe('?task=task-1')
     })
 
     it('shows pinned comments separately and can unpin them', async () => {
