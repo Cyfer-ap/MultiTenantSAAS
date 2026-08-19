@@ -32,6 +32,7 @@ public class TaskCommentQueryController {
             @PathVariable UUID commentId) {
         TaskCommentResponse response =
                 taskCommentQueryService.getComment(tenantId, projectId, taskId, commentId);
-        return ResponseEntity.ok(ApiResponse.success("Task comment fetched successfully", response));
+        return ResponseEntity.ok(
+                ApiResponse.success("Task comment fetched successfully", response));
     }
 }

@@ -90,12 +90,7 @@ describe('projectTaskCollaborationApi', () => {
         const base = '/api/tenants/tenant-1/projects/project-1/tasks/task-1'
 
         await projectTaskCollaborationApi.getComments('tenant-1', 'project-1', 'task-1', descParams)
-        await projectTaskCollaborationApi.getComment(
-            'tenant-1',
-            'project-1',
-            'task-1',
-            'comment-1',
-        )
+        await projectTaskCollaborationApi.getComment('tenant-1', 'project-1', 'task-1', 'comment-1')
         await projectTaskCollaborationApi.getPinnedComments('tenant-1', 'project-1', 'task-1')
         await projectTaskCollaborationApi.getReplies(
             'tenant-1',

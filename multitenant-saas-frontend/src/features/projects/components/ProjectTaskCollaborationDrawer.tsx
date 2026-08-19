@@ -457,7 +457,8 @@ function CommentCard({
                 borderColor: focused || comment.pinned ? 'primary.main' : undefined,
                 boxShadow: focused ? 2 : undefined,
                 padding: 1.75,
-                transition: 'background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
+                transition:
+                    'background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
             }}
         >
             <Stack spacing={1.25}>
@@ -629,7 +630,10 @@ function CommentCard({
                         }}
                     >
                         {linkedReply && !replyAlreadyLoaded && (
-                            <Stack spacing={1.25} sx={{ marginBottom: repliesQuery.data ? 1.25 : 0 }}>
+                            <Stack
+                                spacing={1.25}
+                                sx={{ marginBottom: repliesQuery.data ? 1.25 : 0 }}
+                            >
                                 <CommentCard
                                     allowPinning={false}
                                     allowThreading={false}
@@ -819,9 +823,7 @@ export function ProjectTaskCollaborationDrawer({
             onFeedback={onFeedback}
             projectId={projectId}
             readOnly={readOnly}
-            targetReply={
-                comment.id === deepLinkTarget.commentId ? targetReply : undefined
-            }
+            targetReply={comment.id === deepLinkTarget.commentId ? targetReply : undefined}
             taskId={task.id}
             tenantId={tenantId}
         />
@@ -1005,18 +1007,20 @@ export function ProjectTaskCollaborationDrawer({
                                     )}
                                 </Alert>
                             )}
-                            {commentsQuery.isSuccess && commentsQuery.data.content.length === 0 && !linkedComment && (
-                                <Box sx={{ padding: 3, textAlign: 'center' }}>
-                                    <ChatBubbleOutlineRoundedIcon color="disabled" />
-                                    <Typography sx={{ marginTop: 1 }} variant="subtitle2">
-                                        No comments yet
-                                    </Typography>
-                                    <Typography color="text.secondary" variant="body2">
-                                        Start the conversation with context the whole project can
-                                        keep.
-                                    </Typography>
-                                </Box>
-                            )}
+                            {commentsQuery.isSuccess &&
+                                commentsQuery.data.content.length === 0 &&
+                                !linkedComment && (
+                                    <Box sx={{ padding: 3, textAlign: 'center' }}>
+                                        <ChatBubbleOutlineRoundedIcon color="disabled" />
+                                        <Typography sx={{ marginTop: 1 }} variant="subtitle2">
+                                            No comments yet
+                                        </Typography>
+                                        <Typography color="text.secondary" variant="body2">
+                                            Start the conversation with context the whole project
+                                            can keep.
+                                        </Typography>
+                                    </Box>
+                                )}
 
                             {regularComments.length > 0 && (
                                 <Stack spacing={1.5}>

@@ -215,19 +215,16 @@ describe('ProjectTaskCollaborationDrawer', () => {
     })
 
     it('opens and highlights a top-level comment deep link', async () => {
-        window.history.replaceState(
-            {},
-            '',
-            '/projects/project-1?task=task-1&comment=comment-1',
-        )
+        window.history.replaceState({}, '', '/projects/project-1?task=task-1&comment=comment-1')
 
         renderDrawer()
 
         expect(await screen.findByText('Please validate this before release.')).toBeInTheDocument()
         await waitFor(() => {
-            expect(
-                document.querySelector('[data-comment-id="comment-1"]'),
-            ).toHaveAttribute('data-deep-link-target', 'true')
+            expect(document.querySelector('[data-comment-id="comment-1"]')).toHaveAttribute(
+                'data-deep-link-target',
+                'true',
+            )
         })
         expect(projectTaskCollaborationApi.getComment).toHaveBeenCalledWith(
             'tenant-1',
@@ -266,16 +263,14 @@ describe('ProjectTaskCollaborationDrawer', () => {
         }
         vi.spyOn(projectTaskCollaborationApi, 'getComments').mockResolvedValue(page([]))
         vi.spyOn(projectTaskCollaborationApi, 'getComment').mockResolvedValue(historicalComment)
-        window.history.replaceState(
-            {},
-            '',
-            '/projects/project-1?task=task-1&comment=comment-old',
-        )
+        window.history.replaceState({}, '', '/projects/project-1?task=task-1&comment=comment-old')
 
         renderDrawer()
 
         expect(await screen.findByText('Referenced comment')).toBeInTheDocument()
-        expect(await screen.findByText('Historical context from an older page.')).toBeInTheDocument()
+        expect(
+            await screen.findByText('Historical context from an older page.'),
+        ).toBeInTheDocument()
         expect(document.querySelector('[data-comment-id="comment-old"]')).toHaveAttribute(
             'data-deep-link-target',
             'true',
