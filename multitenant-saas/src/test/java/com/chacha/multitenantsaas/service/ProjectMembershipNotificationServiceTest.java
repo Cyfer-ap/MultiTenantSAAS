@@ -106,7 +106,6 @@ class ProjectMembershipNotificationServiceTest {
 
         verifyNoInteractions(notificationService);
 
-        when(member.getId()).thenReturn(memberId);
         service.notifyRoleChanged(
                 project, actor, member, ProjectMemberRole.MEMBER, ProjectMemberRole.MEMBER);
 
