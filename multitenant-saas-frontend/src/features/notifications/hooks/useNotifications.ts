@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { notificationsApi } from '../api/notificationsApi'
+import type { NotificationPreferenceUpdateInput, NotificationType } from '../types/notifications'
 
 export const notificationQueryKeys = {
     all: ['notifications'] as const,
@@ -8,6 +9,8 @@ export const notificationQueryKeys = {
     list: (tenantId: string) => [...notificationQueryKeys.tenant(tenantId), 'list'] as const,
     unreadCount: (tenantId: string) =>
         [...notificationQueryKeys.tenant(tenantId), 'unread-count'] as const,
+    preferences: (tenantId: string) =>
+        [...notificationQueryKeys.tenant(tenantId), 'preferences'] as const,
 }
 
 export function useNotifications(tenantId: string, enabled = true) {
@@ -27,6 +30,14 @@ export function useNotificationUnreadCount(tenantId: string) {
     })
 }
 
+export function useNotificationPreferences(tenantId: string) {
+    return useQuery({
+        queryKey: notificationQueryKeys.preferences(tenantId),
+        queryFn: () => notificationsApi.getPreferences(tenantId),
+        enabled: tenantId.length > 0,
+    })
+}
+
 function useInvalidateNotifications(tenantId: string) {
     const queryClient = useQueryClient()
 
@@ -35,6 +46,25 @@ function useInvalidateNotifications(tenantId: string) {
             queryKey: notificationQueryKeys.tenant(tenantId),
         })
     }
+}
+
+export function useUpdateNotificationPreference(tenantId: string) {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: ({
+            type,
+            input,
+        }: {
+            type: NotificationType
+            input: NotificationPreferenceUpdateInput
+        }) => notificationsApi.updatePreference(tenantId, type, input),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: notificationQueryKeys.preferences(tenantId),
+            })
+        },
+    })
 }
 
 export function useMarkNotificationRead(tenantId: string) {

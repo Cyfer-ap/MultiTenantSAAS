@@ -27,12 +27,15 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final NotificationDeliveryService notificationDeliveryService;
+    private final NotificationPreferenceService notificationPreferenceService;
 
     public NotificationService(
             NotificationRepository notificationRepository,
-            NotificationDeliveryService notificationDeliveryService) {
+            NotificationDeliveryService notificationDeliveryService,
+            NotificationPreferenceService notificationPreferenceService) {
         this.notificationRepository = notificationRepository;
         this.notificationDeliveryService = notificationDeliveryService;
+        this.notificationPreferenceService = notificationPreferenceService;
     }
 
     @Transactional
@@ -56,18 +59,28 @@ public class NotificationService {
             String targetUrl,
             Set<NotificationDeliveryChannel> deliveryChannels) {
         validateRecipientScope(tenant, recipientUser);
+        NotificationType requiredType =
+                Objects.requireNonNull(type, "Notification type is required");
 
         Notification notification =
                 new Notification(
                         tenant,
                         recipientUser,
-                        Objects.requireNonNull(type, "Notification type is required"),
+                        requiredType,
                         normalizeRequired(title, "Notification title", MAX_TITLE_LENGTH),
                         normalizeRequired(body, "Notification body", MAX_BODY_LENGTH),
                         normalizeTargetUrl(targetUrl));
 
         Notification saved = notificationRepository.save(notification);
         Set.copyOf(Objects.requireNonNull(deliveryChannels, "Delivery channels are required"))
+                .stream()
+                .filter(
+                        channel ->
+                                shouldEnqueueDelivery(
+                                        tenant.getId(),
+                                        recipientUser.getId(),
+                                        requiredType,
+                                        channel))
                 .forEach(channel -> notificationDeliveryService.enqueue(saved, channel));
         return mapToResponse(saved);
     }
@@ -114,6 +127,17 @@ public class NotificationService {
     @Transactional
     public int markAllRead(UUID tenantId, UUID recipientUserId) {
         return notificationRepository.markAllRead(tenantId, recipientUserId, Instant.now());
+    }
+
+    private boolean shouldEnqueueDelivery(
+            UUID tenantId,
+            UUID recipientUserId,
+            NotificationType type,
+            NotificationDeliveryChannel channel) {
+        if (channel != NotificationDeliveryChannel.EMAIL) {
+            return true;
+        }
+        return notificationPreferenceService.isEmailEnabled(tenantId, recipientUserId, type);
     }
 
     private void validateRecipientScope(Tenant tenant, AppUser recipientUser) {

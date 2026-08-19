@@ -27,3 +27,14 @@ export interface NotificationUnreadCount {
 export interface NotificationMarkAllReadResult {
     markedReadCount: number
 }
+
+export interface NotificationPreference {
+    type: NotificationType
+    inAppEnabled: boolean
+    emailEnabled: boolean
+    emailConfigurable: boolean
+}
+
+export interface NotificationPreferenceUpdateInput {
+    emailEnabled: boolean
+}
