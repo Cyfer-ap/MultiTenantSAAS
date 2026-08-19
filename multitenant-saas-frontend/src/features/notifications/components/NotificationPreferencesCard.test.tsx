@@ -62,7 +62,7 @@ describe('NotificationPreferencesCard', () => {
         expect(await screen.findByText('Task assignments')).toBeInTheDocument()
         expect(screen.getByText('In-app · always on')).toBeInTheDocument()
 
-        const taskEmail = screen.getByRole('checkbox', {
+        const taskEmail = screen.getByRole('switch', {
             name: 'Task assignments email notifications',
         })
         expect(taskEmail).toBeChecked()
@@ -79,7 +79,7 @@ describe('NotificationPreferencesCard', () => {
     it('does not allow security alert email delivery to be disabled', async () => {
         renderCard()
 
-        const securityEmail = await screen.findByRole('checkbox', {
+        const securityEmail = await screen.findByRole('switch', {
             name: 'Security alerts email notifications',
         })
         expect(securityEmail).toBeChecked()
