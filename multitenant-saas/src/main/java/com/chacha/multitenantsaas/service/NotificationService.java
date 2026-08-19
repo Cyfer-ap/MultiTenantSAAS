@@ -4,12 +4,14 @@ import com.chacha.multitenantsaas.dto.NotificationResponse;
 import com.chacha.multitenantsaas.dto.PageResponse;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.Notification;
+import com.chacha.multitenantsaas.entity.NotificationDeliveryChannel;
 import com.chacha.multitenantsaas.entity.NotificationType;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.NotificationRepository;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,9 +26,13 @@ public class NotificationService {
     private static final int MAX_TARGET_URL_LENGTH = 1000;
 
     private final NotificationRepository notificationRepository;
+    private final NotificationDeliveryService notificationDeliveryService;
 
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(
+            NotificationRepository notificationRepository,
+            NotificationDeliveryService notificationDeliveryService) {
         this.notificationRepository = notificationRepository;
+        this.notificationDeliveryService = notificationDeliveryService;
     }
 
     @Transactional
@@ -37,6 +43,18 @@ public class NotificationService {
             String title,
             String body,
             String targetUrl) {
+        return create(tenant, recipientUser, type, title, body, targetUrl, Set.of());
+    }
+
+    @Transactional
+    public NotificationResponse create(
+            Tenant tenant,
+            AppUser recipientUser,
+            NotificationType type,
+            String title,
+            String body,
+            String targetUrl,
+            Set<NotificationDeliveryChannel> deliveryChannels) {
         validateRecipientScope(tenant, recipientUser);
 
         Notification notification =
@@ -48,7 +66,10 @@ public class NotificationService {
                         normalizeRequired(body, "Notification body", MAX_BODY_LENGTH),
                         normalizeTargetUrl(targetUrl));
 
-        return mapToResponse(notificationRepository.save(notification));
+        Notification saved = notificationRepository.save(notification);
+        Set.copyOf(Objects.requireNonNull(deliveryChannels, "Delivery channels are required"))
+                .forEach(channel -> notificationDeliveryService.enqueue(saved, channel));
+        return mapToResponse(saved);
     }
 
     @Transactional(readOnly = true)
