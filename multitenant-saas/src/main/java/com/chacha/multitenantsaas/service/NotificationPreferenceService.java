@@ -25,9 +25,12 @@ public class NotificationPreferenceService {
     }
 
     @Transactional(readOnly = true)
-    public List<NotificationPreferenceResponse> getPreferences(UUID tenantId, UUID recipientUserId) {
-        Map<NotificationType, NotificationPreference> stored = new EnumMap<>(NotificationType.class);
-        repository.findByTenant_IdAndRecipientUser_Id(tenantId, recipientUserId)
+    public List<NotificationPreferenceResponse> getPreferences(
+            UUID tenantId, UUID recipientUserId) {
+        Map<NotificationType, NotificationPreference> stored =
+                new EnumMap<>(NotificationType.class);
+        repository
+                .findByTenant_IdAndRecipientUser_Id(tenantId, recipientUserId)
                 .forEach(preference -> stored.put(preference.getType(), preference));
 
         return Arrays.stream(NotificationType.values())
@@ -54,7 +57,8 @@ public class NotificationPreferenceService {
         Objects.requireNonNull(type, "Notification type is required");
 
         if (!isEmailConfigurable(type) && !emailEnabled) {
-            throw new IllegalArgumentException("Security alert email notifications cannot be disabled");
+            throw new IllegalArgumentException(
+                    "Security alert email notifications cannot be disabled");
         }
 
         NotificationPreference preference =

@@ -128,9 +128,7 @@ export function NotificationPreferencesCard({ tenantId }: { tenantId: string }) 
                     )}
 
                     {preferencesQuery.isError && (
-                        <Alert severity="error">
-                            {getErrorMessage(preferencesQuery.error)}
-                        </Alert>
+                        <Alert severity="error">{getErrorMessage(preferencesQuery.error)}</Alert>
                     )}
 
                     {preferencesQuery.data && (

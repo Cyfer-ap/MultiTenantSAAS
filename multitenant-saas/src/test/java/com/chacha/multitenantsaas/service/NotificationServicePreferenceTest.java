@@ -85,6 +85,8 @@ class NotificationServicePreferenceTest {
                 Set.of(NotificationDeliveryChannel.EMAIL));
 
         verify(notificationDeliveryService)
-                .enqueue(any(Notification.class), org.mockito.ArgumentMatchers.eq(NotificationDeliveryChannel.EMAIL));
+                .enqueue(
+                        any(Notification.class),
+                        org.mockito.ArgumentMatchers.eq(NotificationDeliveryChannel.EMAIL));
     }
 }

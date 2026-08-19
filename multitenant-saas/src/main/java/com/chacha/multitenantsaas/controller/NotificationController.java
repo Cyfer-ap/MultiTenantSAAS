@@ -98,7 +98,8 @@ public class NotificationController {
                 notificationPreferenceService.updateEmailPreference(
                         recipient.getTenant(), recipient, type, request.emailEnabled());
 
-        return noStore(ApiResponse.success("Notification preference updated successfully", response));
+        return noStore(
+                ApiResponse.success("Notification preference updated successfully", response));
     }
 
     @PatchMapping("/{notificationId}/read")

@@ -59,7 +59,8 @@ public class NotificationService {
             String targetUrl,
             Set<NotificationDeliveryChannel> deliveryChannels) {
         validateRecipientScope(tenant, recipientUser);
-        NotificationType requiredType = Objects.requireNonNull(type, "Notification type is required");
+        NotificationType requiredType =
+                Objects.requireNonNull(type, "Notification type is required");
 
         Notification notification =
                 new Notification(
@@ -71,11 +72,15 @@ public class NotificationService {
                         normalizeTargetUrl(targetUrl));
 
         Notification saved = notificationRepository.save(notification);
-        Set.copyOf(Objects.requireNonNull(deliveryChannels, "Delivery channels are required")).stream()
+        Set.copyOf(Objects.requireNonNull(deliveryChannels, "Delivery channels are required"))
+                .stream()
                 .filter(
                         channel ->
                                 shouldEnqueueDelivery(
-                                        tenant.getId(), recipientUser.getId(), requiredType, channel))
+                                        tenant.getId(),
+                                        recipientUser.getId(),
+                                        requiredType,
+                                        channel))
                 .forEach(channel -> notificationDeliveryService.enqueue(saved, channel));
         return mapToResponse(saved);
     }
