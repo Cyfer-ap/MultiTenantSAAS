@@ -142,6 +142,43 @@ class NotificationPersistenceIntegrationTest {
         assertThat(notificationRepository.count()).isZero();
     }
 
+    @Test
+    void marksEveryUnreadNotificationForOnlyTheScopedRecipient() {
+        Tenant tenant = createTenant("notification-read-all");
+        AppUser firstRecipient = createUser(tenant, "read-all-first");
+        AppUser secondRecipient = createUser(tenant, "read-all-second");
+
+        notificationService.create(
+                tenant,
+                firstRecipient,
+                NotificationType.TASK_ASSIGNED,
+                "First task",
+                "A task was assigned to you.",
+                "/projects/project-1?task=task-1");
+        notificationService.create(
+                tenant,
+                firstRecipient,
+                NotificationType.TASK_ASSIGNED,
+                "Second task",
+                "Another task was assigned to you.",
+                "/projects/project-1?task=task-2");
+        notificationService.create(
+                tenant,
+                secondRecipient,
+                NotificationType.TASK_ASSIGNED,
+                "Other recipient task",
+                "This belongs to another recipient.",
+                "/projects/project-1?task=task-3");
+
+        int markedRead = notificationService.markAllRead(tenant.getId(), firstRecipient.getId());
+
+        assertThat(markedRead).isEqualTo(2);
+        assertThat(notificationService.countUnread(tenant.getId(), firstRecipient.getId()))
+                .isZero();
+        assertThat(notificationService.countUnread(tenant.getId(), secondRecipient.getId()))
+                .isEqualTo(1);
+    }
+
     private Tenant createTenant(String prefix) {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         return tenantRepository.saveAndFlush(new Tenant(prefix + " Tenant", prefix + "-" + suffix));
