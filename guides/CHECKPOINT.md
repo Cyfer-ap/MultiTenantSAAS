@@ -1,54 +1,43 @@
-# MultiTenantSAAS Documentation Recovery Checkpoint
+# MultiTenantSAAS Documentation Checkpoint
 
-Date: 2026-08-16
+Date: 2026-08-20
+Repository: `Cyfer-ap/MultiTenantSAAS`
 
-Repository: Cyfer-ap/MultiTenantSAAS
+## Documentation status
 
-## Important discovery
+The repository documentation has moved beyond the earlier Step 40 snapshot. The current engineering phase is **product expansion + production/platform completion**.
 
-The repository currently contains the original generated documentation archive:
-
-`multitenant-saas-guide-update.zip`
-
-It also contains:
-
-`GUIDE_UPDATE_MANIFEST.md`
-
-The original manifest says the generated update bundle contains/replaces:
+Primary documentation entry points:
 
 - `readme.md`
-- `guides/progress.md`
-- `guides/Plan.txt`
-- `guides/security_model.md`
-- `multitenant-saas-frontend/README.md`
+- `CHECKPOINT.md`
+- `guides/README.md`
+- `guides/HANDOFF.md`
+- `guides/DEFERRED_PLATFORM_WORK.md`
+- `guides/collaboration_and_notifications.md`
+- `wiki/Home.md`
+- `wiki/Roadmap.md`
 
-and adds:
+## Current feature state
 
-- `guides/frontend_architecture.md`
-- `guides/frontend_testing.md`
-- `guides/authorization_v2_plan.md`
+Recent completed milestones include:
 
-## Current documentation state
+- authentication/security hardening
+- project Kanban/task collaboration workspace
+- threaded replies and pinned comments
+- R2/S3-compatible task attachments
+- notification persistence
+- durable notification delivery records/outbox processing
+- notification email delivery
+- in-app task-assignment notifications
 
-The repository has since advanced beyond that original snapshot.
+## Current migration state
 
-Current authoritative guide index:
+The repository keeps separate historical H2 and PostgreSQL baseline histories, with portable shared migrations in `db/common`.
 
-`guides/README.md`
+Current common migrations extend through **V26**.
 
-The guide index states that the current development phase is:
-
-**Step 40 - Transaction & Concurrency Hardening**
-
-and that current focused documentation includes:
-
-- `guides/current_architecture.md`
-- `guides/data_model.md`
-- `guides/authorization_model.md`
-- `guides/subscription_billing.md`
-- `guides/postgresql_and_migrations.md`
-- `guides/step39_closeout.md`
-- `guides/step40_transaction_concurrency.md`
+Never rewrite an already-applied migration.
 
 ## Source-of-truth rule
 
@@ -57,19 +46,25 @@ Use this order when documentation and implementation disagree:
 1. current application code and tests
 2. current Flyway migrations
 3. focused current guides
-4. historical workflow/planning guides
+4. historical workflow/planning notes
 
-## Migration checkpoint
+## Historical material
 
-The repository has separate H2 historical and PostgreSQL baseline histories.
-Future portable schema changes begin with V18 in `db/common`.
+Older generated bundles, `progress.md`, `Plan.txt`, Step 39/40 notes and the Authorization V2 plan remain useful as implementation history, but they are not authoritative statements of the current project phase.
 
-Never rewrite an already-applied migration.
+## Current backlog summary
 
-## Recovery recommendation
+Product follow-up:
 
-Use the repository's existing `multitenant-saas-guide-update.zip` when you need
-the exact earlier generated files.
+- broaden collaboration notifications
+- improve notification deep links/preferences/channel controls
 
-For ongoing development, use `guides/README.md` and the current focused guides
-instead of treating the old `progress.md` snapshot as authoritative.
+Platform follow-up:
+
+- external billing integration
+- usage metering
+- webhooks
+- API keys/service accounts
+- recovery/alerting/runbooks
+- enterprise SSO
+- advanced authorization delegation/explain-access

@@ -19,6 +19,8 @@
 **Product domains**
 
 - [[Projects-and-Tasks]]
+- [[Collaboration-and-Attachments]]
+- [[Notifications]]
 - [[Subscriptions-and-Quotas]]
 
 **Data & operations**

@@ -1,34 +1,35 @@
 # MultiTenantSAAS Wiki
 
-MultiTenantSAAS is a full-stack multi-tenant SaaS platform focused on tenant isolation, authentication, permission-oriented authorization, organization-aware access, projects/tasks, subscription enforcement, PostgreSQL correctness, and production hardening.
+MultiTenantSAAS is a full-stack multi-tenant SaaS platform focused on tenant isolation, secure authentication, scoped authorization, project collaboration, subscription enforcement, PostgreSQL correctness and production-oriented engineering.
 
-This Wiki is the long-form technical reference for the repository. The version-controlled source for these pages lives in the main repository under `wiki/`; publishing is described in [[Wiki-Maintenance]].
+The version-controlled source for this Wiki lives under `wiki/` in the main repository. Publishing is described in [[Wiki-Maintenance]].
 
 ## Current platform state
 
-Major foundations already implemented and hardened include:
+Major implemented capabilities include:
 
-- tenant and system-administrator control planes
-- JWT authentication, refresh-token rotation, logout, logout-all, password change/reset, and account lockout
+- separate tenant and system-admin control planes
+- JWT authentication, refresh-token rotation/revocation, logout/logout-all, password recovery and account lockout
 - shared-schema tenant isolation
-- permission-oriented authorization with scoped assignments
-- organization hierarchy and reporting relationships
+- scoped permission-oriented authorization and organization hierarchy
 - invitations
-- projects, memberships, and tasks
+- projects, memberships, tasks, Kanban/table workspace
+- task comments, mentions, activity, one-level replies and pinned comments
+- Cloudflare R2 / S3-compatible task attachments with presigned flows
 - tenant and platform audit logs
-- subscription plans, lifecycle evaluation, read-only enforcement, and resource quotas
-- PostgreSQL 17 + Flyway migration strategy
-- Docker/Compose development and deployment paths
-- PostgreSQL concurrency hardening and integration tests
-- request correlation IDs and completion logging
-- secured Actuator health/metrics access
-- SaaS-specific Micrometer counters
-- frontend route-level code splitting
-- CI, container/security checks, and Qodana analysis
+- internal subscription plans, lifecycle evaluation, read-only enforcement and quotas
+- tenant-scoped notification persistence and unread/read state
+- durable notification delivery records/outbox processing
+- email notification delivery integration
+- in-app task-assignment notification center
+- PostgreSQL 17 + Flyway + Testcontainers validation
+- Docker/Compose execution paths
+- request correlation, Actuator/Micrometer observability
+- CI, security scanning, container validation and Qodana
 
 ## Stack
 
-**Backend:** Java 21, Spring Boot 4.0.7, Spring Security, OAuth2 Resource Server/JWT, Spring Data JPA/Hibernate, Flyway, PostgreSQL, H2 test/history path, Testcontainers, Actuator.
+**Backend:** Java 21, Spring Boot 4.0.7, Spring Security, OAuth2 Resource Server/JWT, Spring Data JPA/Hibernate, Flyway, PostgreSQL, Testcontainers, Actuator, AWS SDK v2.
 
 **Frontend:** React 19.2, TypeScript 6, Vite 8, Material UI 9, React Router 7, TanStack React Query, Axios, React Hook Form, Zod, Vitest and Testing Library.
 
@@ -50,6 +51,7 @@ Controller
   +--> authorization / scope evaluation
   +--> subscription access
   +--> quota enforcement
+  +--> domain invariants
   |
   v
 Transactional services
@@ -61,7 +63,7 @@ Tenant-scoped repositories
 PostgreSQL
 ```
 
-These controls are deliberately separate. Authorization does not bypass subscription restrictions, and a valid subscription does not grant missing permissions.
+Authorization does not bypass subscription restrictions, and a valid subscription does not grant missing permissions.
 
 ## Start here
 
@@ -73,7 +75,14 @@ These controls are deliberately separate. Authorization does not bypass subscrip
 - [[Frontend]]
 - [[Testing-and-CI]]
 
-For production and support work:
+## Product domains
+
+- [[Projects-and-Tasks]]
+- [[Collaboration-and-Attachments]]
+- [[Notifications]]
+- [[Subscriptions-and-Quotas]]
+
+## Production and support
 
 - [[Production-Deployment]]
 - [[Operations-and-Observability]]
@@ -81,11 +90,13 @@ For production and support work:
 - [[PostgreSQL-and-Flyway]]
 - [[Transaction-and-Concurrency]]
 
-For project status:
+## Project status
 
 - [[Roadmap]]
 - [[Developer-Handoff]]
 
 ## Production-readiness boundary
 
-The application has a strong production-readiness foundation, but remaining operational work includes database backup/restore, external monitoring/alerting, provider billing/webhooks, background jobs/notifications, and additional load/failure-recovery verification.
+The platform has a strong production-readiness foundation, but it is not yet fully production-complete. Remaining platform gaps include external billing/reconciliation, durable usage metering, tenant webhooks, API keys/service accounts, backup/restore drills, external alerting/runbooks, enterprise SSO and broader failure/load verification.
+
+The notification outbox and production email-delivery foundation are already implemented and should no longer be described as deferred generic platform work.

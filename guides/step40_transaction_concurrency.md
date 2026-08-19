@@ -1,14 +1,21 @@
 # Step 40 — Transaction and concurrency hardening
 
-Step 40 addresses stale decisions, lost updates, duplicate work, and inconsistent error behavior under overlapping requests.
+> Historical milestone reference. Step 40 is no longer the active project phase.
 
-## Slice 40.1 — subscription state serialization
+Step 40 addressed stale decisions, lost updates, duplicate work and inconsistent error behavior under overlapping requests.
 
-Existing quota-sensitive growth operations use a pessimistic write lock on tenant subscription state.
+## Implemented protections
 
-Plan changes and lifecycle updates now load mutable subscription state under the same write-lock discipline.
+Database-backed hardening now covers the major paths that motivated this milestone, including:
 
-Subscription creation locks the tenant row before performing the one-subscription-per-tenant existence check/insert sequence.
+- subscription state serialization
+- one-subscription-per-tenant creation races
+- invitation single-use/replacement behavior
+- failed-login/account-lock races
+- refresh-token rotation races
+- session/credential concurrency
+- PostgreSQL pessimistic-write-lock behavior
+- targeted PostgreSQL concurrency integration tests
 
 ## Locking rule
 
@@ -20,13 +27,14 @@ subscription creation invariant
 -> lock tenant row before check/insert
 ```
 
-Use database-backed locks, not application-process mutexes.
+Use database-backed locks and constraints for cross-request invariants rather than application-process mutexes.
 
-## Remaining slices
+## Current regression coverage
 
-1. invitation single-use/replacement races
-2. tenant/system-admin failed-login counters
-3. session-version/password/logout-all lost updates
-4. duplicate/integrity race normalization
-5. PostgreSQL concurrency integration tests
-6. lock-order/deadlock review
+`PostgreSqlConcurrencyIntegrationTest` exercises representative PostgreSQL concurrency behavior, including competing pessimistic locks, concurrent subscription creation, failed-login updates and one-time refresh-token rotation.
+
+## Remaining concurrency work
+
+Concurrency is now treated as an invariant to preserve for every new feature rather than as a standalone numbered phase.
+
+Future work should be added only where code review or testing identifies a concrete race, integrity-normalization issue or deadlock/lock-order risk.
