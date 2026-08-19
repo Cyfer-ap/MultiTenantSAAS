@@ -1,5 +1,6 @@
 package com.chacha.multitenantsaas.service;
 
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -40,12 +41,12 @@ class ProjectMembershipNotificationServiceTest {
         actorId = UUID.randomUUID();
         memberId = UUID.randomUUID();
 
-        when(project.getTenant()).thenReturn(tenant);
-        when(project.getId()).thenReturn(projectId);
-        when(project.getName()).thenReturn("Launch Project");
-        when(actor.getId()).thenReturn(actorId);
-        when(actor.getFullName()).thenReturn("Ada Admin");
-        when(member.getId()).thenReturn(memberId);
+        lenient().when(project.getTenant()).thenReturn(tenant);
+        lenient().when(project.getId()).thenReturn(projectId);
+        lenient().when(project.getName()).thenReturn("Launch Project");
+        lenient().when(actor.getId()).thenReturn(actorId);
+        lenient().when(actor.getFullName()).thenReturn("Ada Admin");
+        lenient().when(member.getId()).thenReturn(memberId);
     }
 
     @Test
