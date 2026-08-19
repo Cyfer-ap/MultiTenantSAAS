@@ -330,6 +330,7 @@ function CommentCard({
     const focused = comment.id === focusCommentId
     const linkedReply =
         allowThreading && targetReply?.parentCommentId === comment.id ? targetReply : undefined
+    const repliesExpanded = expanded || Boolean(linkedReply)
 
     const replyParams = { page: 0, size: 50, sortDir: 'asc' as const }
     const repliesQuery = useTaskCommentReplies(
@@ -338,7 +339,7 @@ function CommentCard({
         taskId,
         comment.id,
         replyParams,
-        allowThreading && expanded && comment.replyCount > 0,
+        allowThreading && repliesExpanded && comment.replyCount > 0,
     )
     const createReplyMutation = useCreateTaskCommentReply(tenantId, projectId, taskId)
     const updateMutation = useUpdateTaskComment(tenantId, projectId, taskId)
@@ -355,10 +356,6 @@ function CommentCard({
     const replyAlreadyLoaded = Boolean(
         linkedReply && repliesQuery.data?.content.some((reply) => reply.id === linkedReply.id),
     )
-
-    useEffect(() => {
-        if (linkedReply) setExpanded(true)
-    }, [linkedReply])
 
     useEffect(() => {
         if (!focused) return
@@ -592,7 +589,7 @@ function CommentCard({
                                 size="small"
                                 startIcon={<ForumOutlinedIcon />}
                             >
-                                {expanded ? 'Hide' : 'View'} {comment.replyCount}{' '}
+                                {repliesExpanded ? 'Hide' : 'View'} {comment.replyCount}{' '}
                                 {comment.replyCount === 1 ? 'reply' : 'replies'}
                             </Button>
                         )}
@@ -620,7 +617,7 @@ function CommentCard({
                     </Box>
                 )}
 
-                {allowThreading && expanded && comment.replyCount > 0 && (
+                {allowThreading && repliesExpanded && comment.replyCount > 0 && (
                     <Box
                         sx={{
                             borderLeft: 2,
@@ -723,6 +720,8 @@ export function ProjectTaskCollaborationDrawer({
     const [tab, setTab] = useState<CollaborationTab>('comments')
     const [mutationError, setMutationError] = useState<string | null>(null)
     const [deepLinkTarget, setDeepLinkTarget] = useState<DeepLinkTarget>(readDeepLinkTarget)
+    const activeTab: CollaborationTab =
+        deepLinkTarget.commentId || deepLinkTarget.replyId ? 'comments' : tab
 
     const pageParams = { page: 0, size: 50, sortDir: 'desc' as const }
     const commentsQuery = useTaskComments(tenantId, projectId, task.id, pageParams, open)
@@ -750,10 +749,6 @@ export function ProjectTaskCollaborationDrawer({
         window.addEventListener('popstate', syncTarget)
         return () => window.removeEventListener('popstate', syncTarget)
     }, [task.id])
-
-    useEffect(() => {
-        if (deepLinkTarget.commentId || deepLinkTarget.replyId) setTab('comments')
-    }, [deepLinkTarget.commentId, deepLinkTarget.replyId])
 
     const pinnedIds = useMemo(
         () => new Set((pinnedCommentsQuery.data ?? []).map((comment) => comment.id)),
@@ -899,7 +894,7 @@ export function ProjectTaskCollaborationDrawer({
                 <Tabs
                     aria-label="Task collaboration views"
                     onChange={(_event, value: CollaborationTab) => setTab(value)}
-                    value={tab}
+                    value={activeTab}
                     variant="fullWidth"
                 >
                     <Tab
@@ -934,7 +929,7 @@ export function ProjectTaskCollaborationDrawer({
                         </Alert>
                     )}
 
-                    {tab === 'comments' && (
+                    {activeTab === 'comments' && (
                         <Stack spacing={2}>
                             {readOnly ? (
                                 <Alert severity="info">
@@ -1035,7 +1030,7 @@ export function ProjectTaskCollaborationDrawer({
                         </Stack>
                     )}
 
-                    {tab === 'attachments' && (
+                    {activeTab === 'attachments' && (
                         <ProjectTaskAttachmentsPanel
                             comments={commentsQuery.data?.content ?? []}
                             currentUserId={currentUserId}
@@ -1047,7 +1042,7 @@ export function ProjectTaskCollaborationDrawer({
                         />
                     )}
 
-                    {tab === 'activity' && (
+                    {activeTab === 'activity' && (
                         <Stack spacing={1.25}>
                             {activityQuery.isPending && (
                                 <Stack
