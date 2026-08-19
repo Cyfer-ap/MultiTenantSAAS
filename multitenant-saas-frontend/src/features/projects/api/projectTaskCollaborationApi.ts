@@ -28,6 +28,18 @@ async function getComments(
     return response.data.data
 }
 
+async function getComment(
+    tenantId: string,
+    projectId: string,
+    taskId: string,
+    commentId: string,
+): Promise<TaskComment> {
+    const response = await httpClient.get<ApiResponse<TaskComment>>(
+        `${taskPath(tenantId, projectId, taskId)}/comments/${commentId}`,
+    )
+    return response.data.data
+}
+
 async function getPinnedComments(
     tenantId: string,
     projectId: string,
@@ -264,6 +276,7 @@ async function getActivity(
 
 export const projectTaskCollaborationApi = {
     getComments,
+    getComment,
     getPinnedComments,
     getReplies,
     createComment,

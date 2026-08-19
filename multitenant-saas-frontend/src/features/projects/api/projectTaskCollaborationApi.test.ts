@@ -77,6 +77,7 @@ describe('projectTaskCollaborationApi', () => {
         const get = vi
             .spyOn(httpClient, 'get')
             .mockResolvedValueOnce(successfulResponse(page))
+            .mockResolvedValueOnce(successfulResponse(comment))
             .mockResolvedValueOnce(successfulResponse([comment]))
             .mockResolvedValueOnce(successfulResponse(replyPage))
             .mockResolvedValueOnce(successfulResponse(activityPage))
@@ -89,6 +90,7 @@ describe('projectTaskCollaborationApi', () => {
         const base = '/api/tenants/tenant-1/projects/project-1/tasks/task-1'
 
         await projectTaskCollaborationApi.getComments('tenant-1', 'project-1', 'task-1', descParams)
+        await projectTaskCollaborationApi.getComment('tenant-1', 'project-1', 'task-1', 'comment-1')
         await projectTaskCollaborationApi.getPinnedComments('tenant-1', 'project-1', 'task-1')
         await projectTaskCollaborationApi.getReplies(
             'tenant-1',
@@ -128,8 +130,9 @@ describe('projectTaskCollaborationApi', () => {
         await projectTaskCollaborationApi.getActivity('tenant-1', 'project-1', 'task-1', descParams)
 
         expect(get).toHaveBeenNthCalledWith(1, `${base}/comments`, { params: descParams })
-        expect(get).toHaveBeenNthCalledWith(2, `${base}/comments/pinned`)
-        expect(get).toHaveBeenNthCalledWith(3, `${base}/comments/comment-1/replies`, {
+        expect(get).toHaveBeenNthCalledWith(2, `${base}/comments/comment-1`)
+        expect(get).toHaveBeenNthCalledWith(3, `${base}/comments/pinned`)
+        expect(get).toHaveBeenNthCalledWith(4, `${base}/comments/comment-1/replies`, {
             params: ascParams,
         })
         expect(post).toHaveBeenCalledWith(`${base}/comments`, input)
@@ -138,6 +141,6 @@ describe('projectTaskCollaborationApi', () => {
         expect(put).toHaveBeenCalledWith(`${base}/comments/comment-1`, input)
         expect(remove).toHaveBeenCalledWith(`${base}/comments/comment-1`)
         expect(remove).toHaveBeenCalledWith(`${base}/comments/comment-1/pin`)
-        expect(get).toHaveBeenNthCalledWith(4, `${base}/activity`, { params: descParams })
+        expect(get).toHaveBeenNthCalledWith(5, `${base}/activity`, { params: descParams })
     })
 })

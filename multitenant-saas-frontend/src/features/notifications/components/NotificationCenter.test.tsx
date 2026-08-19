@@ -73,6 +73,8 @@ describe('NotificationCenter', () => {
     it('shows unread notifications and opens their deep link after marking them read', async () => {
         const user = userEvent.setup()
         const markRead = vi.spyOn(notificationsApi, 'markRead')
+        const popState = vi.fn()
+        window.addEventListener('popstate', popState)
         renderCenter()
 
         const notificationButton = screen.getByRole('button', { name: /^notifications/i })
@@ -93,6 +95,8 @@ describe('NotificationCenter', () => {
                 '/projects/project-1?task=task-1',
             )
         })
+        expect(popState).toHaveBeenCalledTimes(1)
+        window.removeEventListener('popstate', popState)
     })
 
     it('marks every visible unread notification as read', async () => {

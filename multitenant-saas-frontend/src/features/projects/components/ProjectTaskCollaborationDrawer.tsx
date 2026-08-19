@@ -37,7 +37,7 @@ import {
     Typography,
 } from '@mui/material'
 import type { FormEvent } from 'react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import {
     useCreateTaskComment,
@@ -51,6 +51,7 @@ import {
     useUnpinTaskComment,
     useUpdateTaskComment,
 } from '../hooks/useProjectTaskCollaboration'
+import { useTaskCommentDeepLink } from '../hooks/useTaskCommentDeepLink'
 import type { TaskActivityType, TaskComment } from '../types/taskCollaboration'
 import type { ProjectTask } from '../types/projectTasks'
 import type { ProjectMember } from '../types/projects'
@@ -69,6 +70,11 @@ interface ProjectTaskCollaborationDrawerProps {
 }
 
 type CollaborationTab = 'comments' | 'attachments' | 'activity'
+
+interface DeepLinkTarget {
+    commentId: string
+    replyId: string
+}
 
 const statusLabels: Record<ProjectTask['status'], string> = {
     TODO: 'To do',
@@ -122,6 +128,15 @@ function formatDateTime(value: string | null): string {
 
 function getErrorMessage(error: unknown, fallback: string): string {
     return error instanceof Error ? error.message : fallback
+}
+
+function readDeepLinkTarget(): DeepLinkTarget {
+    if (typeof window === 'undefined') return { commentId: '', replyId: '' }
+    const searchParams = new URL(window.location.href).searchParams
+    return {
+        commentId: searchParams.get('comment')?.trim() ?? '',
+        replyId: searchParams.get('reply')?.trim() ?? '',
+    }
 }
 
 function MemberMentionPicker({
@@ -284,6 +299,8 @@ interface CommentCardProps {
     readOnly: boolean
     allowThreading: boolean
     allowPinning: boolean
+    focusCommentId?: string
+    targetReply?: TaskComment
     onFeedback: (message: string) => void
 }
 
@@ -297,8 +314,11 @@ function CommentCard({
     readOnly,
     allowThreading,
     allowPinning,
+    focusCommentId,
+    targetReply,
     onFeedback,
 }: CommentCardProps) {
+    const cardRef = useRef<HTMLDivElement | null>(null)
     const [expanded, setExpanded] = useState(false)
     const [replying, setReplying] = useState(false)
     const [editing, setEditing] = useState(false)
@@ -307,6 +327,11 @@ function CommentCard({
     const [confirmDelete, setConfirmDelete] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
+    const focused = comment.id === focusCommentId
+    const linkedReply =
+        allowThreading && targetReply?.parentCommentId === comment.id ? targetReply : undefined
+    const repliesExpanded = expanded || Boolean(linkedReply)
+
     const replyParams = { page: 0, size: 50, sortDir: 'asc' as const }
     const repliesQuery = useTaskCommentReplies(
         tenantId,
@@ -314,7 +339,7 @@ function CommentCard({
         taskId,
         comment.id,
         replyParams,
-        allowThreading && expanded && comment.replyCount > 0,
+        allowThreading && repliesExpanded && comment.replyCount > 0,
     )
     const createReplyMutation = useCreateTaskCommentReply(tenantId, projectId, taskId)
     const updateMutation = useUpdateTaskComment(tenantId, projectId, taskId)
@@ -328,6 +353,17 @@ function CommentCard({
     )
     const ownComment = comment.authorUserId === currentUserId
     const canMutateBody = ownComment && !readOnly && !comment.deleted
+    const replyAlreadyLoaded = Boolean(
+        linkedReply && repliesQuery.data?.content.some((reply) => reply.id === linkedReply.id),
+    )
+
+    useEffect(() => {
+        if (!focused) return
+        const frameId = window.requestAnimationFrame(() => {
+            cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        })
+        return () => window.cancelAnimationFrame(frameId)
+    }, [focused])
 
     const startEditing = () => {
         setEditBody(comment.body ?? '')
@@ -410,10 +446,16 @@ function CommentCard({
     return (
         <Paper
             data-comment-id={comment.id}
+            data-deep-link-target={focused ? 'true' : undefined}
+            ref={cardRef}
             variant="outlined"
             sx={{
-                borderColor: comment.pinned ? 'primary.main' : undefined,
+                bgcolor: focused ? 'action.selected' : undefined,
+                borderColor: focused || comment.pinned ? 'primary.main' : undefined,
+                boxShadow: focused ? 2 : undefined,
                 padding: 1.75,
+                transition:
+                    'background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
             }}
         >
             <Stack spacing={1.25}>
@@ -547,7 +589,7 @@ function CommentCard({
                                 size="small"
                                 startIcon={<ForumOutlinedIcon />}
                             >
-                                {expanded ? 'Hide' : 'View'} {comment.replyCount}{' '}
+                                {repliesExpanded ? 'Hide' : 'View'} {comment.replyCount}{' '}
                                 {comment.replyCount === 1 ? 'reply' : 'replies'}
                             </Button>
                         )}
@@ -575,7 +617,7 @@ function CommentCard({
                     </Box>
                 )}
 
-                {allowThreading && expanded && comment.replyCount > 0 && (
+                {allowThreading && repliesExpanded && comment.replyCount > 0 && (
                     <Box
                         sx={{
                             borderLeft: 2,
@@ -584,6 +626,26 @@ function CommentCard({
                             paddingLeft: 1.5,
                         }}
                     >
+                        {linkedReply && !replyAlreadyLoaded && (
+                            <Stack
+                                spacing={1.25}
+                                sx={{ marginBottom: repliesQuery.data ? 1.25 : 0 }}
+                            >
+                                <CommentCard
+                                    allowPinning={false}
+                                    allowThreading={false}
+                                    comment={linkedReply}
+                                    currentUserId={currentUserId}
+                                    focusCommentId={linkedReply.id}
+                                    members={members}
+                                    onFeedback={onFeedback}
+                                    projectId={projectId}
+                                    readOnly={readOnly}
+                                    taskId={taskId}
+                                    tenantId={tenantId}
+                                />
+                            </Stack>
+                        )}
                         {repliesQuery.isPending && (
                             <Stack spacing={1} aria-label="Loading comment replies" role="status">
                                 <Skeleton height={82} variant="rounded" />
@@ -605,6 +667,7 @@ function CommentCard({
                                         allowThreading={false}
                                         comment={reply}
                                         currentUserId={currentUserId}
+                                        focusCommentId={linkedReply?.id}
                                         key={reply.id}
                                         members={members}
                                         onFeedback={onFeedback}
@@ -656,12 +719,36 @@ export function ProjectTaskCollaborationDrawer({
 }: ProjectTaskCollaborationDrawerProps) {
     const [tab, setTab] = useState<CollaborationTab>('comments')
     const [mutationError, setMutationError] = useState<string | null>(null)
+    const [deepLinkTarget, setDeepLinkTarget] = useState<DeepLinkTarget>(readDeepLinkTarget)
+    const activeTab: CollaborationTab =
+        deepLinkTarget.commentId || deepLinkTarget.replyId ? 'comments' : tab
 
     const pageParams = { page: 0, size: 50, sortDir: 'desc' as const }
     const commentsQuery = useTaskComments(tenantId, projectId, task.id, pageParams, open)
     const pinnedCommentsQuery = usePinnedTaskComments(tenantId, projectId, task.id, open)
     const activityQuery = useTaskActivity(tenantId, projectId, task.id, pageParams, open)
     const createCommentMutation = useCreateTaskComment(tenantId, projectId, task.id)
+    const targetCommentQuery = useTaskCommentDeepLink(
+        tenantId,
+        projectId,
+        task.id,
+        deepLinkTarget.commentId,
+        open && Boolean(deepLinkTarget.commentId),
+    )
+    const targetReplyQuery = useTaskCommentDeepLink(
+        tenantId,
+        projectId,
+        task.id,
+        deepLinkTarget.replyId,
+        open && Boolean(deepLinkTarget.replyId),
+    )
+
+    useEffect(() => {
+        const syncTarget = () => setDeepLinkTarget(readDeepLinkTarget())
+        syncTarget()
+        window.addEventListener('popstate', syncTarget)
+        return () => window.removeEventListener('popstate', syncTarget)
+    }, [task.id])
 
     const pinnedIds = useMemo(
         () => new Set((pinnedCommentsQuery.data ?? []).map((comment) => comment.id)),
@@ -671,6 +758,25 @@ export function ProjectTaskCollaborationDrawer({
         () => (commentsQuery.data?.content ?? []).filter((comment) => !pinnedIds.has(comment.id)),
         [commentsQuery.data?.content, pinnedIds],
     )
+    const loadedCommentIds = useMemo(
+        () =>
+            new Set([
+                ...(pinnedCommentsQuery.data ?? []).map((comment) => comment.id),
+                ...(commentsQuery.data?.content ?? []).map((comment) => comment.id),
+            ]),
+        [commentsQuery.data?.content, pinnedCommentsQuery.data],
+    )
+    const linkedComment =
+        targetCommentQuery.data &&
+        !targetCommentQuery.data.parentCommentId &&
+        !loadedCommentIds.has(targetCommentQuery.data.id)
+            ? targetCommentQuery.data
+            : undefined
+    const targetReply =
+        targetReplyQuery.data?.parentCommentId === deepLinkTarget.commentId
+            ? targetReplyQuery.data
+            : undefined
+    const topLevelFocusId = deepLinkTarget.replyId ? undefined : deepLinkTarget.commentId
 
     const copyDeepLink = async () => {
         try {
@@ -691,10 +797,37 @@ export function ProjectTaskCollaborationDrawer({
         }
     }
 
+    const closeDrawer = () => {
+        const url = new URL(window.location.href)
+        url.searchParams.delete('comment')
+        url.searchParams.delete('reply')
+        window.history.replaceState({}, '', url)
+        setDeepLinkTarget({ commentId: '', replyId: '' })
+        onClose()
+    }
+
+    const renderCommentCard = (comment: TaskComment) => (
+        <CommentCard
+            allowPinning
+            allowThreading
+            comment={comment}
+            currentUserId={currentUserId}
+            focusCommentId={topLevelFocusId}
+            key={comment.id}
+            members={members}
+            onFeedback={onFeedback}
+            projectId={projectId}
+            readOnly={readOnly}
+            targetReply={comment.id === deepLinkTarget.commentId ? targetReply : undefined}
+            taskId={task.id}
+            tenantId={tenantId}
+        />
+    )
+
     return (
         <Drawer
             anchor="right"
-            onClose={onClose}
+            onClose={closeDrawer}
             open={open}
             slotProps={{
                 paper: {
@@ -727,7 +860,7 @@ export function ProjectTaskCollaborationDrawer({
                                 <ContentCopyRoundedIcon />
                             </IconButton>
                         </Tooltip>
-                        <IconButton aria-label="Close task details" onClick={onClose}>
+                        <IconButton aria-label="Close task details" onClick={closeDrawer}>
                             <CloseRoundedIcon />
                         </IconButton>
                     </Stack>
@@ -761,7 +894,7 @@ export function ProjectTaskCollaborationDrawer({
                 <Tabs
                     aria-label="Task collaboration views"
                     onChange={(_event, value: CollaborationTab) => setTab(value)}
-                    value={tab}
+                    value={activeTab}
                     variant="fullWidth"
                 >
                     <Tab
@@ -796,7 +929,7 @@ export function ProjectTaskCollaborationDrawer({
                         </Alert>
                     )}
 
-                    {tab === 'comments' && (
+                    {activeTab === 'comments' && (
                         <Stack spacing={2}>
                             {readOnly ? (
                                 <Alert severity="info">
@@ -810,6 +943,22 @@ export function ProjectTaskCollaborationDrawer({
                                     onSubmit={createComment}
                                     submitting={createCommentMutation.isPending}
                                 />
+                            )}
+
+                            {(targetCommentQuery.isError || targetReplyQuery.isError) && (
+                                <Alert severity="warning">
+                                    The referenced comment could not be loaded. The task discussion
+                                    is still available below.
+                                </Alert>
+                            )}
+
+                            {linkedComment && (
+                                <Stack spacing={1.25}>
+                                    <Typography color="text.secondary" variant="subtitle2">
+                                        Referenced comment
+                                    </Typography>
+                                    {renderCommentCard(linkedComment)}
+                                </Stack>
                             )}
 
                             {pinnedCommentsQuery.isError && (
@@ -831,21 +980,7 @@ export function ProjectTaskCollaborationDrawer({
                                         <PushPinRoundedIcon color="primary" fontSize="small" />
                                         <Typography variant="subtitle2">Pinned comments</Typography>
                                     </Stack>
-                                    {pinnedCommentsQuery.data?.map((comment) => (
-                                        <CommentCard
-                                            allowPinning
-                                            allowThreading
-                                            comment={comment}
-                                            currentUserId={currentUserId}
-                                            key={comment.id}
-                                            members={members}
-                                            onFeedback={onFeedback}
-                                            projectId={projectId}
-                                            readOnly={readOnly}
-                                            taskId={task.id}
-                                            tenantId={tenantId}
-                                        />
-                                    ))}
+                                    {pinnedCommentsQuery.data?.map(renderCommentCard)}
                                 </Stack>
                             )}
 
@@ -867,18 +1002,20 @@ export function ProjectTaskCollaborationDrawer({
                                     )}
                                 </Alert>
                             )}
-                            {commentsQuery.isSuccess && commentsQuery.data.content.length === 0 && (
-                                <Box sx={{ padding: 3, textAlign: 'center' }}>
-                                    <ChatBubbleOutlineRoundedIcon color="disabled" />
-                                    <Typography sx={{ marginTop: 1 }} variant="subtitle2">
-                                        No comments yet
-                                    </Typography>
-                                    <Typography color="text.secondary" variant="body2">
-                                        Start the conversation with context the whole project can
-                                        keep.
-                                    </Typography>
-                                </Box>
-                            )}
+                            {commentsQuery.isSuccess &&
+                                commentsQuery.data.content.length === 0 &&
+                                !linkedComment && (
+                                    <Box sx={{ padding: 3, textAlign: 'center' }}>
+                                        <ChatBubbleOutlineRoundedIcon color="disabled" />
+                                        <Typography sx={{ marginTop: 1 }} variant="subtitle2">
+                                            No comments yet
+                                        </Typography>
+                                        <Typography color="text.secondary" variant="body2">
+                                            Start the conversation with context the whole project
+                                            can keep.
+                                        </Typography>
+                                    </Box>
+                                )}
 
                             {regularComments.length > 0 && (
                                 <Stack spacing={1.5}>
@@ -887,27 +1024,13 @@ export function ProjectTaskCollaborationDrawer({
                                             Discussion
                                         </Typography>
                                     )}
-                                    {regularComments.map((comment) => (
-                                        <CommentCard
-                                            allowPinning
-                                            allowThreading
-                                            comment={comment}
-                                            currentUserId={currentUserId}
-                                            key={comment.id}
-                                            members={members}
-                                            onFeedback={onFeedback}
-                                            projectId={projectId}
-                                            readOnly={readOnly}
-                                            taskId={task.id}
-                                            tenantId={tenantId}
-                                        />
-                                    ))}
+                                    {regularComments.map(renderCommentCard)}
                                 </Stack>
                             )}
                         </Stack>
                     )}
 
-                    {tab === 'attachments' && (
+                    {activeTab === 'attachments' && (
                         <ProjectTaskAttachmentsPanel
                             comments={commentsQuery.data?.content ?? []}
                             currentUserId={currentUserId}
@@ -919,7 +1042,7 @@ export function ProjectTaskCollaborationDrawer({
                         />
                     )}
 
-                    {tab === 'activity' && (
+                    {activeTab === 'activity' && (
                         <Stack spacing={1.25}>
                             {activityQuery.isPending && (
                                 <Stack
