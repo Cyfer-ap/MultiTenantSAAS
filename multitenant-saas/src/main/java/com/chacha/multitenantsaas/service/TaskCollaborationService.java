@@ -47,6 +47,7 @@ public class TaskCollaborationService {
     private final TaskActivityService taskActivityService;
     private final AuditLogService auditLogService;
     private final TaskAttachmentService taskAttachmentService;
+    private final TaskNotificationService taskNotificationService;
 
     public TaskCollaborationService(
             TaskCommentRepository taskCommentRepository,
@@ -57,7 +58,8 @@ public class TaskCollaborationService {
             CurrentActorService currentActorService,
             TaskActivityService taskActivityService,
             AuditLogService auditLogService,
-            TaskAttachmentService taskAttachmentService) {
+            TaskAttachmentService taskAttachmentService,
+            TaskNotificationService taskNotificationService) {
         this.taskCommentRepository = taskCommentRepository;
         this.projectRepository = projectRepository;
         this.projectTaskRepository = projectTaskRepository;
@@ -67,6 +69,7 @@ public class TaskCollaborationService {
         this.taskActivityService = taskActivityService;
         this.auditLogService = auditLogService;
         this.taskAttachmentService = taskAttachmentService;
+        this.taskNotificationService = taskNotificationService;
     }
 
     @Transactional(readOnly = true)
@@ -127,6 +130,7 @@ public class TaskCollaborationService {
                 firstMentionOrActor(mentionedUsers, actor),
                 AuditAction.TASK_COMMENT_CREATED,
                 "Task comment created");
+        taskNotificationService.notifyCommentCreated(task, saved, actor, mentionedUsers);
         return mapToResponse(saved);
     }
 
@@ -175,6 +179,7 @@ public class TaskCollaborationService {
                 parent.getAuthorUser(),
                 AuditAction.TASK_COMMENT_REPLIED,
                 "Task comment reply created");
+        taskNotificationService.notifyReplyCreated(task, saved, parent, actor, mentionedUsers);
         return mapToResponse(saved);
     }
 
@@ -199,6 +204,7 @@ public class TaskCollaborationService {
 
         Set<AppUser> mentionedUsers =
                 resolveMentionedUsers(tenantId, projectId, request.mentionedUserIds());
+        Set<AppUser> newlyMentionedUsers = findNewMentions(comment, mentionedUsers);
         comment.edit(normalizeBody(request.body()), mentionedUsers);
         TaskComment saved = taskCommentRepository.save(comment);
 
@@ -211,6 +217,7 @@ public class TaskCollaborationService {
                 firstMentionOrActor(mentionedUsers, actor),
                 AuditAction.TASK_COMMENT_UPDATED,
                 "Task comment updated");
+        taskNotificationService.notifyMentionedUsers(task, saved, actor, newlyMentionedUsers);
         return mapToResponse(saved);
     }
 
@@ -339,6 +346,21 @@ public class TaskCollaborationService {
             users.add(user);
         }
         return users;
+    }
+
+    private Set<AppUser> findNewMentions(TaskComment comment, Set<AppUser> mentionedUsers) {
+        Set<UUID> existingUserIds = new LinkedHashSet<>();
+        for (TaskCommentMention mention : comment.getMentions()) {
+            existingUserIds.add(mention.getMentionedUser().getId());
+        }
+
+        Set<AppUser> newMentions = new LinkedHashSet<>();
+        for (AppUser user : mentionedUsers) {
+            if (!existingUserIds.contains(user.getId())) {
+                newMentions.add(user);
+            }
+        }
+        return newMentions;
     }
 
     private Project getProjectOrThrow(UUID tenantId, UUID projectId) {
