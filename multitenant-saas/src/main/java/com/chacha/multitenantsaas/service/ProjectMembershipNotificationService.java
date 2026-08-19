@@ -20,7 +20,8 @@ public class ProjectMembershipNotificationService {
         this.notificationService = notificationService;
     }
 
-    public void notifyAdded(Project project, AppUser actor, AppUser member, ProjectMemberRole role) {
+    public void notifyAdded(
+            Project project, AppUser actor, AppUser member, ProjectMemberRole role) {
         if (!shouldNotify(member, actor)) {
             return;
         }

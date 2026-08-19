@@ -67,11 +67,7 @@ class ProjectMembershipNotificationServiceTest {
     @Test
     void notifiesMemberWhenProjectRoleChanges() {
         service.notifyRoleChanged(
-                project,
-                actor,
-                member,
-                ProjectMemberRole.MEMBER,
-                ProjectMemberRole.PROJECT_LEAD);
+                project, actor, member, ProjectMemberRole.MEMBER, ProjectMemberRole.PROJECT_LEAD);
 
         verify(notificationService)
                 .create(
@@ -106,21 +102,13 @@ class ProjectMembershipNotificationServiceTest {
         service.notifyAdded(project, actor, member, ProjectMemberRole.MEMBER);
         service.notifyRemoved(project, actor, member);
         service.notifyRoleChanged(
-                project,
-                actor,
-                member,
-                ProjectMemberRole.MEMBER,
-                ProjectMemberRole.PROJECT_LEAD);
+                project, actor, member, ProjectMemberRole.MEMBER, ProjectMemberRole.PROJECT_LEAD);
 
         verifyNoInteractions(notificationService);
 
         when(member.getId()).thenReturn(memberId);
         service.notifyRoleChanged(
-                project,
-                actor,
-                member,
-                ProjectMemberRole.MEMBER,
-                ProjectMemberRole.MEMBER);
+                project, actor, member, ProjectMemberRole.MEMBER, ProjectMemberRole.MEMBER);
 
         verify(notificationService, never())
                 .create(
