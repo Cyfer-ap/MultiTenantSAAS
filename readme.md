@@ -4,9 +4,9 @@ A full-stack multi-tenant SaaS platform focused on secure tenant isolation, perm
 
 > **Current documentation snapshot**
 >
-> Repository: `Cyfer-ap/MultiTenantSAAS`  
-> Branch: `main`  
-> Base reviewed state: post-PR #59 feature state, with Dependabot PRs #53/#54 intentionally skipped/reverted  
+> Repository: `Cyfer-ap/MultiTenantSAAS`
+> Branch: `main`
+> Base reviewed state: post-PR #59 feature state, with Dependabot PRs #53/#54 intentionally skipped/reverted
 > Current phase: **product expansion + production/platform completion**
 
 ## Platform capabilities
