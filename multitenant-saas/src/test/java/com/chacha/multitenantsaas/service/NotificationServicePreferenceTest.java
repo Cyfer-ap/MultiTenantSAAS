@@ -1,6 +1,8 @@
 package com.chacha.multitenantsaas.service;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -74,6 +76,9 @@ class NotificationServicePreferenceTest {
         when(notificationPreferenceService.isEmailEnabled(
                         tenantId, recipientId, NotificationType.TASK_ASSIGNED))
                 .thenReturn(true);
+        doReturn(null)
+                .when(notificationDeliveryService)
+                .enqueue(any(Notification.class), eq(NotificationDeliveryChannel.EMAIL));
 
         service.create(
                 tenant,
@@ -85,8 +90,6 @@ class NotificationServicePreferenceTest {
                 Set.of(NotificationDeliveryChannel.EMAIL));
 
         verify(notificationDeliveryService)
-                .enqueue(
-                        any(Notification.class),
-                        org.mockito.ArgumentMatchers.eq(NotificationDeliveryChannel.EMAIL));
+                .enqueue(any(Notification.class), eq(NotificationDeliveryChannel.EMAIL));
     }
 }
