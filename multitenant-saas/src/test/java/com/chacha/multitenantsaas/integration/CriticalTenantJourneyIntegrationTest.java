@@ -1,6 +1,5 @@
 package com.chacha.multitenantsaas.integration;
 
-import static org.hamcrest.Matchers.hasItems;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -61,8 +60,7 @@ class CriticalTenantJourneyIntegrationTest {
                         adminSession.accessToken(),
                         member.userId());
 
-        SessionTokens memberSession =
-                login(tenant.tenantId(), member.email(), MEMBER_PASSWORD);
+        SessionTokens memberSession = login(tenant.tenantId(), member.email(), MEMBER_PASSWORD);
 
         UUID commentId =
                 createMentionedComment(
@@ -82,15 +80,11 @@ class CriticalTenantJourneyIntegrationTest {
                                         "Bearer " + memberSession.accessToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalElements").value(3))
-                .andExpect(
-                        jsonPath("$.data.content[*].type")
-                                .value(
-                                        hasItems(
-                                                "PROJECT_MEMBERSHIP_CHANGED",
-                                                "TASK_ASSIGNED",
-                                                "TASK_COMMENT_MENTIONED")))
                 .andExpect(jsonPath("$.data.content[0].type").value("TASK_COMMENT_MENTIONED"))
-                .andExpect(jsonPath("$.data.content[0].targetUrl").value(commentTarget));
+                .andExpect(jsonPath("$.data.content[0].targetUrl").value(commentTarget))
+                .andExpect(jsonPath("$.data.content[1].type").value("TASK_ASSIGNED"))
+                .andExpect(
+                        jsonPath("$.data.content[2].type").value("PROJECT_MEMBERSHIP_CHANGED"));
 
         UUID replyId =
                 createReply(
@@ -193,7 +187,9 @@ class CriticalTenantJourneyIntegrationTest {
                                         HttpHeaders.AUTHORIZATION,
                                         "Bearer " + memberSession.accessToken()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.message").value("Logged out from all devices successfully"));
+                .andExpect(
+                        jsonPath("$.data.message")
+                                .value("Logged out from all devices successfully"));
 
         assertRefreshRejected(memberSession.refreshToken());
         assertAccessTokenRejected(memberSession.accessToken());
@@ -330,7 +326,10 @@ class CriticalTenantJourneyIntegrationTest {
             UUID tenantId, UUID projectId, String accessToken, UUID userId, String role)
             throws Exception {
         mockMvc.perform(
-                        post("/api/tenants/{tenantId}/projects/{projectId}/members", tenantId, projectId)
+                        post(
+                                        "/api/tenants/{tenantId}/projects/{projectId}/members",
+                                        tenantId,
+                                        projectId)
                                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
@@ -350,7 +349,10 @@ class CriticalTenantJourneyIntegrationTest {
             throws Exception {
         MvcResult result =
                 mockMvc.perform(
-                                post("/api/tenants/{tenantId}/projects/{projectId}/tasks", tenantId, projectId)
+                                post(
+                                                "/api/tenants/{tenantId}/projects/{projectId}/tasks",
+                                                tenantId,
+                                                projectId)
                                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .content(
