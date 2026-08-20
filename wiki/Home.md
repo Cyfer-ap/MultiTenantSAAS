@@ -4,24 +4,32 @@ MultiTenantSAAS is a full-stack multi-tenant SaaS platform focused on tenant iso
 
 The version-controlled source for this Wiki lives under `wiki/` in the main repository. Publishing is described in [[Wiki-Maintenance]].
 
+Current snapshot: **post-PR #65 (`0e1edd6`)**.
+
 ## Current platform state
 
 Major implemented capabilities include:
 
 - separate tenant and system-admin control planes
-- JWT authentication, refresh-token rotation/revocation, logout/logout-all, password recovery and account lockout
+- JWT authentication, refresh-token rotation/revocation, logout/logout-all, verified-email login, OTP, password recovery and account lockout
 - shared-schema tenant isolation
 - scoped permission-oriented authorization and organization hierarchy
 - invitations
 - projects, memberships, tasks, Kanban/table workspace
 - task comments, mentions, activity, one-level replies and pinned comments
-- Cloudflare R2 / S3-compatible task attachments with presigned flows
+- Cloudflare R2 / S3-compatible task attachments with presigned flows and lifecycle cleanup
 - tenant and platform audit logs
 - internal subscription plans, lifecycle evaluation, read-only enforcement and quotas
 - tenant-scoped notification persistence and unread/read state
 - durable notification delivery records/outbox processing
 - email notification delivery integration
-- in-app task-assignment notification center
+- in-app notification center
+- task assignment/reassignment notifications
+- task status/cancellation notifications
+- comment, reply and mention notifications
+- precise task/comment/reply deep links
+- per-event optional email notification preferences
+- project membership add/role-change/remove notifications
 - PostgreSQL 17 + Flyway + Testcontainers validation
 - Docker/Compose execution paths
 - request correlation, Actuator/Micrometer observability
@@ -65,6 +73,24 @@ PostgreSQL
 
 Authorization does not bypass subscription restrictions, and a valid subscription does not grant missing permissions.
 
+## Current database checkpoint
+
+Portable common migrations now extend through **V27**:
+
+```text
+V21 task collaboration
+V22 task attachments
+V23 attachment cleanup hardening
+V24 comment replies and pins
+V25 notifications
+V26 notification deliveries
+V27 notification preferences
+```
+
+## Testing checkpoint
+
+Focused tests remain the primary regression layer. The post-PR #65 hardening checkpoint adds a cross-module critical tenant journey that exercises onboarding/login, invitation acceptance, project membership, task assignment, collaboration notifications/deep links, task status and session revocation in one flow. See [[Testing-and-CI]].
+
 ## Start here
 
 - [[Local-Development]]
@@ -97,6 +123,6 @@ Authorization does not bypass subscription restrictions, and a valid subscriptio
 
 ## Production-readiness boundary
 
-The platform has a strong production-readiness foundation, but it is not yet fully production-complete. Remaining platform gaps include external billing/reconciliation, durable usage metering, tenant webhooks, API keys/service accounts, backup/restore drills, external alerting/runbooks, enterprise SSO and broader failure/load verification.
+The platform has a strong production-readiness foundation, but it is not yet fully production-complete. Remaining platform gaps include external billing/reconciliation, durable usage metering, tenant webhooks, API keys/service accounts, backup/restore drills, external alerting/runbooks, enterprise SSO, production R2 operations validation and broader failure/load verification.
 
-The notification outbox and production email-delivery foundation are already implemented and should no longer be described as deferred generic platform work.
+External billing is the next major platform milestone after the current documentation/critical-journey checkpoint.
