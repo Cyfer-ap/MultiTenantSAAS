@@ -43,9 +43,7 @@ class CriticalTenantJourneyIntegrationTest {
 
         UUID projectId =
                 createProject(
-                        tenant.tenantId(),
-                        adminSession.accessToken(),
-                        "Critical Journey Project");
+                        tenant.tenantId(), adminSession.accessToken(), "Critical Journey Project");
         addProjectMember(
                 tenant.tenantId(),
                 projectId,
@@ -55,10 +53,7 @@ class CriticalTenantJourneyIntegrationTest {
 
         UUID taskId =
                 createTask(
-                        tenant.tenantId(),
-                        projectId,
-                        adminSession.accessToken(),
-                        member.userId());
+                        tenant.tenantId(), projectId, adminSession.accessToken(), member.userId());
 
         SessionTokens memberSession = login(tenant.tenantId(), member.email(), MEMBER_PASSWORD);
 
@@ -83,8 +78,7 @@ class CriticalTenantJourneyIntegrationTest {
                 .andExpect(jsonPath("$.data.content[0].type").value("TASK_COMMENT_MENTIONED"))
                 .andExpect(jsonPath("$.data.content[0].targetUrl").value(commentTarget))
                 .andExpect(jsonPath("$.data.content[1].type").value("TASK_ASSIGNED"))
-                .andExpect(
-                        jsonPath("$.data.content[2].type").value("PROJECT_MEMBERSHIP_CHANGED"));
+                .andExpect(jsonPath("$.data.content[2].type").value("PROJECT_MEMBERSHIP_CHANGED"));
 
         UUID replyId =
                 createReply(
@@ -215,9 +209,7 @@ class CriticalTenantJourneyIntegrationTest {
                                                 }
                                                 """
                                                         .formatted(
-                                                                slug,
-                                                                adminEmail,
-                                                                ADMIN_PASSWORD)))
+                                                                slug, adminEmail, ADMIN_PASSWORD)))
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$.data.tenant.slug").value(slug))
                         .andReturn();
@@ -297,7 +289,8 @@ class CriticalTenantJourneyIntegrationTest {
                         .andExpect(status().isOk())
                         .andReturn();
 
-        JsonNode response = jsonMapper.readTree(acceptanceResult.getResponse().getContentAsString());
+        JsonNode response =
+                jsonMapper.readTree(acceptanceResult.getResponse().getContentAsString());
         return new UserFixture(UUID.fromString(response.at("/data/user/id").asString()), email);
     }
 
@@ -344,8 +337,7 @@ class CriticalTenantJourneyIntegrationTest {
                 .andExpect(jsonPath("$.data.userId").value(userId.toString()));
     }
 
-    private UUID createTask(
-            UUID tenantId, UUID projectId, String accessToken, UUID assigneeUserId)
+    private UUID createTask(UUID tenantId, UUID projectId, String accessToken, UUID assigneeUserId)
             throws Exception {
         MvcResult result =
                 mockMvc.perform(
@@ -375,11 +367,7 @@ class CriticalTenantJourneyIntegrationTest {
     }
 
     private UUID createMentionedComment(
-            UUID tenantId,
-            UUID projectId,
-            UUID taskId,
-            String accessToken,
-            UUID mentionedUserId)
+            UUID tenantId, UUID projectId, UUID taskId, String accessToken, UUID mentionedUserId)
             throws Exception {
         MvcResult result =
                 mockMvc.perform(
@@ -410,11 +398,7 @@ class CriticalTenantJourneyIntegrationTest {
     }
 
     private UUID createReply(
-            UUID tenantId,
-            UUID projectId,
-            UUID taskId,
-            UUID commentId,
-            String accessToken)
+            UUID tenantId, UUID projectId, UUID taskId, UUID commentId, String accessToken)
             throws Exception {
         MvcResult result =
                 mockMvc.perform(
