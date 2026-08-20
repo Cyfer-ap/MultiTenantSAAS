@@ -12,13 +12,24 @@ PR #57 added PostgreSQL-backed notification delivery records with retry/backoff,
 
 PR #58 connected notification delivery to the existing email-provider abstraction. PR #59 added recipient-scoped in-app task-assignment notifications and the notification center.
 
-These capabilities are no longer generic deferred platform debt. Future notification work is feature expansion and operational hardening.
+### Collaboration notification expansion — delivered
+
+PRs #62-#65 completed the previously active notification product backlog:
+
+- task comment, reply and mention notifications
+- task status/cancellation notifications
+- precise task/comment/reply deep links
+- per-event optional email preferences while preserving mandatory in-app history
+- project membership add/role-change/remove notifications
+
+These capabilities are no longer generic deferred debt.
 
 ## Priority platform debt
 
 1. **External billing integration**
    - connect the existing subscription/entitlement model to a payment provider
-   - signed webhooks, replay protection, reconciliation and customer/subscription mapping
+   - provider-neutral boundary with provider/customer/subscription mapping
+   - signed webhooks, replay protection, reconciliation and payment-state synchronization
 
 2. **Usage metering and quota accounting**
    - durable consumption events and atomic accounting periods
@@ -36,6 +47,7 @@ These capabilities are no longer generic deferred platform debt. Future notifica
    - database backup/restore procedure and tested recovery path
    - actionable service/database alerts and production runbooks
    - broader load/failure-recovery verification
+   - production-environment R2 operational validation
 
 6. **Enterprise SSO / federated authentication**
    - tenant-configurable OIDC/SAML-style enterprise sign-in
@@ -47,14 +59,20 @@ These capabilities are no longer generic deferred platform debt. Future notifica
 
 ## Notification follow-up backlog
 
-The notification foundation exists. Remaining product work includes:
+The notification foundation and the previously planned collaboration-event expansion are delivered. Remaining notification work should be treated as optional product/operations expansion rather than prerequisite foundation work:
 
-- comment/reply/mention notifications
-- task status and collaboration-event notifications
-- precise task/comment/thread deep links
-- user notification preferences
-- per-channel controls and optional digesting
+- wire `WORKSPACE_INVITATION` when a product-level in-app invitation notification is desired
+- optional digesting/batching
+- optional real-time browser delivery via SSE/WebSocket
+- optional mobile/push channels
 - delivery/admin observability if operational needs justify it
+- provider bounce/complaint handling if email operations require it
+
+`SECURITY_ALERT` email remains mandatory/non-configurable by design.
+
+## Testing follow-up
+
+The post-PR #65 hardening checkpoint adds a cross-module critical tenant integration journey using the existing Spring test stack. A dedicated browser E2E runner such as Playwright remains intentionally deferred until browser-level coverage justifies the extra dependency, browser-installation and CI cost.
 
 ## Revisit rule
 

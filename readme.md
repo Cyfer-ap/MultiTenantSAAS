@@ -6,8 +6,9 @@ A full-stack multi-tenant SaaS platform focused on secure tenant isolation, perm
 >
 > Repository: `Cyfer-ap/MultiTenantSAAS`
 > Branch: `main`
-> Base reviewed state: post-PR #59 feature state, with Dependabot PRs #53/#54 intentionally skipped/reverted
+> Base reviewed state: post-PR #65 (`0e1edd6`)
 > Current phase: **product expansion + production/platform completion**
+> Immediate platform milestone: **external billing integration after the current hardening checkpoint**
 
 ## Platform capabilities
 
@@ -16,7 +17,7 @@ A full-stack multi-tenant SaaS platform focused on secure tenant isolation, perm
 - tenant onboarding and lifecycle
 - JWT authentication and session restoration
 - hashed refresh tokens, rotation, revocation, logout and logout-all
-- verified password recovery and account lockout/unlock
+- verified email login, email OTP, password recovery and account lockout/unlock
 - tenant users and invitations
 - organization hierarchy and scoped authorization
 - projects, memberships and tasks
@@ -24,7 +25,9 @@ A full-stack multi-tenant SaaS platform focused on secure tenant isolation, perm
 - task comments, mentions, activity history, one-level replies and pinned comments
 - R2/S3-compatible task attachments with presigned upload/download flows
 - tenant-scoped notifications, unread state and in-app notification center
-- task-assignment notifications
+- task assignment, task status, comment, reply, mention and project-membership notifications
+- precise task/comment/reply notification deep links
+- per-event optional email notification preferences
 - tenant audit logs
 - subscription visibility, lifecycle restrictions and quotas
 
@@ -92,8 +95,8 @@ These controls intentionally remain separate. Authorization never bypasses subsc
 
 Task collaboration is implemented as a tenant/project/task-scoped subsystem:
 
-- comments and mentions
-- activity timeline
+- comments and validated project-member mentions
+- task activity timeline
 - one-level comment replies
 - pinned comments
 - attachment metadata and lifecycle cleanup
@@ -113,24 +116,32 @@ See `guides/collaboration_and_notifications.md` and the Wiki pages `Collaboratio
 
 ## Notifications
 
-The notification foundation now includes:
+The notification subsystem now includes:
 
 - tenant- and recipient-scoped notification persistence
 - unread count and read/read-all mutations
 - durable PostgreSQL-backed delivery records
 - retry/backoff/lease/idempotency-oriented delivery processing
 - email delivery through the existing email-provider abstraction
-- in-app notification bell and deep links
-- task-assignment notification generation
+- in-app notification bell and safe internal navigation
+- task assignment/reassignment events
+- task status/cancellation events
+- top-level task comment events
+- comment reply events
+- mention events
+- project membership add/role-change/remove events
+- exact comment/reply deep links, including targets outside the normal first comment page
+- recipient-scoped optional email preferences while in-app notification history remains mandatory
 
 Relevant migrations:
 
 ```text
 V25  notifications
 V26  notification deliveries
+V27  notification preferences
 ```
 
-The next notification work is product expansion rather than foundation work: comments/replies/mentions, task-status events, finer deep links and user/channel preferences.
+`WORKSPACE_INVITATION` and `SECURITY_ALERT` remain part of the notification type catalogue; security-alert email is intentionally mandatory/non-configurable. Product follow-up should now focus on genuinely new value such as invitation-event wiring, optional digests/live delivery and operational delivery visibility rather than rebuilding the notification foundation.
 
 ## Authorization
 
@@ -141,8 +152,9 @@ Authorization has evolved beyond the legacy coarse tenant roles. Current concept
 - role-permission mappings
 - user role assignments
 - organization hierarchy and assignments
-- scoped authorization evaluation
+- project/organization scoped authorization evaluation
 - backend-authoritative permission checks
+- authorization management UI
 
 Legacy roles such as `TENANT_ADMIN`, `TENANT_MANAGER` and `TENANT_USER` remain where required for compatibility.
 
@@ -158,7 +170,7 @@ The platform separates:
 - workspace read-only enforcement
 - resource quotas
 
-The current subscription model is internal. A production external billing provider, signed webhook reconciliation and payment-state synchronization are still future work.
+The current subscription model is internal. A production external billing provider, signed webhook reconciliation and payment-state synchronization are still future work and are the next major platform milestone.
 
 ## PostgreSQL and Flyway
 
@@ -170,7 +182,7 @@ multitenant-saas/src/main/resources/db/postgresql  PostgreSQL V17 baseline
 multitenant-saas/src/main/resources/db/common      portable V18+
 ```
 
-Current shared migrations have advanced through **V26**.
+Current shared migrations have advanced through **V27**.
 
 Never rewrite an already-applied migration.
 
@@ -182,11 +194,36 @@ The former Step 40 transaction/concurrency phase is no longer the active project
 - one-subscription-per-tenant creation races
 - invitation single-use/replacement behavior
 - failed-login/account-lock races
-- refresh-token rotation races
-- session/credential concurrency
+- refresh-token rotation/session invalidation races
 - PostgreSQL pessimistic-lock integration coverage
+- attachment completion/deletion serialization and cleanup recovery
+- notification delivery leasing/idempotency behavior
 
 `guides/step40_transaction_concurrency.md` is retained as a historical closeout/reference page.
+
+## Testing strategy
+
+Focused unit/integration tests remain the primary regression layer. In addition, the hardening checkpoint adds a deliberately cross-module critical tenant journey covering the wiring between:
+
+```text
+tenant onboarding + login
+        ↓
+invitation acceptance
+        ↓
+project membership
+        ↓
+task assignment
+        ↓
+comment mention / reply
+        ↓
+notification deep links + read state
+        ↓
+task status change
+        ↓
+session revocation
+```
+
+This journey is not a replacement for focused tests; it protects the seams between otherwise independently tested subsystems. A dedicated browser-E2E runner such as Playwright remains a later testing-infrastructure option rather than being mixed into this small checkpoint.
 
 ## Production and operations
 
@@ -209,6 +246,7 @@ Still not production-complete:
 - backup/restore drills, alerts and operational runbooks
 - enterprise SSO
 - broader load/failure-recovery verification
+- confirmed production-environment R2 round-trip/operations validation
 
 See `guides/DEFERRED_PLATFORM_WORK.md` for the current platform backlog.
 
@@ -277,12 +315,12 @@ Use `-NoPush` to preview the Wiki diff without publishing.
 
 Near-term order:
 
-1. keep repository docs and Wiki synchronized with current `main`
-2. expand collaboration notifications to replies/mentions/comments/task updates
-3. add notification preferences/channel controls and improve deep links
-4. complete external billing integration when selected
-5. add usage metering, webhooks and API keys/service accounts
-6. add recovery/alerting/runbooks and broader operational verification
+1. complete the post-PR #65 documentation and critical-journey hardening checkpoint
+2. connect the internal subscription model to an external billing provider
+3. add durable usage metering/accounting
+4. add tenant webhooks and API keys/service accounts
+5. add recovery/alerting/runbooks and broader operational verification
+6. add enterprise SSO when product requirements justify it
 7. add advanced authorization delegation/explain-access when needed
 
 The platform has a strong production-readiness foundation, but it should not be described as fully production-complete until the remaining provider, recovery, observability and operational gaps are closed.

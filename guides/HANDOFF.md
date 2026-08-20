@@ -23,7 +23,9 @@ Default branch: `main`
 
 **Product expansion + production/platform completion**
 
-The old Step 40 transaction/concurrency milestone is no longer the active development phase. Its principal database-backed hardening and PostgreSQL concurrency coverage are already present.
+Base reviewed state: post-PR #65 (`0e1edd6`). The old Step 40 transaction/concurrency milestone is historical. Its principal database-backed hardening and PostgreSQL concurrency coverage are already present.
+
+The current short milestone is a post-PR #65 hardening checkpoint: synchronize repository/Wiki documentation and add one cross-module critical tenant journey. External billing is the next major feature after this checkpoint.
 
 ## Current feature baseline
 
@@ -31,16 +33,23 @@ Implemented areas include:
 
 - separate tenant and system-admin control planes
 - secure browser authentication/session lifecycle
+- verified-email login, OTP and password recovery
 - tenant isolation
 - scoped authorization and organization hierarchy
 - subscription lifecycle, read-only enforcement and quotas
 - projects, memberships and task Kanban/table workspace
 - task collaboration: comments, mentions, activity, replies and pins
-- R2/S3-compatible task attachments
-- tenant notification persistence
+- R2/S3-compatible task attachments with lifecycle cleanup
+- tenant notification persistence and read state
 - durable notification delivery records/outbox processing
 - email notification delivery
-- in-app task-assignment notifications
+- in-app notification center
+- task assignment/reassignment notifications
+- task status/cancellation notifications
+- comment, reply and mention notifications
+- precise task/comment/reply notification deep links
+- per-event optional email preferences
+- project membership add/role-change/remove notifications
 - PostgreSQL/Flyway/Testcontainers path
 - CI, Security, Container CI and Qodana
 
@@ -67,23 +76,54 @@ db/postgresql  -> PostgreSQL V17 baseline
 db/common      -> portable V18+
 ```
 
-Current common migrations extend through V26. Never rewrite an already-applied migration.
+Current common migrations extend through **V27**. Never rewrite an already-applied migration.
 
-## Next product priorities
+## Critical-journey regression
 
-1. broaden notifications to comments/replies/mentions/task status changes
-2. improve collaboration deep links and notification preferences/channel controls
-3. choose the next platform capability only when product value justifies it
+The focused test suite remains authoritative for individual features. The hardening checkpoint adds `CriticalTenantJourneyIntegrationTest` to verify that these subsystem boundaries still compose correctly:
+
+```text
+onboarding/login
+    ↓
+invitation acceptance
+    ↓
+project membership
+    ↓
+task assignment
+    ↓
+comment mention/reply
+    ↓
+notification deep links/read state
+    ↓
+task status transition
+    ↓
+logout-all/session revocation
+```
+
+Run it with:
+
+```powershell
+cd multitenant-saas
+.\mvnw.cmd "-Dtest=CriticalTenantJourneyIntegrationTest" test
+```
+
+Do not treat this as a substitute for the existing focused security, authorization, subscription, collaboration or PostgreSQL tests.
+
+## Next product/platform priority
+
+1. external billing provider boundary and provider mapping
+2. signed webhook verification, replay protection and durable reconciliation
+3. connect provider state to the existing subscription/entitlement model without weakening current lifecycle/authorization boundaries
 
 ## Deferred platform priorities
 
-- external billing provider + webhook reconciliation
 - usage metering/accounting
 - tenant outbound webhooks
 - API keys/service accounts
 - recovery/alerting/runbooks
 - enterprise SSO
 - authorization delegation/explain-access
+- broader load/failure-recovery and production R2 validation
 
 ## Verification baseline
 
