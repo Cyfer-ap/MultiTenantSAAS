@@ -41,7 +41,9 @@ class StripeBillingProviderTest {
                 .andExpect(content().string(containsString("price=price_pro_test")))
                 .andRespond(
                         withSuccess(
-                                "{"id":"cs_test_123","url":"https://checkout.stripe.com/test"}",
+                                """
+                                {"id":"cs_test_123","url":"https://checkout.stripe.com/test"}
+                                """,
                                 MediaType.APPLICATION_JSON));
 
         BillingCheckoutSession session = provider.createCheckoutSession(tenantId, "pro");
@@ -102,7 +104,7 @@ class StripeBillingProviderTest {
         properties.setBaseUrl("https://api.stripe.com");
         properties.setSuccessUrl("https://app.example.com/billing/success");
         properties.setCancelUrl("https://app.example.com/billing/cancel");
-        properties.setPrices(Map.of("PRO", "price_pro_test"));
+        properties.setPrices(Map.of("pro", "price_pro_test"));
         return properties;
     }
 }
