@@ -22,7 +22,9 @@ class BillingCheckoutServiceTest {
         BillingProvider stripe = mock(BillingProvider.class);
         BillingCheckoutSession expected =
                 new BillingCheckoutSession(
-                        "session-1", "https://checkout.example/session-1", BillingProviderType.STRIPE);
+                        "session-1",
+                        "https://checkout.example/session-1",
+                        BillingProviderType.STRIPE);
         when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
         when(stripe.createCheckoutSession(tenantId, "PRO")).thenReturn(expected);
 
