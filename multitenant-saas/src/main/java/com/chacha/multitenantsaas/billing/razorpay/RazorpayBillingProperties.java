@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 public class RazorpayBillingProperties {
 
     private boolean enabled;
+    private boolean webhookEnabled;
+    private String webhookSecret = "";
     private String keyId = "";
     private String keySecret = "";
     private String baseUrl = "https://api.razorpay.com";
@@ -22,6 +24,22 @@ public class RazorpayBillingProperties {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isWebhookEnabled() {
+        return webhookEnabled;
+    }
+
+    public void setWebhookEnabled(boolean webhookEnabled) {
+        this.webhookEnabled = webhookEnabled;
+    }
+
+    public String getWebhookSecret() {
+        return webhookSecret;
+    }
+
+    public void setWebhookSecret(String webhookSecret) {
+        this.webhookSecret = webhookSecret;
     }
 
     public String getKeyId() {
