@@ -2,6 +2,9 @@ package com.chacha.multitenantsaas.billing.service;
 
 import com.chacha.multitenantsaas.billing.provider.BillingCheckoutSession;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
+import com.chacha.multitenantsaas.dto.SubscriptionPlanResponse;
+import com.chacha.multitenantsaas.entity.SubscriptionPlanStatus;
+import com.chacha.multitenantsaas.service.SubscriptionPlanService;
 import java.util.Objects;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -10,9 +13,13 @@ import org.springframework.stereotype.Service;
 public class BillingCheckoutService {
 
     private final BillingProviderRegistry providerRegistry;
+    private final SubscriptionPlanService subscriptionPlanService;
 
-    public BillingCheckoutService(BillingProviderRegistry providerRegistry) {
+    public BillingCheckoutService(
+            BillingProviderRegistry providerRegistry,
+            SubscriptionPlanService subscriptionPlanService) {
         this.providerRegistry = providerRegistry;
+        this.subscriptionPlanService = subscriptionPlanService;
     }
 
     public BillingCheckoutSession createCheckoutSession(
@@ -23,8 +30,16 @@ public class BillingCheckoutService {
             throw new IllegalArgumentException("planCode must not be blank");
         }
 
+        SubscriptionPlanResponse plan = subscriptionPlanService.getPlanByCode(planCode);
+        if (plan.status() != SubscriptionPlanStatus.ACTIVE) {
+            throw new IllegalArgumentException("Subscription plan must be active");
+        }
+        if (plan.price().signum() <= 0) {
+            throw new IllegalArgumentException("Free plans do not require provider checkout");
+        }
+
         return providerRegistry
                 .require(providerType)
-                .createCheckoutSession(tenantId, planCode.trim());
+                .createCheckoutSession(tenantId, plan.code());
     }
 }
