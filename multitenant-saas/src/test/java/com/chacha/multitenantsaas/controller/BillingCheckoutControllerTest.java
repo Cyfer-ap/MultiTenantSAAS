@@ -32,8 +32,7 @@ class BillingCheckoutControllerTest {
 
         ResponseEntity<ApiResponse<BillingCheckoutResponse>> response =
                 controller.createCheckout(
-                        tenantId,
-                        new BillingCheckoutRequest("PRO", BillingProviderType.STRIPE));
+                        tenantId, new BillingCheckoutRequest("PRO", BillingProviderType.STRIPE));
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().success()).isTrue();

@@ -38,8 +38,6 @@ public class BillingCheckoutService {
             throw new IllegalArgumentException("Free plans do not require provider checkout");
         }
 
-        return providerRegistry
-                .require(providerType)
-                .createCheckoutSession(tenantId, plan.code());
+        return providerRegistry.require(providerType).createCheckoutSession(tenantId, plan.code());
     }
 }

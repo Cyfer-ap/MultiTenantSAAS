@@ -33,7 +33,8 @@ class BillingCheckoutServiceTest {
         when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
         when(stripe.createCheckoutSession(tenantId, "PRO")).thenReturn(expected);
         SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
-        when(planService.getPlanByCode(" PRO ")).thenReturn(plan("PRO", SubscriptionPlanStatus.ACTIVE, "29.00"));
+        when(planService.getPlanByCode(" PRO "))
+                .thenReturn(plan("PRO", SubscriptionPlanStatus.ACTIVE, "29.00"));
 
         BillingCheckoutService service =
                 new BillingCheckoutService(
@@ -147,8 +148,7 @@ class BillingCheckoutServiceTest {
                         mock(SubscriptionPlanService.class));
 
         assertThatNullPointerException()
-                .isThrownBy(
-                        () -> service.createCheckoutSession(UUID.randomUUID(), "PRO", null))
+                .isThrownBy(() -> service.createCheckoutSession(UUID.randomUUID(), "PRO", null))
                 .withMessage("providerType must not be null");
     }
 
