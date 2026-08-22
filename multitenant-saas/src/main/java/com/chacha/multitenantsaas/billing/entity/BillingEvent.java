@@ -42,6 +42,10 @@ public class BillingEvent {
         this.payload = payload;
     }
 
+    public UUID getId() {
+        return id;
+    }
+
     public BillingProviderType getProvider() {
         return provider;
     }
@@ -56,5 +60,9 @@ public class BillingEvent {
 
     public String getPayload() {
         return payload;
+    }
+
+    public Instant getReceivedAt() {
+        return receivedAt;
     }
 }
