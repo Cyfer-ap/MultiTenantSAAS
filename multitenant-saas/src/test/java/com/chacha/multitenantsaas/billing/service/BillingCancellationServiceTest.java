@@ -51,8 +51,7 @@ class BillingCancellationServiceTest {
     void rejectsSubscriptionWithoutProviderLinkage() {
         UUID tenantId = UUID.randomUUID();
         TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
-        TenantSubscription subscription =
-                subscription(TenantSubscriptionStatus.ACTIVE, null, null);
+        TenantSubscription subscription = subscription(TenantSubscriptionStatus.ACTIVE, null, null);
         when(repository.findByTenantIdWithPlan(tenantId)).thenReturn(Optional.of(subscription));
         BillingProvider stripe = mock(BillingProvider.class);
         when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
@@ -94,9 +93,7 @@ class BillingCancellationServiceTest {
         TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
         TenantSubscription subscription =
                 subscription(
-                        TenantSubscriptionStatus.ACTIVE,
-                        BillingProviderType.RAZORPAY,
-                        "sub_123");
+                        TenantSubscriptionStatus.ACTIVE, BillingProviderType.RAZORPAY, "sub_123");
         when(repository.findByTenantIdWithPlan(tenantId)).thenReturn(Optional.of(subscription));
         BillingCancellationService service =
                 new BillingCancellationService(new BillingProviderRegistry(List.of()), repository);
