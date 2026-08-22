@@ -36,6 +36,7 @@ class BillingCheckoutServiceTest {
                 service.createCheckoutSession(tenantId, " PRO ", BillingProviderType.STRIPE);
 
         assertThat(actual).isEqualTo(expected);
+        assertThat(actual.provider()).isEqualTo(BillingProviderType.STRIPE);
         verify(stripe).createCheckoutSession(tenantId, "PRO");
     }
 
