@@ -60,8 +60,7 @@ class StripeBillingProviderTest {
                 new StripeBillingProvider(properties(), RestClient.builder());
 
         assertThatIllegalArgumentException()
-                .isThrownBy(
-                        () -> provider.createCheckoutSession(UUID.randomUUID(), "enterprise"))
+                .isThrownBy(() -> provider.createCheckoutSession(UUID.randomUUID(), "enterprise"))
                 .withMessage("No Stripe price is configured for plan: ENTERPRISE");
     }
 
