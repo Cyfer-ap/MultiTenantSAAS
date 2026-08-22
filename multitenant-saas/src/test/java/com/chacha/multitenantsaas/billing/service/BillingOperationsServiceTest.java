@@ -70,6 +70,7 @@ class BillingOperationsServiceTest {
         assertThat(item.subscriptionId()).isEqualTo(subscriptionId);
         assertThat(item.tenantId()).isEqualTo(tenantId);
         assertThat(item.planCode()).isEqualTo("PRO");
+        assertThat(item.status()).isEqualTo(TenantSubscriptionStatus.ACTIVE);
         assertThat(item.provider()).isEqualTo(BillingProviderType.RAZORPAY);
         assertThat(item.providerSubscriptionId()).isEqualTo("sub_123");
     }
