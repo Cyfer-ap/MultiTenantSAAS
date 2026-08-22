@@ -3,6 +3,7 @@ package com.chacha.multitenantsaas.billing.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -77,4 +78,28 @@ class BillingCheckoutServiceTest {
                                         UUID.randomUUID(), " ", BillingProviderType.STRIPE))
                 .withMessage("planCode must not be blank");
     }
+    @Test
+    void rejectsNullTenantId() {
+        BillingCheckoutService service =
+                new BillingCheckoutService(new BillingProviderRegistry(List.of()));
+
+        assertThatNullPointerException()
+                .isThrownBy(
+                        () ->
+                                service.createCheckoutSession(
+                                        null, "PRO", BillingProviderType.STRIPE))
+                .withMessage("tenantId must not be null");
+    }
+
+    @Test
+    void rejectsNullProviderType() {
+        BillingCheckoutService service =
+                new BillingCheckoutService(new BillingProviderRegistry(List.of()));
+
+        assertThatNullPointerException()
+                .isThrownBy(
+                        () -> service.createCheckoutSession(UUID.randomUUID(), "PRO", null))
+                .withMessage("providerType must not be null");
+    }
+
 }
