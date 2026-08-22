@@ -34,8 +34,7 @@ class BillingCancellationControllerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().success()).isTrue();
         assertThat(response.getBody().data().tenantId()).isEqualTo(tenantId);
-        assertThat(response.getBody().data().provider())
-                .isEqualTo(BillingProviderType.RAZORPAY);
+        assertThat(response.getBody().data().provider()).isEqualTo(BillingProviderType.RAZORPAY);
         assertThat(response.getBody().data().providerSubscriptionId()).isEqualTo("sub_123");
         assertThat(response.getBody().data().cancellationRequested()).isTrue();
         verify(service).requestCancellation(tenantId);

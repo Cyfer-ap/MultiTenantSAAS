@@ -31,8 +31,7 @@ public class BillingCancellationController {
     @PostMapping("/cancel")
     public ResponseEntity<ApiResponse<BillingCancellationResponse>> cancelSubscription(
             @PathVariable UUID tenantId) {
-        BillingCancellationResult result =
-                billingCancellationService.requestCancellation(tenantId);
+        BillingCancellationResult result = billingCancellationService.requestCancellation(tenantId);
 
         return ResponseEntity.accepted()
                 .body(

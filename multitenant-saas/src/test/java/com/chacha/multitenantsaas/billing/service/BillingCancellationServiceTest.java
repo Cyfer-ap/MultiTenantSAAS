@@ -29,9 +29,7 @@ class BillingCancellationServiceTest {
         TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
         TenantSubscription subscription =
                 subscription(
-                        TenantSubscriptionStatus.ACTIVE,
-                        BillingProviderType.STRIPE,
-                        "sub_123");
+                        TenantSubscriptionStatus.ACTIVE, BillingProviderType.STRIPE, "sub_123");
         when(repository.findByTenantIdWithPlan(tenantId)).thenReturn(Optional.of(subscription));
 
         BillingProvider stripe = mock(BillingProvider.class);
@@ -53,9 +51,7 @@ class BillingCancellationServiceTest {
         UUID tenantId = UUID.randomUUID();
         TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
         when(repository.findByTenantIdWithPlan(tenantId))
-                .thenReturn(
-                        Optional.of(
-                                subscription(TenantSubscriptionStatus.ACTIVE, null, null)));
+                .thenReturn(Optional.of(subscription(TenantSubscriptionStatus.ACTIVE, null, null)));
         BillingProvider stripe = mock(BillingProvider.class);
         when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
         BillingCancellationService service =
