@@ -4,6 +4,7 @@ import com.chacha.multitenantsaas.billing.provider.BillingCheckoutSession;
 import com.chacha.multitenantsaas.billing.provider.BillingProvider;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderException;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -140,13 +141,15 @@ public class RazorpayBillingProvider implements BillingProvider {
     }
 
     private record RazorpaySubscriptionRequest(
-            String planId,
-            int totalCount,
+            @JsonProperty("plan_id") String planId,
+            @JsonProperty("total_count") int totalCount,
             int quantity,
-            boolean customerNotify,
+            @JsonProperty("customer_notify") boolean customerNotify,
             Map<String, String> notes) {}
 
-    private record RazorpaySubscriptionResponse(String id, String shortUrl) {}
+    private record RazorpaySubscriptionResponse(
+            String id, @JsonProperty("short_url") String shortUrl) {}
 
-    private record RazorpayCancellationRequest(boolean cancelAtCycleEnd) {}
+    private record RazorpayCancellationRequest(
+            @JsonProperty("cancel_at_cycle_end") boolean cancelAtCycleEnd) {}
 }
