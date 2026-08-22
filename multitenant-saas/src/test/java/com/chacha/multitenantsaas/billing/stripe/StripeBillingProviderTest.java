@@ -43,6 +43,17 @@ class StripeBillingProviderTest {
                         content()
                                 .string(
                                         containsString(
+                                                "subscription_data%5Bmetadata%5D%5Btenant_id%5D="
+                                                        + tenantId)))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "subscription_data%5Bmetadata%5D%5Bplan_code%5D=PRO")))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
                                                 "line_items%5B0%5D%5Bprice%5D=price_pro_test")))
                 .andRespond(
                         withSuccess(

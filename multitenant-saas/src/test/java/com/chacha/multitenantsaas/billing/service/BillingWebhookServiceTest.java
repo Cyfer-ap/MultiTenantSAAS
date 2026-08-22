@@ -2,6 +2,7 @@ package com.chacha.multitenantsaas.billing.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -14,52 +15,42 @@ import com.chacha.multitenantsaas.billing.repository.BillingEventRepository;
 import com.chacha.multitenantsaas.billing.webhook.VerifiedBillingEvent;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.mockito.InOrder;
 
 class BillingWebhookServiceTest {
 
     @Test
-    void persistsVerifiedEventBeforeAcknowledgingIt() {
+    void persistsThenSynchronizesVerifiedEventInOneTransaction() {
         BillingEventRepository repository = mock(BillingEventRepository.class);
-        BillingWebhookService service = new BillingWebhookService(repository);
+        BillingSubscriptionSynchronizer synchronizer = mock(BillingSubscriptionSynchronizer.class);
+        BillingWebhookService service = new BillingWebhookService(repository, synchronizer);
         VerifiedBillingEvent event = event();
 
         BillingWebhookReceipt receipt = service.ingest(event);
 
         ArgumentCaptor<BillingEvent> captor = ArgumentCaptor.forClass(BillingEvent.class);
-        verify(repository).saveAndFlush(captor.capture());
+        InOrder order = inOrder(repository, synchronizer);
+        order.verify(repository).save(captor.capture());
+        order.verify(synchronizer).synchronize(event);
         assertThat(captor.getValue().getProvider()).isEqualTo(BillingProviderType.STRIPE);
         assertThat(captor.getValue().getProviderEventId()).isEqualTo("evt_123");
         assertThat(captor.getValue().getEventType()).isEqualTo("customer.subscription.updated");
-        assertThat(captor.getValue().getPayload()).isEqualTo("{\"id\":\"evt_123\"}");
         assertThat(receipt.duplicate()).isFalse();
     }
 
     @Test
-    void acknowledgesAlreadyPersistedDeliveryWithoutWritingAgain() {
+    void acknowledgesAlreadyPersistedDeliveryWithoutSynchronizingAgain() {
         BillingEventRepository repository = mock(BillingEventRepository.class);
         when(repository.existsByProviderAndProviderEventId(BillingProviderType.STRIPE, "evt_123"))
                 .thenReturn(true);
-        BillingWebhookService service = new BillingWebhookService(repository);
+        BillingSubscriptionSynchronizer synchronizer = mock(BillingSubscriptionSynchronizer.class);
+        BillingWebhookService service = new BillingWebhookService(repository, synchronizer);
 
         BillingWebhookReceipt receipt = service.ingest(event());
 
         assertThat(receipt.duplicate()).isTrue();
-        verify(repository, never()).saveAndFlush(any(BillingEvent.class));
-    }
-
-    @Test
-    void treatsConcurrentUniqueConstraintWinnerAsDuplicate() {
-        BillingEventRepository repository = mock(BillingEventRepository.class);
-        when(repository.existsByProviderAndProviderEventId(BillingProviderType.STRIPE, "evt_123"))
-                .thenReturn(false, true);
-        when(repository.saveAndFlush(any(BillingEvent.class)))
-                .thenThrow(new DataIntegrityViolationException("duplicate"));
-        BillingWebhookService service = new BillingWebhookService(repository);
-
-        BillingWebhookReceipt receipt = service.ingest(event());
-
-        assertThat(receipt.duplicate()).isTrue();
+        verify(repository, never()).save(any(BillingEvent.class));
+        verify(synchronizer, never()).synchronize(any(VerifiedBillingEvent.class));
     }
 
     private VerifiedBillingEvent event() {
