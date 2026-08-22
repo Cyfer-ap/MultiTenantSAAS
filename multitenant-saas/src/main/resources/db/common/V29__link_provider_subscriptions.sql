@@ -1,3 +1,4 @@
+-- Nullable columns preserve existing manually administered subscriptions.
 ALTER TABLE tenant_subscriptions
     ADD COLUMN billing_provider VARCHAR(32);
 
