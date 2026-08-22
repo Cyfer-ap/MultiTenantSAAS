@@ -33,9 +33,7 @@ public final class WebhookSignatureSupport {
     private static byte[] sign(String secret, String message) {
         try {
             Mac mac = Mac.getInstance(HMAC_SHA_256);
-            mac.init(
-                    new SecretKeySpec(
-                            secret.getBytes(StandardCharsets.UTF_8), HMAC_SHA_256));
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_SHA_256));
             return mac.doFinal(message.getBytes(StandardCharsets.UTF_8));
         } catch (GeneralSecurityException exception) {
             throw new IllegalStateException("HMAC-SHA256 is unavailable", exception);

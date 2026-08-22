@@ -22,8 +22,7 @@ public class StripeWebhookVerifier {
         this(properties, jsonMapper, Clock.systemUTC());
     }
 
-    StripeWebhookVerifier(
-            StripeBillingProperties properties, JsonMapper jsonMapper, Clock clock) {
+    StripeWebhookVerifier(StripeBillingProperties properties, JsonMapper jsonMapper, Clock clock) {
         this.properties = properties;
         this.jsonMapper = jsonMapper;
         this.clock = clock;
@@ -59,8 +58,7 @@ public class StripeWebhookVerifier {
         if (!properties.isWebhookEnabled()) {
             throw new IllegalArgumentException("Stripe webhook ingestion is disabled");
         }
-        if (properties.getWebhookSecret() == null
-                || properties.getWebhookSecret().isBlank()) {
+        if (properties.getWebhookSecret() == null || properties.getWebhookSecret().isBlank()) {
             throw new IllegalStateException(
                     "STRIPE_WEBHOOK_SECRET must be configured when Stripe webhooks are enabled");
         }
@@ -102,7 +100,8 @@ public class StripeWebhookVerifier {
     private void enforceTimestampTolerance(long timestamp) {
         long ageSeconds = Math.abs(clock.instant().getEpochSecond() - timestamp);
         if (ageSeconds > properties.getWebhookToleranceSeconds()) {
-            throw new IllegalArgumentException("Stripe webhook signature timestamp is outside tolerance");
+            throw new IllegalArgumentException(
+                    "Stripe webhook signature timestamp is outside tolerance");
         }
     }
 
@@ -117,8 +116,7 @@ public class StripeWebhookVerifier {
     private String requiredText(JsonNode event, String fieldName) {
         JsonNode value = event.get(fieldName);
         if (value == null || !value.isString() || value.asString().isBlank()) {
-            throw new IllegalArgumentException(
-                    "Stripe webhook payload is missing " + fieldName);
+            throw new IllegalArgumentException("Stripe webhook payload is missing " + fieldName);
         }
         return value.asString();
     }

@@ -34,8 +34,7 @@ class StripeWebhookVerifierTest {
 
     @Test
     void verifiesRawPayloadAndExtractsEventIdentity() {
-        String payload =
-                "{\"id\":\"evt_123\",\"type\":\"customer.subscription.updated\"}";
+        String payload = "{\"id\":\"evt_123\",\"type\":\"customer.subscription.updated\"}";
         String signature = signatureHeader(NOW, payload);
 
         VerifiedBillingEvent event = verifier.verify(payload, signature);
@@ -51,8 +50,7 @@ class StripeWebhookVerifierTest {
         String payload = "{\"id\":\"evt_old\",\"type\":\"invoice.paid\"}";
         long staleTimestamp = NOW - 301;
 
-        assertThatThrownBy(
-                        () -> verifier.verify(payload, signatureHeader(staleTimestamp, payload)))
+        assertThatThrownBy(() -> verifier.verify(payload, signatureHeader(staleTimestamp, payload)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("outside tolerance");
     }
@@ -63,17 +61,13 @@ class StripeWebhookVerifierTest {
         String receivedPayload = signedPayload + " ";
 
         assertThatThrownBy(
-                        () ->
-                                verifier.verify(
-                                        receivedPayload, signatureHeader(NOW, signedPayload)))
+                        () -> verifier.verify(receivedPayload, signatureHeader(NOW, signedPayload)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Invalid Stripe webhook signature");
     }
 
     private String signatureHeader(long timestamp, String payload) {
-        String signature =
-                WebhookSignatureSupport.signAsHex(
-                        SECRET, timestamp + "." + payload);
+        String signature = WebhookSignatureSupport.signAsHex(SECRET, timestamp + "." + payload);
         return "t=" + timestamp + ",v1=" + signature;
     }
 }

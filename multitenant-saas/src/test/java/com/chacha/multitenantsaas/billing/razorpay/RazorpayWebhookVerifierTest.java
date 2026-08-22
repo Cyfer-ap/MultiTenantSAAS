@@ -21,9 +21,7 @@ class RazorpayWebhookVerifierTest {
         RazorpayBillingProperties properties = new RazorpayBillingProperties();
         properties.setWebhookEnabled(true);
         properties.setWebhookSecret(SECRET);
-        verifier =
-                new RazorpayWebhookVerifier(
-                        properties, JsonMapper.builder().build());
+        verifier = new RazorpayWebhookVerifier(properties, JsonMapper.builder().build());
     }
 
     @Test
@@ -31,8 +29,7 @@ class RazorpayWebhookVerifierTest {
         String payload = "{\"event\":\"subscription.activated\"}";
         String signature = WebhookSignatureSupport.signAsHex(SECRET, payload);
 
-        VerifiedBillingEvent event =
-                verifier.verify(payload, signature, "event_header_123");
+        VerifiedBillingEvent event = verifier.verify(payload, signature, "event_header_123");
 
         assertThat(event.provider()).isEqualTo(BillingProviderType.RAZORPAY);
         assertThat(event.providerEventId()).isEqualTo("event_header_123");
@@ -45,8 +42,7 @@ class RazorpayWebhookVerifierTest {
         String signedPayload = "{\"event\":\"subscription.activated\"}";
         String signature = WebhookSignatureSupport.signAsHex(SECRET, signedPayload);
 
-        assertThatThrownBy(
-                        () -> verifier.verify(signedPayload + " ", signature, "event_123"))
+        assertThatThrownBy(() -> verifier.verify(signedPayload + " ", signature, "event_123"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Invalid Razorpay webhook signature");
     }

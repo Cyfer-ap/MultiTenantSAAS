@@ -30,8 +30,7 @@ class BillingWebhookServiceTest {
         verify(repository).saveAndFlush(captor.capture());
         assertThat(captor.getValue().getProvider()).isEqualTo(BillingProviderType.STRIPE);
         assertThat(captor.getValue().getProviderEventId()).isEqualTo("evt_123");
-        assertThat(captor.getValue().getEventType())
-                .isEqualTo("customer.subscription.updated");
+        assertThat(captor.getValue().getEventType()).isEqualTo("customer.subscription.updated");
         assertThat(captor.getValue().getPayload()).isEqualTo("{\"id\":\"evt_123\"}");
         assertThat(receipt.duplicate()).isFalse();
     }
@@ -39,8 +38,7 @@ class BillingWebhookServiceTest {
     @Test
     void acknowledgesAlreadyPersistedDeliveryWithoutWritingAgain() {
         BillingEventRepository repository = mock(BillingEventRepository.class);
-        when(repository.existsByProviderAndProviderEventId(
-                        BillingProviderType.STRIPE, "evt_123"))
+        when(repository.existsByProviderAndProviderEventId(BillingProviderType.STRIPE, "evt_123"))
                 .thenReturn(true);
         BillingWebhookService service = new BillingWebhookService(repository);
 
@@ -53,8 +51,7 @@ class BillingWebhookServiceTest {
     @Test
     void treatsConcurrentUniqueConstraintWinnerAsDuplicate() {
         BillingEventRepository repository = mock(BillingEventRepository.class);
-        when(repository.existsByProviderAndProviderEventId(
-                        BillingProviderType.STRIPE, "evt_123"))
+        when(repository.existsByProviderAndProviderEventId(BillingProviderType.STRIPE, "evt_123"))
                 .thenReturn(false, true);
         when(repository.saveAndFlush(any(BillingEvent.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate"));

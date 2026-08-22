@@ -14,17 +14,14 @@ public class RazorpayWebhookVerifier {
     private final RazorpayBillingProperties properties;
     private final JsonMapper jsonMapper;
 
-    public RazorpayWebhookVerifier(
-            RazorpayBillingProperties properties, JsonMapper jsonMapper) {
+    public RazorpayWebhookVerifier(RazorpayBillingProperties properties, JsonMapper jsonMapper) {
         this.properties = properties;
         this.jsonMapper = jsonMapper;
     }
 
-    public VerifiedBillingEvent verify(
-            String payload, String signature, String providerEventId) {
+    public VerifiedBillingEvent verify(String payload, String signature, String providerEventId) {
         requireConfigured();
-        if (!WebhookSignatureSupport.matches(
-                properties.getWebhookSecret(), payload, signature)) {
+        if (!WebhookSignatureSupport.matches(properties.getWebhookSecret(), payload, signature)) {
             throw new IllegalArgumentException("Invalid Razorpay webhook signature");
         }
         if (providerEventId == null || providerEventId.isBlank()) {
@@ -48,8 +45,7 @@ public class RazorpayWebhookVerifier {
         if (!properties.isWebhookEnabled()) {
             throw new IllegalArgumentException("Razorpay webhook ingestion is disabled");
         }
-        if (properties.getWebhookSecret() == null
-                || properties.getWebhookSecret().isBlank()) {
+        if (properties.getWebhookSecret() == null || properties.getWebhookSecret().isBlank()) {
             throw new IllegalStateException(
                     "RAZORPAY_WEBHOOK_SECRET must be configured when Razorpay webhooks are enabled");
         }

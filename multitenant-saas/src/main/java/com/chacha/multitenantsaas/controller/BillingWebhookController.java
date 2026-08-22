@@ -31,8 +31,7 @@ public class BillingWebhookController {
 
     @PostMapping("/stripe")
     public ResponseEntity<ApiResponse<BillingWebhookReceipt>> receiveStripeWebhook(
-            @RequestBody String payload,
-            @RequestHeader("Stripe-Signature") String signature) {
+            @RequestBody String payload, @RequestHeader("Stripe-Signature") String signature) {
         BillingWebhookReceipt receipt =
                 billingWebhookService.ingest(stripeWebhookVerifier.verify(payload, signature));
         return response(receipt);
@@ -45,8 +44,7 @@ public class BillingWebhookController {
             @RequestHeader("x-razorpay-event-id") String providerEventId) {
         BillingWebhookReceipt receipt =
                 billingWebhookService.ingest(
-                        razorpayWebhookVerifier.verify(
-                                payload, signature, providerEventId));
+                        razorpayWebhookVerifier.verify(payload, signature, providerEventId));
         return response(receipt);
     }
 
