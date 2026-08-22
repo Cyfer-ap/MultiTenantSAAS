@@ -78,6 +78,7 @@ class BillingCheckoutServiceTest {
                                         UUID.randomUUID(), " ", BillingProviderType.STRIPE))
                 .withMessage("planCode must not be blank");
     }
+
     @Test
     void rejectsNullTenantId() {
         BillingCheckoutService service =
@@ -97,9 +98,7 @@ class BillingCheckoutServiceTest {
                 new BillingCheckoutService(new BillingProviderRegistry(List.of()));
 
         assertThatNullPointerException()
-                .isThrownBy(
-                        () -> service.createCheckoutSession(UUID.randomUUID(), "PRO", null))
+                .isThrownBy(() -> service.createCheckoutSession(UUID.randomUUID(), "PRO", null))
                 .withMessage("providerType must not be null");
     }
-
 }
