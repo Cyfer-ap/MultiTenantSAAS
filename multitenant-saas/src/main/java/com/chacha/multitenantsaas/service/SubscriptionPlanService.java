@@ -123,6 +123,24 @@ public class SubscriptionPlanService {
         return plan;
     }
 
+    @Transactional(readOnly = true)
+    public SubscriptionPlan getActivePlanEntityByCode(String code) {
+        String normalizedCode = normalizeCode(code);
+        SubscriptionPlan plan =
+                subscriptionPlanRepository
+                        .findByCode(normalizedCode)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Subscription plan not found with code: "
+                                                        + normalizedCode));
+
+        if (plan.getStatus() != SubscriptionPlanStatus.ACTIVE) {
+            throw new IllegalArgumentException("Subscription plan must be active.");
+        }
+        return plan;
+    }
+
     private SubscriptionPlan getPlanEntity(UUID planId) {
         if (planId == null) {
             throw new IllegalArgumentException("Subscription plan id is required.");

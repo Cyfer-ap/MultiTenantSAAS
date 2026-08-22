@@ -57,6 +57,8 @@ public class StripeBillingProvider implements BillingProvider {
         form.add("client_reference_id", tenantId.toString());
         form.add("metadata[tenant_id]", tenantId.toString());
         form.add("metadata[plan_code]", normalizedPlanCode);
+        form.add("subscription_data[metadata][tenant_id]", tenantId.toString());
+        form.add("subscription_data[metadata][plan_code]", normalizedPlanCode);
         form.add("line_items[0][price]", priceId);
         form.add("line_items[0][quantity]", "1");
         form.add("success_url", properties.getSuccessUrl());

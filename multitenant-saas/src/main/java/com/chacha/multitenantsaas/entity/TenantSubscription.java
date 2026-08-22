@@ -1,5 +1,6 @@
 package com.chacha.multitenantsaas.entity;
 
+import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -23,7 +24,10 @@ import java.util.UUID;
 @Table(
         name = "tenant_subscriptions",
         uniqueConstraints = {
-            @UniqueConstraint(name = "uk_tenant_subscription_tenant", columnNames = "tenant_id")
+            @UniqueConstraint(name = "uk_tenant_subscription_tenant", columnNames = "tenant_id"),
+            @UniqueConstraint(
+                    name = "uk_tenant_subscription_provider_ref",
+                    columnNames = {"billing_provider", "provider_subscription_id"})
         },
         indexes = {
             @Index(name = "idx_tenant_subscription_plan_status", columnList = "plan_id,status"),
@@ -66,6 +70,16 @@ public class TenantSubscription {
 
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "billing_provider", length = 32)
+    private BillingProviderType billingProvider;
+
+    @Column(name = "provider_subscription_id", length = 255)
+    private String providerSubscriptionId;
+
+    @Column(name = "provider_event_created_at")
+    private Instant providerEventCreatedAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -146,6 +160,18 @@ public class TenantSubscription {
         return cancelledAt;
     }
 
+    public BillingProviderType getBillingProvider() {
+        return billingProvider;
+    }
+
+    public String getProviderSubscriptionId() {
+        return providerSubscriptionId;
+    }
+
+    public Instant getProviderEventCreatedAt() {
+        return providerEventCreatedAt;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -184,5 +210,17 @@ public class TenantSubscription {
 
     public void setCancelledAt(Instant cancelledAt) {
         this.cancelledAt = cancelledAt;
+    }
+
+    public void setBillingProvider(BillingProviderType billingProvider) {
+        this.billingProvider = billingProvider;
+    }
+
+    public void setProviderSubscriptionId(String providerSubscriptionId) {
+        this.providerSubscriptionId = providerSubscriptionId;
+    }
+
+    public void setProviderEventCreatedAt(Instant providerEventCreatedAt) {
+        this.providerEventCreatedAt = providerEventCreatedAt;
     }
 }
