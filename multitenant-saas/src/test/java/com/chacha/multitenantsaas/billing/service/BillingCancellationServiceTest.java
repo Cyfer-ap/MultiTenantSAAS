@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -61,7 +62,7 @@ class BillingCancellationServiceTest {
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> service.requestCancellation(tenantId))
                 .withMessage("Tenant subscription is not linked to a billing provider");
-        verify(stripe, never()).cancelSubscription(org.mockito.ArgumentMatchers.anyString());
+        verify(stripe, never()).cancelSubscription(anyString());
     }
 
     @Test
@@ -84,7 +85,7 @@ class BillingCancellationServiceTest {
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> service.requestCancellation(tenantId))
                 .withMessage("Subscription is already terminal: CANCELLED");
-        verify(razorpay, never()).cancelSubscription(org.mockito.ArgumentMatchers.anyString());
+        verify(razorpay, never()).cancelSubscription(anyString());
     }
 
     @Test
