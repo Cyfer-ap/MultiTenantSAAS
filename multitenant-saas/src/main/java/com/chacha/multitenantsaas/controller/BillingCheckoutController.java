@@ -25,7 +25,12 @@ public class BillingCheckoutController {
         this.billingCheckoutService = billingCheckoutService;
     }
 
-    @PreAuthorize("@tenantSecurity.isTenantAdmin(#tenantId)")
+    @PreAuthorize(
+            "@authorizationSecurity"
+                    + ".hasTenantPermission("
+                    + "#tenantId,"
+                    + "'tenant.update'"
+                    + ")")
     @PostMapping("/checkout")
     public ResponseEntity<ApiResponse<BillingCheckoutResponse>> createCheckout(
             @PathVariable UUID tenantId, @Valid @RequestBody BillingCheckoutRequest request) {
