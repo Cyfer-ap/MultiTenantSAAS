@@ -51,8 +51,9 @@ class BillingCancellationServiceTest {
     void rejectsSubscriptionWithoutProviderLinkage() {
         UUID tenantId = UUID.randomUUID();
         TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
-        when(repository.findByTenantIdWithPlan(tenantId))
-                .thenReturn(Optional.of(subscription(TenantSubscriptionStatus.ACTIVE, null, null)));
+        TenantSubscription subscription =
+                subscription(TenantSubscriptionStatus.ACTIVE, null, null);
+        when(repository.findByTenantIdWithPlan(tenantId)).thenReturn(Optional.of(subscription));
         BillingProvider stripe = mock(BillingProvider.class);
         when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
         BillingCancellationService service =
@@ -69,13 +70,12 @@ class BillingCancellationServiceTest {
     void rejectsTerminalSubscriptionBeforeProviderCall() {
         UUID tenantId = UUID.randomUUID();
         TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
-        when(repository.findByTenantIdWithPlan(tenantId))
-                .thenReturn(
-                        Optional.of(
-                                subscription(
-                                        TenantSubscriptionStatus.CANCELLED,
-                                        BillingProviderType.RAZORPAY,
-                                        "sub_cancelled")));
+        TenantSubscription subscription =
+                subscription(
+                        TenantSubscriptionStatus.CANCELLED,
+                        BillingProviderType.RAZORPAY,
+                        "sub_cancelled");
+        when(repository.findByTenantIdWithPlan(tenantId)).thenReturn(Optional.of(subscription));
         BillingProvider razorpay = mock(BillingProvider.class);
         when(razorpay.providerType()).thenReturn(BillingProviderType.RAZORPAY);
         BillingCancellationService service =
@@ -92,13 +92,12 @@ class BillingCancellationServiceTest {
     void rejectsProviderThatIsNotConfigured() {
         UUID tenantId = UUID.randomUUID();
         TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
-        when(repository.findByTenantIdWithPlan(tenantId))
-                .thenReturn(
-                        Optional.of(
-                                subscription(
-                                        TenantSubscriptionStatus.ACTIVE,
-                                        BillingProviderType.RAZORPAY,
-                                        "sub_123")));
+        TenantSubscription subscription =
+                subscription(
+                        TenantSubscriptionStatus.ACTIVE,
+                        BillingProviderType.RAZORPAY,
+                        "sub_123");
+        when(repository.findByTenantIdWithPlan(tenantId)).thenReturn(Optional.of(subscription));
         BillingCancellationService service =
                 new BillingCancellationService(new BillingProviderRegistry(List.of()), repository);
 
