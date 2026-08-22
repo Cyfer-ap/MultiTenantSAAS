@@ -24,6 +24,10 @@ public class BillingCancellationService {
         this.tenantSubscriptionRepository = tenantSubscriptionRepository;
     }
 
+    /**
+     * Requests cancellation from the provider linked by a verified subscription webhook. The local
+     * lifecycle state remains unchanged until provider webhook reconciliation completes.
+     */
     public BillingCancellationResult requestCancellation(UUID tenantId) {
         Objects.requireNonNull(tenantId, "tenantId must not be null");
 
