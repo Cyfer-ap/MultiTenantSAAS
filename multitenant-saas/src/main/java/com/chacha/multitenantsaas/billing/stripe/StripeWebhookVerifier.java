@@ -6,6 +6,7 @@ import com.chacha.multitenantsaas.billing.webhook.WebhookSignatureSupport;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
@@ -18,6 +19,7 @@ public class StripeWebhookVerifier {
     private final JsonMapper jsonMapper;
     private final Clock clock;
 
+    @Autowired
     public StripeWebhookVerifier(StripeBillingProperties properties, JsonMapper jsonMapper) {
         this(properties, jsonMapper, Clock.systemUTC());
     }
