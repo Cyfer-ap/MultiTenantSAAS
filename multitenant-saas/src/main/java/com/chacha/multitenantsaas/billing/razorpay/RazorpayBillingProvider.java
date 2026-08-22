@@ -34,8 +34,7 @@ public class RazorpayBillingProvider implements BillingProvider {
                         .defaultHeaders(
                                 headers ->
                                         headers.setBasicAuth(
-                                                properties.getKeyId(),
-                                                properties.getKeySecret()))
+                                                properties.getKeyId(), properties.getKeySecret()))
                         .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                         .build();
     }
@@ -60,9 +59,7 @@ public class RazorpayBillingProvider implements BillingProvider {
                         properties.getTotalCount(),
                         1,
                         false,
-                        Map.of(
-                                "tenant_id", tenantId.toString(),
-                                "plan_code", normalizedPlanCode));
+                        Map.of("tenant_id", tenantId.toString(), "plan_code", normalizedPlanCode));
 
         try {
             RazorpaySubscriptionResponse response =
@@ -84,8 +81,7 @@ public class RazorpayBillingProvider implements BillingProvider {
             return new BillingCheckoutSession(
                     response.id(), response.shortUrl(), BillingProviderType.RAZORPAY);
         } catch (RestClientException ex) {
-            throw new BillingProviderException(
-                    "Razorpay subscription creation failed", ex);
+            throw new BillingProviderException("Razorpay subscription creation failed", ex);
         }
     }
 
@@ -98,16 +94,13 @@ public class RazorpayBillingProvider implements BillingProvider {
         try {
             restClient
                     .post()
-                    .uri(
-                            "/v1/subscriptions/{subscriptionId}/cancel",
-                            providerSubscriptionId.trim())
+                    .uri("/v1/subscriptions/{subscriptionId}/cancel", providerSubscriptionId.trim())
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new RazorpayCancellationRequest(false))
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientException ex) {
-            throw new BillingProviderException(
-                    "Razorpay subscription cancellation failed", ex);
+            throw new BillingProviderException("Razorpay subscription cancellation failed", ex);
         }
     }
 
@@ -128,8 +121,7 @@ public class RazorpayBillingProvider implements BillingProvider {
         requireConfigured(properties.getKeySecret(), "RAZORPAY_KEY_SECRET");
         requireConfigured(properties.getBaseUrl(), "RAZORPAY_BASE_URL");
         if (properties.getTotalCount() < 1) {
-            throw new IllegalStateException(
-                    "RAZORPAY_SUBSCRIPTION_TOTAL_COUNT must be at least 1");
+            throw new IllegalStateException("RAZORPAY_SUBSCRIPTION_TOTAL_COUNT must be at least 1");
         }
     }
 

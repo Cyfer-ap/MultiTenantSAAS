@@ -71,8 +71,7 @@ class RazorpayBillingProviderTest {
                 new RazorpayBillingProvider(properties(), RestClient.builder());
 
         assertThatIllegalArgumentException()
-                .isThrownBy(
-                        () -> provider.createCheckoutSession(UUID.randomUUID(), "enterprise"))
+                .isThrownBy(() -> provider.createCheckoutSession(UUID.randomUUID(), "enterprise"))
                 .withMessage("No Razorpay plan is configured for plan: ENTERPRISE");
     }
 
