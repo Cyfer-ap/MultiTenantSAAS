@@ -11,6 +11,10 @@ import static org.mockito.Mockito.when;
 import com.chacha.multitenantsaas.billing.provider.BillingCheckoutSession;
 import com.chacha.multitenantsaas.billing.provider.BillingProvider;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
+import com.chacha.multitenantsaas.dto.SubscriptionPlanResponse;
+import com.chacha.multitenantsaas.entity.SubscriptionPlanStatus;
+import com.chacha.multitenantsaas.service.SubscriptionPlanService;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -18,7 +22,7 @@ import org.junit.jupiter.api.Test;
 class BillingCheckoutServiceTest {
 
     @Test
-    void delegatesCheckoutToSelectedProvider() {
+    void delegatesEligibleCheckoutToSelectedProvider() {
         UUID tenantId = UUID.randomUUID();
         BillingProvider stripe = mock(BillingProvider.class);
         BillingCheckoutSession expected =
@@ -28,9 +32,12 @@ class BillingCheckoutServiceTest {
                         BillingProviderType.STRIPE);
         when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
         when(stripe.createCheckoutSession(tenantId, "PRO")).thenReturn(expected);
+        SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
+        stubPlan(planService, " PRO ", "PRO", SubscriptionPlanStatus.ACTIVE, "29.00");
 
         BillingCheckoutService service =
-                new BillingCheckoutService(new BillingProviderRegistry(List.of(stripe)));
+                new BillingCheckoutService(
+                        new BillingProviderRegistry(List.of(stripe)), planService);
 
         BillingCheckoutSession actual =
                 service.createCheckoutSession(tenantId, " PRO ", BillingProviderType.STRIPE);
@@ -42,8 +49,10 @@ class BillingCheckoutServiceTest {
 
     @Test
     void rejectsUnconfiguredProvider() {
+        SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
+        stubPlan(planService, "PRO", "PRO", SubscriptionPlanStatus.ACTIVE, "29.00");
         BillingCheckoutService service =
-                new BillingCheckoutService(new BillingProviderRegistry(List.of()));
+                new BillingCheckoutService(new BillingProviderRegistry(List.of()), planService);
 
         assertThatIllegalArgumentException()
                 .isThrownBy(
@@ -51,6 +60,36 @@ class BillingCheckoutServiceTest {
                                 service.createCheckoutSession(
                                         UUID.randomUUID(), "PRO", BillingProviderType.RAZORPAY))
                 .withMessage("Billing provider is not configured: RAZORPAY");
+    }
+
+    @Test
+    void rejectsInactivePlan() {
+        SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
+        stubPlan(planService, "PRO", "PRO", SubscriptionPlanStatus.INACTIVE, "29.00");
+        BillingCheckoutService service =
+                new BillingCheckoutService(new BillingProviderRegistry(List.of()), planService);
+
+        assertThatIllegalArgumentException()
+                .isThrownBy(
+                        () ->
+                                service.createCheckoutSession(
+                                        UUID.randomUUID(), "PRO", BillingProviderType.STRIPE))
+                .withMessage("Subscription plan must be active");
+    }
+
+    @Test
+    void rejectsFreePlan() {
+        SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
+        stubPlan(planService, "FREE", "FREE", SubscriptionPlanStatus.ACTIVE, "0.00");
+        BillingCheckoutService service =
+                new BillingCheckoutService(new BillingProviderRegistry(List.of()), planService);
+
+        assertThatIllegalArgumentException()
+                .isThrownBy(
+                        () ->
+                                service.createCheckoutSession(
+                                        UUID.randomUUID(), "FREE", BillingProviderType.STRIPE))
+                .withMessage("Free plans do not require provider checkout");
     }
 
     @Test
@@ -66,11 +105,13 @@ class BillingCheckoutServiceTest {
     }
 
     @Test
-    void rejectsBlankPlanCodeBeforeProviderInvocation() {
+    void rejectsBlankPlanCodeBeforePlanLookup() {
         BillingProvider stripe = mock(BillingProvider.class);
         when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
+        SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
         BillingCheckoutService service =
-                new BillingCheckoutService(new BillingProviderRegistry(List.of(stripe)));
+                new BillingCheckoutService(
+                        new BillingProviderRegistry(List.of(stripe)), planService);
 
         assertThatIllegalArgumentException()
                 .isThrownBy(
@@ -83,7 +124,9 @@ class BillingCheckoutServiceTest {
     @Test
     void rejectsNullTenantId() {
         BillingCheckoutService service =
-                new BillingCheckoutService(new BillingProviderRegistry(List.of()));
+                new BillingCheckoutService(
+                        new BillingProviderRegistry(List.of()),
+                        mock(SubscriptionPlanService.class));
 
         assertThatNullPointerException()
                 .isThrownBy(
@@ -96,10 +139,31 @@ class BillingCheckoutServiceTest {
     @Test
     void rejectsNullProviderType() {
         BillingCheckoutService service =
-                new BillingCheckoutService(new BillingProviderRegistry(List.of()));
+                new BillingCheckoutService(
+                        new BillingProviderRegistry(List.of()),
+                        mock(SubscriptionPlanService.class));
 
         assertThatNullPointerException()
                 .isThrownBy(() -> service.createCheckoutSession(UUID.randomUUID(), "PRO", null))
                 .withMessage("providerType must not be null");
+    }
+
+    private void stubPlan(
+            SubscriptionPlanService planService,
+            String requestedCode,
+            String responseCode,
+            SubscriptionPlanStatus status,
+            String price) {
+        SubscriptionPlanResponse plan = plan(responseCode, status, price);
+        when(planService.getPlanByCode(requestedCode)).thenReturn(plan);
+    }
+
+    private SubscriptionPlanResponse plan(
+            String code, SubscriptionPlanStatus status, String price) {
+        SubscriptionPlanResponse plan = mock(SubscriptionPlanResponse.class);
+        when(plan.code()).thenReturn(code);
+        when(plan.status()).thenReturn(status);
+        when(plan.price()).thenReturn(new BigDecimal(price));
+        return plan;
     }
 }
