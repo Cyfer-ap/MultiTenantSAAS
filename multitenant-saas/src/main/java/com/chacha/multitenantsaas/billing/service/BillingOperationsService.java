@@ -50,8 +50,7 @@ public class BillingOperationsService {
         return toPageResponse(events.map(this::mapEvent));
     }
 
-    private BillingSubscriptionOperationsResponse mapSubscription(
-            TenantSubscription subscription) {
+    private BillingSubscriptionOperationsResponse mapSubscription(TenantSubscription subscription) {
         return new BillingSubscriptionOperationsResponse(
                 subscription.getId(),
                 subscription.getTenant().getId(),

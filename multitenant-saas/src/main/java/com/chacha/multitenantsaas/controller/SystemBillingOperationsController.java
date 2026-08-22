@@ -54,8 +54,7 @@ public class SystemBillingOperationsController {
                                 "billingProvider"));
 
         PageResponse<BillingSubscriptionOperationsResponse> response =
-                billingOperationsService.getLinkedSubscriptions(
-                        provider, status, search, pageable);
+                billingOperationsService.getLinkedSubscriptions(provider, status, search, pageable);
 
         return ResponseEntity.ok(
                 ApiResponse.success("Linked billing subscriptions fetched successfully", response));
@@ -78,15 +77,10 @@ public class SystemBillingOperationsController {
                         PaginationUtils.validateSize(size),
                         SortingUtils.getDirection(sortDir),
                         SortingUtils.validateSortBy(
-                                sortBy,
-                                "receivedAt",
-                                "receivedAt",
-                                "eventType",
-                                "provider"));
+                                sortBy, "receivedAt", "receivedAt", "eventType", "provider"));
 
         PageResponse<BillingEventOperationsResponse> response =
-                billingOperationsService.getBillingEvents(
-                        provider, eventType, search, pageable);
+                billingOperationsService.getBillingEvents(provider, eventType, search, pageable);
 
         return ResponseEntity.ok(
                 ApiResponse.success("Billing events fetched successfully", response));
