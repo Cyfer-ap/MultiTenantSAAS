@@ -5,6 +5,7 @@ import com.chacha.multitenantsaas.billing.provider.BillingProvider;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderException;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
@@ -45,7 +46,7 @@ public class StripeBillingProvider implements BillingProvider {
     @Override
     public BillingCheckoutSession createCheckoutSession(UUID tenantId, String planCode) {
         String normalizedPlanCode = planCode.trim().toUpperCase(Locale.ROOT);
-        String priceId = properties.getPrices().get(normalizedPlanCode);
+        String priceId = resolvePriceId(normalizedPlanCode);
         if (priceId == null || priceId.isBlank()) {
             throw new IllegalArgumentException(
                     "No Stripe price is configured for plan: " + normalizedPlanCode);
@@ -99,6 +100,15 @@ public class StripeBillingProvider implements BillingProvider {
         } catch (RestClientException ex) {
             throw new BillingProviderException("Stripe subscription cancellation failed", ex);
         }
+    }
+
+    private String resolvePriceId(String normalizedPlanCode) {
+        for (Map.Entry<String, String> price : properties.getPrices().entrySet()) {
+            if (price.getKey().equalsIgnoreCase(normalizedPlanCode)) {
+                return price.getValue();
+            }
+        }
+        return null;
     }
 
     private static void validateConfiguration(StripeBillingProperties properties) {
