@@ -35,6 +35,7 @@ class StripeBillingProviderTest {
         server.expect(requestTo("https://api.stripe.com/v1/checkout/sessions"))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(header("Authorization", "Bearer sk_test_example"))
+                .andExpect(header("Accept", MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
                 .andExpect(content().string(containsString("mode=subscription")))
                 .andExpect(content().string(containsString("client_reference_id=" + tenantId)))
