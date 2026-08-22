@@ -30,4 +30,31 @@ public class BillingEvent {
     private Instant receivedAt = Instant.now();
 
     protected BillingEvent() {}
+
+    public BillingEvent(
+            BillingProviderType provider,
+            String providerEventId,
+            String eventType,
+            String payload) {
+        this.provider = provider;
+        this.providerEventId = providerEventId;
+        this.eventType = eventType;
+        this.payload = payload;
+    }
+
+    public BillingProviderType getProvider() {
+        return provider;
+    }
+
+    public String getProviderEventId() {
+        return providerEventId;
+    }
+
+    public String getEventType() {
+        return eventType;
+    }
+
+    public String getPayload() {
+        return payload;
+    }
 }

@@ -98,6 +98,11 @@ public class SecurityConfig {
                                         .requestMatchers(
                                                 HttpMethod.POST, "/api/user-invitations/accept")
                                         .permitAll()
+                                        .requestMatchers(
+                                                HttpMethod.POST,
+                                                "/api/billing/webhooks/stripe",
+                                                "/api/billing/webhooks/razorpay")
+                                        .permitAll()
                                         .requestMatchers("/api/**")
                                         .authenticated()
                                         .anyRequest()

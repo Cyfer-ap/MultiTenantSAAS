@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 public class StripeBillingProperties {
 
     private boolean enabled;
+    private boolean webhookEnabled;
+    private String webhookSecret = "";
+    private long webhookToleranceSeconds = 300;
     private String secretKey = "";
     private String baseUrl = "https://api.stripe.com";
     private String successUrl = "http://localhost:8080/settings/billing?checkout=success";
@@ -22,6 +25,30 @@ public class StripeBillingProperties {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isWebhookEnabled() {
+        return webhookEnabled;
+    }
+
+    public void setWebhookEnabled(boolean webhookEnabled) {
+        this.webhookEnabled = webhookEnabled;
+    }
+
+    public String getWebhookSecret() {
+        return webhookSecret;
+    }
+
+    public void setWebhookSecret(String webhookSecret) {
+        this.webhookSecret = webhookSecret;
+    }
+
+    public long getWebhookToleranceSeconds() {
+        return webhookToleranceSeconds;
+    }
+
+    public void setWebhookToleranceSeconds(long webhookToleranceSeconds) {
+        this.webhookToleranceSeconds = webhookToleranceSeconds;
     }
 
     public String getSecretKey() {
