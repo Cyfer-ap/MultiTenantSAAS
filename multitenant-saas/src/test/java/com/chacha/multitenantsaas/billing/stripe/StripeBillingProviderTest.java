@@ -39,7 +39,7 @@ class StripeBillingProviderTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
                 .andExpect(content().string(containsString("mode=subscription")))
                 .andExpect(content().string(containsString("client_reference_id=" + tenantId)))
-                .andExpect(content().string(containsString("price=price_pro_test")))
+                .andExpect(content().string(containsString("line_items%5B0%5D%5Bprice%5D=price_pro_test")))
                 .andRespond(
                         withSuccess(
                                 """
