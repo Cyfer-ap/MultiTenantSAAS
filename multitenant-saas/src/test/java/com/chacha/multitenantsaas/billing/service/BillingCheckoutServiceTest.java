@@ -33,8 +33,7 @@ class BillingCheckoutServiceTest {
         when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
         when(stripe.createCheckoutSession(tenantId, "PRO")).thenReturn(expected);
         SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
-        when(planService.getPlanByCode(" PRO "))
-                .thenReturn(plan("PRO", SubscriptionPlanStatus.ACTIVE, "29.00"));
+        stubPlan(planService, " PRO ", "PRO", SubscriptionPlanStatus.ACTIVE, "29.00");
 
         BillingCheckoutService service =
                 new BillingCheckoutService(
@@ -51,8 +50,7 @@ class BillingCheckoutServiceTest {
     @Test
     void rejectsUnconfiguredProvider() {
         SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
-        when(planService.getPlanByCode("PRO"))
-                .thenReturn(plan("PRO", SubscriptionPlanStatus.ACTIVE, "29.00"));
+        stubPlan(planService, "PRO", "PRO", SubscriptionPlanStatus.ACTIVE, "29.00");
         BillingCheckoutService service =
                 new BillingCheckoutService(new BillingProviderRegistry(List.of()), planService);
 
@@ -67,8 +65,7 @@ class BillingCheckoutServiceTest {
     @Test
     void rejectsInactivePlan() {
         SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
-        when(planService.getPlanByCode("PRO"))
-                .thenReturn(plan("PRO", SubscriptionPlanStatus.INACTIVE, "29.00"));
+        stubPlan(planService, "PRO", "PRO", SubscriptionPlanStatus.INACTIVE, "29.00");
         BillingCheckoutService service =
                 new BillingCheckoutService(new BillingProviderRegistry(List.of()), planService);
 
@@ -83,8 +80,7 @@ class BillingCheckoutServiceTest {
     @Test
     void rejectsFreePlan() {
         SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
-        when(planService.getPlanByCode("FREE"))
-                .thenReturn(plan("FREE", SubscriptionPlanStatus.ACTIVE, "0.00"));
+        stubPlan(planService, "FREE", "FREE", SubscriptionPlanStatus.ACTIVE, "0.00");
         BillingCheckoutService service =
                 new BillingCheckoutService(new BillingProviderRegistry(List.of()), planService);
 
@@ -150,6 +146,16 @@ class BillingCheckoutServiceTest {
         assertThatNullPointerException()
                 .isThrownBy(() -> service.createCheckoutSession(UUID.randomUUID(), "PRO", null))
                 .withMessage("providerType must not be null");
+    }
+
+    private void stubPlan(
+            SubscriptionPlanService planService,
+            String requestedCode,
+            String responseCode,
+            SubscriptionPlanStatus status,
+            String price) {
+        SubscriptionPlanResponse plan = plan(responseCode, status, price);
+        when(planService.getPlanByCode(requestedCode)).thenReturn(plan);
     }
 
     private SubscriptionPlanResponse plan(
