@@ -34,16 +34,14 @@ class BillingWebhookServiceTest {
         order.verify(synchronizer).synchronize(event);
         assertThat(captor.getValue().getProvider()).isEqualTo(BillingProviderType.STRIPE);
         assertThat(captor.getValue().getProviderEventId()).isEqualTo("evt_123");
-        assertThat(captor.getValue().getEventType())
-                .isEqualTo("customer.subscription.updated");
+        assertThat(captor.getValue().getEventType()).isEqualTo("customer.subscription.updated");
         assertThat(receipt.duplicate()).isFalse();
     }
 
     @Test
     void acknowledgesAlreadyPersistedDeliveryWithoutSynchronizingAgain() {
         BillingEventRepository repository = mock(BillingEventRepository.class);
-        when(repository.existsByProviderAndProviderEventId(
-                        BillingProviderType.STRIPE, "evt_123"))
+        when(repository.existsByProviderAndProviderEventId(BillingProviderType.STRIPE, "evt_123"))
                 .thenReturn(true);
         BillingSubscriptionSynchronizer synchronizer = mock(BillingSubscriptionSynchronizer.class);
         BillingWebhookService service = new BillingWebhookService(repository, synchronizer);

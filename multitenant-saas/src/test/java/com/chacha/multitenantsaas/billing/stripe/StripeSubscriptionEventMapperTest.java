@@ -64,10 +64,7 @@ class StripeSubscriptionEventMapperTest {
         Optional<BillingSubscriptionUpdate> result =
                 mapper.map(
                         new VerifiedBillingEvent(
-                                BillingProviderType.STRIPE,
-                                "evt_123",
-                                "invoice.paid",
-                                "{}"));
+                                BillingProviderType.STRIPE, "evt_123", "invoice.paid", "{}"));
 
         assertThat(result).isEmpty();
     }

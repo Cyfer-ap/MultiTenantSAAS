@@ -69,16 +69,17 @@ public class RazorpaySubscriptionEventMapper implements BillingSubscriptionEvent
         return switch (eventType) {
             case "subscription.cancelled" -> TenantSubscriptionStatus.CANCELLED;
             case "subscription.completed" -> TenantSubscriptionStatus.EXPIRED;
-            case "subscription.pending", "subscription.halted" ->
-                    TenantSubscriptionStatus.PAST_DUE;
-            default -> switch (status) {
-                case "active" -> TenantSubscriptionStatus.ACTIVE;
-                case "pending", "halted" -> TenantSubscriptionStatus.PAST_DUE;
-                case "cancelled" -> TenantSubscriptionStatus.CANCELLED;
-                case "completed", "expired" -> TenantSubscriptionStatus.EXPIRED;
-                default -> throw new IllegalArgumentException(
-                        "Unsupported Razorpay subscription status: " + status);
-            };
+            case "subscription.pending", "subscription.halted" -> TenantSubscriptionStatus.PAST_DUE;
+            default ->
+                    switch (status) {
+                        case "active" -> TenantSubscriptionStatus.ACTIVE;
+                        case "pending", "halted" -> TenantSubscriptionStatus.PAST_DUE;
+                        case "cancelled" -> TenantSubscriptionStatus.CANCELLED;
+                        case "completed", "expired" -> TenantSubscriptionStatus.EXPIRED;
+                        default ->
+                                throw new IllegalArgumentException(
+                                        "Unsupported Razorpay subscription status: " + status);
+                    };
         };
     }
 
@@ -86,7 +87,8 @@ public class RazorpaySubscriptionEventMapper implements BillingSubscriptionEvent
         try {
             return jsonMapper.readTree(payload);
         } catch (JacksonException exception) {
-            throw new IllegalArgumentException("Malformed Razorpay subscription payload", exception);
+            throw new IllegalArgumentException(
+                    "Malformed Razorpay subscription payload", exception);
         }
     }
 

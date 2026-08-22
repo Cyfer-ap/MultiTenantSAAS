@@ -39,10 +39,7 @@ class BillingSubscriptionSynchronizerTest {
         when(planService.getActivePlanEntityByCode("PRO")).thenReturn(targetPlan);
         BillingSubscriptionSynchronizer synchronizer =
                 new BillingSubscriptionSynchronizer(
-                        List.of(mapper),
-                        repository,
-                        mock(TenantLookupService.class),
-                        planService);
+                        List.of(mapper), repository, mock(TenantLookupService.class), planService);
 
         synchronizer.synchronize(event());
 
@@ -67,10 +64,7 @@ class BillingSubscriptionSynchronizerTest {
         SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
         BillingSubscriptionSynchronizer synchronizer =
                 new BillingSubscriptionSynchronizer(
-                        List.of(mapper),
-                        repository,
-                        mock(TenantLookupService.class),
-                        planService);
+                        List.of(mapper), repository, mock(TenantLookupService.class), planService);
 
         synchronizer.synchronize(event());
 
@@ -116,9 +110,6 @@ class BillingSubscriptionSynchronizerTest {
 
     private VerifiedBillingEvent event() {
         return new VerifiedBillingEvent(
-                BillingProviderType.STRIPE,
-                "evt_123",
-                "customer.subscription.updated",
-                "{}");
+                BillingProviderType.STRIPE, "evt_123", "customer.subscription.updated", "{}");
     }
 }

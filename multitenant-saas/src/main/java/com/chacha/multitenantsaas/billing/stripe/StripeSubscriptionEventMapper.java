@@ -83,12 +83,12 @@ public class StripeSubscriptionEventMapper implements BillingSubscriptionEventMa
         return switch (status) {
             case "trialing" -> TenantSubscriptionStatus.TRIALING;
             case "active" -> TenantSubscriptionStatus.ACTIVE;
-            case "past_due", "unpaid", "incomplete", "paused" ->
-                    TenantSubscriptionStatus.PAST_DUE;
+            case "past_due", "unpaid", "incomplete", "paused" -> TenantSubscriptionStatus.PAST_DUE;
             case "canceled" -> TenantSubscriptionStatus.CANCELLED;
             case "incomplete_expired" -> TenantSubscriptionStatus.EXPIRED;
-            default -> throw new IllegalArgumentException(
-                    "Unsupported Stripe subscription status: " + status);
+            default ->
+                    throw new IllegalArgumentException(
+                            "Unsupported Stripe subscription status: " + status);
         };
     }
 
@@ -130,8 +130,7 @@ public class StripeSubscriptionEventMapper implements BillingSubscriptionEventMa
             return Optional.empty();
         }
         if (!value.isIntegralNumber()) {
-            throw new IllegalArgumentException(
-                    "Stripe subscription payload has invalid " + field);
+            throw new IllegalArgumentException("Stripe subscription payload has invalid " + field);
         }
         return Optional.of(Instant.ofEpochSecond(value.asLong()));
     }
