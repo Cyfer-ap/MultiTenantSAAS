@@ -22,8 +22,8 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.MapPropertySource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -34,12 +34,20 @@ class RazorpayBillingProviderTest {
 
     @Test
     void springBeanFactorySelectsThePropertiesInjectionConstructor() {
-        DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
-        beanFactory.registerSingleton("razorpayBillingProperties", properties());
-        beanFactory.registerBeanDefinition(
-                "razorpayBillingProvider", new RootBeanDefinition(RazorpayBillingProvider.class));
+        try (AnnotationConfigApplicationContext context =
+                new AnnotationConfigApplicationContext()) {
+            context.getEnvironment()
+                    .getPropertySources()
+                    .addFirst(
+                            new MapPropertySource(
+                                    "razorpay-test",
+                                    Map.of("app.billing.razorpay.enabled", "true")));
+            context.registerBean(RazorpayBillingProperties.class, this::properties);
+            context.register(RazorpayBillingProvider.class);
+            context.refresh();
 
-        assertThat(beanFactory.getBean(RazorpayBillingProvider.class)).isNotNull();
+            assertThat(context.getBean(RazorpayBillingProvider.class)).isNotNull();
+        }
     }
 
     @Test
