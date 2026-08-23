@@ -6,6 +6,7 @@ import com.chacha.multitenantsaas.billing.dto.BillingCheckoutResponse;
 import com.chacha.multitenantsaas.billing.provider.BillingCheckoutSession;
 import com.chacha.multitenantsaas.billing.service.BillingCheckoutService;
 import com.chacha.multitenantsaas.common.ApiResponse;
+import com.chacha.multitenantsaas.web.SubscriptionReadOnlyAllowed;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,7 @@ public class BillingCheckoutController {
                         billingCheckoutService.getCheckoutConfiguration()));
     }
 
+    @SubscriptionReadOnlyAllowed
     @PreAuthorize(
             "@authorizationSecurity"
                     + ".hasTenantPermission("
