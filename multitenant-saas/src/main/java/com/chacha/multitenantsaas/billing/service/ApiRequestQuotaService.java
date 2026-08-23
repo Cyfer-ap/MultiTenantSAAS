@@ -44,9 +44,7 @@ public class ApiRequestQuotaService {
                 tenantSubscriptionRepository
                         .findByTenantIdWithPlanForUpdate(tenantId)
                         .orElseThrow(
-                                () ->
-                                        serviceUnavailable(
-                                                SubscriptionAccessReason.NO_SUBSCRIPTION));
+                                () -> serviceUnavailable(SubscriptionAccessReason.NO_SUBSCRIPTION));
 
         Instant occurredAt = Instant.now();
         SubscriptionAccessReason unavailableReason =
@@ -74,10 +72,7 @@ public class ApiRequestQuotaService {
                             tenantId, API_REQUESTS_METRIC, periodStart, periodEnd);
             if (used >= usageLimit.getPeriodLimit()) {
                 throw new ApiUsageLimitExceededException(
-                        API_REQUESTS_METRIC,
-                        used,
-                        usageLimit.getPeriodLimit(),
-                        periodEnd);
+                        API_REQUESTS_METRIC, used, usageLimit.getPeriodLimit(), periodEnd);
             }
         }
 

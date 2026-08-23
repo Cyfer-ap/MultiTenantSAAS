@@ -71,5 +71,4 @@ public class TenantApiKeyAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.clearContext();
         }
     }
-
 }

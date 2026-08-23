@@ -48,9 +48,7 @@ public class SubscriptionPlanUsageLimitService {
                         .orElseGet(
                                 () ->
                                         new SubscriptionPlanUsageLimit(
-                                                plan,
-                                                normalizedMetricCode,
-                                                request.periodLimit()));
+                                                plan, normalizedMetricCode, request.periodLimit()));
 
         usageLimit.setPeriodLimit(request.periodLimit());
 
@@ -102,8 +100,7 @@ public class SubscriptionPlanUsageLimitService {
         return metricCode.trim().toUpperCase(Locale.ROOT);
     }
 
-    private SubscriptionPlanUsageLimitResponse mapResponse(
-            SubscriptionPlanUsageLimit usageLimit) {
+    private SubscriptionPlanUsageLimitResponse mapResponse(SubscriptionPlanUsageLimit usageLimit) {
         return new SubscriptionPlanUsageLimitResponse(
                 usageLimit.getId(),
                 usageLimit.getPlan().getId(),

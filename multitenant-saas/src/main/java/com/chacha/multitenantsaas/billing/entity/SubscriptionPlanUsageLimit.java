@@ -13,9 +13,7 @@ import java.util.UUID;
                     name = "uk_subscription_plan_usage_limit_metric",
                     columnNames = {"plan_id", "metric_code"})
         },
-        indexes = {
-            @Index(name = "idx_subscription_plan_usage_limit_plan", columnList = "plan_id")
-        })
+        indexes = {@Index(name = "idx_subscription_plan_usage_limit_plan", columnList = "plan_id")})
 public class SubscriptionPlanUsageLimit {
 
     @Id
@@ -40,8 +38,7 @@ public class SubscriptionPlanUsageLimit {
 
     public SubscriptionPlanUsageLimit() {}
 
-    public SubscriptionPlanUsageLimit(
-            SubscriptionPlan plan, String metricCode, long periodLimit) {
+    public SubscriptionPlanUsageLimit(SubscriptionPlan plan, String metricCode, long periodLimit) {
         this.plan = plan;
         this.metricCode = metricCode;
         this.periodLimit = periodLimit;

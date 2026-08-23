@@ -9,8 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface SubscriptionPlanUsageLimitRepository
         extends JpaRepository<SubscriptionPlanUsageLimit, UUID> {
 
-    Optional<SubscriptionPlanUsageLimit> findByPlan_IdAndMetricCode(
-            UUID planId, String metricCode);
+    Optional<SubscriptionPlanUsageLimit> findByPlan_IdAndMetricCode(UUID planId, String metricCode);
 
     List<SubscriptionPlanUsageLimit> findAllByPlan_IdOrderByMetricCodeAsc(UUID planId);
 }
