@@ -1,19 +1,24 @@
 package com.chacha.multitenantsaas.controller;
 
 import com.chacha.multitenantsaas.billing.dto.BillingEventOperationsResponse;
+import com.chacha.multitenantsaas.billing.dto.BillingReconciliationResponse;
 import com.chacha.multitenantsaas.billing.dto.BillingSubscriptionOperationsResponse;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
 import com.chacha.multitenantsaas.billing.service.BillingOperationsService;
+import com.chacha.multitenantsaas.billing.service.BillingReconciliationService;
 import com.chacha.multitenantsaas.common.ApiResponse;
 import com.chacha.multitenantsaas.common.PaginationUtils;
 import com.chacha.multitenantsaas.common.SortingUtils;
 import com.chacha.multitenantsaas.dto.PageResponse;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
+import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,9 +28,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class SystemBillingOperationsController {
 
     private final BillingOperationsService billingOperationsService;
+    private final BillingReconciliationService billingReconciliationService;
 
-    public SystemBillingOperationsController(BillingOperationsService billingOperationsService) {
+    public SystemBillingOperationsController(
+            BillingOperationsService billingOperationsService,
+            BillingReconciliationService billingReconciliationService) {
         this.billingOperationsService = billingOperationsService;
+        this.billingReconciliationService = billingReconciliationService;
     }
 
     @PreAuthorize("@systemSecurity.isSystemAdmin()")
@@ -84,5 +93,16 @@ public class SystemBillingOperationsController {
 
         return ResponseEntity.ok(
                 ApiResponse.success("Billing events fetched successfully", response));
+    }
+
+    @PreAuthorize("@systemSecurity.isSystemAdmin()")
+    @PostMapping("/subscriptions/{tenantId}/reconcile")
+    public ResponseEntity<ApiResponse<BillingReconciliationResponse>> reconcileSubscription(
+            @PathVariable UUID tenantId) {
+        BillingReconciliationResponse response =
+                billingReconciliationService.reconcile(tenantId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Billing subscription reconciliation completed", response));
     }
 }
