@@ -168,6 +168,27 @@ describe('TenantSubscriptionPage', () => {
         expect(screen.queryByText('plan-1')).not.toBeInTheDocument()
     })
 
+    it('does not enable checkout discovery for an active subscription', () => {
+        vi.mocked(useBillingCheckoutConfiguration).mockReturnValue({
+            data: {
+                plans: [subscription.plan],
+                providers: ['RAZORPAY'],
+            },
+            error: null,
+            isError: false,
+            isPending: false,
+        } as never)
+
+        renderPage()
+
+        expect(useBillingCheckoutConfiguration).toHaveBeenCalledWith('tenant-1', false)
+        expect(
+            screen.queryByRole('button', {
+                name: 'Continue with Razorpay',
+            }),
+        ).not.toBeInTheDocument()
+    })
+
     it('shows a clear empty state when no plan is assigned', () => {
         vi.mocked(useWorkspaceSubscription).mockReturnValue({
             data: undefined,
