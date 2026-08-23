@@ -13,7 +13,10 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import com.chacha.multitenantsaas.billing.provider.BillingCheckoutSession;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderException;
+import com.chacha.multitenantsaas.billing.provider.BillingProviderSubscriptionSnapshot;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
+import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
+import java.time.Instant;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -88,6 +91,42 @@ class RazorpayBillingProviderTest {
         assertThatThrownBy(() -> provider.createCheckoutSession(UUID.randomUUID(), "PRO"))
                 .isInstanceOf(BillingProviderException.class)
                 .hasMessage("Razorpay subscription creation failed");
+        server.verify();
+    }
+
+    @Test
+    void fetchesProviderSubscriptionSnapshot() {
+        RazorpayBillingProperties properties = properties();
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        RazorpayBillingProvider provider = new RazorpayBillingProvider(properties, builder);
+
+        server.expect(requestTo("https://api.razorpay.com/v1/subscriptions/sub_test_123"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(
+                        withSuccess(
+                                """
+                                {
+                                  "id": "sub_test_123",
+                                  "plan_id": "plan_pro_test",
+                                  "status": "active",
+                                  "current_start": 1787460000,
+                                  "current_end": 1790138400,
+                                  "cancel_at_cycle_end": false
+                                }
+                                """,
+                                MediaType.APPLICATION_JSON));
+
+        BillingProviderSubscriptionSnapshot snapshot =
+                provider.fetchSubscription("sub_test_123");
+
+        assertThat(snapshot.provider()).isEqualTo(BillingProviderType.RAZORPAY);
+        assertThat(snapshot.planCode()).isEqualTo("PRO");
+        assertThat(snapshot.status()).isEqualTo(TenantSubscriptionStatus.ACTIVE);
+        assertThat(snapshot.currentPeriodStart())
+                .isEqualTo(Instant.ofEpochSecond(1787460000));
+        assertThat(snapshot.currentPeriodEnd()).isEqualTo(Instant.ofEpochSecond(1790138400));
+        assertThat(snapshot.cancelAtPeriodEnd()).isFalse();
         server.verify();
     }
 
