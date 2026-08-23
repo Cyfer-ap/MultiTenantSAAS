@@ -1,5 +1,8 @@
 package com.chacha.multitenantsaas.controller;
 
+import com.chacha.multitenantsaas.billing.dto.SubscriptionPlanUsageLimitRequest;
+import com.chacha.multitenantsaas.billing.dto.SubscriptionPlanUsageLimitResponse;
+import com.chacha.multitenantsaas.billing.service.SubscriptionPlanUsageLimitService;
 import com.chacha.multitenantsaas.common.ApiResponse;
 import com.chacha.multitenantsaas.dto.SubscriptionPlanCreateRequest;
 import com.chacha.multitenantsaas.dto.SubscriptionPlanResponse;
@@ -13,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,10 +32,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class SystemSubscriptionPlanController {
 
     private final SubscriptionAdministrationService subscriptionAdministrationService;
+    private final SubscriptionPlanUsageLimitService usageLimitService;
 
     public SystemSubscriptionPlanController(
-            SubscriptionAdministrationService subscriptionAdministrationService) {
+            SubscriptionAdministrationService subscriptionAdministrationService,
+            SubscriptionPlanUsageLimitService usageLimitService) {
         this.subscriptionAdministrationService = subscriptionAdministrationService;
+        this.usageLimitService = usageLimitService;
     }
 
     @PreAuthorize("@systemSecurity.isSystemAdmin()")
@@ -52,6 +59,38 @@ public class SystemSubscriptionPlanController {
                 ApiResponse.success(
                         "Subscription plan fetched successfully",
                         subscriptionAdministrationService.getPlan(planId)));
+    }
+
+    @PreAuthorize("@systemSecurity.isSystemAdmin()")
+    @GetMapping("/{planId}/usage-limits")
+    public ResponseEntity<ApiResponse<List<SubscriptionPlanUsageLimitResponse>>> getUsageLimits(
+            @PathVariable UUID planId) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Subscription plan usage limits fetched successfully",
+                        usageLimitService.list(planId)));
+    }
+
+    @PreAuthorize("@systemSecurity.isSystemAdmin()")
+    @PutMapping("/{planId}/usage-limits/{metricCode}")
+    public ResponseEntity<ApiResponse<SubscriptionPlanUsageLimitResponse>> upsertUsageLimit(
+            @PathVariable UUID planId,
+            @PathVariable String metricCode,
+            @Valid @RequestBody SubscriptionPlanUsageLimitRequest request) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Subscription plan usage limit saved successfully",
+                        usageLimitService.upsert(planId, metricCode, request)));
+    }
+
+    @PreAuthorize("@systemSecurity.isSystemAdmin()")
+    @DeleteMapping("/{planId}/usage-limits/{metricCode}")
+    public ResponseEntity<ApiResponse<SubscriptionPlanUsageLimitResponse>> removeUsageLimit(
+            @PathVariable UUID planId, @PathVariable String metricCode) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Subscription plan usage limit removed successfully",
+                        usageLimitService.remove(planId, metricCode)));
     }
 
     @PreAuthorize("@systemSecurity.isSystemAdmin()")

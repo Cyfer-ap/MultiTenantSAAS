@@ -4,6 +4,7 @@ import com.chacha.multitenantsaas.billing.provider.BillingProviderException;
 import com.chacha.multitenantsaas.common.ApiErrorResponse;
 import com.chacha.multitenantsaas.common.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -148,6 +149,34 @@ public class GlobalExceptionHandler {
                         + "from completing. Please retry.",
                 request,
                 Map.of("retryable", true));
+    }
+
+    @ExceptionHandler(ApiUsageLimitExceededException.class)
+    public ResponseEntity<ApiErrorResponse> handleApiUsageLimitExceededException(
+            ApiUsageLimitExceededException exception, HttpServletRequest request) {
+        long retryAfterSeconds =
+                Math.max(
+                        1L,
+                        java.time.Duration.between(Instant.now(), exception.getResetAt())
+                                .toSeconds());
+        Map<String, Object> details = new LinkedHashMap<>();
+        details.put("metricCode", exception.getMetricCode());
+        details.put("used", exception.getUsed());
+        details.put("limit", exception.getLimit());
+        details.put("resetAt", exception.getResetAt());
+
+        ApiErrorResponse response =
+                ApiErrorResponse.of(
+                        exception.getMessage(),
+                        ErrorCode.RATE_LIMITED,
+                        HttpStatus.TOO_MANY_REQUESTS.value(),
+                        request.getRequestURI(),
+                        details);
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, Long.toString(retryAfterSeconds))
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .body(response);
     }
 
     @ExceptionHandler(RateLimitExceededException.class)
