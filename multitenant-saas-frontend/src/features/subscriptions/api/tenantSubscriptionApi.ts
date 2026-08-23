@@ -1,6 +1,9 @@
 import { httpClient } from '../../../api/httpClient'
 import type { ApiResponse } from '../../../types/api'
 import type {
+    BillingCheckoutConfiguration,
+    BillingCheckoutInput,
+    BillingCheckoutSession,
     TenantSubscription,
     TenantSubscriptionEntitlements,
     WorkspaceSubscriptionAccess,
@@ -30,8 +33,30 @@ async function getAccess(tenantId: string): Promise<WorkspaceSubscriptionAccess>
     return response.data.data
 }
 
+async function getCheckoutConfiguration(tenantId: string): Promise<BillingCheckoutConfiguration> {
+    const response = await httpClient.get<ApiResponse<BillingCheckoutConfiguration>>(
+        `/api/tenants/${tenantId}/billing/checkout/configuration`,
+    )
+
+    return response.data.data
+}
+
+async function createCheckout(
+    tenantId: string,
+    input: BillingCheckoutInput,
+): Promise<BillingCheckoutSession> {
+    const response = await httpClient.post<ApiResponse<BillingCheckoutSession>>(
+        `/api/tenants/${tenantId}/billing/checkout`,
+        input,
+    )
+
+    return response.data.data
+}
+
 export const tenantSubscriptionApi = {
     getSubscription,
+    getCheckoutConfiguration,
+    createCheckout,
     getEntitlements,
     getAccess,
 }

@@ -1,6 +1,23 @@
 export type BillingInterval = 'MONTHLY' | 'YEARLY'
 export type SubscriptionPlanStatus = 'ACTIVE' | 'INACTIVE'
 export type TenantSubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED'
+export type BillingProvider = 'STRIPE' | 'RAZORPAY'
+
+export interface BillingCheckoutConfiguration {
+    plans: SubscriptionPlan[]
+    providers: BillingProvider[]
+}
+
+export interface BillingCheckoutInput {
+    planCode: string
+    provider: BillingProvider
+}
+
+export interface BillingCheckoutSession {
+    sessionId: string
+    checkoutUrl: string
+    provider: BillingProvider
+}
 
 export type SubscriptionAccessLevel = 'FULL_ACCESS' | 'GRACE_ACCESS' | 'BLOCKED'
 

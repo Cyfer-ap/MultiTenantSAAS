@@ -5,6 +5,8 @@ import com.chacha.multitenantsaas.billing.provider.BillingCheckoutSession;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
 import com.chacha.multitenantsaas.dto.SubscriptionPlanResponse;
 import com.chacha.multitenantsaas.entity.SubscriptionPlanStatus;
+import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
+import com.chacha.multitenantsaas.repository.TenantSubscriptionRepository;
 import com.chacha.multitenantsaas.service.SubscriptionPlanService;
 import java.util.List;
 import java.util.Objects;
@@ -16,12 +18,15 @@ public class BillingCheckoutService {
 
     private final BillingProviderRegistry providerRegistry;
     private final SubscriptionPlanService subscriptionPlanService;
+    private final TenantSubscriptionRepository tenantSubscriptionRepository;
 
     public BillingCheckoutService(
             BillingProviderRegistry providerRegistry,
-            SubscriptionPlanService subscriptionPlanService) {
+            SubscriptionPlanService subscriptionPlanService,
+            TenantSubscriptionRepository tenantSubscriptionRepository) {
         this.providerRegistry = providerRegistry;
         this.subscriptionPlanService = subscriptionPlanService;
+        this.tenantSubscriptionRepository = tenantSubscriptionRepository;
     }
 
     public BillingCheckoutConfigurationResponse getCheckoutConfiguration() {
@@ -50,6 +55,23 @@ public class BillingCheckoutService {
             throw new IllegalArgumentException("Free plans do not require provider checkout");
         }
 
+        rejectDuplicateSubscriptionCheckout(tenantId);
         return providerRegistry.require(providerType).createCheckoutSession(tenantId, plan.code());
+    }
+
+    private void rejectDuplicateSubscriptionCheckout(UUID tenantId) {
+        tenantSubscriptionRepository
+                .findByTenantIdWithPlan(tenantId)
+                .filter(subscription -> !isTerminal(subscription.getStatus()))
+                .ifPresent(
+                        subscription -> {
+                            throw new IllegalArgumentException(
+                                    "Workspace already has an active subscription");
+                        });
+    }
+
+    private boolean isTerminal(TenantSubscriptionStatus status) {
+        return status == TenantSubscriptionStatus.CANCELLED
+                || status == TenantSubscriptionStatus.EXPIRED;
     }
 }

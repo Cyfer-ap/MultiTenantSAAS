@@ -1,11 +1,14 @@
 import { ThemeProvider } from '@mui/material'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiClientError } from '../api/apiError'
 import { AuthContext } from '../features/auth/context/AuthContext'
 import type { AuthContextValue } from '../features/auth/context/AuthContext'
 import {
+    useBillingCheckoutConfiguration,
+    useCreateBillingCheckout,
     useWorkspaceSubscription,
     useWorkspaceSubscriptionEntitlements,
 } from '../features/subscriptions/hooks/useWorkspaceSubscription'
@@ -13,9 +16,13 @@ import { appTheme } from '../theme/appTheme'
 import { TenantSubscriptionPage } from './TenantSubscriptionPage'
 
 vi.mock('../features/subscriptions/hooks/useWorkspaceSubscription', () => ({
+    useBillingCheckoutConfiguration: vi.fn(),
+    useCreateBillingCheckout: vi.fn(),
     useWorkspaceSubscription: vi.fn(),
     useWorkspaceSubscriptionEntitlements: vi.fn(),
 }))
+
+const createCheckout = vi.fn()
 
 const authContextValue: AuthContextValue = {
     status: 'authenticated',
@@ -112,6 +119,7 @@ function renderPage() {
 
 describe('TenantSubscriptionPage', () => {
     beforeEach(() => {
+        createCheckout.mockReset()
         vi.mocked(useWorkspaceSubscription).mockReturnValue({
             data: subscription,
             error: null,
@@ -127,6 +135,21 @@ describe('TenantSubscriptionPage', () => {
             isFetching: false,
             isPending: false,
             refetch: vi.fn(),
+        } as never)
+        vi.mocked(useBillingCheckoutConfiguration).mockReturnValue({
+            data: {
+                plans: [],
+                providers: [],
+            },
+            error: null,
+            isError: false,
+            isPending: false,
+        } as never)
+        vi.mocked(useCreateBillingCheckout).mockReturnValue({
+            error: null,
+            isError: false,
+            isPending: false,
+            mutate: createCheckout,
         } as never)
     })
 
@@ -145,6 +168,27 @@ describe('TenantSubscriptionPage', () => {
         expect(screen.queryByText('plan-1')).not.toBeInTheDocument()
     })
 
+    it('does not enable checkout discovery for an active subscription', () => {
+        vi.mocked(useBillingCheckoutConfiguration).mockReturnValue({
+            data: {
+                plans: [subscription.plan],
+                providers: ['RAZORPAY'],
+            },
+            error: null,
+            isError: false,
+            isPending: false,
+        } as never)
+
+        renderPage()
+
+        expect(useBillingCheckoutConfiguration).toHaveBeenCalledWith('tenant-1', false)
+        expect(
+            screen.queryByRole('button', {
+                name: 'Continue with Razorpay',
+            }),
+        ).not.toBeInTheDocument()
+    })
+
     it('shows a clear empty state when no plan is assigned', () => {
         vi.mocked(useWorkspaceSubscription).mockReturnValue({
             data: undefined,
@@ -161,5 +205,45 @@ describe('TenantSubscriptionPage', () => {
         renderPage()
 
         expect(screen.getByText('No subscription assigned')).toBeInTheDocument()
+    })
+
+    it('starts Razorpay checkout for an available paid plan', async () => {
+        const user = userEvent.setup()
+        vi.mocked(useWorkspaceSubscription).mockReturnValue({
+            data: undefined,
+            error: new ApiClientError({
+                message: 'Subscription not found.',
+                status: 404,
+            }),
+            isError: true,
+            isFetching: false,
+            isPending: false,
+            refetch: vi.fn(),
+        } as never)
+        vi.mocked(useBillingCheckoutConfiguration).mockReturnValue({
+            data: {
+                plans: [subscription.plan],
+                providers: ['RAZORPAY'],
+            },
+            error: null,
+            isError: false,
+            isPending: false,
+        } as never)
+
+        renderPage()
+        await user.click(screen.getByRole('button', { name: 'Continue with Razorpay' }))
+
+        expect(createCheckout).toHaveBeenCalledWith(
+            {
+                tenantId: 'tenant-1',
+                input: {
+                    planCode: 'GROWTH',
+                    provider: 'RAZORPAY',
+                },
+            },
+            expect.objectContaining({
+                onSuccess: expect.any(Function),
+            }),
+        )
     })
 })
