@@ -122,6 +122,24 @@ class TenantApiKeyAuthenticationIntegrationTest {
                         jsonPath("$.message").value("Unauthorized. Missing or invalid API key."));
     }
 
+    @Test
+    void apiKeyCannotAuthenticateExistingJwtEndpoints() throws Exception {
+        Tenant tenant = createTenant("jwt-boundary");
+        AppUser actor = createAdmin(tenant);
+        TenantApiKeyCreatedResponse created =
+                apiKeyService.create(
+                        tenant.getId(),
+                        actor,
+                        new TenantApiKeyCreateRequest("External only", null));
+
+        mockMvc.perform(
+                        get("/api/tenants/" + tenant.getId())
+                                .header(
+                                        TenantApiKeyAuthenticationFilter.API_KEY_HEADER,
+                                        created.apiKey()))
+                .andExpect(status().isUnauthorized());
+    }
+
     private Tenant createTenant(String prefix) {
         return tenantRepository.saveAndFlush(
                 new Tenant(
