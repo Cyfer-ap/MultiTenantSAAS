@@ -1,17 +1,11 @@
 package com.chacha.multitenantsaas.security;
 
-import com.chacha.multitenantsaas.billing.dto.BillingUsageRecordRequest;
-import com.chacha.multitenantsaas.billing.service.BillingUsageMeteringService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -26,21 +20,14 @@ public class TenantApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
     public static final String API_KEY_HEADER = "X-API-Key";
     public static final String API_KEY_AUTHORITY = "TENANT_API";
-    public static final String API_REQUESTS_METRIC = "API_REQUESTS";
-
-    private static final Logger log =
-            LoggerFactory.getLogger(TenantApiKeyAuthenticationFilter.class);
 
     private final TenantApiKeyAuthenticationService authenticationService;
-    private final BillingUsageMeteringService usageMeteringService;
     private final ApiKeyAuthenticationEntryPoint authenticationEntryPoint;
 
     public TenantApiKeyAuthenticationFilter(
             TenantApiKeyAuthenticationService authenticationService,
-            BillingUsageMeteringService usageMeteringService,
             ApiKeyAuthenticationEntryPoint authenticationEntryPoint) {
         this.authenticationService = authenticationService;
-        this.usageMeteringService = usageMeteringService;
         this.authenticationEntryPoint = authenticationEntryPoint;
     }
 
@@ -78,8 +65,6 @@ public class TenantApiKeyAuthenticationFilter extends OncePerRequestFilter {
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
 
-        recordUsage(principal);
-
         try {
             filterChain.doFilter(request, response);
         } finally {
@@ -87,24 +72,4 @@ public class TenantApiKeyAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    private void recordUsage(TenantApiKeyPrincipal principal) {
-        Instant occurredAt = Instant.now();
-        String idempotencyKey = "api:" + principal.apiKeyId() + ":" + UUID.randomUUID();
-
-        try {
-            usageMeteringService.recordUsage(
-                    new BillingUsageRecordRequest(
-                            principal.tenantId(),
-                            API_REQUESTS_METRIC,
-                            1L,
-                            idempotencyKey,
-                            occurredAt));
-        } catch (RuntimeException exception) {
-            log.error(
-                    "Failed to record API request usage for tenant {} and API key {}",
-                    principal.tenantId(),
-                    principal.apiKeyId(),
-                    exception);
-        }
-    }
 }
