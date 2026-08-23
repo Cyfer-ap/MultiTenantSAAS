@@ -194,12 +194,9 @@ export function TenantSubscriptionPage() {
     const entitlements = entitlementQuery.data
     const refreshing = subscriptionQuery.isFetching || entitlementQuery.isFetching
     const lifecycleMessage = subscription ? statusMessage(subscription.status) : null
-    const canManageBilling =
-        session?.role === 'TENANT_ADMIN' || session?.role === 'TENANT_MANAGER'
+    const canManageBilling = session?.role === 'TENANT_ADMIN' || session?.role === 'TENANT_MANAGER'
     const checkoutEligible =
-        noSubscription ||
-        subscription?.status === 'CANCELLED' ||
-        subscription?.status === 'EXPIRED'
+        noSubscription || subscription?.status === 'CANCELLED' || subscription?.status === 'EXPIRED'
     const checkoutConfigurationQuery = useBillingCheckoutConfiguration(
         tenantId,
         canManageBilling && checkoutEligible,
@@ -412,7 +409,8 @@ export function TenantSubscriptionPage() {
                                             variant="body2"
                                         >
                                             {' '}
-                                            / {plan.billingInterval === 'MONTHLY' ? 'month' : 'year'}
+                                            /{' '}
+                                            {plan.billingInterval === 'MONTHLY' ? 'month' : 'year'}
                                         </Typography>
                                     </Typography>
                                     <Stack spacing={1} sx={{ marginTop: 2 }}>

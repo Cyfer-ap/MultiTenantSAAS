@@ -39,8 +39,7 @@ class BillingCheckoutServiceTest {
         when(planService.getPlans(true)).thenReturn(List.of(free, pro));
 
         BillingCheckoutService service =
-                service(
-                        new BillingProviderRegistry(List.of(razorpay, stripe)), planService);
+                service(new BillingProviderRegistry(List.of(razorpay, stripe)), planService);
 
         BillingCheckoutConfigurationResponse configuration = service.getCheckoutConfiguration();
 
@@ -79,8 +78,7 @@ class BillingCheckoutServiceTest {
         stubPlan(planService, " PRO ", "PRO", SubscriptionPlanStatus.ACTIVE, "29.00");
 
         BillingCheckoutService service =
-                service(
-                        new BillingProviderRegistry(List.of(stripe)), planService);
+                service(new BillingProviderRegistry(List.of(stripe)), planService);
 
         BillingCheckoutSession actual =
                 service.createCheckoutSession(tenantId, " PRO ", BillingProviderType.STRIPE);
@@ -182,8 +180,7 @@ class BillingCheckoutServiceTest {
         when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
         SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
         BillingCheckoutService service =
-                service(
-                        new BillingProviderRegistry(List.of(stripe)), planService);
+                service(new BillingProviderRegistry(List.of(stripe)), planService);
 
         assertThatIllegalArgumentException()
                 .isThrownBy(

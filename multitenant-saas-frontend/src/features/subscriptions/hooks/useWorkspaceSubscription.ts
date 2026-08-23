@@ -52,12 +52,7 @@ export function useBillingCheckoutConfiguration(tenantId: string, enabled = true
 
 export function useCreateBillingCheckout() {
     return useMutation({
-        mutationFn: ({
-            tenantId,
-            input,
-        }: {
-            tenantId: string
-            input: BillingCheckoutInput
-        }) => tenantSubscriptionApi.createCheckout(tenantId, input),
+        mutationFn: ({ tenantId, input }: { tenantId: string; input: BillingCheckoutInput }) =>
+            tenantSubscriptionApi.createCheckout(tenantId, input),
     })
 }

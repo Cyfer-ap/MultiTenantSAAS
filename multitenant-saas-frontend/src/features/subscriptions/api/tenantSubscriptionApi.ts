@@ -33,9 +33,7 @@ async function getAccess(tenantId: string): Promise<WorkspaceSubscriptionAccess>
     return response.data.data
 }
 
-async function getCheckoutConfiguration(
-    tenantId: string,
-): Promise<BillingCheckoutConfiguration> {
+async function getCheckoutConfiguration(tenantId: string): Promise<BillingCheckoutConfiguration> {
     const response = await httpClient.get<ApiResponse<BillingCheckoutConfiguration>>(
         `/api/tenants/${tenantId}/billing/checkout/configuration`,
     )
