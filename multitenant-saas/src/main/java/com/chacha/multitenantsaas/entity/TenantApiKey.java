@@ -39,6 +39,9 @@ public class TenantApiKey {
     @Column(name = "expires_at")
     private Instant expiresAt;
 
+    @Column(name = "last_used_at")
+    private Instant lastUsedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -77,6 +80,10 @@ public class TenantApiKey {
         }
     }
 
+    public void markUsed(Instant usedAt) {
+        this.lastUsedAt = usedAt;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -107,6 +114,10 @@ public class TenantApiKey {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Instant getLastUsedAt() {
+        return lastUsedAt;
     }
 
     public Instant getRevokedAt() {
@@ -143,6 +154,10 @@ public class TenantApiKey {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public void setLastUsedAt(Instant lastUsedAt) {
+        this.lastUsedAt = lastUsedAt;
     }
 
     public void setRevokedAt(Instant revokedAt) {
