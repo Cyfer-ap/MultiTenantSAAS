@@ -18,10 +18,14 @@ import {
 import { ApiClientError } from '../api/apiError'
 import { useAuth } from '../features/auth/hooks/useAuth'
 import {
+    useBillingCheckoutConfiguration,
+    useCreateBillingCheckout,
     useWorkspaceSubscription,
     useWorkspaceSubscriptionEntitlements,
 } from '../features/subscriptions/hooks/useWorkspaceSubscription'
 import type {
+    BillingProvider,
+    SubscriptionPlan,
     SubscriptionResourceEntitlement,
     TenantSubscriptionStatus,
 } from '../features/subscriptions/types/subscriptions'
@@ -74,6 +78,10 @@ function statusColor(status: TenantSubscriptionStatus): StatusColor {
     }
 
     return 'default'
+}
+
+function providerLabel(provider: BillingProvider): string {
+    return provider === 'RAZORPAY' ? 'Razorpay' : 'Stripe'
 }
 
 function statusMessage(status: TenantSubscriptionStatus): string | null {
@@ -186,6 +194,34 @@ export function TenantSubscriptionPage() {
     const entitlements = entitlementQuery.data
     const refreshing = subscriptionQuery.isFetching || entitlementQuery.isFetching
     const lifecycleMessage = subscription ? statusMessage(subscription.status) : null
+    const canManageBilling =
+        session?.role === 'TENANT_ADMIN' || session?.role === 'TENANT_MANAGER'
+    const checkoutEligible =
+        noSubscription ||
+        subscription?.status === 'CANCELLED' ||
+        subscription?.status === 'EXPIRED'
+    const checkoutConfigurationQuery = useBillingCheckoutConfiguration(
+        tenantId,
+        canManageBilling && checkoutEligible,
+    )
+    const checkoutMutation = useCreateBillingCheckout()
+
+    const beginCheckout = (plan: SubscriptionPlan, provider: BillingProvider) => {
+        checkoutMutation.mutate(
+            {
+                tenantId,
+                input: {
+                    planCode: plan.code,
+                    provider,
+                },
+            },
+            {
+                onSuccess: (checkout) => {
+                    window.location.assign(checkout.checkoutUrl)
+                },
+            },
+        )
+    }
 
     return (
         <Box>
@@ -291,6 +327,125 @@ export function TenantSubscriptionPage() {
                         ? subscriptionQuery.error.message
                         : 'The subscription could not be loaded.'}
                 </Alert>
+            )}
+
+            {canManageBilling && checkoutEligible && checkoutConfigurationQuery.isPending && (
+                <Paper
+                    sx={{
+                        marginTop: 3,
+                        padding: 4,
+                        textAlign: 'center',
+                    }}
+                    variant="outlined"
+                >
+                    <CircularProgress size={28} />
+                    <Typography color="text.secondary" sx={{ marginTop: 1.5 }}>
+                        Loading billing options…
+                    </Typography>
+                </Paper>
+            )}
+
+            {canManageBilling && checkoutEligible && checkoutConfigurationQuery.isError && (
+                <Alert severity="error" sx={{ marginTop: 3 }}>
+                    {checkoutConfigurationQuery.error instanceof Error
+                        ? checkoutConfigurationQuery.error.message
+                        : 'Billing checkout options could not be loaded.'}
+                </Alert>
+            )}
+
+            {canManageBilling && checkoutEligible && checkoutConfigurationQuery.data && (
+                <Paper sx={{ marginTop: 3, padding: 3 }} variant="outlined">
+                    <Typography component="h2" variant="h5">
+                        Choose a subscription
+                    </Typography>
+                    <Typography color="text.secondary" sx={{ marginTop: 0.5 }}>
+                        Select a paid plan and continue securely on the payment provider&apos;s
+                        hosted checkout page.
+                    </Typography>
+
+                    {checkoutMutation.isError && (
+                        <Alert severity="error" sx={{ marginTop: 2 }}>
+                            {checkoutMutation.error instanceof Error
+                                ? checkoutMutation.error.message
+                                : 'The billing checkout could not be started.'}
+                        </Alert>
+                    )}
+
+                    {checkoutConfigurationQuery.data.providers.length === 0 ? (
+                        <Alert severity="info" sx={{ marginTop: 2 }}>
+                            Online billing is not enabled for this deployment yet.
+                        </Alert>
+                    ) : checkoutConfigurationQuery.data.plans.length === 0 ? (
+                        <Alert severity="info" sx={{ marginTop: 2 }}>
+                            No paid subscription plans are currently available.
+                        </Alert>
+                    ) : (
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gap: 2,
+                                gridTemplateColumns: {
+                                    xs: '1fr',
+                                    md: 'repeat(2, minmax(0, 1fr))',
+                                },
+                                marginTop: 3,
+                            }}
+                        >
+                            {checkoutConfigurationQuery.data.plans.map((plan) => (
+                                <Paper key={plan.id} sx={{ padding: 2.5 }} variant="outlined">
+                                    <Typography component="h3" variant="h6">
+                                        {plan.name}
+                                    </Typography>
+                                    <Typography color="text.secondary" variant="body2">
+                                        {plan.code}
+                                    </Typography>
+                                    {plan.description && (
+                                        <Typography sx={{ marginTop: 1.5 }}>
+                                            {plan.description}
+                                        </Typography>
+                                    )}
+                                    <Typography sx={{ fontWeight: 700, marginTop: 2 }} variant="h5">
+                                        {formatMoney(plan.price, plan.currency)}
+                                        <Typography
+                                            color="text.secondary"
+                                            component="span"
+                                            variant="body2"
+                                        >
+                                            {' '}
+                                            / {plan.billingInterval === 'MONTHLY' ? 'month' : 'year'}
+                                        </Typography>
+                                    </Typography>
+                                    <Stack spacing={1} sx={{ marginTop: 2 }}>
+                                        {checkoutConfigurationQuery.data.providers.map(
+                                            (provider) => (
+                                                <Button
+                                                    disabled={checkoutMutation.isPending}
+                                                    key={provider}
+                                                    onClick={() => {
+                                                        beginCheckout(plan, provider)
+                                                    }}
+                                                    startIcon={
+                                                        checkoutMutation.isPending ? (
+                                                            <CircularProgress
+                                                                color="inherit"
+                                                                size={16}
+                                                            />
+                                                        ) : (
+                                                            <PaymentsRoundedIcon />
+                                                        )
+                                                    }
+                                                    variant="contained"
+                                                >
+                                                    Continue with {providerLabel(provider)}
+                                                </Button>
+                                            ),
+                                        )}
+                                    </Stack>
+                                </Paper>
+                            ))}
+                        </Box>
+                    )}
+                </Paper>
             )}
 
             {subscription && (
