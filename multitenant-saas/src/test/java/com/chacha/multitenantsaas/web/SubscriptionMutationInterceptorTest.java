@@ -1,12 +1,14 @@
 package com.chacha.multitenantsaas.web;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.chacha.multitenantsaas.billing.dto.BillingCheckoutRequest;
+import com.chacha.multitenantsaas.billing.service.BillingCheckoutService;
 import com.chacha.multitenantsaas.controller.BillingCheckoutController;
 import com.chacha.multitenantsaas.security.AuthorizationSecurityService;
 import com.chacha.multitenantsaas.security.SystemSecurityService;
@@ -81,7 +83,7 @@ class SubscriptionMutationInterceptorTest {
         when(authorizationSecurity.isCurrentTenant(TENANT_ID)).thenReturn(true);
         HandlerMethod checkoutHandler =
                 new HandlerMethod(
-                        new BillingCheckoutController(null),
+                        new BillingCheckoutController(mock(BillingCheckoutService.class)),
                         BillingCheckoutController.class.getMethod(
                                 "createCheckout", UUID.class, BillingCheckoutRequest.class));
 
