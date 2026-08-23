@@ -59,6 +59,9 @@ class TenantApiKeyLifecycleIntegrationTest {
         assertThat(created.name()).isEqualTo("Deployment key");
         assertThat(stored.getKeyHash()).isNotEqualTo(created.apiKey());
         assertThat(stored.getKeyHash()).isEqualTo(secureTokenService.hashToken(created.apiKey()));
+        assertThat(secureTokenService.matchesToken(created.apiKey(), stored.getKeyHash())).isTrue();
+        assertThat(secureTokenService.matchesToken(created.apiKey() + "x", stored.getKeyHash()))
+                .isFalse();
         assertThat(apiKeyService.list(tenant.getId()))
                 .singleElement()
                 .satisfies(
