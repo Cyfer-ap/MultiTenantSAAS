@@ -22,6 +22,8 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -29,6 +31,16 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 class RazorpayBillingProviderTest {
+
+    @Test
+    void springBeanFactorySelectsThePropertiesInjectionConstructor() {
+        DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
+        beanFactory.registerSingleton("razorpayBillingProperties", properties());
+        beanFactory.registerBeanDefinition(
+                "razorpayBillingProvider", new RootBeanDefinition(RazorpayBillingProvider.class));
+
+        assertThat(beanFactory.getBean(RazorpayBillingProvider.class)).isNotNull();
+    }
 
     @Test
     void createsSubscriptionLinkWithTenantReconciliationNotes() {
