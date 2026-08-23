@@ -90,8 +90,7 @@ public class RazorpayBillingProvider implements BillingProvider {
     }
 
     @Override
-    public BillingProviderSubscriptionSnapshot fetchSubscription(
-            String providerSubscriptionId) {
+    public BillingProviderSubscriptionSnapshot fetchSubscription(String providerSubscriptionId) {
         String subscriptionId = requireSubscriptionId(providerSubscriptionId);
 
         try {

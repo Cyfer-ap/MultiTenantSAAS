@@ -126,14 +126,12 @@ class StripeBillingProviderTest {
                                 """,
                                 MediaType.APPLICATION_JSON));
 
-        BillingProviderSubscriptionSnapshot snapshot =
-                provider.fetchSubscription("sub_test_123");
+        BillingProviderSubscriptionSnapshot snapshot = provider.fetchSubscription("sub_test_123");
 
         assertThat(snapshot.provider()).isEqualTo(BillingProviderType.STRIPE);
         assertThat(snapshot.planCode()).isEqualTo("PRO");
         assertThat(snapshot.status()).isEqualTo(TenantSubscriptionStatus.ACTIVE);
-        assertThat(snapshot.currentPeriodStart())
-                .isEqualTo(Instant.ofEpochSecond(1787460000));
+        assertThat(snapshot.currentPeriodStart()).isEqualTo(Instant.ofEpochSecond(1787460000));
         assertThat(snapshot.currentPeriodEnd()).isEqualTo(Instant.ofEpochSecond(1790138400));
         assertThat(snapshot.cancelAtPeriodEnd()).isTrue();
         server.verify();

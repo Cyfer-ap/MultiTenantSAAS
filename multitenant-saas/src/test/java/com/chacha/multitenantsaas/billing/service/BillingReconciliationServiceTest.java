@@ -28,12 +28,7 @@ class BillingReconciliationServiceTest {
         Instant periodStart = Instant.parse("2026-08-23T00:00:00Z");
         Instant periodEnd = Instant.parse("2026-09-23T00:00:00Z");
         TenantSubscription subscription =
-                subscription(
-                        "PRO",
-                        TenantSubscriptionStatus.ACTIVE,
-                        periodStart,
-                        periodEnd,
-                        false);
+                subscription("PRO", TenantSubscriptionStatus.ACTIVE, periodStart, periodEnd, false);
 
         TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
         when(repository.findByTenantIdWithPlan(tenantId)).thenReturn(Optional.of(subscription));
@@ -69,11 +64,7 @@ class BillingReconciliationServiceTest {
         Instant providerPeriodEnd = Instant.parse("2026-10-23T00:00:00Z");
         TenantSubscription subscription =
                 subscription(
-                        "PRO",
-                        TenantSubscriptionStatus.ACTIVE,
-                        periodStart,
-                        localPeriodEnd,
-                        false);
+                        "PRO", TenantSubscriptionStatus.ACTIVE, periodStart, localPeriodEnd, false);
 
         TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
         when(repository.findByTenantIdWithPlan(tenantId)).thenReturn(Optional.of(subscription));

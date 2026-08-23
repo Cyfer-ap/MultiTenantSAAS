@@ -30,8 +30,8 @@ public class BillingReconciliationService {
     }
 
     /**
-     * Reads current state from the linked provider and reports differences. Local lifecycle state is
-     * intentionally not mutated; verified webhooks remain the authoritative write path.
+     * Reads current state from the linked provider and reports differences. Local lifecycle state
+     * is intentionally not mutated; verified webhooks remain the authoritative write path.
      */
     public BillingReconciliationResponse reconcile(UUID tenantId) {
         Objects.requireNonNull(tenantId, "tenantId must not be null");
@@ -82,8 +82,7 @@ public class BillingReconciliationService {
         addMismatch(
                 mismatches,
                 !Objects.equals(
-                        subscription.getCurrentPeriodStart(),
-                        providerState.currentPeriodStart()),
+                        subscription.getCurrentPeriodStart(), providerState.currentPeriodStart()),
                 BillingReconciliationMismatch.CURRENT_PERIOD_START);
         addMismatch(
                 mismatches,

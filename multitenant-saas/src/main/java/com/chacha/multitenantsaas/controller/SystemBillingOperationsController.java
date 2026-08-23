@@ -99,8 +99,7 @@ public class SystemBillingOperationsController {
     @PostMapping("/subscriptions/{tenantId}/reconcile")
     public ResponseEntity<ApiResponse<BillingReconciliationResponse>> reconcileSubscription(
             @PathVariable UUID tenantId) {
-        BillingReconciliationResponse response =
-                billingReconciliationService.reconcile(tenantId);
+        BillingReconciliationResponse response = billingReconciliationService.reconcile(tenantId);
 
         return ResponseEntity.ok(
                 ApiResponse.success("Billing subscription reconciliation completed", response));

@@ -93,8 +93,7 @@ public class StripeBillingProvider implements BillingProvider {
     }
 
     @Override
-    public BillingProviderSubscriptionSnapshot fetchSubscription(
-            String providerSubscriptionId) {
+    public BillingProviderSubscriptionSnapshot fetchSubscription(String providerSubscriptionId) {
         String subscriptionId = requireSubscriptionId(providerSubscriptionId);
 
         try {
@@ -161,8 +160,7 @@ public class StripeBillingProvider implements BillingProvider {
         return switch (status) {
             case "trialing" -> TenantSubscriptionStatus.TRIALING;
             case "active" -> TenantSubscriptionStatus.ACTIVE;
-            case "past_due", "unpaid", "incomplete", "paused" ->
-                    TenantSubscriptionStatus.PAST_DUE;
+            case "past_due", "unpaid", "incomplete", "paused" -> TenantSubscriptionStatus.PAST_DUE;
             case "canceled" -> TenantSubscriptionStatus.CANCELLED;
             case "incomplete_expired" -> TenantSubscriptionStatus.EXPIRED;
             default ->

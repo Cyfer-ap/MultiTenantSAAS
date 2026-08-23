@@ -16,8 +16,8 @@ import com.chacha.multitenantsaas.billing.provider.BillingProviderException;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderSubscriptionSnapshot;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
-import java.time.Instant;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
@@ -117,14 +117,12 @@ class RazorpayBillingProviderTest {
                                 """,
                                 MediaType.APPLICATION_JSON));
 
-        BillingProviderSubscriptionSnapshot snapshot =
-                provider.fetchSubscription("sub_test_123");
+        BillingProviderSubscriptionSnapshot snapshot = provider.fetchSubscription("sub_test_123");
 
         assertThat(snapshot.provider()).isEqualTo(BillingProviderType.RAZORPAY);
         assertThat(snapshot.planCode()).isEqualTo("PRO");
         assertThat(snapshot.status()).isEqualTo(TenantSubscriptionStatus.ACTIVE);
-        assertThat(snapshot.currentPeriodStart())
-                .isEqualTo(Instant.ofEpochSecond(1787460000));
+        assertThat(snapshot.currentPeriodStart()).isEqualTo(Instant.ofEpochSecond(1787460000));
         assertThat(snapshot.currentPeriodEnd()).isEqualTo(Instant.ofEpochSecond(1790138400));
         assertThat(snapshot.cancelAtPeriodEnd()).isFalse();
         server.verify();
