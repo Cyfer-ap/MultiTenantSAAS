@@ -13,7 +13,10 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import com.chacha.multitenantsaas.billing.provider.BillingCheckoutSession;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderException;
+import com.chacha.multitenantsaas.billing.provider.BillingProviderSubscriptionSnapshot;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
+import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -93,6 +96,46 @@ class StripeBillingProviderTest {
         assertThatThrownBy(() -> provider.createCheckoutSession(UUID.randomUUID(), "PRO"))
                 .isInstanceOf(BillingProviderException.class)
                 .hasMessage("Stripe checkout session creation failed");
+        server.verify();
+    }
+
+    @Test
+    void fetchesProviderSubscriptionSnapshot() {
+        StripeBillingProperties properties = properties();
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        StripeBillingProvider provider = new StripeBillingProvider(properties, builder);
+
+        server.expect(requestTo("https://api.stripe.com/v1/subscriptions/sub_test_123"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(
+                        withSuccess(
+                                """
+                                {
+                                  "id": "sub_test_123",
+                                  "status": "active",
+                                  "cancel_at_period_end": true,
+                                  "items": {
+                                    "data": [{
+                                      "current_period_start": 1787460000,
+                                      "current_period_end": 1790138400,
+                                      "price": {"id": "price_pro_test"}
+                                    }]
+                                  }
+                                }
+                                """,
+                                MediaType.APPLICATION_JSON));
+
+        BillingProviderSubscriptionSnapshot snapshot =
+                provider.fetchSubscription("sub_test_123");
+
+        assertThat(snapshot.provider()).isEqualTo(BillingProviderType.STRIPE);
+        assertThat(snapshot.planCode()).isEqualTo("PRO");
+        assertThat(snapshot.status()).isEqualTo(TenantSubscriptionStatus.ACTIVE);
+        assertThat(snapshot.currentPeriodStart())
+                .isEqualTo(Instant.ofEpochSecond(1787460000));
+        assertThat(snapshot.currentPeriodEnd()).isEqualTo(Instant.ofEpochSecond(1790138400));
+        assertThat(snapshot.cancelAtPeriodEnd()).isTrue();
         server.verify();
     }
 
