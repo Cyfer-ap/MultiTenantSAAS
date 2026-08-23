@@ -8,5 +8,7 @@ public interface BillingProvider {
 
     BillingCheckoutSession createCheckoutSession(UUID tenantId, String planCode);
 
+    BillingProviderSubscriptionSnapshot fetchSubscription(String providerSubscriptionId);
+
     void cancelSubscription(String providerSubscriptionId);
 }

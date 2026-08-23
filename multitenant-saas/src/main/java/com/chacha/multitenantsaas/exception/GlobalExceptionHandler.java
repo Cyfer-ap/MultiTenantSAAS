@@ -1,5 +1,6 @@
 package com.chacha.multitenantsaas.exception;
 
+import com.chacha.multitenantsaas.billing.provider.BillingProviderException;
 import com.chacha.multitenantsaas.common.ApiErrorResponse;
 import com.chacha.multitenantsaas.common.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
@@ -84,6 +85,23 @@ public class GlobalExceptionHandler {
                 exception.getMessage(),
                 request,
                 details);
+    }
+
+    @ExceptionHandler(BillingProviderException.class)
+    public ResponseEntity<ApiErrorResponse> handleBillingProviderException(
+            BillingProviderException exception, HttpServletRequest request) {
+        log.warn(
+                "Billing provider request failed while processing {} {}",
+                request.getMethod(),
+                request.getRequestURI(),
+                exception);
+
+        return buildResponse(
+                HttpStatus.BAD_GATEWAY,
+                ErrorCode.BILLING_PROVIDER_ERROR,
+                exception.getMessage(),
+                request,
+                null);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
