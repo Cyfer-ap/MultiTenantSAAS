@@ -1,6 +1,5 @@
 package com.chacha.multitenantsaas.config;
 
-import com.chacha.multitenantsaas.security.ApiKeyAuthenticationEntryPoint;
 import com.chacha.multitenantsaas.security.JwtAccessDeniedHandler;
 import com.chacha.multitenantsaas.security.JwtAuthenticationEntryPoint;
 import com.chacha.multitenantsaas.security.TenantApiKeyAuthenticationFilter;
@@ -21,7 +20,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
@@ -30,17 +28,14 @@ public class SecurityConfig {
 
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
-    private final ApiKeyAuthenticationEntryPoint apiKeyAuthenticationEntryPoint;
     private final TenantApiKeyAuthenticationFilter tenantApiKeyAuthenticationFilter;
 
     public SecurityConfig(
             JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
             JwtAccessDeniedHandler jwtAccessDeniedHandler,
-            ApiKeyAuthenticationEntryPoint apiKeyAuthenticationEntryPoint,
             TenantApiKeyAuthenticationFilter tenantApiKeyAuthenticationFilter) {
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
-        this.apiKeyAuthenticationEntryPoint = apiKeyAuthenticationEntryPoint;
         this.tenantApiKeyAuthenticationFilter = tenantApiKeyAuthenticationFilter;
     }
 
@@ -65,9 +60,6 @@ public class SecurityConfig {
                         exception ->
                                 exception
                                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                                        .defaultAuthenticationEntryPointFor(
-                                                apiKeyAuthenticationEntryPoint,
-                                                new AntPathRequestMatcher("/api/external/**"))
                                         .accessDeniedHandler(jwtAccessDeniedHandler))
                 .authorizeHttpRequests(
                         auth ->
