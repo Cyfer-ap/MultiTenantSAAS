@@ -29,10 +29,8 @@ class BillingCheckoutServiceTest {
         when(razorpay.providerType()).thenReturn(BillingProviderType.RAZORPAY);
         when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
 
-        SubscriptionPlanResponse free =
-                plan("FREE", SubscriptionPlanStatus.ACTIVE, "0.00");
-        SubscriptionPlanResponse pro =
-                plan("PRO", SubscriptionPlanStatus.ACTIVE, "29.00");
+        SubscriptionPlanResponse free = plan("FREE", SubscriptionPlanStatus.ACTIVE, "0.00");
+        SubscriptionPlanResponse pro = plan("PRO", SubscriptionPlanStatus.ACTIVE, "29.00");
         SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
         when(planService.getPlans(true)).thenReturn(List.of(free, pro));
 
@@ -40,8 +38,7 @@ class BillingCheckoutServiceTest {
                 new BillingCheckoutService(
                         new BillingProviderRegistry(List.of(razorpay, stripe)), planService);
 
-        BillingCheckoutConfigurationResponse configuration =
-                service.getCheckoutConfiguration();
+        BillingCheckoutConfigurationResponse configuration = service.getCheckoutConfiguration();
 
         assertThat(configuration.plans()).containsExactly(pro);
         assertThat(configuration.providers())
