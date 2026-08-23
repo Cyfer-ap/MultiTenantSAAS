@@ -2,6 +2,7 @@ package com.chacha.multitenantsaas.config;
 
 import com.chacha.multitenantsaas.security.JwtAccessDeniedHandler;
 import com.chacha.multitenantsaas.security.JwtAuthenticationEntryPoint;
+import com.chacha.multitenantsaas.security.TenantApiKeyAuthenticationFilter;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -26,12 +28,15 @@ public class SecurityConfig {
 
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    private final TenantApiKeyAuthenticationFilter tenantApiKeyAuthenticationFilter;
 
     public SecurityConfig(
             JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-            JwtAccessDeniedHandler jwtAccessDeniedHandler) {
+            JwtAccessDeniedHandler jwtAccessDeniedHandler,
+            TenantApiKeyAuthenticationFilter tenantApiKeyAuthenticationFilter) {
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
+        this.tenantApiKeyAuthenticationFilter = tenantApiKeyAuthenticationFilter;
     }
 
     @Bean
@@ -95,6 +100,9 @@ public class SecurityConfig {
                                         .permitAll()
                                         .requestMatchers("/api/dashboard/**")
                                         .hasAuthority("SYSTEM_ADMIN")
+                                        .requestMatchers("/api/external/**")
+                                        .hasAuthority(
+                                                TenantApiKeyAuthenticationFilter.API_KEY_AUTHORITY)
                                         .requestMatchers(
                                                 HttpMethod.POST, "/api/user-invitations/accept")
                                         .permitAll()
@@ -114,7 +122,9 @@ public class SecurityConfig {
                                         .jwt(
                                                 jwt ->
                                                         jwt.jwtAuthenticationConverter(
-                                                                jwtAuthenticationConverter())));
+                                                                jwtAuthenticationConverter())))
+                .addFilterBefore(
+                        tenantApiKeyAuthenticationFilter, BearerTokenAuthenticationFilter.class);
 
         return http.build();
     }
