@@ -94,7 +94,8 @@ class TenantApiKeyAuthenticationIntegrationTest {
                                         TenantApiKeyAuthenticationFilter.API_KEY_HEADER,
                                         created.apiKey() + "invalid"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Unauthorized. Missing or invalid API key."));
+                .andExpect(
+                        jsonPath("$.message").value("Unauthorized. Missing or invalid API key."));
 
         apiKeyService.revoke(tenant.getId(), created.id(), actor);
 
@@ -107,10 +108,7 @@ class TenantApiKeyAuthenticationIntegrationTest {
 
         var summary =
                 usageMeteringService.summarize(
-                        tenant.getId(),
-                        "API_REQUESTS",
-                        periodStart,
-                        Instant.now().plusSeconds(60));
+                        tenant.getId(), "API_REQUESTS", periodStart, Instant.now().plusSeconds(60));
 
         assertThat(summary.quantity()).isZero();
         assertThat(summary.eventCount()).isZero();
@@ -120,7 +118,8 @@ class TenantApiKeyAuthenticationIntegrationTest {
     void externalApiRequiresApiKeyAuthority() throws Exception {
         mockMvc.perform(get("/api/external/v1/context"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Unauthorized. Missing or invalid API key."));
+                .andExpect(
+                        jsonPath("$.message").value("Unauthorized. Missing or invalid API key."));
     }
 
     private Tenant createTenant(String prefix) {

@@ -71,9 +71,7 @@ public class TenantApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        principal,
-                        null,
-                        List.of(new SimpleGrantedAuthority(API_KEY_AUTHORITY)));
+                        principal, null, List.of(new SimpleGrantedAuthority(API_KEY_AUTHORITY)));
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();
@@ -91,8 +89,7 @@ public class TenantApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
     private void recordUsage(TenantApiKeyPrincipal principal) {
         Instant occurredAt = Instant.now();
-        String idempotencyKey =
-                "api:" + principal.apiKeyId() + ":" + UUID.randomUUID();
+        String idempotencyKey = "api:" + principal.apiKeyId() + ":" + UUID.randomUUID();
 
         try {
             usageMeteringService.recordUsage(

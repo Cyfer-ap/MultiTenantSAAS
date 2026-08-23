@@ -124,8 +124,7 @@ public class SecurityConfig {
                                                         jwt.jwtAuthenticationConverter(
                                                                 jwtAuthenticationConverter())))
                 .addFilterBefore(
-                        tenantApiKeyAuthenticationFilter,
-                        BearerTokenAuthenticationFilter.class);
+                        tenantApiKeyAuthenticationFilter, BearerTokenAuthenticationFilter.class);
 
         return http.build();
     }
