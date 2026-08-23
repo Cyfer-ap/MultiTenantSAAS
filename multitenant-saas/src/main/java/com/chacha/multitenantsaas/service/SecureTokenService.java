@@ -18,6 +18,17 @@ public class SecureTokenService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
     }
 
+    public boolean matchesToken(String rawToken, String expectedHash) {
+        if (rawToken == null || expectedHash == null) {
+            return false;
+        }
+
+        byte[] actual = hashToken(rawToken).getBytes(StandardCharsets.UTF_8);
+        byte[] expected = expectedHash.getBytes(StandardCharsets.UTF_8);
+
+        return MessageDigest.isEqual(actual, expected);
+    }
+
     public String hashToken(String rawToken) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
