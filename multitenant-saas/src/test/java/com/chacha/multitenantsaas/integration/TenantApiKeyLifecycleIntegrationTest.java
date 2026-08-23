@@ -50,8 +50,7 @@ class TenantApiKeyLifecycleIntegrationTest {
                         tenant.getId(),
                         actor,
                         new TenantApiKeyCreateRequest(
-                                " Deployment key ",
-                                Instant.now().plus(30, ChronoUnit.DAYS)));
+                                " Deployment key ", Instant.now().plus(30, ChronoUnit.DAYS)));
 
         TenantApiKey stored = apiKeyRepository.findById(created.id()).orElseThrow();
 
@@ -59,9 +58,9 @@ class TenantApiKeyLifecycleIntegrationTest {
         assertThat(created.apiKey()).startsWith(created.keyPrefix());
         assertThat(created.name()).isEqualTo("Deployment key");
         assertThat(stored.getKeyHash()).isNotEqualTo(created.apiKey());
-        assertThat(stored.getKeyHash())
-                .isEqualTo(secureTokenService.hashToken(created.apiKey()));
-        assertThat(apiKeyService.list(tenant.getId())).singleElement()
+        assertThat(stored.getKeyHash()).isEqualTo(secureTokenService.hashToken(created.apiKey()));
+        assertThat(apiKeyService.list(tenant.getId()))
+                .singleElement()
                 .satisfies(
                         key -> {
                             assertThat(key.id()).isEqualTo(created.id());
@@ -90,9 +89,7 @@ class TenantApiKeyLifecycleIntegrationTest {
                         new TenantApiKeyCreateRequest("Owner key", null));
 
         assertThatThrownBy(
-                        () ->
-                                apiKeyService.revoke(
-                                        otherTenant.getId(), created.id(), otherAdmin))
+                        () -> apiKeyService.revoke(otherTenant.getId(), created.id(), otherAdmin))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessage("API key not found");
 

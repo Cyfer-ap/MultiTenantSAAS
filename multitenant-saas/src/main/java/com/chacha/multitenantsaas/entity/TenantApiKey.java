@@ -11,9 +11,7 @@ import java.util.UUID;
             @UniqueConstraint(name = "uk_tenant_api_key_prefix", columnNames = "key_prefix")
         },
         indexes = {
-            @Index(
-                    name = "idx_tenant_api_key_tenant_created",
-                    columnList = "tenant_id, created_at")
+            @Index(name = "idx_tenant_api_key_tenant_created", columnList = "tenant_id, created_at")
         })
 public class TenantApiKey {
 

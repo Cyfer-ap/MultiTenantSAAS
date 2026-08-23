@@ -37,8 +37,7 @@ public class TenantApiKeyController {
         this.currentActorService = currentActorService;
     }
 
-    @PreAuthorize(
-            "@authorizationSecurity.hasTenantPermission(#tenantId, 'tenant.update')")
+    @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId, 'tenant.update')")
     @PostMapping
     public ResponseEntity<ApiResponse<TenantApiKeyCreatedResponse>> create(
             @PathVariable UUID tenantId,
@@ -55,8 +54,7 @@ public class TenantApiKeyController {
                                 response));
     }
 
-    @PreAuthorize(
-            "@authorizationSecurity.hasTenantPermission(#tenantId, 'tenant.update')")
+    @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId, 'tenant.update')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<TenantApiKeyResponse>>> list(
             @PathVariable UUID tenantId) {
@@ -68,8 +66,7 @@ public class TenantApiKeyController {
                                 apiKeyService.list(tenantId)));
     }
 
-    @PreAuthorize(
-            "@authorizationSecurity.hasTenantPermission(#tenantId, 'tenant.update')")
+    @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId, 'tenant.update')")
     @DeleteMapping("/{apiKeyId}")
     public ResponseEntity<ApiResponse<TenantApiKeyResponse>> revoke(
             @PathVariable UUID tenantId,
