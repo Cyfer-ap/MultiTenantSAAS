@@ -52,8 +52,7 @@ class BillingCheckoutServiceTest {
         when(planService.getPlans(true)).thenReturn(List.of(pro));
 
         BillingCheckoutService service =
-                new BillingCheckoutService(
-                        new BillingProviderRegistry(List.of()), planService);
+                new BillingCheckoutService(new BillingProviderRegistry(List.of()), planService);
 
         BillingCheckoutConfigurationResponse configuration = service.getCheckoutConfiguration();
 
