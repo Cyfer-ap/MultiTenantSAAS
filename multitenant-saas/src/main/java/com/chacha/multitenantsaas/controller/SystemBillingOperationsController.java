@@ -20,9 +20,9 @@ import java.time.Instant;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -133,13 +133,10 @@ public class SystemBillingOperationsController {
     public ResponseEntity<ApiResponse<BillingUsageSummaryResponse>> summarizeUsage(
             @RequestParam UUID tenantId,
             @RequestParam String metricCode,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-                    Instant periodStart,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-                    Instant periodEnd) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant periodStart,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant periodEnd) {
         BillingUsageSummaryResponse response =
-                billingUsageMeteringService.summarize(
-                        tenantId, metricCode, periodStart, periodEnd);
+                billingUsageMeteringService.summarize(tenantId, metricCode, periodStart, periodEnd);
 
         return ResponseEntity.ok(
                 ApiResponse.success("Billing usage summary fetched successfully", response));

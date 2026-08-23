@@ -26,8 +26,7 @@ public class BillingUsageMeteringService {
     private final TenantRepository tenantRepository;
 
     public BillingUsageMeteringService(
-            BillingUsageEventRepository usageEventRepository,
-            TenantRepository tenantRepository) {
+            BillingUsageEventRepository usageEventRepository, TenantRepository tenantRepository) {
         this.usageEventRepository = usageEventRepository;
         this.tenantRepository = tenantRepository;
     }
@@ -58,8 +57,7 @@ public class BillingUsageMeteringService {
                                         new ResourceNotFoundException(
                                                 "Tenant not found: " + tenantId));
         BillingUsageEvent event =
-                new BillingUsageEvent(
-                        tenant, metricCode, quantity, idempotencyKey, occurredAt);
+                new BillingUsageEvent(tenant, metricCode, quantity, idempotencyKey, occurredAt);
 
         try {
             BillingUsageEvent saved = usageEventRepository.saveAndFlush(event);
@@ -95,12 +93,7 @@ public class BillingUsageMeteringService {
                         tenantId, normalizedMetricCode, periodStart, periodEnd);
 
         return new BillingUsageSummaryResponse(
-                tenantId,
-                normalizedMetricCode,
-                periodStart,
-                periodEnd,
-                quantity,
-                eventCount);
+                tenantId, normalizedMetricCode, periodStart, periodEnd, quantity, eventCount);
     }
 
     private BillingUsageRecordResponse resolveDuplicate(

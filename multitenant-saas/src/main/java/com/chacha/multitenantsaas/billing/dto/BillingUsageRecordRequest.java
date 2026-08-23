@@ -10,8 +10,7 @@ import java.util.UUID;
 
 public record BillingUsageRecordRequest(
         @NotNull UUID tenantId,
-        @NotBlank
-                @Pattern(
+        @NotBlank @Pattern(
                         regexp = "[A-Za-z][A-Za-z0-9_]{0,63}",
                         message = "metricCode must contain only letters, numbers, and underscores")
                 String metricCode,

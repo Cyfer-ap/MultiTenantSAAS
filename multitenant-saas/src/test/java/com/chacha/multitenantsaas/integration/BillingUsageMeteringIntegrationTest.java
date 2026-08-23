@@ -49,8 +49,7 @@ class BillingUsageMeteringIntegrationTest {
                         request(tenant.getId(), "api_requests", 1L, "request-1", periodStart));
 
         BillingUsageSummaryResponse summary =
-                meteringService.summarize(
-                        tenant.getId(), "api_requests", periodStart, periodEnd);
+                meteringService.summarize(tenant.getId(), "api_requests", periodStart, periodEnd);
 
         assertThat(first.duplicate()).isFalse();
         assertThat(first.metricCode()).isEqualTo("API_REQUESTS");
@@ -93,7 +92,6 @@ class BillingUsageMeteringIntegrationTest {
 
     private Tenant createTenant() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
-        return tenantRepository.saveAndFlush(
-                new Tenant("Usage Labs", "usage-labs-" + suffix));
+        return tenantRepository.saveAndFlush(new Tenant("Usage Labs", "usage-labs-" + suffix));
     }
 }
