@@ -46,6 +46,22 @@ class BillingCheckoutServiceTest {
     }
 
     @Test
+    void reportsNoCheckoutProvidersWhenBillingIsDisabled() {
+        SubscriptionPlanResponse pro = plan("PRO", SubscriptionPlanStatus.ACTIVE, "29.00");
+        SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
+        when(planService.getPlans(true)).thenReturn(List.of(pro));
+
+        BillingCheckoutService service =
+                new BillingCheckoutService(
+                        new BillingProviderRegistry(List.of()), planService);
+
+        BillingCheckoutConfigurationResponse configuration = service.getCheckoutConfiguration();
+
+        assertThat(configuration.plans()).containsExactly(pro);
+        assertThat(configuration.providers()).isEmpty();
+    }
+
+    @Test
     void delegatesEligibleCheckoutToSelectedProvider() {
         UUID tenantId = UUID.randomUUID();
         BillingProvider stripe = mock(BillingProvider.class);
