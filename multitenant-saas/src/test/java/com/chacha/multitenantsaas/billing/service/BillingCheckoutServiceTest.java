@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.chacha.multitenantsaas.billing.dto.BillingCheckoutConfigurationResponse;
 import com.chacha.multitenantsaas.billing.provider.BillingCheckoutSession;
 import com.chacha.multitenantsaas.billing.provider.BillingProvider;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
@@ -20,6 +21,44 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class BillingCheckoutServiceTest {
+
+    @Test
+    void exposesOnlyPaidActivePlansAndConfiguredProviders() {
+        BillingProvider razorpay = mock(BillingProvider.class);
+        BillingProvider stripe = mock(BillingProvider.class);
+        when(razorpay.providerType()).thenReturn(BillingProviderType.RAZORPAY);
+        when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
+
+        SubscriptionPlanResponse free = plan("FREE", SubscriptionPlanStatus.ACTIVE, "0.00");
+        SubscriptionPlanResponse pro = plan("PRO", SubscriptionPlanStatus.ACTIVE, "29.00");
+        SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
+        when(planService.getPlans(true)).thenReturn(List.of(free, pro));
+
+        BillingCheckoutService service =
+                new BillingCheckoutService(
+                        new BillingProviderRegistry(List.of(razorpay, stripe)), planService);
+
+        BillingCheckoutConfigurationResponse configuration = service.getCheckoutConfiguration();
+
+        assertThat(configuration.plans()).containsExactly(pro);
+        assertThat(configuration.providers())
+                .containsExactly(BillingProviderType.STRIPE, BillingProviderType.RAZORPAY);
+    }
+
+    @Test
+    void reportsNoCheckoutProvidersWhenBillingIsDisabled() {
+        SubscriptionPlanResponse pro = plan("PRO", SubscriptionPlanStatus.ACTIVE, "29.00");
+        SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
+        when(planService.getPlans(true)).thenReturn(List.of(pro));
+
+        BillingCheckoutService service =
+                new BillingCheckoutService(new BillingProviderRegistry(List.of()), planService);
+
+        BillingCheckoutConfigurationResponse configuration = service.getCheckoutConfiguration();
+
+        assertThat(configuration.plans()).containsExactly(pro);
+        assertThat(configuration.providers()).isEmpty();
+    }
 
     @Test
     void delegatesEligibleCheckoutToSelectedProvider() {

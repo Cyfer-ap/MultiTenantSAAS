@@ -25,6 +25,10 @@ public class BillingProviderRegistry {
         this.providers = Map.copyOf(registered);
     }
 
+    public List<BillingProviderType> availableProviderTypes() {
+        return providers.keySet().stream().sorted().toList();
+    }
+
     public BillingProvider require(BillingProviderType providerType) {
         BillingProvider provider = providers.get(providerType);
         if (provider == null) {
