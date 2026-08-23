@@ -182,6 +182,36 @@ class TenantApiKeyAuthenticationIntegrationTest {
     }
 
     @Test
+    void zeroQuotaRejectsFirstRequestWithoutMeteringIt() throws Exception {
+        Tenant tenant = createTenant("disabled");
+        AppUser actor = createAdmin(tenant);
+        attachSubscription(tenant.getId(), 0L);
+        TenantApiKeyCreatedResponse created =
+                apiKeyService.create(
+                        tenant.getId(),
+                        actor,
+                        new TenantApiKeyCreateRequest("Disabled integration", null));
+        Instant periodStart = Instant.now().minusSeconds(60);
+
+        mockMvc.perform(
+                        get("/api/external/v1/context")
+                                .header(
+                                        TenantApiKeyAuthenticationFilter.API_KEY_HEADER,
+                                        created.apiKey()))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().exists("Retry-After"))
+                .andExpect(jsonPath("$.details.used").value(0))
+                .andExpect(jsonPath("$.details.limit").value(0));
+
+        var summary =
+                usageMeteringService.summarize(
+                        tenant.getId(), "API_REQUESTS", periodStart, Instant.now().plusSeconds(60));
+
+        assertThat(summary.quantity()).isZero();
+        assertThat(summary.eventCount()).isZero();
+    }
+
+    @Test
     void blocksValidApiKeyWhenTenantHasNoSubscription() throws Exception {
         Tenant tenant = createTenant("unsubscribed");
         AppUser actor = createAdmin(tenant);
