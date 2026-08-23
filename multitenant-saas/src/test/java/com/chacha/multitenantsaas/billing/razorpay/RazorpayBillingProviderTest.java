@@ -22,6 +22,8 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.MapPropertySource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -29,6 +31,24 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 class RazorpayBillingProviderTest {
+
+    @Test
+    void springBeanFactorySelectsThePropertiesInjectionConstructor() {
+        try (AnnotationConfigApplicationContext context =
+                new AnnotationConfigApplicationContext()) {
+            context.getEnvironment()
+                    .getPropertySources()
+                    .addFirst(
+                            new MapPropertySource(
+                                    "razorpay-test",
+                                    Map.of("app.billing.razorpay.enabled", "true")));
+            context.registerBean(RazorpayBillingProperties.class, this::properties);
+            context.register(RazorpayBillingProvider.class);
+            context.refresh();
+
+            assertThat(context.getBean(RazorpayBillingProvider.class)).isNotNull();
+        }
+    }
 
     @Test
     void createsSubscriptionLinkWithTenantReconciliationNotes() {

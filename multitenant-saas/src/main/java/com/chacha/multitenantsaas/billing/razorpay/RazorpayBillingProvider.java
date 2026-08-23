@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -26,6 +27,7 @@ public class RazorpayBillingProvider implements BillingProvider {
     private final RazorpayBillingProperties properties;
     private final RestClient restClient;
 
+    @Autowired
     public RazorpayBillingProvider(RazorpayBillingProperties properties) {
         this(properties, RestClient.builder());
     }
