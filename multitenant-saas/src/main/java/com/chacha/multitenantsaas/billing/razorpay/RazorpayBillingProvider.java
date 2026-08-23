@@ -3,8 +3,11 @@ package com.chacha.multitenantsaas.billing.razorpay;
 import com.chacha.multitenantsaas.billing.provider.BillingCheckoutSession;
 import com.chacha.multitenantsaas.billing.provider.BillingProvider;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderException;
+import com.chacha.multitenantsaas.billing.provider.BillingProviderSubscriptionSnapshot;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
+import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.Instant;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -14,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import tools.jackson.databind.JsonNode;
 
 @Component
 @ConditionalOnProperty(prefix = "app.billing.razorpay", name = "enabled", havingValue = "true")
@@ -86,15 +90,43 @@ public class RazorpayBillingProvider implements BillingProvider {
     }
 
     @Override
-    public void cancelSubscription(String providerSubscriptionId) {
-        if (providerSubscriptionId == null || providerSubscriptionId.isBlank()) {
-            throw new IllegalArgumentException("providerSubscriptionId must not be blank");
+    public BillingProviderSubscriptionSnapshot fetchSubscription(
+            String providerSubscriptionId) {
+        String subscriptionId = requireSubscriptionId(providerSubscriptionId);
+
+        try {
+            JsonNode subscription =
+                    restClient
+                            .get()
+                            .uri("/v1/subscriptions/{subscriptionId}", subscriptionId)
+                            .retrieve()
+                            .body(JsonNode.class);
+            if (subscription == null || !subscription.isObject()) {
+                throw new BillingProviderException(
+                        "Razorpay returned an incomplete subscription", null);
+            }
+
+            return new BillingProviderSubscriptionSnapshot(
+                    BillingProviderType.RAZORPAY,
+                    requiredText(subscription, "id"),
+                    resolvePlanCode(requiredText(subscription, "plan_id")),
+                    mapStatus(requiredText(subscription, "status")),
+                    requiredInstant(subscription, "current_start"),
+                    requiredInstant(subscription, "current_end"),
+                    optionalBoolean(subscription, "cancel_at_cycle_end"));
+        } catch (RestClientException ex) {
+            throw new BillingProviderException("Razorpay subscription lookup failed", ex);
         }
+    }
+
+    @Override
+    public void cancelSubscription(String providerSubscriptionId) {
+        String subscriptionId = requireSubscriptionId(providerSubscriptionId);
 
         try {
             restClient
                     .post()
-                    .uri("/v1/subscriptions/{subscriptionId}/cancel", providerSubscriptionId.trim())
+                    .uri("/v1/subscriptions/{subscriptionId}/cancel", subscriptionId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new RazorpayCancellationRequest(false))
                     .retrieve()
@@ -104,6 +136,19 @@ public class RazorpayBillingProvider implements BillingProvider {
         }
     }
 
+    private TenantSubscriptionStatus mapStatus(String status) {
+        return switch (status) {
+            case "created", "authenticated" -> TenantSubscriptionStatus.TRIALING;
+            case "active" -> TenantSubscriptionStatus.ACTIVE;
+            case "pending", "halted" -> TenantSubscriptionStatus.PAST_DUE;
+            case "cancelled" -> TenantSubscriptionStatus.CANCELLED;
+            case "completed", "expired" -> TenantSubscriptionStatus.EXPIRED;
+            default ->
+                    throw new BillingProviderException(
+                            "Unsupported Razorpay subscription status: " + status, null);
+        };
+    }
+
     private String resolvePlanId(String normalizedPlanCode) {
         for (Map.Entry<String, String> plan : properties.getPlans().entrySet()) {
             if (plan.getKey().equalsIgnoreCase(normalizedPlanCode)) {
@@ -111,6 +156,45 @@ public class RazorpayBillingProvider implements BillingProvider {
             }
         }
         return null;
+    }
+
+    private String resolvePlanCode(String providerPlanId) {
+        for (Map.Entry<String, String> plan : properties.getPlans().entrySet()) {
+            if (providerPlanId.equals(plan.getValue())) {
+                return plan.getKey().toUpperCase(Locale.ROOT);
+            }
+        }
+        return null;
+    }
+
+    private String requireSubscriptionId(String providerSubscriptionId) {
+        if (providerSubscriptionId == null || providerSubscriptionId.isBlank()) {
+            throw new IllegalArgumentException("providerSubscriptionId must not be blank");
+        }
+        return providerSubscriptionId.trim();
+    }
+
+    private String requiredText(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        if (value == null || !value.isString() || value.asString().isBlank()) {
+            throw new BillingProviderException(
+                    "Razorpay returned a subscription without " + field, null);
+        }
+        return value.asString();
+    }
+
+    private Instant requiredInstant(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        if (value == null || !value.isIntegralNumber()) {
+            throw new BillingProviderException(
+                    "Razorpay returned a subscription without " + field, null);
+        }
+        return Instant.ofEpochSecond(value.asLong());
+    }
+
+    private boolean optionalBoolean(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        return value != null && value.isBoolean() && value.asBoolean();
     }
 
     private static void validateConfiguration(RazorpayBillingProperties properties) {
