@@ -5,13 +5,13 @@ import com.chacha.multitenantsaas.billing.entity.SubscriptionPlanUsageLimit;
 import com.chacha.multitenantsaas.billing.repository.BillingUsageEventRepository;
 import com.chacha.multitenantsaas.billing.repository.SubscriptionPlanUsageLimitRepository;
 import com.chacha.multitenantsaas.dto.SubscriptionAccessReason;
-import com.chacha.multitenantsaas.dto.TenantSubscriptionEntitlementResponse;
+import com.chacha.multitenantsaas.entity.SubscriptionPlanStatus;
 import com.chacha.multitenantsaas.entity.TenantSubscription;
+import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
 import com.chacha.multitenantsaas.exception.ApiUsageLimitExceededException;
 import com.chacha.multitenantsaas.exception.SubscriptionRestrictionException;
 import com.chacha.multitenantsaas.exception.SubscriptionRestrictionException.RestrictionType;
 import com.chacha.multitenantsaas.repository.TenantSubscriptionRepository;
-import com.chacha.multitenantsaas.service.SubscriptionEntitlementService;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -23,19 +23,16 @@ public class ApiRequestQuotaService {
     public static final String API_REQUESTS_METRIC = "API_REQUESTS";
 
     private final TenantSubscriptionRepository tenantSubscriptionRepository;
-    private final SubscriptionEntitlementService subscriptionEntitlementService;
     private final SubscriptionPlanUsageLimitRepository usageLimitRepository;
     private final BillingUsageEventRepository usageEventRepository;
     private final BillingUsageMeteringService usageMeteringService;
 
     public ApiRequestQuotaService(
             TenantSubscriptionRepository tenantSubscriptionRepository,
-            SubscriptionEntitlementService subscriptionEntitlementService,
             SubscriptionPlanUsageLimitRepository usageLimitRepository,
             BillingUsageEventRepository usageEventRepository,
             BillingUsageMeteringService usageMeteringService) {
         this.tenantSubscriptionRepository = tenantSubscriptionRepository;
-        this.subscriptionEntitlementService = subscriptionEntitlementService;
         this.usageLimitRepository = usageLimitRepository;
         this.usageEventRepository = usageEventRepository;
         this.usageMeteringService = usageMeteringService;
@@ -51,13 +48,12 @@ public class ApiRequestQuotaService {
                                         serviceUnavailable(
                                                 SubscriptionAccessReason.NO_SUBSCRIPTION));
 
-        TenantSubscriptionEntitlementResponse entitlement =
-                subscriptionEntitlementService.evaluate(tenantId);
-        if (!entitlement.serviceAvailable()) {
-            throw serviceUnavailable(entitlement.accessReason());
-        }
-
         Instant occurredAt = Instant.now();
+        SubscriptionAccessReason unavailableReason =
+                resolveUnavailableReason(subscription, occurredAt);
+        if (unavailableReason != null) {
+            throw serviceUnavailable(unavailableReason);
+        }
         Instant periodStart = subscription.getCurrentPeriodStart();
         Instant periodEnd = subscription.getCurrentPeriodEnd();
         if (periodStart == null
@@ -92,6 +88,29 @@ public class ApiRequestQuotaService {
                         1L,
                         "api:" + apiKeyId + ":" + UUID.randomUUID(),
                         occurredAt));
+    }
+
+    private SubscriptionAccessReason resolveUnavailableReason(
+            TenantSubscription subscription, Instant evaluatedAt) {
+        if (subscription.getPlan().getStatus() != SubscriptionPlanStatus.ACTIVE) {
+            return SubscriptionAccessReason.PLAN_INACTIVE;
+        }
+        if (subscription.getStatus() == TenantSubscriptionStatus.CANCELLED) {
+            return SubscriptionAccessReason.CANCELLED;
+        }
+        if (subscription.getStatus() == TenantSubscriptionStatus.EXPIRED) {
+            return SubscriptionAccessReason.EXPIRED;
+        }
+        if (subscription.getCurrentPeriodEnd() == null
+                || !subscription.getCurrentPeriodEnd().isAfter(evaluatedAt)) {
+            return SubscriptionAccessReason.PERIOD_EXPIRED;
+        }
+        if (subscription.getStatus() == TenantSubscriptionStatus.TRIALING
+                && (subscription.getTrialEndsAt() == null
+                        || !subscription.getTrialEndsAt().isAfter(evaluatedAt))) {
+            return SubscriptionAccessReason.TRIAL_EXPIRED;
+        }
+        return null;
     }
 
     private SubscriptionRestrictionException serviceUnavailable(
