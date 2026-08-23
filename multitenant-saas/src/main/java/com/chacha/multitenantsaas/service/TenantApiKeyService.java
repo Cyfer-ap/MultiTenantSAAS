@@ -157,6 +157,7 @@ public class TenantApiKeyService {
                 apiKey.getCreatedByUser().getId(),
                 apiKey.getExpiresAt(),
                 apiKey.getCreatedAt(),
+                apiKey.getLastUsedAt(),
                 apiKey.getRevokedAt());
     }
 }
