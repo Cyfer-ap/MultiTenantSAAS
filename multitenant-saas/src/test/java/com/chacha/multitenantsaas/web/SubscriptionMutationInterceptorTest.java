@@ -6,6 +6,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.chacha.multitenantsaas.billing.dto.BillingCheckoutRequest;
+import com.chacha.multitenantsaas.controller.BillingCheckoutController;
 import com.chacha.multitenantsaas.security.AuthorizationSecurityService;
 import com.chacha.multitenantsaas.security.SystemSecurityService;
 import com.chacha.multitenantsaas.service.SubscriptionLifecycleGuardService;
@@ -70,6 +72,22 @@ class SubscriptionMutationInterceptorTest {
         assertTrue(
                 interceptor.preHandle(
                         request("PATCH"), new MockHttpServletResponse(), handler("allowed")));
+
+        verify(lifecycleGuard, never()).requireBusinessMutationAllowed(TENANT_ID);
+    }
+
+    @Test
+    void billingCheckoutBypassesReadOnlyGuardSoWorkspaceCanRecover() throws Exception {
+        when(authorizationSecurity.isCurrentTenant(TENANT_ID)).thenReturn(true);
+        HandlerMethod checkoutHandler =
+                new HandlerMethod(
+                        new BillingCheckoutController(null),
+                        BillingCheckoutController.class.getMethod(
+                                "createCheckout", UUID.class, BillingCheckoutRequest.class));
+
+        assertTrue(
+                interceptor.preHandle(
+                        request("POST"), new MockHttpServletResponse(), checkoutHandler));
 
         verify(lifecycleGuard, never()).requireBusinessMutationAllowed(TENANT_ID);
     }
