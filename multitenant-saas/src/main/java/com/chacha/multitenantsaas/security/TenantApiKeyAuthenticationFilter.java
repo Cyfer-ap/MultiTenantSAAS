@@ -56,7 +56,8 @@ public class TenantApiKeyAuthenticationFilter extends OncePerRequestFilter {
         String rawApiKey = request.getHeader(API_KEY_HEADER);
 
         if (rawApiKey == null || rawApiKey.isBlank()) {
-            filterChain.doFilter(request, response);
+            authenticationEntryPoint.commence(
+                    request, response, new BadCredentialsException("Missing API key"));
             return;
         }
 
