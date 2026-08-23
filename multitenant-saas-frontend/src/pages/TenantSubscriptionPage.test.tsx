@@ -119,6 +119,7 @@ function renderPage() {
 
 describe('TenantSubscriptionPage', () => {
     beforeEach(() => {
+        createCheckout.mockReset()
         vi.mocked(useWorkspaceSubscription).mockReturnValue({
             data: subscription,
             error: null,
