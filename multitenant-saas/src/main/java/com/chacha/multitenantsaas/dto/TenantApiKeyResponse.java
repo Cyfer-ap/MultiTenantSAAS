@@ -12,4 +12,5 @@ public record TenantApiKeyResponse(
         UUID createdByUserId,
         Instant expiresAt,
         Instant createdAt,
+        Instant lastUsedAt,
         Instant revokedAt) {}
