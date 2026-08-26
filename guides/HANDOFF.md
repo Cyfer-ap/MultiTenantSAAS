@@ -1,155 +1,54 @@
 # Development Handoff
 
-Use this file to resume development without relying on prior chat/session history.
-
-## Repository
-
-`Cyfer-ap/MultiTenantSAAS`
-
-Default branch: `main`
-
-## Start here
-
-1. `readme.md`
-2. `CHECKPOINT.md`
-3. `guides/README.md`
-4. `guides/current_architecture.md`
-5. `guides/authorization_model.md`
-6. `guides/collaboration_and_notifications.md`
-7. `guides/DEFERRED_PLATFORM_WORK.md`
-8. `wiki/Roadmap.md`
+Repository: `Cyfer-ap/MultiTenantSAAS`  
+Default branch: `main`  
+Reviewed state: post-PR #84 (`b97a3ef`)  
+Date: 2026-08-26
 
 ## Current phase
 
-**Product expansion + production/platform completion**
+**Razorpay Test Mode validation**
 
-Base reviewed state: post-PR #65 (`0e1edd6`). The old Step 40 transaction/concurrency milestone is historical. Its principal database-backed hardening and PostgreSQL concurrency coverage are already present.
+The billing implementation now includes provider-neutral orchestration, Stripe/Razorpay adapters, signed durable webhooks, webhook-driven lifecycle changes, provider cancellation, operational views, reconciliation, durable metering, tenant API keys, API quotas and tenant hosted checkout.
 
-The current short milestone is a post-PR #65 hardening checkpoint: synchronize repository/Wiki documentation and add one cross-module critical tenant journey. External billing is the next major feature after this checkpoint.
+## Important status
 
-## Current feature baseline
+Razorpay is not yet working end to end. Checkout creation and redirect succeed, but every attempted card fails on Razorpay's hosted page before recurring authorization. This blocks a real activation webhook and local subscription activation test. Keep live mode deferred.
 
-Implemented areas include:
+## Server configuration
 
-- separate tenant and system-admin control planes
-- secure browser authentication/session lifecycle
-- verified-email login, OTP and password recovery
-- tenant isolation
-- scoped authorization and organization hierarchy
-- subscription lifecycle, read-only enforcement and quotas
-- projects, memberships and task Kanban/table workspace
-- task collaboration: comments, mentions, activity, replies and pins
-- R2/S3-compatible task attachments with lifecycle cleanup
-- tenant notification persistence and read state
-- durable notification delivery records/outbox processing
-- email notification delivery
-- in-app notification center
-- task assignment/reassignment notifications
-- task status/cancellation notifications
-- comment, reply and mention notifications
-- precise task/comment/reply notification deep links
-- per-event optional email preferences
-- project membership add/role-change/remove notifications
-- PostgreSQL/Flyway/Testcontainers path
-- CI, Security, Container CI and Qodana
-
-## Architecture boundaries to preserve
-
-Do not collapse these concepts:
+Internal plans are not imported from Razorpay. Map app codes to provider plans only on the server:
 
 ```text
-authentication
-tenant isolation
-authorization
-subscription lifecycle
-quota enforcement
-domain invariants
+PRO        -> RAZORPAY_PLAN_PRO
+ENTERPRISE -> RAZORPAY_PLAN_ENTERPRISE
 ```
 
-System-admin identity remains separate from tenant-user identity.
-
-## Migration invariant
+Correct webhook URL:
 
 ```text
-db/migration   -> historical H2 V1-V17
-db/postgresql  -> PostgreSQL V17 baseline
-db/common      -> portable V18+
+POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/razorpay
 ```
 
-Current common migrations extend through **V27**. Never rewrite an already-applied migration.
+Never place real credentials in docs, commits, frontend configuration or screenshots. Rotate exposed credentials.
 
-## Critical-journey regression
+## Boundaries
 
-The focused test suite remains authoritative for individual features. The hardening checkpoint adds `CriticalTenantJourneyIntegrationTest` to verify that these subsystem boundaries still compose correctly:
+- webhook state is authoritative
+- reconciliation reports mismatches but does not overwrite local state
+- checkout is a lifecycle recovery action but still requires tenant authorization
+- provider identifiers and credentials stay server-side
+- API keys remain tenant-bound and restricted to `/api/external/**`
 
-```text
-onboarding/login
-    ↓
-invitation acceptance
-    ↓
-project membership
-    ↓
-task assignment
-    ↓
-comment mention/reply
-    ↓
-notification deep links/read state
-    ↓
-task status transition
-    ↓
-logout-all/session revocation
-```
+## Resume steps
 
-Run it with:
+1. create a test subscription directly from Razorpay Dashboard
+2. inspect the failed payment's `code`, `description`, `source`, `step` and `reason`
+3. contact Razorpay Support if the dashboard-native flow fails
+4. optionally add a feature-flagged, system-admin-only billing simulator
+5. repeat deployed activation, webhook, reconciliation and cancellation tests
+6. enable live plans only after the full Test Mode lifecycle succeeds
 
-```powershell
-cd multitenant-saas
-.\mvnw.cmd "-Dtest=CriticalTenantJourneyIntegrationTest" test
-```
+## Verification
 
-Do not treat this as a substitute for the existing focused security, authorization, subscription, collaboration or PostgreSQL tests.
-
-## Next product/platform priority
-
-1. external billing provider boundary and provider mapping
-2. signed webhook verification, replay protection and durable reconciliation
-3. connect provider state to the existing subscription/entitlement model without weakening current lifecycle/authorization boundaries
-
-## Deferred platform priorities
-
-- usage metering/accounting
-- tenant outbound webhooks
-- API keys/service accounts
-- recovery/alerting/runbooks
-- enterprise SSO
-- authorization delegation/explain-access
-- broader load/failure-recovery and production R2 validation
-
-## Verification baseline
-
-Backend:
-
-```powershell
-cd multitenant-saas
-.\mvnw.cmd spotless:check
-.\mvnw.cmd test
-.\mvnw.cmd verify
-```
-
-Frontend when touched:
-
-```powershell
-cd multitenant-saas-frontend
-npm run format:check
-npm run lint
-npm test
-npm run build
-```
-
-For targeted Maven tests containing multiple classes in PowerShell, quote the property:
-
-```powershell
-.\mvnw.cmd "-Dtest=FirstTest,SecondTest" test
-```
-
-Before merge, required GitHub checks should remain green.
+GitHub Actions is authoritative while local Docker is unavailable. Provider contract mocks do not count as real Razorpay E2E validation.
