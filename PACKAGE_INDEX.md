@@ -1,20 +1,23 @@
 # Documentation Package Index
 
-This is a complete, non-placeholder documentation package.
+Current snapshot: post-PR #84 (`b97a3ef`), 2026-08-26.
 
-## Root files
+## Primary status documents
 
-- `readme.md` — updated main repository README
-- `CHECKPOINT.md` — concise current-state checkpoint
-- `HANDOFF.md` — resume-development handoff
-- `MANIFEST.json` — package inventory
+- `readme.md` — platform overview and current billing status
+- `CHECKPOINT.md` — concise verified checkpoint
+- `HANDOFF.md` — session-independent resume instructions
+- `guides/README.md` — guide routing and source-of-truth rules
+- `guides/subscription_billing.md` — billing contracts, configuration and Razorpay blocker
+- `guides/DEFERRED_PLATFORM_WORK.md` — remaining work
+- `wiki/Home.md` — version-controlled Wiki entry point
+- `wiki/Roadmap.md` — current sequence
+- `MANIFEST.json` — documentation inventory
 
-## Focused guides
+## Historical material
 
-The `guides/` folder contains complete current-state guide files for architecture,
-data model, authorization, subscriptions, PostgreSQL/Flyway, Step 39, and Step 40.
+Step 39/40, Authorization V2 and older planning/progress files remain for implementation history. Where they conflict with the primary status documents, current code/tests, migrations and focused current guides win.
 
-## Wiki
+## Current warning
 
-The `wiki/` folder contains a full multi-page wiki suitable for copying into a
-GitHub Wiki repository. `Home.md` is the entry point.
+Razorpay hosted Test Mode checkout opens, but payment authorization still fails within Razorpay. Live billing is deferred.
