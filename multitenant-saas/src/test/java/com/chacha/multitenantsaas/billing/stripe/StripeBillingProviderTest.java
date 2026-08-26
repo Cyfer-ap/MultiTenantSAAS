@@ -37,8 +37,7 @@ class StripeBillingProviderTest {
                     .getPropertySources()
                     .addFirst(
                             new MapPropertySource(
-                                    "stripe-test",
-                                    Map.of("app.billing.stripe.enabled", "true")));
+                                    "stripe-test", Map.of("app.billing.stripe.enabled", "true")));
             context.registerBean(StripeBillingProperties.class, this::properties);
             context.register(StripeBillingProvider.class);
             context.refresh();
