@@ -1,7 +1,7 @@
 # MultiTenantSAAS Documentation Checkpoint
 
-Date: 2026-08-26  
-Repository: `Cyfer-ap/MultiTenantSAAS`  
+Date: 2026-08-26
+Repository: `Cyfer-ap/MultiTenantSAAS`
 Base reviewed state: post-PR #84 (`b97a3ef`)
 
 ## Documentation status
