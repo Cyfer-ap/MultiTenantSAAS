@@ -1,79 +1,46 @@
 # Multi-Tenant SaaS Platform
 
-A full-stack multi-tenant SaaS platform focused on secure tenant isolation, permission-oriented authorization, project collaboration, subscription enforcement, PostgreSQL correctness, and production-oriented engineering.
+A full-stack multi-tenant SaaS platform focused on tenant isolation, permission-oriented authorization, project collaboration, subscription enforcement, external billing foundations, PostgreSQL correctness, and production-oriented engineering.
 
 > **Current documentation snapshot**
 >
 > Repository: `Cyfer-ap/MultiTenantSAAS`
 > Branch: `main`
-> Base reviewed state: post-PR #65 (`0e1edd6`)
-> Current phase: **product expansion + production/platform completion**
-> Immediate platform milestone: **external billing integration after the current hardening checkpoint**
+> Base reviewed state: post-PR #84 (`b97a3ef`)
+> Snapshot date: 2026-08-26
+> Current phase: **billing test-mode validation and operational hardening**
 
 ## Platform capabilities
 
 ### Tenant plane
 
-- tenant onboarding and lifecycle
-- JWT authentication and session restoration
-- hashed refresh tokens, rotation, revocation, logout and logout-all
-- verified email login, email OTP, password recovery and account lockout/unlock
-- tenant users and invitations
-- organization hierarchy and scoped authorization
-- projects, memberships and tasks
-- Kanban/table task workspace
-- task comments, mentions, activity history, one-level replies and pinned comments
-- R2/S3-compatible task attachments with presigned upload/download flows
-- tenant-scoped notifications, unread state and in-app notification center
-- task assignment, task status, comment, reply, mention and project-membership notifications
-- precise task/comment/reply notification deep links
-- per-event optional email notification preferences
-- tenant audit logs
-- subscription visibility, lifecycle restrictions and quotas
+- secure tenant onboarding, JWT/browser sessions, invitations, users, organization hierarchy, projects and tasks
+- permission-oriented scoped authorization
+- task comments, mentions, replies, pins, activity, R2/S3-compatible attachments and notifications
+- subscription visibility, lifecycle restrictions, recovery actions and resource quotas
+- tenant API-key lifecycle plus API-key authentication in the isolated `/api/external/**` namespace
+- metered and plan-limited external API requests
+- paid-plan discovery, hosted provider checkout and provider-backed cancellation
 
 ### System plane
 
-- separate system-admin authentication/control plane
-- platform dashboard
-- tenant administration and onboarding
-- tenant-user administration
-- system-admin management
-- platform audit logs
-- subscription plan and lifecycle administration
+- separate system-admin identity and control plane
+- tenant, user, subscription-plan and subscription administration
+- billing subscription/event visibility
+- read-only provider reconciliation
+- durable usage ingestion and summaries
+- plan-level API request limits
+- tenant and platform audit logs
 
-System administrators remain a separate identity domain; they are not tenant users with an elevated tenant role.
+System administrators are not tenant users with an elevated tenant role.
 
 ## Technology stack
 
-### Backend
+**Backend:** Java 21, Spring Boot 4.0.7, Spring Security/JWT, Spring Data JPA/Hibernate, Flyway, PostgreSQL 17, Testcontainers, AWS SDK v2, Actuator/Micrometer.
 
-- Java 21
-- Spring Boot 4.0.7
-- Spring Security / OAuth2 Resource Server / JWT
-- Spring Data JPA / Hibernate
-- Flyway
-- PostgreSQL 17
-- H2 historical/test migration path
-- Testcontainers PostgreSQL integration testing
-- AWS SDK v2 for S3-compatible object storage / Cloudflare R2
-- Spring Boot Actuator and Micrometer
-- Maven Wrapper (`.\mvnw.cmd`)
+**Frontend:** React 19.2, TypeScript 6, Vite 8, Material UI 9, React Router 7, TanStack React Query, Axios, React Hook Form/Zod, Vitest and Testing Library.
 
-### Frontend
-
-- React 19.2
-- TypeScript 6
-- Vite 8
-- Material UI 9
-- React Router 7
-- TanStack React Query
-- Axios
-- React Hook Form + Zod
-- Vitest + Testing Library
-
-## Security and request enforcement
-
-Business requests pass through distinct enforcement layers:
+## Security and enforcement
 
 ```text
 authentication
@@ -84,95 +51,71 @@ authorization / scoped permission evaluation
     ↓
 subscription lifecycle access
     ↓
-resource quota enforcement
+resource and API-usage quotas
     ↓
 domain invariants
 ```
 
-These controls intentionally remain separate. Authorization never bypasses subscription restrictions, and a valid subscription never grants a missing permission.
+The billing checkout POST is an explicitly permitted subscription-recovery action for a read-only workspace, while the existing `tenant.update` authorization remains required.
 
-## Collaboration and storage
+API keys are tenant-bound, stored only as hashes, revealed once at creation and accepted only on `/api/external/**`. They cannot impersonate browser users.
 
-Task collaboration is implemented as a tenant/project/task-scoped subsystem:
+## Subscription, billing and metering
 
-- comments and validated project-member mentions
-- task activity timeline
-- one-level comment replies
-- pinned comments
-- attachment metadata and lifecycle cleanup
-- presigned object-storage uploads/downloads
-- Cloudflare R2 through the S3-compatible AWS SDK
+Implemented through PR #84:
 
-Relevant schema migrations:
+- provider-neutral billing boundary with configuration-gated Stripe and Razorpay adapters
+- hosted subscription checkout API
+- signed Stripe and Razorpay webhook ingestion
+- durable provider-event persistence and replay/duplicate protection
+- webhook-driven subscription lifecycle synchronization
+- provider-backed cancellation
+- system-admin billing operations views and read-only reconciliation
+- append-only usage metering
+- tenant API keys and external API authentication
+- per-plan `API_REQUESTS` quotas with atomic consumption and `429 Retry-After`
+- safe checkout configuration discovery and tenant subscription-page checkout
+- duplicate active-subscription prevention
+- read-only workspace recovery through checkout
 
-```text
-V21  task collaboration
-V22  task attachments
-V23  attachment cleanup hardening
-V24  comment replies and pins
-```
+Internal application plans and Razorpay plans are separate. App plan codes such as `PRO` and `ENTERPRISE` map server-side to `RAZORPAY_PLAN_PRO` and `RAZORPAY_PLAN_ENTERPRISE`. Provider plan IDs and secrets are never returned to the browser.
 
-See `guides/collaboration_and_notifications.md` and the Wiki pages `Collaboration-and-Attachments` and `Notifications`.
+### Razorpay test-mode status
 
-## Notifications
+**Razorpay is not working end to end yet.** The deployed application can create a test subscription and open Razorpay's hosted checkout, but every attempted test card currently fails inside Razorpay before an authorization can complete. International test cards are rejected because international acceptance is unavailable, and recurring-compatible domestic test cards have also returned provider errors.
 
-The notification subsystem now includes:
+This means the application-side integration is implemented and CI-tested with mock provider contracts, but real Razorpay sandbox activation, webhook delivery and resulting local subscription activation have not been successfully validated. Treat this as a provider-level end-to-end blocker under investigation, not as production-ready billing.
 
-- tenant- and recipient-scoped notification persistence
-- unread count and read/read-all mutations
-- durable PostgreSQL-backed delivery records
-- retry/backoff/lease/idempotency-oriented delivery processing
-- email delivery through the existing email-provider abstraction
-- in-app notification bell and safe internal navigation
-- task assignment/reassignment events
-- task status/cancellation events
-- top-level task comment events
-- comment reply events
-- mention events
-- project membership add/role-change/remove events
-- exact comment/reply deep links, including targets outside the normal first comment page
-- recipient-scoped optional email preferences while in-app notification history remains mandatory
+Current deployment decision:
 
-Relevant migrations:
+- Razorpay stays in **Test Mode**
+- live keys and live plans are deferred
+- do not use real cards in Test Mode
+- never commit keys, key secrets, webhook secrets or plan IDs
+- rotate any credential that has been exposed in a screenshot or log
+
+Correct deployed webhook target:
 
 ```text
-V25  notifications
-V26  notification deliveries
-V27  notification preferences
+POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/razorpay
 ```
 
-`WORKSPACE_INVITATION` and `SECURITY_ALERT` remain part of the notification type catalogue; security-alert email is intentionally mandatory/non-configurable. Product follow-up should now focus on genuinely new value such as invitation-event wiring, optional digests/live delivery and operational delivery visibility rather than rebuilding the notification foundation.
+It belongs to the backend. Opening that URL in a browser sends a GET request and is not a webhook test.
 
-## Authorization
+Relevant variables:
 
-Authorization has evolved beyond the legacy coarse tenant roles. Current concepts include:
+```dotenv
+RAZORPAY_BILLING_ENABLED=true
+RAZORPAY_KEY_ID=...
+RAZORPAY_KEY_SECRET=...
+RAZORPAY_PLAN_PRO=plan_...
+RAZORPAY_PLAN_ENTERPRISE=plan_...
+RAZORPAY_SUBSCRIPTION_TOTAL_COUNT=120
+RAZORPAY_WEBHOOK_ENABLED=true
+RAZORPAY_WEBHOOK_SECRET=...
+```
 
-- permission catalogue
-- authorization roles
-- role-permission mappings
-- user role assignments
-- organization hierarchy and assignments
-- project/organization scoped authorization evaluation
-- backend-authoritative permission checks
-- authorization management UI
-
-Legacy roles such as `TENANT_ADMIN`, `TENANT_MANAGER` and `TENANT_USER` remain where required for compatibility.
-
-Advanced authorization still worth adding later includes temporary delegation and an explain-access capability.
-
-## Subscription and quota model
-
-The platform separates:
-
-- plans and entitlements
-- tenant subscription lifecycle
-- evaluated access state
-- workspace read-only enforcement
-- resource quotas
-
-The current subscription model is internal. A production external billing provider, signed webhook reconciliation and payment-state synchronization are still future work and are the next major platform milestone.
-
-## PostgreSQL and Flyway
+## Database checkpoint
 
 Migration layout:
 
@@ -182,145 +125,57 @@ multitenant-saas/src/main/resources/db/postgresql  PostgreSQL V17 baseline
 multitenant-saas/src/main/resources/db/common      portable V18+
 ```
 
-Current shared migrations have advanced through **V27**.
+Current shared migrations extend through **V33**:
 
-Never rewrite an already-applied migration.
+- V28 billing foundation
+- V29 provider subscription linkage
+- V30 billing usage events
+- V31 tenant API keys
+- V32 API-key last-used metadata
+- V33 subscription-plan usage limits
 
-## Concurrency hardening
+Never rewrite an applied migration.
 
-The former Step 40 transaction/concurrency phase is no longer the active project phase. Database-backed protections and regression coverage now include, among other paths:
+## Verification
 
-- subscription state serialization
-- one-subscription-per-tenant creation races
-- invitation single-use/replacement behavior
-- failed-login/account-lock races
-- refresh-token rotation/session invalidation races
-- PostgreSQL pessimistic-lock integration coverage
-- attachment completion/deletion serialization and cleanup recovery
-- notification delivery leasing/idempotency behavior
+GitHub Actions is authoritative for this environment because local Docker is unavailable. Required gates include backend tests/verification, PostgreSQL and Flyway, frontend lint/tests/build, repository hygiene, security scanning, container validation and Qodana.
 
-`guides/step40_transaction_concurrency.md` is retained as a historical closeout/reference page.
+Provider contract tests do not replace a real Razorpay Test Mode checkout and webhook smoke test.
 
-## Testing strategy
+## Deployment
 
-Focused unit/integration tests remain the primary regression layer. In addition, the hardening checkpoint adds a deliberately cross-module critical tenant journey covering the wiring between:
+- Frontend: `https://multitenantsaas-frontend.onrender.com`
+- Backend: `https://multitenantsaas-akxn.onrender.com`
+- Production profile: `SPRING_PROFILES_ACTIVE=postgres,production`
 
-```text
-tenant onboarding + login
-        ↓
-invitation acceptance
-        ↓
-project membership
-        ↓
-task assignment
-        ↓
-comment mention / reply
-        ↓
-notification deep links + read state
-        ↓
-task status change
-        ↓
-session revocation
-```
-
-This journey is not a replacement for focused tests; it protects the seams between otherwise independently tested subsystems. A dedicated browser-E2E runner such as Playwright remains a later testing-infrastructure option rather than being mixed into this small checkpoint.
-
-## Production and operations
-
-Implemented foundation:
-
-- `postgres,production` execution path
-- production environment template
-- Docker/Compose paths
-- request correlation IDs and completion logging
-- secured Actuator access
-- SaaS-specific metrics
-- CI, security scanning, container validation and Qodana
-
-Still not production-complete:
-
-- external billing provider and reconciliation
-- durable usage metering/accounting
-- tenant webhook platform
-- API keys/service accounts
-- backup/restore drills, alerts and operational runbooks
-- enterprise SSO
-- broader load/failure-recovery verification
-- confirmed production-environment R2 round-trip/operations validation
-
-See `guides/DEFERRED_PLATFORM_WORK.md` for the current platform backlog.
-
-## Local development
-
-### PostgreSQL
-
-```powershell
-docker compose -f .\docker-compose.postgres.yml up -d
-```
-
-### Backend
-
-```powershell
-cd multitenant-saas
-.\mvnw.cmd test
-.\mvnw.cmd verify
-```
-
-### Frontend
-
-```powershell
-cd multitenant-saas-frontend
-npm install
-npm run lint
-npm test
-npm run build
-```
-
-Typical local configuration:
-
-```dotenv
-BACKEND_PORT=8081
-FRONTEND_PORT=8080
-VITE_API_BASE_URL=http://localhost:8081
-CORS_ALLOWED_ORIGINS=http://localhost:8080
-```
+Use environment configuration for all secrets. See `wiki/Production-Deployment.md`.
 
 ## Documentation
 
-Documentation source-of-truth order:
+Source-of-truth order:
 
-1. current application code and tests
+1. current code and tests
 2. current Flyway migrations
 3. focused guides under `guides/`
 4. historical planning/progress notes
 
-Primary entry points:
+Start with:
 
 - `CHECKPOINT.md`
+- `HANDOFF.md`
 - `guides/README.md`
-- `guides/HANDOFF.md`
+- `guides/subscription_billing.md`
 - `guides/DEFERRED_PLATFORM_WORK.md`
 - `wiki/Home.md`
 - `wiki/Roadmap.md`
 
-The version-controlled Wiki source lives under `wiki/`. Publish it with:
+Version-controlled Wiki source is under `wiki/`. Publish it with `scripts/publish-wiki.ps1`.
 
-```powershell
-.\scripts\publish-wiki.ps1
-```
+## Next steps
 
-Use `-NoPush` to preview the Wiki diff without publishing.
-
-## Current roadmap
-
-Near-term order:
-
-1. complete the post-PR #65 documentation and critical-journey hardening checkpoint
-2. connect the internal subscription model to an external billing provider
-3. add durable usage metering/accounting
-4. add tenant webhooks and API keys/service accounts
-5. add recovery/alerting/runbooks and broader operational verification
-6. add enterprise SSO when product requirements justify it
-7. add advanced authorization delegation/explain-access when needed
-
-The platform has a strong production-readiness foundation, but it should not be described as fully production-complete until the remaining provider, recovery, observability and operational gaps are closed.
+1. isolate the Razorpay sandbox failure by creating/testing a subscription directly in Razorpay and recording the failed payment fields: `code`, `description`, `source`, `step` and `reason`
+2. raise the result with Razorpay Support if the dashboard-created subscription also fails
+3. optionally add a feature-flagged, system-admin-only billing lifecycle simulator for application testing
+4. repeat the deployed Razorpay activation/webhook/cancellation flow
+5. move to KYC/live keys/live plans only after Test Mode succeeds
+6. continue operational recovery, tenant outbound webhooks, broader failure testing and enterprise SSO

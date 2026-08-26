@@ -1,81 +1,61 @@
 # Deferred Platform Work
 
-This file tracks platform capabilities that remain intentionally deferred while product-facing work continues. Retire an entry only when the underlying capability is actually delivered.
+Reviewed through PR #84 on 2026-08-26. Retire an item only when it is implemented and verified at the appropriate boundary.
 
-## Recently retired from this list
+## Recently delivered
 
-### Durable notification outbox foundation — delivered
+- billing provider abstraction and Stripe/Razorpay adapters — PRs #67-#70
+- tenant checkout API, signed webhooks and subscription synchronization — PRs #71-#73
+- provider-backed cancellation, operations visibility and reconciliation — PRs #74-#76
+- durable usage metering — PR #77
+- tenant API-key lifecycle, authentication and metering — PRs #78-#79
+- plan-level API request quotas — PR #80
+- tenant checkout discovery/UI and recovery fixes — PRs #81-#84
 
-PR #57 added PostgreSQL-backed notification delivery records with retry/backoff, lease-token/idempotency-oriented processing and durable delivery state.
+These are no longer deferred foundations.
 
-### Production notification email delivery foundation — delivered
+## Active billing validation debt
 
-PR #58 connected notification delivery to the existing email-provider abstraction. PR #59 added recipient-scoped in-app task-assignment notifications and the notification center.
+### Razorpay Test Mode E2E
 
-### Collaboration notification expansion — delivered
+The hosted subscription page opens, but every attempted card currently fails inside Razorpay before recurring authorization. Activation webhooks and local subscription activation are therefore not validated against the real provider.
 
-PRs #62-#65 completed the previously active notification product backlog:
+Required closeout:
 
-- task comment, reply and mention notifications
-- task status/cancellation notifications
-- precise task/comment/reply deep links
-- per-event optional email preferences while preserving mandatory in-app history
-- project membership add/role-change/remove notifications
+- dashboard-native subscription test
+- structured failed-payment diagnostics
+- Razorpay Support escalation if necessary
+- deployed activation, renewal/charged, pending/halted, cancellation, replay and reconciliation smoke tests
+- credential rotation for any exposed test secret
 
-These capabilities are no longer generic deferred debt.
+Live KYC, live keys and live plan mapping remain deferred until Test Mode passes.
 
-## Priority platform debt
+### Optional application lifecycle simulator
 
-1. **External billing integration**
-   - connect the existing subscription/entitlement model to a payment provider
-   - provider-neutral boundary with provider/customer/subscription mapping
-   - signed webhooks, replay protection, reconciliation and payment-state synchronization
+A feature-flagged, system-admin-only simulator could drive signed-equivalent internal lifecycle scenarios without external money movement. It is useful for application testing but cannot replace provider E2E.
 
-2. **Usage metering and quota accounting**
-   - durable consumption events and atomic accounting periods
-   - idempotent usage recording, reset semantics, history and enforcement visibility
+## Remaining platform debt
 
-3. **Webhook platform**
-   - tenant-configurable outbound webhooks with signing, retry history and delivery logs
-   - SSRF protections and secure handling of tenant-controlled destinations/secrets
+1. **Operational recovery and alerting**
+   - database backup/restore drills
+   - actionable service/database alerts and runbooks
+   - broader load and failure-recovery verification
+   - production R2 operational validation
 
-4. **API keys and service accounts**
-   - non-browser access with tenant binding, scoped permissions, rotation, expiration, revocation and audit history
-   - store only hashed credentials and reveal secrets once at creation
+2. **Tenant outbound webhooks**
+   - tenant-configurable endpoints, signing, retries and delivery logs
+   - SSRF protections and secret handling
 
-5. **Operational recovery and alerting**
-   - database backup/restore procedure and tested recovery path
-   - actionable service/database alerts and production runbooks
-   - broader load/failure-recovery verification
-   - production-environment R2 operational validation
+3. **Enterprise SSO**
+   - OIDC/SAML-style sign-in, account linking, discovery and enforcement
 
-6. **Enterprise SSO / federated authentication**
-   - tenant-configurable OIDC/SAML-style enterprise sign-in
-   - account linking, domain discovery and optional enforced SSO
+4. **Advanced authorization**
+   - temporary/scoped delegation
+   - explain-access API/UI
 
-7. **Advanced authorization ergonomics**
-   - temporary/scoped authorization delegation
-   - explain-access API/UI showing why a subject can or cannot perform an action
-
-## Notification follow-up backlog
-
-The notification foundation and the previously planned collaboration-event expansion are delivered. Remaining notification work should be treated as optional product/operations expansion rather than prerequisite foundation work:
-
-- wire `WORKSPACE_INVITATION` when a product-level in-app invitation notification is desired
-- optional digesting/batching
-- optional real-time browser delivery via SSE/WebSocket
-- optional mobile/push channels
-- delivery/admin observability if operational needs justify it
-- provider bounce/complaint handling if email operations require it
-
-`SECURITY_ALERT` email remains mandatory/non-configurable by design.
-
-## Testing follow-up
-
-The post-PR #65 hardening checkpoint adds a cross-module critical tenant integration journey using the existing Spring test stack. A dedicated browser E2E runner such as Playwright remains intentionally deferred until browser-level coverage justifies the extra dependency, browser-installation and CI cost.
+5. **Optional notification expansion**
+   - invitation events, digests, live browser delivery and admin observability
 
 ## Revisit rule
 
-Revisit a deferred item when a product feature starts depending on it, before a relevant external integration is treated as production-ready, or when scale/reliability makes the current approach unsafe.
-
-When an item is implemented, link the implementing PR and move it to the retired section rather than leaving stale debt in the active list.
+Revisit a deferred item when product work depends on it or before an external integration is described as production-ready.

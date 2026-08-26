@@ -1,92 +1,56 @@
 # Architecture
 
-## Repository layout
+Reviewed through PR #84 on 2026-08-26.
 
-```text
-MultiTenantSAAS/
-├── .github/                         CI, security and quality workflows
-├── guides/                          focused engineering documentation
-├── wiki/                            version-controlled GitHub Wiki source
-├── scripts/                         verification and Wiki publishing helpers
-├── multitenant-saas/                Spring Boot backend
-├── multitenant-saas-frontend/       React/Vite frontend
-├── compose.yaml                     full-stack Compose environment
-├── docker-compose.postgres.yml      PostgreSQL-only development environment
-├── .env.example
-├── .env.production.example
-└── qodana.yaml
-```
+## Stack and planes
 
-## Technology boundaries
+The platform uses Java 21/Spring Boot 4.0.7, React 19.2/TypeScript 6/Vite 8 and PostgreSQL 17/Flyway. Tenant and system-admin identities remain separate control planes.
 
-### Backend
-
-- Java 21
-- Spring Boot 4.0.7
-- Spring Web MVC
-- Spring Security
-- OAuth2 Resource Server / JWT
-- Spring Data JPA / Hibernate
-- Flyway
-- PostgreSQL 17
-- H2 historical/test path
-- Testcontainers
-- Actuator / Micrometer
-- Maven Wrapper
-
-### Frontend
-
-- React 19.2
-- TypeScript 6
-- Vite 8
-- Material UI 9
-- React Router 7
-- TanStack React Query
-- Axios
-- React Hook Form + Zod
-- Vitest + Testing Library
-
-## Two control planes
-
-The platform deliberately separates:
-
-1. **Tenant plane** — tenant users, organization, authorization, projects, tasks, invitations, subscription state and tenant audit activity.
-2. **System plane** — system administrators, platform dashboards, tenant administration, plan/subscription administration and platform audit activity.
-
-A system administrator is not a tenant user with a stronger tenant role.
-
-## Backend enforcement pipeline
+## Enforcement pipeline
 
 ```text
 authentication
     ↓
 tenant boundary
     ↓
-authorization and target scope
+authorization and scope
     ↓
-subscription lifecycle access
+subscription lifecycle
     ↓
-resource quota
+resource/API quota
     ↓
 domain invariant
     ↓
-database constraint / transaction
+transaction/database constraint
 ```
 
-A business operation may need to satisfy every layer.
+## Billing architecture
 
-## Persistence
+```text
+application plan
+    + server-side provider-plan mapping
+        ↓
+provider-neutral checkout service
+        ↓
+Stripe or Razorpay hosted checkout
+        ↓
+signed webhook
+        ↓
+durable billing event + replay protection
+        ↓
+locked tenant subscription synchronization
+        ↓
+access, entitlement and quota evaluation
+```
 
-Production-readiness work targets PostgreSQL. Schema evolution belongs to Flyway; Hibernate validates the production schema rather than creating it.
+Cancellation delegates to the linked provider and waits for a signed webhook. Reconciliation fetches a provider snapshot and reports differences without overwriting webhook-authoritative local state.
 
-Tenant-scoped tables and repository queries must retain the tenant boundary. Prefer a tenant-qualified database lookup over an unscoped entity lookup followed by an in-memory tenant check.
+Checkout is permitted for a read-only workspace as a recovery action, but tenant authorization remains required.
 
-## Cross-cutting design rules
+## API keys and metering
 
-- tenant isolation is never implied by role
-- frontend visibility is not authorization
-- subscription state is not authorization
-- resource quotas are not subscription lifecycle state
-- database invariants should be backed by constraints/locks when concurrency matters
-- sensitive operations should be auditable
-- request correlation data is operational metadata, not a business identifier
+Tenant API keys are revealed once, stored as hashes and accepted only under `/api/external/**`. Accepted calls record attributed `API_REQUESTS` usage and consume plan-period limits atomically.
+
+## Operational boundary
+
+Mocked provider contracts are covered in CI. Real Razorpay Test Mode authorization currently fails at the hosted provider page, so the external lifecycle is not production-validated.

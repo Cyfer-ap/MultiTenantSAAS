@@ -1,74 +1,46 @@
 # Subscriptions and Quotas
 
+Reviewed through PR #84 on 2026-08-26.
+
 ## Separation of concerns
 
-Subscription code answers distinct questions:
+Keep application plans, stored subscription lifecycle, evaluated access, entitlements, usage and provider objects separate.
 
-1. which plan applies?
-2. what lifecycle state is stored?
-3. what access does that state currently permit?
-4. what entitlements and limits apply?
-5. what usage has already been consumed?
+Application plan codes are mapped to provider plan IDs on the server. Razorpay plans are not imported into the application plan catalogue and provider IDs are not returned to the frontend.
 
-Do not collapse lifecycle status, evaluated access and quota usage into one boolean.
+## Access and recovery
 
-## Access reasons
+Ordinary tenant writes are rejected with `WORKSPACE_READ_ONLY` when lifecycle access is unavailable. Billing checkout is an explicitly permitted recovery action, but tenant authorization is still required.
 
-Current access-reason semantics include:
+Resource limits and per-period API limits are independent of lifecycle access.
 
-```text
-ACTIVE
-TRIAL_ACTIVE
-PAST_DUE_GRACE
-NO_SUBSCRIPTION
-PLAN_INACTIVE
-CANCELLED
-EXPIRED
-PERIOD_EXPIRED
-TRIAL_EXPIRED
-```
+## Billing implementation
 
-## Workspace read-only enforcement
+- safe checkout configuration discovery
+- hosted Stripe and Razorpay subscription checkout
+- signed durable webhooks with duplicate/replay protection
+- lifecycle mapping for supported provider events
+- provider-backed cancellation
+- system-admin billing operations visibility
+- read-only provider reconciliation
+- append-only usage events
+- tenant API-key creation/list/revocation
+- API-key authentication only under `/api/external/**`
+- plan-level `API_REQUESTS` quota enforcement with atomic consumption and `429 Retry-After`
 
-When evaluated subscription access does not permit ordinary tenant mutations, the central mutation guard returns a business restriction rather than pretending the user lacks authorization.
+Local provider-linked subscription state is webhook-authoritative.
 
-Typical contract:
+## Razorpay mapping
 
 ```text
-HTTP 409
-restriction = WORKSPACE_READ_ONLY
-resource = workspace
+PRO        -> RAZORPAY_PLAN_PRO
+ENTERPRISE -> RAZORPAY_PLAN_ENTERPRISE
 ```
 
-Read operations can remain available.
+Use Test Mode keys with Test Mode plans. Keep secrets and provider IDs server-side.
 
-## Resource quotas
+## Current provider status
 
-When the workspace is otherwise writable, resource capacity can independently reject growth.
+Razorpay is **not validated end to end**. Subscription creation and hosted redirect work, but all attempted test cards fail within Razorpay before recurring authorization. Activation webhooks and local activation remain unproven against the real sandbox.
 
-Examples:
-
-```text
-USER_LIMIT_REACHED
-PROJECT_LIMIT_REACHED
-```
-
-Quota-sensitive creation is transactionally serialized against tenant subscription state.
-
-## Recovery
-
-Selected cleanup/recovery operations may remain available so a tenant can reduce usage and return to compliance.
-
-## Metrics
-
-Blocked tenant growth is counted using:
-
-```text
-saas.subscription.restrictions
-```
-
-Tags are bounded categories such as restriction type, resource and access reason. Tenant IDs, user IDs and emails are intentionally not metric tags.
-
-## Billing boundary
-
-Provider checkout, invoices, webhook reconciliation and payment-provider idempotency remain separate future production work until explicitly implemented and tested.
+This external blocker does not invalidate CI's application and mock-provider coverage, but it prevents a production-readiness claim.

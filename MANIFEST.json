@@ -1,40 +1,38 @@
 {
   "repository": "Cyfer-ap/MultiTenantSAAS",
   "branch": "main",
-  "reviewed_commit": "3808c0ddf95d075aed7114bf060518640c19d6c2",
-  "generated_date": "2026-08-16",
+  "reviewed_state": "post-PR #84",
+  "reviewed_commit": "b97a3efcbf4b5d48c63c9234b3a21784666f9b3e",
+  "generated_date": "2026-08-26",
+  "phase": "Razorpay Test Mode validation",
+  "external_blocker": "Razorpay hosted checkout opens, but test payment authorization has not completed successfully.",
+  "current_migration": "V33",
   "contents": {
     "root": [
       "readme.md",
       "CHECKPOINT.md",
       "HANDOFF.md",
+      "GUIDE_UPDATE_MANIFEST.md",
+      "PACKAGE_INDEX.md",
       "MANIFEST.json"
     ],
     "guides": [
       "README.md",
-      "authorization_model.md",
+      "progress.md",
+      "CHECKPOINT.md",
+      "HANDOFF.md",
       "current_architecture.md",
-      "data_model.md",
-      "postgresql_and_migrations.md",
-      "step39_closeout.md",
-      "step40_transaction_concurrency.md",
-      "subscription_billing.md"
+      "subscription_billing.md",
+      "DEFERRED_PLATFORM_WORK.md"
     ],
     "wiki": [
-      "Architecture.md",
-      "Authorization.md",
-      "Developer-Handoff.md",
-      "Frontend.md",
       "Home.md",
-      "PostgreSQL-and-Flyway.md",
-      "Production-Deployment.md",
-      "Projects-and-Tasks.md",
+      "Architecture.md",
+      "Developer-Handoff.md",
       "Roadmap.md",
-      "Security-and-Authentication.md",
       "Subscriptions-and-Quotas.md",
-      "Tenancy-and-Data-Model.md",
-      "Testing-and-CI.md",
-      "Transaction-and-Concurrency.md"
+      "Production-Deployment.md",
+      "Testing-and-CI.md"
     ]
   }
 }

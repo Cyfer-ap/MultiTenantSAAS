@@ -1,78 +1,48 @@
 # MultiTenantSAAS — Development Handoff
 
-Use this document to resume development in a new session without relying on chat history.
+Use this document to resume without relying on chat history.
 
 ## Repository checkpoint
 
 ```text
 Repository: Cyfer-ap/MultiTenantSAAS
 Branch: main
-Commit reviewed: 3808c0ddf95d075aed7114bf060518640c19d6c2
-Current engineering phase: Step 40
+Reviewed state: post-PR #84 (b97a3ef)
+Date: 2026-08-26
+Current phase: Razorpay Test Mode validation
 ```
 
 ## Read first
 
 1. `readme.md`
-2. `guides/README.md`
-3. `guides/current_architecture.md`
-4. `guides/authorization_model.md`
-5. `guides/subscription_billing.md`
-6. `guides/postgresql_and_migrations.md`
-7. `guides/step40_transaction_concurrency.md`
+2. `CHECKPOINT.md`
+3. `guides/HANDOFF.md`
+4. `guides/subscription_billing.md`
+5. `wiki/Subscriptions-and-Quotas.md`
+6. `wiki/Production-Deployment.md`
+7. `wiki/Testing-and-CI.md`
 
-## Architecture boundaries to preserve
+## Current result
 
-Do not collapse:
+Billing is substantially implemented through PR #84: provider-neutral checkout, Razorpay/Stripe adapters, signed durable webhooks, lifecycle synchronization, cancellation, operations views, reconciliation, metering, API keys, API-request quotas and tenant checkout UI.
 
-```text
-authentication
-tenant isolation
-authorization
-subscription lifecycle
-quota enforcement
-```
+Razorpay remains externally blocked. Hosted Test Mode checkout opens, but all attempted cards fail within Razorpay before authorization. No real sandbox activation/webhook cycle has succeeded, so live mode is deferred.
 
-System-admin identity must remain separate from tenant-user identity.
+## Boundaries to preserve
 
-## Database/migration rule
+- authentication, tenant isolation, authorization, subscription lifecycle and quotas remain separate
+- checkout may bypass lifecycle read-only enforcement only as an explicit recovery action; `tenant.update` is still required
+- local subscription state remains webhook-authoritative
+- provider and plan mapping comes only from server-side configuration/verified metadata
+- API keys authenticate only `/api/external/**`, are tenant-bound and cannot impersonate users
+- never expose or commit provider keys, secrets, webhook secrets or plan IDs
 
-H2 and PostgreSQL have different starting migration histories, but all new shared schema work starts at V18 in `db/common`.
+## Next action
 
-Never edit V1-V17 merely to make a new implementation easier.
+Test a Dashboard-created Razorpay subscription to distinguish account/sandbox capability from application integration. Capture the provider's structured failure fields and escalate to Razorpay Support if that direct flow also fails.
 
-## Current concurrency work
+A feature-flagged, system-admin-only lifecycle simulator is a valid parallel follow-up for testing application transitions without claiming provider validation.
 
-Slice 40.1 established database locking for subscription invariants.
+## Verification
 
-Continue with invitation races, failed-login counters, session-version/password/logout-all lost updates, duplicate/integrity normalization, and PostgreSQL concurrency tests.
-
-Prefer database constraints/locks over JVM-local mutexes.
-
-## Production-profile state
-
-Latest main includes a `production` Spring profile and `.env.production.example`.
-
-Do not remove:
-
-- hidden error details
-- `open-in-view=false`
-- `ddl-auto=validate`
-- Flyway clean disabled
-- restricted Actuator exposure
-- health-detail suppression
-- production rate-limit configuration
-
-## Definition of a safe next change
-
-A change is not complete until:
-
-```text
-backend tests pass
-frontend lint/tests/build pass when affected
-PostgreSQL schema/integration path remains valid
-git diff --check passes
-tenant isolation is preserved
-authorization/subscription contracts are not conflated
-documentation is updated
-```
+GitHub Actions is authoritative while local Docker is unavailable. Before merge require backend, PostgreSQL/Flyway, frontend, security, container and Qodana checks to pass.

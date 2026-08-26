@@ -1,6 +1,6 @@
 # Production Deployment
 
-## Current staging topology
+## Current hosted topology
 
 ```text
 Render Static Site (frontend)
@@ -12,39 +12,47 @@ Render Web Service (backend)
 Neon PostgreSQL 17
 ```
 
-The hosted path has been used to verify HTTPS, authentication, CORS, Flyway/Hibernate validation, persistence, and core tenant/system flows.
+Frontend: `https://multitenantsaas-frontend.onrender.com`
+Backend: `https://multitenantsaas-akxn.onrender.com`
 
-## Spring profiles
+Use `SPRING_PROFILES_ACTIVE=postgres,production`.
 
-Hosted backend execution uses:
+## Razorpay Test Mode
 
-```text
-SPRING_PROFILES_ACTIVE=postgres,production
+Current deployment intentionally uses Test Mode. Required variable names:
+
+```dotenv
+RAZORPAY_BILLING_ENABLED=true
+RAZORPAY_KEY_ID=...
+RAZORPAY_KEY_SECRET=...
+RAZORPAY_PLAN_PRO=plan_...
+RAZORPAY_PLAN_ENTERPRISE=plan_...
+RAZORPAY_SUBSCRIPTION_TOTAL_COUNT=120
+RAZORPAY_WEBHOOK_ENABLED=true
+RAZORPAY_WEBHOOK_SECRET=...
 ```
 
-## Environment template
+Map Test Mode keys only to Test Mode plan IDs. Never commit values or expose them to the frontend.
 
-Use:
+Correct webhook target:
 
 ```text
-.env.production.example
+POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/razorpay
 ```
 
-as the variable inventory, but never commit real secrets.
+The webhook secret is a value chosen/configured for that Razorpay webhook, not the Razorpay API key secret. Opening the URL in a browser is a GET and is not a valid webhook test.
 
-Important values include:
+Rotate any credential exposed in a screenshot, log or commit.
 
-- PostgreSQL JDBC URL
-- PostgreSQL username/password
-- JWT secret
-- allowed CORS origins
-- system-admin bootstrap controls
-- password-reset exposure controls
-- public endpoint rate limits
-- invitation expiration
-- frontend API base URL
+## Current deployment status
 
-Recommended hosted rules include:
+The backend startup and application checkout route work. Razorpay's hosted page opens, but every attempted Test Mode card fails before recurring authorization. Therefore activation webhooks and local subscription activation have not been validated with the real provider.
+
+Do not enable live keys or live plans until Test Mode completes successfully.
+
+## Standard environment safety
+
+Also configure database, JWT, CORS, bootstrap and frontend URL variables from the production environment template. Keep:
 
 ```text
 SYSTEM_ADMIN_BOOTSTRAP_ENABLED=false
@@ -53,37 +61,4 @@ CORS_ALLOWED_ORIGINS=<hosted frontend only>
 FORWARD_HEADERS_STRATEGY=framework
 ```
 
-## Production Spring hardening
-
-The production profile:
-
-- hides internal exception detail
-- disables Open Session in View
-- uses Hibernate schema validation
-- disables Flyway clean
-- restricts Actuator exposure
-- suppresses health details/components
-- avoids verbose security/database logging
-
-## Frontend deployment
-
-Render Static Site configuration:
-
-```text
-Root Directory: multitenant-saas-frontend
-Build: npm ci && npm run build
-Publish: dist
-```
-
-`VITE_API_BASE_URL` points to the hosted backend. SPA routes rewrite to `/index.html`.
-
-## Remaining production-readiness work
-
-Hosted staging is not the same as a production SLA. Remaining work includes:
-
-- database backup/restore drills
-- external monitoring and alerting
-- secrets rotation/management
-- load and failure-recovery verification
-- payment-provider integration and webhook idempotency
-- background jobs/notifications when required
+Hosted staging is not a production SLA. Backup/restore drills, alerts, runbooks, load/failure testing and production R2 validation remain.
