@@ -1,120 +1,51 @@
 # Testing and CI
 
-## Backend local verification
+## Authoritative gates
 
-Use the Maven Wrapper:
+GitHub Actions is authoritative while local Docker is unavailable. Required repository coverage includes:
 
-```powershell
-cd multitenant-saas
+- repository hygiene
+- backend tests and Maven verification
+- PostgreSQL/Flyway integration
+- frontend formatting, lint, tests and build
+- security scanning
+- Compose and backend/frontend container validation
+- Qodana
 
-.\mvnw.cmd spotless:apply
-.\mvnw.cmd spotless:check
-.\mvnw.cmd test
-.\mvnw.cmd verify
-```
+PR #84 passed these gates.
 
-For multiple targeted tests in PowerShell, quote the property containing commas:
+## Billing coverage in CI
 
-```powershell
-.\mvnw.cmd "-Dtest=FirstTest,SecondTest" test
-```
+Automated tests cover:
 
-## Backend coverage priorities
+- provider registry and checkout validation
+- Stripe and Razorpay HTTP contracts with mock servers
+- signature verification, replay/duplicate handling and durable events
+- lifecycle mapping and out-of-order/terminal-state safety
+- cancellation and reconciliation
+- usage event idempotency and period aggregation
+- tenant API-key lifecycle/authentication/metering
+- plan-level API request quotas
+- checkout configuration and duplicate-subscription protection
+- checkout recovery through the read-only interceptor
+- Razorpay Spring constructor injection/startup regression
 
-Tests should cover:
+## Provider E2E boundary
 
-- tenant isolation
-- authentication/session behavior
-- authorization scopes
-- account-state invariants
-- invitation lifecycle
-- projects/tasks
-- collaboration and notification recipient/deep-link behavior
-- subscription access and quota behavior
-- concurrency
-- PostgreSQL/Flyway compatibility
-- operational filters/metrics where behavior matters
+CI does not prove Razorpay sandbox availability. The deployed application opens Razorpay Test Mode checkout, but all attempted cards currently fail before recurring authorization. A successful activation webhook/local activation cycle remains outstanding.
 
-## Cross-module critical tenant journey
+Required deployed smoke sequence:
 
-The post-PR #65 hardening checkpoint adds `CriticalTenantJourneyIntegrationTest`.
+1. successful hosted authorization
+2. verified `subscription.activated`
+3. charged/update behavior
+4. pending/halted handling
+5. cancellation and terminal webhook
+6. duplicate/replay resistance
+7. provider/local reconciliation
 
-The purpose of this test is not to duplicate every focused assertion. It protects the seams between major user-facing subsystems in one realistic flow:
+A browser GET to the webhook URL is not a webhook test.
 
-```text
-tenant onboarding + admin login
-        ↓
-invite/accept member + member login
-        ↓
-create project + add member
-        ↓
-assign task
-        ↓
-create mentioned comment + reply
-        ↓
-verify notification types and exact deep links
-        ↓
-change task status + verify notification read state
-        ↓
-logout-all + verify session credentials are revoked
-```
+## Without local Docker
 
-Run only this journey with:
-
-```powershell
-cd multitenant-saas
-.\mvnw.cmd "-Dtest=CriticalTenantJourneyIntegrationTest" test
-```
-
-Focused tests remain the authoritative place for detailed edge cases and security boundaries.
-
-## Browser E2E status
-
-The frontend currently uses Vitest + Testing Library and already has focused project/Kanban/collaboration/deep-link regression coverage. A dedicated browser E2E runner such as Playwright is **not** introduced in this checkpoint so a new dependency, browser installation and CI job do not get mixed into a documentation/hardening change.
-
-Browser E2E can be added later as a standalone testing-infrastructure slice when its maintenance cost is justified.
-
-## Frontend verification
-
-```powershell
-cd multitenant-saas-frontend
-
-npm run format
-npm run format:check
-npm run lint
-npm test
-npm run build
-```
-
-## PostgreSQL
-
-PostgreSQL integration tests use Testcontainers. When Docker is available, the database path should execute rather than silently relying on H2 semantics.
-
-## GitHub quality gates
-
-Repository CI/security coverage includes:
-
-```text
-Repository Hygiene
-Backend
-PostgreSQL & Flyway
-Frontend
-Trivy filesystem/source scan
-Qodana
-
-Container CI:
-Compose Validation
-Backend Container
-Frontend Container
-```
-
-Qodana is useful static analysis; repository branch policy determines whether a specific Qodana result is merge-blocking.
-
-## Repository hygiene
-
-Before finalizing a change:
-
-```powershell
-git diff --check
-git status --short
-```
+Contributors may rely on GitHub Actions for PostgreSQL and container validation, then perform provider smoke testing only in the deployed Test Mode environment. Live plans are not part of the current test scope.
