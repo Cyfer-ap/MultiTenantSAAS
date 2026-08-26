@@ -20,12 +20,32 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.MapPropertySource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 class StripeBillingProviderTest {
+
+    @Test
+    void springBeanFactorySelectsThePropertiesInjectionConstructor() {
+        try (AnnotationConfigApplicationContext context =
+                new AnnotationConfigApplicationContext()) {
+            context.getEnvironment()
+                    .getPropertySources()
+                    .addFirst(
+                            new MapPropertySource(
+                                    "stripe-test", Map.of("app.billing.stripe.enabled", "true")));
+            context.registerBean(StripeBillingProperties.class, this::properties);
+            context.register(StripeBillingProvider.class);
+            context.refresh();
+
+            StripeBillingProvider provider = context.getBean(StripeBillingProvider.class);
+            assertThat(provider.providerType()).isEqualTo(BillingProviderType.STRIPE);
+        }
+    }
 
     @Test
     void createsSubscriptionCheckoutSessionWithTenantReconciliationData() {
