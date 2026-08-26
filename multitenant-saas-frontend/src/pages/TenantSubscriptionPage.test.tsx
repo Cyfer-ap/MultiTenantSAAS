@@ -246,4 +246,46 @@ describe('TenantSubscriptionPage', () => {
             }),
         )
     })
+
+    it('starts Stripe checkout while Razorpay remains available', async () => {
+        const user = userEvent.setup()
+        vi.mocked(useWorkspaceSubscription).mockReturnValue({
+            data: undefined,
+            error: new ApiClientError({
+                message: 'Subscription not found.',
+                status: 404,
+            }),
+            isError: true,
+            isFetching: false,
+            isPending: false,
+            refetch: vi.fn(),
+        } as never)
+        vi.mocked(useBillingCheckoutConfiguration).mockReturnValue({
+            data: {
+                plans: [subscription.plan],
+                providers: ['RAZORPAY', 'STRIPE'],
+            },
+            error: null,
+            isError: false,
+            isPending: false,
+        } as never)
+
+        renderPage()
+
+        expect(screen.getByRole('button', { name: 'Continue with Razorpay' })).toBeInTheDocument()
+        await user.click(screen.getByRole('button', { name: 'Continue with Stripe' }))
+
+        expect(createCheckout).toHaveBeenCalledWith(
+            {
+                tenantId: 'tenant-1',
+                input: {
+                    planCode: 'GROWTH',
+                    provider: 'STRIPE',
+                },
+            },
+            expect.objectContaining({
+                onSuccess: expect.any(Function),
+            }),
+        )
+    })
 })

@@ -80,6 +80,18 @@ Implemented through PR #84:
 
 Internal application plans and Razorpay plans are separate. App plan codes such as `PRO` and `ENTERPRISE` map server-side to `RAZORPAY_PLAN_PRO` and `RAZORPAY_PLAN_ENTERPRISE`. Provider plan IDs and secrets are never returned to the browser.
 
+### Stripe parallel option
+
+Stripe is supported as an additional hosted subscription provider and does not replace Razorpay. If both are enabled, the tenant sees separate Stripe and Razorpay actions.
+
+Stripe deployment requires a server-side Test Mode secret key, recurring Price IDs for `PRO` and `ENTERPRISE`, success/cancel URLs pointing to `/subscription`, and a separate webhook signing secret. The deployed webhook target is:
+
+```text
+POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/stripe
+```
+
+Razorpay remains configured and visible independently. A successful Stripe E2E test must still be completed after the Test Mode values are added to Render.
+
 ### Razorpay test-mode status
 
 **Razorpay is not working end to end yet.** The deployed application can create a test subscription and open Razorpay's hosted checkout, but every attempted test card currently fails inside Razorpay before an authorization can complete. International test cards are rejected because international acceptance is unavailable, and recurring-compatible domestic test cards have also returned provider errors.

@@ -44,6 +44,31 @@ The webhook secret is a value chosen/configured for that Razorpay webhook, not t
 
 Rotate any credential exposed in a screenshot, log or commit.
 
+## Stripe Test Mode
+
+Stripe can run beside Razorpay. Enabling both providers makes both hosted-checkout actions available; it does not remove or disable Razorpay.
+
+Configure server-side Test Mode values:
+
+```dotenv
+STRIPE_BILLING_ENABLED=true
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PRICE_PRO=price_...
+STRIPE_PRICE_ENTERPRISE=price_...
+STRIPE_SUCCESS_URL=https://multitenantsaas-frontend.onrender.com/subscription?checkout=success
+STRIPE_CANCEL_URL=https://multitenantsaas-frontend.onrender.com/subscription?checkout=cancelled
+STRIPE_WEBHOOK_ENABLED=true
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+Register:
+
+```text
+POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/stripe
+```
+
+for `customer.subscription.created`, `customer.subscription.updated` and `customer.subscription.deleted`. Use recurring Test Mode Price IDs. No Stripe publishable key is required by the current hosted redirect implementation.
+
 ## Current deployment status
 
 The backend startup and application checkout route work. Razorpay's hosted page opens, but every attempted Test Mode card fails before recurring authorization. Therefore activation webhooks and local subscription activation have not been validated with the real provider.
