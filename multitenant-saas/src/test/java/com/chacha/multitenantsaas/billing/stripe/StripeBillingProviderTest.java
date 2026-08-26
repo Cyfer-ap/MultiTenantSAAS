@@ -42,7 +42,8 @@ class StripeBillingProviderTest {
             context.register(StripeBillingProvider.class);
             context.refresh();
 
-            assertThat(context.getBean(StripeBillingProvider.class)).isNotNull();
+            StripeBillingProvider provider = context.getBean(StripeBillingProvider.class);
+            assertThat(provider.providerType()).isEqualTo(BillingProviderType.STRIPE);
         }
     }
 
