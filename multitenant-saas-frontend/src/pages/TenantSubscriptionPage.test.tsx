@@ -271,9 +271,7 @@ describe('TenantSubscriptionPage', () => {
 
         renderPage()
 
-        expect(
-            screen.getByRole('button', { name: 'Continue with Razorpay' }),
-        ).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: 'Continue with Razorpay' })).toBeInTheDocument()
         await user.click(screen.getByRole('button', { name: 'Continue with Stripe' }))
 
         expect(createCheckout).toHaveBeenCalledWith(
@@ -289,5 +287,4 @@ describe('TenantSubscriptionPage', () => {
             }),
         )
     })
-
 })
