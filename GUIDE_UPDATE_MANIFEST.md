@@ -1,35 +1,44 @@
 # Guide Update Manifest
 
-These files were prepared from the latest GitHub state reviewed at commit:
+Current documentation refresh:
 
 ```text
-ae1fa4cbb5133ae0b3bcd2596379e1ab64f36be1
+Repository: Cyfer-ap/MultiTenantSAAS
+Reviewed state: post-PR #84 (b97a3ef)
+Snapshot date: 2026-08-26
+Phase: Razorpay Test Mode validation
 ```
 
-## Replace existing files
+## Updated status documents
 
-```text
-readme.md
-guides/progress.md
-guides/Plan.txt
-guides/security_model.md
-multitenant-saas-frontend/README.md
-```
+Root:
 
-## Add new files
+- `readme.md`
+- `CHECKPOINT.md`
+- `HANDOFF.md`
+- `PACKAGE_INDEX.md`
+- `MANIFEST.json`
 
-```text
-guides/frontend_architecture.md
-guides/frontend_testing.md
-guides/authorization_v2_plan.md
-```
+Guides:
 
-## Reviewed but intentionally not replaced
+- `guides/README.md`
+- `guides/progress.md`
+- `guides/CHECKPOINT.md`
+- `guides/HANDOFF.md`
+- `guides/subscription_billing.md`
+- `guides/current_architecture.md`
+- `guides/DEFERRED_PLATFORM_WORK.md`
 
-```text
-guides/postman_tests.md
-guides/Details.txt
-guides/sb_difficulties.txt
-```
+Wiki source:
 
-The Postman guide remains useful for the current endpoint catalogue. Current session semantics are documented in `security_model.md` and `progress.md`. Historical learning and difficulty notes were preserved.
+- `wiki/Home.md`
+- `wiki/Developer-Handoff.md`
+- `wiki/Roadmap.md`
+- `wiki/Subscriptions-and-Quotas.md`
+- `wiki/Production-Deployment.md`
+- `wiki/Architecture.md`
+- `wiki/Testing-and-CI.md`
+
+## Status recorded
+
+The refresh retires stale PR #65/Step 40 claims, records billing/API-key/metering work through PR #84 and marks real Razorpay Test Mode end-to-end validation as blocked. No credentials or provider plan IDs are recorded.
