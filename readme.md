@@ -4,10 +4,10 @@ A full-stack multi-tenant SaaS platform focused on tenant isolation, permission-
 
 > **Current documentation snapshot**
 >
-> Repository: `Cyfer-ap/MultiTenantSAAS`  
-> Branch: `main`  
-> Base reviewed state: post-PR #84 (`b97a3ef`)  
-> Snapshot date: 2026-08-26  
+> Repository: `Cyfer-ap/MultiTenantSAAS`
+> Branch: `main`
+> Base reviewed state: post-PR #84 (`b97a3ef`)
+> Snapshot date: 2026-08-26
 > Current phase: **billing test-mode validation and operational hardening**
 
 ## Platform capabilities
