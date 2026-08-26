@@ -12,7 +12,7 @@ Render Web Service (backend)
 Neon PostgreSQL 17
 ```
 
-Frontend: `https://multitenantsaas-frontend.onrender.com`  
+Frontend: `https://multitenantsaas-frontend.onrender.com`
 Backend: `https://multitenantsaas-akxn.onrender.com`
 
 Use `SPRING_PROFILES_ACTIVE=postgres,production`.
