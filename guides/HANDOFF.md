@@ -1,8 +1,8 @@
 # Development Handoff
 
-Repository: `Cyfer-ap/MultiTenantSAAS`  
-Default branch: `main`  
-Reviewed state: post-PR #84 (`b97a3ef`)  
+Repository: `Cyfer-ap/MultiTenantSAAS`
+Default branch: `main`
+Reviewed state: post-PR #84 (`b97a3ef`)
 Date: 2026-08-26
 
 ## Current phase
