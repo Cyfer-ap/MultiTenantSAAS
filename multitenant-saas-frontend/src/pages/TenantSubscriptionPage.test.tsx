@@ -246,7 +246,8 @@ describe('TenantSubscriptionPage', () => {
             }),
         )
     })
-    it('offers Stripe alongside Razorpay and starts Stripe checkout independently', async () => {
+
+    it('starts Stripe checkout while Razorpay remains available', async () => {
         const user = userEvent.setup()
         vi.mocked(useWorkspaceSubscription).mockReturnValue({
             data: undefined,
@@ -271,7 +272,9 @@ describe('TenantSubscriptionPage', () => {
 
         renderPage()
 
-        expect(screen.getByRole('button', { name: 'Continue with Razorpay' })).toBeInTheDocument()
+        expect(
+            screen.getByRole('button', { name: 'Continue with Razorpay' }),
+        ).toBeInTheDocument()
         await user.click(screen.getByRole('button', { name: 'Continue with Stripe' }))
 
         expect(createCheckout).toHaveBeenCalledWith(
