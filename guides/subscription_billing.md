@@ -61,6 +61,35 @@ POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/razorpay
 
 A browser GET to that route is not a webhook test.
 
+## Stripe as a parallel provider
+
+Stripe can be enabled without disabling Razorpay. When both providers are configured, the tenant subscription page renders separate **Continue with Stripe** and **Continue with Razorpay** actions for each eligible paid plan.
+
+Stripe uses server-created hosted Checkout Sessions in `subscription` mode. Only a server-side test secret key is required; this redirect-based integration does not require a publishable key in the frontend.
+
+Create recurring Stripe Prices for the application plan codes and configure:
+
+```dotenv
+STRIPE_BILLING_ENABLED=true
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PRICE_PRO=price_...
+STRIPE_PRICE_ENTERPRISE=price_...
+STRIPE_SUCCESS_URL=https://multitenantsaas-frontend.onrender.com/subscription?checkout=success
+STRIPE_CANCEL_URL=https://multitenantsaas-frontend.onrender.com/subscription?checkout=cancelled
+STRIPE_WEBHOOK_ENABLED=true
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+Register this Test Mode webhook endpoint:
+
+```text
+POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/stripe
+```
+
+Subscribe it to `customer.subscription.created`, `customer.subscription.updated` and `customer.subscription.deleted`. The webhook signing secret is separate from the Stripe API secret key.
+
+Use Test Mode products, recurring Prices, keys and webhook endpoints together. Razorpay configuration remains unchanged.
+
 ## Current Razorpay blocker
 
 **The real Test Mode subscription flow has not succeeded.**
