@@ -1,7 +1,7 @@
 # Multi-Tenant SaaS Platform — Current Progress
 
-Snapshot date: 2026-08-26  
-Reviewed state: post-PR #84 (`b97a3ef`)  
+Snapshot date: 2026-08-26
+Reviewed state: post-PR #84 (`b97a3ef`)
 Current stage: **billing Test Mode validation**
 
 This page is a concise progress index. Code, tests, migrations, `CHECKPOINT.md` and focused guides are authoritative.
