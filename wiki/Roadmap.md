@@ -2,9 +2,9 @@
 
 ## Current
 
-The active phase is **Razorpay Test Mode validation and billing operational hardening**.
+The active phase is **billing provider validation and operational hardening**.
 
-Billing foundations completed through PR #84:
+Billing foundations completed through PR #90:
 
 - provider-neutral checkout
 - Stripe and Razorpay adapters
@@ -17,18 +17,21 @@ Billing foundations completed through PR #84:
 - tenant plan discovery and hosted-checkout UI
 - checkout recovery for read-only workspaces
 
+Stripe Test Mode is validated end to end in deployment: hosted Checkout completes and signed webhook synchronization updates local subscription state.
+
 ## Active blocker
 
 Razorpay hosted Test Mode checkout opens but every attempted card fails before recurring authorization. A real activation webhook and local activation have not been observed. Live plans and keys remain deferred.
 
 ## Near term
 
-1. isolate the failure with a Dashboard-created Razorpay subscription
-2. capture structured provider diagnostics and escalate to Razorpay Support if needed
-3. optionally add a feature-flagged, system-admin-only billing simulator
-4. complete deployed Razorpay activation, charged/pending/halted, cancellation, replay and reconciliation tests
-5. rotate any exposed test credentials
-6. move to live-mode readiness only after the sandbox lifecycle succeeds
+1. preserve and monitor the working Stripe Test Mode path
+2. isolate the failure with a Dashboard-created Razorpay subscription
+3. capture structured provider diagnostics and escalate to Razorpay Support if needed
+4. optionally add a feature-flagged, system-admin-only billing simulator
+5. complete deployed Razorpay activation, charged/pending/halted, cancellation, replay and reconciliation tests
+6. rotate any exposed test credentials
+7. move each provider to live-mode readiness only after provider-specific review
 
 ## Next platform work
 

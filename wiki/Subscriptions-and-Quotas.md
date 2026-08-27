@@ -1,6 +1,6 @@
 # Subscriptions and Quotas
 
-Reviewed through PR #84 on 2026-08-26.
+Reviewed through PR #90 on 2026-08-27.
 
 ## Separation of concerns
 
@@ -40,6 +40,8 @@ ENTERPRISE -> RAZORPAY_PLAN_ENTERPRISE
 Use Test Mode keys with Test Mode plans. Keep secrets and provider IDs server-side.
 
 ## Current provider status
+
+Stripe is **working end to end in deployed Test Mode**. Hosted Checkout completes and the signed subscription webhook synchronizes local subscription state.
 
 Razorpay is **not validated end to end**. Subscription creation and hosted redirect work, but all attempted test cards fail within Razorpay before recurring authorization. Activation webhooks and local activation remain unproven against the real sandbox.
 

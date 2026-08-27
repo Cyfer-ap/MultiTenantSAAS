@@ -7,9 +7,9 @@ Use this document to resume without relying on chat history.
 ```text
 Repository: Cyfer-ap/MultiTenantSAAS
 Branch: main
-Reviewed state: post-PR #84 (b97a3ef)
-Date: 2026-08-26
-Current phase: Razorpay Test Mode validation
+Reviewed state: post-PR #90 (e9257b3)
+Date: 2026-08-27
+Current phase: billing provider validation and operational hardening
 ```
 
 ## Read first
@@ -24,7 +24,9 @@ Current phase: Razorpay Test Mode validation
 
 ## Current result
 
-Billing is substantially implemented through PR #84: provider-neutral checkout, Razorpay/Stripe adapters, signed durable webhooks, lifecycle synchronization, cancellation, operations views, reconciliation, metering, API keys, API-request quotas and tenant checkout UI.
+Billing is substantially implemented through PR #90: provider-neutral checkout, Razorpay/Stripe adapters, signed durable webhooks, lifecycle synchronization, cancellation, operations views, reconciliation, metering, API keys, API-request quotas and tenant checkout UI.
+
+Stripe works end to end in the deployed Test Mode environment, including hosted checkout and signed webhook-driven local subscription synchronization. PR #90 fixed the Stripe-enabled Render startup regression.
 
 Razorpay remains externally blocked. Hosted Test Mode checkout opens, but all attempted cards fail within Razorpay before authorization. No real sandbox activation/webhook cycle has succeeded, so live mode is deferred.
 
@@ -39,7 +41,7 @@ Razorpay remains externally blocked. Hosted Test Mode checkout opens, but all at
 
 ## Next action
 
-Test a Dashboard-created Razorpay subscription to distinguish account/sandbox capability from application integration. Capture the provider's structured failure fields and escalate to Razorpay Support if that direct flow also fails.
+Preserve the working Stripe Test Mode path. Test a Dashboard-created Razorpay subscription to distinguish account/sandbox capability from application integration. Capture the provider's structured failure fields and escalate to Razorpay Support if that direct flow also fails.
 
 A feature-flagged, system-admin-only lifecycle simulator is a valid parallel follow-up for testing application transitions without claiming provider validation.
 

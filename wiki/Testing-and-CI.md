@@ -12,7 +12,7 @@ GitHub Actions is authoritative while local Docker is unavailable. Required repo
 - Compose and backend/frontend container validation
 - Qodana
 
-PR #84 passed these gates.
+PR #90 passed these gates.
 
 ## Billing coverage in CI
 
@@ -29,10 +29,11 @@ Automated tests cover:
 - checkout configuration and duplicate-subscription protection
 - checkout recovery through the read-only interceptor
 - Razorpay Spring constructor injection/startup regression
+- Stripe Spring constructor injection/startup regression
 
 ## Provider E2E boundary
 
-CI does not prove Razorpay sandbox availability. The deployed application opens Razorpay Test Mode checkout, but all attempted cards currently fail before recurring authorization. A successful activation webhook/local activation cycle remains outstanding.
+Stripe has passed a deployed Test Mode checkout and signed-webhook synchronization smoke test. CI still does not prove Razorpay sandbox availability: the deployed application opens Razorpay Test Mode checkout, but all attempted cards currently fail before recurring authorization. A successful Razorpay activation webhook/local activation cycle remains outstanding.
 
 Required deployed smoke sequence:
 
@@ -48,4 +49,4 @@ A browser GET to the webhook URL is not a webhook test.
 
 ## Without local Docker
 
-Contributors may rely on GitHub Actions for PostgreSQL and container validation, then perform provider smoke testing only in the deployed Test Mode environment. Live plans are not part of the current test scope.
+Contributors may rely on GitHub Actions for PostgreSQL and container validation, then perform provider smoke testing only in the deployed Test Mode environment. Stripe Test Mode is currently working; Razorpay remains blocked. Live plans are not part of the current test scope.

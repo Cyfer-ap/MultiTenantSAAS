@@ -2,14 +2,14 @@
 
 Repository: `Cyfer-ap/MultiTenantSAAS`
 Branch: `main`
-Date: 2026-08-26
-Base reviewed state: post-PR #84 (`b97a3ef`)
+Date: 2026-08-27
+Base reviewed state: post-PR #90 (`e9257b3`)
 
 ## Current phase
 
 **Billing test-mode validation and operational hardening**
 
-The provider-neutral billing, Razorpay adapter, verified webhooks, lifecycle synchronization, cancellation, reconciliation, usage metering, API keys, API request quotas and tenant checkout UI are implemented. The active blocker is real Razorpay Test Mode authorization: hosted checkout opens, but no tested payment method has completed successfully.
+The provider-neutral billing, Stripe/Razorpay adapters, verified webhooks, lifecycle synchronization, cancellation, reconciliation, usage metering, API keys, API request quotas and tenant checkout UI are implemented. Stripe now works end to end in the deployed Test Mode environment. Razorpay remains blocked at real Test Mode recurring authorization.
 
 ## Delivered since the previous checkpoint
 
@@ -22,6 +22,22 @@ The provider-neutral billing, Razorpay adapter, verified webhooks, lifecycle syn
 - PRs #81-#82: safe checkout discovery and tenant hosted-checkout UI
 - PR #83: Razorpay provider startup injection fix for Render
 - PR #84: allow checkout as a recovery action in read-only workspaces
+- PR #88: refresh the billing checkpoint and Razorpay status
+- PR #89: expose Stripe alongside Razorpay in deployment and tenant checkout
+- PR #90: fix Stripe provider constructor injection and Render startup
+
+## Stripe status
+
+**Working end to end in deployed Test Mode.**
+
+Confirmed:
+
+- Stripe is available alongside Razorpay without removing it
+- hosted Checkout completes in Test Mode
+- the signed Stripe subscription webhook synchronizes local subscription state
+- the Stripe-enabled backend starts successfully on Render after PR #90
+
+Live-mode readiness is still a separate future step.
 
 ## Razorpay status
 
@@ -79,15 +95,16 @@ Never rewrite an applied migration.
 
 ## Verification checkpoint
 
-PR #84 passed the repository's GitHub Actions gates, including backend, PostgreSQL/Flyway, frontend, security, containers and Qodana. CI remains authoritative while local Docker is unavailable.
+PR #90 passed the repository's GitHub Actions gates, including backend, PostgreSQL/Flyway, frontend, security, containers and Qodana. CI remains authoritative while local Docker is unavailable. Stripe also passed the deployed Test Mode checkout/webhook smoke test.
 
 Mocked provider-contract tests prove application behavior, not Razorpay sandbox availability.
 
 ## Immediate next steps
 
-1. reproduce through a subscription created directly in Razorpay Dashboard
-2. capture failed-payment diagnostics (`code`, `description`, `source`, `step`, `reason`)
-3. contact Razorpay Support if the direct Dashboard flow also fails
-4. optionally implement a feature-flagged system-admin billing simulator
-5. rerun deployed activation, webhook, reconciliation and cancellation
-6. only then prepare live keys and live plans
+1. keep the working Stripe Test Mode flow covered and monitored
+2. reproduce through a subscription created directly in Razorpay Dashboard
+3. capture failed-payment diagnostics (`code`, `description`, `source`, `step`, `reason`)
+4. contact Razorpay Support if the direct Dashboard flow also fails
+5. optionally implement a feature-flagged system-admin billing simulator
+6. rerun Razorpay activation, webhook, reconciliation and cancellation
+7. prepare live-mode configuration only after provider-specific readiness review

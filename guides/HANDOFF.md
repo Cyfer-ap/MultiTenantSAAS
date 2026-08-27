@@ -2,14 +2,16 @@
 
 Repository: `Cyfer-ap/MultiTenantSAAS`
 Default branch: `main`
-Reviewed state: post-PR #84 (`b97a3ef`)
-Date: 2026-08-26
+Reviewed state: post-PR #90 (`e9257b3`)
+Date: 2026-08-27
 
 ## Current phase
 
-**Razorpay Test Mode validation**
+**Billing provider validation and operational hardening**
 
 The billing implementation now includes provider-neutral orchestration, Stripe/Razorpay adapters, signed durable webhooks, webhook-driven lifecycle changes, provider cancellation, operational views, reconciliation, durable metering, tenant API keys, API quotas and tenant hosted checkout.
+
+Stripe works end to end in deployed Test Mode: hosted Checkout completes and the signed subscription webhook updates local subscription state. The Stripe-enabled Render startup regression was fixed in PR #90.
 
 ## Important status
 
@@ -42,13 +44,14 @@ Never place real credentials in docs, commits, frontend configuration or screens
 
 ## Resume steps
 
-1. create a test subscription directly from Razorpay Dashboard
-2. inspect the failed payment's `code`, `description`, `source`, `step` and `reason`
-3. contact Razorpay Support if the dashboard-native flow fails
-4. optionally add a feature-flagged, system-admin-only billing simulator
-5. repeat deployed activation, webhook, reconciliation and cancellation tests
-6. enable live plans only after the full Test Mode lifecycle succeeds
+1. preserve and monitor the working Stripe Test Mode path
+2. create a test subscription directly from Razorpay Dashboard
+3. inspect the failed payment's `code`, `description`, `source`, `step` and `reason`
+4. contact Razorpay Support if the dashboard-native flow fails
+5. optionally add a feature-flagged, system-admin-only billing simulator
+6. repeat deployed Razorpay activation, webhook, reconciliation and cancellation tests
+7. enable each provider's live configuration only after its full Test Mode lifecycle succeeds
 
 ## Verification
 
-GitHub Actions is authoritative while local Docker is unavailable. Provider contract mocks do not count as real Razorpay E2E validation.
+GitHub Actions is authoritative while local Docker is unavailable. Stripe has passed a deployed Test Mode smoke test; provider contract mocks still do not count as real Razorpay E2E validation.

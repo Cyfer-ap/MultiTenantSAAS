@@ -4,7 +4,7 @@ MultiTenantSAAS is a full-stack multi-tenant SaaS platform with tenant isolation
 
 Version-controlled Wiki source lives under `wiki/`. See [[Wiki-Maintenance]].
 
-Current snapshot: **post-PR #84 (`b97a3ef`), 2026-08-26**.
+Current snapshot: **post-PR #90 (`e9257b3`), 2026-08-27**.
 
 ## Current platform state
 
@@ -25,6 +25,12 @@ Implemented capabilities include:
 - plan-level API request quotas
 - tenant paid-plan discovery and hosted-checkout UI
 - PostgreSQL 17, Flyway, Testcontainers, CI, security and container checks
+
+## Stripe status
+
+**Stripe works end to end in the deployed Test Mode environment.** Hosted Checkout completes and the signed Stripe subscription webhook synchronizes local subscription state. PR #90 fixed the Stripe-enabled Render startup regression.
+
+This is a Test Mode validation checkpoint, not a live-mode production-readiness claim.
 
 ## Razorpay status
 
@@ -64,4 +70,4 @@ Portable common migrations extend through **V33**. V28-V33 add billing persisten
 
 ## Current next step
 
-Isolate the Razorpay sandbox failure through a Dashboard-created subscription, capture the structured payment failure fields and contact Razorpay Support if the direct provider flow also fails. An internal, feature-flagged billing simulator may be added for application lifecycle tests, but it does not replace real provider validation.
+Preserve the working Stripe Test Mode path. Isolate the Razorpay sandbox failure through a Dashboard-created subscription, capture the structured payment failure fields and contact Razorpay Support if the direct provider flow also fails. An internal, feature-flagged billing simulator may be added for application lifecycle tests, but it does not replace real provider validation.

@@ -1,6 +1,6 @@
 # Subscription and billing
 
-Reviewed through PR #84 on 2026-08-26.
+Reviewed through PR #90 on 2026-08-27.
 
 ## Domain boundary
 
@@ -89,6 +89,12 @@ POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/stripe
 Subscribe it to `customer.subscription.created`, `customer.subscription.updated` and `customer.subscription.deleted`. The webhook signing secret is separate from the Stripe API secret key.
 
 Use Test Mode products, recurring Prices, keys and webhook endpoints together. Razorpay configuration remains unchanged.
+
+## Current Stripe status
+
+**The deployed Stripe Test Mode subscription flow is working end to end.** Hosted Checkout completes and the signed Stripe subscription webhook synchronizes local subscription state. PR #90 fixed the constructor-injection startup failure that initially affected Stripe-enabled Render deployment.
+
+This verifies the current Test Mode integration only. Live keys, live Prices and a live webhook endpoint remain separate readiness work.
 
 ## Current Razorpay blocker
 

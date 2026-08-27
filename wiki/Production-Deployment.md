@@ -69,11 +69,13 @@ POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/stripe
 
 for `customer.subscription.created`, `customer.subscription.updated` and `customer.subscription.deleted`. Use recurring Test Mode Price IDs. No Stripe publishable key is required by the current hosted redirect implementation.
 
+The deployed Stripe Test Mode flow is working: hosted Checkout completes and signed subscription webhook processing synchronizes local state. PR #90 fixed the Stripe provider constructor injection failure that initially prevented Render startup with Stripe enabled.
+
 ## Current deployment status
 
-The backend startup and application checkout route work. Razorpay's hosted page opens, but every attempted Test Mode card fails before recurring authorization. Therefore activation webhooks and local subscription activation have not been validated with the real provider.
+The Stripe-enabled backend starts and Stripe Test Mode works end to end. Razorpay's hosted page opens, but every attempted Test Mode card fails before recurring authorization. Therefore Razorpay activation webhooks and local subscription activation have not been validated with that provider.
 
-Do not enable live keys or live plans until Test Mode completes successfully.
+Do not enable live keys or live plans until the relevant provider's separate live-readiness checklist is complete. Razorpay must first complete Test Mode successfully.
 
 ## Standard environment safety
 
