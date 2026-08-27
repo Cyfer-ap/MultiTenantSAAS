@@ -2,14 +2,14 @@
 
 Repository: `Cyfer-ap/MultiTenantSAAS`
 Default branch: `main`
-Reviewed state: post-PR #84 (`b97a3ef`)
-Date: 2026-08-26
+Reviewed state: post-PR #90 (`e9257b3`)
+Date: 2026-08-27
 
 ## Current phase
 
-**Razorpay Test Mode validation and billing operational hardening**
+**Billing provider validation and operational hardening**
 
-Delivered through PR #84:
+Delivered through PR #90:
 
 - provider-neutral billing and Stripe/Razorpay adapters
 - tenant hosted checkout
@@ -22,6 +22,11 @@ Delivered through PR #84:
 - per-plan API-request quotas
 - subscription-page checkout and read-only recovery
 - deployed startup regression fix
+- parallel Stripe and Razorpay choices in tenant checkout
+
+## Working provider
+
+Stripe is working end to end in deployed Test Mode. Hosted Checkout completes, the signed subscription webhook synchronizes local state, and the Stripe-enabled backend starts successfully after PR #90.
 
 ## Blocking fact
 
@@ -38,13 +43,14 @@ Razorpay is not working end to end. The hosted Test Mode page opens, but all att
 
 ## Resume sequence
 
-1. test a subscription created directly in Razorpay Dashboard
-2. record `code`, `description`, `source`, `step` and `reason`
-3. contact Razorpay Support if the direct provider flow fails
-4. optionally build a feature-flagged, system-admin-only lifecycle simulator
-5. rerun activation, charged/pending/halted, cancellation, replay and reconciliation smoke tests
-6. prepare live plans/keys only after Test Mode succeeds
+1. preserve and monitor the working Stripe Test Mode path
+2. test a subscription created directly in Razorpay Dashboard
+3. record `code`, `description`, `source`, `step` and `reason`
+4. contact Razorpay Support if the direct provider flow fails
+5. optionally build a feature-flagged, system-admin-only lifecycle simulator
+6. rerun Razorpay activation, charged/pending/halted, cancellation, replay and reconciliation smoke tests
+7. prepare live plans/keys only after provider-specific Test Mode validation succeeds
 
 ## Verification
 
-GitHub Actions is authoritative while local Docker is unavailable. Mock provider tests validate application contracts, not Razorpay sandbox availability.
+GitHub Actions is authoritative while local Docker is unavailable. Stripe has also passed a deployed Test Mode smoke test. Mock provider tests validate application contracts, not Razorpay sandbox availability.

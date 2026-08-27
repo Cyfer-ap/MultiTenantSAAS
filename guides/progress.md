@@ -1,8 +1,8 @@
 # Multi-Tenant SaaS Platform — Current Progress
 
-Snapshot date: 2026-08-26
-Reviewed state: post-PR #84 (`b97a3ef`)
-Current stage: **billing Test Mode validation**
+Snapshot date: 2026-08-27
+Reviewed state: post-PR #90 (`e9257b3`)
+Current stage: **billing provider validation and operational hardening**
 
 This page is a concise progress index. Code, tests, migrations, `CHECKPOINT.md` and focused guides are authoritative.
 
@@ -35,6 +35,12 @@ This page is a concise progress index. Code, tests, migrations, `CHECKPOINT.md` 
 - duplicate active-subscription guard
 - read-only recovery allowance for checkout
 - Render Razorpay startup regression fix
+- parallel Stripe deployment and tenant checkout option
+- Render Stripe startup regression fix
+
+## Working provider
+
+Stripe is **working end to end in deployed Test Mode**. Hosted Checkout completes and the signed Stripe subscription webhook synchronizes local subscription state. This does not yet enable or validate live mode.
 
 ## Current blocker
 
@@ -44,9 +50,10 @@ Live mode, live plans and live keys are intentionally deferred.
 
 ## Next
 
-1. reproduce using a subscription created directly in Razorpay Dashboard
-2. capture provider failure diagnostics and contact Razorpay Support if direct checkout fails
-3. optionally add a feature-flagged system-admin billing lifecycle simulator
-4. validate activation, charged/pending/halted/cancelled webhooks in deployment
-5. proceed to live-mode readiness only after Test Mode succeeds
-6. continue operational recovery, tenant webhooks and enterprise SSO
+1. preserve and monitor the working Stripe Test Mode path
+2. reproduce using a subscription created directly in Razorpay Dashboard
+3. capture provider failure diagnostics and contact Razorpay Support if direct checkout fails
+4. optionally add a feature-flagged system-admin billing lifecycle simulator
+5. validate Razorpay activation, charged/pending/halted/cancelled webhooks in deployment
+6. proceed to provider-specific live-mode readiness only after its Test Mode path succeeds
+7. continue operational recovery, tenant webhooks and enterprise SSO

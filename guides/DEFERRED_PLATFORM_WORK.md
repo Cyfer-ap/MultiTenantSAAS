@@ -1,6 +1,6 @@
 # Deferred Platform Work
 
-Reviewed through PR #84 on 2026-08-26. Retire an item only when it is implemented and verified at the appropriate boundary.
+Reviewed through PR #90 on 2026-08-27. Retire an item only when it is implemented and verified at the appropriate boundary.
 
 ## Recently delivered
 
@@ -11,8 +11,11 @@ Reviewed through PR #84 on 2026-08-26. Retire an item only when it is implemente
 - tenant API-key lifecycle, authentication and metering — PRs #78-#79
 - plan-level API request quotas — PR #80
 - tenant checkout discovery/UI and recovery fixes — PRs #81-#84
+- parallel Stripe deployment and checkout, plus the Stripe startup fix — PRs #89-#90
 
 These are no longer deferred foundations.
+
+Stripe Test Mode E2E is no longer deferred: hosted Checkout and signed webhook-driven local subscription synchronization work in deployment. Live-mode readiness remains deferred.
 
 ## Active billing validation debt
 

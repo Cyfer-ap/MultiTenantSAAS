@@ -1,6 +1,6 @@
 # Architecture
 
-Reviewed through PR #84 on 2026-08-26.
+Reviewed through PR #90 on 2026-08-27.
 
 ## Stack and planes
 
@@ -53,4 +53,4 @@ Tenant API keys are revealed once, stored as hashes and accepted only under `/ap
 
 ## Operational boundary
 
-Mocked provider contracts are covered in CI. Real Razorpay Test Mode authorization currently fails at the hosted provider page, so the external lifecycle is not production-validated.
+Mocked provider contracts are covered in CI. Stripe's deployed Test Mode path works through hosted Checkout and signed webhook synchronization. Real Razorpay Test Mode authorization currently fails at the hosted provider page, so Razorpay's external lifecycle is not provider-validated.

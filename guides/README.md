@@ -28,7 +28,7 @@ Never modify an applied migration.
 
 ## Current phase
 
-The project is in **billing test-mode validation and operational hardening**, reviewed through PR #84.
+The project is in **billing provider validation and operational hardening**, reviewed through PR #90.
 
 Delivered billing/platform milestones now include:
 
@@ -42,7 +42,7 @@ Delivered billing/platform milestones now include:
 - tenant paid-plan discovery and hosted checkout
 - checkout recovery from a read-only workspace
 
-Razorpay hosted Test Mode checkout opens but payment authorization still fails inside Razorpay. Live mode remains deferred.
+Stripe hosted checkout and webhook-driven subscription synchronization work end to end in the deployed Test Mode environment. Razorpay hosted Test Mode checkout opens but payment authorization still fails inside Razorpay. Live mode remains deferred.
 
 Portable Flyway migrations extend through **V33**.
 
@@ -61,7 +61,7 @@ npm test
 npm run build
 ```
 
-GitHub Actions is authoritative where Docker is unavailable. Real provider E2E must still be tested in deployment.
+GitHub Actions is authoritative where Docker is unavailable. Stripe has also passed a real deployed Test Mode smoke test; Razorpay E2E remains outstanding.
 
 ## Wiki
 

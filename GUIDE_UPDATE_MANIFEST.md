@@ -4,9 +4,9 @@ Current documentation refresh:
 
 ```text
 Repository: Cyfer-ap/MultiTenantSAAS
-Reviewed state: post-PR #84 (b97a3ef)
-Snapshot date: 2026-08-26
-Phase: Razorpay Test Mode validation
+Reviewed state: post-PR #90 (e9257b3)
+Snapshot date: 2026-08-27
+Phase: billing provider validation and operational hardening
 ```
 
 ## Updated status documents
@@ -41,4 +41,4 @@ Wiki source:
 
 ## Status recorded
 
-The refresh retires stale PR #65/Step 40 claims, records billing/API-key/metering work through PR #84 and marks real Razorpay Test Mode end-to-end validation as blocked. No credentials or provider plan IDs are recorded.
+The refresh records billing work through PR #90, the successful deployed Stripe Test Mode flow and the Stripe startup fix. Razorpay real-provider Test Mode validation remains blocked. No credentials or provider plan IDs are recorded.

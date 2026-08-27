@@ -1,6 +1,6 @@
 # Current architecture
 
-Reviewed through PR #84 on 2026-08-26.
+Reviewed through PR #90 on 2026-08-27.
 
 ## Platform
 
@@ -51,4 +51,4 @@ Provider secrets and external plan IDs never cross into the frontend.
 
 ## Current operational boundary
 
-The application-side Razorpay flow is implemented, but real Test Mode payment authorization is failing at Razorpay checkout. Live billing is not enabled and the integration is not production-ready.
+The deployed Stripe Test Mode flow works through hosted Checkout and signed webhook synchronization. The application-side Razorpay flow is implemented, but real Test Mode payment authorization is still failing at Razorpay checkout. Live billing is not enabled, and neither provider should be described as live-production-ready yet.

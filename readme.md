@@ -6,8 +6,8 @@ A full-stack multi-tenant SaaS platform focused on tenant isolation, permission-
 >
 > Repository: `Cyfer-ap/MultiTenantSAAS`
 > Branch: `main`
-> Base reviewed state: post-PR #84 (`b97a3ef`)
-> Snapshot date: 2026-08-26
+> Base reviewed state: post-PR #90 (`e9257b3`)
+> Snapshot date: 2026-08-27
 > Current phase: **billing test-mode validation and operational hardening**
 
 ## Platform capabilities
@@ -62,7 +62,7 @@ API keys are tenant-bound, stored only as hashes, revealed once at creation and 
 
 ## Subscription, billing and metering
 
-Implemented through PR #84:
+Implemented through PR #90:
 
 - provider-neutral billing boundary with configuration-gated Stripe and Razorpay adapters
 - hosted subscription checkout API
@@ -90,7 +90,13 @@ Stripe deployment requires a server-side Test Mode secret key, recurring Price I
 POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/stripe
 ```
 
-Razorpay remains configured and visible independently. A successful Stripe E2E test must still be completed after the Test Mode values are added to Render.
+Razorpay remains configured and visible independently.
+
+### Stripe test-mode status
+
+**Stripe is working end to end in the deployed Test Mode environment.** The hosted Checkout flow completes and the application receives the signed subscription webhook needed to synchronize local subscription state. PR #90 also fixed the Stripe provider constructor injection failure that initially prevented Render startup when Stripe was enabled.
+
+This validates the current deployed Stripe Test Mode path; it is not a live-mode or production-readiness claim. Keep using Test Mode keys, Prices and webhook secrets until the separate live-readiness work is completed.
 
 ### Razorpay test-mode status
 
@@ -152,7 +158,7 @@ Never rewrite an applied migration.
 
 GitHub Actions is authoritative for this environment because local Docker is unavailable. Required gates include backend tests/verification, PostgreSQL and Flyway, frontend lint/tests/build, repository hygiene, security scanning, container validation and Qodana.
 
-Provider contract tests do not replace a real Razorpay Test Mode checkout and webhook smoke test.
+Provider contract tests are supplemented by a successful deployed Stripe Test Mode checkout/webhook smoke test. Razorpay still requires separate real-provider validation.
 
 ## Deployment
 
@@ -185,9 +191,10 @@ Version-controlled Wiki source is under `wiki/`. Publish it with `scripts/publis
 
 ## Next steps
 
-1. isolate the Razorpay sandbox failure by creating/testing a subscription directly in Razorpay and recording the failed payment fields: `code`, `description`, `source`, `step` and `reason`
-2. raise the result with Razorpay Support if the dashboard-created subscription also fails
-3. optionally add a feature-flagged, system-admin-only billing lifecycle simulator for application testing
-4. repeat the deployed Razorpay activation/webhook/cancellation flow
-5. move to KYC/live keys/live plans only after Test Mode succeeds
-6. continue operational recovery, tenant outbound webhooks, broader failure testing and enterprise SSO
+1. preserve the working Stripe Test Mode path and add focused regression coverage when it changes
+2. isolate the Razorpay sandbox failure by creating/testing a subscription directly in Razorpay and recording the failed payment fields: `code`, `description`, `source`, `step` and `reason`
+3. raise the result with Razorpay Support if the dashboard-created subscription also fails
+4. optionally add a feature-flagged, system-admin-only billing lifecycle simulator for application testing
+5. repeat the deployed Razorpay activation/webhook/cancellation flow
+6. move each provider to live keys/plans only after its own readiness checklist succeeds
+7. continue operational recovery, tenant outbound webhooks, broader failure testing and enterprise SSO

@@ -1,6 +1,6 @@
 # Documentation Package Index
 
-Current snapshot: post-PR #84 (`b97a3ef`), 2026-08-26.
+Current snapshot: post-PR #90 (`e9257b3`), 2026-08-27.
 
 ## Primary status documents
 
@@ -18,6 +18,6 @@ Current snapshot: post-PR #84 (`b97a3ef`), 2026-08-26.
 
 Step 39/40, Authorization V2 and older planning/progress files remain for implementation history. Where they conflict with the primary status documents, current code/tests, migrations and focused current guides win.
 
-## Current warning
+## Current provider status
 
-Razorpay hosted Test Mode checkout opens, but payment authorization still fails within Razorpay. Live billing is deferred.
+Stripe works end to end in deployed Test Mode. Razorpay hosted Test Mode checkout opens, but payment authorization still fails within Razorpay. Live-mode work remains deferred.
