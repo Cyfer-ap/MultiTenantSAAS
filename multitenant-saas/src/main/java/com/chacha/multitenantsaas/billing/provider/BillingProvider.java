@@ -11,7 +11,8 @@ public interface BillingProvider {
     BillingProviderSubscriptionSnapshot fetchSubscription(String providerSubscriptionId);
 
     /**
-     * Verifies that this provider owns the supplied provider subscription ID.
+     * Verifies that this provider owns the supplied provider subscription ID without mutating the
+     * subscription.
      *
      * <p>Providers may override this with a lightweight existence/identity lookup when a complete
      * subscription snapshot requires lifecycle fields that are irrelevant to ownership recovery.
