@@ -2,6 +2,7 @@ package com.chacha.multitenantsaas.billing.repository;
 
 import com.chacha.multitenantsaas.billing.entity.BillingEvent;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +14,8 @@ public interface BillingEventRepository extends JpaRepository<BillingEvent, UUID
 
     boolean existsByProviderAndProviderEventId(
             BillingProviderType provider, String providerEventId);
+
+    List<BillingEvent> findTop200ByPayloadContainingOrderByReceivedAtDesc(String payloadFragment);
 
     @Query(
             """
