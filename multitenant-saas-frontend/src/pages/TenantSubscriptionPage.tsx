@@ -205,9 +205,9 @@ export function TenantSubscriptionPage() {
     const lifecycleMessage = subscription ? statusMessage(subscription.status) : null
     const cancellationAvailable = Boolean(
         subscription &&
-            canManageBilling &&
-            !subscription.cancelAtPeriodEnd &&
-            canRequestCancellation(subscription.status),
+        canManageBilling &&
+        !subscription.cancelAtPeriodEnd &&
+        canRequestCancellation(subscription.status),
     )
 
     const beginCheckout = (plan: SubscriptionPlan, provider: BillingProvider) => {
@@ -248,7 +248,8 @@ export function TenantSubscriptionPage() {
                         Subscription & billing
                     </Typography>
                     <Typography color="text.secondary" sx={{ marginTop: 0.5 }}>
-                        Manage your workspace plan, usage limits, billing lifecycle, and secure checkout.
+                        Manage your workspace plan, usage limits, billing lifecycle, and secure
+                        checkout.
                     </Typography>
                 </Box>
                 <Button
@@ -330,8 +331,8 @@ export function TenantSubscriptionPage() {
                     {subscription.cancelAtPeriodEnd && (
                         <Alert severity="warning">
                             Cancellation is scheduled for the end of the current billing period on{' '}
-                            {formatDate(subscription.currentPeriodEnd)}. Provider webhooks remain the
-                            source of truth for the final state.
+                            {formatDate(subscription.currentPeriodEnd)}. Provider webhooks remain
+                            the source of truth for the final state.
                         </Alert>
                     )}
                     {cancellationMutation.isSuccess && (
@@ -358,7 +359,10 @@ export function TenantSubscriptionPage() {
                         <Stack
                             direction={{ xs: 'column', md: 'row' }}
                             spacing={3}
-                            sx={{ alignItems: { md: 'flex-start' }, justifyContent: 'space-between' }}
+                            sx={{
+                                alignItems: { md: 'flex-start' },
+                                justifyContent: 'space-between',
+                            }}
                         >
                             <Box sx={{ maxWidth: 760 }}>
                                 <Typography color="text.secondary" variant="overline">
@@ -376,9 +380,20 @@ export function TenantSubscriptionPage() {
                                     </Typography>
                                 )}
                                 <Typography sx={{ fontWeight: 700, marginTop: 2 }} variant="h5">
-                                    {formatMoney(subscription.plan.price, subscription.plan.currency)}
-                                    <Typography color="text.secondary" component="span" variant="body1">
-                                        {' '}/ {subscription.plan.billingInterval === 'MONTHLY' ? 'month' : 'year'}
+                                    {formatMoney(
+                                        subscription.plan.price,
+                                        subscription.plan.currency,
+                                    )}
+                                    <Typography
+                                        color="text.secondary"
+                                        component="span"
+                                        variant="body1"
+                                    >
+                                        {' '}
+                                        /{' '}
+                                        {subscription.plan.billingInterval === 'MONTHLY'
+                                            ? 'month'
+                                            : 'year'}
                                     </Typography>
                                 </Typography>
                             </Box>
@@ -429,11 +444,19 @@ export function TenantSubscriptionPage() {
                                 <CalendarMonthRoundedIcon color="primary" />
                                 <Typography variant="h6">Current period</Typography>
                             </Stack>
-                            <Typography color="text.secondary" sx={{ marginTop: 2 }} variant="body2">
+                            <Typography
+                                color="text.secondary"
+                                sx={{ marginTop: 2 }}
+                                variant="body2"
+                            >
                                 Starts
                             </Typography>
                             <Typography>{formatDate(subscription.currentPeriodStart)}</Typography>
-                            <Typography color="text.secondary" sx={{ marginTop: 1.5 }} variant="body2">
+                            <Typography
+                                color="text.secondary"
+                                sx={{ marginTop: 1.5 }}
+                                variant="body2"
+                            >
                                 Ends
                             </Typography>
                             <Typography>{formatDate(subscription.currentPeriodEnd)}</Typography>
@@ -470,8 +493,13 @@ export function TenantSubscriptionPage() {
                             <Typography sx={{ fontWeight: 700, marginTop: 2 }} variant="h5">
                                 {formatLimit(subscription.plan.maxStorageMb, ' MB')}
                             </Typography>
-                            <Typography color="text.secondary" sx={{ marginTop: 1 }} variant="body2">
-                                Configured plan capacity. Usage tracking will be added with the storage module.
+                            <Typography
+                                color="text.secondary"
+                                sx={{ marginTop: 1 }}
+                                variant="body2"
+                            >
+                                Configured plan capacity. Usage tracking will be added with the
+                                storage module.
                             </Typography>
                         </Paper>
                     </Box>
@@ -551,7 +579,8 @@ export function TenantSubscriptionPage() {
                             Choose your plan
                         </Typography>
                         <Typography color="text.secondary" sx={{ marginTop: 0.5 }}>
-                            Compare plan capacity first. Payment methods are shown only after you select a plan.
+                            Compare plan capacity first. Payment methods are shown only after you
+                            select a plan.
                         </Typography>
 
                         {checkoutConfigurationQuery.data.plans.length === 0 ? (
@@ -594,12 +623,19 @@ export function TenantSubscriptionPage() {
                                                     <Typography component="h3" variant="h6">
                                                         {plan.name}
                                                     </Typography>
-                                                    <Typography color="text.secondary" variant="body2">
+                                                    <Typography
+                                                        color="text.secondary"
+                                                        variant="body2"
+                                                    >
                                                         {plan.code}
                                                     </Typography>
                                                 </Box>
                                                 {selected && (
-                                                    <Chip color="primary" label="Selected" size="small" />
+                                                    <Chip
+                                                        color="primary"
+                                                        label="Selected"
+                                                        size="small"
+                                                    />
                                                 )}
                                             </Stack>
                                             {plan.description && (
@@ -607,10 +643,21 @@ export function TenantSubscriptionPage() {
                                                     {plan.description}
                                                 </Typography>
                                             )}
-                                            <Typography sx={{ fontWeight: 700, marginTop: 2 }} variant="h4">
+                                            <Typography
+                                                sx={{ fontWeight: 700, marginTop: 2 }}
+                                                variant="h4"
+                                            >
                                                 {formatMoney(plan.price, plan.currency)}
-                                                <Typography color="text.secondary" component="span" variant="body2">
-                                                    {' '}/ {plan.billingInterval === 'MONTHLY' ? 'month' : 'year'}
+                                                <Typography
+                                                    color="text.secondary"
+                                                    component="span"
+                                                    variant="body2"
+                                                >
+                                                    {' '}
+                                                    /{' '}
+                                                    {plan.billingInterval === 'MONTHLY'
+                                                        ? 'month'
+                                                        : 'year'}
                                                 </Typography>
                                             </Typography>
                                             <Box
@@ -694,7 +741,11 @@ export function TenantSubscriptionPage() {
                                     }}
                                 >
                                     {checkoutConfigurationQuery.data.providers.map((provider) => (
-                                        <Paper key={provider} sx={{ padding: 2.5 }} variant="outlined">
+                                        <Paper
+                                            key={provider}
+                                            sx={{ padding: 2.5 }}
+                                            variant="outlined"
+                                        >
                                             <Stack
                                                 direction="row"
                                                 spacing={1}
@@ -714,8 +765,16 @@ export function TenantSubscriptionPage() {
                                                     </Typography>
                                                 </Stack>
                                                 <Chip
-                                                    color={provider === 'STRIPE' ? 'primary' : 'default'}
-                                                    label={provider === 'STRIPE' ? 'Recommended' : 'Available'}
+                                                    color={
+                                                        provider === 'STRIPE'
+                                                            ? 'primary'
+                                                            : 'default'
+                                                    }
+                                                    label={
+                                                        provider === 'STRIPE'
+                                                            ? 'Recommended'
+                                                            : 'Available'
+                                                    }
                                                     size="small"
                                                     variant="outlined"
                                                 />
@@ -735,7 +794,10 @@ export function TenantSubscriptionPage() {
                                                 }}
                                                 startIcon={
                                                     checkoutMutation.isPending ? (
-                                                        <CircularProgress color="inherit" size={16} />
+                                                        <CircularProgress
+                                                            color="inherit"
+                                                            size={16}
+                                                        />
                                                     ) : (
                                                         <PaymentsRoundedIcon />
                                                     )
@@ -756,7 +818,8 @@ export function TenantSubscriptionPage() {
 
             {!canManageBilling && checkoutEligible && (
                 <Alert severity="info" sx={{ marginTop: 3 }}>
-                    A tenant administrator or manager must choose and purchase a subscription for this workspace.
+                    A tenant administrator or manager must choose and purchase a subscription for
+                    this workspace.
                 </Alert>
             )}
 
@@ -771,8 +834,8 @@ export function TenantSubscriptionPage() {
                 <DialogTitle>Cancel subscription?</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        The request is sent to the linked payment provider and is normally applied at
-                        the end of the current billing period. Local subscription state remains
+                        The request is sent to the linked payment provider and is normally applied
+                        at the end of the current billing period. Local subscription state remains
                         webhook-authoritative, so the page may not change immediately.
                     </DialogContentText>
                 </DialogContent>
