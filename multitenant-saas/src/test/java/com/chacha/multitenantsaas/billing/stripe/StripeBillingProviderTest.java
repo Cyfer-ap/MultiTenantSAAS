@@ -159,14 +159,16 @@ class StripeBillingProviderTest {
     }
 
     @Test
-    void cancelsProviderSubscription() {
+    void schedulesProviderSubscriptionCancellationAtPeriodEnd() {
         StripeBillingProperties properties = properties();
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         StripeBillingProvider provider = new StripeBillingProvider(properties, builder);
 
         server.expect(requestTo("https://api.stripe.com/v1/subscriptions/sub_test_123"))
-                .andExpect(method(HttpMethod.DELETE))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                .andExpect(content().string(containsString("cancel_at_period_end=true")))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
         provider.cancelSubscription("sub_test_123");

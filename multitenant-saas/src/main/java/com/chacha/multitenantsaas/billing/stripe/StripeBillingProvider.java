@@ -130,10 +130,15 @@ public class StripeBillingProvider implements BillingProvider {
     @Override
     public void cancelSubscription(String providerSubscriptionId) {
         String subscriptionId = requireSubscriptionId(providerSubscriptionId);
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("cancel_at_period_end", "true");
+
         try {
             restClient
-                    .delete()
+                    .post()
                     .uri("/v1/subscriptions/{subscriptionId}", subscriptionId)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(form)
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientException ex) {
