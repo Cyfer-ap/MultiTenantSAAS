@@ -36,18 +36,19 @@ class SecurityBoundaryIntegrationTest {
     }
 
     @Test
-    void billingWebhookPostsReachSignatureValidationWithoutAuthentication() throws Exception {
+    void exactBillingWebhookPostsPassAuthenticationBoundaryWhenProvidersAreDisabled()
+            throws Exception {
         mockMvc.perform(
                         post("/api/billing/webhooks/stripe")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{}"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
 
         mockMvc.perform(
                         post("/api/billing/webhooks/razorpay")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{}"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
