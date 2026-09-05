@@ -226,9 +226,9 @@ export function TenantSubscriptionPage() {
     )
     const cancellationAvailable = Boolean(
         subscription &&
-            canManageBilling &&
-            !subscription.cancelAtPeriodEnd &&
-            canRequestCancellation(subscription.status),
+        canManageBilling &&
+        !subscription.cancelAtPeriodEnd &&
+        canRequestCancellation(subscription.status),
     )
 
     const beginCheckout = (plan: SubscriptionPlan, provider: BillingProvider) => {
@@ -358,8 +358,8 @@ export function TenantSubscriptionPage() {
                     {subscription.cancelAtPeriodEnd && (
                         <Alert severity="warning">
                             Cancellation is scheduled for the end of the current billing period on{' '}
-                            {formatDate(subscription.currentPeriodEnd)}. Provider webhooks remain the
-                            source of truth for the final state.
+                            {formatDate(subscription.currentPeriodEnd)}. Provider webhooks remain
+                            the source of truth for the final state.
                         </Alert>
                     )}
 
@@ -389,7 +389,10 @@ export function TenantSubscriptionPage() {
                         <Stack
                             direction={{ xs: 'column', md: 'row' }}
                             spacing={3}
-                            sx={{ alignItems: { md: 'flex-start' }, justifyContent: 'space-between' }}
+                            sx={{
+                                alignItems: { md: 'flex-start' },
+                                justifyContent: 'space-between',
+                            }}
                         >
                             <Box sx={{ maxWidth: 760 }}>
                                 <Typography color="text.secondary" variant="overline">
@@ -407,7 +410,10 @@ export function TenantSubscriptionPage() {
                                     </Typography>
                                 )}
                                 <Typography sx={{ fontWeight: 700, marginTop: 2 }} variant="h5">
-                                    {formatMoney(subscription.plan.price, subscription.plan.currency)}
+                                    {formatMoney(
+                                        subscription.plan.price,
+                                        subscription.plan.currency,
+                                    )}
                                     <Typography
                                         color="text.secondary"
                                         component="span"
@@ -469,7 +475,11 @@ export function TenantSubscriptionPage() {
                                 <CalendarMonthRoundedIcon color="primary" />
                                 <Typography variant="h6">Current period</Typography>
                             </Stack>
-                            <Typography color="text.secondary" sx={{ marginTop: 2 }} variant="body2">
+                            <Typography
+                                color="text.secondary"
+                                sx={{ marginTop: 2 }}
+                                variant="body2"
+                            >
                                 Starts
                             </Typography>
                             <Typography>{formatDate(subscription.currentPeriodStart)}</Typography>
@@ -517,7 +527,11 @@ export function TenantSubscriptionPage() {
                             <Typography sx={{ fontWeight: 700, marginTop: 2 }} variant="h5">
                                 {formatLimit(subscription.plan.maxStorageMb, ' MB')}
                             </Typography>
-                            <Typography color="text.secondary" sx={{ marginTop: 1 }} variant="body2">
+                            <Typography
+                                color="text.secondary"
+                                sx={{ marginTop: 1 }}
+                                variant="body2"
+                            >
                                 Configured plan capacity. Usage tracking will be added with the
                                 storage module.
                             </Typography>
@@ -652,7 +666,11 @@ export function TenantSubscriptionPage() {
                                                     </Typography>
                                                 </Box>
                                                 {selected && (
-                                                    <Chip color="primary" label="Selected" size="small" />
+                                                    <Chip
+                                                        color="primary"
+                                                        label="Selected"
+                                                        size="small"
+                                                    />
                                                 )}
                                             </Stack>
 
@@ -761,7 +779,11 @@ export function TenantSubscriptionPage() {
                                     }}
                                 >
                                     {checkoutConfigurationQuery.data.providers.map((provider) => (
-                                        <Paper key={provider} sx={{ padding: 2.5 }} variant="outlined">
+                                        <Paper
+                                            key={provider}
+                                            sx={{ padding: 2.5 }}
+                                            variant="outlined"
+                                        >
                                             <Stack
                                                 direction="row"
                                                 spacing={1}
@@ -781,7 +803,11 @@ export function TenantSubscriptionPage() {
                                                     </Typography>
                                                 </Stack>
                                                 <Chip
-                                                    color={provider === 'STRIPE' ? 'primary' : 'default'}
+                                                    color={
+                                                        provider === 'STRIPE'
+                                                            ? 'primary'
+                                                            : 'default'
+                                                    }
                                                     label={
                                                         provider === 'STRIPE'
                                                             ? 'Recommended'
