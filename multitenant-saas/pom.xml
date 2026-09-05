@@ -31,6 +31,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<aws.sdk.version>2.49.6</aws.sdk.version>
+		<tomcat.version>11.0.25</tomcat.version>
 	</properties>
 
 	<dependencyManagement>
