@@ -67,7 +67,8 @@ public class BillingCancellationService {
             return new BillingCancellationResult(
                     tenantId, recordedProviderType, providerSubscriptionId);
         } catch (BillingProviderException recordedFailure) {
-            if (repairTerminalProviderState(subscription, recordedProvider, providerSubscriptionId)) {
+            if (repairTerminalProviderState(
+                    subscription, recordedProvider, providerSubscriptionId)) {
                 return new BillingCancellationResult(
                         tenantId, recordedProviderType, providerSubscriptionId);
             }
