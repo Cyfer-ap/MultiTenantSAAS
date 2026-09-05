@@ -120,7 +120,8 @@ class BillingCancellationServiceTest {
         BillingProvider razorpay = mock(BillingProvider.class);
         when(razorpay.providerType()).thenReturn(BillingProviderType.RAZORPAY);
         when(razorpay.fetchSubscription(subscriptionId))
-                .thenThrow(new BillingProviderException("Razorpay subscription lookup failed", null));
+                .thenThrow(
+                        new BillingProviderException("Razorpay subscription lookup failed", null));
 
         BillingCancellationService service =
                 new BillingCancellationService(
