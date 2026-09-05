@@ -72,6 +72,66 @@ class BillingSubscriptionSynchronizerTest {
         verify(repository, never()).save(subscription);
     }
 
+    @Test
+    void ignoresNewerNonTerminalRegressionForSameProviderSubscription() {
+        UUID tenantId = UUID.randomUUID();
+        Instant terminalEventTime = Instant.parse("2026-08-22T11:00:00Z");
+        BillingSubscriptionUpdate update = update(tenantId, Instant.parse("2026-08-22T12:00:00Z"));
+        BillingSubscriptionEventMapper mapper = mapper(update);
+        TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
+        TenantSubscription subscription = subscription(tenantId);
+        subscription.setStatus(TenantSubscriptionStatus.CANCELLED);
+        subscription.setBillingProvider(BillingProviderType.STRIPE);
+        subscription.setProviderSubscriptionId("sub_123");
+        subscription.setProviderEventCreatedAt(terminalEventTime);
+        subscription.setCancelledAt(terminalEventTime);
+        when(repository.findByTenantIdWithPlanForUpdate(tenantId))
+                .thenReturn(Optional.of(subscription));
+        SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
+        BillingSubscriptionSynchronizer synchronizer =
+                new BillingSubscriptionSynchronizer(
+                        List.of(mapper), repository, mock(TenantLookupService.class), planService);
+
+        synchronizer.synchronize(event());
+
+        assertThat(subscription.getStatus()).isEqualTo(TenantSubscriptionStatus.CANCELLED);
+        assertThat(subscription.getCancelledAt()).isEqualTo(terminalEventTime);
+        verify(planService, never()).getActivePlanEntityByCode("PRO");
+        verify(repository, never()).save(subscription);
+    }
+
+    @Test
+    void allowsNewProviderSubscriptionToReactivateTerminalTenant() {
+        UUID tenantId = UUID.randomUUID();
+        Instant terminalEventTime = Instant.parse("2026-08-22T11:00:00Z");
+        BillingSubscriptionUpdate update =
+                update(tenantId, "sub_456", Instant.parse("2026-08-22T12:00:00Z"));
+        BillingSubscriptionEventMapper mapper = mapper(update);
+        TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
+        TenantSubscription subscription = subscription(tenantId);
+        subscription.setStatus(TenantSubscriptionStatus.CANCELLED);
+        subscription.setBillingProvider(BillingProviderType.STRIPE);
+        subscription.setProviderSubscriptionId("sub_123");
+        subscription.setProviderEventCreatedAt(terminalEventTime);
+        subscription.setCancelledAt(terminalEventTime);
+        when(repository.findByTenantIdWithPlanForUpdate(tenantId))
+                .thenReturn(Optional.of(subscription));
+        SubscriptionPlan targetPlan = mock(SubscriptionPlan.class);
+        SubscriptionPlanService planService = mock(SubscriptionPlanService.class);
+        when(planService.getActivePlanEntityByCode("PRO")).thenReturn(targetPlan);
+        BillingSubscriptionSynchronizer synchronizer =
+                new BillingSubscriptionSynchronizer(
+                        List.of(mapper), repository, mock(TenantLookupService.class), planService);
+
+        synchronizer.synchronize(event());
+
+        assertThat(subscription.getPlan()).isSameAs(targetPlan);
+        assertThat(subscription.getStatus()).isEqualTo(TenantSubscriptionStatus.ACTIVE);
+        assertThat(subscription.getProviderSubscriptionId()).isEqualTo("sub_456");
+        assertThat(subscription.getCancelledAt()).isNull();
+        verify(repository).save(subscription);
+    }
+
     private BillingSubscriptionEventMapper mapper(BillingSubscriptionUpdate update) {
         BillingSubscriptionEventMapper mapper = mock(BillingSubscriptionEventMapper.class);
         when(mapper.providerType()).thenReturn(BillingProviderType.STRIPE);
@@ -80,9 +140,14 @@ class BillingSubscriptionSynchronizerTest {
     }
 
     private BillingSubscriptionUpdate update(UUID tenantId, Instant occurredAt) {
+        return update(tenantId, "sub_123", occurredAt);
+    }
+
+    private BillingSubscriptionUpdate update(
+            UUID tenantId, String providerSubscriptionId, Instant occurredAt) {
         return new BillingSubscriptionUpdate(
                 BillingProviderType.STRIPE,
-                "sub_123",
+                providerSubscriptionId,
                 tenantId,
                 "PRO",
                 TenantSubscriptionStatus.ACTIVE,
