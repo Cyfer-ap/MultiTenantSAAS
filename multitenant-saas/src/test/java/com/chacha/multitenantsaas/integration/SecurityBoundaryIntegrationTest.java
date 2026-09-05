@@ -41,14 +41,17 @@ class SecurityBoundaryIntegrationTest {
         mockMvc.perform(
                         post("/api/billing/webhooks/stripe")
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Stripe-Signature", "t=0,v1=invalid")
                                 .content("{}"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isBadRequest());
 
         mockMvc.perform(
                         post("/api/billing/webhooks/razorpay")
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("X-Razorpay-Signature", "invalid")
+                                .header("x-razorpay-event-id", "event_invalid")
                                 .content("{}"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
