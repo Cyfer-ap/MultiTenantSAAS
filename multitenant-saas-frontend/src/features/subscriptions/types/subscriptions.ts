@@ -19,6 +19,13 @@ export interface BillingCheckoutSession {
     provider: BillingProvider
 }
 
+export interface BillingCancellationResponse {
+    tenantId: string
+    provider: BillingProvider
+    providerSubscriptionId: string
+    cancellationRequested: boolean
+}
+
 export type SubscriptionAccessLevel = 'FULL_ACCESS' | 'GRACE_ACCESS' | 'BLOCKED'
 
 export type SubscriptionAccessReason =
