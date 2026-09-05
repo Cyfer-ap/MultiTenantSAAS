@@ -14,8 +14,9 @@ import static org.mockito.Mockito.when;
 import com.chacha.multitenantsaas.billing.provider.BillingCancellationResult;
 import com.chacha.multitenantsaas.billing.provider.BillingProvider;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderException;
-import com.chacha.multitenantsaas.billing.provider.BillingProviderSubscriptionSnapshot;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
+import com.chacha.multitenantsaas.billing.webhook.BillingSubscriptionUpdate;
+import com.chacha.multitenantsaas.entity.SubscriptionPlan;
 import com.chacha.multitenantsaas.entity.TenantSubscription;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
@@ -40,8 +41,10 @@ class BillingCancellationServiceTest {
         BillingProvider stripe = mock(BillingProvider.class);
         when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
         BillingCancellationService service =
-                new BillingCancellationService(
-                        new BillingProviderRegistry(List.of(stripe)), repository);
+                service(
+                        List.of(stripe),
+                        repository,
+                        mock(BillingSubscriptionHistoryResolver.class));
 
         BillingCancellationResult result = service.requestCancellation(tenantId);
 
@@ -72,20 +75,13 @@ class BillingCancellationServiceTest {
 
         BillingProvider razorpay = mock(BillingProvider.class);
         when(razorpay.providerType()).thenReturn(BillingProviderType.RAZORPAY);
-        when(razorpay.fetchSubscription(subscriptionId))
-                .thenReturn(
-                        new BillingProviderSubscriptionSnapshot(
-                                BillingProviderType.RAZORPAY,
-                                subscriptionId,
-                                "PRO",
-                                TenantSubscriptionStatus.ACTIVE,
-                                Instant.parse("2026-08-27T12:33:00Z"),
-                                Instant.parse("2026-09-27T12:33:00Z"),
-                                false));
+        when(razorpay.ownsSubscription(subscriptionId)).thenReturn(true);
 
         BillingCancellationService service =
-                new BillingCancellationService(
-                        new BillingProviderRegistry(List.of(stripe, razorpay)), repository);
+                service(
+                        List.of(stripe, razorpay),
+                        repository,
+                        mock(BillingSubscriptionHistoryResolver.class));
 
         BillingCancellationResult result = service.requestCancellation(tenantId);
 
@@ -93,10 +89,67 @@ class BillingCancellationServiceTest {
         assertThat(result.provider()).isEqualTo(BillingProviderType.RAZORPAY);
         assertThat(result.providerSubscriptionId()).isEqualTo(subscriptionId);
         verify(stripe).cancelSubscription(subscriptionId);
-        verify(razorpay).fetchSubscription(subscriptionId);
+        verify(razorpay).ownsSubscription(subscriptionId);
         verify(subscription).setBillingProvider(BillingProviderType.RAZORPAY);
+        verify(subscription).setProviderSubscriptionId(subscriptionId);
         verify(repository).save(subscription);
         verify(razorpay).cancelSubscription(subscriptionId);
+    }
+
+    @Test
+    void recoversDifferentRazorpaySubscriptionIdFromVerifiedWebhookHistory() {
+        UUID tenantId = UUID.randomUUID();
+        String staleStripeId = "sub_stripe_stale";
+        String razorpayId = "sub_razorpay_active";
+        TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
+        TenantSubscription subscription =
+                subscription(
+                        TenantSubscriptionStatus.ACTIVE, BillingProviderType.STRIPE, staleStripeId);
+        SubscriptionPlan plan = mock(SubscriptionPlan.class);
+        when(plan.getCode()).thenReturn("PRO");
+        when(subscription.getPlan()).thenReturn(plan);
+        when(repository.findByTenantIdWithPlan(tenantId)).thenReturn(Optional.of(subscription));
+
+        BillingProvider stripe = mock(BillingProvider.class);
+        when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
+        BillingProviderException stripeFailure =
+                new BillingProviderException("Stripe subscription cancellation failed", null);
+        doThrow(stripeFailure).when(stripe).cancelSubscription(staleStripeId);
+
+        BillingProvider razorpay = mock(BillingProvider.class);
+        when(razorpay.providerType()).thenReturn(BillingProviderType.RAZORPAY);
+        when(razorpay.ownsSubscription(staleStripeId)).thenReturn(false);
+        when(razorpay.ownsSubscription(razorpayId)).thenReturn(true);
+
+        BillingSubscriptionHistoryResolver historyResolver =
+                mock(BillingSubscriptionHistoryResolver.class);
+        when(historyResolver.findNonTerminalCandidates(tenantId))
+                .thenReturn(
+                        List.of(
+                                new BillingSubscriptionUpdate(
+                                        BillingProviderType.RAZORPAY,
+                                        razorpayId,
+                                        tenantId,
+                                        "PRO",
+                                        TenantSubscriptionStatus.ACTIVE,
+                                        Instant.parse("2026-08-27T12:33:00Z"),
+                                        Instant.parse("2026-08-27T12:33:00Z"),
+                                        Instant.parse("2026-09-27T12:33:00Z"),
+                                        null,
+                                        false,
+                                        Instant.parse("2026-08-27T12:34:00Z"))));
+
+        BillingCancellationService service =
+                service(List.of(stripe, razorpay), repository, historyResolver);
+
+        BillingCancellationResult result = service.requestCancellation(tenantId);
+
+        assertThat(result.provider()).isEqualTo(BillingProviderType.RAZORPAY);
+        assertThat(result.providerSubscriptionId()).isEqualTo(razorpayId);
+        verify(subscription).setBillingProvider(BillingProviderType.RAZORPAY);
+        verify(subscription).setProviderSubscriptionId(razorpayId);
+        verify(repository).save(subscription);
+        verify(razorpay).cancelSubscription(razorpayId);
     }
 
     @Test
@@ -119,13 +172,13 @@ class BillingCancellationServiceTest {
 
         BillingProvider razorpay = mock(BillingProvider.class);
         when(razorpay.providerType()).thenReturn(BillingProviderType.RAZORPAY);
-        when(razorpay.fetchSubscription(subscriptionId))
-                .thenThrow(
-                        new BillingProviderException("Razorpay subscription lookup failed", null));
+        when(razorpay.ownsSubscription(subscriptionId)).thenReturn(false);
+        BillingSubscriptionHistoryResolver historyResolver =
+                mock(BillingSubscriptionHistoryResolver.class);
+        when(historyResolver.findNonTerminalCandidates(tenantId)).thenReturn(List.of());
 
         BillingCancellationService service =
-                new BillingCancellationService(
-                        new BillingProviderRegistry(List.of(stripe, razorpay)), repository);
+                service(List.of(stripe, razorpay), repository, historyResolver);
 
         assertThatThrownBy(() -> service.requestCancellation(tenantId)).isSameAs(stripeFailure);
         verify(razorpay, never()).cancelSubscription(anyString());
@@ -141,8 +194,10 @@ class BillingCancellationServiceTest {
         BillingProvider stripe = mock(BillingProvider.class);
         when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
         BillingCancellationService service =
-                new BillingCancellationService(
-                        new BillingProviderRegistry(List.of(stripe)), repository);
+                service(
+                        List.of(stripe),
+                        repository,
+                        mock(BillingSubscriptionHistoryResolver.class));
 
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> service.requestCancellation(tenantId))
@@ -163,8 +218,10 @@ class BillingCancellationServiceTest {
         BillingProvider razorpay = mock(BillingProvider.class);
         when(razorpay.providerType()).thenReturn(BillingProviderType.RAZORPAY);
         BillingCancellationService service =
-                new BillingCancellationService(
-                        new BillingProviderRegistry(List.of(razorpay)), repository);
+                service(
+                        List.of(razorpay),
+                        repository,
+                        mock(BillingSubscriptionHistoryResolver.class));
 
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> service.requestCancellation(tenantId))
@@ -181,7 +238,7 @@ class BillingCancellationServiceTest {
                         TenantSubscriptionStatus.ACTIVE, BillingProviderType.RAZORPAY, "sub_123");
         when(repository.findByTenantIdWithPlan(tenantId)).thenReturn(Optional.of(subscription));
         BillingCancellationService service =
-                new BillingCancellationService(new BillingProviderRegistry(List.of()), repository);
+                service(List.of(), repository, mock(BillingSubscriptionHistoryResolver.class));
 
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> service.requestCancellation(tenantId))
@@ -194,7 +251,7 @@ class BillingCancellationServiceTest {
         TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
         when(repository.findByTenantIdWithPlan(tenantId)).thenReturn(Optional.empty());
         BillingCancellationService service =
-                new BillingCancellationService(new BillingProviderRegistry(List.of()), repository);
+                service(List.of(), repository, mock(BillingSubscriptionHistoryResolver.class));
 
         assertThatThrownBy(() -> service.requestCancellation(tenantId))
                 .isInstanceOf(ResourceNotFoundException.class)
@@ -204,13 +261,22 @@ class BillingCancellationServiceTest {
     @Test
     void rejectsNullTenantId() {
         BillingCancellationService service =
-                new BillingCancellationService(
-                        new BillingProviderRegistry(List.of()),
-                        mock(TenantSubscriptionRepository.class));
+                service(
+                        List.of(),
+                        mock(TenantSubscriptionRepository.class),
+                        mock(BillingSubscriptionHistoryResolver.class));
 
         assertThatNullPointerException()
                 .isThrownBy(() -> service.requestCancellation(null))
                 .withMessage("tenantId must not be null");
+    }
+
+    private BillingCancellationService service(
+            List<BillingProvider> providers,
+            TenantSubscriptionRepository repository,
+            BillingSubscriptionHistoryResolver historyResolver) {
+        return new BillingCancellationService(
+                new BillingProviderRegistry(providers), repository, historyResolver);
     }
 
     private TenantSubscription subscription(

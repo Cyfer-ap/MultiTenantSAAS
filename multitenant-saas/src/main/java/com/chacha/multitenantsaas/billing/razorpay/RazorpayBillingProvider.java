@@ -92,6 +92,27 @@ public class RazorpayBillingProvider implements BillingProvider {
     }
 
     @Override
+    public boolean ownsSubscription(String providerSubscriptionId) {
+        String subscriptionId = requireSubscriptionId(providerSubscriptionId);
+
+        try {
+            JsonNode subscription =
+                    restClient
+                            .get()
+                            .uri("/v1/subscriptions/{subscriptionId}", subscriptionId)
+                            .retrieve()
+                            .body(JsonNode.class);
+            if (subscription == null || !subscription.isObject()) {
+                return false;
+            }
+            JsonNode id = subscription.get("id");
+            return id != null && id.isString() && subscriptionId.equals(id.asString());
+        } catch (RestClientException ex) {
+            throw new BillingProviderException("Razorpay subscription ownership lookup failed", ex);
+        }
+    }
+
+    @Override
     public BillingProviderSubscriptionSnapshot fetchSubscription(String providerSubscriptionId) {
         String subscriptionId = requireSubscriptionId(providerSubscriptionId);
 
