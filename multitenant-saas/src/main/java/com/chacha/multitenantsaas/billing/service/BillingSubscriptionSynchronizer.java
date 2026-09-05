@@ -49,7 +49,7 @@ public class BillingSubscriptionSynchronizer {
                 tenantSubscriptionRepository
                         .findByTenantIdWithPlanForUpdate(update.tenantId())
                         .orElse(null);
-        if (subscription != null && isStaleOrTerminalRegression(subscription, update)) {
+        if (subscription != null && shouldIgnore(subscription, update)) {
             return;
         }
 
@@ -83,11 +83,19 @@ public class BillingSubscriptionSynchronizer {
         tenantSubscriptionRepository.save(subscription);
     }
 
-    private boolean isStaleOrTerminalRegression(
+    private boolean shouldIgnore(
             TenantSubscription subscription, BillingSubscriptionUpdate update) {
         if (subscription.getProviderEventCreatedAt() != null
                 && update.occurredAt().isBefore(subscription.getProviderEventCreatedAt())) {
             return true;
+        }
+
+        boolean hasCurrentLinkage =
+                subscription.getBillingProvider() != null
+                        && subscription.getProviderSubscriptionId() != null
+                        && !subscription.getProviderSubscriptionId().isBlank();
+        if (!hasCurrentLinkage) {
+            return false;
         }
 
         boolean sameProviderSubscription =
@@ -95,9 +103,31 @@ public class BillingSubscriptionSynchronizer {
                         && Objects.equals(
                                 subscription.getProviderSubscriptionId(),
                                 update.providerSubscriptionId());
-        return sameProviderSubscription
-                && isTerminal(subscription.getStatus())
-                && !isTerminal(update.status());
+
+        if (sameProviderSubscription) {
+            return isTerminal(subscription.getStatus()) && !isTerminal(update.status());
+        }
+
+        return shouldProtectCurrentSubscription(subscription.getStatus(), update.status());
+    }
+
+    private boolean shouldProtectCurrentSubscription(
+            TenantSubscriptionStatus currentStatus, TenantSubscriptionStatus incomingStatus) {
+        if (isTerminal(currentStatus)) {
+            return false;
+        }
+
+        if (currentStatus == TenantSubscriptionStatus.ACTIVE
+                || currentStatus == TenantSubscriptionStatus.TRIALING) {
+            return true;
+        }
+
+        if (currentStatus == TenantSubscriptionStatus.PAST_DUE) {
+            return incomingStatus != TenantSubscriptionStatus.ACTIVE
+                    && incomingStatus != TenantSubscriptionStatus.TRIALING;
+        }
+
+        return false;
     }
 
     private boolean isTerminal(TenantSubscriptionStatus status) {
