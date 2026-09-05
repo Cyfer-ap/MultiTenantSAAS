@@ -23,9 +23,12 @@ class BillingSubscriptionHistoryResolverTest {
     void returnsLatestNonTerminalStatePerVerifiedProviderSubscription() {
         UUID tenantId = UUID.randomUUID();
         BillingEventRepository repository = mock(BillingEventRepository.class);
-        BillingEvent olderActive = event(BillingProviderType.RAZORPAY, "evt_1", "subscription.activated");
-        BillingEvent newerCancelled = event(BillingProviderType.RAZORPAY, "evt_2", "subscription.cancelled");
-        BillingEvent activeCandidate = event(BillingProviderType.RAZORPAY, "evt_3", "subscription.activated");
+        BillingEvent olderActive =
+                event(BillingProviderType.RAZORPAY, "evt_1", "subscription.activated");
+        BillingEvent newerCancelled =
+                event(BillingProviderType.RAZORPAY, "evt_2", "subscription.cancelled");
+        BillingEvent activeCandidate =
+                event(BillingProviderType.RAZORPAY, "evt_3", "subscription.activated");
         when(repository.findTop200ByPayloadContainingOrderByReceivedAtDesc(tenantId.toString()))
                 .thenReturn(List.of(activeCandidate, newerCancelled, olderActive));
 
@@ -66,8 +69,7 @@ class BillingSubscriptionHistoryResolverTest {
                 .containsExactly("sub_current");
     }
 
-    private BillingEvent event(
-            BillingProviderType provider, String eventId, String eventType) {
+    private BillingEvent event(BillingProviderType provider, String eventId, String eventType) {
         return new BillingEvent(provider, eventId, eventType, "{\"tenant_id\":\"test\"}");
     }
 

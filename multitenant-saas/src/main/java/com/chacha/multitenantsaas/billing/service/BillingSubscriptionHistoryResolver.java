@@ -68,8 +68,7 @@ public class BillingSubscriptionHistoryResolver {
                 candidates.add(update);
             }
         }
-        candidates.sort(
-                Comparator.comparing(BillingSubscriptionUpdate::occurredAt).reversed());
+        candidates.sort(Comparator.comparing(BillingSubscriptionUpdate::occurredAt).reversed());
         return List.copyOf(candidates);
     }
 

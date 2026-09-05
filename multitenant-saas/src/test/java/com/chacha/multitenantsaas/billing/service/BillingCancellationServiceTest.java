@@ -41,7 +41,10 @@ class BillingCancellationServiceTest {
         BillingProvider stripe = mock(BillingProvider.class);
         when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
         BillingCancellationService service =
-                service(List.of(stripe), repository, mock(BillingSubscriptionHistoryResolver.class));
+                service(
+                        List.of(stripe),
+                        repository,
+                        mock(BillingSubscriptionHistoryResolver.class));
 
         BillingCancellationResult result = service.requestCancellation(tenantId);
 
@@ -101,9 +104,7 @@ class BillingCancellationServiceTest {
         TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
         TenantSubscription subscription =
                 subscription(
-                        TenantSubscriptionStatus.ACTIVE,
-                        BillingProviderType.STRIPE,
-                        staleStripeId);
+                        TenantSubscriptionStatus.ACTIVE, BillingProviderType.STRIPE, staleStripeId);
         SubscriptionPlan plan = mock(SubscriptionPlan.class);
         when(plan.getCode()).thenReturn("PRO");
         when(subscription.getPlan()).thenReturn(plan);
@@ -193,7 +194,10 @@ class BillingCancellationServiceTest {
         BillingProvider stripe = mock(BillingProvider.class);
         when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
         BillingCancellationService service =
-                service(List.of(stripe), repository, mock(BillingSubscriptionHistoryResolver.class));
+                service(
+                        List.of(stripe),
+                        repository,
+                        mock(BillingSubscriptionHistoryResolver.class));
 
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> service.requestCancellation(tenantId))

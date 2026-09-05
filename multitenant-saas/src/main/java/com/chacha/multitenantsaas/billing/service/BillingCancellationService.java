@@ -106,8 +106,7 @@ public class BillingCancellationService {
 
             BillingProvider candidate = providerRegistry.require(candidateType);
             if (providerOwns(candidate, providerSubscriptionId)) {
-                return new ResolvedSubscription(
-                        candidateType, candidate, providerSubscriptionId);
+                return new ResolvedSubscription(candidateType, candidate, providerSubscriptionId);
             }
         }
         return null;
@@ -164,8 +163,7 @@ public class BillingCancellationService {
         if (subscription.getStatus() == update.status()) {
             score += 4;
         }
-        if (Objects.equals(
-                subscription.getCurrentPeriodStart(), update.currentPeriodStart())) {
+        if (Objects.equals(subscription.getCurrentPeriodStart(), update.currentPeriodStart())) {
             score += 2;
         }
         if (Objects.equals(subscription.getCurrentPeriodEnd(), update.currentPeriodEnd())) {
@@ -190,7 +188,5 @@ public class BillingCancellationService {
     }
 
     private record ResolvedSubscription(
-            BillingProviderType type,
-            BillingProvider provider,
-            String providerSubscriptionId) {}
+            BillingProviderType type, BillingProvider provider, String providerSubscriptionId) {}
 }
