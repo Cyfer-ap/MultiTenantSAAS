@@ -3,6 +3,7 @@ package com.chacha.multitenantsaas.billing.service;
 import com.chacha.multitenantsaas.billing.provider.BillingCancellationResult;
 import com.chacha.multitenantsaas.billing.provider.BillingProvider;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderException;
+import com.chacha.multitenantsaas.billing.provider.BillingProviderSubscriptionSnapshot;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
 import com.chacha.multitenantsaas.billing.webhook.BillingSubscriptionUpdate;
 import com.chacha.multitenantsaas.entity.SubscriptionPlan;
@@ -10,6 +11,7 @@ import com.chacha.multitenantsaas.entity.TenantSubscription;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.TenantSubscriptionRepository;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -32,16 +34,6 @@ public class BillingCancellationService {
         this.historyResolver = historyResolver;
     }
 
-    /**
-     * Requests cancellation from the provider linked by a verified subscription webhook. The local
-     * lifecycle state remains unchanged until provider webhook reconciliation completes.
-     *
-     * <p>If the persisted provider linkage is stale, ownership is checked against the other
-     * configured providers without requiring a complete provider snapshot. If the stored provider
-     * subscription ID is itself stale, durable verified webhook history is used to recover a recent
-     * non-terminal provider/subscription pair for the same tenant. A recovered linkage is persisted
-     * only after the provider confirms ownership of that subscription ID.
-     */
     public BillingCancellationResult requestCancellation(UUID tenantId) {
         Objects.requireNonNull(tenantId, "tenantId must not be null");
 
@@ -75,6 +67,12 @@ public class BillingCancellationService {
             return new BillingCancellationResult(
                     tenantId, recordedProviderType, providerSubscriptionId);
         } catch (BillingProviderException recordedFailure) {
+            if (repairTerminalProviderState(
+                    subscription, recordedProvider, providerSubscriptionId)) {
+                return new BillingCancellationResult(
+                        tenantId, recordedProviderType, providerSubscriptionId);
+            }
+
             ResolvedSubscription verifiedOwner =
                     findAlternativeOwner(recordedProviderType, providerSubscriptionId);
             if (verifiedOwner == null) {
@@ -90,11 +88,48 @@ public class BillingCancellationService {
             }
 
             repairLinkage(subscription, verifiedOwner);
-            verifiedOwner.provider().cancelSubscription(verifiedOwner.providerSubscriptionId());
+            try {
+                verifiedOwner.provider().cancelSubscription(verifiedOwner.providerSubscriptionId());
+            } catch (BillingProviderException recoveredFailure) {
+                if (!repairTerminalProviderState(
+                        subscription,
+                        verifiedOwner.provider(),
+                        verifiedOwner.providerSubscriptionId())) {
+                    throw recoveredFailure;
+                }
+            }
 
             return new BillingCancellationResult(
                     tenantId, verifiedOwner.type(), verifiedOwner.providerSubscriptionId());
         }
+    }
+
+    private boolean repairTerminalProviderState(
+            TenantSubscription subscription,
+            BillingProvider provider,
+            String providerSubscriptionId) {
+        BillingProviderSubscriptionSnapshot snapshot;
+        try {
+            snapshot = provider.fetchSubscription(providerSubscriptionId);
+        } catch (BillingProviderException | IllegalArgumentException lookupFailure) {
+            return false;
+        }
+
+        if (snapshot == null
+                || (snapshot.status() != TenantSubscriptionStatus.CANCELLED
+                        && snapshot.status() != TenantSubscriptionStatus.EXPIRED)) {
+            return false;
+        }
+
+        subscription.setStatus(snapshot.status());
+        subscription.setCurrentPeriodStart(snapshot.currentPeriodStart());
+        subscription.setCurrentPeriodEnd(snapshot.currentPeriodEnd());
+        subscription.setCancelAtPeriodEnd(false);
+        subscription.setCancelledAt(Instant.now());
+        subscription.setBillingProvider(snapshot.provider());
+        subscription.setProviderSubscriptionId(snapshot.providerSubscriptionId());
+        tenantSubscriptionRepository.save(subscription);
+        return true;
     }
 
     private ResolvedSubscription findAlternativeOwner(
