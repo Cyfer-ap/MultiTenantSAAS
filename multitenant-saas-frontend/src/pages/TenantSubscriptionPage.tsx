@@ -1,14 +1,21 @@
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
+import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded'
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded'
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
 import StorageRoundedIcon from '@mui/icons-material/StorageRounded'
+import { useState } from 'react'
 import {
     Alert,
     Box,
     Button,
     Chip,
     CircularProgress,
-    Divider,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
     LinearProgress,
     Paper,
     Stack,
@@ -19,6 +26,7 @@ import { ApiClientError } from '../api/apiError'
 import { useAuth } from '../features/auth/hooks/useAuth'
 import {
     useBillingCheckoutConfiguration,
+    useCancelBillingSubscription,
     useCreateBillingCheckout,
     useWorkspaceSubscription,
     useWorkspaceSubscriptionEntitlements,
@@ -33,10 +41,7 @@ import type {
 type StatusColor = 'success' | 'info' | 'warning' | 'error' | 'default'
 
 function formatMoney(value: number, currency: string): string {
-    return new Intl.NumberFormat(undefined, {
-        style: 'currency',
-        currency,
-    }).format(value)
+    return new Intl.NumberFormat(undefined, { currency, style: 'currency' }).format(value)
 }
 
 function formatDate(value: string | null): string {
@@ -45,7 +50,6 @@ function formatDate(value: string | null): string {
     }
 
     const date = new Date(value)
-
     if (Number.isNaN(date.getTime())) {
         return '—'
     }
@@ -61,47 +65,48 @@ function formatLimit(value: number | null, suffix = ''): string {
 }
 
 function statusColor(status: TenantSubscriptionStatus): StatusColor {
-    if (status === 'ACTIVE') {
-        return 'success'
+    switch (status) {
+        case 'ACTIVE':
+            return 'success'
+        case 'TRIALING':
+            return 'info'
+        case 'PAST_DUE':
+            return 'warning'
+        case 'CANCELLED':
+        case 'EXPIRED':
+            return 'error'
+        default:
+            return 'default'
     }
+}
 
-    if (status === 'TRIALING') {
-        return 'info'
+function statusMessage(status: TenantSubscriptionStatus): string | null {
+    switch (status) {
+        case 'TRIALING':
+            return 'Your workspace is currently using a trial subscription.'
+        case 'PAST_DUE':
+            return 'This subscription is past due. Service may be restricted until the provider reports recovery.'
+        case 'CANCELLED':
+            return 'This subscription has been cancelled. Choose a new plan below to restore paid access.'
+        case 'EXPIRED':
+            return 'This subscription has expired. Choose a new plan below to restore paid access.'
+        default:
+            return null
     }
-
-    if (status === 'PAST_DUE') {
-        return 'warning'
-    }
-
-    if (status === 'CANCELLED' || status === 'EXPIRED') {
-        return 'error'
-    }
-
-    return 'default'
 }
 
 function providerLabel(provider: BillingProvider): string {
     return provider === 'RAZORPAY' ? 'Razorpay' : 'Stripe'
 }
 
-function statusMessage(status: TenantSubscriptionStatus): string | null {
-    if (status === 'TRIALING') {
-        return 'Your workspace is currently using a trial subscription.'
-    }
+function providerDescription(provider: BillingProvider): string {
+    return provider === 'STRIPE'
+        ? 'Card checkout hosted securely by Stripe. Recommended when available.'
+        : 'Hosted checkout through Razorpay for payment methods supported by the deployment.'
+}
 
-    if (status === 'PAST_DUE') {
-        return 'This subscription is past due. Contact the platform administrator to prevent service restrictions.'
-    }
-
-    if (status === 'CANCELLED') {
-        return 'This subscription has been cancelled.'
-    }
-
-    if (status === 'EXPIRED') {
-        return 'This subscription has expired.'
-    }
-
-    return null
+function canRequestCancellation(status: TenantSubscriptionStatus): boolean {
+    return status === 'ACTIVE' || status === 'TRIALING' || status === 'PAST_DUE'
 }
 
 interface ResourceUsageCardProps {
@@ -117,9 +122,9 @@ function ResourceUsageCard({
     entitlement,
     loading,
 }: ResourceUsageCardProps) {
-    const limit = entitlement ? entitlement.limit : configuredLimit
-    const unlimited = entitlement?.unlimited ?? limit === null
+    const limit = entitlement?.limit ?? configuredLimit
     const used = entitlement?.used
+    const unlimited = entitlement?.unlimited ?? limit === null
     const progress =
         used === undefined || unlimited
             ? 0
@@ -128,23 +133,18 @@ function ResourceUsageCard({
               : Math.min(100, (used / limit) * 100)
 
     let detail = 'Current usage is unavailable.'
-
     if (loading) {
         detail = 'Loading current usage…'
+    } else if (entitlement?.overLimit) {
+        detail = 'Usage is above the current plan limit.'
+    } else if (entitlement?.limitReached) {
+        detail = 'Plan limit reached.'
+    } else if (entitlement && !entitlement.creationAllowed) {
+        detail = 'New resource creation is restricted.'
+    } else if (entitlement?.unlimited) {
+        detail = 'Unlimited plan capacity.'
     } else if (entitlement) {
-        if (entitlement.overLimit) {
-            detail = 'Usage is above the current plan limit.'
-        } else if (entitlement.limitReached) {
-            detail = 'Plan limit reached.'
-        } else if (!entitlement.creationAllowed) {
-            detail = 'New resource creation is restricted.'
-        } else if (entitlement.unlimited) {
-            detail = 'Unlimited plan capacity.'
-        } else {
-            detail = `${entitlement.remaining ?? 0} slot${
-                entitlement.remaining === 1 ? '' : 's'
-            } remaining.`
-        }
+        detail = `${entitlement.remaining ?? 0} slot${entitlement.remaining === 1 ? '' : 's'} remaining.`
     }
 
     const usageLabel =
@@ -157,16 +157,9 @@ function ResourceUsageCard({
     return (
         <Paper sx={{ padding: 3 }} variant="outlined">
             <Typography variant="h6">{title}</Typography>
-            <Typography
-                sx={{
-                    fontWeight: 700,
-                    marginTop: 2,
-                }}
-                variant="h5"
-            >
+            <Typography sx={{ fontWeight: 700, marginTop: 2 }} variant="h5">
                 {usageLabel}
             </Typography>
-
             {used !== undefined && !unlimited && (
                 <LinearProgress
                     aria-label={`${title} usage`}
@@ -175,7 +168,6 @@ function ResourceUsageCard({
                     variant="determinate"
                 />
             )}
-
             <Typography color="text.secondary" sx={{ marginTop: 1 }} variant="body2">
                 {detail}
             </Typography>
@@ -186,31 +178,43 @@ function ResourceUsageCard({
 export function TenantSubscriptionPage() {
     const { session } = useAuth()
     const tenantId = session?.tenantId ?? ''
+    const [selectedPlanCode, setSelectedPlanCode] = useState<string | null>(null)
+    const [cancellationDialogOpen, setCancellationDialogOpen] = useState(false)
+
     const subscriptionQuery = useWorkspaceSubscription(tenantId)
     const entitlementQuery = useWorkspaceSubscriptionEntitlements(tenantId)
-    const noSubscription =
-        subscriptionQuery.error instanceof ApiClientError && subscriptionQuery.error.status === 404
     const subscription = subscriptionQuery.data
     const entitlements = entitlementQuery.data
-    const refreshing = subscriptionQuery.isFetching || entitlementQuery.isFetching
-    const lifecycleMessage = subscription ? statusMessage(subscription.status) : null
+    const noSubscription =
+        subscriptionQuery.error instanceof ApiClientError && subscriptionQuery.error.status === 404
     const canManageBilling = session?.role === 'TENANT_ADMIN' || session?.role === 'TENANT_MANAGER'
     const checkoutEligible =
         noSubscription || subscription?.status === 'CANCELLED' || subscription?.status === 'EXPIRED'
+    const refreshing = subscriptionQuery.isFetching || entitlementQuery.isFetching
+
     const checkoutConfigurationQuery = useBillingCheckoutConfiguration(
         tenantId,
         canManageBilling && checkoutEligible,
     )
     const checkoutMutation = useCreateBillingCheckout()
+    const cancellationMutation = useCancelBillingSubscription()
+    const checkoutOutcome = new URLSearchParams(window.location.search).get('checkout')
+    const selectedPlan = checkoutConfigurationQuery.data?.plans.find(
+        (plan) => plan.code === selectedPlanCode,
+    )
+    const lifecycleMessage = subscription ? statusMessage(subscription.status) : null
+    const cancellationAvailable = Boolean(
+        subscription &&
+        canManageBilling &&
+        !subscription.cancelAtPeriodEnd &&
+        canRequestCancellation(subscription.status),
+    )
 
     const beginCheckout = (plan: SubscriptionPlan, provider: BillingProvider) => {
         checkoutMutation.mutate(
             {
                 tenantId,
-                input: {
-                    planCode: plan.code,
-                    provider,
-                },
+                input: { planCode: plan.code, provider },
             },
             {
                 onSuccess: (checkout) => {
@@ -220,30 +224,34 @@ export function TenantSubscriptionPage() {
         )
     }
 
+    const requestCancellation = () => {
+        cancellationMutation.mutate(
+            { tenantId },
+            {
+                onSuccess: () => {
+                    setCancellationDialogOpen(false)
+                    void Promise.all([subscriptionQuery.refetch(), entitlementQuery.refetch()])
+                },
+            },
+        )
+    }
+
     return (
         <Box>
             <Stack
-                direction={{
-                    xs: 'column',
-                    sm: 'row',
-                }}
+                direction={{ xs: 'column', sm: 'row' }}
                 spacing={2}
-                sx={{
-                    alignItems: {
-                        sm: 'flex-start',
-                    },
-                    justifyContent: 'space-between',
-                }}
+                sx={{ alignItems: { sm: 'flex-start' }, justifyContent: 'space-between' }}
             >
                 <Box>
                     <Typography component="h1" variant="h4">
-                        Subscription
+                        Subscription & billing
                     </Typography>
                     <Typography color="text.secondary" sx={{ marginTop: 0.5 }}>
-                        Review your workspace plan, billing period, and configured limits.
+                        Manage your workspace plan, usage limits, billing lifecycle, and secure
+                        checkout.
                     </Typography>
                 </Box>
-
                 <Button
                     disabled={refreshing}
                     onClick={() => {
@@ -262,45 +270,24 @@ export function TenantSubscriptionPage() {
                 </Button>
             </Stack>
 
+            {checkoutOutcome === 'success' && (
+                <Alert icon={<CheckCircleRoundedIcon />} severity="success" sx={{ marginTop: 3 }}>
+                    Checkout completed. We are confirming the subscription from the signed provider
+                    webhook. If the new plan is not visible yet, refresh this page shortly.
+                </Alert>
+            )}
+            {(checkoutOutcome === 'cancelled' || checkoutOutcome === 'cancel') && (
+                <Alert severity="info" sx={{ marginTop: 3 }}>
+                    Checkout was cancelled. No subscription change was made; you can choose a plan
+                    again whenever you are ready.
+                </Alert>
+            )}
+
             {subscriptionQuery.isPending && (
-                <Paper
-                    sx={{
-                        marginTop: 3,
-                        padding: 8,
-                        textAlign: 'center',
-                    }}
-                    variant="outlined"
-                >
+                <Paper sx={{ marginTop: 3, padding: 8, textAlign: 'center' }} variant="outlined">
                     <CircularProgress />
                     <Typography color="text.secondary" sx={{ marginTop: 2 }}>
                         Loading subscription…
-                    </Typography>
-                </Paper>
-            )}
-
-            {noSubscription && (
-                <Paper
-                    sx={{
-                        marginTop: 3,
-                        padding: 6,
-                        textAlign: 'center',
-                    }}
-                    variant="outlined"
-                >
-                    <PaymentsRoundedIcon color="disabled" sx={{ fontSize: 52 }} />
-                    <Typography sx={{ marginTop: 1 }} variant="h6">
-                        No subscription assigned
-                    </Typography>
-                    <Typography
-                        color="text.secondary"
-                        sx={{
-                            marginX: 'auto',
-                            marginTop: 1,
-                            maxWidth: 560,
-                        }}
-                    >
-                        A platform administrator has not assigned a subscription plan to this
-                        workspace yet.
                     </Typography>
                 </Paper>
             )}
@@ -326,126 +313,6 @@ export function TenantSubscriptionPage() {
                 </Alert>
             )}
 
-            {canManageBilling && checkoutEligible && checkoutConfigurationQuery.isPending && (
-                <Paper
-                    sx={{
-                        marginTop: 3,
-                        padding: 4,
-                        textAlign: 'center',
-                    }}
-                    variant="outlined"
-                >
-                    <CircularProgress size={28} />
-                    <Typography color="text.secondary" sx={{ marginTop: 1.5 }}>
-                        Loading billing options…
-                    </Typography>
-                </Paper>
-            )}
-
-            {canManageBilling && checkoutEligible && checkoutConfigurationQuery.isError && (
-                <Alert severity="error" sx={{ marginTop: 3 }}>
-                    {checkoutConfigurationQuery.error instanceof Error
-                        ? checkoutConfigurationQuery.error.message
-                        : 'Billing checkout options could not be loaded.'}
-                </Alert>
-            )}
-
-            {canManageBilling && checkoutEligible && checkoutConfigurationQuery.data && (
-                <Paper sx={{ marginTop: 3, padding: 3 }} variant="outlined">
-                    <Typography component="h2" variant="h5">
-                        Choose a subscription
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ marginTop: 0.5 }}>
-                        Select a paid plan and continue securely on the payment provider&apos;s
-                        hosted checkout page.
-                    </Typography>
-
-                    {checkoutMutation.isError && (
-                        <Alert severity="error" sx={{ marginTop: 2 }}>
-                            {checkoutMutation.error instanceof Error
-                                ? checkoutMutation.error.message
-                                : 'The billing checkout could not be started.'}
-                        </Alert>
-                    )}
-
-                    {checkoutConfigurationQuery.data.providers.length === 0 ? (
-                        <Alert severity="info" sx={{ marginTop: 2 }}>
-                            Online billing is not enabled for this deployment yet.
-                        </Alert>
-                    ) : checkoutConfigurationQuery.data.plans.length === 0 ? (
-                        <Alert severity="info" sx={{ marginTop: 2 }}>
-                            No paid subscription plans are currently available.
-                        </Alert>
-                    ) : (
-                        <Box
-                            sx={{
-                                display: 'grid',
-                                gap: 2,
-                                gridTemplateColumns: {
-                                    xs: '1fr',
-                                    md: 'repeat(2, minmax(0, 1fr))',
-                                },
-                                marginTop: 3,
-                            }}
-                        >
-                            {checkoutConfigurationQuery.data.plans.map((plan) => (
-                                <Paper key={plan.id} sx={{ padding: 2.5 }} variant="outlined">
-                                    <Typography component="h3" variant="h6">
-                                        {plan.name}
-                                    </Typography>
-                                    <Typography color="text.secondary" variant="body2">
-                                        {plan.code}
-                                    </Typography>
-                                    {plan.description && (
-                                        <Typography sx={{ marginTop: 1.5 }}>
-                                            {plan.description}
-                                        </Typography>
-                                    )}
-                                    <Typography sx={{ fontWeight: 700, marginTop: 2 }} variant="h5">
-                                        {formatMoney(plan.price, plan.currency)}
-                                        <Typography
-                                            color="text.secondary"
-                                            component="span"
-                                            variant="body2"
-                                        >
-                                            {' '}
-                                            /{' '}
-                                            {plan.billingInterval === 'MONTHLY' ? 'month' : 'year'}
-                                        </Typography>
-                                    </Typography>
-                                    <Stack spacing={1} sx={{ marginTop: 2 }}>
-                                        {checkoutConfigurationQuery.data.providers.map(
-                                            (provider) => (
-                                                <Button
-                                                    disabled={checkoutMutation.isPending}
-                                                    key={provider}
-                                                    onClick={() => {
-                                                        beginCheckout(plan, provider)
-                                                    }}
-                                                    startIcon={
-                                                        checkoutMutation.isPending ? (
-                                                            <CircularProgress
-                                                                color="inherit"
-                                                                size={16}
-                                                            />
-                                                        ) : (
-                                                            <PaymentsRoundedIcon />
-                                                        )
-                                                    }
-                                                    variant="contained"
-                                                >
-                                                    Continue with {providerLabel(provider)}
-                                                </Button>
-                                            ),
-                                        )}
-                                    </Stack>
-                                </Paper>
-                            ))}
-                        </Box>
-                    )}
-                </Paper>
-            )}
-
             {subscription && (
                 <Stack spacing={2} sx={{ marginTop: 3 }}>
                     {lifecycleMessage && (
@@ -461,14 +328,26 @@ export function TenantSubscriptionPage() {
                             {lifecycleMessage}
                         </Alert>
                     )}
-
                     {subscription.cancelAtPeriodEnd && (
                         <Alert severity="warning">
-                            This subscription is scheduled to end when the current billing period
-                            finishes on {formatDate(subscription.currentPeriodEnd)}.
+                            Cancellation is scheduled for the end of the current billing period on{' '}
+                            {formatDate(subscription.currentPeriodEnd)}. Provider webhooks remain
+                            the source of truth for the final state.
                         </Alert>
                     )}
-
+                    {cancellationMutation.isSuccess && (
+                        <Alert severity="success">
+                            Cancellation was requested from the payment provider. The local status
+                            will update after the signed provider webhook is received.
+                        </Alert>
+                    )}
+                    {cancellationMutation.isError && (
+                        <Alert severity="error">
+                            {cancellationMutation.error instanceof Error
+                                ? cancellationMutation.error.message
+                                : 'The cancellation request could not be submitted.'}
+                        </Alert>
+                    )}
                     {subscription.plan.status === 'INACTIVE' && (
                         <Alert severity="warning">
                             This plan is no longer offered to new subscriptions. Your current
@@ -478,74 +357,75 @@ export function TenantSubscriptionPage() {
 
                     <Paper sx={{ padding: 3 }} variant="outlined">
                         <Stack
-                            direction={{
-                                xs: 'column',
-                                sm: 'row',
-                            }}
-                            spacing={2}
+                            direction={{ xs: 'column', md: 'row' }}
+                            spacing={3}
                             sx={{
-                                alignItems: {
-                                    sm: 'flex-start',
-                                },
+                                alignItems: { md: 'flex-start' },
                                 justifyContent: 'space-between',
                             }}
                         >
-                            <Box>
+                            <Box sx={{ maxWidth: 760 }}>
+                                <Typography color="text.secondary" variant="overline">
+                                    Current plan
+                                </Typography>
                                 <Typography component="h2" variant="h5">
                                     {subscription.plan.name}
                                 </Typography>
-                                <Typography
-                                    color="text.secondary"
-                                    sx={{
-                                        marginTop: 0.5,
-                                    }}
-                                >
+                                <Typography color="text.secondary" sx={{ marginTop: 0.5 }}>
                                     {subscription.plan.code}
                                 </Typography>
                                 {subscription.plan.description && (
-                                    <Typography
-                                        sx={{
-                                            marginTop: 1.5,
-                                            maxWidth: 720,
-                                        }}
-                                    >
+                                    <Typography sx={{ marginTop: 1.5 }}>
                                         {subscription.plan.description}
                                     </Typography>
                                 )}
+                                <Typography sx={{ fontWeight: 700, marginTop: 2 }} variant="h5">
+                                    {formatMoney(
+                                        subscription.plan.price,
+                                        subscription.plan.currency,
+                                    )}
+                                    <Typography
+                                        color="text.secondary"
+                                        component="span"
+                                        variant="body1"
+                                    >
+                                        {' '}
+                                        /{' '}
+                                        {subscription.plan.billingInterval === 'MONTHLY'
+                                            ? 'month'
+                                            : 'year'}
+                                    </Typography>
+                                </Typography>
                             </Box>
-
-                            <Stack direction="row" spacing={1}>
-                                <Chip
-                                    color={statusColor(subscription.status)}
-                                    label={subscription.status.replaceAll('_', ' ')}
-                                    variant="outlined"
-                                />
-                                <Chip
-                                    label={
-                                        subscription.plan.billingInterval === 'MONTHLY'
-                                            ? 'Monthly'
-                                            : 'Yearly'
-                                    }
-                                    variant="outlined"
-                                />
+                            <Stack spacing={1.5} sx={{ minWidth: { md: 220 } }}>
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                    <Chip
+                                        color={statusColor(subscription.status)}
+                                        label={subscription.status.replaceAll('_', ' ')}
+                                        variant="outlined"
+                                    />
+                                    <Chip
+                                        label={
+                                            subscription.plan.billingInterval === 'MONTHLY'
+                                                ? 'Monthly billing'
+                                                : 'Yearly billing'
+                                        }
+                                        variant="outlined"
+                                    />
+                                </Box>
+                                {cancellationAvailable && (
+                                    <Button
+                                        color="error"
+                                        onClick={() => {
+                                            setCancellationDialogOpen(true)
+                                        }}
+                                        variant="outlined"
+                                    >
+                                        Cancel subscription
+                                    </Button>
+                                )}
                             </Stack>
                         </Stack>
-
-                        <Divider
-                            sx={{
-                                marginBottom: 3,
-                                marginTop: 3,
-                            }}
-                        />
-
-                        <Typography sx={{ fontWeight: 700 }} variant="h5">
-                            {formatMoney(subscription.plan.price, subscription.plan.currency)}
-                            <Typography color="text.secondary" component="span" variant="body1">
-                                {' '}
-                                /{' '}
-                                {subscription.plan.billingInterval === 'MONTHLY' ? 'month' : 'year'}
-                            </Typography>
-                        </Typography>
                     </Paper>
 
                     <Box
@@ -560,13 +440,7 @@ export function TenantSubscriptionPage() {
                         }}
                     >
                         <Paper sx={{ padding: 3 }} variant="outlined">
-                            <Stack
-                                direction="row"
-                                spacing={1}
-                                sx={{
-                                    alignItems: 'center',
-                                }}
-                            >
+                            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                                 <CalendarMonthRoundedIcon color="primary" />
                                 <Typography variant="h6">Current period</Typography>
                             </Stack>
@@ -590,9 +464,7 @@ export function TenantSubscriptionPage() {
                                 <>
                                     <Typography
                                         color="text.secondary"
-                                        sx={{
-                                            marginTop: 1.5,
-                                        }}
+                                        sx={{ marginTop: 1.5 }}
                                         variant="body2"
                                     >
                                         Trial ends
@@ -601,39 +473,24 @@ export function TenantSubscriptionPage() {
                                 </>
                             )}
                         </Paper>
-
                         <ResourceUsageCard
                             configuredLimit={subscription.plan.maxUsers}
                             entitlement={entitlements?.users}
                             loading={entitlementQuery.isPending}
                             title="Active users"
                         />
-
                         <ResourceUsageCard
                             configuredLimit={subscription.plan.maxProjects}
                             entitlement={entitlements?.projects}
                             loading={entitlementQuery.isPending}
                             title="Projects"
                         />
-
                         <Paper sx={{ padding: 3 }} variant="outlined">
-                            <Stack
-                                direction="row"
-                                spacing={1}
-                                sx={{
-                                    alignItems: 'center',
-                                }}
-                            >
+                            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                                 <StorageRoundedIcon color="primary" />
                                 <Typography variant="h6">Storage</Typography>
                             </Stack>
-                            <Typography
-                                sx={{
-                                    fontWeight: 700,
-                                    marginTop: 2,
-                                }}
-                                variant="h5"
-                            >
+                            <Typography sx={{ fontWeight: 700, marginTop: 2 }} variant="h5">
                                 {formatLimit(subscription.plan.maxStorageMb, ' MB')}
                             </Typography>
                             <Typography
@@ -649,14 +506,9 @@ export function TenantSubscriptionPage() {
 
                     <Paper sx={{ padding: 3 }} variant="outlined">
                         <Stack
-                            direction={{
-                                xs: 'column',
-                                sm: 'row',
-                            }}
+                            direction={{ xs: 'column', sm: 'row' }}
                             spacing={2}
-                            sx={{
-                                justifyContent: 'space-between',
-                            }}
+                            sx={{ justifyContent: 'space-between' }}
                         >
                             <Box>
                                 <Typography color="text.secondary" variant="body2">
@@ -680,6 +532,332 @@ export function TenantSubscriptionPage() {
                     </Paper>
                 </Stack>
             )}
+
+            {noSubscription && (
+                <Paper sx={{ marginTop: 3, padding: 4 }} variant="outlined">
+                    <Stack
+                        direction={{ xs: 'column', sm: 'row' }}
+                        spacing={2}
+                        sx={{ alignItems: { sm: 'center' } }}
+                    >
+                        <PaymentsRoundedIcon color="primary" sx={{ fontSize: 44 }} />
+                        <Box>
+                            <Typography variant="h6">Start a workspace subscription</Typography>
+                            <Typography color="text.secondary" sx={{ marginTop: 0.5 }}>
+                                This workspace does not have an active subscription. Compare the
+                                available plans below and choose the one that fits your team.
+                            </Typography>
+                        </Box>
+                    </Stack>
+                </Paper>
+            )}
+
+            {canManageBilling && checkoutEligible && checkoutConfigurationQuery.isPending && (
+                <Paper sx={{ marginTop: 3, padding: 4, textAlign: 'center' }} variant="outlined">
+                    <CircularProgress size={28} />
+                    <Typography color="text.secondary" sx={{ marginTop: 1.5 }}>
+                        Loading subscription plans…
+                    </Typography>
+                </Paper>
+            )}
+
+            {canManageBilling && checkoutEligible && checkoutConfigurationQuery.isError && (
+                <Alert severity="error" sx={{ marginTop: 3 }}>
+                    {checkoutConfigurationQuery.error instanceof Error
+                        ? checkoutConfigurationQuery.error.message
+                        : 'Billing checkout options could not be loaded.'}
+                </Alert>
+            )}
+
+            {canManageBilling && checkoutEligible && checkoutConfigurationQuery.data && (
+                <Stack spacing={3} sx={{ marginTop: 3 }}>
+                    <Paper sx={{ padding: 3 }} variant="outlined">
+                        <Typography color="primary" variant="overline">
+                            Step 1 of 2
+                        </Typography>
+                        <Typography component="h2" variant="h5">
+                            Choose your plan
+                        </Typography>
+                        <Typography color="text.secondary" sx={{ marginTop: 0.5 }}>
+                            Compare plan capacity first. Payment methods are shown only after you
+                            select a plan.
+                        </Typography>
+
+                        {checkoutConfigurationQuery.data.plans.length === 0 ? (
+                            <Alert severity="info" sx={{ marginTop: 2 }}>
+                                No paid subscription plans are currently available.
+                            </Alert>
+                        ) : (
+                            <Box
+                                sx={{
+                                    display: 'grid',
+                                    gap: 2,
+                                    gridTemplateColumns: {
+                                        xs: '1fr',
+                                        md: 'repeat(2, minmax(0, 1fr))',
+                                    },
+                                    marginTop: 3,
+                                }}
+                            >
+                                {checkoutConfigurationQuery.data.plans.map((plan) => {
+                                    const selected = selectedPlanCode === plan.code
+                                    return (
+                                        <Paper
+                                            key={plan.id}
+                                            sx={{
+                                                borderColor: selected ? 'primary.main' : undefined,
+                                                borderWidth: selected ? 2 : 1,
+                                                padding: 3,
+                                            }}
+                                            variant="outlined"
+                                        >
+                                            <Stack
+                                                direction="row"
+                                                spacing={1}
+                                                sx={{
+                                                    alignItems: 'flex-start',
+                                                    justifyContent: 'space-between',
+                                                }}
+                                            >
+                                                <Box>
+                                                    <Typography component="h3" variant="h6">
+                                                        {plan.name}
+                                                    </Typography>
+                                                    <Typography
+                                                        color="text.secondary"
+                                                        variant="body2"
+                                                    >
+                                                        {plan.code}
+                                                    </Typography>
+                                                </Box>
+                                                {selected && (
+                                                    <Chip
+                                                        color="primary"
+                                                        label="Selected"
+                                                        size="small"
+                                                    />
+                                                )}
+                                            </Stack>
+                                            {plan.description && (
+                                                <Typography sx={{ marginTop: 1.5 }}>
+                                                    {plan.description}
+                                                </Typography>
+                                            )}
+                                            <Typography
+                                                sx={{ fontWeight: 700, marginTop: 2 }}
+                                                variant="h4"
+                                            >
+                                                {formatMoney(plan.price, plan.currency)}
+                                                <Typography
+                                                    color="text.secondary"
+                                                    component="span"
+                                                    variant="body2"
+                                                >
+                                                    {' '}
+                                                    /{' '}
+                                                    {plan.billingInterval === 'MONTHLY'
+                                                        ? 'month'
+                                                        : 'year'}
+                                                </Typography>
+                                            </Typography>
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    flexWrap: 'wrap',
+                                                    gap: 1,
+                                                    marginTop: 2,
+                                                }}
+                                            >
+                                                <Chip
+                                                    label={`${formatLimit(plan.maxUsers)} users`}
+                                                    size="small"
+                                                    variant="outlined"
+                                                />
+                                                <Chip
+                                                    label={`${formatLimit(plan.maxProjects)} projects`}
+                                                    size="small"
+                                                    variant="outlined"
+                                                />
+                                                <Chip
+                                                    label={`${formatLimit(plan.maxStorageMb)} MB storage`}
+                                                    size="small"
+                                                    variant="outlined"
+                                                />
+                                            </Box>
+                                            <Button
+                                                fullWidth
+                                                onClick={() => {
+                                                    setSelectedPlanCode(plan.code)
+                                                }}
+                                                sx={{ marginTop: 3 }}
+                                                variant={selected ? 'contained' : 'outlined'}
+                                            >
+                                                {selected ? 'Plan selected' : `Choose ${plan.name}`}
+                                            </Button>
+                                        </Paper>
+                                    )
+                                })}
+                            </Box>
+                        )}
+                    </Paper>
+
+                    {selectedPlan && (
+                        <Paper sx={{ padding: 3 }} variant="outlined">
+                            <Typography color="primary" variant="overline">
+                                Step 2 of 2
+                            </Typography>
+                            <Typography component="h2" variant="h5">
+                                Select a payment method
+                            </Typography>
+                            <Typography color="text.secondary" sx={{ marginTop: 0.5 }}>
+                                You selected {selectedPlan.name} at{' '}
+                                {formatMoney(selectedPlan.price, selectedPlan.currency)} per{' '}
+                                {selectedPlan.billingInterval === 'MONTHLY' ? 'month' : 'year'}.
+                                Checkout opens on the provider&apos;s secure hosted page.
+                            </Typography>
+
+                            {checkoutMutation.isError && (
+                                <Alert severity="error" sx={{ marginTop: 2 }}>
+                                    {checkoutMutation.error instanceof Error
+                                        ? checkoutMutation.error.message
+                                        : 'The billing checkout could not be started.'}
+                                </Alert>
+                            )}
+
+                            {checkoutConfigurationQuery.data.providers.length === 0 ? (
+                                <Alert severity="info" sx={{ marginTop: 2 }}>
+                                    Online billing is not enabled for this deployment yet.
+                                </Alert>
+                            ) : (
+                                <Box
+                                    sx={{
+                                        display: 'grid',
+                                        gap: 2,
+                                        gridTemplateColumns: {
+                                            xs: '1fr',
+                                            md: 'repeat(2, minmax(0, 1fr))',
+                                        },
+                                        marginTop: 3,
+                                    }}
+                                >
+                                    {checkoutConfigurationQuery.data.providers.map((provider) => (
+                                        <Paper
+                                            key={provider}
+                                            sx={{ padding: 2.5 }}
+                                            variant="outlined"
+                                        >
+                                            <Stack
+                                                direction="row"
+                                                spacing={1}
+                                                sx={{
+                                                    alignItems: 'center',
+                                                    justifyContent: 'space-between',
+                                                }}
+                                            >
+                                                <Stack
+                                                    direction="row"
+                                                    spacing={1}
+                                                    sx={{ alignItems: 'center' }}
+                                                >
+                                                    <CreditCardRoundedIcon color="primary" />
+                                                    <Typography variant="h6">
+                                                        {providerLabel(provider)}
+                                                    </Typography>
+                                                </Stack>
+                                                <Chip
+                                                    color={
+                                                        provider === 'STRIPE'
+                                                            ? 'primary'
+                                                            : 'default'
+                                                    }
+                                                    label={
+                                                        provider === 'STRIPE'
+                                                            ? 'Recommended'
+                                                            : 'Available'
+                                                    }
+                                                    size="small"
+                                                    variant="outlined"
+                                                />
+                                            </Stack>
+                                            <Typography
+                                                color="text.secondary"
+                                                sx={{ marginTop: 1.5 }}
+                                                variant="body2"
+                                            >
+                                                {providerDescription(provider)}
+                                            </Typography>
+                                            <Button
+                                                disabled={checkoutMutation.isPending}
+                                                fullWidth
+                                                onClick={() => {
+                                                    beginCheckout(selectedPlan, provider)
+                                                }}
+                                                startIcon={
+                                                    checkoutMutation.isPending ? (
+                                                        <CircularProgress
+                                                            color="inherit"
+                                                            size={16}
+                                                        />
+                                                    ) : (
+                                                        <PaymentsRoundedIcon />
+                                                    )
+                                                }
+                                                sx={{ marginTop: 2 }}
+                                                variant="contained"
+                                            >
+                                                Pay securely with {providerLabel(provider)}
+                                            </Button>
+                                        </Paper>
+                                    ))}
+                                </Box>
+                            )}
+                        </Paper>
+                    )}
+                </Stack>
+            )}
+
+            {!canManageBilling && checkoutEligible && (
+                <Alert severity="info" sx={{ marginTop: 3 }}>
+                    A tenant administrator or manager must choose and purchase a subscription for
+                    this workspace.
+                </Alert>
+            )}
+
+            <Dialog
+                onClose={() => {
+                    if (!cancellationMutation.isPending) {
+                        setCancellationDialogOpen(false)
+                    }
+                }}
+                open={cancellationDialogOpen}
+            >
+                <DialogTitle>Cancel subscription?</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        The request is sent to the linked payment provider and is normally applied
+                        at the end of the current billing period. Local subscription state remains
+                        webhook-authoritative, so the page may not change immediately.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        disabled={cancellationMutation.isPending}
+                        onClick={() => {
+                            setCancellationDialogOpen(false)
+                        }}
+                    >
+                        Keep subscription
+                    </Button>
+                    <Button
+                        color="error"
+                        disabled={cancellationMutation.isPending}
+                        onClick={requestCancellation}
+                        variant="contained"
+                    >
+                        {cancellationMutation.isPending ? 'Requesting…' : 'Confirm cancellation'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     )
 }

@@ -1,6 +1,7 @@
 import { httpClient } from '../../../api/httpClient'
 import type { ApiResponse } from '../../../types/api'
 import type {
+    BillingCancellationResponse,
     BillingCheckoutConfiguration,
     BillingCheckoutInput,
     BillingCheckoutSession,
@@ -53,10 +54,19 @@ async function createCheckout(
     return response.data.data
 }
 
+async function cancelSubscription(tenantId: string): Promise<BillingCancellationResponse> {
+    const response = await httpClient.post<ApiResponse<BillingCancellationResponse>>(
+        `/api/tenants/${tenantId}/billing/cancel`,
+    )
+
+    return response.data.data
+}
+
 export const tenantSubscriptionApi = {
     getSubscription,
     getCheckoutConfiguration,
     createCheckout,
+    cancelSubscription,
     getEntitlements,
     getAccess,
 }

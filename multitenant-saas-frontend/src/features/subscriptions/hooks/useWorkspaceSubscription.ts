@@ -56,3 +56,10 @@ export function useCreateBillingCheckout() {
             tenantSubscriptionApi.createCheckout(tenantId, input),
     })
 }
+
+export function useCancelBillingSubscription() {
+    return useMutation({
+        mutationFn: ({ tenantId }: { tenantId: string }) =>
+            tenantSubscriptionApi.cancelSubscription(tenantId),
+    })
+}
