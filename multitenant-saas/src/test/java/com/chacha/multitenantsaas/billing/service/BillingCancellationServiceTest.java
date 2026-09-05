@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -12,11 +13,14 @@ import static org.mockito.Mockito.when;
 
 import com.chacha.multitenantsaas.billing.provider.BillingCancellationResult;
 import com.chacha.multitenantsaas.billing.provider.BillingProvider;
+import com.chacha.multitenantsaas.billing.provider.BillingProviderException;
+import com.chacha.multitenantsaas.billing.provider.BillingProviderSubscriptionSnapshot;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
 import com.chacha.multitenantsaas.entity.TenantSubscription;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.TenantSubscriptionRepository;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,6 +49,86 @@ class BillingCancellationServiceTest {
         assertThat(result.provider()).isEqualTo(BillingProviderType.STRIPE);
         assertThat(result.providerSubscriptionId()).isEqualTo("sub_123");
         verify(stripe).cancelSubscription("sub_123");
+        verify(repository, never()).save(subscription);
+    }
+
+    @Test
+    void repairsStaleProviderLinkageAndCancelsThroughVerifiedOwner() {
+        UUID tenantId = UUID.randomUUID();
+        String subscriptionId = "sub_razorpay_123";
+        TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
+        TenantSubscription subscription =
+                subscription(
+                        TenantSubscriptionStatus.ACTIVE,
+                        BillingProviderType.STRIPE,
+                        subscriptionId);
+        when(repository.findByTenantIdWithPlan(tenantId)).thenReturn(Optional.of(subscription));
+
+        BillingProvider stripe = mock(BillingProvider.class);
+        when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
+        BillingProviderException stripeFailure =
+                new BillingProviderException("Stripe subscription cancellation failed", null);
+        doThrow(stripeFailure).when(stripe).cancelSubscription(subscriptionId);
+
+        BillingProvider razorpay = mock(BillingProvider.class);
+        when(razorpay.providerType()).thenReturn(BillingProviderType.RAZORPAY);
+        when(razorpay.fetchSubscription(subscriptionId))
+                .thenReturn(
+                        new BillingProviderSubscriptionSnapshot(
+                                BillingProviderType.RAZORPAY,
+                                subscriptionId,
+                                "PRO",
+                                TenantSubscriptionStatus.ACTIVE,
+                                Instant.parse("2026-08-27T12:33:00Z"),
+                                Instant.parse("2026-09-27T12:33:00Z"),
+                                false));
+
+        BillingCancellationService service =
+                new BillingCancellationService(
+                        new BillingProviderRegistry(List.of(stripe, razorpay)), repository);
+
+        BillingCancellationResult result = service.requestCancellation(tenantId);
+
+        assertThat(result.tenantId()).isEqualTo(tenantId);
+        assertThat(result.provider()).isEqualTo(BillingProviderType.RAZORPAY);
+        assertThat(result.providerSubscriptionId()).isEqualTo(subscriptionId);
+        verify(stripe).cancelSubscription(subscriptionId);
+        verify(razorpay).fetchSubscription(subscriptionId);
+        verify(subscription).setBillingProvider(BillingProviderType.RAZORPAY);
+        verify(repository).save(subscription);
+        verify(razorpay).cancelSubscription(subscriptionId);
+    }
+
+    @Test
+    void preservesRecordedProviderFailureWhenNoAlternativeOwnsSubscription() {
+        UUID tenantId = UUID.randomUUID();
+        String subscriptionId = "sub_unknown";
+        TenantSubscriptionRepository repository = mock(TenantSubscriptionRepository.class);
+        TenantSubscription subscription =
+                subscription(
+                        TenantSubscriptionStatus.ACTIVE,
+                        BillingProviderType.STRIPE,
+                        subscriptionId);
+        when(repository.findByTenantIdWithPlan(tenantId)).thenReturn(Optional.of(subscription));
+
+        BillingProvider stripe = mock(BillingProvider.class);
+        when(stripe.providerType()).thenReturn(BillingProviderType.STRIPE);
+        BillingProviderException stripeFailure =
+                new BillingProviderException("Stripe subscription cancellation failed", null);
+        doThrow(stripeFailure).when(stripe).cancelSubscription(subscriptionId);
+
+        BillingProvider razorpay = mock(BillingProvider.class);
+        when(razorpay.providerType()).thenReturn(BillingProviderType.RAZORPAY);
+        when(razorpay.fetchSubscription(subscriptionId))
+                .thenThrow(new BillingProviderException("Razorpay subscription lookup failed", null));
+
+        BillingCancellationService service =
+                new BillingCancellationService(
+                        new BillingProviderRegistry(List.of(stripe, razorpay)), repository);
+
+        assertThatThrownBy(() -> service.requestCancellation(tenantId)).isSameAs(stripeFailure);
+        verify(razorpay, never()).cancelSubscription(anyString());
+        verify(repository, never()).save(subscription);
     }
 
     @Test
