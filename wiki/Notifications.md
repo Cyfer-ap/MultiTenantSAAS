@@ -1,6 +1,6 @@
 # Notifications
 
-The notification subsystem is tenant scoped and separates durable notification records from external delivery attempts. This page reflects the post-PR #65 state.
+Reviewed for the current platform snapshot on 2026-09-06. The notification subsystem is tenant scoped and separates durable notification records from external delivery attempts. Its core product expansion was completed before the billing milestone; Billing & Payments is now also complete at application level through PR #98.
 
 ## Current capabilities
 
@@ -65,13 +65,11 @@ The delivery model includes:
 - stale-lease recovery
 - provider failure handling
 
-This is the reliability foundation for email and future delivery channels.
+This is the reliability foundation for email and future delivery channels. The same architectural ideas are relevant to the recommended tenant outbound-webhook milestone, although outbound webhooks require additional endpoint security, signing and SSRF controls.
 
 ## Preferences
 
-Recipients can configure optional email delivery by supported notification event.
-
-The policy intentionally separates persistence from delivery:
+Recipients can configure optional email delivery by supported notification event while in-app history remains mandatory.
 
 ```text
 domain event
@@ -87,27 +85,11 @@ Security alerts are not user-configurable.
 
 ## In-app notification center
 
-The authenticated application shell provides:
-
-- unread badge
-- notification popover/list
-- loading, empty and error states
-- read/unread behavior
-- mark-all-read
-- internal navigation for safe target URLs
+The authenticated application shell provides an unread badge, notification popover/list, loading/empty/error states, read/unread behavior, mark-all-read and safe internal navigation.
 
 ## Precise collaboration deep links
 
-Task collaboration notifications can target the exact task comment/reply. The project workspace resolves and displays the target even when it falls outside the normal first page of comments.
-
-Supported behavior includes:
-
-- open the task collaboration drawer
-- open the Comments tab
-- highlight/scroll the exact top-level comment
-- expand the correct parent thread
-- highlight/scroll the exact reply
-- remove comment/reply query parameters when the drawer closes
+Task collaboration notifications can target the exact task comment/reply. The project workspace resolves the target even when it falls outside the normal first page, expands the correct thread and highlights/scrolls to the requested comment or reply.
 
 Project-removal notifications target `/projects` because the removed user may no longer be authorized for the former project.
 
@@ -117,16 +99,16 @@ Delivery behavior is environment configurable, including enablement, batch size,
 
 ## Remaining optional work
 
-The previously planned collaboration-notification expansion is complete. Remaining work should be driven by product/operations value:
+The planned collaboration-notification expansion is complete. Remaining optional work is product/operations driven:
 
 1. workspace-invitation in-app event wiring
-2. optional digest/batching
-3. optional live browser delivery via SSE/WebSocket
-4. optional push/mobile channels
+2. digest/batching
+3. live browser delivery via SSE/WebSocket
+4. push/mobile channels
 5. delivery/admin observability
 6. provider bounce/complaint processing if needed
 
-Notification foundation work should not block the next major platform milestone: external billing.
+Notification work does not block the current recommended next milestone: **tenant-configurable outbound webhooks**.
 
 ## Related pages
 
