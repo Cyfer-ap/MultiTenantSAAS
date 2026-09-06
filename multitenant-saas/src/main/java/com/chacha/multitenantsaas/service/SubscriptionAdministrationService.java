@@ -1,6 +1,8 @@
 package com.chacha.multitenantsaas.service;
 
 import com.chacha.multitenantsaas.billing.catalog.SubscriptionPlanCatalogService;
+import com.chacha.multitenantsaas.billing.service.SubscriptionPlanRetirementCoordinator;
+import com.chacha.multitenantsaas.billing.service.SubscriptionPlanRetirementOperationService;
 import com.chacha.multitenantsaas.dto.SubscriptionPlanCreateRequest;
 import com.chacha.multitenantsaas.dto.SubscriptionPlanResponse;
 import com.chacha.multitenantsaas.dto.SubscriptionPlanUpdateRequest;
@@ -36,6 +38,10 @@ public class SubscriptionAdministrationService {
 
     private final SubscriptionPlanCatalogService subscriptionPlanCatalogService;
 
+    private final SubscriptionPlanRetirementOperationService retirementOperationService;
+
+    private final SubscriptionPlanRetirementCoordinator retirementCoordinator;
+
     public SubscriptionAdministrationService(
             SubscriptionPlanService subscriptionPlanService,
             TenantSubscriptionService tenantSubscriptionService,
@@ -43,7 +49,9 @@ public class SubscriptionAdministrationService {
             TenantLookupService tenantLookupService,
             PlatformAuditLogService platformAuditLogService,
             AuditLogService auditLogService,
-            SubscriptionPlanCatalogService subscriptionPlanCatalogService) {
+            SubscriptionPlanCatalogService subscriptionPlanCatalogService,
+            SubscriptionPlanRetirementOperationService retirementOperationService,
+            SubscriptionPlanRetirementCoordinator retirementCoordinator) {
         this.subscriptionPlanService = subscriptionPlanService;
         this.tenantSubscriptionService = tenantSubscriptionService;
         this.currentSystemAdminService = currentSystemAdminService;
@@ -51,6 +59,8 @@ public class SubscriptionAdministrationService {
         this.platformAuditLogService = platformAuditLogService;
         this.auditLogService = auditLogService;
         this.subscriptionPlanCatalogService = subscriptionPlanCatalogService;
+        this.retirementOperationService = retirementOperationService;
+        this.retirementCoordinator = retirementCoordinator;
     }
 
     @Transactional(readOnly = true)
@@ -85,6 +95,10 @@ public class SubscriptionAdministrationService {
         SystemAdmin actor = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
 
         SubscriptionPlanResponse before = subscriptionPlanService.getPlan(planId);
+        if (before.status() == SubscriptionPlanStatus.RETIRED) {
+            throw new IllegalArgumentException(
+                    "Retired subscription plans are immutable; create a replacement plan instead.");
+        }
         SubscriptionPlanResponse updated = subscriptionPlanService.updatePlan(planId, request);
         subscriptionPlanCatalogService.planUpdated(before, updated);
 
@@ -97,10 +111,16 @@ public class SubscriptionAdministrationService {
         return updated;
     }
 
-    @Transactional
     public SubscriptionPlanResponse changePlanStatus(
             UUID planId, SubscriptionPlanStatus status, Jwt jwt) {
         SystemAdmin actor = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
+        SubscriptionPlanResponse before = subscriptionPlanService.getPlan(planId);
+
+        if (before.status() == SubscriptionPlanStatus.RETIRED
+                && status != SubscriptionPlanStatus.RETIRED) {
+            throw new IllegalArgumentException(
+                    "Retired subscription plans cannot be reactivated; create a replacement plan.");
+        }
 
         SubscriptionPlanResponse updated = subscriptionPlanService.changeStatus(planId, status);
 
@@ -109,6 +129,11 @@ public class SubscriptionAdministrationService {
                 null,
                 PlatformAuditAction.SUBSCRIPTION_PLAN_STATUS_UPDATED,
                 "Subscription plan status updated: " + updated.code() + " -> " + updated.status());
+
+        if (status == SubscriptionPlanStatus.RETIRED) {
+            retirementOperationService.request(planId);
+            retirementCoordinator.execute(planId);
+        }
 
         return updated;
     }
