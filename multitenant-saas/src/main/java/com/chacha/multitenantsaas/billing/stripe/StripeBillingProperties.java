@@ -1,5 +1,6 @@
 package com.chacha.multitenantsaas.billing.stripe;
 
+import com.chacha.multitenantsaas.billing.entity.BillingProviderEnvironment;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 public class StripeBillingProperties {
 
     private boolean enabled;
+    private BillingProviderEnvironment environment = BillingProviderEnvironment.TEST;
     private boolean webhookEnabled;
     private String webhookSecret = "";
     private long webhookToleranceSeconds = 300;
@@ -25,6 +27,14 @@ public class StripeBillingProperties {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public BillingProviderEnvironment getEnvironment() {
+        return environment;
+    }
+
+    public void setEnvironment(BillingProviderEnvironment environment) {
+        this.environment = environment;
     }
 
     public boolean isWebhookEnabled() {
