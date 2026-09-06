@@ -1,6 +1,13 @@
 name: Wiki Sync
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'wiki/**'
+      - 'scripts/publish-wiki.ps1'
+      - '.github/workflows/wiki-sync.yml'
   push:
     branches:
       - main
@@ -11,17 +18,34 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: wiki-sync
+  group: wiki-sync-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  publish:
-    name: Publish GitHub Wiki
+  validate:
+    name: Validate Wiki Source
     runs-on: windows-latest
     timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate canonical Wiki source and publisher
+        shell: pwsh
+        run: .\scripts\publish-wiki.ps1 -NoPush
+
+  publish:
+    name: Publish GitHub Wiki
+    if: github.event_name != 'pull_request'
+    needs: validate
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
 
     steps:
       - name: Check out repository
