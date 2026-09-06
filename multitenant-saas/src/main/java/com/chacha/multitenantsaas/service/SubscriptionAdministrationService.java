@@ -1,5 +1,6 @@
 package com.chacha.multitenantsaas.service;
 
+import com.chacha.multitenantsaas.billing.catalog.SubscriptionPlanCatalogService;
 import com.chacha.multitenantsaas.dto.SubscriptionPlanCreateRequest;
 import com.chacha.multitenantsaas.dto.SubscriptionPlanResponse;
 import com.chacha.multitenantsaas.dto.SubscriptionPlanUpdateRequest;
@@ -33,19 +34,23 @@ public class SubscriptionAdministrationService {
 
     private final AuditLogService auditLogService;
 
+    private final SubscriptionPlanCatalogService subscriptionPlanCatalogService;
+
     public SubscriptionAdministrationService(
             SubscriptionPlanService subscriptionPlanService,
             TenantSubscriptionService tenantSubscriptionService,
             CurrentSystemAdminService currentSystemAdminService,
             TenantLookupService tenantLookupService,
             PlatformAuditLogService platformAuditLogService,
-            AuditLogService auditLogService) {
+            AuditLogService auditLogService,
+            SubscriptionPlanCatalogService subscriptionPlanCatalogService) {
         this.subscriptionPlanService = subscriptionPlanService;
         this.tenantSubscriptionService = tenantSubscriptionService;
         this.currentSystemAdminService = currentSystemAdminService;
         this.tenantLookupService = tenantLookupService;
         this.platformAuditLogService = platformAuditLogService;
         this.auditLogService = auditLogService;
+        this.subscriptionPlanCatalogService = subscriptionPlanCatalogService;
     }
 
     @Transactional(readOnly = true)
@@ -63,6 +68,7 @@ public class SubscriptionAdministrationService {
         SystemAdmin actor = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
 
         SubscriptionPlanResponse created = subscriptionPlanService.createPlan(request);
+        subscriptionPlanCatalogService.planCreated(created);
 
         platformAuditLogService.recordSuccess(
                 actor,
@@ -78,7 +84,9 @@ public class SubscriptionAdministrationService {
             UUID planId, SubscriptionPlanUpdateRequest request, Jwt jwt) {
         SystemAdmin actor = currentSystemAdminService.getRequiredActiveSystemAdmin(jwt);
 
+        SubscriptionPlanResponse before = subscriptionPlanService.getPlan(planId);
         SubscriptionPlanResponse updated = subscriptionPlanService.updatePlan(planId, request);
+        subscriptionPlanCatalogService.planUpdated(before, updated);
 
         platformAuditLogService.recordSuccess(
                 actor,
