@@ -74,8 +74,6 @@ GitHub Actions remains authoritative where Docker is unavailable.
 
 ## Wiki
 
-Version-controlled Wiki source lives under `wiki/`. Publish with:
+Version-controlled Wiki source lives under `wiki/` and is canonical. Pull requests that change Wiki source run a no-push validation in `.github/workflows/wiki-sync.yml`. After those changes reach `main`, the same workflow automatically publishes them to the live GitHub Wiki using `scripts/publish-wiki.ps1`.
 
-```powershell
-.\scripts\publish-wiki.ps1
-```
+Manual publishing is now only a fallback. See `wiki/Wiki-Maintenance.md` for the synchronization policy.
