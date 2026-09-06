@@ -1,10 +1,12 @@
 package com.chacha.multitenantsaas.billing.stripe;
 
+import com.chacha.multitenantsaas.billing.entity.SubscriptionPlanProviderMappingStatus;
 import com.chacha.multitenantsaas.billing.provider.BillingCheckoutSession;
 import com.chacha.multitenantsaas.billing.provider.BillingProvider;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderException;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderSubscriptionSnapshot;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
+import com.chacha.multitenantsaas.billing.repository.SubscriptionPlanProviderMappingRepository;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
 import java.time.Instant;
 import java.util.Locale;
@@ -27,6 +29,7 @@ public class StripeBillingProvider implements BillingProvider {
 
     private final StripeBillingProperties properties;
     private final RestClient restClient;
+    private SubscriptionPlanProviderMappingRepository mappingRepository;
 
     @Autowired
     public StripeBillingProvider(StripeBillingProperties properties) {
@@ -42,6 +45,11 @@ public class StripeBillingProvider implements BillingProvider {
                                 HttpHeaders.AUTHORIZATION, "Bearer " + properties.getSecretKey())
                         .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                         .build();
+    }
+
+    @Autowired(required = false)
+    void setMappingRepository(SubscriptionPlanProviderMappingRepository mappingRepository) {
+        this.mappingRepository = mappingRepository;
     }
 
     @Override
@@ -177,18 +185,47 @@ public class StripeBillingProvider implements BillingProvider {
     }
 
     private String resolvePriceId(String normalizedPlanCode) {
+        if (mappingRepository != null) {
+            String mappedPriceId =
+                    mappingRepository
+                            .findFirstByPlan_CodeIgnoreCaseAndProviderAndEnvironmentAndStatusOrderByCreatedAtDesc(
+                                    normalizedPlanCode,
+                                    providerType(),
+                                    properties.getEnvironment(),
+                                    SubscriptionPlanProviderMappingStatus.ACTIVE)
+                            .map(mapping -> mapping.getProviderPriceId())
+                            .orElse(null);
+            if (mappedPriceId != null && !mappedPriceId.isBlank()) {
+                return mappedPriceId;
+            }
+        }
+        return configuredPriceId(normalizedPlanCode);
+    }
+
+    private String resolvePlanCode(String priceId) {
+        if (mappingRepository != null) {
+            String mappedPlanCode =
+                    mappingRepository
+                            .findPlanCodeByProviderPriceId(
+                                    providerType(), properties.getEnvironment(), priceId)
+                            .orElse(null);
+            if (mappedPlanCode != null && !mappedPlanCode.isBlank()) {
+                return mappedPlanCode.toUpperCase(Locale.ROOT);
+            }
+        }
+
         for (Map.Entry<String, String> price : properties.getPrices().entrySet()) {
-            if (price.getKey().equalsIgnoreCase(normalizedPlanCode)) {
-                return price.getValue();
+            if (priceId.equals(price.getValue())) {
+                return price.getKey().toUpperCase(Locale.ROOT);
             }
         }
         return null;
     }
 
-    private String resolvePlanCode(String priceId) {
+    private String configuredPriceId(String normalizedPlanCode) {
         for (Map.Entry<String, String> price : properties.getPrices().entrySet()) {
-            if (priceId.equals(price.getValue())) {
-                return price.getKey().toUpperCase(Locale.ROOT);
+            if (price.getKey().equalsIgnoreCase(normalizedPlanCode)) {
+                return price.getValue();
             }
         }
         return null;
@@ -241,6 +278,9 @@ public class StripeBillingProvider implements BillingProvider {
     private static void validateConfiguration(StripeBillingProperties properties) {
         if (properties == null) {
             throw new IllegalStateException("Stripe billing properties are required");
+        }
+        if (properties.getEnvironment() == null) {
+            throw new IllegalStateException("STRIPE_BILLING_ENVIRONMENT must be configured");
         }
         requireConfigured(properties.getSecretKey(), "STRIPE_SECRET_KEY");
         requireConfigured(properties.getBaseUrl(), "STRIPE_BASE_URL");
