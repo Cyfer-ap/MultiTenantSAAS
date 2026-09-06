@@ -1,6 +1,6 @@
 # Architecture
 
-Reviewed through PR #90 on 2026-08-27.
+Reviewed through PR #98 on 2026-09-06.
 
 ## Stack and planes
 
@@ -28,7 +28,7 @@ transaction/database constraint
 
 ```text
 application plan
-    + server-side provider-plan mapping
+    + server-side provider-plan/price mapping
         ↓
 provider-neutral checkout service
         ↓
@@ -43,7 +43,11 @@ locked tenant subscription synchronization
 access, entitlement and quota evaluation
 ```
 
-Cancellation delegates to the linked provider and waits for a signed webhook. Reconciliation fetches a provider snapshot and reports differences without overwriting webhook-authoritative local state.
+The application plan catalogue and provider billing catalogues are separate. System-admin plan creation does not automatically create Stripe Products/Prices or Razorpay Plans. Provider checkout requires explicit server-side mappings.
+
+Cancellation delegates to the linked provider, with ownership/history recovery when linkage is stale. Normal lifecycle state is webhook-authoritative. Verified provider state may repair a stale terminal local row when a cancellation succeeded but its terminal webhook was missed.
+
+Stripe's final cancellation issue exposed that exact case: Stripe had cancelled subscriptions, but `customer.subscription.deleted` was not enabled on the endpoint. The endpoint configuration is now correct and PR #98 provides idempotent repair.
 
 Checkout is permitted for a read-only workspace as a recovery action, but tenant authorization remains required.
 
@@ -53,4 +57,4 @@ Tenant API keys are revealed once, stored as hashes and accepted only under `/ap
 
 ## Operational boundary
 
-Mocked provider contracts are covered in CI. Stripe's deployed Test Mode path works through hosted Checkout and signed webhook synchronization. Real Razorpay Test Mode authorization currently fails at the hosted provider page, so Razorpay's external lifecycle is not provider-validated.
+**Billing & Payments is complete at application level.** Stripe is validated in deployed Test Mode for hosted Checkout, lifecycle webhooks and cancellation. Razorpay application integration is implemented but real recurring Test Mode authorization remains provider-sandbox blocked. Live-provider readiness remains separate operational work.
