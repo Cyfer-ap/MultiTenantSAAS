@@ -82,6 +82,35 @@ class SubscriptionEntitlementServiceTest {
     }
 
     @Test
+    void retiredPlanKeepsPurchasedEntitlementsUntilCurrentPeriodEnds() {
+        stubUsage(2L, 1L, 0L);
+        when(tenantSubscriptionRepository.findByTenantIdWithPlan(TENANT_ID))
+                .thenReturn(Optional.of(subscription));
+        when(subscription.getId()).thenReturn(SUBSCRIPTION_ID);
+        when(subscription.getPlan()).thenReturn(plan);
+        when(subscription.getStatus()).thenReturn(TenantSubscriptionStatus.ACTIVE);
+        when(subscription.getCurrentPeriodEnd())
+                .thenReturn(Instant.now().plus(30, ChronoUnit.DAYS));
+        when(subscription.isCancelAtPeriodEnd()).thenReturn(false);
+        when(plan.getId()).thenReturn(PLAN_ID);
+        when(plan.getStatus()).thenReturn(SubscriptionPlanStatus.RETIRED);
+        when(subscription.getPlanCodeSnapshot()).thenReturn("LEGACY_PRO");
+        when(subscription.getPlanNameSnapshot()).thenReturn("Legacy Pro");
+        when(subscription.getMaxUsersSnapshot()).thenReturn(3);
+        when(subscription.getMaxProjectsSnapshot()).thenReturn(2);
+
+        TenantSubscriptionEntitlementResponse result = service.evaluate(TENANT_ID);
+
+        assertThat(result.accessLevel()).isEqualTo(SubscriptionAccessLevel.FULL_ACCESS);
+        assertThat(result.accessReason()).isEqualTo(SubscriptionAccessReason.ACTIVE);
+        assertThat(result.planCode()).isEqualTo("LEGACY_PRO");
+        assertThat(result.planName()).isEqualTo("Legacy Pro");
+        assertThat(result.users().limit()).isEqualTo(3L);
+        assertThat(result.projects().limit()).isEqualTo(2L);
+        assertThat(result.mutationsAllowed()).isTrue();
+    }
+
+    @Test
     void activeTrialAllowsMutationsBeforeTrialEnd() {
         stubUsage(1L, 0L, 0L);
         stubSubscription(

@@ -1,5 +1,5 @@
 export type BillingInterval = 'MONTHLY' | 'YEARLY'
-export type SubscriptionPlanStatus = 'ACTIVE' | 'INACTIVE'
+export type SubscriptionPlanStatus = 'ACTIVE' | 'RETIRED' | 'INACTIVE'
 export type TenantSubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED'
 export type BillingProvider = 'STRIPE' | 'RAZORPAY'
 

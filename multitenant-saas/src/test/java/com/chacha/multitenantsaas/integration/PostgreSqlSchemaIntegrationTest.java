@@ -69,7 +69,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV33AndMatchesJpaMappings() {
+    void postgresSchemaReachesV34AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -81,7 +81,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("33");
+        assertThat(version).isEqualTo("34");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -95,6 +95,7 @@ class PostgreSqlSchemaIntegrationTest {
         assertTableExists("authorization_user_role_assignments");
         assertTableExists("subscription_plans");
         assertTableExists("tenant_subscriptions");
+        assertTableExists("subscription_plan_provider_mappings");
         assertTableExists("email_verification_challenges");
         assertTableExists("trusted_email_browsers");
         assertTableExists("task_comments");
@@ -112,6 +113,14 @@ class PostgreSqlSchemaIntegrationTest {
         assertColumnExists("subscription_plan_usage_limits", "plan_id");
         assertColumnExists("subscription_plan_usage_limits", "metric_code");
         assertColumnExists("subscription_plan_usage_limits", "period_limit");
+        assertColumnExists("subscription_plan_provider_mappings", "plan_id");
+        assertColumnExists("subscription_plan_provider_mappings", "provider");
+        assertColumnExists("subscription_plan_provider_mappings", "environment");
+        assertColumnExists("subscription_plan_provider_mappings", "provider_product_id");
+        assertColumnExists("subscription_plan_provider_mappings", "provider_price_id");
+        assertColumnExists("subscription_plan_provider_mappings", "provider_plan_id");
+        assertColumnExists("subscription_plan_provider_mappings", "status");
+        assertColumnExists("subscription_plan_provider_mappings", "archived_at");
         assertColumnExists("tenant_api_keys", "tenant_id");
         assertColumnExists("tenant_api_keys", "key_prefix");
         assertColumnExists("tenant_api_keys", "key_hash");
@@ -125,6 +134,15 @@ class PostgreSqlSchemaIntegrationTest {
         assertColumnExists("tenant_subscriptions", "billing_provider");
         assertColumnExists("tenant_subscriptions", "provider_subscription_id");
         assertColumnExists("tenant_subscriptions", "provider_event_created_at");
+        assertColumnExists("tenant_subscriptions", "plan_code_snapshot");
+        assertColumnExists("tenant_subscriptions", "plan_name_snapshot");
+        assertColumnExists("tenant_subscriptions", "plan_description_snapshot");
+        assertColumnExists("tenant_subscriptions", "billing_interval_snapshot");
+        assertColumnExists("tenant_subscriptions", "price_snapshot");
+        assertColumnExists("tenant_subscriptions", "currency_snapshot");
+        assertColumnExists("tenant_subscriptions", "max_users_snapshot");
+        assertColumnExists("tenant_subscriptions", "max_projects_snapshot");
+        assertColumnExists("tenant_subscriptions", "max_storage_mb_snapshot");
         assertColumnExists("task_attachments", "storage_deleted_at");
         assertColumnExists("task_comments", "parent_comment_id");
         assertColumnExists("task_comments", "reply_count");

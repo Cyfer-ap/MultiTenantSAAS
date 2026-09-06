@@ -210,19 +210,28 @@ public class TenantSubscriptionService {
 
     private TenantSubscriptionResponse mapToResponse(TenantSubscription subscription) {
         SubscriptionPlan plan = subscription.getPlan();
+        boolean hasPlanSnapshot = subscription.getPlanCodeSnapshot() != null;
 
         SubscriptionPlanResponse planResponse =
                 new SubscriptionPlanResponse(
                         plan.getId(),
-                        plan.getCode(),
-                        plan.getName(),
-                        plan.getDescription(),
-                        plan.getBillingInterval(),
-                        plan.getPrice(),
-                        plan.getCurrency(),
-                        plan.getMaxUsers(),
-                        plan.getMaxProjects(),
-                        plan.getMaxStorageMb(),
+                        hasPlanSnapshot ? subscription.getPlanCodeSnapshot() : plan.getCode(),
+                        hasPlanSnapshot ? subscription.getPlanNameSnapshot() : plan.getName(),
+                        hasPlanSnapshot
+                                ? subscription.getPlanDescriptionSnapshot()
+                                : plan.getDescription(),
+                        hasPlanSnapshot
+                                ? subscription.getBillingIntervalSnapshot()
+                                : plan.getBillingInterval(),
+                        hasPlanSnapshot ? subscription.getPriceSnapshot() : plan.getPrice(),
+                        hasPlanSnapshot ? subscription.getCurrencySnapshot() : plan.getCurrency(),
+                        hasPlanSnapshot ? subscription.getMaxUsersSnapshot() : plan.getMaxUsers(),
+                        hasPlanSnapshot
+                                ? subscription.getMaxProjectsSnapshot()
+                                : plan.getMaxProjects(),
+                        hasPlanSnapshot
+                                ? subscription.getMaxStorageMbSnapshot()
+                                : plan.getMaxStorageMb(),
                         plan.getStatus(),
                         plan.getCreatedAt(),
                         plan.getUpdatedAt());
