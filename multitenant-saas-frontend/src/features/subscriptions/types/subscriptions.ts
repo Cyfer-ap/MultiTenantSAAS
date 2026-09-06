@@ -100,48 +100,60 @@ export interface TenantSubscriptionEntitlements {
     projects: SubscriptionResourceEntitlement
 }
 
-export interface SubscriptionPlanCreateInput {
+export interface WorkspaceSubscriptionAccess {
+    tenantId: string
+    subscriptionStatus: TenantSubscriptionStatus | null
+    accessLevel: SubscriptionAccessLevel
+    accessReason: SubscriptionAccessReason
+    serviceAvailable: boolean
+    mutationsAllowed: boolean
+    userCreationAllowed: boolean
+    projectCreationAllowed: boolean
+    userLimitReached: boolean
+    projectLimitReached: boolean
+    cancelAtPeriodEnd: boolean
+    currentPeriodEnd: string | null
+    trialEndsAt: string | null
+    evaluatedAt: string
+}
+
+export interface CreateSubscriptionPlanInput {
     code: string
     name: string
-    description?: string | null
+    description: string | null
     billingInterval: BillingInterval
     price: number
     currency: string
-    maxUsers?: number | null
-    maxProjects?: number | null
-    maxStorageMb?: number | null
+    maxUsers: number | null
+    maxProjects: number | null
+    maxStorageMb: number | null
 }
 
-export interface SubscriptionPlanUpdateInput {
-    name: string
-    description?: string | null
-    billingInterval: BillingInterval
-    price: number
-    currency: string
-    maxUsers?: number | null
-    maxProjects?: number | null
-    maxStorageMb?: number | null
+export type UpdateSubscriptionPlanInput = Omit<CreateSubscriptionPlanInput, 'code'>
+
+export interface UpdateSubscriptionPlanStatusInput {
+    status: SubscriptionPlanStatus
 }
 
-export interface TenantSubscriptionStartInput {
+export interface StartTenantSubscriptionInput {
     planId: string
     status: 'TRIALING' | 'ACTIVE'
-    startedAt?: string | null
-    currentPeriodStart?: string | null
+    startedAt: string | null
+    currentPeriodStart: string | null
     currentPeriodEnd: string
-    trialEndsAt?: string | null
+    trialEndsAt: string | null
     cancelAtPeriodEnd: boolean
 }
 
-export interface TenantSubscriptionPlanChangeInput {
+export interface ChangeTenantSubscriptionPlanInput {
     planId: string
     currentPeriodStart: string
     currentPeriodEnd: string
 }
 
-export interface TenantSubscriptionLifecycleInput {
+export interface UpdateTenantSubscriptionLifecycleInput {
     status: TenantSubscriptionStatus
-    currentPeriodEnd?: string | null
-    trialEndsAt?: string | null
     cancelAtPeriodEnd: boolean
+    currentPeriodEnd: string | null
+    trialEndsAt: string | null
 }
