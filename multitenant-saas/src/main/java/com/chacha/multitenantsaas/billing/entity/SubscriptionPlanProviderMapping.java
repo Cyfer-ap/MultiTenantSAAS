@@ -54,13 +54,13 @@ public class SubscriptionPlanProviderMapping {
     @Column(nullable = false, length = 16, updatable = false)
     private BillingProviderEnvironment environment;
 
-    @Column(name = "provider_product_id", length = 255)
+    @Column(name = "provider_product_id", length = 255, updatable = false)
     private String providerProductId;
 
-    @Column(name = "provider_price_id", length = 255)
+    @Column(name = "provider_price_id", length = 255, updatable = false)
     private String providerPriceId;
 
-    @Column(name = "provider_plan_id", length = 255)
+    @Column(name = "provider_plan_id", length = 255, updatable = false)
     private String providerPlanId;
 
     @Enumerated(EnumType.STRING)
@@ -160,17 +160,5 @@ public class SubscriptionPlanProviderMapping {
 
     public void setId(UUID id) {
         this.id = id;
-    }
-
-    public void setProviderProductId(String providerProductId) {
-        this.providerProductId = providerProductId;
-    }
-
-    public void setProviderPriceId(String providerPriceId) {
-        this.providerPriceId = providerPriceId;
-    }
-
-    public void setProviderPlanId(String providerPlanId) {
-        this.providerPlanId = providerPlanId;
     }
 }
