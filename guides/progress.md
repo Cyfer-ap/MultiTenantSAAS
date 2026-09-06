@@ -1,8 +1,8 @@
 # Multi-Tenant SaaS Platform — Current Progress
 
-Snapshot date: 2026-08-27
-Reviewed state: post-PR #90 (`e9257b3`)
-Current stage: **billing provider validation and operational hardening**
+Snapshot date: 2026-09-06
+Reviewed state: post-PR #98 (`87319f8`)
+Current stage: **billing complete at application level; next product milestone selection**
 
 This page is a concise progress index. Code, tests, migrations, `CHECKPOINT.md` and focused guides are authoritative.
 
@@ -18,42 +18,35 @@ This page is a concise progress index. Code, tests, migrations, `CHECKPOINT.md` 
 - PostgreSQL/Flyway/Testcontainers path
 - production profiles, observability, CI, security and container checks
 
-## Billing and API platform delivered
+## Billing and API platform — complete at application level
 
-- V28 provider-neutral billing foundation
-- Stripe and Razorpay hosted-checkout adapters
-- tenant checkout API
-- signed Stripe and Razorpay webhook ingestion with durable event persistence
-- webhook-driven subscription lifecycle synchronization
-- provider-backed cancellation
-- system-admin billing subscription/event views
-- read-only provider reconciliation
-- V30 durable usage metering
-- V31-V32 tenant API-key lifecycle, authentication and metering
-- V33 per-plan API request limits and atomic enforcement
-- safe tenant checkout configuration API and subscription-page UI
-- duplicate active-subscription guard
-- read-only recovery allowance for checkout
-- Render Razorpay startup regression fix
-- parallel Stripe deployment and tenant checkout option
-- Render Stripe startup regression fix
+- provider-neutral Stripe/Razorpay billing boundary
+- professional plan-selection/provider-selection/hosted-checkout UX
+- signed durable provider webhooks and replay protection
+- webhook-driven subscription synchronization
+- provider-aware cancellation and provider-linkage recovery
+- cross-provider overwrite protection
+- read-only reconciliation and stale-terminal-state repair
+- durable usage metering
+- tenant API-key lifecycle/authentication/metering
+- per-plan API request quotas with atomic enforcement
+- checkout recovery for read-only workspaces
+- billing/security regression coverage
 
-## Working provider
+### Stripe
 
-Stripe is **working end to end in deployed Test Mode**. Hosted Checkout completes and the signed Stripe subscription webhook synchronizes local subscription state. This does not yet enable or validate live mode.
+Stripe is the validated deployed Test Mode path. Hosted checkout, signed subscription lifecycle synchronization and provider-side cancellation work. The final stale-state cancellation issue was caused by the Stripe endpoint missing `customer.subscription.deleted`; that event is now enabled, and PR #98 adds idempotent repair for subscriptions already terminal at Stripe.
 
-## Current blocker
+### Razorpay
 
-Razorpay is **not yet working end to end** in Test Mode. The application creates a hosted subscription and redirects correctly, but every attempted card fails within Razorpay before recurring authorization. Consequently, real activation webhooks and local subscription activation remain unverified.
+Razorpay integration is implemented but Test Mode recurring authorization remains externally blocked: hosted checkout opens, while attempted sandbox cards fail before recurring authorization. This is treated as a provider sandbox limitation, not unfinished application architecture.
 
-Live mode, live plans and live keys are intentionally deferred.
+### Provider plan provisioning
+
+Application plans are not automatically provisioned into Stripe or Razorpay. New application plans require explicit server-side provider mappings. Automated provider product/price/plan provisioning is a possible future feature.
 
 ## Next
 
-1. preserve and monitor the working Stripe Test Mode path
-2. reproduce using a subscription created directly in Razorpay Dashboard
-3. capture provider failure diagnostics and contact Razorpay Support if direct checkout fails
-4. optionally add a feature-flagged system-admin billing lifecycle simulator
-5. validate Razorpay activation, charged/pending/halted/cancelled webhooks in deployment
-6. proceed to provider-specific live-mode readiness only after its Test Mode path succeeds
-7. continue operational recovery, tenant webhooks and enterprise SSO
+Recommended next major product milestone: **tenant-configurable outbound webhooks**.
+
+Then consider enterprise SSO, authorization delegation/explain-access, backup/restore drills, monitoring/alerts, and broader load/failure-recovery testing. Provider live-mode readiness remains an independent deployment/operations track.
