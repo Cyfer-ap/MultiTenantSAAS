@@ -102,7 +102,8 @@ public class SubscriptionEntitlementService {
                 subscription.getCurrentPeriodEnd(),
                 subscription.getTrialEndsAt(),
                 evaluatedAt,
-                resourceEntitlement(activeUsers, toLong(maxUsers), accessDecision.mutationsAllowed()),
+                resourceEntitlement(
+                        activeUsers, toLong(maxUsers), accessDecision.mutationsAllowed()),
                 resourceEntitlement(
                         nonArchivedProjects,
                         toLong(maxProjects),
