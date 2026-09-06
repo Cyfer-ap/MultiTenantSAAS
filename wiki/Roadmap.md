@@ -2,48 +2,62 @@
 
 ## Current
 
-The active phase is **billing provider validation and operational hardening**.
+The billing milestone is closed at application level through PR #98.
 
-Billing foundations completed through PR #90:
+Completed billing/platform capabilities include:
 
-- provider-neutral checkout
-- Stripe and Razorpay adapters
+- provider-neutral Stripe/Razorpay checkout
+- professional plan/provider checkout UX
 - signed durable webhooks
 - webhook-driven subscription lifecycle
-- cancellation, operations visibility and reconciliation
+- cancellation, provider-linkage recovery and stale-state repair
+- operations visibility and reconciliation
 - durable usage metering
 - tenant API keys and external API authentication
 - plan-level API request quotas
-- tenant plan discovery and hosted-checkout UI
 - checkout recovery for read-only workspaces
 
-Stripe Test Mode is validated end to end in deployment: hosted Checkout completes and signed webhook synchronization updates local subscription state.
+Stripe is validated in deployed Test Mode for hosted Checkout, signed lifecycle synchronization and provider-side cancellation.
 
-## Active blocker
+Razorpay application integration is implemented, but recurring Test Mode authorization remains provider-sandbox blocked. This is no longer an active application-development blocker.
 
-Razorpay hosted Test Mode checkout opens but every attempted card fails before recurring authorization. A real activation webhook and local activation have not been observed. Live plans and keys remain deferred.
+## Next major product milestone
 
-## Near term
+### 1. Tenant-configurable outbound webhooks
 
-1. preserve and monitor the working Stripe Test Mode path
-2. isolate the failure with a Dashboard-created Razorpay subscription
-3. capture structured provider diagnostics and escalate to Razorpay Support if needed
-4. optionally add a feature-flagged, system-admin-only billing simulator
-5. complete deployed Razorpay activation, charged/pending/halted, cancellation, replay and reconciliation tests
-6. rotate any exposed test credentials
-7. move each provider to live-mode readiness only after provider-specific review
+Recommended next feature.
 
-## Next platform work
+Target capabilities:
 
-- backup/restore drills, monitoring, alerts and operational runbooks
-- tenant-configurable outbound webhooks
-- broader load/failure-recovery and production R2 verification
-- enterprise SSO
-- authorization delegation and explain-access
-- optional notification expansion
+- tenant-admin endpoint registration
+- event subscription selection
+- encrypted/signing-secret management
+- HMAC-signed outbound deliveries
+- durable delivery records
+- retry/backoff/lease/idempotency semantics
+- delivery history and failure visibility
+- manual replay
+- tenant isolation and scoped authorization
+- initial domain-event catalogue for projects, tasks, collaboration, membership and selected subscription events
 
-API keys and durable usage metering are implemented and must not be listed as future foundations.
+This reuses proven platform patterns from durable notifications and inbound billing webhooks while exposing a high-value integration surface to tenant systems.
+
+## Following platform work
+
+2. enterprise SSO
+3. authorization delegation and explain-access
+4. backup/restore drills, monitoring, alerts and operational runbooks
+5. broader load/failure-recovery and production R2 verification
+6. optional notification expansion such as digests/live browser delivery
+
+## Independent provider/live-readiness track
+
+- preserve the working Stripe Test Mode path
+- keep Razorpay integration available while its sandbox authorization remains blocked
+- rotate any exposed test credentials
+- enable live keys/plans only after provider-specific readiness review
+- automatic Stripe/Razorpay plan provisioning may be evaluated later; current system-admin plan creation does not create provider Products/Prices/Plans
 
 ## Engineering rules
 
-Preserve tenant isolation, backend-authoritative authorization, webhook-authoritative billing state, Flyway invariants, database-backed concurrency, auditability and server-only secret/provider mappings.
+Preserve tenant isolation, backend-authoritative authorization, webhook-authoritative normal billing state, verified provider reconciliation, Flyway invariants, database-backed concurrency, auditability and server-only secret/provider mappings.
