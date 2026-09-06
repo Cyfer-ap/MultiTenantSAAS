@@ -20,4 +20,8 @@ public class SubscriptionPlanCatalogService {
     public void planUpdated(SubscriptionPlanResponse before, SubscriptionPlanResponse after) {
         provisioners.forEach(provisioner -> provisioner.planUpdated(before, after));
     }
+
+    public void planRetired(SubscriptionPlanResponse plan) {
+        provisioners.forEach(provisioner -> provisioner.planRetired(plan));
+    }
 }
