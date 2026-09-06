@@ -1,6 +1,6 @@
 # Current architecture
 
-Reviewed through PR #90 on 2026-08-27.
+Reviewed through PR #98 on 2026-09-06.
 
 ## Platform
 
@@ -31,7 +31,9 @@ Checkout is an explicit subscription-recovery mutation; it bypasses lifecycle re
 - internal subscription/entitlement/access evaluation
 - provider-neutral billing with Stripe and Razorpay adapters
 - signed durable billing webhooks and lifecycle synchronization
-- cancellation, operations visibility and read-only reconciliation
+- professional plan/provider checkout UX
+- provider-aware cancellation, linkage recovery and stale-state repair
+- operations visibility and read-only reconciliation
 - durable usage metering and plan limits
 - tenant API keys and isolated external API authentication
 - audit logs, observability and production profiles
@@ -39,7 +41,7 @@ Checkout is an explicit subscription-recovery mutation; it bypasses lifecycle re
 ## Billing data flow
 
 ```text
-app plan + server-side provider mapping
+application plan + server-side provider mapping
         -> hosted provider checkout
         -> signed provider webhook
         -> durable billing event
@@ -47,8 +49,18 @@ app plan + server-side provider mapping
         -> access and quota evaluation
 ```
 
-Provider secrets and external plan IDs never cross into the frontend.
+Provider secrets and external plan/price IDs never cross into the frontend.
+
+Application plans and provider billing objects remain separate. Creating an application plan does not automatically create a Stripe Product/Price or Razorpay Plan; checkout requires an explicit provider mapping.
+
+## Cancellation/reconciliation boundary
+
+Cancellation delegates to the provider linked to the subscription. Recovery logic can verify provider ownership and use durable webhook history when linkage is stale. Normal lifecycle writes remain webhook-authoritative.
+
+If a provider already reports a terminal subscription but the terminal webhook was missed, the cancellation path may repair the local terminal state from verified provider data. This hardening was added after Stripe cancellations succeeded provider-side while local state remained `ACTIVE` because `customer.subscription.deleted` was missing from the webhook endpoint configuration.
 
 ## Current operational boundary
 
-The deployed Stripe Test Mode flow works through hosted Checkout and signed webhook synchronization. The application-side Razorpay flow is implemented, but real Test Mode payment authorization is still failing at Razorpay checkout. Live billing is not enabled, and neither provider should be described as live-production-ready yet.
+Billing & Payments is complete at application level.
+
+Stripe works in deployed Test Mode through hosted Checkout, signed lifecycle synchronization and cancellation. Razorpay integration is implemented but real recurring Test Mode authorization remains blocked at the provider sandbox. Live-provider readiness is a separate deployment/operations track.
