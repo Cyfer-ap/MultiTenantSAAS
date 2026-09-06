@@ -17,7 +17,9 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -48,6 +50,34 @@ public class TenantSubscription {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id", nullable = false)
     private SubscriptionPlan plan;
+
+    @Column(name = "plan_code_snapshot", nullable = false, length = 60)
+    private String planCodeSnapshot;
+
+    @Column(name = "plan_name_snapshot", nullable = false, length = 150)
+    private String planNameSnapshot;
+
+    @Column(name = "plan_description_snapshot", length = 500)
+    private String planDescriptionSnapshot;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "billing_interval_snapshot", nullable = false, length = 20)
+    private BillingInterval billingIntervalSnapshot;
+
+    @Column(name = "price_snapshot", nullable = false, precision = 19, scale = 2)
+    private BigDecimal priceSnapshot;
+
+    @Column(name = "currency_snapshot", nullable = false, length = 3)
+    private String currencySnapshot;
+
+    @Column(name = "max_users_snapshot")
+    private Integer maxUsersSnapshot;
+
+    @Column(name = "max_projects_snapshot")
+    private Integer maxProjectsSnapshot;
+
+    @Column(name = "max_storage_mb_snapshot")
+    private Long maxStorageMbSnapshot;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -99,7 +129,8 @@ public class TenantSubscription {
             Instant trialEndsAt,
             boolean cancelAtPeriodEnd) {
         this.tenant = tenant;
-        this.plan = plan;
+        this.plan = Objects.requireNonNull(plan, "Subscription plan is required.");
+        capturePlanSnapshot(plan);
         this.status = status;
         this.startedAt = startedAt;
         this.currentPeriodStart = currentPeriodStart;
@@ -120,6 +151,18 @@ public class TenantSubscription {
         this.updatedAt = Instant.now();
     }
 
+    private void capturePlanSnapshot(SubscriptionPlan sourcePlan) {
+        this.planCodeSnapshot = sourcePlan.getCode();
+        this.planNameSnapshot = sourcePlan.getName();
+        this.planDescriptionSnapshot = sourcePlan.getDescription();
+        this.billingIntervalSnapshot = sourcePlan.getBillingInterval();
+        this.priceSnapshot = sourcePlan.getPrice();
+        this.currencySnapshot = sourcePlan.getCurrency();
+        this.maxUsersSnapshot = sourcePlan.getMaxUsers();
+        this.maxProjectsSnapshot = sourcePlan.getMaxProjects();
+        this.maxStorageMbSnapshot = sourcePlan.getMaxStorageMb();
+    }
+
     public UUID getId() {
         return id;
     }
@@ -130,6 +173,42 @@ public class TenantSubscription {
 
     public SubscriptionPlan getPlan() {
         return plan;
+    }
+
+    public String getPlanCodeSnapshot() {
+        return planCodeSnapshot;
+    }
+
+    public String getPlanNameSnapshot() {
+        return planNameSnapshot;
+    }
+
+    public String getPlanDescriptionSnapshot() {
+        return planDescriptionSnapshot;
+    }
+
+    public BillingInterval getBillingIntervalSnapshot() {
+        return billingIntervalSnapshot;
+    }
+
+    public BigDecimal getPriceSnapshot() {
+        return priceSnapshot;
+    }
+
+    public String getCurrencySnapshot() {
+        return currencySnapshot;
+    }
+
+    public Integer getMaxUsersSnapshot() {
+        return maxUsersSnapshot;
+    }
+
+    public Integer getMaxProjectsSnapshot() {
+        return maxProjectsSnapshot;
+    }
+
+    public Long getMaxStorageMbSnapshot() {
+        return maxStorageMbSnapshot;
     }
 
     public TenantSubscriptionStatus getStatus() {
@@ -185,7 +264,13 @@ public class TenantSubscription {
     }
 
     public void setPlan(SubscriptionPlan plan) {
-        this.plan = plan;
+        SubscriptionPlan newPlan = Objects.requireNonNull(plan, "Subscription plan is required.");
+        boolean planChanged =
+                this.plan == null || !Objects.equals(this.plan.getId(), newPlan.getId());
+        this.plan = newPlan;
+        if (planChanged) {
+            capturePlanSnapshot(newPlan);
+        }
     }
 
     public void setStatus(TenantSubscriptionStatus status) {
