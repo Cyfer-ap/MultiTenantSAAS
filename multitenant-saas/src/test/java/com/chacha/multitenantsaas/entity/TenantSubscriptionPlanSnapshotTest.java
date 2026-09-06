@@ -13,7 +13,7 @@ class TenantSubscriptionPlanSnapshotTest {
     @Test
     void samePlanLifecycleRefreshDoesNotRewritePurchasedTerms() {
         SubscriptionPlan plan = plan("PRO", "Pro", "499.00", 10, 20);
-        Tenant tenant = new Tenant("Acme");
+        Tenant tenant = new Tenant("Acme", "acme");
         Instant now = Instant.now();
 
         TenantSubscription subscription =
@@ -41,7 +41,7 @@ class TenantSubscriptionPlanSnapshotTest {
     void changingPlanCapturesNewPurchasedTerms() {
         SubscriptionPlan original = plan("PRO", "Pro", "499.00", 10, 20);
         SubscriptionPlan enterprise = plan("ENTERPRISE", "Enterprise", "1499.00", 100, 200);
-        Tenant tenant = new Tenant("Acme");
+        Tenant tenant = new Tenant("Acme", "acme");
         Instant now = Instant.now();
 
         TenantSubscription subscription =
