@@ -1,62 +1,76 @@
 # Wiki Maintenance
 
-## Why the repository `wiki/` folder does not automatically appear in the Wiki tab
-
 GitHub Wiki pages are stored in a separate Git repository:
 
 ```text
 Cyfer-ap/MultiTenantSAAS.wiki.git
 ```
 
-The main repository's `wiki/` directory is therefore a **version-controlled source copy**, not the live Wiki repository.
+The main repository therefore keeps `wiki/*.md` as the **canonical, reviewable source**. Do not treat long-lived edits made directly in the Wiki UI as authoritative.
 
-## Source of truth
+## Automatic validation and publishing
 
-Use:
+Wiki synchronization is managed by:
 
 ```text
-wiki/*.md
+.github/workflows/wiki-sync.yml
 ```
 
-in the main repository as the canonical editable source.
+The workflow watches:
 
-Changes should normally go through the protected-main pull-request workflow.
+- `wiki/**`
+- `scripts/publish-wiki.ps1`
+- `.github/workflows/wiki-sync.yml`
+
+On a pull request, it runs a **no-push validation** of the canonical Wiki source and publishing script. Draft/unmerged documentation is never published.
+
+After the change reaches `main`, the workflow validates again and then uses the repository `GITHUB_TOKEN` to publish the merged source to `MultiTenantSAAS.wiki.git`.
+
+The publish step configures a GitHub Actions bot commit identity and invokes:
+
+```powershell
+.\scripts\publish-wiki.ps1
+```
+
+The publisher:
+
+1. validates required source pages
+2. clones the live Wiki repository
+3. synchronizes every Markdown page from `wiki/`
+4. removes live Markdown pages that no longer exist in source
+5. runs `git diff --cached --check`
+6. commits only when a difference exists
+7. pushes the live Wiki repository
 
 ## One-time Wiki initialization
 
-Before GitHub exposes the `.wiki.git` repository, create the first Wiki page once through the GitHub Wiki UI.
+GitHub must expose the `.wiki.git` repository before automation can use it. If the Wiki has never been initialized, create a temporary `Home` page once through the repository Wiki UI. After that, the automated workflow owns synchronization from `wiki/`.
 
-The initial page can be a temporary `Home` page; the publishing script will replace it from the canonical source.
+## Manual fallback / preview
 
-## Publishing
-
-After Wiki initialization and after the documentation PR is merged:
+Automatic publishing is the normal path. For troubleshooting or local preview:
 
 ```powershell
-git switch main
-git pull --ff-only origin main
+# Validate and preview differences without committing or pushing.
+.\scripts\publish-wiki.ps1 -NoPush
 
+# Manual authenticated publish if CI ever needs a fallback.
 gh auth setup-git
 .\scripts\publish-wiki.ps1
 ```
 
-The script:
+In GitHub Actions the script reads `GITHUB_TOKEN` automatically. Locally, when no token is supplied, it continues to use the user's normal Git credential configuration.
 
-1. validates required source pages
-2. clones `MultiTenantSAAS.wiki.git` into a temporary directory
-3. synchronizes all Markdown pages from `wiki/`
-4. removes Markdown pages that no longer exist in the source folder
-5. runs `git diff --check`
-6. commits only when there are changes
-7. pushes the live Wiki repository
+## Required and special files
 
-Use preview mode to inspect without pushing:
+The publisher validates:
 
-```powershell
-.\scripts\publish-wiki.ps1 -NoPush
+```text
+Home.md
+_Sidebar.md
+_Footer.md
+Wiki-Maintenance.md
 ```
-
-## Special files
 
 GitHub renders these specially:
 
@@ -68,10 +82,10 @@ _Footer.md    -> custom footer
 
 ## Editing policy
 
-Avoid making long-lived edits directly in the GitHub Wiki UI because they can drift from the source folder.
+1. edit `wiki/*.md` in the main repository
+2. let the PR Wiki validation run
+3. merge through the normal protected-main workflow
+4. let `Wiki Sync` publish the merged content automatically
+5. if an emergency direct Wiki edit is unavoidable, copy it back into `wiki/` immediately or the next source sync will overwrite it
 
-If an emergency Wiki edit is made directly, copy the same change back into `wiki/` before the next source sync.
-
-## Links
-
-Prefer Wiki page links over links to the source Markdown files so readers stay inside the Wiki.
+Prefer Wiki page links over links to source Markdown so readers remain inside the Wiki.

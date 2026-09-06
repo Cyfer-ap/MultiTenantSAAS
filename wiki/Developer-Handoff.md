@@ -2,55 +2,58 @@
 
 Repository: `Cyfer-ap/MultiTenantSAAS`
 Default branch: `main`
-Reviewed state: post-PR #90 (`e9257b3`)
-Date: 2026-08-27
+Reviewed state: post-PR #98 (`87319f8`)
+Date: 2026-09-06
 
 ## Current phase
 
-**Billing provider validation and operational hardening**
+**Billing & Payments complete at application level; next product milestone selection**
 
-Delivered through PR #90:
+Delivered through PR #98:
 
-- provider-neutral billing and Stripe/Razorpay adapters
-- tenant hosted checkout
+- provider-neutral Stripe/Razorpay billing
+- professional tenant plan/provider checkout UX
 - signed durable provider webhooks
 - webhook-driven subscription synchronization
-- provider cancellation
+- provider-aware cancellation and stale-linkage recovery
+- cross-provider overwrite protection
+- idempotent repair for already-terminal provider subscriptions
 - billing event/subscription views and read-only reconciliation
 - durable usage metering
 - tenant API keys and isolated external API authentication
 - per-plan API-request quotas
-- subscription-page checkout and read-only recovery
-- deployed startup regression fix
-- parallel Stripe and Razorpay choices in tenant checkout
+- subscription recovery checkout for read-only workspaces
 
-## Working provider
+## Stripe
 
-Stripe is working end to end in deployed Test Mode. Hosted Checkout completes, the signed subscription webhook synchronizes local state, and the Stripe-enabled backend starts successfully after PR #90.
+Stripe is working in deployed Test Mode. Hosted Checkout completes, signed lifecycle webhooks synchronize local state, and provider-side cancellation was confirmed.
 
-## Blocking fact
+The final cancellation discrepancy was caused by the Stripe webhook endpoint not subscribing to `customer.subscription.deleted`. Stripe cancelled correctly but local state remained `ACTIVE`. The endpoint is now configured for created/updated/deleted subscription events, and PR #98 handles already-terminal provider state idempotently.
 
-Razorpay is not working end to end. The hosted Test Mode page opens, but all attempted cards fail inside Razorpay before recurring authorization. No real activation webhook/local activation cycle has succeeded. Live mode remains deferred.
+## Razorpay
+
+Razorpay application integration is implemented, but hosted Test Mode recurring authorization remains externally blocked. Attempted sandbox cards fail within Razorpay before recurring authorization. Keep live mode deferred; do not treat this provider limitation as unfinished application billing work.
+
+## Plan/provider boundary
+
+Application plan creation does not automatically provision Stripe Products/Prices or Razorpay Plans. Provider checkout requires explicit server-side mappings. Automatic provider provisioning is future optional work.
 
 ## Preserve these boundaries
 
 - authentication, tenant isolation, authorization, subscription access and quotas are independent
 - checkout bypasses only lifecycle read-only enforcement and still requires `tenant.update`
-- provider webhooks remain authoritative for local subscription state
-- reconciliation reports mismatches without overwriting state
-- provider plan IDs, API keys and secrets remain server-side
+- provider webhooks remain authoritative for normal local lifecycle synchronization
+- verified provider lookup may repair stale terminal local state
+- provider plan/price IDs, API keys and secrets remain server-side
 - tenant API keys authenticate only `/api/external/**` and never impersonate users
 
 ## Resume sequence
 
-1. preserve and monitor the working Stripe Test Mode path
-2. test a subscription created directly in Razorpay Dashboard
-3. record `code`, `description`, `source`, `step` and `reason`
-4. contact Razorpay Support if the direct provider flow fails
-5. optionally build a feature-flagged, system-admin-only lifecycle simulator
-6. rerun Razorpay activation, charged/pending/halted, cancellation, replay and reconciliation smoke tests
-7. prepare live plans/keys only after provider-specific Test Mode validation succeeds
+1. consider Billing & Payments closed at application level
+2. start tenant-configurable outbound webhooks as the recommended next product milestone
+3. keep Stripe/Razorpay live readiness separate from feature development
+4. subsequently consider enterprise SSO, explain-access/delegation and deeper operational hardening
 
 ## Verification
 
-GitHub Actions is authoritative while local Docker is unavailable. Stripe has also passed a deployed Test Mode smoke test. Mock provider tests validate application contracts, not Razorpay sandbox availability.
+GitHub Actions remains authoritative where local Docker is unavailable. Require backend, PostgreSQL/Flyway, frontend, repository hygiene, security, container and Qodana checks before merge.

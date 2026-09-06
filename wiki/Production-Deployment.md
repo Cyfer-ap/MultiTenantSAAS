@@ -1,5 +1,7 @@
 # Production Deployment
 
+Reviewed through PR #98 on 2026-09-06.
+
 ## Current hosted topology
 
 ```text
@@ -17,38 +19,15 @@ Backend: `https://multitenantsaas-akxn.onrender.com`
 
 Use `SPRING_PROFILES_ACTIVE=postgres,production`.
 
-## Razorpay Test Mode
+## Billing deployment boundary
 
-Current deployment intentionally uses Test Mode. Required variable names:
-
-```dotenv
-RAZORPAY_BILLING_ENABLED=true
-RAZORPAY_KEY_ID=...
-RAZORPAY_KEY_SECRET=...
-RAZORPAY_PLAN_PRO=plan_...
-RAZORPAY_PLAN_ENTERPRISE=plan_...
-RAZORPAY_SUBSCRIPTION_TOTAL_COUNT=120
-RAZORPAY_WEBHOOK_ENABLED=true
-RAZORPAY_WEBHOOK_SECRET=...
-```
-
-Map Test Mode keys only to Test Mode plan IDs. Never commit values or expose them to the frontend.
-
-Correct webhook target:
-
-```text
-POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/razorpay
-```
-
-The webhook secret is a value chosen/configured for that Razorpay webhook, not the Razorpay API key secret. Opening the URL in a browser is a GET and is not a valid webhook test.
-
-Rotate any credential exposed in a screenshot, log or commit.
+Billing & Payments is complete at application level, but Test Mode validation is not a live-production readiness claim. Provider live keys/plans/products and production operational checks remain separate work.
 
 ## Stripe Test Mode
 
-Stripe can run beside Razorpay. Enabling both providers makes both hosted-checkout actions available; it does not remove or disable Razorpay.
+Stripe can run beside Razorpay.
 
-Configure server-side Test Mode values:
+Example server-side Test Mode variables:
 
 ```dotenv
 STRIPE_BILLING_ENABLED=true
@@ -67,17 +46,48 @@ Register:
 POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/stripe
 ```
 
-for `customer.subscription.created`, `customer.subscription.updated` and `customer.subscription.deleted`. Use recurring Test Mode Price IDs. No Stripe publishable key is required by the current hosted redirect implementation.
+Required enabled subscription lifecycle events currently include:
 
-The deployed Stripe Test Mode flow is working: hosted Checkout completes and signed subscription webhook processing synchronizes local state. PR #90 fixed the Stripe provider constructor injection failure that initially prevented Render startup with Stripe enabled.
+```text
+customer.subscription.created
+customer.subscription.updated
+customer.subscription.deleted
+```
 
-## Current deployment status
+The deployed Stripe Test Mode path is validated for hosted checkout, signed lifecycle synchronization and provider-side cancellation.
 
-The Stripe-enabled backend starts and Stripe Test Mode works end to end. Razorpay's hosted page opens, but every attempted Test Mode card fails before recurring authorization. Therefore Razorpay activation webhooks and local subscription activation have not been validated with that provider.
+Important incident note: during final cancellation validation, Stripe had cancelled subscriptions correctly but local state remained `ACTIVE` because `customer.subscription.deleted` was not enabled on the webhook endpoint. The endpoint configuration is now corrected; PR #98 additionally repairs already-terminal provider state idempotently.
 
-Do not enable live keys or live plans until the relevant provider's separate live-readiness checklist is complete. Razorpay must first complete Test Mode successfully.
+## Razorpay Test Mode
+
+Example variable names:
+
+```dotenv
+RAZORPAY_BILLING_ENABLED=true
+RAZORPAY_KEY_ID=...
+RAZORPAY_KEY_SECRET=...
+RAZORPAY_PLAN_PRO=plan_...
+RAZORPAY_PLAN_ENTERPRISE=plan_...
+RAZORPAY_SUBSCRIPTION_TOTAL_COUNT=120
+RAZORPAY_WEBHOOK_ENABLED=true
+RAZORPAY_WEBHOOK_SECRET=...
+```
+
+Correct webhook target:
+
+```text
+POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/razorpay
+```
+
+Razorpay checkout creation/redirect works, but recurring Test Mode authorization remains provider-sandbox blocked: attempted cards fail before authorization completes. Keep live readiness deferred.
+
+## Provider plan mapping
+
+Application plans are separate from Stripe Products/Prices and Razorpay Plans. Creating an application plan through system administration does not automatically provision provider billing objects. New paid plans need explicit server-side provider mappings before checkout can be enabled for those providers.
 
 ## Standard environment safety
+
+Never commit or expose provider keys, API secrets, webhook secrets or provider plan/price IDs. Rotate any credential exposed in a screenshot, log or commit.
 
 Also configure database, JWT, CORS, bootstrap and frontend URL variables from the production environment template. Keep:
 

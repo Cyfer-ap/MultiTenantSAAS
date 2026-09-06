@@ -2,6 +2,7 @@
 param(
     [string]$Repository = "Cyfer-ap/MultiTenantSAAS",
     [string]$SourceDirectory = (Join-Path $PSScriptRoot "..\wiki"),
+    [string]$AccessToken = $env:GITHUB_TOKEN,
     [switch]$NoPush
 )
 
@@ -44,6 +45,12 @@ if ($sourceFiles.Count -eq 0) {
 
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("multitenantsaas-wiki-" + [Guid]::NewGuid())
 $wikiUrl = "https://github.com/$Repository.wiki.git"
+
+if (-not $NoPush -and -not [string]::IsNullOrWhiteSpace($AccessToken)) {
+    $escapedToken = [System.Uri]::EscapeDataString($AccessToken)
+    $wikiUrl = "https://x-access-token:${escapedToken}@github.com/$Repository.wiki.git"
+}
+
 $pushedLocation = $false
 
 try {

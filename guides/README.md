@@ -28,23 +28,32 @@ Never modify an applied migration.
 
 ## Current phase
 
-The project is in **billing provider validation and operational hardening**, reviewed through PR #90.
+The project has completed **Billing & Payments at application level**, reviewed through PR #98.
 
-Delivered billing/platform milestones now include:
+Delivered billing/platform capabilities include:
 
-- provider-neutral billing and Stripe/Razorpay adapters
-- signed, durable webhook ingestion and subscription synchronization
-- provider-backed cancellation and read-only reconciliation
-- operations visibility
+- provider-neutral Stripe/Razorpay billing
+- signed durable webhooks and lifecycle synchronization
+- professional plan/provider checkout UX
+- provider-backed cancellation with linkage recovery
+- idempotent stale-terminal-state repair
+- operations visibility and read-only reconciliation
 - durable usage metering
 - tenant API keys and isolated external API authentication
 - per-plan external API quotas
-- tenant paid-plan discovery and hosted checkout
-- checkout recovery from a read-only workspace
+- checkout recovery from read-only workspaces
 
-Stripe hosted checkout and webhook-driven subscription synchronization work end to end in the deployed Test Mode environment. Razorpay hosted Test Mode checkout opens but payment authorization still fails inside Razorpay. Live mode remains deferred.
+Stripe is validated in deployed Test Mode for checkout, signed lifecycle webhooks and provider-side cancellation. Razorpay remains provider-sandbox blocked at recurring Test Mode authorization; this does not keep the application billing milestone open.
+
+Application plan creation does not automatically provision Stripe Products/Prices or Razorpay Plans. Provider mappings remain server-side configuration.
 
 Portable Flyway migrations extend through **V33**.
+
+## Next product milestone
+
+Recommended next major feature: **tenant-configurable outbound webhooks**.
+
+Other roadmap items include enterprise SSO, authorization delegation/explain-access, backup/restore drills, monitoring/alerts and broader load/failure-recovery testing.
 
 ## Verification baseline
 
@@ -61,12 +70,10 @@ npm test
 npm run build
 ```
 
-GitHub Actions is authoritative where Docker is unavailable. Stripe has also passed a real deployed Test Mode smoke test; Razorpay E2E remains outstanding.
+GitHub Actions remains authoritative where Docker is unavailable.
 
 ## Wiki
 
-Version-controlled Wiki source lives under `wiki/`. Publish with:
+Version-controlled Wiki source lives under `wiki/` and is canonical. Pull requests that change Wiki source run a no-push validation in `.github/workflows/wiki-sync.yml`. After those changes reach `main`, the same workflow automatically publishes them to the live GitHub Wiki using `scripts/publish-wiki.ps1`.
 
-```powershell
-.\scripts\publish-wiki.ps1
-```
+Manual publishing is now only a fallback. See `wiki/Wiki-Maintenance.md` for the synchronization policy.

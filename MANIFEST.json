@@ -1,12 +1,15 @@
 {
   "repository": "Cyfer-ap/MultiTenantSAAS",
   "branch": "main",
-  "reviewed_state": "post-PR #90",
-  "reviewed_commit": "e9257b3f368b5b2cc5df68f8782403011136e273",
-  "generated_date": "2026-08-27",
-  "phase": "Billing provider validation and operational hardening",
-  "working_provider": "Stripe deployed Test Mode checkout and webhook synchronization",
-  "external_blocker": "Razorpay hosted checkout opens, but test payment authorization has not completed successfully.",
+  "reviewed_state": "post-PR #98",
+  "reviewed_commit": "87319f8cba38528f7d03c4cdc0805459a3980de1",
+  "generated_date": "2026-09-06",
+  "phase": "Billing & Payments complete at application level",
+  "next_recommended_milestone": "Tenant-configurable outbound webhooks",
+  "stripe_status": "Deployed Test Mode checkout, signed lifecycle webhooks and provider-side cancellation validated; customer.subscription.deleted webhook subscription corrected.",
+  "razorpay_status": "Application integration implemented; Test Mode recurring authorization remains provider-sandbox blocked.",
+  "plan_provisioning": "System-admin application plan creation does not automatically provision Stripe Products/Prices or Razorpay Plans; provider mappings remain explicit server-side configuration.",
+  "wiki_sync": "Automatic on main through .github/workflows/wiki-sync.yml using scripts/publish-wiki.ps1.",
   "current_migration": "V33",
   "contents": {
     "root": [
@@ -24,7 +27,8 @@
       "HANDOFF.md",
       "current_architecture.md",
       "subscription_billing.md",
-      "DEFERRED_PLATFORM_WORK.md"
+      "DEFERRED_PLATFORM_WORK.md",
+      "collaboration_and_notifications.md"
     ],
     "wiki": [
       "Home.md",
@@ -33,7 +37,13 @@
       "Roadmap.md",
       "Subscriptions-and-Quotas.md",
       "Production-Deployment.md",
-      "Testing-and-CI.md"
+      "Testing-and-CI.md",
+      "Notifications.md",
+      "Wiki-Maintenance.md"
+    ],
+    "automation": [
+      "scripts/publish-wiki.ps1",
+      ".github/workflows/wiki-sync.yml"
     ]
   }
 }
