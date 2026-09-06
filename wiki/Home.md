@@ -1,10 +1,10 @@
 # MultiTenantSAAS Wiki
 
-MultiTenantSAAS is a full-stack multi-tenant SaaS platform with tenant isolation, scoped authorization, project collaboration, subscription enforcement, external billing foundations, usage metering, API keys and PostgreSQL-oriented production engineering.
+MultiTenantSAAS is a full-stack multi-tenant SaaS platform with tenant isolation, scoped authorization, project collaboration, subscription enforcement, external billing, usage metering, API keys and PostgreSQL-oriented production engineering.
 
 Version-controlled Wiki source lives under `wiki/`. See [[Wiki-Maintenance]].
 
-Current snapshot: **post-PR #90 (`e9257b3`), 2026-08-27**.
+Current snapshot: **post-PR #98 (`87319f8`), 2026-09-06**.
 
 ## Current platform state
 
@@ -18,27 +18,26 @@ Implemented capabilities include:
 - durable notifications, email delivery and preferences
 - internal subscription lifecycle, read-only enforcement and quotas
 - provider-neutral billing with Stripe and Razorpay adapters
-- hosted checkout, signed durable webhooks and webhook-driven lifecycle synchronization
-- provider cancellation, billing operations visibility and read-only reconciliation
+- professional plan/provider checkout UX
+- signed durable webhooks and webhook-driven lifecycle synchronization
+- provider-aware cancellation, linkage recovery and stale-terminal-state repair
+- billing operations visibility and read-only reconciliation
 - durable billing usage events
 - tenant API-key lifecycle and authentication under `/api/external/**`
 - plan-level API request quotas
-- tenant paid-plan discovery and hosted-checkout UI
 - PostgreSQL 17, Flyway, Testcontainers, CI, security and container checks
 
-## Stripe status
+## Billing milestone
 
-**Stripe works end to end in the deployed Test Mode environment.** Hosted Checkout completes and the signed Stripe subscription webhook synchronizes local subscription state. PR #90 fixed the Stripe-enabled Render startup regression.
+**Billing & Payments is complete at application level.**
 
-This is a Test Mode validation checkpoint, not a live-mode production-readiness claim.
+Stripe works in deployed Test Mode for hosted subscription Checkout, signed lifecycle webhooks and provider-side cancellation. During final validation, Stripe cancellations succeeded but the application remained locally `ACTIVE` because `customer.subscription.deleted` was missing from the webhook endpoint's enabled events. The endpoint now includes created/updated/deleted subscription events, and PR #98 adds idempotent state repair for already-terminal provider subscriptions.
 
-## Razorpay status
+Razorpay remains available but recurring Test Mode authorization is provider-sandbox blocked: hosted checkout opens while attempted test cards fail before recurring authorization. This external limitation does not keep the application billing milestone open.
 
-**Razorpay Test Mode is not working end to end yet.**
+## Provider plan boundary
 
-The deployed application starts, lists Pro and Enterprise, creates a Razorpay subscription and opens hosted checkout. All attempted test cards then fail inside Razorpay before recurring authorization. International cards are rejected because international acceptance is unavailable, while domestic recurring-compatible test cards have also failed.
-
-A real activation webhook and local subscription activation have therefore not been validated. Keep live keys and live plans deferred and do not call billing production-ready.
+Application plans and provider billing objects are separate. Creating a system-admin application plan does not automatically provision a Stripe Product/Price or Razorpay Plan. Provider checkout currently requires explicit server-side plan-code mappings.
 
 ## Architecture boundary
 
@@ -51,7 +50,7 @@ authentication
   -> domain invariants
 ```
 
-Provider plan IDs and secrets stay server-side. Application plans are mapped to Razorpay plans by environment configuration.
+Provider plan/price IDs and secrets stay server-side.
 
 ## Database checkpoint
 
@@ -70,4 +69,4 @@ Portable common migrations extend through **V33**. V28-V33 add billing persisten
 
 ## Current next step
 
-Preserve the working Stripe Test Mode path. Isolate the Razorpay sandbox failure through a Dashboard-created subscription, capture the structured payment failure fields and contact Razorpay Support if the direct provider flow also fails. An internal, feature-flagged billing simulator may be added for application lifecycle tests, but it does not replace real provider validation.
+Begin the next major product milestone rather than extending billing for provider-sandbox behavior. Recommended: **tenant-configurable outbound webhooks**. Enterprise SSO, authorization delegation/explain-access and deeper operational recovery/load testing follow on the roadmap.
