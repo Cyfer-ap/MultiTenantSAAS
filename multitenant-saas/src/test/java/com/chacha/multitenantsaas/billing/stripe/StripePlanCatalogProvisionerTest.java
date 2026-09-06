@@ -61,8 +61,7 @@ class StripePlanCatalogProvisionerTest {
                 .andExpect(content().string(containsString("product=prod_managed")))
                 .andExpect(content().string(containsString("currency=inr")))
                 .andExpect(content().string(containsString("unit_amount=49900")))
-                .andExpect(
-                        content().string(containsString("recurring%5Binterval%5D=month")))
+                .andExpect(content().string(containsString("recurring%5Binterval%5D=month")))
                 .andRespond(withSuccess("{\"id\":\"price_managed\"}", MediaType.APPLICATION_JSON));
 
         provisioner.planCreated(plan(planId, "499.00", BillingInterval.MONTHLY, "Pro", null));

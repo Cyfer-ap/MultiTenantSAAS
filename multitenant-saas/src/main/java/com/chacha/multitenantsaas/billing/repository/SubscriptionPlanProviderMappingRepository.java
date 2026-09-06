@@ -28,11 +28,10 @@ public interface SubscriptionPlanProviderMappingRepository
                     BillingProviderEnvironment environment,
                     SubscriptionPlanProviderMappingStatus status);
 
-    Optional<SubscriptionPlanProviderMapping>
-            findFirstByProviderAndEnvironmentAndProviderPriceId(
-                    BillingProviderType provider,
-                    BillingProviderEnvironment environment,
-                    String providerPriceId);
+    Optional<SubscriptionPlanProviderMapping> findFirstByProviderAndEnvironmentAndProviderPriceId(
+            BillingProviderType provider,
+            BillingProviderEnvironment environment,
+            String providerPriceId);
 
     List<SubscriptionPlanProviderMapping>
             findAllByPlan_IdAndProviderAndEnvironmentOrderByCreatedAtDesc(

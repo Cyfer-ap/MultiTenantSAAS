@@ -248,7 +248,11 @@ public class StripePlanCatalogProvisioner implements SubscriptionPlanCatalogProv
                 form,
                 idempotencyKey(
                         "product-update",
-                        plan.id() + "|" + plan.name() + "|" + Objects.toString(plan.description(), "")),
+                        plan.id()
+                                + "|"
+                                + plan.name()
+                                + "|"
+                                + Objects.toString(plan.description(), "")),
                 "Stripe product update failed");
     }
 
@@ -414,7 +418,12 @@ public class StripePlanCatalogProvisioner implements SubscriptionPlanCatalogProv
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(material.getBytes(StandardCharsets.UTF_8));
             String suffix = HexFormat.of().formatHex(hash, 0, 12);
-            return "mtsaas-" + environment().name().toLowerCase(Locale.ROOT) + "-" + operation + "-" + suffix;
+            return "mtsaas-"
+                    + environment().name().toLowerCase(Locale.ROOT)
+                    + "-"
+                    + operation
+                    + "-"
+                    + suffix;
         } catch (NoSuchAlgorithmException ex) {
             throw new IllegalStateException("SHA-256 is unavailable", ex);
         }
@@ -447,7 +456,8 @@ public class StripePlanCatalogProvisioner implements SubscriptionPlanCatalogProv
         return value.asString();
     }
 
-    private void compensateNewCatalogObjects(String productId, String priceId, RuntimeException cause) {
+    private void compensateNewCatalogObjects(
+            String productId, String priceId, RuntimeException cause) {
         setPriceActiveQuietly(priceId, false, cause);
         setProductActiveQuietly(productId, false, cause);
     }
@@ -481,7 +491,8 @@ public class StripePlanCatalogProvisioner implements SubscriptionPlanCatalogProv
 
     private static void requireConfigured(String value, String environmentVariable) {
         if (value == null || value.isBlank()) {
-            throw new IllegalStateException(environmentVariable + " must be configured for Stripe billing");
+            throw new IllegalStateException(
+                    environmentVariable + " must be configured for Stripe billing");
         }
     }
 }
