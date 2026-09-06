@@ -10,7 +10,6 @@ import com.chacha.multitenantsaas.dto.SubscriptionPlanResponse;
 import com.chacha.multitenantsaas.entity.SubscriptionPlan;
 import com.chacha.multitenantsaas.repository.SubscriptionPlanRepository;
 import java.time.Instant;
-import java.util.Locale;
 import java.util.Map;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
@@ -35,12 +34,19 @@ public class StripePlanRetirementProvisioner implements SubscriptionPlanCatalogP
             StripeBillingProperties properties,
             SubscriptionPlanProviderMappingRepository mappingRepository,
             SubscriptionPlanRepository planRepository) {
+        this(properties, mappingRepository, planRepository, RestClient.builder());
+    }
+
+    StripePlanRetirementProvisioner(
+            StripeBillingProperties properties,
+            SubscriptionPlanProviderMappingRepository mappingRepository,
+            SubscriptionPlanRepository planRepository,
+            RestClient.Builder builder) {
         this.properties = properties;
         this.mappingRepository = mappingRepository;
         this.planRepository = planRepository;
         this.restClient =
-                RestClient.builder()
-                        .baseUrl(properties.getBaseUrl())
+                builder.baseUrl(properties.getBaseUrl())
                         .defaultHeader(
                                 HttpHeaders.AUTHORIZATION, "Bearer " + properties.getSecretKey())
                         .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
