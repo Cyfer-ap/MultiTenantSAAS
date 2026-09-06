@@ -109,9 +109,7 @@ public class StripePlanRetirementProvisioner implements SubscriptionPlanCatalogP
         SubscriptionPlanProviderMapping existing =
                 mappingRepository
                         .findFirstByProviderAndEnvironmentAndProviderPriceId(
-                                BillingProviderType.STRIPE,
-                                properties.getEnvironment(),
-                                priceId)
+                                BillingProviderType.STRIPE, properties.getEnvironment(), priceId)
                         .orElse(null);
         if (existing != null) {
             return existing;

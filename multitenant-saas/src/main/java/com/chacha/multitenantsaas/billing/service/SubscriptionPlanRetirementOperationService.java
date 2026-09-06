@@ -29,9 +29,11 @@ public class SubscriptionPlanRetirementOperationService {
         SubscriptionPlan plan =
                 planRepository
                         .findById(planId)
-                        .orElseThrow(() -> new IllegalArgumentException("Subscription plan not found."));
+                        .orElseThrow(
+                                () -> new IllegalArgumentException("Subscription plan not found."));
         if (plan.getStatus() != SubscriptionPlanStatus.RETIRED) {
-            throw new IllegalStateException("Plan must be retired before provider cleanup is queued.");
+            throw new IllegalStateException(
+                    "Plan must be retired before provider cleanup is queued.");
         }
 
         Instant now = Instant.now();
@@ -67,13 +69,17 @@ public class SubscriptionPlanRetirementOperationService {
     private SubscriptionPlanRetirementOperation requireOperation(UUID planId) {
         return operationRepository
                 .findByPlan_Id(planId)
-                .orElseThrow(() -> new IllegalStateException("Plan retirement operation is missing."));
+                .orElseThrow(
+                        () -> new IllegalStateException("Plan retirement operation is missing."));
     }
 
     private String safeMessage(Throwable failure) {
         String message = failure == null ? null : failure.getMessage();
         if (message == null || message.isBlank()) {
-            message = failure == null ? "Unknown provider cleanup failure" : failure.getClass().getSimpleName();
+            message =
+                    failure == null
+                            ? "Unknown provider cleanup failure"
+                            : failure.getClass().getSimpleName();
         }
         return message.length() <= 1000 ? message : message.substring(0, 1000);
     }

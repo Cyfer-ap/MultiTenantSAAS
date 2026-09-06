@@ -100,7 +100,10 @@ class SubscriptionPlanRetirementCoordinatorTest {
                 .hasMessageContaining("retired locally");
 
         verify(stripe).scheduleCancellationAtPeriodEnd("sub_ok");
-        verify(operationService).markFailed(org.mockito.ArgumentMatchers.eq(planId), org.mockito.ArgumentMatchers.any());
+        verify(operationService)
+                .markFailed(
+                        org.mockito.ArgumentMatchers.eq(planId),
+                        org.mockito.ArgumentMatchers.any());
         verify(operationService, never()).markCompleted(planId);
     }
 
