@@ -100,6 +100,14 @@ Billing hardening through PR #98 passed the repository's required CI families ac
 
 Mocked provider-contract tests prove application behavior; they do not prove Razorpay sandbox availability.
 
+## Documentation closure
+
+Current README, root checkpoint/handoff files, focused guides, Wiki source, roadmap, testing/deployment pages and documentation manifests are refreshed to this checkpoint.
+
+`wiki/*.md` is the canonical Wiki source. `.github/workflows/wiki-sync.yml` validates Wiki changes on pull requests and automatically publishes merged `main` changes to the live GitHub Wiki with `scripts/publish-wiki.ps1`. Manual Wiki publishing is now a fallback rather than a normal release step.
+
+Historical planning files remain intentionally historical and are not rewritten as current specifications.
+
 ## Next platform milestone
 
 Billing is no longer the active development phase. The next major product milestone should be selected from the current roadmap. Recommended next feature: **tenant-configurable outbound webhooks**, followed by enterprise SSO, authorization delegation/explain-access and deeper operational recovery/load testing.
