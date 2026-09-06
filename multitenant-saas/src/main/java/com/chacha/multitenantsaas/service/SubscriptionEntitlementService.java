@@ -78,13 +78,21 @@ public class SubscriptionEntitlementService {
             Instant evaluatedAt) {
         SubscriptionPlan plan = subscription.getPlan();
         AccessDecision accessDecision = evaluateAccess(subscription, plan, evaluatedAt);
+        boolean hasPlanSnapshot = subscription.getPlanCodeSnapshot() != null;
+
+        String planCode = hasPlanSnapshot ? subscription.getPlanCodeSnapshot() : plan.getCode();
+        String planName = hasPlanSnapshot ? subscription.getPlanNameSnapshot() : plan.getName();
+        Integer maxUsers =
+                hasPlanSnapshot ? subscription.getMaxUsersSnapshot() : plan.getMaxUsers();
+        Integer maxProjects =
+                hasPlanSnapshot ? subscription.getMaxProjectsSnapshot() : plan.getMaxProjects();
 
         return new TenantSubscriptionEntitlementResponse(
                 tenantId,
                 subscription.getId(),
                 plan.getId(),
-                plan.getCode(),
-                plan.getName(),
+                planCode,
+                planName,
                 subscription.getStatus(),
                 accessDecision.accessLevel(),
                 accessDecision.accessReason(),
@@ -94,11 +102,10 @@ public class SubscriptionEntitlementService {
                 subscription.getCurrentPeriodEnd(),
                 subscription.getTrialEndsAt(),
                 evaluatedAt,
-                resourceEntitlement(
-                        activeUsers, toLong(plan.getMaxUsers()), accessDecision.mutationsAllowed()),
+                resourceEntitlement(activeUsers, toLong(maxUsers), accessDecision.mutationsAllowed()),
                 resourceEntitlement(
                         nonArchivedProjects,
-                        toLong(plan.getMaxProjects()),
+                        toLong(maxProjects),
                         accessDecision.mutationsAllowed()));
     }
 
@@ -125,7 +132,7 @@ public class SubscriptionEntitlementService {
 
     private AccessDecision evaluateAccess(
             TenantSubscription subscription, SubscriptionPlan plan, Instant evaluatedAt) {
-        if (plan.getStatus() != SubscriptionPlanStatus.ACTIVE) {
+        if (plan.getStatus() == SubscriptionPlanStatus.INACTIVE) {
             return AccessDecision.blocked(SubscriptionAccessReason.PLAN_INACTIVE);
         }
 
