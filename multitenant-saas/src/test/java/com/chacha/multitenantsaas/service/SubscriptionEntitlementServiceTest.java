@@ -82,6 +82,32 @@ class SubscriptionEntitlementServiceTest {
     }
 
     @Test
+    void retiredPlanKeepsPurchasedEntitlementsUntilCurrentPeriodEnds() {
+        stubUsage(2L, 1L, 0L);
+        stubSubscription(
+                TenantSubscriptionStatus.ACTIVE,
+                SubscriptionPlanStatus.RETIRED,
+                Instant.now().plus(30, ChronoUnit.DAYS),
+                null,
+                99,
+                99);
+        when(subscription.getPlanCodeSnapshot()).thenReturn("LEGACY_PRO");
+        when(subscription.getPlanNameSnapshot()).thenReturn("Legacy Pro");
+        when(subscription.getMaxUsersSnapshot()).thenReturn(3);
+        when(subscription.getMaxProjectsSnapshot()).thenReturn(2);
+
+        TenantSubscriptionEntitlementResponse result = service.evaluate(TENANT_ID);
+
+        assertThat(result.accessLevel()).isEqualTo(SubscriptionAccessLevel.FULL_ACCESS);
+        assertThat(result.accessReason()).isEqualTo(SubscriptionAccessReason.ACTIVE);
+        assertThat(result.planCode()).isEqualTo("LEGACY_PRO");
+        assertThat(result.planName()).isEqualTo("Legacy Pro");
+        assertThat(result.users().limit()).isEqualTo(3L);
+        assertThat(result.projects().limit()).isEqualTo(2L);
+        assertThat(result.mutationsAllowed()).isTrue();
+    }
+
+    @Test
     void activeTrialAllowsMutationsBeforeTrialEnd() {
         stubUsage(1L, 0L, 0L);
         stubSubscription(
