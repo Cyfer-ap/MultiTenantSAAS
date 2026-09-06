@@ -84,13 +84,16 @@ class SubscriptionEntitlementServiceTest {
     @Test
     void retiredPlanKeepsPurchasedEntitlementsUntilCurrentPeriodEnds() {
         stubUsage(2L, 1L, 0L);
-        stubSubscription(
-                TenantSubscriptionStatus.ACTIVE,
-                SubscriptionPlanStatus.RETIRED,
-                Instant.now().plus(30, ChronoUnit.DAYS),
-                null,
-                99,
-                99);
+        when(tenantSubscriptionRepository.findByTenantIdWithPlan(TENANT_ID))
+                .thenReturn(Optional.of(subscription));
+        when(subscription.getId()).thenReturn(SUBSCRIPTION_ID);
+        when(subscription.getPlan()).thenReturn(plan);
+        when(subscription.getStatus()).thenReturn(TenantSubscriptionStatus.ACTIVE);
+        when(subscription.getCurrentPeriodEnd())
+                .thenReturn(Instant.now().plus(30, ChronoUnit.DAYS));
+        when(subscription.isCancelAtPeriodEnd()).thenReturn(false);
+        when(plan.getId()).thenReturn(PLAN_ID);
+        when(plan.getStatus()).thenReturn(SubscriptionPlanStatus.RETIRED);
         when(subscription.getPlanCodeSnapshot()).thenReturn("LEGACY_PRO");
         when(subscription.getPlanNameSnapshot()).thenReturn("Legacy Pro");
         when(subscription.getMaxUsersSnapshot()).thenReturn(3);
