@@ -1,62 +1,66 @@
 # Wiki Maintenance
 
-## Why the repository `wiki/` folder does not automatically appear in the Wiki tab
-
 GitHub Wiki pages are stored in a separate Git repository:
 
 ```text
 Cyfer-ap/MultiTenantSAAS.wiki.git
 ```
 
-The main repository's `wiki/` directory is therefore a **version-controlled source copy**, not the live Wiki repository.
+The main repository therefore keeps `wiki/*.md` as the **canonical, reviewable source**. Do not treat long-lived edits made directly in the Wiki UI as authoritative.
 
-## Source of truth
+## Automatic publishing
 
-Use:
+The live GitHub Wiki is synchronized automatically by:
 
 ```text
-wiki/*.md
+.github/workflows/wiki-sync.yml
 ```
 
-in the main repository as the canonical editable source.
+The workflow runs after a push to `main` when any of these change:
 
-Changes should normally go through the protected-main pull-request workflow.
+- `wiki/**`
+- `scripts/publish-wiki.ps1`
+- `.github/workflows/wiki-sync.yml`
+
+It uses the repository `GITHUB_TOKEN`, configures a GitHub Actions bot commit identity and invokes:
+
+```powershell
+.\scripts\publish-wiki.ps1
+```
+
+The publisher clones `MultiTenantSAAS.wiki.git`, copies every Markdown page from the canonical `wiki/` directory, removes live Markdown pages that no longer exist in source, runs `git diff --cached --check`, and commits/pushes only when a difference exists.
+
+The workflow runs only from `main`; pull requests do **not** publish unmerged Wiki content.
 
 ## One-time Wiki initialization
 
-Before GitHub exposes the `.wiki.git` repository, create the first Wiki page once through the GitHub Wiki UI.
+GitHub must expose the `.wiki.git` repository before automation can use it. If the Wiki has never been initialized, create the first temporary `Home` page once through the repository Wiki UI. After that, the automatic workflow owns synchronization from `wiki/`.
 
-The initial page can be a temporary `Home` page; the publishing script will replace it from the canonical source.
+## Manual fallback / preview
 
-## Publishing
-
-After Wiki initialization and after the documentation PR is merged:
+Automatic publishing is the normal path. For troubleshooting or local preview:
 
 ```powershell
-git switch main
-git pull --ff-only origin main
+# Preview the difference without committing or pushing.
+.\scripts\publish-wiki.ps1 -NoPush
 
+# Manual authenticated publish after gh auth setup-git, if ever needed.
 gh auth setup-git
 .\scripts\publish-wiki.ps1
 ```
 
-The script:
+In GitHub Actions the script reads `GITHUB_TOKEN` automatically. Locally, it continues to work with the user's normal Git credential configuration when no token is supplied.
 
-1. validates required source pages
-2. clones `MultiTenantSAAS.wiki.git` into a temporary directory
-3. synchronizes all Markdown pages from `wiki/`
-4. removes Markdown pages that no longer exist in the source folder
-5. runs `git diff --check`
-6. commits only when there are changes
-7. pushes the live Wiki repository
+## Required and special files
 
-Use preview mode to inspect without pushing:
+The publisher validates these required source pages:
 
-```powershell
-.\scripts\publish-wiki.ps1 -NoPush
+```text
+Home.md
+_Sidebar.md
+_Footer.md
+Wiki-Maintenance.md
 ```
-
-## Special files
 
 GitHub renders these specially:
 
@@ -68,10 +72,9 @@ _Footer.md    -> custom footer
 
 ## Editing policy
 
-Avoid making long-lived edits directly in the GitHub Wiki UI because they can drift from the source folder.
+1. edit `wiki/*.md` in the main repository
+2. merge through the normal protected-main PR workflow
+3. let `Wiki Sync` publish the merged content automatically
+4. if an emergency direct Wiki edit is unavoidable, copy the same change back into `wiki/` immediately or the next automatic sync will overwrite it
 
-If an emergency Wiki edit is made directly, copy the same change back into `wiki/` before the next source sync.
-
-## Links
-
-Prefer Wiki page links over links to the source Markdown files so readers stay inside the Wiki.
+Prefer Wiki page links over links to source Markdown so readers remain inside the Wiki.
