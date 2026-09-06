@@ -1,6 +1,6 @@
 # Collaboration, attachments and notifications
 
-This guide summarizes the current tenant-scoped collaboration stack and the notification/delivery subsystem that supports it. The snapshot is current through PR #65.
+Reviewed for the current platform snapshot on 2026-09-06. The collaboration/notification implementation itself was largely delivered by PR #65 and earlier collaboration/storage work; the platform has since completed the billing milestone through PR #98.
 
 ## Task collaboration
 
@@ -18,7 +18,7 @@ Authorization and tenant isolation remain backend authoritative for every collab
 
 ## Attachment storage
 
-Attachments use an S3-compatible abstraction backed by the AWS SDK v2 and designed for Cloudflare R2.
+Attachments use an S3-compatible abstraction backed by AWS SDK v2 and designed for Cloudflare R2.
 
 The upload lifecycle is two-phase:
 
@@ -36,7 +36,7 @@ client completes attachment metadata flow
 backend verifies durable attachment state and object metadata
 ```
 
-Download/delete operations repeat scope/authorization validation rather than trusting object keys supplied by the client.
+Download/delete operations repeat scope and authorization validation rather than trusting client-supplied object keys.
 
 Attachment lifecycle hardening includes pessimistic completion/deletion locking, idempotent state handling, stale `PENDING` cleanup, retryable deferred object deletion and comment-deletion cleanup.
 
@@ -51,68 +51,35 @@ V23__harden_task_attachment_cleanup.sql
 V24__add_comment_threads_and_pins.sql
 ```
 
-The one-level reply model is intentional; do not silently turn it into arbitrary-depth recursive threads without revisiting API, query and UI behavior.
+The one-level reply model is intentional; do not silently turn it into arbitrary-depth recursion without revisiting API, query and UI behavior.
 
-## Notification persistence
+## Notification persistence and delivery
 
-Tenant notifications are recipient scoped. Current capabilities include:
+Tenant notifications are recipient scoped and include:
 
-- create/store notification records
-- list current recipient notifications
-- unread count
-- mark one notification read
-- mark all notifications read
-- safe internal deep-link target
+- durable notification records
+- recipient list and unread count
+- mark-one-read and mark-all-read
+- safe internal deep links
+- durable external delivery records
+- bounded retry/backoff
+- processing leases/timeouts
+- idempotency-oriented claiming
+- email delivery through the provider abstraction
+- recipient email preferences
+- in-app notification bell and unread badge
 
-The authenticated actor/recipient context is authoritative; clients must not be allowed to select an arbitrary recipient identity.
+The authenticated actor/recipient context is authoritative; clients cannot choose an arbitrary recipient identity.
 
 Schema:
 
 ```text
 V25__create_notifications.sql
-```
-
-## Durable delivery
-
-Notification delivery records provide a PostgreSQL-backed reliability layer for external side effects.
-
-The delivery design includes:
-
-- durable delivery state
-- bounded retry attempts
-- retry/backoff scheduling
-- processing leases/timeouts
-- idempotency-oriented claiming/processing
-- provider failure handling
-
-Schema:
-
-```text
 V26__create_notification_deliveries.sql
-```
-
-This foundation supports email delivery through the existing email-provider abstraction.
-
-## Notification preferences
-
-Recipients can configure optional email delivery per configurable notification event while in-app notification history remains mandatory.
-
-Important policy rules:
-
-- in-app persistence is not disabled by an email opt-out
-- optional email defaults to enabled for backward compatibility
-- security-alert email is mandatory/non-configurable
-- preference lookup remains tenant + recipient + notification-type scoped
-
-Schema:
-
-```text
 V27__create_notification_preferences.sql
 ```
 
 ## Current product events
-
-The notification catalogue includes:
 
 ```text
 TASK_ASSIGNED
@@ -125,60 +92,29 @@ WORKSPACE_INVITATION
 SECURITY_ALERT
 ```
 
-Current producers cover:
+Current producers cover task assignment/reassignment, task lifecycle changes, top-level comments, replies, mentions and project membership changes. Recipient policy suppresses self-notifications and deduplicates overlapping mention/reply/assignee targets.
 
-- assignment/reassignment of a task to another project member
-- task status/cancellation changes for the assignee when the actor differs
-- top-level task comments for the assignee
-- replies for the parent comment author
-- mentions for explicitly mentioned project members
-- project membership add/role-change/remove lifecycle events
-
-Recipient policy suppresses self-notifications and deduplicates overlapping mention/reply/assignee targets.
-
-`WORKSPACE_INVITATION` is present in the type catalogue and preferences surface but remains available for future product-level invitation notification wiring.
+`WORKSPACE_INVITATION` remains available in the catalogue/preferences surface for future product-level wiring. Security-alert email remains mandatory/non-configurable.
 
 ## Precise deep links
 
-Collaboration notification targets carry internal project/task/comment/reply identifiers. The frontend can:
+Collaboration notification targets carry internal project/task/comment/reply identifiers. The frontend can open the task collaboration drawer, select the Comments tab, resolve comments outside the first page, expand the correct parent thread, highlight/scroll the exact comment or reply, and clean query parameters when the drawer closes.
 
-- open the task collaboration drawer
-- open the Comments tab
-- resolve a linked comment directly even when it is outside the normal first comment page
-- expand the correct parent thread
-- highlight and scroll to the exact top-level comment or reply
-- clean comment/reply query parameters when the drawer closes
+Removal-from-project notifications intentionally target `/projects` because the removed user may no longer be authorized for the former project.
 
-Removal-from-project notifications intentionally target `/projects` because a removed user may no longer be authorized for the former project.
+## Remaining optional work
 
-## In-app notification center
+The original collaboration/notification expansion is complete. Optional follow-ups include:
 
-The authenticated application shell includes a notification bell with:
+1. workspace invitation in-app wiring
+2. digest/batching behavior
+3. live browser delivery via SSE/WebSocket
+4. delivery/admin observability
+5. provider bounce/complaint processing if needed
 
-- unread badge
-- notification list
-- loading/empty/error states
-- read/unread state
-- mark-all-read
-- safe internal deep-link navigation
+These are **not** the next platform foundation. Billing has now also been completed at application level through PR #98.
 
-## Configuration
-
-Notification delivery is environment controlled. Compose/production configuration should preserve delivery enablement, batch sizing, retry limits, processing timeout, retry delays and frontend base URL as environment values.
-
-Object storage is likewise environment controlled through the storage provider/R2 endpoint/bucket/credential configuration.
-
-## Remaining product/operations opportunities
-
-The original collaboration-notification expansion is complete. Further work is optional and should be driven by product or operations value:
-
-1. workspace invitation in-app event wiring
-2. optional digest/batching behavior
-3. optional live notification delivery via SSE/WebSocket
-4. delivery/admin observability when needed
-5. provider bounce/complaint processing if email operations require it
-
-External billing is the next major platform milestone; notification foundation work should not block it.
+The recommended next major product milestone is **tenant-configurable outbound webhooks**, which can reuse lessons from the existing durable notification delivery model: retries, leases, idempotency, recipient/endpoint scoping and operational visibility.
 
 ## Invariants
 
