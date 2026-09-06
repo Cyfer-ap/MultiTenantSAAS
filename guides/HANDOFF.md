@@ -33,6 +33,12 @@ Never place real credentials or provider IDs in docs, commits, frontend configur
 - provider identifiers and credentials stay server-side
 - API keys remain tenant-bound and restricted to `/api/external/**`
 
+## Documentation/Wiki
+
+Current root docs, focused guides and version-controlled Wiki source have been refreshed to the billing-closure checkpoint.
+
+`wiki/*.md` is canonical. `.github/workflows/wiki-sync.yml` validates relevant pull requests and automatically publishes merged `main` Wiki changes using `scripts/publish-wiki.ps1`. Manual publishing is fallback-only.
+
 ## Resume steps
 
 1. treat Billing & Payments as closed at application level
@@ -43,4 +49,4 @@ Never place real credentials or provider IDs in docs, commits, frontend configur
 
 ## Verification
 
-GitHub Actions remains authoritative where local Docker is unavailable. Require backend, PostgreSQL/Flyway, frontend, repository hygiene, security, containers and Qodana before merge.
+GitHub Actions remains authoritative where local Docker is unavailable. Require backend, PostgreSQL/Flyway, frontend, repository hygiene, security, containers and Qodana before merge. Relevant Wiki changes must also pass `Wiki Sync / Validate Wiki Source`.
