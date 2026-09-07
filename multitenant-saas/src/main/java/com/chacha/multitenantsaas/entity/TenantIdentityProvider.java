@@ -143,6 +143,18 @@ public class TenantIdentityProvider {
         this.updatedAt = now;
     }
 
+    public void markVerified(AppUser actor, Instant now) {
+        if (status == TenantIdentityProviderStatus.DISABLED) {
+            throw new IllegalStateException(
+                    "Disabled identity-provider configuration cannot be verified");
+        }
+        status = TenantIdentityProviderStatus.VERIFIED;
+        verifiedAt = now;
+        disabledAt = null;
+        updatedByUser = actor;
+        updatedAt = now;
+    }
+
     public void disable(AppUser actor, Instant now) {
         if (status != TenantIdentityProviderStatus.DISABLED) {
             status = TenantIdentityProviderStatus.DISABLED;
@@ -234,5 +246,9 @@ public class TenantIdentityProvider {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public long getVersion() {
+        return version;
     }
 }

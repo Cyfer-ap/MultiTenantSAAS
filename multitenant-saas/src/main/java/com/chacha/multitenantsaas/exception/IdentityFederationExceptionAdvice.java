@@ -14,6 +14,20 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class IdentityFederationExceptionAdvice {
 
+    @ExceptionHandler(IdentityProviderVerificationException.class)
+    public ResponseEntity<ApiErrorResponse> handleVerificationFailure(
+            IdentityProviderVerificationException exception, HttpServletRequest request) {
+        ApiErrorResponse response =
+                ApiErrorResponse.of(
+                        exception.getMessage(),
+                        ErrorCode.IDENTITY_PROVIDER_VERIFICATION_FAILED,
+                        HttpStatus.BAD_GATEWAY.value(),
+                        request.getRequestURI(),
+                        null);
+
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(response);
+    }
+
     @ExceptionHandler(IdentityFederationUnavailableException.class)
     public ResponseEntity<ApiErrorResponse> handleUnavailable(
             IdentityFederationUnavailableException exception, HttpServletRequest request) {
