@@ -4,16 +4,21 @@ import com.chacha.multitenantsaas.dto.TenantIdentityProviderCreateRequest;
 import com.chacha.multitenantsaas.dto.TenantIdentityProviderResponse;
 import com.chacha.multitenantsaas.dto.TenantIdentityProviderSecretRotatedResponse;
 import com.chacha.multitenantsaas.dto.TenantIdentityProviderUpdateRequest;
+import com.chacha.multitenantsaas.dto.TenantSsoPolicyUpdateRequest;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.AuditAction;
 import com.chacha.multitenantsaas.entity.IdentityProviderProtocol;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.TenantIdentityProvider;
 import com.chacha.multitenantsaas.entity.TenantIdentityProviderStatus;
+import com.chacha.multitenantsaas.entity.TenantSsoMode;
 import com.chacha.multitenantsaas.entity.TenantStatus;
+import com.chacha.multitenantsaas.entity.UserRole;
+import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import com.chacha.multitenantsaas.exception.DuplicateResourceException;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
+import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.TenantIdentityProviderRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import java.time.Instant;
@@ -38,6 +43,7 @@ public class TenantIdentityProviderService {
 
     private final TenantIdentityProviderRepository identityProviderRepository;
     private final TenantRepository tenantRepository;
+    private final AppUserRepository appUserRepository;
     private final IdentityProviderIssuerValidator issuerValidator;
     private final IdentityProviderSecretCipher secretCipher;
     private final AuditLogService auditLogService;
@@ -45,11 +51,13 @@ public class TenantIdentityProviderService {
     public TenantIdentityProviderService(
             TenantIdentityProviderRepository identityProviderRepository,
             TenantRepository tenantRepository,
+            AppUserRepository appUserRepository,
             IdentityProviderIssuerValidator issuerValidator,
             IdentityProviderSecretCipher secretCipher,
             AuditLogService auditLogService) {
         this.identityProviderRepository = identityProviderRepository;
         this.tenantRepository = tenantRepository;
+        this.appUserRepository = appUserRepository;
         this.issuerValidator = issuerValidator;
         this.secretCipher = secretCipher;
         this.auditLogService = auditLogService;
@@ -121,6 +129,39 @@ public class TenantIdentityProviderService {
                 actor,
                 AuditAction.IDENTITY_PROVIDER_UPDATED,
                 "Updated tenant identity provider " + identityProvider.getId());
+        return mapResponse(identityProvider);
+    }
+
+    @Transactional
+    public TenantIdentityProviderResponse updateSsoPolicy(
+            UUID tenantId, AppUser actor, TenantSsoPolicyUpdateRequest request) {
+        Objects.requireNonNull(request, "request must not be null");
+        Tenant tenant = getActiveTenant(tenantId);
+        requireTenantActor(tenantId, actor);
+        TenantIdentityProvider identityProvider = requireConfiguration(tenantId);
+
+        if (request.ssoMode() == TenantSsoMode.REQUIRED) {
+            if (identityProvider.getStatus() != TenantIdentityProviderStatus.VERIFIED) {
+                throw new IllegalArgumentException(
+                        "SSO can only be required after the identity provider is verified");
+            }
+
+            long breakGlassAdmins =
+                    appUserRepository.countUsersWithPasswordByTenantRoleAndStatus(
+                            tenantId, UserRole.TENANT_ADMIN, UserStatus.ACTIVE);
+            if (breakGlassAdmins < 1L) {
+                throw new IllegalArgumentException(
+                        "At least one active tenant administrator with a password is required before SSO enforcement can be enabled");
+            }
+        }
+
+        identityProvider.updateSsoMode(request.ssoMode(), actor, Instant.now());
+        identityProviderRepository.save(identityProvider);
+        auditLogService.recordSelfSuccess(
+                tenant,
+                actor,
+                AuditAction.IDENTITY_PROVIDER_SSO_POLICY_UPDATED,
+                "Updated tenant SSO policy to " + identityProvider.getSsoMode());
         return mapResponse(identityProvider);
     }
 
@@ -277,6 +318,7 @@ public class TenantIdentityProviderService {
                 identityProvider.getClientId(),
                 identityProvider.getScopes(),
                 identityProvider.getStatus(),
+                identityProvider.getSsoMode(),
                 identityProvider.getClientSecretHint(),
                 identityProvider.getSecretVersion(),
                 identityProvider.getVerifiedAt(),

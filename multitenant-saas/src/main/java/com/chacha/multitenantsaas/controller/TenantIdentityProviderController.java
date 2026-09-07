@@ -7,6 +7,7 @@ import com.chacha.multitenantsaas.dto.TenantIdentityProviderSecretRotateRequest;
 import com.chacha.multitenantsaas.dto.TenantIdentityProviderSecretRotatedResponse;
 import com.chacha.multitenantsaas.dto.TenantIdentityProviderUpdateRequest;
 import com.chacha.multitenantsaas.dto.TenantIdentityProviderVerificationResponse;
+import com.chacha.multitenantsaas.dto.TenantSsoPolicyUpdateRequest;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.service.CurrentActorService;
 import com.chacha.multitenantsaas.service.TenantIdentityProviderService;
@@ -85,6 +86,21 @@ public class TenantIdentityProviderController {
                         ApiResponse.success(
                                 "Tenant identity-provider configuration updated successfully",
                                 identityProviderService.update(tenantId, actor, request)));
+    }
+
+    @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId, 'tenant.update')")
+    @PutMapping("/policy")
+    public ResponseEntity<ApiResponse<TenantIdentityProviderResponse>> updateSsoPolicy(
+            @PathVariable UUID tenantId,
+            @Valid @RequestBody TenantSsoPolicyUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(
+                        ApiResponse.success(
+                                "Tenant SSO policy updated successfully",
+                                identityProviderService.updateSsoPolicy(tenantId, actor, request)));
     }
 
     @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId, 'tenant.update')")

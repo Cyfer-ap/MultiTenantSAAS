@@ -2,6 +2,7 @@ package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.IdentityProviderProtocol;
 import com.chacha.multitenantsaas.entity.TenantIdentityProviderStatus;
+import com.chacha.multitenantsaas.entity.TenantSsoMode;
 import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
@@ -15,6 +16,7 @@ public record TenantIdentityProviderResponse(
         String clientId,
         Set<String> scopes,
         TenantIdentityProviderStatus status,
+        TenantSsoMode ssoMode,
         String clientSecretHint,
         int secretVersion,
         Instant verifiedAt,
