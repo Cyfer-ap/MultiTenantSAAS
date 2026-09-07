@@ -9,6 +9,7 @@ import com.chacha.multitenantsaas.entity.AuditAction;
 import com.chacha.multitenantsaas.entity.IdentityProviderProtocol;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.TenantIdentityProvider;
+import com.chacha.multitenantsaas.entity.TenantIdentityProviderStatus;
 import com.chacha.multitenantsaas.entity.TenantStatus;
 import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import com.chacha.multitenantsaas.exception.DuplicateResourceException;
@@ -28,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class TenantIdentityProviderService {
 
     private static final int SECRET_HINT_LENGTH = 6;
+    private static final int MAX_CLIENT_SECRET_LENGTH = 2048;
+    private static final int MIN_CLIENT_SECRET_LENGTH = 8;
     private static final int MAX_SCOPES = 20;
     private static final int MAX_SCOPE_LENGTH = 100;
     private static final Pattern SCOPE_PATTERN = Pattern.compile("[A-Za-z0-9._:-]+");
@@ -67,7 +70,7 @@ public class TenantIdentityProviderService {
                     "Only OIDC identity providers are supported currently");
         }
 
-        String rawSecret = normalizeClientSecret(request.clientSecret());
+        String rawSecret = validateClientSecret(request.clientSecret());
         Instant now = Instant.now();
         TenantIdentityProvider identityProvider =
                 new TenantIdentityProvider(
@@ -127,7 +130,7 @@ public class TenantIdentityProviderService {
         Tenant tenant = getActiveTenant(tenantId);
         requireTenantActor(tenantId, actor);
         TenantIdentityProvider identityProvider = requireConfiguration(tenantId);
-        String rawSecret = normalizeClientSecret(clientSecret);
+        String rawSecret = validateClientSecret(clientSecret);
         Instant now = Instant.now();
 
         identityProvider.rotateClientSecret(
@@ -152,8 +155,7 @@ public class TenantIdentityProviderService {
         requireTenantActor(tenantId, actor);
         TenantIdentityProvider identityProvider = requireConfiguration(tenantId);
 
-        if (identityProvider.getStatus()
-                != com.chacha.multitenantsaas.entity.TenantIdentityProviderStatus.DISABLED) {
+        if (identityProvider.getStatus() != TenantIdentityProviderStatus.DISABLED) {
             identityProvider.disable(actor, Instant.now());
             identityProviderRepository.save(identityProvider);
             auditLogService.recordSelfSuccess(
@@ -208,13 +210,19 @@ public class TenantIdentityProviderService {
         return normalizeRequired(value, 512, "Identity-provider client ID");
     }
 
-    private String normalizeClientSecret(String value) {
-        String normalized = normalizeRequired(value, 2048, "Identity-provider client secret");
-        if (normalized.length() < 8) {
+    private String validateClientSecret(String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Identity-provider client secret must not be blank");
+        }
+        if (value.length() < MIN_CLIENT_SECRET_LENGTH) {
             throw new IllegalArgumentException(
                     "Identity-provider client secret must contain at least 8 characters");
         }
-        return normalized;
+        if (value.length() > MAX_CLIENT_SECRET_LENGTH) {
+            throw new IllegalArgumentException(
+                    "Identity-provider client secret must not exceed 2048 characters");
+        }
+        return value;
     }
 
     private String normalizeRequired(String value, int maxLength, String label) {
