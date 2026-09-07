@@ -36,21 +36,25 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           path = Path('src/pages/OutboundWebhooksPage.tsx')
           text = path.read_text()
-          replacements = [
-              ("inputProps={{ readOnly: true }}", "slotProps={{ input: { readOnly: true } }}"),
-              ('<Stack alignItems="center" sx={{ p: 4 }}>', "<Stack sx={{ alignItems: 'center', p: 4 }}>") ,
-              ('<Stack direction="row" flexWrap="wrap" gap={0.5}>', "<Stack direction=\"row\" sx={{ flexWrap: 'wrap', gap: 0.5 }}>") ,
-              ('<Stack direction="row" justifyContent="flex-end" spacing={0.5}>', "<Stack direction=\"row\" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>") ,
-              ("endpointById.get(deliveryQuery.data.delivery.endpointId)?.enabled === false", "endpointById.get(deliveryQuery.data.delivery.endpointId)?.enabled !== true"),
+
+          substitutions = [
+              (r'inputProps=\{\{\s*readOnly:\s*true\s*\}\}', "slotProps={{ input: { readOnly: true } }}", 1),
+              (r'<Stack\s+alignItems="center"\s+sx=\{\{\s*p:\s*4\s*\}\}\s*>', "<Stack sx={{ alignItems: 'center', p: 4 }}>", 3),
+              (r'<Stack\s+direction="row"\s+flexWrap="wrap"\s+gap=\{0\.5\}\s*>', "<Stack direction=\"row\" sx={{ flexWrap: 'wrap', gap: 0.5 }}>", 1),
+              (r'<Stack\s+direction="row"\s+justifyContent="flex-end"\s+spacing=\{0\.5\}\s*>', "<Stack direction=\"row\" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>", 1),
+              (r'endpointById\.get\(\s*deliveryQuery\.data\.delivery\.endpointId\s*\)\?\.enabled\s*===\s*false', "endpointById.get(deliveryQuery.data.delivery.endpointId)?.enabled !== true", 1),
           ]
 
-          for old, new in replacements:
-              if old not in text:
-                  raise SystemExit(f'Expected source fragment not found: {old}')
-              text = text.replace(old, new)
+          for pattern, replacement, expected in substitutions:
+              text, count = re.subn(pattern, replacement, text)
+              if count != expected:
+                  raise SystemExit(
+                      f'Expected {expected} replacement(s) for {pattern!r}, found {count}'
+                  )
 
           path.write_text(text)
           PY
