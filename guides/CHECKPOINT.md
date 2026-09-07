@@ -2,27 +2,28 @@
 
 Date: 2026-09-07
 Repository: `Cyfer-ap/MultiTenantSAAS`
-Base reviewed state: post-PR #106 (`486f592`)
+Base reviewed state: post-PR #112 (`8324ae9`)
 
 ## Documentation status
 
-The repository and version-controlled Wiki record billing/catalog lifecycle as complete at application level through PR #106. The older post-#98 statements that provider provisioning was future work are superseded.
+The repository and version-controlled Wiki now record both billing/catalog lifecycle and tenant-configurable outbound webhooks as complete at application level.
 
 ## Delivered state
 
-- provider-neutral Stripe/Razorpay checkout
-- professional tenant subscription UX
-- signed durable webhook ingestion and lifecycle synchronization
-- verified provider-aware period-end cancellation, linkage recovery and stale-state repair
-- managed Stripe Product/Price provisioning and version replacement
-- managed Razorpay Plan provisioning and replacement mappings
-- TEST/LIVE durable provider mapping persistence
-- terminal `RETIRED` lifecycle with safe paid-period continuation
-- durable retirement operations and provider cleanup retry
-- immutable purchased-plan snapshots
-- immutable tenant subscription history and tenant/system-admin history APIs/UI
-- billing operations visibility and reconciliation
-- durable usage metering, tenant API keys and plan-level API quotas
+Billing/API platform remains complete with provider-neutral Stripe/Razorpay checkout, managed provider catalogs, verified cancellation/reconciliation, immutable purchased/history snapshots, metering, tenant API keys and plan-level API quotas.
+
+Outbound webhook milestone PRs #108–#112 add:
+
+- tenant-scoped endpoint/event-subscription management
+- generated and rotatable signing secrets encrypted at rest
+- HTTPS/public-routable SSRF validation with delivery-time revalidation
+- durable immutable events and endpoint-specific deliveries
+- HMAC-SHA256 signing
+- lease-safe retry/backoff/timeout processing
+- transactional project/task/comment/member/subscription event publication
+- immutable delivery-attempt history
+- tenant delivery history/detail APIs and guarded manual replay
+- permission-gated tenant Integrations UX
 
 ## Provider validation status
 
@@ -30,10 +31,16 @@ Stripe remains the validated deployed Test Mode path. Razorpay integration and c
 
 ## Migration state
 
-Common migrations extend through **V36**. V34 adds provider catalog mappings/purchased snapshots, V35 durable retirement operations, and V36 immutable tenant subscription history.
+Common migrations extend through **V39**:
+
+- V37 outbound webhook endpoints/event subscriptions
+- V38 durable outbound webhook events/deliveries
+- V39 outbound webhook delivery attempts
+
+Never rewrite an applied migration.
 
 ## Next checkpoint
 
-The next checkpoint belongs to the **tenant-configurable outbound webhooks** milestone.
+The next product checkpoint belongs to **enterprise SSO / identity federation**. Prefer a provider-neutral federation model with OIDC first and SAML added only where enterprise requirements justify it.
 
 Code/tests and Flyway migrations remain authoritative.
