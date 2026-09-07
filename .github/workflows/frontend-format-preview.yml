@@ -1,0 +1,44 @@
+name: Frontend Format Preview
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: multitenant-saas-frontend
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: multitenant-saas-frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply frontend formatting
+        run: npm run format
+
+      - name: Capture formatting diff
+        shell: bash
+        run: git diff -- . > ../prettier.patch
+
+      - name: Upload formatting diff
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-prettier-diff
+          path: prettier.patch
+          retention-days: 1
