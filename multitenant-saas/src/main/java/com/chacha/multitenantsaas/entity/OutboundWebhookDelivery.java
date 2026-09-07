@@ -49,6 +49,9 @@ public class OutboundWebhookDelivery {
     @Column(name = "attempt_count", nullable = false)
     private int attemptCount;
 
+    @Column(name = "replay_count", nullable = false)
+    private int replayCount;
+
     @Column(name = "next_attempt_at")
     private Instant nextAttemptAt;
 
@@ -145,6 +148,23 @@ public class OutboundWebhookDelivery {
         updatedAt = now;
     }
 
+    public void replay(Instant now) {
+        if (status != OutboundWebhookDeliveryStatus.SENT
+                && status != OutboundWebhookDeliveryStatus.FAILED) {
+            throw new IllegalStateException("Only sent or failed webhook deliveries can be replayed");
+        }
+        status = OutboundWebhookDeliveryStatus.PENDING;
+        attemptCount = 0;
+        replayCount++;
+        nextAttemptAt = now;
+        processingStartedAt = null;
+        leaseToken = null;
+        lastHttpStatus = null;
+        lastError = null;
+        sentAt = null;
+        updatedAt = now;
+    }
+
     private boolean ownsLease(UUID expectedLeaseToken) {
         return status == OutboundWebhookDeliveryStatus.PROCESSING
                 && leaseToken != null
@@ -194,6 +214,10 @@ public class OutboundWebhookDelivery {
 
     public int getAttemptCount() {
         return attemptCount;
+    }
+
+    public int getReplayCount() {
+        return replayCount;
     }
 
     public Instant getNextAttemptAt() {
