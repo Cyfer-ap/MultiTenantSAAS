@@ -32,9 +32,7 @@ public class OidcProviderMetadataService {
 
         String metadataIssuer =
                 remoteUriValidator.validateAndNormalize(
-                        requiredString(configuration, "issuer"),
-                        "OIDC metadata issuer URI",
-                        false);
+                        requiredString(configuration, "issuer"), "OIDC metadata issuer URI", false);
         if (!issuer.equals(metadataIssuer)) {
             throw new IdentityProviderVerificationException(
                     "OIDC metadata issuer does not exactly match the configured issuer");

@@ -145,7 +145,8 @@ public class TenantIdentityProvider {
 
     public void markVerified(AppUser actor, Instant now) {
         if (status == TenantIdentityProviderStatus.DISABLED) {
-            throw new IllegalStateException("Disabled identity-provider configuration cannot be verified");
+            throw new IllegalStateException(
+                    "Disabled identity-provider configuration cannot be verified");
         }
         status = TenantIdentityProviderStatus.VERIFIED;
         verifiedAt = now;
