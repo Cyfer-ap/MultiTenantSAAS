@@ -4,12 +4,15 @@ import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
 import com.chacha.multitenantsaas.billing.webhook.BillingSubscriptionEventMapper;
 import com.chacha.multitenantsaas.billing.webhook.BillingSubscriptionUpdate;
 import com.chacha.multitenantsaas.billing.webhook.VerifiedBillingEvent;
+import com.chacha.multitenantsaas.dto.OutboundWebhookSubscriptionPayload;
+import com.chacha.multitenantsaas.entity.OutboundWebhookEventType;
 import com.chacha.multitenantsaas.entity.SubscriptionPlan;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.TenantSubscription;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionHistoryEventType;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
 import com.chacha.multitenantsaas.repository.TenantSubscriptionRepository;
+import com.chacha.multitenantsaas.service.OutboundWebhookEventService;
 import com.chacha.multitenantsaas.service.SubscriptionPlanService;
 import com.chacha.multitenantsaas.service.TenantLookupService;
 import com.chacha.multitenantsaas.service.TenantSubscriptionHistoryService;
@@ -19,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class BillingSubscriptionSynchronizer {
@@ -28,6 +32,7 @@ public class BillingSubscriptionSynchronizer {
     private final TenantLookupService tenantLookupService;
     private final SubscriptionPlanService subscriptionPlanService;
     private final TenantSubscriptionHistoryService historyService;
+    private final OutboundWebhookEventService outboundWebhookEventService;
 
     public BillingSubscriptionSynchronizer(
             List<BillingSubscriptionEventMapper> mappers,
@@ -39,6 +44,22 @@ public class BillingSubscriptionSynchronizer {
                 tenantSubscriptionRepository,
                 tenantLookupService,
                 subscriptionPlanService,
+                null,
+                null);
+    }
+
+    public BillingSubscriptionSynchronizer(
+            List<BillingSubscriptionEventMapper> mappers,
+            TenantSubscriptionRepository tenantSubscriptionRepository,
+            TenantLookupService tenantLookupService,
+            SubscriptionPlanService subscriptionPlanService,
+            TenantSubscriptionHistoryService historyService) {
+        this(
+                mappers,
+                tenantSubscriptionRepository,
+                tenantLookupService,
+                subscriptionPlanService,
+                historyService,
                 null);
     }
 
@@ -48,14 +69,17 @@ public class BillingSubscriptionSynchronizer {
             TenantSubscriptionRepository tenantSubscriptionRepository,
             TenantLookupService tenantLookupService,
             SubscriptionPlanService subscriptionPlanService,
-            TenantSubscriptionHistoryService historyService) {
+            TenantSubscriptionHistoryService historyService,
+            OutboundWebhookEventService outboundWebhookEventService) {
         this.mappers = register(mappers);
         this.tenantSubscriptionRepository = tenantSubscriptionRepository;
         this.tenantLookupService = tenantLookupService;
         this.subscriptionPlanService = subscriptionPlanService;
         this.historyService = historyService;
+        this.outboundWebhookEventService = outboundWebhookEventService;
     }
 
+    @Transactional
     public void synchronize(VerifiedBillingEvent event) {
         BillingSubscriptionEventMapper mapper = mappers.get(event.provider());
         if (mapper == null) {
@@ -104,11 +128,27 @@ public class BillingSubscriptionSynchronizer {
         subscription.setProviderEventCreatedAt(update.occurredAt());
         updateCancellation(subscription, update.status(), update.occurredAt());
         TenantSubscription saved = tenantSubscriptionRepository.save(subscription);
+        TenantSubscription synchronizedSubscription = saved == null ? subscription : saved;
         if (historyService != null) {
             historyService.record(
-                    saved == null ? subscription : saved,
+                    synchronizedSubscription,
                     TenantSubscriptionHistoryEventType.PROVIDER_SYNCHRONIZED);
         }
+        publish(synchronizedSubscription);
+    }
+
+    private void publish(TenantSubscription subscription) {
+        if (outboundWebhookEventService == null) {
+            return;
+        }
+        OutboundWebhookEventType eventType =
+                subscription.getStatus() == TenantSubscriptionStatus.CANCELLED
+                        ? OutboundWebhookEventType.SUBSCRIPTION_CANCELLED
+                        : OutboundWebhookEventType.SUBSCRIPTION_UPDATED;
+        outboundWebhookEventService.publish(
+                subscription.getTenant().getId(),
+                eventType,
+                OutboundWebhookSubscriptionPayload.from(subscription));
     }
 
     private boolean shouldIgnore(
