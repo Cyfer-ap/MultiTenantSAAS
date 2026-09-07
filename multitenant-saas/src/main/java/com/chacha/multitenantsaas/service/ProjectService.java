@@ -257,7 +257,8 @@ public class ProjectService {
         return normalized.isBlank() ? null : normalized;
     }
 
-    private void publish(UUID tenantId, OutboundWebhookEventType eventType, ProjectResponse response) {
+    private void publish(
+            UUID tenantId, OutboundWebhookEventType eventType, ProjectResponse response) {
         if (outboundWebhookEventService != null) {
             outboundWebhookEventService.publish(tenantId, eventType, response);
         }

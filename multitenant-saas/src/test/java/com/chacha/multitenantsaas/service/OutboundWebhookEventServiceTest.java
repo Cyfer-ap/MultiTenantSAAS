@@ -24,8 +24,7 @@ class OutboundWebhookEventServiceTest {
         TenantRepository tenantRepository = mock(TenantRepository.class);
         OutboundWebhookEndpointRepository endpointRepository =
                 mock(OutboundWebhookEndpointRepository.class);
-        OutboundWebhookEventRepository eventRepository =
-                mock(OutboundWebhookEventRepository.class);
+        OutboundWebhookEventRepository eventRepository = mock(OutboundWebhookEventRepository.class);
         OutboundWebhookDeliveryRepository deliveryRepository =
                 mock(OutboundWebhookDeliveryRepository.class);
         JsonMapper jsonMapper = mock(JsonMapper.class);

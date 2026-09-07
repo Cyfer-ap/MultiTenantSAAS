@@ -141,7 +141,9 @@ public class TaskNotificationService {
             ProjectTask task, TaskComment comment, OutboundWebhookEventType eventType) {
         if (outboundWebhookEventService != null) {
             outboundWebhookEventService.publish(
-                    task.getTenant().getId(), eventType, OutboundWebhookCommentPayload.from(comment));
+                    task.getTenant().getId(),
+                    eventType,
+                    OutboundWebhookCommentPayload.from(comment));
         }
     }
 
