@@ -174,10 +174,6 @@ public class AuthService {
             throw new AuthenticationFailedException("Password is not set for this user");
         }
 
-        boolean breakGlassLogin =
-                tenantSsoLoginPolicyGuard != null
-                        && tenantSsoLoginPolicyGuard.enforcePasswordLogin(tenantId, user);
-
         loginAttemptService.ensureNotLocked(user);
 
         boolean passwordMatches =
@@ -195,6 +191,10 @@ public class AuthService {
 
             throw new AuthenticationFailedException("Invalid email or password");
         }
+
+        boolean breakGlassLogin =
+                tenantSsoLoginPolicyGuard != null
+                        && tenantSsoLoginPolicyGuard.enforcePasswordLogin(tenantId, user);
 
         loginAttemptService.recordSuccessfulLogin(user);
 
