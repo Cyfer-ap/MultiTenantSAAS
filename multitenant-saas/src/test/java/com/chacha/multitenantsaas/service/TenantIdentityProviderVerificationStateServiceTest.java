@@ -130,6 +130,7 @@ class TenantIdentityProviderVerificationStateServiceTest {
                 .thenReturn(Optional.of(identityProvider));
         when(identityProvider.getTenant()).thenReturn(tenant);
         when(actor.getTenant()).thenReturn(tenant);
+        when(tenant.getId()).thenReturn(tenantId);
         when(tenant.getStatus()).thenReturn(TenantStatus.ACTIVE);
         when(identityProvider.getStatus()).thenReturn(status);
     }
