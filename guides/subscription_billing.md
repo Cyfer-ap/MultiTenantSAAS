@@ -1,10 +1,10 @@
 # Subscription and billing
 
-Reviewed through PR #98 on 2026-09-06.
+Reviewed through PR #106 on 2026-09-07.
 
 ## Milestone status
 
-**Billing & Payments is complete at application level.**
+**Billing, cancellation hardening and managed provider catalogs are complete at application level.**
 
 Live-provider readiness remains a separate deployment/operations concern.
 
@@ -12,9 +12,45 @@ Live-provider readiness remains a separate deployment/operations concern.
 
 The platform keeps application plans, tenant subscription state, evaluated access, entitlements, quotas and payment-provider objects separate.
 
-Application plans are stored in the platform database. Stripe Products/Prices and Razorpay Plans are separate provider objects. The frontend receives plan display data and enabled provider names only; it never receives provider plan IDs, API secrets or webhook secrets.
+Application plans are stored in the platform database. Stripe Products/Prices and Razorpay Plans are provider objects linked through durable `subscription_plan_provider_mappings`. Provider IDs and secrets remain server-side.
 
-Creating a new application plan through system administration does **not** automatically create Stripe Products/Prices or Razorpay Plans. Current checkout requires server-side mappings from application plan code to provider billing ID. Automatic provider provisioning can be designed later as a separate feature.
+## Managed provider catalog
+
+System-admin paid-plan create/update operations synchronize enabled managed providers through a provider-neutral catalog layer.
+
+### Stripe
+
+- creates a Stripe Product + recurring Price for a new paid application plan
+- stores TEST/LIVE provider mapping durably
+- resolves checkout DB-first with legacy configured Price fallback/import
+- economic edits (price/currency/interval) create replacement Prices rather than rewriting historical economics
+- old Prices remain available for historical/existing subscription resolution but inactive for new sale
+- plan retirement deactivates the active Product/Price for new purchase and retains provider references
+
+### Razorpay
+
+- creates a Razorpay subscription Plan for a new paid application plan
+- stores TEST/LIVE provider mapping durably
+- resolves checkout DB-first with legacy configured Plan fallback/import
+- provider-visible edits create replacement Plans because Razorpay does not expose an equivalent mutable Plan lifecycle
+- old local mappings are archived while historical Plan IDs remain resolvable
+- deterministic application metadata allows retry adoption of an already-created matching Plan
+
+## Plan lifecycle
+
+- `ACTIVE`: available for purchase and normal entitlement
+- `INACTIVE`: administrative hard-disable
+- `RETIRED`: terminal catalog state; immediately removed from new checkout, not normally editable/reactivatable
+
+Retirement does not destroy historical provider objects or purchased terms. Existing valid subscriptions retain entitlement through the current paid period. Provider-linked subscriptions are scheduled to cancel at period/cycle end, while normal local subscription state remains webhook-authoritative.
+
+V35 persists durable retirement operations with retryable provider cleanup.
+
+## Immutable purchased terms and history
+
+V34 stores purchased-plan snapshots on tenant subscriptions, including plan code/name/description, billing interval, price/currency and resource limits. Later catalog edits therefore do not rewrite what a tenant bought.
+
+V36 adds immutable `tenant_subscription_history` snapshots for material subscription state. History is available through paginated tenant and system-admin APIs and the corresponding frontend UI. Tenant-facing history hides provider subscription references; system-admin history can expose them for operational troubleshooting.
 
 ## Implemented billing flow
 
@@ -28,13 +64,14 @@ Creating a new application plan through system administration does **not** autom
 - webhook-driven subscription lifecycle mapping
 - cross-provider linkage protection and verified-history recovery
 - `POST /api/tenants/{tenantId}/billing/cancel`
-- provider-aware cancellation and stale-terminal-state repair
-- system-admin billing subscription/event views
-- `POST /api/system/billing/subscriptions/{tenantId}/reconcile` read-only comparison
+- provider-aware period-end cancellation and stale-terminal-state repair
+- system-admin billing subscription/event/history views
+- tenant subscription history view
+- read-only provider reconciliation
 - append-only usage events and plan-level `API_REQUESTS` limits
 - tenant API keys authenticated only under `/api/external/**`
 
-Local subscription state is webhook-authoritative during normal operation. Verified provider lookup/reconciliation may repair stale terminal state when a provider cancellation already succeeded but its webhook was missed.
+Local provider-linked subscription lifecycle is webhook-authoritative during normal operation. Verified provider lookup/reconciliation may repair stale terminal state when cancellation already succeeded but its webhook was missed.
 
 ## Read-only recovery
 
@@ -42,7 +79,7 @@ Ordinary tenant mutations are blocked when subscription access is read-only. Bil
 
 ## Stripe configuration
 
-Stripe can be enabled without disabling Razorpay. Stripe uses server-created hosted Checkout Sessions in `subscription` mode.
+Stripe can be enabled without disabling Razorpay. Legacy environment Price variables remain supported for compatibility, while managed plans use durable DB mappings first.
 
 Example server-side configuration:
 
@@ -51,19 +88,20 @@ STRIPE_BILLING_ENABLED=true
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PRICE_PRO=price_...
 STRIPE_PRICE_ENTERPRISE=price_...
+STRIPE_BILLING_ENVIRONMENT=TEST
 STRIPE_SUCCESS_URL=https://multitenantsaas-frontend.onrender.com/subscription?checkout=success
 STRIPE_CANCEL_URL=https://multitenantsaas-frontend.onrender.com/subscription?checkout=cancelled
 STRIPE_WEBHOOK_ENABLED=true
 STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
-Register the Test Mode webhook endpoint:
+Webhook target:
 
 ```text
 POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/stripe
 ```
 
-Subscribe it to all lifecycle events currently required by the backend:
+Required lifecycle events:
 
 ```text
 customer.subscription.created
@@ -71,17 +109,11 @@ customer.subscription.updated
 customer.subscription.deleted
 ```
 
-The webhook signing secret is separate from the Stripe API secret key.
-
-### Stripe validation result
-
-The deployed Stripe Test Mode subscription flow is working. Hosted Checkout completes with Test Mode cards, signed subscription webhooks synchronize local state, and provider-side cancellation was confirmed.
-
-During final cancellation testing, Stripe correctly cancelled subscriptions but the application remained `ACTIVE`. The Stripe webhook endpoint had not been subscribed to `customer.subscription.deleted`, so the terminal event was never delivered. The endpoint configuration was corrected, and PR #98 added an idempotent provider-state repair path for already-cancelled subscriptions.
-
-This is a Test Mode application-validation statement, not live-mode readiness.
+The deployed Stripe Test Mode subscription flow is the validated payment path. This is not a live-mode readiness claim.
 
 ## Razorpay configuration
+
+Legacy Plan variables remain supported for compatibility/import while managed plans use durable DB mappings first.
 
 Example server-side configuration:
 
@@ -91,37 +123,24 @@ RAZORPAY_KEY_ID=...
 RAZORPAY_KEY_SECRET=...
 RAZORPAY_PLAN_PRO=plan_...
 RAZORPAY_PLAN_ENTERPRISE=plan_...
+RAZORPAY_BILLING_ENVIRONMENT=TEST
 RAZORPAY_SUBSCRIPTION_TOTAL_COUNT=120
 RAZORPAY_WEBHOOK_ENABLED=true
 RAZORPAY_WEBHOOK_SECRET=...
 ```
 
-Use Test Mode keys with Test Mode plan IDs. Do not mix modes. Do not commit values.
-
-Deployed webhook target:
+Webhook target:
 
 ```text
 POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/razorpay
 ```
 
-### Razorpay validation result
+Razorpay application integration and managed Plan provisioning are implemented, but real Test Mode recurring authorization remains provider-sandbox blocked. Hosted checkout opens while attempted sandbox cards fail before recurring authorization completes.
 
-The application integration is implemented, but real Test Mode recurring authorization remains provider-sandbox blocked. Hosted checkout opens, while attempted sandbox cards fail inside Razorpay before recurring authorization completes. International-card acceptance is unavailable in the current path, and domestic recurring-compatible test attempts have also failed.
+## Database checkpoint
 
-Keep Razorpay available in code. Do not hold the application billing milestone open because of this external provider limitation.
-
-## Provider plan mappings
-
-Current provider mappings are configuration-driven. Conceptually:
-
-```text
-Application plan code
-    ├─ Stripe   -> recurring Price ID
-    └─ Razorpay -> Plan ID
-```
-
-The platform does not yet provision or synchronize provider Products/Prices/Plans when a system administrator creates or edits an application plan. If implemented later, provider provisioning must handle partial failure, idempotency, immutable Stripe Price semantics, provider-specific lifecycle, rollback/compensation and live/test-mode separation.
+Common Flyway migrations extend through **V36**. Never rewrite an applied migration.
 
 ## Closure decision
 
-Billing should not receive additional application features merely because Razorpay Test Mode refuses cards. Future payment work is limited to genuine regressions, live-readiness work when required, or explicitly scoped enhancements such as automatic provider-plan provisioning.
+Do not extend billing merely to work around Razorpay sandbox/card behavior. Future payment work should be limited to real regressions, explicit live-readiness work, or deliberately scoped billing enhancements. The active product milestone is now tenant-configurable outbound webhooks.
