@@ -69,7 +69,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV36AndMatchesJpaMappings() {
+    void postgresSchemaReachesV37AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -81,7 +81,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("36");
+        assertThat(version).isEqualTo("37");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -112,6 +112,8 @@ class PostgreSqlSchemaIntegrationTest {
         assertTableExists("billing_usage_events");
         assertTableExists("tenant_api_keys");
         assertTableExists("subscription_plan_usage_limits");
+        assertTableExists("outbound_webhook_endpoints");
+        assertTableExists("outbound_webhook_endpoint_events");
         assertColumnExists("subscription_plan_usage_limits", "plan_id");
         assertColumnExists("subscription_plan_usage_limits", "metric_code");
         assertColumnExists("subscription_plan_usage_limits", "period_limit");
@@ -180,6 +182,16 @@ class PostgreSqlSchemaIntegrationTest {
         assertColumnExists("notification_preferences", "recipient_user_id");
         assertColumnExists("notification_preferences", "type");
         assertColumnExists("notification_preferences", "email_enabled");
+        assertColumnExists("outbound_webhook_endpoints", "tenant_id");
+        assertColumnExists("outbound_webhook_endpoints", "url");
+        assertColumnExists("outbound_webhook_endpoints", "enabled");
+        assertColumnExists("outbound_webhook_endpoints", "secret_ciphertext");
+        assertColumnExists("outbound_webhook_endpoints", "secret_hint");
+        assertColumnExists("outbound_webhook_endpoints", "secret_version");
+        assertColumnExists("outbound_webhook_endpoints", "secret_rotated_at");
+        assertColumnExists("outbound_webhook_endpoints", "archived_at");
+        assertColumnExists("outbound_webhook_endpoint_events", "endpoint_id");
+        assertColumnExists("outbound_webhook_endpoint_events", "event_type");
     }
 
     @Test
