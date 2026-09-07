@@ -69,7 +69,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV38AndMatchesJpaMappings() {
+    void postgresSchemaReachesV39AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -81,7 +81,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("38");
+        assertThat(version).isEqualTo("39");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -116,6 +116,7 @@ class PostgreSqlSchemaIntegrationTest {
         assertTableExists("outbound_webhook_endpoint_events");
         assertTableExists("outbound_webhook_events");
         assertTableExists("outbound_webhook_deliveries");
+        assertTableExists("outbound_webhook_delivery_attempts");
         assertColumnExists("subscription_plan_usage_limits", "plan_id");
         assertColumnExists("subscription_plan_usage_limits", "metric_code");
         assertColumnExists("subscription_plan_usage_limits", "period_limit");
@@ -202,10 +203,21 @@ class PostgreSqlSchemaIntegrationTest {
         assertColumnExists("outbound_webhook_deliveries", "endpoint_id");
         assertColumnExists("outbound_webhook_deliveries", "status");
         assertColumnExists("outbound_webhook_deliveries", "attempt_count");
+        assertColumnExists("outbound_webhook_deliveries", "replay_count");
         assertColumnExists("outbound_webhook_deliveries", "next_attempt_at");
         assertColumnExists("outbound_webhook_deliveries", "processing_started_at");
         assertColumnExists("outbound_webhook_deliveries", "lease_token");
         assertColumnExists("outbound_webhook_deliveries", "last_http_status");
+        assertColumnExists("outbound_webhook_delivery_attempts", "tenant_id");
+        assertColumnExists("outbound_webhook_delivery_attempts", "delivery_id");
+        assertColumnExists("outbound_webhook_delivery_attempts", "replay_number");
+        assertColumnExists("outbound_webhook_delivery_attempts", "attempt_number");
+        assertColumnExists("outbound_webhook_delivery_attempts", "lease_token");
+        assertColumnExists("outbound_webhook_delivery_attempts", "outcome");
+        assertColumnExists("outbound_webhook_delivery_attempts", "http_status");
+        assertColumnExists("outbound_webhook_delivery_attempts", "error");
+        assertColumnExists("outbound_webhook_delivery_attempts", "started_at");
+        assertColumnExists("outbound_webhook_delivery_attempts", "completed_at");
     }
 
     @Test
