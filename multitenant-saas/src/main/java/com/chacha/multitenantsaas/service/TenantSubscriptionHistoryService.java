@@ -46,7 +46,8 @@ public class TenantSubscriptionHistoryService {
         Objects.requireNonNull(subscription, "subscription must not be null");
         Objects.requireNonNull(eventType, "eventType must not be null");
         if (subscription.getId() == null) {
-            throw new IllegalStateException("Subscription must be persisted before history is recorded.");
+            throw new IllegalStateException(
+                    "Subscription must be persisted before history is recorded.");
         }
         historyRepository.save(new TenantSubscriptionHistory(subscription, eventType));
     }
