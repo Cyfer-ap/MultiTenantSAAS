@@ -26,4 +26,12 @@ public interface BillingProvider {
     }
 
     void cancelSubscription(String providerSubscriptionId);
+
+    /**
+     * Schedules cancellation for the end of the already-paid billing period. Providers whose normal
+     * cancellation method already has this behavior may use the default implementation.
+     */
+    default void scheduleCancellationAtPeriodEnd(String providerSubscriptionId) {
+        cancelSubscription(providerSubscriptionId);
+    }
 }

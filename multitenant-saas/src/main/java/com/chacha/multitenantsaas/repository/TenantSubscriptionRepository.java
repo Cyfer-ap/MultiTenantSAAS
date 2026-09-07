@@ -4,6 +4,8 @@ import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
 import com.chacha.multitenantsaas.entity.TenantSubscription;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
 import jakarta.persistence.LockModeType;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -37,6 +39,22 @@ public interface TenantSubscriptionRepository extends JpaRepository<TenantSubscr
             WHERE tenant.id = :tenantId
             """)
     Optional<TenantSubscription> findByTenantIdWithPlanForUpdate(@Param("tenantId") UUID tenantId);
+
+    @Query(
+            """
+            SELECT subscription
+            FROM TenantSubscription subscription
+            JOIN FETCH subscription.tenant tenant
+            JOIN FETCH subscription.plan plan
+            WHERE plan.id = :planId
+              AND subscription.status IN :statuses
+              AND subscription.billingProvider IS NOT NULL
+              AND subscription.providerSubscriptionId IS NOT NULL
+            ORDER BY subscription.createdAt ASC
+            """)
+    List<TenantSubscription> findProviderLinkedSubscriptionsForPlan(
+            @Param("planId") UUID planId,
+            @Param("statuses") Collection<TenantSubscriptionStatus> statuses);
 
     @Query(
             value =

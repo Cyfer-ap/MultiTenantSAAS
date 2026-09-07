@@ -143,6 +143,15 @@ public class RazorpayBillingProvider implements BillingProvider {
 
     @Override
     public void cancelSubscription(String providerSubscriptionId) {
+        cancel(providerSubscriptionId, false);
+    }
+
+    @Override
+    public void scheduleCancellationAtPeriodEnd(String providerSubscriptionId) {
+        cancel(providerSubscriptionId, true);
+    }
+
+    private void cancel(String providerSubscriptionId, boolean cancelAtCycleEnd) {
         String subscriptionId = requireSubscriptionId(providerSubscriptionId);
 
         try {
@@ -150,7 +159,7 @@ public class RazorpayBillingProvider implements BillingProvider {
                     .post()
                     .uri("/v1/subscriptions/{subscriptionId}/cancel", subscriptionId)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(new RazorpayCancellationRequest(false))
+                    .body(new RazorpayCancellationRequest(cancelAtCycleEnd))
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientException ex) {

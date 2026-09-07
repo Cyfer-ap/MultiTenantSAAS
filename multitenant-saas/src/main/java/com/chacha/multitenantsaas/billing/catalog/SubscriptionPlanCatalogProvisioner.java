@@ -14,4 +14,8 @@ public interface SubscriptionPlanCatalogProvisioner {
     void planCreated(SubscriptionPlanResponse plan);
 
     void planUpdated(SubscriptionPlanResponse before, SubscriptionPlanResponse after);
+
+    default void planRetired(SubscriptionPlanResponse plan) {
+        // Providers without an externally managed plan catalog have nothing to archive.
+    }
 }

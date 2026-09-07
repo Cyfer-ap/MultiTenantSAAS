@@ -69,7 +69,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV34AndMatchesJpaMappings() {
+    void postgresSchemaReachesV35AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -81,7 +81,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("34");
+        assertThat(version).isEqualTo("35");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -96,6 +96,7 @@ class PostgreSqlSchemaIntegrationTest {
         assertTableExists("subscription_plans");
         assertTableExists("tenant_subscriptions");
         assertTableExists("subscription_plan_provider_mappings");
+        assertTableExists("subscription_plan_retirement_operations");
         assertTableExists("email_verification_challenges");
         assertTableExists("trusted_email_browsers");
         assertTableExists("task_comments");
@@ -121,6 +122,14 @@ class PostgreSqlSchemaIntegrationTest {
         assertColumnExists("subscription_plan_provider_mappings", "provider_plan_id");
         assertColumnExists("subscription_plan_provider_mappings", "status");
         assertColumnExists("subscription_plan_provider_mappings", "archived_at");
+        assertColumnExists("subscription_plan_retirement_operations", "plan_id");
+        assertColumnExists("subscription_plan_retirement_operations", "status");
+        assertColumnExists("subscription_plan_retirement_operations", "attempt_count");
+        assertColumnExists("subscription_plan_retirement_operations", "last_error");
+        assertColumnExists("subscription_plan_retirement_operations", "requested_at");
+        assertColumnExists("subscription_plan_retirement_operations", "started_at");
+        assertColumnExists("subscription_plan_retirement_operations", "completed_at");
+        assertColumnExists("subscription_plan_retirement_operations", "updated_at");
         assertColumnExists("tenant_api_keys", "tenant_id");
         assertColumnExists("tenant_api_keys", "key_prefix");
         assertColumnExists("tenant_api_keys", "key_hash");
