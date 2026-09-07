@@ -5,6 +5,7 @@ import com.chacha.multitenantsaas.entity.TenantSubscription;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionHistory;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionHistoryEventType;
 import com.chacha.multitenantsaas.repository.TenantSubscriptionHistoryRepository;
+import com.chacha.multitenantsaas.repository.TenantSubscriptionRepository;
 import java.util.Objects;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -16,13 +17,27 @@ import org.springframework.transaction.annotation.Transactional;
 public class TenantSubscriptionHistoryService {
 
     private final TenantSubscriptionHistoryRepository historyRepository;
+    private final TenantSubscriptionRepository subscriptionRepository;
     private final TenantLookupService tenantLookupService;
 
     public TenantSubscriptionHistoryService(
             TenantSubscriptionHistoryRepository historyRepository,
+            TenantSubscriptionRepository subscriptionRepository,
             TenantLookupService tenantLookupService) {
         this.historyRepository = historyRepository;
+        this.subscriptionRepository = subscriptionRepository;
         this.tenantLookupService = tenantLookupService;
+    }
+
+    @Transactional
+    public void ensureBaseline(TenantSubscription subscription) {
+        Objects.requireNonNull(subscription, "subscription must not be null");
+        if (subscription.getId() == null) {
+            return;
+        }
+        if (!historyRepository.existsBySubscriptionId(subscription.getId())) {
+            record(subscription, TenantSubscriptionHistoryEventType.MIGRATED_CURRENT_STATE);
+        }
     }
 
     @Transactional
@@ -36,9 +51,10 @@ public class TenantSubscriptionHistoryService {
         historyRepository.save(new TenantSubscriptionHistory(subscription, eventType));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Page<TenantSubscriptionHistoryResponse> getHistory(UUID tenantId, Pageable pageable) {
         tenantLookupService.ensureExists(tenantId);
+        subscriptionRepository.findByTenantIdWithPlan(tenantId).ifPresent(this::ensureBaseline);
         return historyRepository.findByTenantId(tenantId, pageable).map(this::toResponse);
     }
 
