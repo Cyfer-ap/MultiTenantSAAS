@@ -3,6 +3,7 @@ package com.chacha.multitenantsaas.entity;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -60,6 +61,10 @@ public class TenantIdentityProvider {
     @Column(nullable = false, length = 20)
     private TenantIdentityProviderStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sso_mode", nullable = false, length = 20)
+    private TenantSsoMode ssoMode = TenantSsoMode.OPTIONAL;
+
     @Column(name = "verified_at")
     private Instant verifiedAt;
 
@@ -110,6 +115,7 @@ public class TenantIdentityProvider {
         this.secretVersion = 1;
         this.scopes = copyScopes(scopes);
         this.status = TenantIdentityProviderStatus.DRAFT;
+        this.ssoMode = TenantSsoMode.OPTIONAL;
         this.createdByUser = actor;
         this.updatedByUser = actor;
         this.secretRotatedAt = now;
@@ -155,7 +161,22 @@ public class TenantIdentityProvider {
         updatedAt = now;
     }
 
+    public void updateSsoMode(TenantSsoMode mode, AppUser actor, Instant now) {
+        TenantSsoMode requestedMode = Objects.requireNonNull(mode, "SSO mode must not be null");
+        if (status == TenantIdentityProviderStatus.DISABLED) {
+            throw new IllegalStateException("Disabled identity-provider configuration has no SSO policy");
+        }
+        if (requestedMode == TenantSsoMode.REQUIRED
+                && status != TenantIdentityProviderStatus.VERIFIED) {
+            throw new IllegalStateException("SSO can only be required for a verified identity provider");
+        }
+        ssoMode = requestedMode;
+        updatedByUser = actor;
+        updatedAt = now;
+    }
+
     public void disable(AppUser actor, Instant now) {
+        ssoMode = TenantSsoMode.OPTIONAL;
         if (status != TenantIdentityProviderStatus.DISABLED) {
             status = TenantIdentityProviderStatus.DISABLED;
             disabledAt = now;
@@ -166,6 +187,7 @@ public class TenantIdentityProvider {
     }
 
     private void invalidateVerification() {
+        ssoMode = TenantSsoMode.OPTIONAL;
         if (status == TenantIdentityProviderStatus.VERIFIED) {
             status = TenantIdentityProviderStatus.DRAFT;
             verifiedAt = null;
@@ -218,6 +240,10 @@ public class TenantIdentityProvider {
 
     public TenantIdentityProviderStatus getStatus() {
         return status;
+    }
+
+    public TenantSsoMode getSsoMode() {
+        return ssoMode;
     }
 
     public Instant getVerifiedAt() {
