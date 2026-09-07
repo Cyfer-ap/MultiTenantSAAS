@@ -1,13 +1,19 @@
 package com.chacha.multitenantsaas.controller;
 
 import com.chacha.multitenantsaas.common.ApiResponse;
+import com.chacha.multitenantsaas.dto.TenantSubscriptionHistoryResponse;
 import com.chacha.multitenantsaas.dto.TenantSubscriptionLifecycleUpdateRequest;
 import com.chacha.multitenantsaas.dto.TenantSubscriptionPlanChangeRequest;
 import com.chacha.multitenantsaas.dto.TenantSubscriptionResponse;
 import com.chacha.multitenantsaas.dto.TenantSubscriptionStartRequest;
 import com.chacha.multitenantsaas.service.SubscriptionAdministrationService;
+import com.chacha.multitenantsaas.service.TenantSubscriptionHistoryService;
 import jakarta.validation.Valid;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,10 +32,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class SystemTenantSubscriptionController {
 
     private final SubscriptionAdministrationService subscriptionAdministrationService;
+    private final TenantSubscriptionHistoryService historyService;
 
     public SystemTenantSubscriptionController(
-            SubscriptionAdministrationService subscriptionAdministrationService) {
+            SubscriptionAdministrationService subscriptionAdministrationService,
+            TenantSubscriptionHistoryService historyService) {
         this.subscriptionAdministrationService = subscriptionAdministrationService;
+        this.historyService = historyService;
     }
 
     @PreAuthorize("@systemSecurity.isSystemAdmin()")
@@ -40,6 +49,18 @@ public class SystemTenantSubscriptionController {
                 ApiResponse.success(
                         "Tenant subscription fetched successfully",
                         subscriptionAdministrationService.getTenantSubscription(tenantId)));
+    }
+
+    @PreAuthorize("@systemSecurity.isSystemAdmin()")
+    @GetMapping("/history")
+    public ResponseEntity<ApiResponse<Page<TenantSubscriptionHistoryResponse>>> getHistory(
+            @PathVariable UUID tenantId,
+            @PageableDefault(size = 50, sort = "recordedAt", direction = Sort.Direction.DESC)
+                    Pageable pageable) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Tenant subscription history fetched successfully",
+                        historyService.getHistory(tenantId, pageable)));
     }
 
     @PreAuthorize("@systemSecurity.isSystemAdmin()")
