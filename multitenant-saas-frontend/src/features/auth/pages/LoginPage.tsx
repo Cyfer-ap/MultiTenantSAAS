@@ -525,7 +525,10 @@ export function LoginPage() {
                                                 <Typography
                                                     component="span"
                                                     variant="caption"
-                                                    sx={{ color: 'text.secondary', display: 'block' }}
+                                                    sx={{
+                                                        color: 'text.secondary',
+                                                        display: 'block',
+                                                    }}
                                                 >
                                                     {authenticationDescription(workspace)}
                                                 </Typography>
