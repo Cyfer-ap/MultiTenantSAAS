@@ -87,6 +87,12 @@ const OrganizationPage = lazy(() =>
     })),
 )
 
+const OutboundWebhooksPage = lazy(() =>
+    import('../pages/OutboundWebhooksPage').then((module) => ({
+        default: module.OutboundWebhooksPage,
+    })),
+)
+
 const PlatformAuditLogsPage = lazy(() =>
     import('../pages/PlatformAuditLogsPage').then((module) => ({
         default: module.PlatformAuditLogsPage,
@@ -260,6 +266,18 @@ export function AppRoutes() {
                             }
                         >
                             <Route path="authorization" element={<AuthorizationManagementPage />} />
+                        </Route>
+
+                        <Route
+                            element={
+                                <TenantPermissionProtectedRoute
+                                    requiredPermissions={[
+                                        authorizationPermissionCodes.TENANT_UPDATE,
+                                    ]}
+                                />
+                            }
+                        >
+                            <Route path="integrations" element={<OutboundWebhooksPage />} />
                         </Route>
 
                         <Route
