@@ -2,28 +2,32 @@
 
 Repository: `Cyfer-ap/MultiTenantSAAS`
 Default branch: `main`
-Reviewed state: post-PR #98 (`87319f8`)
-Date: 2026-09-06
+Reviewed state: post-PR #106 (`486f592`)
+Date: 2026-09-07
 
 ## Current phase
 
-**Billing & Payments complete at application level; next product milestone selection**
+**Billing/catalog lifecycle complete at application level; outbound webhooks next**
 
-The billing implementation includes provider-neutral orchestration, Stripe/Razorpay adapters, signed durable webhooks, webhook-driven lifecycle changes, professional checkout UX, provider cancellation, stale-linkage recovery, operational views, reconciliation, durable metering, tenant API keys and API quotas.
+Billing now includes provider-neutral orchestration, Stripe/Razorpay adapters, signed durable webhooks, webhook-driven lifecycle changes, professional checkout UX, verified provider cancellation/reconciliation, managed provider catalogs, safe terminal plan retirement, immutable purchased terms/history, durable metering, tenant API keys and API quotas.
 
-Stripe works in deployed Test Mode for hosted Checkout, signed lifecycle synchronization and provider-side cancellation. The final stale cancellation state was traced to the Stripe webhook endpoint missing `customer.subscription.deleted`; that event is now enabled and PR #98 adds idempotent repair when Stripe is already terminal but local state is stale.
+Stripe remains the validated deployed Test Mode payment path. Razorpay application integration and managed Plan provisioning are complete, while recurring Test Mode authorization remains externally provider-sandbox blocked.
 
-## Razorpay status
+## Managed catalog boundary
 
-Razorpay remains externally blocked at Test Mode recurring authorization. Checkout creation and redirect work, but attempted sandbox cards fail within Razorpay before recurring authorization. Keep the adapter in place and treat live readiness as separate provider work.
+Application plans and provider billing objects remain separate, but enabled managed providers are synchronized automatically through durable TEST/LIVE mappings.
 
-## Server configuration boundary
+- Stripe: Product + recurring Price creation; economic edits create replacement Prices.
+- Razorpay: Plan creation; provider-visible edits create replacement Plans and archive prior local mappings.
+- legacy configured provider IDs remain compatibility/import paths.
 
-Application plans are not imported from payment providers, and creating a system-admin plan does not automatically create provider billing objects.
+Plan states are `ACTIVE`, `INACTIVE` and terminal `RETIRED`. Retiring a plan blocks new checkout immediately while existing valid subscriptions retain their purchased entitlement through the current period and provider renewals are scheduled to stop at period/cycle end.
 
-Current checkout uses server-side mappings from application plan codes to Stripe Price IDs and Razorpay Plan IDs. New paid plans require explicit provider mappings before provider checkout can be offered.
+Never place real credentials or provider IDs in docs, commits, frontend configuration or screenshots.
 
-Never place real credentials or provider IDs in docs, commits, frontend configuration or screenshots. Rotate exposed credentials.
+## History boundary
+
+Purchased terms and V36 subscription-history rows are immutable historical records. Tenant-facing history hides internal provider references; system-admin history retains provider identifiers for operations.
 
 ## Boundaries
 
@@ -32,21 +36,20 @@ Never place real credentials or provider IDs in docs, commits, frontend configur
 - checkout is a lifecycle recovery action but still requires tenant authorization
 - provider identifiers and credentials stay server-side
 - API keys remain tenant-bound and restricted to `/api/external/**`
+- never hard-delete used plans/provider references merely to remove them from future sale
 
 ## Documentation/Wiki
 
-Current root docs, focused guides and version-controlled Wiki source have been refreshed to the billing-closure checkpoint.
-
-`wiki/*.md` is canonical. `.github/workflows/wiki-sync.yml` validates relevant pull requests and automatically publishes merged `main` Wiki changes using `scripts/publish-wiki.ps1`. Manual publishing is fallback-only.
+Current root docs, focused guides and version-controlled Wiki source are refreshed through PR #106. `wiki/*.md` is canonical and publishes automatically from merged `main`.
 
 ## Resume steps
 
-1. treat Billing & Payments as closed at application level
-2. do not continue provider-sandbox debugging as core feature work
-3. begin the next product milestone, recommended: tenant-configurable outbound webhooks
+1. treat billing/catalog lifecycle as closed at application level
+2. do not continue Razorpay sandbox debugging as core feature work
+3. begin tenant-configurable outbound webhooks
 4. keep provider live-mode readiness as an independent deployment/operations track
 5. preserve full CI requirements on every PR
 
 ## Verification
 
-GitHub Actions remains authoritative where local Docker is unavailable. Require backend, PostgreSQL/Flyway, frontend, repository hygiene, security, containers and Qodana before merge. Relevant Wiki changes must also pass `Wiki Sync / Validate Wiki Source`.
+Require Backend, PostgreSQL/Flyway, Frontend, Repository Hygiene, Security, Container CI and Qodana before merge. Relevant Wiki changes must also pass `Wiki Sync / Validate Wiki Source`.
