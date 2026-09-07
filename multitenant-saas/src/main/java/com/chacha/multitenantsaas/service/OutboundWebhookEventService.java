@@ -10,15 +10,15 @@ import com.chacha.multitenantsaas.repository.OutboundWebhookDeliveryRepository;
 import com.chacha.multitenantsaas.repository.OutboundWebhookEndpointRepository;
 import com.chacha.multitenantsaas.repository.OutboundWebhookEventRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 @Service
 public class OutboundWebhookEventService {
@@ -27,19 +27,19 @@ public class OutboundWebhookEventService {
     private final OutboundWebhookEndpointRepository endpointRepository;
     private final OutboundWebhookEventRepository eventRepository;
     private final OutboundWebhookDeliveryRepository deliveryRepository;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     public OutboundWebhookEventService(
             TenantRepository tenantRepository,
             OutboundWebhookEndpointRepository endpointRepository,
             OutboundWebhookEventRepository eventRepository,
             OutboundWebhookDeliveryRepository deliveryRepository,
-            ObjectMapper objectMapper) {
+            JsonMapper jsonMapper) {
         this.tenantRepository = tenantRepository;
         this.endpointRepository = endpointRepository;
         this.eventRepository = eventRepository;
         this.deliveryRepository = deliveryRepository;
-        this.objectMapper = objectMapper;
+        this.jsonMapper = jsonMapper;
     }
 
     /**
@@ -87,15 +87,15 @@ public class OutboundWebhookEventService {
             OutboundWebhookEventType eventType,
             Instant occurredAt,
             Object data) {
-        ObjectNode envelope = objectMapper.createObjectNode();
+        ObjectNode envelope = jsonMapper.createObjectNode();
         envelope.put("id", eventId.toString());
         envelope.put("type", eventType.wireName());
         envelope.put("tenantId", tenantId.toString());
         envelope.put("occurredAt", occurredAt.toString());
-        envelope.set("data", objectMapper.valueToTree(data));
+        envelope.set("data", jsonMapper.valueToTree(data));
         try {
-            return objectMapper.writeValueAsString(envelope);
-        } catch (JsonProcessingException exception) {
+            return jsonMapper.writeValueAsString(envelope);
+        } catch (JacksonException exception) {
             throw new IllegalArgumentException(
                     "Webhook event payload could not be serialized", exception);
         }
