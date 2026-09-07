@@ -16,6 +16,9 @@ Never modify an applied migration.
 - `security_model.md`
 - `authorization_model.md`
 - `subscription_billing.md`
+- `outbound-webhook-events.md`
+- `outbound-webhook-delivery-history.md`
+- `outbound-webhook-admin-ux.md`
 - `postgresql_and_migrations.md`
 - `frontend_architecture.md`
 - `frontend_testing.md`
@@ -28,32 +31,42 @@ Never modify an applied migration.
 
 ## Current phase
 
-The project has completed **Billing & Payments at application level**, reviewed through PR #98.
+The project has completed both **Billing & Payments** and **tenant-configurable outbound webhooks** at application level, reviewed through PR #112 (`8324ae9`).
 
-Delivered billing/platform capabilities include:
+### Billing/platform capabilities
 
 - provider-neutral Stripe/Razorpay billing
-- signed durable webhooks and lifecycle synchronization
+- signed durable provider webhooks and lifecycle synchronization
 - professional plan/provider checkout UX
 - provider-backed cancellation with linkage recovery
 - idempotent stale-terminal-state repair
+- managed Stripe/Razorpay provider catalogs
+- safe terminal plan retirement and immutable billing history
 - operations visibility and read-only reconciliation
 - durable usage metering
-- tenant API keys and isolated external API authentication
-- per-plan external API quotas
-- checkout recovery from read-only workspaces
+- tenant API keys and per-plan external API quotas
 
 Stripe is validated in deployed Test Mode for checkout, signed lifecycle webhooks and provider-side cancellation. Razorpay remains provider-sandbox blocked at recurring Test Mode authorization; this does not keep the application billing milestone open.
 
-Application plan creation does not automatically provision Stripe Products/Prices or Razorpay Plans. Provider mappings remain server-side configuration.
+### Outbound integration capabilities
 
-Portable Flyway migrations extend through **V33**.
+- tenant endpoint/event-subscription lifecycle
+- generated/rotatable signing secrets encrypted at rest
+- HTTPS/public-routable SSRF protection
+- durable immutable event/delivery/attempt persistence
+- HMAC-SHA256 delivery signing
+- lease-safe retries/backoff/timeouts and stale-lease recovery
+- transactional domain event publication
+- delivery history/detail and terminal replay
+- permission-gated tenant Integrations UX
+
+Portable Flyway migrations extend through **V39**.
 
 ## Next product milestone
 
-Recommended next major feature: **tenant-configurable outbound webhooks**.
+Recommended next major feature: **enterprise SSO / identity federation**.
 
-Other roadmap items include enterprise SSO, authorization delegation/explain-access, backup/restore drills, monitoring/alerts and broader load/failure-recovery testing.
+Use a provider-neutral federation boundary, implement OIDC first, and add SAML only where enterprise requirements justify it. Follow-up roadmap items include authorization delegation/explain-access, backup/restore drills, monitoring/alerts and broader load/failure-recovery testing.
 
 ## Verification baseline
 
@@ -76,4 +89,4 @@ GitHub Actions remains authoritative where Docker is unavailable.
 
 Version-controlled Wiki source lives under `wiki/` and is canonical. Pull requests that change Wiki source run a no-push validation in `.github/workflows/wiki-sync.yml`. After those changes reach `main`, the same workflow automatically publishes them to the live GitHub Wiki using `scripts/publish-wiki.ps1`.
 
-Manual publishing is now only a fallback. See `wiki/Wiki-Maintenance.md` for the synchronization policy.
+Manual publishing is only a fallback. See `wiki/Wiki-Maintenance.md` for the synchronization policy.

@@ -4,10 +4,10 @@ Current documentation refresh:
 
 ```text
 Repository: Cyfer-ap/MultiTenantSAAS
-Reviewed application state: post-PR #106 (486f592)
+Reviewed application state: post-PR #112 (8324ae9)
 Snapshot date: 2026-09-07
-Phase: billing/catalog lifecycle complete at application level
-Next recommended product milestone: tenant-configurable outbound webhooks
+Phase: tenant-configurable outbound webhooks complete at application level
+Next recommended product milestone: enterprise SSO / identity federation
 ```
 
 ## Updated status documents
@@ -23,38 +23,44 @@ Root:
 
 Guides:
 
+- `guides/README.md`
 - `guides/progress.md`
 - `guides/CHECKPOINT.md`
-- `guides/subscription_billing.md`
+- `guides/HANDOFF.md`
+- `guides/DEFERRED_PLATFORM_WORK.md`
+- `guides/outbound-webhook-events.md`
+- `guides/outbound-webhook-delivery-history.md`
+- `guides/outbound-webhook-admin-ux.md`
 
 Wiki source:
 
 - `wiki/Home.md`
 - `wiki/Developer-Handoff.md`
 - `wiki/Roadmap.md`
-- `wiki/Subscriptions-and-Quotas.md`
+- `wiki/Notifications.md`
 
 ## Status recorded
 
-This refresh supersedes the post-#98/#99 statement that provider catalog provisioning was future work.
+This refresh advances the repository from the post-#106 billing/catalog checkpoint through the completed outbound-webhook sequence.
 
-PRs #100–#106 add:
+PRs #108–#112 add:
 
-- `ACTIVE` / `INACTIVE` / terminal `RETIRED` plan lifecycle
-- durable TEST/LIVE provider catalog mappings
-- immutable purchased-plan snapshots
-- automatic Stripe Product/Price provisioning and Price replacement
-- safe Stripe/Razorpay plan retirement with period-end/cycle-end cancellation
-- durable retirement operations
-- immutable tenant subscription history
-- tenant/system-admin billing-history UX
-- automatic Razorpay Plan provisioning/replacement and legacy mapping compatibility
+- V37 tenant-scoped endpoint/event-subscription configuration
+- generated/rotatable signing secrets encrypted at rest
+- HTTPS/public-routable SSRF protections
+- V38 immutable outbound events and durable endpoint-specific deliveries
+- HMAC-SHA256 signing with stable event identity/body
+- lease-safe retries/backoff/timeouts/stale-lease recovery
+- transactional project/task/comment/member/subscription event publication
+- V39 immutable delivery-attempt history
+- tenant-scoped delivery history/detail and guarded manual replay
+- permission-gated tenant Integrations endpoint/delivery UX
 
-Stripe remains the validated deployed Test Mode payment path. Razorpay integration and managed Plan provisioning are implemented, while recurring Test Mode authorization remains provider-sandbox blocked.
+Billing/provider status is unchanged: Stripe remains the validated deployed Test Mode payment path. Razorpay integration and managed Plan provisioning are implemented, while recurring Test Mode authorization remains provider-sandbox blocked.
 
-Common Flyway migrations now extend through V36.
+Common Flyway migrations now extend through V39.
 
-No credentials, webhook secrets or provider plan/price IDs are recorded in documentation.
+No credentials, outbound signing secrets or provider plan/price IDs are recorded in documentation.
 
 ## Wiki synchronization
 

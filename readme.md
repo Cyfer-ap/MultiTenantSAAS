@@ -1,14 +1,14 @@
 # Multi-Tenant SaaS Platform
 
-A full-stack multi-tenant SaaS platform focused on tenant isolation, permission-oriented authorization, project collaboration, subscription enforcement, external billing, PostgreSQL correctness and production-oriented engineering.
+A full-stack multi-tenant SaaS platform focused on tenant isolation, permission-oriented authorization, project collaboration, subscription enforcement, external billing, durable outbound integrations, PostgreSQL correctness and production-oriented engineering.
 
 > **Current documentation snapshot**
 >
 > Repository: `Cyfer-ap/MultiTenantSAAS`
 > Branch: `main`
-> Application state reviewed through: PR #106 (`486f592`)
+> Application state reviewed through: PR #112 (`8324ae9`)
 > Snapshot date: 2026-09-07
-> Current phase: **Billing/catalog lifecycle complete at application level; outbound webhooks next**
+> Current phase: **Tenant-configurable outbound webhooks complete; enterprise SSO next**
 
 ## Platform capabilities
 
@@ -25,6 +25,9 @@ A full-stack multi-tenant SaaS platform focused on tenant isolation, permission-
 - immutable subscription purchase/history snapshots
 - tenant API keys restricted to `/api/external/**`
 - metered and plan-limited external API requests
+- tenant-configurable outbound webhook endpoints and event subscriptions
+- HMAC-signed durable webhook delivery with retry/backoff, history and replay
+- tenant-admin Integrations UX for endpoint lifecycle and delivery observability
 
 ### System plane
 
@@ -177,6 +180,54 @@ POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/razorpay
 
 Opening these URLs in a browser sends GET and is not a webhook test.
 
+# Tenant Outbound Webhooks
+
+## Milestone status
+
+**Tenant-configurable outbound webhooks are complete at application level through PR #112.**
+
+Implemented across PRs #108–#112:
+
+- tenant-scoped endpoint registration, update, enable/disable and soft archive
+- event-subscription selection from a server-owned event catalogue
+- generated high-entropy signing secrets and secret rotation
+- one-time plaintext secret exposure; AES-256-GCM encrypted storage at rest
+- HTTPS-only endpoint validation and public-routable DNS/SSRF protection
+- delivery-time DNS/SSRF revalidation and disabled redirects
+- immutable event envelopes with stable event IDs and exact stored request bodies
+- endpoint-specific durable delivery records
+- HMAC-SHA256 signatures over `timestamp.eventId.body`
+- lease-safe asynchronous worker processing
+- bounded retries, exponential backoff, timeouts, stale-lease recovery and terminal failure
+- transactional publication from project/task/comment/member/subscription mutations
+- immutable attempt history and replay cycles
+- tenant-scoped paginated delivery history/detail APIs
+- guarded manual replay for terminal deliveries only
+- permission-gated Integrations navigation and full tenant-admin endpoint/delivery UX
+
+Initial events:
+
+```text
+project.created
+project.updated
+project.archived
+task.created
+task.updated
+task.completed
+comment.created
+comment.replied
+member.added
+member.removed
+subscription.updated
+subscription.cancelled
+```
+
+Focused guides:
+
+- `guides/outbound-webhook-events.md`
+- `guides/outbound-webhook-delivery-history.md`
+- `guides/outbound-webhook-admin-ux.md`
+
 ## Database checkpoint
 
 ```text
@@ -185,7 +236,7 @@ multitenant-saas/src/main/resources/db/postgresql  PostgreSQL V17 baseline
 multitenant-saas/src/main/resources/db/common      portable V18+
 ```
 
-Shared migrations currently extend through **V36**:
+Shared migrations currently extend through **V39**:
 
 - V28 billing foundation
 - V29 provider subscription linkage
@@ -196,6 +247,9 @@ Shared migrations currently extend through **V36**:
 - V34 provider catalog mappings and immutable purchased-plan snapshots
 - V35 durable plan-retirement operations
 - V36 immutable tenant subscription history
+- V37 outbound webhook endpoints and event subscriptions
+- V38 durable outbound webhook events and deliveries
+- V39 outbound webhook delivery attempts
 
 Never rewrite an applied Flyway migration.
 
@@ -203,7 +257,9 @@ Never rewrite an applied Flyway migration.
 
 Required GitHub Actions gates include Backend, PostgreSQL/Flyway, Frontend, Repository Hygiene, Security/Trivy, Container CI and Qodana.
 
-The #100–#106 catalog/history sequence was developed under those repository gates. Mock/provider-contract coverage validates application behavior; it does not prove Razorpay sandbox availability or live-provider readiness.
+The #108–#112 outbound-webhook sequence was developed under those gates. The final #112 head additionally passed React 19 lint rules, TypeScript/MUI 9 production build, frontend tests/coverage and container build/scan.
+
+Mock/provider-contract coverage validates application behavior; it does not prove Razorpay sandbox availability, live-provider billing readiness or third-party webhook receiver correctness.
 
 ## Deployment
 
@@ -211,7 +267,7 @@ The #100–#106 catalog/history sequence was developed under those repository ga
 - Backend: `https://multitenantsaas-akxn.onrender.com`
 - Production profile: `SPRING_PROFILES_ACTIVE=postgres,production`
 
-All secrets remain environment configured.
+All secrets remain environment configured. Outbound webhook endpoint creation/secret rotation also requires the server-side encryption key documented in the application/environment templates.
 
 ## Documentation and Wiki
 
@@ -226,8 +282,10 @@ Start with:
 
 - `CHECKPOINT.md`
 - `HANDOFF.md`
+- `guides/outbound-webhook-events.md`
+- `guides/outbound-webhook-delivery-history.md`
+- `guides/outbound-webhook-admin-ux.md`
 - `guides/subscription_billing.md`
-- `guides/DEFERRED_PLATFORM_WORK.md`
 - `wiki/Home.md`
 - `wiki/Roadmap.md`
 
@@ -235,12 +293,12 @@ The repository `wiki/` directory is canonical Wiki source. `.github/workflows/wi
 
 ## Next platform milestone
 
-Billing/catalog lifecycle is closed at the application level. The recommended next major product feature is:
+Billing/catalog lifecycle and tenant-configurable outbound webhooks are closed at the application level. The recommended next major product sequence is:
 
-1. **tenant-configurable outbound webhooks**
-2. enterprise SSO
-3. authorization delegation and explain-access
-4. backup/restore drills, monitoring, alerts and operational runbooks
-5. broader load/failure-recovery and production R2 validation
+1. **enterprise SSO / identity federation**
+2. authorization delegation and explain-access
+3. backup/restore drills, monitoring, alerts and operational runbooks
+4. broader load/failure-recovery and production R2 validation
+5. optional notification expansion such as digests/live browser delivery
 
-Provider-specific live billing readiness can proceed independently when required.
+For SSO, prefer a provider-neutral federation model with OIDC first, then add SAML only where enterprise requirements justify it. Provider-specific live billing readiness can proceed independently when required.

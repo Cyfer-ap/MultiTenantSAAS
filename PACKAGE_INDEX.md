@@ -1,28 +1,37 @@
 # Documentation Package Index
 
-Current snapshot: post-PR #106 (`486f592`), 2026-09-07.
+Current snapshot: post-PR #112 (`8324ae9`), 2026-09-07.
 
 ## Primary status documents
 
-- `readme.md` — platform overview, provider/catalog status and next milestone
+- `readme.md` — platform overview, billing/outbound-integration status and next milestone
 - `CHECKPOINT.md` — concise verified application checkpoint
 - `HANDOFF.md` — session-independent resume instructions
-- `guides/subscription_billing.md` — billing contracts, provider catalog lifecycle and closure status
+- `guides/subscription_billing.md` — billing contracts and provider catalog lifecycle
+- `guides/outbound-webhook-events.md` — outbound event catalogue and payload contracts
+- `guides/outbound-webhook-delivery-history.md` — delivery/attempt history and replay
+- `guides/outbound-webhook-admin-ux.md` — tenant Integrations UX and API mapping
 - `guides/DEFERRED_PLATFORM_WORK.md` — remaining platform/live-readiness work
 - `wiki/Home.md` — version-controlled Wiki entry point
 - `wiki/Roadmap.md` — current platform sequence
 - `wiki/Wiki-Maintenance.md` — automatic Wiki synchronization policy
 - `MANIFEST.json` — machine-readable documentation inventory
 
-## Billing/catalog milestone status
+## Completed platform milestones
 
-**Billing, cancellation hardening and managed provider catalogs are complete at application level through PR #106.**
+### Billing/catalog
 
-Stripe remains the validated deployed Test Mode payment path and now supports managed Product/Price provisioning/versioning. Razorpay application integration and managed Plan provisioning are implemented, while recurring Test Mode authorization remains provider-sandbox blocked.
+Billing, cancellation hardening and managed provider catalogs are complete at application level through PR #106.
 
-System-admin paid-plan management now uses durable TEST/LIVE provider mappings. Safe terminal retirement preserves existing paid-period entitlement, immutable purchased-plan snapshots/history preserve prior terms, and tenant/system-admin billing history is available in the UI.
+Stripe remains the validated deployed Test Mode payment path and supports managed Product/Price provisioning/versioning. Razorpay application integration and managed Plan provisioning are implemented, while recurring Test Mode authorization remains provider-sandbox blocked.
 
-Common Flyway migrations extend through **V36**.
+### Tenant outbound webhooks
+
+Tenant-configurable outbound webhooks are complete at application level through PR #112.
+
+Delivered capabilities include tenant endpoint/event-subscription management, generated/rotatable encrypted signing secrets, SSRF-safe HTTPS validation, durable immutable event/delivery/attempt records, HMAC-SHA256 delivery signing, lease-safe retry/backoff processing, transactional domain events, delivery history/detail, guarded replay and tenant-admin Integrations UX.
+
+Common Flyway migrations extend through **V39**.
 
 ## Wiki publishing
 
@@ -34,4 +43,4 @@ Older planning/recovery files remain implementation history. They are not curren
 
 ## Next product milestone
 
-Recommended: **tenant-configurable outbound webhooks**, followed by enterprise SSO, advanced authorization/explain-access and deeper operational recovery/load validation.
+Recommended: **enterprise SSO / identity federation**, followed by advanced authorization/explain-access and deeper operational recovery/load validation. Prefer OIDC first behind a provider-neutral federation boundary, with SAML added where required.

@@ -1,6 +1,6 @@
 # Notifications
 
-Reviewed for the current platform snapshot on 2026-09-06. The notification subsystem is tenant scoped and separates durable notification records from external delivery attempts. Its core product expansion was completed before the billing milestone; Billing & Payments is now also complete at application level through PR #98.
+Reviewed for the current platform snapshot on 2026-09-07. The notification subsystem is tenant scoped and separates durable notification records from external delivery attempts. Its collaboration expansion is complete, and tenant-configurable outbound webhooks are now also complete at application level through PR #112.
 
 ## Current capabilities
 
@@ -65,7 +65,7 @@ The delivery model includes:
 - stale-lease recovery
 - provider failure handling
 
-This is the reliability foundation for email and future delivery channels. The same architectural ideas are relevant to the recommended tenant outbound-webhook milestone, although outbound webhooks require additional endpoint security, signing and SSRF controls.
+These reliability patterns were subsequently reused and extended by tenant outbound webhooks. Outbound webhook delivery adds tenant-managed HTTPS destinations, generated signing secrets, HMAC-SHA256 signatures, delivery-time DNS/SSRF revalidation, immutable event/delivery/attempt history and manual replay.
 
 ## Preferences
 
@@ -108,7 +108,7 @@ The planned collaboration-notification expansion is complete. Remaining optional
 5. delivery/admin observability
 6. provider bounce/complaint processing if needed
 
-Notification work does not block the current recommended next milestone: **tenant-configurable outbound webhooks**.
+Notification expansion does not block the current recommended next milestone: **enterprise SSO / identity federation**.
 
 ## Related pages
 
