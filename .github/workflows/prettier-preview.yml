@@ -1,0 +1,37 @@
+name: Prettier Preview
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: multitenant-saas-frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: multitenant-saas-frontend
+        run: npm ci
+      - name: Print Prettier diff
+        working-directory: multitenant-saas-frontend
+        run: |
+          npx prettier \
+            src/features/subscriptions/hooks/useSubscriptionHistory.ts \
+            src/features/subscriptions/types/subscriptionHistory.ts \
+            src/pages/SystemSubscriptionsPage.tsx \
+            --write
+          git diff -- \
+            src/features/subscriptions/hooks/useSubscriptionHistory.ts \
+            src/features/subscriptions/types/subscriptionHistory.ts \
+            src/pages/SystemSubscriptionsPage.tsx
