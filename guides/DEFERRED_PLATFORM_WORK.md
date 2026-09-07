@@ -1,6 +1,6 @@
 # Deferred Platform Work
 
-Reviewed through PR #106 on 2026-09-07. Retire an item only when it is implemented and verified at the appropriate boundary.
+Reviewed through PR #112 on 2026-09-07. Retire an item only when it is implemented and verified at the appropriate boundary.
 
 ## Recently delivered
 
@@ -23,8 +23,13 @@ Reviewed through PR #106 on 2026-09-07. Retire an item only when it is implement
 - immutable tenant subscription history backend/API — PR #104
 - tenant/system-admin billing-history and retired-plan UX — PR #105
 - managed Razorpay Plan provisioning/versioning — PR #106
+- tenant outbound webhook configuration/signing/SSRF foundation — PR #108
+- durable HMAC-signed delivery engine with leases/retry/backoff — PR #109
+- transactional domain-event publication — PR #110
+- immutable attempt history and guarded manual replay — PR #111
+- tenant-admin Integrations endpoint/delivery UX — PR #112
 
-**Billing/catalog lifecycle is complete at application level.** It is no longer deferred platform work.
+**Billing/catalog lifecycle and tenant outbound webhooks are complete at application level.** They are no longer deferred platform work.
 
 ## Provider/live-readiness debt
 
@@ -44,31 +49,41 @@ Before enabling live billing for any provider:
 - confirm taxes/compliance/customer communications as required
 - establish operational alerting, rollback and runbook procedures
 
-Automatic provider catalog provisioning is no longer deferred: Stripe and Razorpay managed catalog flows are implemented through PR #106.
+Automatic provider catalog provisioning is implemented for Stripe and Razorpay.
+
+### Outbound-webhook receiver readiness
+
+Application-side outbound delivery is complete. Production use still requires operational validation against real tenant receivers:
+
+- configure the server-side encryption key before endpoint creation/secret rotation
+- verify receiver HTTPS/TLS and public DNS behavior
+- verify receiver HMAC validation and timestamp/replay policy
+- establish alerting/runbooks for repeated terminal failures
+- validate throughput/timeouts against realistic third-party endpoints
+
+These are deployment/consumer-readiness concerns rather than missing core webhook architecture.
 
 ## Remaining platform work
 
-1. **Tenant outbound webhooks** — recommended next product milestone
-   - tenant-configurable endpoints and event subscriptions
-   - HMAC signing and secret rotation
-   - durable retries/backoff/leases/idempotency
-   - delivery logs and manual replay
-   - SSRF protections and tenant authorization
+1. **Enterprise SSO / identity federation** — recommended next product milestone
+   - tenant identity-provider configuration
+   - provider-neutral federation boundary
+   - OIDC first; SAML where enterprise requirements justify it
+   - account linking and tenant/domain discovery
+   - optional/enforced SSO policy with safe recovery/break-glass behavior
+   - login/admin UX and auditability
 
-2. **Enterprise SSO**
-   - OIDC/SAML-style sign-in, account linking, discovery and enforcement
-
-3. **Advanced authorization**
+2. **Advanced authorization**
    - temporary/scoped delegation
    - explain-access API/UI
 
-4. **Operational recovery and alerting**
+3. **Operational recovery and alerting**
    - database backup/restore drills
    - actionable service/database alerts and runbooks
    - broader load and failure-recovery verification
    - production R2 operational validation
 
-5. **Optional notification expansion**
+4. **Optional notification expansion**
    - invitation events, digests, live browser delivery and admin observability
 
 ## Revisit rule
