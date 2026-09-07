@@ -1,10 +1,12 @@
 package com.chacha.multitenantsaas.billing.razorpay;
 
+import com.chacha.multitenantsaas.billing.entity.SubscriptionPlanProviderMappingStatus;
 import com.chacha.multitenantsaas.billing.provider.BillingCheckoutSession;
 import com.chacha.multitenantsaas.billing.provider.BillingProvider;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderException;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderSubscriptionSnapshot;
 import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
+import com.chacha.multitenantsaas.billing.repository.SubscriptionPlanProviderMappingRepository;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
@@ -26,6 +28,7 @@ public class RazorpayBillingProvider implements BillingProvider {
 
     private final RazorpayBillingProperties properties;
     private final RestClient restClient;
+    private SubscriptionPlanProviderMappingRepository mappingRepository;
 
     @Autowired
     public RazorpayBillingProvider(RazorpayBillingProperties properties) {
@@ -43,6 +46,11 @@ public class RazorpayBillingProvider implements BillingProvider {
                                                 properties.getKeyId(), properties.getKeySecret()))
                         .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                         .build();
+    }
+
+    @Autowired(required = false)
+    void setMappingRepository(SubscriptionPlanProviderMappingRepository mappingRepository) {
+        this.mappingRepository = mappingRepository;
     }
 
     @Override
@@ -181,18 +189,48 @@ public class RazorpayBillingProvider implements BillingProvider {
     }
 
     private String resolvePlanId(String normalizedPlanCode) {
+        if (mappingRepository != null) {
+            String mappedPlanId =
+                    mappingRepository
+                            .findFirstByPlan_CodeIgnoreCaseAndProviderAndEnvironmentAndStatusOrderByCreatedAtDesc(
+                                    normalizedPlanCode,
+                                    providerType(),
+                                    properties.getEnvironment(),
+                                    SubscriptionPlanProviderMappingStatus.ACTIVE)
+                            .map(mapping -> mapping.getProviderPlanId())
+                            .orElse(null);
+            if (mappedPlanId != null && !mappedPlanId.isBlank()) {
+                return mappedPlanId;
+            }
+        }
+
+        return configuredPlanId(normalizedPlanCode);
+    }
+
+    private String resolvePlanCode(String providerPlanId) {
+        if (mappingRepository != null) {
+            String mappedPlanCode =
+                    mappingRepository
+                            .findPlanCodeByProviderPlanId(
+                                    providerType(), properties.getEnvironment(), providerPlanId)
+                            .orElse(null);
+            if (mappedPlanCode != null && !mappedPlanCode.isBlank()) {
+                return mappedPlanCode.toUpperCase(Locale.ROOT);
+            }
+        }
+
         for (Map.Entry<String, String> plan : properties.getPlans().entrySet()) {
-            if (plan.getKey().equalsIgnoreCase(normalizedPlanCode)) {
-                return plan.getValue();
+            if (providerPlanId.equals(plan.getValue())) {
+                return plan.getKey().toUpperCase(Locale.ROOT);
             }
         }
         return null;
     }
 
-    private String resolvePlanCode(String providerPlanId) {
+    private String configuredPlanId(String normalizedPlanCode) {
         for (Map.Entry<String, String> plan : properties.getPlans().entrySet()) {
-            if (providerPlanId.equals(plan.getValue())) {
-                return plan.getKey().toUpperCase(Locale.ROOT);
+            if (plan.getKey().equalsIgnoreCase(normalizedPlanCode)) {
+                return plan.getValue();
             }
         }
         return null;
@@ -231,6 +269,9 @@ public class RazorpayBillingProvider implements BillingProvider {
     private static void validateConfiguration(RazorpayBillingProperties properties) {
         if (properties == null) {
             throw new IllegalStateException("Razorpay billing properties are required");
+        }
+        if (properties.getEnvironment() == null) {
+            throw new IllegalStateException("RAZORPAY_BILLING_ENVIRONMENT must be configured");
         }
         requireConfigured(properties.getKeyId(), "RAZORPAY_KEY_ID");
         requireConfigured(properties.getKeySecret(), "RAZORPAY_KEY_SECRET");
