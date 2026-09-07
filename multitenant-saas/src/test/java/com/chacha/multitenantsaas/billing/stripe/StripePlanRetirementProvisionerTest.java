@@ -22,12 +22,37 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.MapPropertySource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 class StripePlanRetirementProvisionerTest {
+
+    @Test
+    void springBeanFactorySelectsThePropertiesInjectionConstructor() {
+        try (AnnotationConfigApplicationContext context =
+                new AnnotationConfigApplicationContext()) {
+            context.getEnvironment()
+                    .getPropertySources()
+                    .addFirst(
+                            new MapPropertySource(
+                                    "stripe-retirement-test",
+                                    Map.of("app.billing.stripe.enabled", "true")));
+            context.registerBean(StripeBillingProperties.class, this::properties);
+            context.registerBean(
+                    SubscriptionPlanProviderMappingRepository.class,
+                    () -> mock(SubscriptionPlanProviderMappingRepository.class));
+            context.registerBean(
+                    SubscriptionPlanRepository.class, () -> mock(SubscriptionPlanRepository.class));
+            context.register(StripePlanRetirementProvisioner.class);
+            context.refresh();
+
+            assertThat(context.getBean(StripePlanRetirementProvisioner.class)).isNotNull();
+        }
+    }
 
     @Test
     void retirementDeactivatesCurrentPriceAndProductAndArchivesMapping() {
