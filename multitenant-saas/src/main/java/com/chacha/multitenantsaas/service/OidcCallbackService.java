@@ -1,6 +1,5 @@
 package com.chacha.multitenantsaas.service;
 
-import com.chacha.multitenantsaas.dto.LoginResponse;
 import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -14,7 +13,7 @@ public class OidcCallbackService {
     private final OidcTokenExchangeService tokenExchangeService;
     private final OidcIdTokenValidator idTokenValidator;
     private final OidcFederatedIdentityService federatedIdentityService;
-    private final OidcSessionService sessionService;
+    private final OidcSessionHandoffService sessionHandoffService;
 
     public OidcCallbackService(
             OidcAuthorizationTransactionStateService stateService,
@@ -23,17 +22,18 @@ public class OidcCallbackService {
             OidcTokenExchangeService tokenExchangeService,
             OidcIdTokenValidator idTokenValidator,
             OidcFederatedIdentityService federatedIdentityService,
-            OidcSessionService sessionService) {
+            OidcSessionHandoffService sessionHandoffService) {
         this.stateService = stateService;
         this.metadataService = metadataService;
         this.secretCipher = secretCipher;
         this.tokenExchangeService = tokenExchangeService;
         this.idTokenValidator = idTokenValidator;
         this.federatedIdentityService = federatedIdentityService;
-        this.sessionService = sessionService;
+        this.sessionHandoffService = sessionHandoffService;
     }
 
-    public LoginResponse authenticate(String state, String code, String providerError) {
+    public OidcSessionHandoffService.IssuedHandoff authenticate(
+            String state, String code, String providerError) {
         OidcCallbackTransactionSnapshot transaction = stateService.consume(state);
         if (providerError != null && !providerError.isBlank()) {
             throw failed();
@@ -50,7 +50,7 @@ public class OidcCallbackService {
                 idTokenValidator.validate(
                         idToken, metadata, transaction.clientId(), transaction.nonceHash());
         UUID userId = federatedIdentityService.resolveUser(transaction, identity);
-        return sessionService.issue(
+        return sessionHandoffService.issue(
                 transaction.tenantId(), userId, transaction.persistentSession());
     }
 
