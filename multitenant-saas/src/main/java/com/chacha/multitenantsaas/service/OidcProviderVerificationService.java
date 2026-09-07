@@ -1,5 +1,6 @@
 package com.chacha.multitenantsaas.service;
 
+import com.chacha.multitenantsaas.config.OidcLoginProperties;
 import com.chacha.multitenantsaas.entity.IdentityProviderProtocol;
 import com.chacha.multitenantsaas.exception.IdentityProviderVerificationException;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -11,12 +12,15 @@ public class OidcProviderVerificationService {
 
     private final OidcProviderMetadataService metadataService;
     private final IdentityProviderSecretCipher secretCipher;
+    private final OidcLoginProperties loginProperties;
 
     public OidcProviderVerificationService(
             OidcProviderMetadataService metadataService,
-            IdentityProviderSecretCipher secretCipher) {
+            IdentityProviderSecretCipher secretCipher,
+            OidcLoginProperties loginProperties) {
         this.metadataService = metadataService;
         this.secretCipher = secretCipher;
+        this.loginProperties = loginProperties;
     }
 
     public OidcProviderVerificationResult verify(OidcProviderVerificationInput input) {
@@ -35,7 +39,7 @@ public class OidcProviderVerificationService {
                             .clientId(input.clientId())
                             .clientSecret(clientSecret)
                             .scope(input.scopes())
-                            .redirectUri("{baseUrl}/api/auth/oidc/callback/{registrationId}")
+                            .redirectUri(loginProperties.requireRedirectUri().toString())
                             .clientName(input.displayName())
                             .build();
 

@@ -19,6 +19,8 @@ public class PublicAuthRateLimitInterceptor implements HandlerInterceptor {
 
     private static final Pattern TENANT_LOGIN_PATTERN =
             Pattern.compile("^/api/tenants/[^/]+/auth/login/?$");
+    private static final Pattern TENANT_OIDC_START_PATTERN =
+            Pattern.compile("^/api/tenants/[^/]+/auth/oidc/start/?$");
 
     private static final long CLEANUP_INTERVAL = 256L;
 
@@ -99,6 +101,7 @@ public class PublicAuthRateLimitInterceptor implements HandlerInterceptor {
 
     private RateLimitScope resolveScope(String path) {
         if (TENANT_LOGIN_PATTERN.matcher(path).matches()
+                || TENANT_OIDC_START_PATTERN.matcher(path).matches()
                 || "/api/system/auth/login".equals(path)
                 || "/api/system/auth/login/".equals(path)) {
             return RateLimitScope.LOGIN;

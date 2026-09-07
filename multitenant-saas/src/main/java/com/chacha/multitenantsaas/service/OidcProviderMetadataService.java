@@ -25,7 +25,6 @@ public class OidcProviderMetadataService {
                         configuredIssuer, "Identity-provider issuer URI", false);
         URI discoveryUri = discoveryUri(issuer);
 
-        // Re-resolve immediately before the request so configuration-time DNS cannot be trusted.
         remoteUriValidator.validateAndNormalize(
                 discoveryUri.toString(), "OIDC discovery URI", false);
         Map<String, Object> configuration = httpTransport.getJson(discoveryUri);
@@ -53,7 +52,7 @@ public class OidcProviderMetadataService {
                         requiredString(configuration, "jwks_uri"), "OIDC JWKS endpoint", true);
 
         validateOptionalRemoteUri(configuration, "userinfo_endpoint", "OIDC userinfo endpoint");
-        validateJwkSet(jwkSetUri);
+        Map<String, Object> jwkSet = validateJwkSet(jwkSetUri);
 
         Map<String, Object> normalized = new LinkedHashMap<>(configuration);
         normalized.put("issuer", metadataIssuer);
@@ -62,7 +61,12 @@ public class OidcProviderMetadataService {
         normalized.put("jwks_uri", jwkSetUri);
 
         return new OidcProviderMetadata(
-                normalized, metadataIssuer, authorizationEndpoint, tokenEndpoint, jwkSetUri);
+                normalized,
+                metadataIssuer,
+                authorizationEndpoint,
+                tokenEndpoint,
+                jwkSetUri,
+                jwkSet);
     }
 
     private URI discoveryUri(String issuer) {
@@ -70,8 +74,7 @@ public class OidcProviderMetadataService {
         return URI.create(base + "/.well-known/openid-configuration");
     }
 
-    private void validateJwkSet(String jwkSetUri) {
-        // Re-resolve immediately before the JWKS request as well.
+    private Map<String, Object> validateJwkSet(String jwkSetUri) {
         String validated =
                 remoteUriValidator.validateAndNormalize(jwkSetUri, "OIDC JWKS endpoint", true);
         Map<String, Object> jwks = httpTransport.getJson(URI.create(validated));
@@ -80,6 +83,7 @@ public class OidcProviderMetadataService {
             throw new IdentityProviderVerificationException(
                     "OIDC JWKS response must contain at least one signing key");
         }
+        return jwks;
     }
 
     private void validateOptionalRemoteUri(

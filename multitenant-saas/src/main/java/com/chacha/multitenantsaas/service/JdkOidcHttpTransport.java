@@ -4,11 +4,15 @@ import com.chacha.multitenantsaas.exception.IdentityProviderVerificationExceptio
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
@@ -48,7 +52,34 @@ public class JdkOidcHttpTransport implements OidcHttpTransport {
                         .header("Accept", "application/json")
                         .GET()
                         .build();
+        return sendJson(request);
+    }
 
+    @Override
+    public Map<String, Object> postFormJson(
+            URI uri, Map<String, String> form, String basicClientId, String basicClientSecret) {
+        String body =
+                form.entrySet().stream()
+                        .map(entry -> encode(entry.getKey()) + "=" + encode(entry.getValue()))
+                        .collect(Collectors.joining("&"));
+        HttpRequest.Builder builder =
+                HttpRequest.newBuilder(uri)
+                        .timeout(REQUEST_TIMEOUT)
+                        .header("Accept", "application/json")
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8));
+
+        if (basicClientId != null && basicClientSecret != null) {
+            String credentials = encode(basicClientId) + ":" + encode(basicClientSecret);
+            String encoded =
+                    Base64.getEncoder()
+                            .encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+            builder.header("Authorization", "Basic " + encoded);
+        }
+        return sendJson(builder.build());
+    }
+
+    private Map<String, Object> sendJson(HttpRequest request) {
         try {
             HttpResponse<InputStream> response =
                     httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
@@ -80,6 +111,10 @@ public class JdkOidcHttpTransport implements OidcHttpTransport {
             throw new IdentityProviderVerificationException(
                     "OIDC provider request or JSON parsing failed", exception);
         }
+    }
+
+    private String encode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
     private void closeQuietly(InputStream body) {

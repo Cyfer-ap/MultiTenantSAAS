@@ -69,7 +69,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV40AndMatchesJpaMappings() {
+    void postgresSchemaReachesV41AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -81,7 +81,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("40");
+        assertThat(version).isEqualTo("41");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -119,6 +119,8 @@ class PostgreSqlSchemaIntegrationTest {
         assertTableExists("outbound_webhook_delivery_attempts");
         assertTableExists("tenant_identity_providers");
         assertTableExists("tenant_identity_provider_scopes");
+        assertTableExists("oidc_authorization_transactions");
+        assertTableExists("tenant_federated_identities");
         assertColumnExists("subscription_plan_usage_limits", "plan_id");
         assertColumnExists("subscription_plan_usage_limits", "metric_code");
         assertColumnExists("subscription_plan_usage_limits", "period_limit");
@@ -236,6 +238,25 @@ class PostgreSqlSchemaIntegrationTest {
         assertColumnExists("tenant_identity_providers", "secret_rotated_at");
         assertColumnExists("tenant_identity_provider_scopes", "identity_provider_id");
         assertColumnExists("tenant_identity_provider_scopes", "scope");
+        assertColumnExists("oidc_authorization_transactions", "tenant_id");
+        assertColumnExists("oidc_authorization_transactions", "identity_provider_id");
+        assertColumnExists("oidc_authorization_transactions", "identity_provider_version");
+        assertColumnExists("oidc_authorization_transactions", "state_hash");
+        assertColumnExists("oidc_authorization_transactions", "nonce_hash");
+        assertColumnExists("oidc_authorization_transactions", "pkce_verifier_ciphertext");
+        assertColumnExists("oidc_authorization_transactions", "persistent_session");
+        assertColumnExists("oidc_authorization_transactions", "created_at");
+        assertColumnExists("oidc_authorization_transactions", "expires_at");
+        assertColumnExists("oidc_authorization_transactions", "consumed_at");
+        assertColumnExists("tenant_federated_identities", "tenant_id");
+        assertColumnExists("tenant_federated_identities", "identity_provider_id");
+        assertColumnExists("tenant_federated_identities", "user_id");
+        assertColumnExists("tenant_federated_identities", "issuer");
+        assertColumnExists("tenant_federated_identities", "issuer_hash");
+        assertColumnExists("tenant_federated_identities", "subject");
+        assertColumnExists("tenant_federated_identities", "email_at_link");
+        assertColumnExists("tenant_federated_identities", "linked_at");
+        assertColumnExists("tenant_federated_identities", "last_login_at");
     }
 
     @Test

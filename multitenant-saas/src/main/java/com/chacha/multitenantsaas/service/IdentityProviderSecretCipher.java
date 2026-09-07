@@ -27,8 +27,24 @@ public class IdentityProviderSecretCipher {
     }
 
     public String encrypt(String plaintext) {
+        return encryptValue(plaintext, "Identity-provider client secret");
+    }
+
+    public String decrypt(String ciphertext) {
+        return decryptValue(ciphertext, "identity-provider client secret");
+    }
+
+    public String encryptTransactionSecret(String plaintext) {
+        return encryptValue(plaintext, "OIDC authorization transaction secret");
+    }
+
+    public String decryptTransactionSecret(String ciphertext) {
+        return decryptValue(ciphertext, "OIDC authorization transaction secret");
+    }
+
+    private String encryptValue(String plaintext, String label) {
         if (plaintext == null || plaintext.isBlank()) {
-            throw new IllegalArgumentException("Identity-provider client secret must not be blank");
+            throw new IllegalArgumentException(label + " must not be blank");
         }
 
         byte[] iv = new byte[IV_BYTES];
@@ -44,14 +60,13 @@ public class IdentityProviderSecretCipher {
             return Base64.getEncoder().encodeToString(packed.array());
         } catch (GeneralSecurityException exception) {
             throw new IdentityFederationUnavailableException(
-                    "Could not protect identity-provider client secret", exception);
+                    "Could not protect " + label, exception);
         }
     }
 
-    public String decrypt(String ciphertext) {
+    private String decryptValue(String ciphertext, String label) {
         if (ciphertext == null || ciphertext.isBlank()) {
-            throw new IdentityFederationUnavailableException(
-                    "Stored identity-provider client secret is unavailable");
+            throw new IdentityFederationUnavailableException("Stored " + label + " is unavailable");
         }
 
         try {
@@ -70,7 +85,7 @@ public class IdentityProviderSecretCipher {
             return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
         } catch (IllegalArgumentException | GeneralSecurityException exception) {
             throw new IdentityFederationUnavailableException(
-                    "Could not decrypt identity-provider client secret", exception);
+                    "Could not decrypt " + label, exception);
         }
     }
 

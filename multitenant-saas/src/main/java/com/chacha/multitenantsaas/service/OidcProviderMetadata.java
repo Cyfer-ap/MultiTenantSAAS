@@ -7,9 +7,11 @@ public record OidcProviderMetadata(
         String issuer,
         String authorizationEndpoint,
         String tokenEndpoint,
-        String jwkSetUri) {
+        String jwkSetUri,
+        Map<String, Object> jwkSet) {
 
     public OidcProviderMetadata {
         configuration = Map.copyOf(configuration);
+        jwkSet = Map.copyOf(jwkSet);
     }
 }
