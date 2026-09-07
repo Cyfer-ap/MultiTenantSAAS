@@ -36,9 +36,9 @@ class TenantSsoLoginPolicyGuardTest {
     }
 
     @Test
-    void blocksMemberPasswordLoginWhenVerifiedProviderRequiresSso() {
+    void blocksTenantUserPasswordLoginWhenVerifiedProviderRequiresSso() {
         stubRequiredProvider();
-        when(user.getRole()).thenReturn(UserRole.MEMBER);
+        when(user.getRole()).thenReturn(UserRole.TENANT_USER);
 
         assertThatThrownBy(() -> guard.enforcePasswordLogin(tenantId, user))
                 .isInstanceOf(AuthenticationFailedException.class)
