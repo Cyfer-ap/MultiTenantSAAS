@@ -1,6 +1,7 @@
 package com.chacha.multitenantsaas.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -88,6 +89,35 @@ class OutboundWebhookDeliveryTest {
         assertThat(delivery.getStatus()).isEqualTo(OutboundWebhookDeliveryStatus.SENT);
         assertThat(delivery.getSentAt()).isEqualTo(now.plusSeconds(1));
         assertThat(delivery.getLastHttpStatus()).isEqualTo(204);
+    }
+
+    @Test
+    void replaysOnlyTerminalDeliveryAndStartsFreshAttemptCycle() {
+        Instant now = Instant.parse("2026-09-07T12:00:00Z");
+        OutboundWebhookDelivery delivery = newDelivery(now);
+
+        assertThatThrownBy(() -> delivery.replay(now.plusSeconds(1)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Only sent or failed");
+
+        UUID lease = delivery.claim(now);
+        assertThat(delivery.markSent(lease, now.plusSeconds(1), 200)).isTrue();
+
+        Instant replayAt = now.plusSeconds(5);
+        delivery.replay(replayAt);
+
+        assertThat(delivery.getStatus()).isEqualTo(OutboundWebhookDeliveryStatus.PENDING);
+        assertThat(delivery.getAttemptCount()).isZero();
+        assertThat(delivery.getReplayCount()).isEqualTo(1);
+        assertThat(delivery.getNextAttemptAt()).isEqualTo(replayAt);
+        assertThat(delivery.getLeaseToken()).isNull();
+        assertThat(delivery.getLastHttpStatus()).isNull();
+        assertThat(delivery.getLastError()).isNull();
+        assertThat(delivery.getSentAt()).isNull();
+
+        delivery.claim(replayAt);
+        assertThat(delivery.getAttemptCount()).isEqualTo(1);
+        assertThat(delivery.getReplayCount()).isEqualTo(1);
     }
 
     private OutboundWebhookDelivery newDelivery(Instant now) {
