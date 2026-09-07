@@ -11,7 +11,10 @@ public class IdentityFederationProperties {
     private String encryptionKey;
 
     public String getEncryptionKey() {
-        return encryptionKey;
+        if (encryptionKey != null && !encryptionKey.isBlank()) {
+            return encryptionKey;
+        }
+        return System.getenv("IDENTITY_FEDERATION_ENCRYPTION_KEY");
     }
 
     public void setEncryptionKey(String encryptionKey) {
