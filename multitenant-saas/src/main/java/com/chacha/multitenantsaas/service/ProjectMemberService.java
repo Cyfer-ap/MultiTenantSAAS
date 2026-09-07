@@ -11,6 +11,7 @@ import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.ProjectMemberRepository;
 import com.chacha.multitenantsaas.repository.ProjectRepository;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -26,6 +27,7 @@ public class ProjectMemberService {
     private final CurrentActorService currentActorService;
     private final AuditLogService auditLogService;
     private final ProjectMembershipNotificationService projectMembershipNotificationService;
+    private final OutboundWebhookEventService outboundWebhookEventService;
 
     public ProjectMemberService(
             ProjectMemberRepository projectMemberRepository,
@@ -34,12 +36,32 @@ public class ProjectMemberService {
             CurrentActorService currentActorService,
             AuditLogService auditLogService,
             ProjectMembershipNotificationService projectMembershipNotificationService) {
+        this(
+                projectMemberRepository,
+                projectRepository,
+                appUserRepository,
+                currentActorService,
+                auditLogService,
+                projectMembershipNotificationService,
+                null);
+    }
+
+    @Autowired
+    public ProjectMemberService(
+            ProjectMemberRepository projectMemberRepository,
+            ProjectRepository projectRepository,
+            AppUserRepository appUserRepository,
+            CurrentActorService currentActorService,
+            AuditLogService auditLogService,
+            ProjectMembershipNotificationService projectMembershipNotificationService,
+            OutboundWebhookEventService outboundWebhookEventService) {
         this.projectMemberRepository = projectMemberRepository;
         this.projectRepository = projectRepository;
         this.appUserRepository = appUserRepository;
         this.currentActorService = currentActorService;
         this.auditLogService = auditLogService;
         this.projectMembershipNotificationService = projectMembershipNotificationService;
+        this.outboundWebhookEventService = outboundWebhookEventService;
     }
 
     @Transactional
@@ -75,7 +97,9 @@ public class ProjectMemberService {
 
         projectMembershipNotificationService.notifyAdded(project, assignedBy, user, request.role());
 
-        return mapToResponse(savedMembership);
+        ProjectMemberResponse response = mapToResponse(savedMembership);
+        publish(tenantId, OutboundWebhookEventType.MEMBER_ADDED, response);
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -184,6 +208,7 @@ public class ProjectMemberService {
                 "User removed from project " + projectId + ": " + removedUser.getEmail());
 
         projectMembershipNotificationService.notifyRemoved(project, actor, removedUser);
+        publish(tenantId, OutboundWebhookEventType.MEMBER_REMOVED, response);
 
         return response;
     }
@@ -266,6 +291,13 @@ public class ProjectMemberService {
         String normalized = search.trim();
 
         return normalized.isBlank() ? null : normalized;
+    }
+
+    private void publish(
+            UUID tenantId, OutboundWebhookEventType eventType, ProjectMemberResponse response) {
+        if (outboundWebhookEventService != null) {
+            outboundWebhookEventService.publish(tenantId, eventType, response);
+        }
     }
 
     private ProjectMemberResponse mapToResponse(ProjectMember membership) {

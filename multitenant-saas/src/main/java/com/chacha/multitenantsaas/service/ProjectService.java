@@ -7,6 +7,7 @@ import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.ProjectRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -22,6 +23,7 @@ public class ProjectService {
     private final ProjectMemberService projectMemberService;
     private final AuditLogService auditLogService;
     private final SubscriptionQuotaGuardService subscriptionQuotaGuardService;
+    private final OutboundWebhookEventService outboundWebhookEventService;
 
     public ProjectService(
             ProjectRepository projectRepository,
@@ -30,12 +32,32 @@ public class ProjectService {
             ProjectMemberService projectMemberService,
             AuditLogService auditLogService,
             SubscriptionQuotaGuardService subscriptionQuotaGuardService) {
+        this(
+                projectRepository,
+                tenantRepository,
+                currentActorService,
+                projectMemberService,
+                auditLogService,
+                subscriptionQuotaGuardService,
+                null);
+    }
+
+    @Autowired
+    public ProjectService(
+            ProjectRepository projectRepository,
+            TenantRepository tenantRepository,
+            CurrentActorService currentActorService,
+            ProjectMemberService projectMemberService,
+            AuditLogService auditLogService,
+            SubscriptionQuotaGuardService subscriptionQuotaGuardService,
+            OutboundWebhookEventService outboundWebhookEventService) {
         this.projectRepository = projectRepository;
         this.tenantRepository = tenantRepository;
         this.currentActorService = currentActorService;
         this.projectMemberService = projectMemberService;
         this.auditLogService = auditLogService;
         this.subscriptionQuotaGuardService = subscriptionQuotaGuardService;
+        this.outboundWebhookEventService = outboundWebhookEventService;
     }
 
     @Transactional
@@ -64,7 +86,9 @@ public class ProjectService {
                 AuditAction.PROJECT_CREATED,
                 "Project created: " + savedProject.getId() + " - " + savedProject.getName());
 
-        return mapToResponse(savedProject);
+        ProjectResponse response = mapToResponse(savedProject);
+        publish(tenantId, OutboundWebhookEventType.PROJECT_CREATED, response);
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -112,7 +136,9 @@ public class ProjectService {
                 AuditAction.PROJECT_UPDATED,
                 "Project updated: " + updatedProject.getId() + " - " + updatedProject.getName());
 
-        return mapToResponse(updatedProject);
+        ProjectResponse response = mapToResponse(updatedProject);
+        publish(tenantId, OutboundWebhookEventType.PROJECT_UPDATED, response);
+        return response;
     }
 
     @Transactional
@@ -146,7 +172,9 @@ public class ProjectService {
                         + ": "
                         + project.getId());
 
-        return mapToResponse(updatedProject);
+        ProjectResponse response = mapToResponse(updatedProject);
+        publish(tenantId, OutboundWebhookEventType.PROJECT_UPDATED, response);
+        return response;
     }
 
     @Transactional
@@ -170,7 +198,9 @@ public class ProjectService {
                 AuditAction.PROJECT_ARCHIVED,
                 "Project archived: " + project.getId() + " - " + project.getName());
 
-        return mapToResponse(archivedProject);
+        ProjectResponse response = mapToResponse(archivedProject);
+        publish(tenantId, OutboundWebhookEventType.PROJECT_ARCHIVED, response);
+        return response;
     }
 
     private Tenant getRequiredActiveTenant(UUID tenantId) {
@@ -225,6 +255,13 @@ public class ProjectService {
         String normalized = search.trim();
 
         return normalized.isBlank() ? null : normalized;
+    }
+
+    private void publish(
+            UUID tenantId, OutboundWebhookEventType eventType, ProjectResponse response) {
+        if (outboundWebhookEventService != null) {
+            outboundWebhookEventService.publish(tenantId, eventType, response);
+        }
     }
 
     private ProjectResponse mapToResponse(Project project) {

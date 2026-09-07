@@ -1,14 +1,17 @@
 package com.chacha.multitenantsaas.service;
 
+import com.chacha.multitenantsaas.dto.OutboundWebhookCommentPayload;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.NotificationDeliveryChannel;
 import com.chacha.multitenantsaas.entity.NotificationType;
+import com.chacha.multitenantsaas.entity.OutboundWebhookEventType;
 import com.chacha.multitenantsaas.entity.ProjectTask;
 import com.chacha.multitenantsaas.entity.ProjectTaskStatus;
 import com.chacha.multitenantsaas.entity.TaskComment;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -18,9 +21,18 @@ public class TaskNotificationService {
             Set.of(NotificationDeliveryChannel.EMAIL);
 
     private final NotificationService notificationService;
+    private final OutboundWebhookEventService outboundWebhookEventService;
 
     public TaskNotificationService(NotificationService notificationService) {
+        this(notificationService, null);
+    }
+
+    @Autowired
+    public TaskNotificationService(
+            NotificationService notificationService,
+            OutboundWebhookEventService outboundWebhookEventService) {
         this.notificationService = notificationService;
+        this.outboundWebhookEventService = outboundWebhookEventService;
     }
 
     public void notifyAssignment(ProjectTask task, AppUser actor, AppUser assignee) {
@@ -45,6 +57,8 @@ public class TaskNotificationService {
 
     public void notifyCommentCreated(
             ProjectTask task, TaskComment comment, AppUser actor, Set<AppUser> mentionedUsers) {
+        publishComment(task, comment, OutboundWebhookEventType.COMMENT_CREATED);
+
         Set<UUID> notifiedUserIds = notifyMentions(task, comment, actor, mentionedUsers);
         AppUser assignee = task.getAssigneeUser();
 
@@ -71,6 +85,8 @@ public class TaskNotificationService {
             TaskComment parent,
             AppUser actor,
             Set<AppUser> mentionedUsers) {
+        publishComment(task, reply, OutboundWebhookEventType.COMMENT_REPLIED);
+
         Set<UUID> notifiedUserIds = notifyMentions(task, reply, actor, mentionedUsers);
         AppUser parentAuthor = parent.getAuthorUser();
 
@@ -119,6 +135,16 @@ public class TaskNotificationService {
                         + ".",
                 taskTarget(task),
                 EMAIL_DELIVERY);
+    }
+
+    private void publishComment(
+            ProjectTask task, TaskComment comment, OutboundWebhookEventType eventType) {
+        if (outboundWebhookEventService != null) {
+            outboundWebhookEventService.publish(
+                    task.getTenant().getId(),
+                    eventType,
+                    OutboundWebhookCommentPayload.from(comment));
+        }
     }
 
     private Set<UUID> notifyMentions(

@@ -8,6 +8,7 @@ import com.chacha.multitenantsaas.dto.ProjectTaskStatusUpdateRequest;
 import com.chacha.multitenantsaas.dto.ProjectTaskUpdateRequest;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.AuditAction;
+import com.chacha.multitenantsaas.entity.OutboundWebhookEventType;
 import com.chacha.multitenantsaas.entity.Project;
 import com.chacha.multitenantsaas.entity.ProjectStatus;
 import com.chacha.multitenantsaas.entity.ProjectTask;
@@ -22,6 +23,7 @@ import com.chacha.multitenantsaas.repository.ProjectRepository;
 import com.chacha.multitenantsaas.repository.ProjectTaskRepository;
 import java.time.Instant;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -39,6 +41,7 @@ public class ProjectTaskService {
     private final AuditLogService auditLogService;
     private final TaskActivityService taskActivityService;
     private final TaskNotificationService taskNotificationService;
+    private final OutboundWebhookEventService outboundWebhookEventService;
 
     public ProjectTaskService(
             ProjectTaskRepository projectTaskRepository,
@@ -49,6 +52,29 @@ public class ProjectTaskService {
             AuditLogService auditLogService,
             TaskActivityService taskActivityService,
             TaskNotificationService taskNotificationService) {
+        this(
+                projectTaskRepository,
+                projectRepository,
+                projectMemberRepository,
+                appUserRepository,
+                currentActorService,
+                auditLogService,
+                taskActivityService,
+                taskNotificationService,
+                null);
+    }
+
+    @Autowired
+    public ProjectTaskService(
+            ProjectTaskRepository projectTaskRepository,
+            ProjectRepository projectRepository,
+            ProjectMemberRepository projectMemberRepository,
+            AppUserRepository appUserRepository,
+            CurrentActorService currentActorService,
+            AuditLogService auditLogService,
+            TaskActivityService taskActivityService,
+            TaskNotificationService taskNotificationService,
+            OutboundWebhookEventService outboundWebhookEventService) {
         this.projectTaskRepository = projectTaskRepository;
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
@@ -57,6 +83,7 @@ public class ProjectTaskService {
         this.auditLogService = auditLogService;
         this.taskActivityService = taskActivityService;
         this.taskNotificationService = taskNotificationService;
+        this.outboundWebhookEventService = outboundWebhookEventService;
     }
 
     @Transactional
@@ -100,7 +127,9 @@ public class ProjectTaskService {
 
         taskNotificationService.notifyAssignment(savedTask, creator, assignee);
 
-        return mapToResponse(savedTask);
+        ProjectTaskResponse response = mapToResponse(savedTask);
+        publish(tenantId, OutboundWebhookEventType.TASK_CREATED, response);
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -171,7 +200,9 @@ public class ProjectTaskService {
                 AuditAction.TASK_UPDATED,
                 "Task updated for project " + projectId + ": " + taskId + " - " + task.getTitle());
 
-        return mapToResponse(updatedTask);
+        ProjectTaskResponse response = mapToResponse(updatedTask);
+        publish(tenantId, OutboundWebhookEventType.TASK_UPDATED, response);
+        return response;
     }
 
     @Transactional
@@ -228,7 +259,14 @@ public class ProjectTaskService {
         taskNotificationService.notifyStatusChanged(
                 updatedTask, actor, previousStatus, request.status());
 
-        return mapToResponse(updatedTask);
+        ProjectTaskResponse response = mapToResponse(updatedTask);
+        publish(
+                tenantId,
+                request.status() == ProjectTaskStatus.COMPLETED
+                        ? OutboundWebhookEventType.TASK_COMPLETED
+                        : OutboundWebhookEventType.TASK_UPDATED,
+                response);
+        return response;
     }
 
     @Transactional
@@ -287,7 +325,9 @@ public class ProjectTaskService {
             taskNotificationService.notifyAssignment(updatedTask, actor, newAssignee);
         }
 
-        return mapToResponse(updatedTask);
+        ProjectTaskResponse response = mapToResponse(updatedTask);
+        publish(tenantId, OutboundWebhookEventType.TASK_UPDATED, response);
+        return response;
     }
 
     @Transactional
@@ -321,7 +361,9 @@ public class ProjectTaskService {
         taskNotificationService.notifyStatusChanged(
                 cancelledTask, actor, previousStatus, ProjectTaskStatus.CANCELLED);
 
-        return mapToResponse(cancelledTask);
+        ProjectTaskResponse response = mapToResponse(cancelledTask);
+        publish(tenantId, OutboundWebhookEventType.TASK_UPDATED, response);
+        return response;
     }
 
     private AppUser resolveAssignee(UUID tenantId, UUID projectId, UUID assigneeUserId) {
@@ -417,6 +459,13 @@ public class ProjectTaskService {
                 && second != null
                 && first.getId() != null
                 && first.getId().equals(second.getId());
+    }
+
+    private void publish(
+            UUID tenantId, OutboundWebhookEventType eventType, ProjectTaskResponse response) {
+        if (outboundWebhookEventService != null) {
+            outboundWebhookEventService.publish(tenantId, eventType, response);
+        }
     }
 
     private ProjectTaskResponse mapToResponse(ProjectTask task) {
