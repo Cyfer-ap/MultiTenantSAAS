@@ -45,7 +45,8 @@ public class OutboundWebhookEventService {
     /**
      * Persists one immutable event envelope and creates one durable delivery per enabled
      * subscriber. Callers may invoke this inside an existing domain transaction so business state
-     * and webhook intent commit or roll back together.
+     * and webhook intent commit or roll back together. Events with no enabled subscribers are not
+     * persisted, preventing unbounded outbox growth for tenants that do not use webhooks.
      */
     @Transactional
     public UUID publish(UUID tenantId, OutboundWebhookEventType eventType, Object data) {
@@ -60,24 +61,25 @@ public class OutboundWebhookEventService {
                                         new ResourceNotFoundException(
                                                 "Tenant not found: " + tenantId));
         UUID eventId = UUID.randomUUID();
+        List<OutboundWebhookEndpoint> subscribers =
+                endpointRepository.findEnabledSubscribers(tenantId, eventType);
+        if (subscribers.isEmpty()) {
+            return eventId;
+        }
+
         Instant occurredAt = Instant.now();
         String payloadJson = serializeEnvelope(eventId, tenantId, eventType, occurredAt, data);
-
         OutboundWebhookEvent event =
                 eventRepository.save(
                         new OutboundWebhookEvent(
                                 eventId, tenant, eventType, payloadJson, occurredAt));
-        List<OutboundWebhookEndpoint> subscribers =
-                endpointRepository.findEnabledSubscribers(tenantId, eventType);
-        if (!subscribers.isEmpty()) {
-            deliveryRepository.saveAll(
-                    subscribers.stream()
-                            .map(
-                                    endpoint ->
-                                            new OutboundWebhookDelivery(
-                                                    tenant, event, endpoint, occurredAt))
-                            .toList());
-        }
+        deliveryRepository.saveAll(
+                subscribers.stream()
+                        .map(
+                                endpoint ->
+                                        new OutboundWebhookDelivery(
+                                                tenant, event, endpoint, occurredAt))
+                        .toList());
         return eventId;
     }
 
