@@ -267,7 +267,7 @@ function SecretDialog({ open, secret, title, onClose }: SecretDialogProps) {
                 </Alert>
                 <TextField
                     fullWidth
-                    inputProps={{ readOnly: true }}
+                    slotProps={{ input: { readOnly: true } }}
                     label="Signing secret"
                     value={secret}
                 />
@@ -454,7 +454,7 @@ export function OutboundWebhooksPage() {
                 <Divider />
 
                 {endpointsQuery.isPending && (
-                    <Stack alignItems="center" sx={{ p: 4 }}>
+                    <Stack sx={{ alignItems: 'center', p: 4 }}>
                         <CircularProgress size={28} />
                     </Stack>
                 )}
@@ -492,7 +492,10 @@ export function OutboundWebhooksPage() {
                                             </Typography>
                                         </TableCell>
                                         <TableCell>
-                                            <Stack direction="row" flexWrap="wrap" gap={0.5}>
+                                            <Stack
+                                                direction="row"
+                                                sx={{ flexWrap: 'wrap', gap: 0.5 }}
+                                            >
                                                 {endpoint.events.map((eventType) => (
                                                     <Chip
                                                         key={eventType}
@@ -521,8 +524,8 @@ export function OutboundWebhooksPage() {
                                         <TableCell align="right">
                                             <Stack
                                                 direction="row"
-                                                justifyContent="flex-end"
                                                 spacing={0.5}
+                                                sx={{ justifyContent: 'flex-end' }}
                                             >
                                                 <Button
                                                     onClick={() => openEditDialog(endpoint)}
@@ -625,7 +628,7 @@ export function OutboundWebhooksPage() {
                 <Divider />
 
                 {deliveriesQuery.isPending && (
-                    <Stack alignItems="center" sx={{ p: 4 }}>
+                    <Stack sx={{ alignItems: 'center', p: 4 }}>
                         <CircularProgress size={28} />
                     </Stack>
                 )}
@@ -771,7 +774,7 @@ export function OutboundWebhooksPage() {
                 <DialogTitle>Webhook delivery</DialogTitle>
                 <DialogContent>
                     {deliveryQuery.isPending && (
-                        <Stack alignItems="center" sx={{ p: 4 }}>
+                        <Stack sx={{ alignItems: 'center', p: 4 }}>
                             <CircularProgress size={28} />
                         </Stack>
                     )}
