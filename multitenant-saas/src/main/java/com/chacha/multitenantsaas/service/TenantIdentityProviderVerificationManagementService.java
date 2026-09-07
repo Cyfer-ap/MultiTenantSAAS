@@ -24,10 +24,6 @@ public class TenantIdentityProviderVerificationManagementService {
         OidcProviderVerificationResult verification =
                 providerVerificationService.verify(snapshot.input());
         return stateService.markVerified(
-                tenantId,
-                snapshot.identityProviderId(),
-                snapshot.version(),
-                actor,
-                verification);
+                tenantId, snapshot.identityProviderId(), snapshot.version(), actor, verification);
     }
 }

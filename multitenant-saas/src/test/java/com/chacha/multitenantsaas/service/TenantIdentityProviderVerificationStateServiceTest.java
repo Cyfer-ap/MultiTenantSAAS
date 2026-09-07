@@ -60,8 +60,7 @@ class TenantIdentityProviderVerificationStateServiceTest {
         when(identityProvider.getScopes()).thenReturn(Set.of("openid", "email"));
         when(identityProvider.getDisplayName()).thenReturn("Enterprise IdP");
 
-        TenantIdentityProviderVerificationSnapshot snapshot =
-                service.loadSnapshot(tenantId, actor);
+        TenantIdentityProviderVerificationSnapshot snapshot = service.loadSnapshot(tenantId, actor);
 
         assertThat(snapshot.identityProviderId()).isEqualTo(providerId);
         assertThat(snapshot.version()).isEqualTo(4L);
@@ -83,9 +82,7 @@ class TenantIdentityProviderVerificationStateServiceTest {
                         "https://idp.example.com/jwks");
 
         assertThatThrownBy(
-                        () ->
-                                service.markVerified(
-                                        tenantId, providerId, 4L, actor, verification))
+                        () -> service.markVerified(tenantId, providerId, 4L, actor, verification))
                 .isInstanceOf(IdentityProviderVerificationException.class)
                 .hasMessage(
                         "Identity-provider configuration changed during verification; verify it again");
@@ -100,7 +97,8 @@ class TenantIdentityProviderVerificationStateServiceTest {
         when(identityProvider.getId()).thenReturn(providerId);
         when(identityProvider.getVersion()).thenReturn(4L);
         when(identityProvider.getStatus())
-                .thenReturn(TenantIdentityProviderStatus.DRAFT, TenantIdentityProviderStatus.VERIFIED);
+                .thenReturn(
+                        TenantIdentityProviderStatus.DRAFT, TenantIdentityProviderStatus.VERIFIED);
         Instant verifiedAt = Instant.parse("2026-09-07T17:00:00Z");
         when(identityProvider.getVerifiedAt()).thenReturn(verifiedAt);
         OidcProviderVerificationResult verification =

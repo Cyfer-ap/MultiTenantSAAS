@@ -86,7 +86,8 @@ class TenantIdentityProviderVerificationManagementServiceTest {
     void doesNotCommitStateWhenRemoteVerificationFails() {
         when(stateService.loadSnapshot(tenantId, actor)).thenReturn(snapshot);
         when(providerVerificationService.verify(input))
-                .thenThrow(new IdentityProviderVerificationException("Provider verification failed"));
+                .thenThrow(
+                        new IdentityProviderVerificationException("Provider verification failed"));
 
         assertThatThrownBy(() -> service.verify(tenantId, actor))
                 .isInstanceOf(IdentityProviderVerificationException.class)
