@@ -1,10 +1,10 @@
 # MultiTenantSAAS Wiki
 
-MultiTenantSAAS is a full-stack multi-tenant SaaS platform with tenant isolation, scoped authorization, project collaboration, subscription enforcement, external billing, usage metering, API keys and PostgreSQL-oriented production engineering.
+MultiTenantSAAS is a full-stack multi-tenant SaaS platform with tenant isolation, scoped authorization, project collaboration, subscription enforcement, external billing, durable outbound integrations, usage metering, API keys and PostgreSQL-oriented production engineering.
 
 Version-controlled Wiki source lives under `wiki/`. See [[Wiki-Maintenance]].
 
-Current snapshot: **post-PR #106 (`486f592`), 2026-09-07**.
+Current snapshot: **post-PR #112 (`8324ae9`), 2026-09-07**.
 
 ## Current platform state
 
@@ -19,7 +19,7 @@ Implemented capabilities include:
 - internal subscription lifecycle, read-only enforcement and quotas
 - provider-neutral billing with Stripe and Razorpay adapters
 - professional plan/provider checkout UX
-- signed durable webhooks and webhook-driven lifecycle synchronization
+- signed durable provider webhooks and webhook-driven lifecycle synchronization
 - verified provider-aware cancellation, linkage recovery and stale-terminal-state repair
 - durable TEST/LIVE provider catalog mappings
 - automatic Stripe Product/Price provisioning and immutable Price replacement
@@ -30,28 +30,33 @@ Implemented capabilities include:
 - billing operations visibility and read-only reconciliation
 - durable billing usage events
 - tenant API-key lifecycle and plan-level API request quotas
+- tenant-configurable outbound webhook endpoints/event subscriptions
+- generated/rotatable encrypted signing secrets
+- durable HMAC-signed webhook delivery with retry/backoff/leases/timeouts
+- transactional project/task/comment/member/subscription event publication
+- immutable delivery-attempt history and manual replay
+- tenant Integrations UX for endpoint administration and delivery observability
 - PostgreSQL 17, Flyway, Testcontainers, CI, security and container checks
 
-## Billing/catalog milestone
+## Completed milestones
+
+### Billing/catalog
 
 **Billing, cancellation hardening and managed provider catalogs are complete at application level through PR #106.**
 
 Stripe is the validated deployed Test Mode payment path. Razorpay application integration and managed catalog provisioning are implemented, while recurring Test Mode authorization remains provider-sandbox blocked.
 
-## Provider catalog lifecycle
+### Tenant outbound webhooks
 
-Application plans and provider objects remain separate but are linked through durable environment-specific mappings.
+**Tenant-configurable outbound webhooks are complete at application level through PR #112.**
 
-- Stripe: managed Product/Price creation, immutable replacement pricing and retirement from new sales.
-- Razorpay: managed Plan creation and replacement mappings; historical provider Plan references remain preserved.
-- `RETIRED`: no new checkout; existing valid subscriptions retain entitlement through the current paid period and are scheduled not to renew.
-- `INACTIVE`: administrative hard-disable.
+The platform now supports tenant endpoint lifecycle, event subscriptions, secure signing-secret rotation/storage, SSRF-safe HTTPS validation, durable signed delivery, retries/backoff/leasing, delivery history/attempts, guarded replay and a permission-gated Integrations workspace.
 
-Provider identifiers and secrets stay server-side.
+Initial events cover project, task, comment/reply, membership and selected subscription lifecycle mutations.
 
 ## Database checkpoint
 
-Portable common migrations extend through **V36**. V34 adds provider catalog mappings and purchased-plan snapshots, V35 durable retirement operations, and V36 immutable tenant subscription history.
+Portable common migrations extend through **V39**. V37 adds outbound webhook endpoints/event subscriptions, V38 durable events/deliveries and V39 immutable delivery attempts.
 
 ## Start here
 
@@ -59,6 +64,7 @@ Portable common migrations extend through **V36**. V34 adds provider catalog map
 - [[Security-and-Authentication]]
 - [[Authorization]]
 - [[Subscriptions-and-Quotas]]
+- [[Notifications]]
 - [[Production-Deployment]]
 - [[Testing-and-CI]]
 - [[Roadmap]]
@@ -66,4 +72,4 @@ Portable common migrations extend through **V36**. V34 adds provider catalog map
 
 ## Current next step
 
-Begin **tenant-configurable outbound webhooks**. Recommended order: endpoint/signing foundation → durable delivery engine → product event integration/replay → tenant-admin delivery UX. Enterprise SSO follows afterward.
+Begin **enterprise SSO / identity federation**. Prefer a provider-neutral federation boundary with OIDC first, safe account linking/domain discovery, optional/enforced tenant policy and recovery controls. Add SAML through the same boundary where enterprise requirements justify it.
