@@ -2,53 +2,72 @@
 
 Repository: `Cyfer-ap/MultiTenantSAAS`
 Default branch: `main`
-Reviewed state: post-PR #106 (`486f592`)
+Reviewed state: post-PR #112 (`8324ae9`)
 Date: 2026-09-07
 
 ## Current phase
 
-**Billing/catalog lifecycle complete at application level; outbound webhooks next**
+**Tenant-configurable outbound webhooks complete at application level; enterprise SSO next**
 
-Billing now includes provider-neutral orchestration, Stripe/Razorpay adapters, signed durable webhooks, webhook-driven lifecycle changes, professional checkout UX, verified provider cancellation/reconciliation, managed provider catalogs, safe terminal plan retirement, immutable purchased terms/history, durable metering, tenant API keys and API quotas.
+Billing/catalog lifecycle remains closed. Stripe is the validated deployed Test Mode payment path. Razorpay application integration and managed Plan provisioning are complete, while recurring Test Mode authorization remains externally provider-sandbox blocked.
 
-Stripe remains the validated deployed Test Mode payment path. Razorpay application integration and managed Plan provisioning are complete, while recurring Test Mode authorization remains externally provider-sandbox blocked.
+## Outbound webhook result
 
-## Managed catalog boundary
+Delivered through PRs #108–#112:
 
-Application plans and provider billing objects remain separate, but enabled managed providers are synchronized automatically through durable TEST/LIVE mappings.
-
-- Stripe: Product + recurring Price creation; economic edits create replacement Prices.
-- Razorpay: Plan creation; provider-visible edits create replacement Plans and archive prior local mappings.
-- legacy configured provider IDs remain compatibility/import paths.
-
-Plan states are `ACTIVE`, `INACTIVE` and terminal `RETIRED`. Retiring a plan blocks new checkout immediately while existing valid subscriptions retain their purchased entitlement through the current period and provider renewals are scheduled to stop at period/cycle end.
-
-Never place real credentials or provider IDs in docs, commits, frontend configuration or screenshots.
-
-## History boundary
-
-Purchased terms and V36 subscription-history rows are immutable historical records. Tenant-facing history hides internal provider references; system-admin history retains provider identifiers for operations.
+- tenant-scoped endpoint lifecycle and event subscriptions
+- generated/rotatable signing secrets encrypted with AES-256-GCM at rest
+- HTTPS/public-routable endpoint validation and delivery-time DNS/SSRF revalidation
+- durable immutable events/deliveries with stable event IDs and bodies
+- HMAC-SHA256 signing over `timestamp.eventId.body`
+- lease-safe workers, retries/backoff/timeouts and stale-lease recovery
+- transactional domain-event publication for projects/tasks/comments/membership/subscriptions
+- immutable V39 attempt history
+- tenant delivery history/detail and terminal replay
+- permission-gated Integrations UX for endpoint/delivery administration
 
 ## Boundaries
 
-- webhook lifecycle state is authoritative in normal operation
-- verified provider lookup/reconciliation may repair stale terminal state
-- checkout is a lifecycle recovery action but still requires tenant authorization
-- provider identifiers and credentials stay server-side
+- endpoint management uses `tenant.update`
+- endpoint/delivery/attempt access remains tenant isolated
+- secrets stay server-side; plaintext appears only on create/rotation
+- redirects stay disabled
+- DNS/SSRF safety is rechecked immediately before dispatch
+- retries/replay preserve the original event ID and exact body
+- replay requires a terminal delivery and an active enabled endpoint
+- event publication stays transactional with business mutations
 - API keys remain tenant-bound and restricted to `/api/external/**`
-- never hard-delete used plans/provider references merely to remove them from future sale
+- provider billing lifecycle remains webhook-authoritative in normal operation
+
+## Database checkpoint
+
+Common Flyway migrations extend through **V39**. Never rewrite an applied migration.
 
 ## Documentation/Wiki
 
-Current root docs, focused guides and version-controlled Wiki source are refreshed through PR #106. `wiki/*.md` is canonical and publishes automatically from merged `main`.
+Current root docs, focused guides and version-controlled Wiki source are refreshed through PR #112. `wiki/*.md` is canonical and publishes automatically from merged `main`.
+
+Webhook guides:
+
+- `guides/outbound-webhook-events.md`
+- `guides/outbound-webhook-delivery-history.md`
+- `guides/outbound-webhook-admin-ux.md`
 
 ## Resume steps
 
-1. treat billing/catalog lifecycle as closed at application level
-2. do not continue Razorpay sandbox debugging as core feature work
-3. begin tenant-configurable outbound webhooks
-4. keep provider live-mode readiness as an independent deployment/operations track
-5. preserve full CI requirements on every PR
+1. treat billing/catalog and outbound-webhook milestones as closed at application level
+2. keep Razorpay sandbox behavior and provider live-mode readiness separate from feature development
+3. begin enterprise SSO / identity federation
+4. preserve full CI requirements on every PR
+
+Recommended SSO sequence:
+
+1. tenant identity-provider configuration and secure secret storage
+2. provider-neutral federation boundary with OIDC first
+3. safe account linking and tenant/domain discovery
+4. optional vs enforced SSO policy with recovery/break-glass protections
+5. login/admin UX, auditing and regression coverage
+6. SAML support through the same boundary when required
 
 ## Verification
 
