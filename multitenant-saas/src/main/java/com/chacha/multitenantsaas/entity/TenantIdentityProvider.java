@@ -247,4 +247,8 @@ public class TenantIdentityProvider {
     public Instant getUpdatedAt() {
         return updatedAt;
     }
+
+    public long getVersion() {
+        return version;
+    }
 }
