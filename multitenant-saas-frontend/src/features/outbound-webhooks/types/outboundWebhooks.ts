@@ -1,18 +1,18 @@
 import type { PageResponse } from '../../../types/api'
 
 export type OutboundWebhookEventType =
-    | 'PROJECT_CREATED'
-    | 'PROJECT_UPDATED'
-    | 'PROJECT_ARCHIVED'
-    | 'TASK_CREATED'
-    | 'TASK_UPDATED'
-    | 'TASK_COMPLETED'
-    | 'COMMENT_CREATED'
-    | 'COMMENT_REPLIED'
-    | 'MEMBER_ADDED'
-    | 'MEMBER_REMOVED'
-    | 'SUBSCRIPTION_UPDATED'
-    | 'SUBSCRIPTION_CANCELLED'
+    | 'project.created'
+    | 'project.updated'
+    | 'project.archived'
+    | 'task.created'
+    | 'task.updated'
+    | 'task.completed'
+    | 'comment.created'
+    | 'comment.replied'
+    | 'member.added'
+    | 'member.removed'
+    | 'subscription.updated'
+    | 'subscription.cancelled'
 
 export type OutboundWebhookDeliveryStatus =
     | 'PENDING'
@@ -52,8 +52,11 @@ export interface OutboundWebhookEndpointCreated {
 }
 
 export interface OutboundWebhookSecretRotated {
-    endpoint: OutboundWebhookEndpoint
+    endpointId: string
+    secretHint: string
+    secretVersion: number
     signingSecret: string
+    secretRotatedAt: string
 }
 
 export interface OutboundWebhookDelivery {
@@ -90,6 +93,13 @@ export interface OutboundWebhookDeliveryDetail {
     delivery: OutboundWebhookDelivery
     payloadJson: string
     attempts: OutboundWebhookDeliveryAttempt[]
+}
+
+export interface OutboundWebhookDeliveryFilters {
+    endpointId?: string
+    status?: OutboundWebhookDeliveryStatus
+    page?: number
+    size?: number
 }
 
 export type OutboundWebhookDeliveryPage = PageResponse<OutboundWebhookDelivery>
