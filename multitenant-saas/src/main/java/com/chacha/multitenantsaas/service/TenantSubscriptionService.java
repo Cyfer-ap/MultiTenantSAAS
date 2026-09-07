@@ -8,12 +8,14 @@ import com.chacha.multitenantsaas.dto.TenantSubscriptionStartRequest;
 import com.chacha.multitenantsaas.entity.SubscriptionPlan;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.TenantSubscription;
+import com.chacha.multitenantsaas.entity.TenantSubscriptionHistoryEventType;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
 import com.chacha.multitenantsaas.exception.DuplicateResourceException;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.TenantSubscriptionRepository;
 import java.time.Instant;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,13 +28,25 @@ public class TenantSubscriptionService {
 
     private final SubscriptionPlanService subscriptionPlanService;
 
+    private final TenantSubscriptionHistoryService historyService;
+
     public TenantSubscriptionService(
             TenantSubscriptionRepository tenantSubscriptionRepository,
             TenantLookupService tenantLookupService,
             SubscriptionPlanService subscriptionPlanService) {
+        this(tenantSubscriptionRepository, tenantLookupService, subscriptionPlanService, null);
+    }
+
+    @Autowired
+    public TenantSubscriptionService(
+            TenantSubscriptionRepository tenantSubscriptionRepository,
+            TenantLookupService tenantLookupService,
+            SubscriptionPlanService subscriptionPlanService,
+            TenantSubscriptionHistoryService historyService) {
         this.tenantSubscriptionRepository = tenantSubscriptionRepository;
         this.tenantLookupService = tenantLookupService;
         this.subscriptionPlanService = subscriptionPlanService;
+        this.historyService = historyService;
     }
 
     @Transactional
@@ -76,7 +90,9 @@ public class TenantSubscriptionService {
                         request.trialEndsAt(),
                         request.cancelAtPeriodEnd());
 
-        return mapToResponse(tenantSubscriptionRepository.saveAndFlush(subscription));
+        TenantSubscription saved = tenantSubscriptionRepository.saveAndFlush(subscription);
+        record(saved, TenantSubscriptionHistoryEventType.STARTED);
+        return mapToResponse(saved);
     }
 
     @Transactional(readOnly = true)
@@ -93,6 +109,7 @@ public class TenantSubscriptionService {
         }
 
         TenantSubscription subscription = getSubscriptionEntityForUpdate(tenantId);
+        ensureBaseline(subscription);
 
         if (subscription.getStatus() == TenantSubscriptionStatus.CANCELLED
                 || subscription.getStatus() == TenantSubscriptionStatus.EXPIRED) {
@@ -113,7 +130,9 @@ public class TenantSubscriptionService {
         subscription.setCurrentPeriodEnd(request.currentPeriodEnd());
         subscription.setTrialEndsAt(null);
 
-        return mapToResponse(tenantSubscriptionRepository.saveAndFlush(subscription));
+        TenantSubscription saved = tenantSubscriptionRepository.saveAndFlush(subscription);
+        record(saved, TenantSubscriptionHistoryEventType.PLAN_CHANGED);
+        return mapToResponse(saved);
     }
 
     @Transactional
@@ -124,6 +143,7 @@ public class TenantSubscriptionService {
         }
 
         TenantSubscription subscription = getSubscriptionEntityForUpdate(tenantId);
+        ensureBaseline(subscription);
 
         TenantSubscriptionStatus status = requireValue(request.status(), "Subscription status");
 
@@ -148,7 +168,9 @@ public class TenantSubscriptionService {
             subscription.setCancelledAt(null);
         }
 
-        return mapToResponse(tenantSubscriptionRepository.saveAndFlush(subscription));
+        TenantSubscription saved = tenantSubscriptionRepository.saveAndFlush(subscription);
+        record(saved, TenantSubscriptionHistoryEventType.LIFECYCLE_UPDATED);
+        return mapToResponse(saved);
     }
 
     private TenantSubscription getSubscriptionEntity(UUID tenantId) {
@@ -250,6 +272,19 @@ public class TenantSubscriptionService {
                 subscription.getCancelledAt(),
                 subscription.getCreatedAt(),
                 subscription.getUpdatedAt());
+    }
+
+    private void ensureBaseline(TenantSubscription subscription) {
+        if (historyService != null) {
+            historyService.ensureBaseline(subscription);
+        }
+    }
+
+    private void record(
+            TenantSubscription subscription, TenantSubscriptionHistoryEventType eventType) {
+        if (historyService != null) {
+            historyService.record(subscription, eventType);
+        }
     }
 
     private <T> T requireValue(T value, String fieldName) {

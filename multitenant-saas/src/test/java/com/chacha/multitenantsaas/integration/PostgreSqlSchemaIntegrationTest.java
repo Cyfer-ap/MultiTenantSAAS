@@ -69,7 +69,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV35AndMatchesJpaMappings() {
+    void postgresSchemaReachesV36AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -81,7 +81,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("35");
+        assertThat(version).isEqualTo("36");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -95,6 +95,7 @@ class PostgreSqlSchemaIntegrationTest {
         assertTableExists("authorization_user_role_assignments");
         assertTableExists("subscription_plans");
         assertTableExists("tenant_subscriptions");
+        assertTableExists("tenant_subscription_history");
         assertTableExists("subscription_plan_provider_mappings");
         assertTableExists("subscription_plan_retirement_operations");
         assertTableExists("email_verification_challenges");
@@ -130,6 +131,19 @@ class PostgreSqlSchemaIntegrationTest {
         assertColumnExists("subscription_plan_retirement_operations", "started_at");
         assertColumnExists("subscription_plan_retirement_operations", "completed_at");
         assertColumnExists("subscription_plan_retirement_operations", "updated_at");
+        assertColumnExists("tenant_subscription_history", "subscription_id");
+        assertColumnExists("tenant_subscription_history", "tenant_id");
+        assertColumnExists("tenant_subscription_history", "tenant_name_snapshot");
+        assertColumnExists("tenant_subscription_history", "plan_id");
+        assertColumnExists("tenant_subscription_history", "plan_code_snapshot");
+        assertColumnExists("tenant_subscription_history", "plan_name_snapshot");
+        assertColumnExists("tenant_subscription_history", "price_snapshot");
+        assertColumnExists("tenant_subscription_history", "currency_snapshot");
+        assertColumnExists("tenant_subscription_history", "status");
+        assertColumnExists("tenant_subscription_history", "billing_provider");
+        assertColumnExists("tenant_subscription_history", "provider_subscription_id");
+        assertColumnExists("tenant_subscription_history", "event_type");
+        assertColumnExists("tenant_subscription_history", "recorded_at");
         assertColumnExists("tenant_api_keys", "tenant_id");
         assertColumnExists("tenant_api_keys", "key_prefix");
         assertColumnExists("tenant_api_keys", "key_hash");

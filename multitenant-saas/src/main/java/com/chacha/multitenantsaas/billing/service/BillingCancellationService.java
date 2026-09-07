@@ -8,14 +8,17 @@ import com.chacha.multitenantsaas.billing.provider.BillingProviderType;
 import com.chacha.multitenantsaas.billing.webhook.BillingSubscriptionUpdate;
 import com.chacha.multitenantsaas.entity.SubscriptionPlan;
 import com.chacha.multitenantsaas.entity.TenantSubscription;
+import com.chacha.multitenantsaas.entity.TenantSubscriptionHistoryEventType;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.TenantSubscriptionRepository;
+import com.chacha.multitenantsaas.service.TenantSubscriptionHistoryService;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -24,14 +27,25 @@ public class BillingCancellationService {
     private final BillingProviderRegistry providerRegistry;
     private final TenantSubscriptionRepository tenantSubscriptionRepository;
     private final BillingSubscriptionHistoryResolver historyResolver;
+    private final TenantSubscriptionHistoryService subscriptionHistoryService;
 
     public BillingCancellationService(
             BillingProviderRegistry providerRegistry,
             TenantSubscriptionRepository tenantSubscriptionRepository,
             BillingSubscriptionHistoryResolver historyResolver) {
+        this(providerRegistry, tenantSubscriptionRepository, historyResolver, null);
+    }
+
+    @Autowired
+    public BillingCancellationService(
+            BillingProviderRegistry providerRegistry,
+            TenantSubscriptionRepository tenantSubscriptionRepository,
+            BillingSubscriptionHistoryResolver historyResolver,
+            TenantSubscriptionHistoryService subscriptionHistoryService) {
         this.providerRegistry = providerRegistry;
         this.tenantSubscriptionRepository = tenantSubscriptionRepository;
         this.historyResolver = historyResolver;
+        this.subscriptionHistoryService = subscriptionHistoryService;
     }
 
     public BillingCancellationResult requestCancellation(UUID tenantId) {
@@ -121,6 +135,7 @@ public class BillingCancellationService {
             return false;
         }
 
+        ensureBaseline(subscription);
         subscription.setStatus(snapshot.status());
         subscription.setCurrentPeriodStart(snapshot.currentPeriodStart());
         subscription.setCurrentPeriodEnd(snapshot.currentPeriodEnd());
@@ -128,7 +143,8 @@ public class BillingCancellationService {
         subscription.setCancelledAt(Instant.now());
         subscription.setBillingProvider(snapshot.provider());
         subscription.setProviderSubscriptionId(snapshot.providerSubscriptionId());
-        tenantSubscriptionRepository.save(subscription);
+        TenantSubscription saved = tenantSubscriptionRepository.save(subscription);
+        record(saved == null ? subscription : saved);
         return true;
     }
 
@@ -217,9 +233,24 @@ public class BillingCancellationService {
 
     private void repairLinkage(
             TenantSubscription subscription, ResolvedSubscription verifiedOwner) {
+        ensureBaseline(subscription);
         subscription.setBillingProvider(verifiedOwner.type());
         subscription.setProviderSubscriptionId(verifiedOwner.providerSubscriptionId());
-        tenantSubscriptionRepository.save(subscription);
+        TenantSubscription saved = tenantSubscriptionRepository.save(subscription);
+        record(saved == null ? subscription : saved);
+    }
+
+    private void ensureBaseline(TenantSubscription subscription) {
+        if (subscriptionHistoryService != null) {
+            subscriptionHistoryService.ensureBaseline(subscription);
+        }
+    }
+
+    private void record(TenantSubscription subscription) {
+        if (subscriptionHistoryService != null) {
+            subscriptionHistoryService.record(
+                    subscription, TenantSubscriptionHistoryEventType.PROVIDER_RECONCILED);
+        }
     }
 
     private record ResolvedSubscription(

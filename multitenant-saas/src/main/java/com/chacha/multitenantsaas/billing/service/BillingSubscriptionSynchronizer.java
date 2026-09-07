@@ -7,14 +7,17 @@ import com.chacha.multitenantsaas.billing.webhook.VerifiedBillingEvent;
 import com.chacha.multitenantsaas.entity.SubscriptionPlan;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.TenantSubscription;
+import com.chacha.multitenantsaas.entity.TenantSubscriptionHistoryEventType;
 import com.chacha.multitenantsaas.entity.TenantSubscriptionStatus;
 import com.chacha.multitenantsaas.repository.TenantSubscriptionRepository;
 import com.chacha.multitenantsaas.service.SubscriptionPlanService;
 import com.chacha.multitenantsaas.service.TenantLookupService;
+import com.chacha.multitenantsaas.service.TenantSubscriptionHistoryService;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -24,16 +27,33 @@ public class BillingSubscriptionSynchronizer {
     private final TenantSubscriptionRepository tenantSubscriptionRepository;
     private final TenantLookupService tenantLookupService;
     private final SubscriptionPlanService subscriptionPlanService;
+    private final TenantSubscriptionHistoryService historyService;
 
     public BillingSubscriptionSynchronizer(
             List<BillingSubscriptionEventMapper> mappers,
             TenantSubscriptionRepository tenantSubscriptionRepository,
             TenantLookupService tenantLookupService,
             SubscriptionPlanService subscriptionPlanService) {
+        this(
+                mappers,
+                tenantSubscriptionRepository,
+                tenantLookupService,
+                subscriptionPlanService,
+                null);
+    }
+
+    @Autowired
+    public BillingSubscriptionSynchronizer(
+            List<BillingSubscriptionEventMapper> mappers,
+            TenantSubscriptionRepository tenantSubscriptionRepository,
+            TenantLookupService tenantLookupService,
+            SubscriptionPlanService subscriptionPlanService,
+            TenantSubscriptionHistoryService historyService) {
         this.mappers = register(mappers);
         this.tenantSubscriptionRepository = tenantSubscriptionRepository;
         this.tenantLookupService = tenantLookupService;
         this.subscriptionPlanService = subscriptionPlanService;
+        this.historyService = historyService;
     }
 
     public void synchronize(VerifiedBillingEvent event) {
@@ -51,6 +71,9 @@ public class BillingSubscriptionSynchronizer {
                         .orElse(null);
         if (subscription != null && shouldIgnore(subscription, update)) {
             return;
+        }
+        if (subscription != null && historyService != null) {
+            historyService.ensureBaseline(subscription);
         }
 
         SubscriptionPlan plan =
@@ -80,7 +103,12 @@ public class BillingSubscriptionSynchronizer {
         subscription.setProviderSubscriptionId(update.providerSubscriptionId());
         subscription.setProviderEventCreatedAt(update.occurredAt());
         updateCancellation(subscription, update.status(), update.occurredAt());
-        tenantSubscriptionRepository.save(subscription);
+        TenantSubscription saved = tenantSubscriptionRepository.save(subscription);
+        if (historyService != null) {
+            historyService.record(
+                    saved == null ? subscription : saved,
+                    TenantSubscriptionHistoryEventType.PROVIDER_SYNCHRONIZED);
+        }
     }
 
     private boolean shouldIgnore(
