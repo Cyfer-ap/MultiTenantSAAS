@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.chacha.multitenantsaas.exception.IdentityProviderVerificationException;
 import java.net.InetAddress;
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -72,13 +71,20 @@ class OidcProviderMetadataServiceTest {
 
     private Map<String, Object> configuration(String issuer) {
         return Map.of(
-                "issuer", issuer,
-                "authorization_endpoint", issuer + "/authorize",
-                "token_endpoint", issuer + "/token",
-                "jwks_uri", issuer + "/jwks",
-                "response_types_supported", List.of("code"),
-                "subject_types_supported", List.of("public"),
-                "id_token_signing_alg_values_supported", List.of("RS256"));
+                "issuer",
+                issuer,
+                "authorization_endpoint",
+                issuer + "/authorize",
+                "token_endpoint",
+                issuer + "/token",
+                "jwks_uri",
+                issuer + "/jwks",
+                "response_types_supported",
+                List.of("code"),
+                "subject_types_supported",
+                List.of("public"),
+                "id_token_signing_alg_values_supported",
+                List.of("RS256"));
     }
 
     private HostAddressResolver publicResolver() throws Exception {

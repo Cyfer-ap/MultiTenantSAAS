@@ -72,7 +72,9 @@ class TenantIdentityProviderVerificationManagementServiceTest {
         assertThat(response.status()).isEqualTo(TenantIdentityProviderStatus.VERIFIED);
         assertThat(response.issuerUri()).isEqualTo("https://idp.example.com");
         verify(providerVerificationService).verify(identityProvider);
-        verify(identityProvider).markVerified(org.mockito.ArgumentMatchers.eq(actor), org.mockito.ArgumentMatchers.any());
+        verify(identityProvider)
+                .markVerified(
+                        org.mockito.ArgumentMatchers.eq(actor), org.mockito.ArgumentMatchers.any());
         verify(identityProviderRepository).save(identityProvider);
         verify(auditLogService)
                 .recordSelfSuccess(
