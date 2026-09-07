@@ -85,8 +85,7 @@ class TenantIdentityProviderLifecycleIntegrationTest {
 
         String rotatedSecret = "rotated-client-secret-456";
         var rotated =
-                identityProviderService.rotateClientSecret(
-                        tenant.getId(), actor, rotatedSecret);
+                identityProviderService.rotateClientSecret(tenant.getId(), actor, rotatedSecret);
         TenantIdentityProvider afterRotation =
                 identityProviderRepository.findByTenant_Id(tenant.getId()).orElseThrow();
 
@@ -166,8 +165,7 @@ class TenantIdentityProviderLifecycleIntegrationTest {
     private Tenant createTenant(String prefix) {
         return tenantRepository.saveAndFlush(
                 new Tenant(
-                        "SSO Labs",
-                        prefix + "-" + UUID.randomUUID().toString().substring(0, 8)));
+                        "SSO Labs", prefix + "-" + UUID.randomUUID().toString().substring(0, 8)));
     }
 
     private AppUser createAdmin(Tenant tenant) {

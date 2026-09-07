@@ -63,7 +63,8 @@ public class TenantIdentityProviderService {
                     "Identity-provider configuration already exists for this tenant");
         }
         if (request.protocol() != IdentityProviderProtocol.OIDC) {
-            throw new IllegalArgumentException("Only OIDC identity providers are supported currently");
+            throw new IllegalArgumentException(
+                    "Only OIDC identity providers are supported currently");
         }
 
         String rawSecret = normalizeClientSecret(request.clientSecret());

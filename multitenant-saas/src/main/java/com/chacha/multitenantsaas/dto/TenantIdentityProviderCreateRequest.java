@@ -12,8 +12,5 @@ public record TenantIdentityProviderCreateRequest(
         @NotNull IdentityProviderProtocol protocol,
         @NotBlank @Size(max = 2048) String issuerUri,
         @NotBlank @Size(max = 512) String clientId,
-        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-                @NotBlank
-                @Size(min = 8, max = 2048)
-                String clientSecret,
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) @NotBlank @Size(min = 8, max = 2048) String clientSecret,
         Set<String> scopes) {}

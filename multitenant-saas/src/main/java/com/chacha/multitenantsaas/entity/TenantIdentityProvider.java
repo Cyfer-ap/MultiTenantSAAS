@@ -15,9 +15,7 @@ import java.util.UUID;
                     columnNames = "tenant_id")
         },
         indexes = {
-            @Index(
-                    name = "idx_tenant_identity_provider_status",
-                    columnList = "status, updated_at")
+            @Index(name = "idx_tenant_identity_provider_status", columnList = "status, updated_at")
         })
 public class TenantIdentityProvider {
 
@@ -135,8 +133,7 @@ public class TenantIdentityProvider {
         this.updatedAt = now;
     }
 
-    public void rotateClientSecret(
-            String ciphertext, String hint, AppUser actor, Instant now) {
+    public void rotateClientSecret(String ciphertext, String hint, AppUser actor, Instant now) {
         this.clientSecretCiphertext = ciphertext;
         this.clientSecretHint = hint;
         this.secretVersion++;

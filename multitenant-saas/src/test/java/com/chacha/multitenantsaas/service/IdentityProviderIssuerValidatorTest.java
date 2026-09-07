@@ -32,7 +32,8 @@ class IdentityProviderIssuerValidatorTest {
     void rejectsPrivateLoopbackAndMetadataDestinations() throws Exception {
         for (String address : List.of("127.0.0.1", "10.0.0.5", "169.254.169.254")) {
             HostAddressResolver resolver = host -> List.of(InetAddress.getByName(address));
-            IdentityProviderIssuerValidator validator = new IdentityProviderIssuerValidator(resolver);
+            IdentityProviderIssuerValidator validator =
+                    new IdentityProviderIssuerValidator(resolver);
 
             assertThatIllegalArgumentException()
                     .isThrownBy(
@@ -53,10 +54,7 @@ class IdentityProviderIssuerValidatorTest {
         IdentityProviderIssuerValidator validator = new IdentityProviderIssuerValidator(resolver);
 
         assertThatIllegalArgumentException()
-                .isThrownBy(
-                        () ->
-                                validator.validateAndNormalize(
-                                        "https://mixed.example.com/oidc"))
+                .isThrownBy(() -> validator.validateAndNormalize("https://mixed.example.com/oidc"))
                 .withMessageContaining("must not resolve to private");
     }
 
