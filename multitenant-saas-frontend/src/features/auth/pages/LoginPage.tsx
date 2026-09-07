@@ -516,14 +516,16 @@ export function LoginPage() {
                                             sx={{ justifyContent: 'flex-start', py: 1.5 }}
                                         >
                                             <Box sx={{ textAlign: 'left' }}>
-                                                <Typography component="span" display="block">
+                                                <Typography
+                                                    component="span"
+                                                    sx={{ display: 'block' }}
+                                                >
                                                     {workspace.name}
                                                 </Typography>
                                                 <Typography
                                                     component="span"
-                                                    display="block"
                                                     variant="caption"
-                                                    sx={{ color: 'text.secondary' }}
+                                                    sx={{ color: 'text.secondary', display: 'block' }}
                                                 >
                                                     {authenticationDescription(workspace)}
                                                 </Typography>
