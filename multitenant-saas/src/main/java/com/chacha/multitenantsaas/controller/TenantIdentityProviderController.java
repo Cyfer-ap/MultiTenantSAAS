@@ -6,9 +6,11 @@ import com.chacha.multitenantsaas.dto.TenantIdentityProviderResponse;
 import com.chacha.multitenantsaas.dto.TenantIdentityProviderSecretRotateRequest;
 import com.chacha.multitenantsaas.dto.TenantIdentityProviderSecretRotatedResponse;
 import com.chacha.multitenantsaas.dto.TenantIdentityProviderUpdateRequest;
+import com.chacha.multitenantsaas.dto.TenantIdentityProviderVerificationResponse;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.service.CurrentActorService;
 import com.chacha.multitenantsaas.service.TenantIdentityProviderService;
+import com.chacha.multitenantsaas.service.TenantIdentityProviderVerificationManagementService;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.CacheControl;
@@ -31,12 +33,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class TenantIdentityProviderController {
 
     private final TenantIdentityProviderService identityProviderService;
+    private final TenantIdentityProviderVerificationManagementService verificationManagementService;
     private final CurrentActorService currentActorService;
 
     public TenantIdentityProviderController(
             TenantIdentityProviderService identityProviderService,
+            TenantIdentityProviderVerificationManagementService verificationManagementService,
             CurrentActorService currentActorService) {
         this.identityProviderService = identityProviderService;
+        this.verificationManagementService = verificationManagementService;
         this.currentActorService = currentActorService;
     }
 
@@ -80,6 +85,19 @@ public class TenantIdentityProviderController {
                         ApiResponse.success(
                                 "Tenant identity-provider configuration updated successfully",
                                 identityProviderService.update(tenantId, actor, request)));
+    }
+
+    @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId, 'tenant.update')")
+    @PostMapping("/verify")
+    public ResponseEntity<ApiResponse<TenantIdentityProviderVerificationResponse>> verify(
+            @PathVariable UUID tenantId, @AuthenticationPrincipal Jwt jwt) {
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(
+                        ApiResponse.success(
+                                "Tenant identity-provider configuration verified successfully",
+                                verificationManagementService.verify(tenantId, actor)));
     }
 
     @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId, 'tenant.update')")
