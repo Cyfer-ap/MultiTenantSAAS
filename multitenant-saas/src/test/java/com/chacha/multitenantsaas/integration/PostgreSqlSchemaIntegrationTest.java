@@ -69,7 +69,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV39AndMatchesJpaMappings() {
+    void postgresSchemaReachesV40AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -81,7 +81,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("39");
+        assertThat(version).isEqualTo("40");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -117,6 +117,8 @@ class PostgreSqlSchemaIntegrationTest {
         assertTableExists("outbound_webhook_events");
         assertTableExists("outbound_webhook_deliveries");
         assertTableExists("outbound_webhook_delivery_attempts");
+        assertTableExists("tenant_identity_providers");
+        assertTableExists("tenant_identity_provider_scopes");
         assertColumnExists("subscription_plan_usage_limits", "plan_id");
         assertColumnExists("subscription_plan_usage_limits", "metric_code");
         assertColumnExists("subscription_plan_usage_limits", "period_limit");
@@ -218,6 +220,22 @@ class PostgreSqlSchemaIntegrationTest {
         assertColumnExists("outbound_webhook_delivery_attempts", "error");
         assertColumnExists("outbound_webhook_delivery_attempts", "started_at");
         assertColumnExists("outbound_webhook_delivery_attempts", "completed_at");
+        assertColumnExists("tenant_identity_providers", "tenant_id");
+        assertColumnExists("tenant_identity_providers", "protocol");
+        assertColumnExists("tenant_identity_providers", "display_name");
+        assertColumnExists("tenant_identity_providers", "issuer_uri");
+        assertColumnExists("tenant_identity_providers", "client_id");
+        assertColumnExists("tenant_identity_providers", "client_secret_ciphertext");
+        assertColumnExists("tenant_identity_providers", "client_secret_hint");
+        assertColumnExists("tenant_identity_providers", "secret_version");
+        assertColumnExists("tenant_identity_providers", "status");
+        assertColumnExists("tenant_identity_providers", "verified_at");
+        assertColumnExists("tenant_identity_providers", "disabled_at");
+        assertColumnExists("tenant_identity_providers", "created_by_user_id");
+        assertColumnExists("tenant_identity_providers", "updated_by_user_id");
+        assertColumnExists("tenant_identity_providers", "secret_rotated_at");
+        assertColumnExists("tenant_identity_provider_scopes", "identity_provider_id");
+        assertColumnExists("tenant_identity_provider_scopes", "scope");
     }
 
     @Test
