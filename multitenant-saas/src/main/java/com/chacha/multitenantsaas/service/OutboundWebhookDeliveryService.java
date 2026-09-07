@@ -57,11 +57,7 @@ public class OutboundWebhookDeliveryService {
 
     @Transactional
     public boolean markFailed(
-            UUID deliveryId,
-            UUID leaseToken,
-            Instant now,
-            Integer httpStatus,
-            String error) {
+            UUID deliveryId, UUID leaseToken, Instant now, Integer httpStatus, String error) {
         return repository
                 .findByIdForUpdate(deliveryId)
                 .map(

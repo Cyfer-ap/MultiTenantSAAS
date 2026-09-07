@@ -40,8 +40,7 @@ public class OutboundWebhookDeliveryWorker {
     private void process(OutboundWebhookDeliveryTask task) {
         try {
             int status = transport.deliver(task);
-            deliveryService.markSent(
-                    task.deliveryId(), task.leaseToken(), Instant.now(), status);
+            deliveryService.markSent(task.deliveryId(), task.leaseToken(), Instant.now(), status);
         } catch (OutboundWebhookDeliveryException exception) {
             log.warn(
                     "Outbound webhook delivery {} failed and will follow retry policy",

@@ -43,9 +43,9 @@ public class OutboundWebhookEventService {
     }
 
     /**
-     * Persists one immutable event envelope and creates one durable delivery per enabled subscriber.
-     * Callers may invoke this inside an existing domain transaction so business state and webhook
-     * intent commit or roll back together.
+     * Persists one immutable event envelope and creates one durable delivery per enabled
+     * subscriber. Callers may invoke this inside an existing domain transaction so business state
+     * and webhook intent commit or roll back together.
      */
     @Transactional
     public UUID publish(UUID tenantId, OutboundWebhookEventType eventType, Object data) {
@@ -56,7 +56,9 @@ public class OutboundWebhookEventService {
                 tenantRepository
                         .findById(tenantId)
                         .orElseThrow(
-                                () -> new ResourceNotFoundException("Tenant not found: " + tenantId));
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Tenant not found: " + tenantId));
         UUID eventId = UUID.randomUUID();
         Instant occurredAt = Instant.now();
         String payloadJson = serializeEnvelope(eventId, tenantId, eventType, occurredAt, data);
@@ -94,7 +96,8 @@ public class OutboundWebhookEventService {
         try {
             return objectMapper.writeValueAsString(envelope);
         } catch (JsonProcessingException exception) {
-            throw new IllegalArgumentException("Webhook event payload could not be serialized", exception);
+            throw new IllegalArgumentException(
+                    "Webhook event payload could not be serialized", exception);
         }
     }
 }
