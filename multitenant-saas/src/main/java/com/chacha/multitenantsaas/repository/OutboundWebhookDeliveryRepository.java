@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -39,4 +40,33 @@ public interface OutboundWebhookDeliveryRepository
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select delivery from OutboundWebhookDelivery delivery where delivery.id = :deliveryId")
     Optional<OutboundWebhookDelivery> findByIdForUpdate(@Param("deliveryId") UUID deliveryId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query(
+            """
+            select delivery from OutboundWebhookDelivery delivery
+            join fetch delivery.tenant
+            join fetch delivery.endpoint
+            join fetch delivery.event
+            where delivery.id = :deliveryId and delivery.tenant.id = :tenantId
+            """)
+    Optional<OutboundWebhookDelivery> findByIdAndTenantIdForUpdate(
+            @Param("deliveryId") UUID deliveryId, @Param("tenantId") UUID tenantId);
+
+    Optional<OutboundWebhookDelivery> findByIdAndTenant_Id(UUID deliveryId, UUID tenantId);
+
+    Page<OutboundWebhookDelivery> findAllByTenant_IdOrderByCreatedAtDesc(
+            UUID tenantId, Pageable pageable);
+
+    Page<OutboundWebhookDelivery> findAllByTenant_IdAndEndpoint_IdOrderByCreatedAtDesc(
+            UUID tenantId, UUID endpointId, Pageable pageable);
+
+    Page<OutboundWebhookDelivery> findAllByTenant_IdAndStatusOrderByCreatedAtDesc(
+            UUID tenantId, OutboundWebhookDeliveryStatus status, Pageable pageable);
+
+    Page<OutboundWebhookDelivery> findAllByTenant_IdAndEndpoint_IdAndStatusOrderByCreatedAtDesc(
+            UUID tenantId,
+            UUID endpointId,
+            OutboundWebhookDeliveryStatus status,
+            Pageable pageable);
 }
