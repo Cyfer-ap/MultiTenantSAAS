@@ -1,10 +1,12 @@
 package com.chacha.multitenantsaas.service;
 
+import com.chacha.multitenantsaas.dto.OutboundWebhookSubscriptionPayload;
 import com.chacha.multitenantsaas.dto.SubscriptionPlanResponse;
 import com.chacha.multitenantsaas.dto.TenantSubscriptionLifecycleUpdateRequest;
 import com.chacha.multitenantsaas.dto.TenantSubscriptionPlanChangeRequest;
 import com.chacha.multitenantsaas.dto.TenantSubscriptionResponse;
 import com.chacha.multitenantsaas.dto.TenantSubscriptionStartRequest;
+import com.chacha.multitenantsaas.entity.OutboundWebhookEventType;
 import com.chacha.multitenantsaas.entity.SubscriptionPlan;
 import com.chacha.multitenantsaas.entity.Tenant;
 import com.chacha.multitenantsaas.entity.TenantSubscription;
@@ -23,18 +25,34 @@ import org.springframework.transaction.annotation.Transactional;
 public class TenantSubscriptionService {
 
     private final TenantSubscriptionRepository tenantSubscriptionRepository;
-
     private final TenantLookupService tenantLookupService;
-
     private final SubscriptionPlanService subscriptionPlanService;
-
     private final TenantSubscriptionHistoryService historyService;
+    private final OutboundWebhookEventService outboundWebhookEventService;
 
     public TenantSubscriptionService(
             TenantSubscriptionRepository tenantSubscriptionRepository,
             TenantLookupService tenantLookupService,
             SubscriptionPlanService subscriptionPlanService) {
-        this(tenantSubscriptionRepository, tenantLookupService, subscriptionPlanService, null);
+        this(
+                tenantSubscriptionRepository,
+                tenantLookupService,
+                subscriptionPlanService,
+                null,
+                null);
+    }
+
+    public TenantSubscriptionService(
+            TenantSubscriptionRepository tenantSubscriptionRepository,
+            TenantLookupService tenantLookupService,
+            SubscriptionPlanService subscriptionPlanService,
+            TenantSubscriptionHistoryService historyService) {
+        this(
+                tenantSubscriptionRepository,
+                tenantLookupService,
+                subscriptionPlanService,
+                historyService,
+                null);
     }
 
     @Autowired
@@ -42,11 +60,13 @@ public class TenantSubscriptionService {
             TenantSubscriptionRepository tenantSubscriptionRepository,
             TenantLookupService tenantLookupService,
             SubscriptionPlanService subscriptionPlanService,
-            TenantSubscriptionHistoryService historyService) {
+            TenantSubscriptionHistoryService historyService,
+            OutboundWebhookEventService outboundWebhookEventService) {
         this.tenantSubscriptionRepository = tenantSubscriptionRepository;
         this.tenantLookupService = tenantLookupService;
         this.subscriptionPlanService = subscriptionPlanService;
         this.historyService = historyService;
+        this.outboundWebhookEventService = outboundWebhookEventService;
     }
 
     @Transactional
@@ -92,6 +112,7 @@ public class TenantSubscriptionService {
 
         TenantSubscription saved = tenantSubscriptionRepository.saveAndFlush(subscription);
         record(saved, TenantSubscriptionHistoryEventType.STARTED);
+        publish(saved, OutboundWebhookEventType.SUBSCRIPTION_UPDATED);
         return mapToResponse(saved);
     }
 
@@ -132,6 +153,7 @@ public class TenantSubscriptionService {
 
         TenantSubscription saved = tenantSubscriptionRepository.saveAndFlush(subscription);
         record(saved, TenantSubscriptionHistoryEventType.PLAN_CHANGED);
+        publish(saved, OutboundWebhookEventType.SUBSCRIPTION_UPDATED);
         return mapToResponse(saved);
     }
 
@@ -170,6 +192,11 @@ public class TenantSubscriptionService {
 
         TenantSubscription saved = tenantSubscriptionRepository.saveAndFlush(subscription);
         record(saved, TenantSubscriptionHistoryEventType.LIFECYCLE_UPDATED);
+        publish(
+                saved,
+                status == TenantSubscriptionStatus.CANCELLED
+                        ? OutboundWebhookEventType.SUBSCRIPTION_CANCELLED
+                        : OutboundWebhookEventType.SUBSCRIPTION_UPDATED);
         return mapToResponse(saved);
     }
 
@@ -284,6 +311,15 @@ public class TenantSubscriptionService {
             TenantSubscription subscription, TenantSubscriptionHistoryEventType eventType) {
         if (historyService != null) {
             historyService.record(subscription, eventType);
+        }
+    }
+
+    private void publish(TenantSubscription subscription, OutboundWebhookEventType eventType) {
+        if (outboundWebhookEventService != null) {
+            outboundWebhookEventService.publish(
+                    subscription.getTenant().getId(),
+                    eventType,
+                    OutboundWebhookSubscriptionPayload.from(subscription));
         }
     }
 
