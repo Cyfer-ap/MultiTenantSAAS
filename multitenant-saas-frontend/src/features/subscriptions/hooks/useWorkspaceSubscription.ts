@@ -1,7 +1,8 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { tenantSubscriptionApi } from '../api/tenantSubscriptionApi'
 import type { BillingCheckoutInput } from '../types/subscriptions'
+import { subscriptionHistoryQueryKeys } from './useSubscriptionHistory'
 
 export const workspaceSubscriptionQueryKeys = {
     all: ['workspace-subscription'] as const,
@@ -58,8 +59,14 @@ export function useCreateBillingCheckout() {
 }
 
 export function useCancelBillingSubscription() {
+    const queryClient = useQueryClient()
     return useMutation({
         mutationFn: ({ tenantId }: { tenantId: string }) =>
             tenantSubscriptionApi.cancelSubscription(tenantId),
+        onSuccess: async (_data, variables) => {
+            await queryClient.invalidateQueries({
+                queryKey: subscriptionHistoryQueryKeys.tenant(variables.tenantId),
+            })
+        },
     })
 }

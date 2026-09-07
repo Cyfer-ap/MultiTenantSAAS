@@ -3,6 +3,7 @@ import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded'
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import {
     Alert,
     Autocomplete,
@@ -10,6 +11,11 @@ import {
     Button,
     Chip,
     CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
     Divider,
     Paper,
     Snackbar,
@@ -34,13 +40,16 @@ import {
     SubscriptionPlanDialog,
     UpdateTenantLifecycleDialog,
 } from '../features/subscriptions/components/SubscriptionDialogs'
+import { SubscriptionHistoryPanel } from '../features/subscriptions/components/SubscriptionHistoryPanel'
 import {
     useSubscriptionPlans,
     useTenantSubscription,
     useUpdateSubscriptionPlanStatus,
 } from '../features/subscriptions/hooks/useSystemSubscriptions'
+import { useSystemTenantSubscriptionHistory } from '../features/subscriptions/hooks/useSubscriptionHistory'
 import type {
     SubscriptionPlan,
+    SubscriptionPlanStatus,
     TenantSubscriptionStatus,
 } from '../features/subscriptions/types/subscriptions'
 import { useSystemTenants } from '../features/system-admin/hooks/useSystemTenants'
@@ -73,6 +82,18 @@ function subscriptionColor(
     return 'default'
 }
 
+function planStatusColor(status: SubscriptionPlanStatus): 'success' | 'warning' | 'default' {
+    if (status === 'ACTIVE') return 'success'
+    if (status === 'RETIRED') return 'warning'
+    return 'default'
+}
+
+function planStatusLabel(status: SubscriptionPlanStatus): string {
+    if (status === 'ACTIVE') return 'Active'
+    if (status === 'RETIRED') return 'Retired'
+    return 'Inactive'
+}
+
 function limit(value: number | null, suffix = ''): string {
     return value === null ? 'Unlimited' : `${value.toLocaleString()}${suffix}`
 }
@@ -82,9 +103,11 @@ export function SystemSubscriptionsPage() {
     const [tenantSearch, setTenantSearch] = useState('')
     const [selectedTenant, setSelectedTenant] = useState<SystemTenant | null>(null)
     const [planDialog, setPlanDialog] = useState<SubscriptionPlan | 'CREATE' | null>(null)
+    const [retirementPlan, setRetirementPlan] = useState<SubscriptionPlan | null>(null)
     const [startOpen, setStartOpen] = useState(false)
     const [changePlanOpen, setChangePlanOpen] = useState(false)
     const [lifecycleOpen, setLifecycleOpen] = useState(false)
+    const [historyPage, setHistoryPage] = useState(0)
     const [feedback, setFeedback] = useState<string | null>(null)
 
     const plansQuery = useSubscriptionPlans(false)
@@ -97,21 +120,58 @@ export function SystemSubscriptionsPage() {
         ...(tenantSearch.trim() ? { search: tenantSearch.trim() } : {}),
     })
     const subscriptionQuery = useTenantSubscription(selectedTenant?.id ?? null)
+    const historyQuery = useSystemTenantSubscriptionHistory(
+        selectedTenant?.id ?? null,
+        historyPage,
+        20,
+    )
     const noSubscription =
         subscriptionQuery.error instanceof ApiClientError && subscriptionQuery.error.status === 404
     const plans = plansQuery.data ?? []
     const planError = statusMutation.error ?? plansQuery.error
+    const refreshing =
+        plansQuery.isFetching ||
+        tenantsQuery.isFetching ||
+        subscriptionQuery.isFetching ||
+        historyQuery.isFetching
 
-    const changePlanStatus = async (plan: SubscriptionPlan): Promise<void> => {
+    const changePlanStatus = async (
+        plan: SubscriptionPlan,
+        status: SubscriptionPlanStatus,
+    ): Promise<void> => {
         try {
-            await statusMutation.mutateAsync({
-                planId: plan.id,
-                status: plan.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE',
-            })
-            setFeedback(`${plan.name} is now ${plan.status === 'ACTIVE' ? 'inactive' : 'active'}.`)
+            await statusMutation.mutateAsync({ planId: plan.id, status })
+            setFeedback(`${plan.name} is now ${planStatusLabel(status).toLowerCase()}.`)
         } catch {
-            // Mutation error is shown above the plan table.
+            // Mutation errors are surfaced above the plan table.
         }
+    }
+
+    const confirmRetirement = async (): Promise<void> => {
+        if (!retirementPlan) return
+        const plan = retirementPlan
+        try {
+            await statusMutation.mutateAsync({ planId: plan.id, status: 'RETIRED' })
+            setRetirementPlan(null)
+            setFeedback(
+                `${plan.name} is retired. It cannot be edited or reactivated; create a replacement plan for future sales.`,
+            )
+        } catch {
+            // Keep the dialog open so the administrator can review the surfaced error.
+        }
+    }
+
+    const refreshCurrentTab = (): void => {
+        if (tab === 0) {
+            void plansQuery.refetch()
+            return
+        }
+
+        const requests: Promise<unknown>[] = [tenantsQuery.refetch()]
+        if (selectedTenant) {
+            requests.push(subscriptionQuery.refetch(), historyQuery.refetch())
+        }
+        void Promise.all(requests)
     }
 
     return (
@@ -126,16 +186,15 @@ export function SystemSubscriptionsPage() {
                         Subscriptions
                     </Typography>
                     <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                        Manage the platform plan catalog and tenant subscription lifecycles.
+                        Manage the platform plan catalog, provider-safe retirement, tenant
+                        lifecycles, and durable subscription history.
                     </Typography>
                 </Box>
                 <Button
-                    disabled={plansQuery.isFetching}
-                    onClick={() => {
-                        void plansQuery.refetch()
-                    }}
+                    disabled={refreshing}
+                    onClick={refreshCurrentTab}
                     startIcon={
-                        plansQuery.isFetching ? (
+                        refreshing ? (
                             <CircularProgress color="inherit" size={16} />
                         ) : (
                             <RefreshRoundedIcon />
@@ -173,8 +232,9 @@ export function SystemSubscriptionsPage() {
                             <Box>
                                 <Typography variant="h6">Subscription plans</Typography>
                                 <Typography color="text.secondary" variant="body2">
-                                    Plans are selected by name and code throughout the
-                                    administration UI.
+                                    Inactive plans can be restored. Retired plans are terminal and
+                                    immutable because retirement also coordinates provider catalog
+                                    shutdown.
                                 </Typography>
                             </Box>
                             <Button
@@ -187,13 +247,15 @@ export function SystemSubscriptionsPage() {
                                 Create plan
                             </Button>
                         </Stack>
+
                         {(plansQuery.isError || statusMutation.isError) && (
                             <Alert severity="error" sx={{ mb: 2 }}>
                                 {planError instanceof Error
                                     ? planError.message
-                                    : 'Subscription plans could not be loaded.'}
+                                    : 'Subscription plans could not be loaded or updated.'}
                             </Alert>
                         )}
+
                         {plansQuery.isLoading ? (
                             <Stack sx={{ alignItems: 'center', py: 8 }}>
                                 <CircularProgress />
@@ -223,6 +285,14 @@ export function SystemSubscriptionsPage() {
                                                     >
                                                         {plan.code}
                                                     </Typography>
+                                                    {plan.status === 'RETIRED' && (
+                                                        <Typography
+                                                            color="warning.main"
+                                                            variant="caption"
+                                                        >
+                                                            Permanent catalog retirement
+                                                        </Typography>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell>
                                                     {formatMoney(plan.price, plan.currency)} /{' '}
@@ -243,52 +313,69 @@ export function SystemSubscriptionsPage() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Chip
-                                                        color={
-                                                            plan.status === 'ACTIVE'
-                                                                ? 'success'
-                                                                : 'default'
-                                                        }
-                                                        label={
-                                                            plan.status === 'ACTIVE'
-                                                                ? 'Active'
-                                                                : 'Inactive'
-                                                        }
+                                                        color={planStatusColor(plan.status)}
+                                                        label={planStatusLabel(plan.status)}
                                                         size="small"
                                                         variant="outlined"
                                                     />
                                                 </TableCell>
                                                 <TableCell align="right">
-                                                    <Stack
-                                                        direction="row"
-                                                        spacing={1}
-                                                        sx={{ justifyContent: 'flex-end' }}
-                                                    >
-                                                        <Button
-                                                            onClick={() => {
-                                                                setPlanDialog(plan)
-                                                            }}
-                                                            size="small"
-                                                            startIcon={<EditOutlinedIcon />}
+                                                    {plan.status === 'RETIRED' ? (
+                                                        <Typography
+                                                            color="text.secondary"
+                                                            variant="body2"
                                                         >
-                                                            Edit
-                                                        </Button>
-                                                        <Button
-                                                            color={
-                                                                plan.status === 'ACTIVE'
-                                                                    ? 'warning'
-                                                                    : 'success'
-                                                            }
-                                                            disabled={statusMutation.isPending}
-                                                            onClick={() => {
-                                                                void changePlanStatus(plan)
-                                                            }}
-                                                            size="small"
+                                                            No further changes
+                                                        </Typography>
+                                                    ) : (
+                                                        <Stack
+                                                            direction="row"
+                                                            spacing={1}
+                                                            sx={{ justifyContent: 'flex-end' }}
                                                         >
-                                                            {plan.status === 'ACTIVE'
-                                                                ? 'Deactivate'
-                                                                : 'Activate'}
-                                                        </Button>
-                                                    </Stack>
+                                                            <Button
+                                                                disabled={statusMutation.isPending}
+                                                                onClick={() => {
+                                                                    setPlanDialog(plan)
+                                                                }}
+                                                                size="small"
+                                                                startIcon={<EditOutlinedIcon />}
+                                                            >
+                                                                Edit
+                                                            </Button>
+                                                            <Button
+                                                                color={
+                                                                    plan.status === 'ACTIVE'
+                                                                        ? 'warning'
+                                                                        : 'success'
+                                                                }
+                                                                disabled={statusMutation.isPending}
+                                                                onClick={() => {
+                                                                    void changePlanStatus(
+                                                                        plan,
+                                                                        plan.status === 'ACTIVE'
+                                                                            ? 'INACTIVE'
+                                                                            : 'ACTIVE',
+                                                                    )
+                                                                }}
+                                                                size="small"
+                                                            >
+                                                                {plan.status === 'ACTIVE'
+                                                                    ? 'Deactivate'
+                                                                    : 'Activate'}
+                                                            </Button>
+                                                            <Button
+                                                                color="error"
+                                                                disabled={statusMutation.isPending}
+                                                                onClick={() => {
+                                                                    setRetirementPlan(plan)
+                                                                }}
+                                                                size="small"
+                                                            >
+                                                                Retire
+                                                            </Button>
+                                                        </Stack>
+                                                    )}
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -315,9 +402,10 @@ export function SystemSubscriptionsPage() {
                     <Box sx={{ p: { xs: 2, md: 3 } }}>
                         <Typography variant="h6">Tenant subscription</Typography>
                         <Typography color="text.secondary" variant="body2">
-                            Search for a workspace by name or slug. Internal identifiers are never
-                            required.
+                            Search for a workspace by name or slug. Current state and immutable
+                            history are shown together.
                         </Typography>
+
                         <Autocomplete
                             filterOptions={(options) => options}
                             getOptionLabel={(option) => `${option.name} (${option.slug})`}
@@ -325,6 +413,7 @@ export function SystemSubscriptionsPage() {
                             loading={tenantsQuery.isFetching}
                             onChange={(_event, value) => {
                                 setSelectedTenant(value)
+                                setHistoryPage(0)
                             }}
                             onInputChange={(_event, value, reason) => {
                                 if (reason === 'input') setTenantSearch(value)
@@ -357,7 +446,8 @@ export function SystemSubscriptionsPage() {
                                     Select a tenant
                                 </Typography>
                                 <Typography color="text.secondary">
-                                    The current subscription and available actions will appear here.
+                                    Current subscription state and its historical ledger will appear
+                                    here.
                                 </Typography>
                             </Paper>
                         )}
@@ -370,9 +460,12 @@ export function SystemSubscriptionsPage() {
 
                         {selectedTenant && noSubscription && (
                             <Paper sx={{ mt: 3, p: 3 }} variant="outlined">
-                                <Typography variant="h6">No subscription assigned</Typography>
+                                <Typography variant="h6">
+                                    No current subscription assigned
+                                </Typography>
                                 <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                                    {selectedTenant.name} does not have a subscription yet.
+                                    {selectedTenant.name} does not have a current subscription. Any
+                                    preserved previous lifecycle remains available in history below.
                                 </Typography>
                                 <Button
                                     disabled={!plans.some((plan) => plan.status === 'ACTIVE')}
@@ -429,7 +522,7 @@ export function SystemSubscriptionsPage() {
                                                 color={subscriptionColor(
                                                     subscriptionQuery.data.status,
                                                 )}
-                                                label={subscriptionQuery.data.status.replace(
+                                                label={subscriptionQuery.data.status.replaceAll(
                                                     '_',
                                                     ' ',
                                                 )}
@@ -498,6 +591,24 @@ export function SystemSubscriptionsPage() {
                                 </Stack>
                             </Paper>
                         )}
+
+                        {selectedTenant && (
+                            <Box sx={{ mt: 3 }}>
+                                <SubscriptionHistoryPanel
+                                    data={historyQuery.data}
+                                    error={historyQuery.error}
+                                    fetching={historyQuery.isFetching}
+                                    loading={historyQuery.isPending}
+                                    onPageChange={setHistoryPage}
+                                    onRefresh={() => {
+                                        void historyQuery.refetch()
+                                    }}
+                                    page={historyPage}
+                                    showProviderReference
+                                    title={`${selectedTenant.name} subscription history`}
+                                />
+                            </Box>
+                        )}
                     </Box>
                 )}
             </Paper>
@@ -544,8 +655,59 @@ export function SystemSubscriptionsPage() {
                     subscription={subscriptionQuery.data}
                 />
             )}
+
+            <Dialog
+                onClose={() => {
+                    if (!statusMutation.isPending) setRetirementPlan(null)
+                }}
+                open={Boolean(retirementPlan)}
+            >
+                <DialogTitle>Retire subscription plan permanently?</DialogTitle>
+                <DialogContent>
+                    <Stack spacing={2}>
+                        <Alert icon={<WarningAmberRoundedIcon />} severity="warning">
+                            Retirement is terminal. This plan cannot be edited or reactivated after
+                            the operation succeeds.
+                        </Alert>
+                        <DialogContentText>
+                            {retirementPlan?.name} will be removed from future checkout eligibility
+                            and provider catalog retirement will be coordinated. Existing historical
+                            subscription records remain preserved. Create a replacement plan if you
+                            need different pricing or limits later.
+                        </DialogContentText>
+                        {statusMutation.isError && (
+                            <Alert severity="error">
+                                {statusMutation.error instanceof Error
+                                    ? statusMutation.error.message
+                                    : 'The plan could not be retired.'}
+                            </Alert>
+                        )}
+                    </Stack>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        disabled={statusMutation.isPending}
+                        onClick={() => {
+                            setRetirementPlan(null)
+                        }}
+                    >
+                        Keep plan
+                    </Button>
+                    <Button
+                        color="error"
+                        disabled={statusMutation.isPending}
+                        onClick={() => {
+                            void confirmRetirement()
+                        }}
+                        variant="contained"
+                    >
+                        {statusMutation.isPending ? 'Retiring…' : 'Retire permanently'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
             <Snackbar
-                autoHideDuration={4000}
+                autoHideDuration={5000}
                 message={feedback}
                 onClose={() => {
                     setFeedback(null)

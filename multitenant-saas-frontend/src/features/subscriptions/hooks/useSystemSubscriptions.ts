@@ -10,6 +10,7 @@ import type {
     UpdateSubscriptionPlanInput,
     UpdateTenantSubscriptionLifecycleInput,
 } from '../types/subscriptions'
+import { subscriptionHistoryQueryKeys } from './useSubscriptionHistory'
 
 export const systemSubscriptionQueryKeys = {
     all: ['system-admin', 'subscriptions'] as const,
@@ -48,6 +49,9 @@ function useInvalidateSubscriptions() {
                 ? [
                       queryClient.invalidateQueries({
                           queryKey: systemSubscriptionQueryKeys.tenant(tenantId),
+                      }),
+                      queryClient.invalidateQueries({
+                          queryKey: subscriptionHistoryQueryKeys.systemTenant(tenantId),
                       }),
                   ]
                 : []),
