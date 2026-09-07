@@ -23,6 +23,7 @@ import com.chacha.multitenantsaas.repository.TenantRepository;
 import com.chacha.multitenantsaas.security.AuthenticatedUserContext;
 import com.chacha.multitenantsaas.security.JwtContextService;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,31 @@ public class AuthService {
     private final AuditLogService auditLogService;
     private final LoginAttemptService loginAttemptService;
     private final EmailWorkspaceDiscoveryService emailWorkspaceDiscoveryService;
+    private final TenantSsoLoginPolicyGuard tenantSsoLoginPolicyGuard;
+
+    @Autowired
+    public AuthService(
+            TenantRepository tenantRepository,
+            AppUserRepository appUserRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            JwtContextService jwtContextService,
+            RefreshTokenService refreshTokenService,
+            AuditLogService auditLogService,
+            LoginAttemptService loginAttemptService,
+            EmailWorkspaceDiscoveryService emailWorkspaceDiscoveryService,
+            TenantSsoLoginPolicyGuard tenantSsoLoginPolicyGuard) {
+        this.tenantRepository = tenantRepository;
+        this.appUserRepository = appUserRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.jwtContextService = jwtContextService;
+        this.refreshTokenService = refreshTokenService;
+        this.auditLogService = auditLogService;
+        this.loginAttemptService = loginAttemptService;
+        this.emailWorkspaceDiscoveryService = emailWorkspaceDiscoveryService;
+        this.tenantSsoLoginPolicyGuard = tenantSsoLoginPolicyGuard;
+    }
 
     public AuthService(
             TenantRepository tenantRepository,
@@ -51,15 +77,17 @@ public class AuthService {
             AuditLogService auditLogService,
             LoginAttemptService loginAttemptService,
             EmailWorkspaceDiscoveryService emailWorkspaceDiscoveryService) {
-        this.tenantRepository = tenantRepository;
-        this.appUserRepository = appUserRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
-        this.jwtContextService = jwtContextService;
-        this.refreshTokenService = refreshTokenService;
-        this.auditLogService = auditLogService;
-        this.loginAttemptService = loginAttemptService;
-        this.emailWorkspaceDiscoveryService = emailWorkspaceDiscoveryService;
+        this(
+                tenantRepository,
+                appUserRepository,
+                passwordEncoder,
+                jwtService,
+                jwtContextService,
+                refreshTokenService,
+                auditLogService,
+                loginAttemptService,
+                emailWorkspaceDiscoveryService,
+                null);
     }
 
     @Transactional(noRollbackFor = AuthenticationFailedException.class)
@@ -146,6 +174,10 @@ public class AuthService {
             throw new AuthenticationFailedException("Password is not set for this user");
         }
 
+        boolean breakGlassLogin =
+                tenantSsoLoginPolicyGuard != null
+                        && tenantSsoLoginPolicyGuard.enforcePasswordLogin(tenantId, user);
+
         loginAttemptService.ensureNotLocked(user);
 
         boolean passwordMatches =
@@ -172,6 +204,14 @@ public class AuthService {
 
         auditLogService.record(
                 tenant, user, AuditAction.LOGIN_SUCCESS, true, "User logged in successfully");
+
+        if (breakGlassLogin) {
+            auditLogService.recordSelfSuccess(
+                    tenant,
+                    user,
+                    AuditAction.IDENTITY_PROVIDER_BREAK_GLASS_LOGIN,
+                    "Tenant administrator used the password break-glass login path");
+        }
 
         return new LoginResponse(
                 tenant.getId(),
