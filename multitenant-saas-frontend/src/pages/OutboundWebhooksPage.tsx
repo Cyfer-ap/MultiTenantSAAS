@@ -36,7 +36,7 @@ import {
     TextField,
     Typography,
 } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { useAuth } from '../features/auth/hooks/useAuth'
 import {
@@ -128,21 +128,10 @@ function EndpointDialog({
     onClose,
     onSave,
 }: EndpointDialogProps) {
-    const [name, setName] = useState('')
-    const [url, setUrl] = useState('')
-    const [enabled, setEnabled] = useState(true)
-    const [events, setEvents] = useState<OutboundWebhookEventType[]>([])
-
-    useEffect(() => {
-        if (!open) {
-            return
-        }
-
-        setName(endpoint?.name ?? '')
-        setUrl(endpoint?.url ?? '')
-        setEnabled(endpoint?.enabled ?? true)
-        setEvents(endpoint?.events ?? [])
-    }, [endpoint, open])
+    const [name, setName] = useState(endpoint?.name ?? '')
+    const [url, setUrl] = useState(endpoint?.url ?? '')
+    const [enabled, setEnabled] = useState(endpoint?.enabled ?? true)
+    const [events, setEvents] = useState<OutboundWebhookEventType[]>(endpoint?.events ?? [])
 
     const canSave = name.trim().length > 0 && url.trim().length > 0 && events.length > 0 && !saving
 
@@ -245,12 +234,6 @@ interface SecretDialogProps {
 
 function SecretDialog({ open, secret, title, onClose }: SecretDialogProps) {
     const [copied, setCopied] = useState(false)
-
-    useEffect(() => {
-        if (open) {
-            setCopied(false)
-        }
-    }, [open])
 
     const copySecret = async (): Promise<void> => {
         await navigator.clipboard.writeText(secret)
@@ -720,6 +703,7 @@ export function OutboundWebhooksPage() {
             </Paper>
 
             <EndpointDialog
+                key={endpointDialogOpen ? (editingEndpoint?.id ?? 'new') : 'closed'}
                 endpoint={editingEndpoint}
                 eventCatalog={eventCatalogQuery.data ?? []}
                 onClose={() => {
@@ -732,6 +716,7 @@ export function OutboundWebhooksPage() {
             />
 
             <SecretDialog
+                key={secret || 'closed-secret'}
                 onClose={() => setSecret('')}
                 open={Boolean(secret)}
                 secret={secret}
