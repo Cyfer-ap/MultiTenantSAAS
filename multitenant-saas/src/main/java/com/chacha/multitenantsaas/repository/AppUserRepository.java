@@ -90,6 +90,21 @@ public interface AppUserRepository
 
     long countByTenantIdAndRoleAndStatus(UUID tenantId, UserRole role, UserStatus status);
 
+    @Query(
+            """
+            SELECT COUNT(appUser)
+            FROM AppUser appUser
+            WHERE appUser.tenant.id = :tenantId
+              AND appUser.role = :role
+              AND appUser.status = :status
+              AND appUser.passwordHash IS NOT NULL
+              AND LENGTH(TRIM(appUser.passwordHash)) > 0
+            """)
+    long countUsersWithPasswordByTenantRoleAndStatus(
+            @Param("tenantId") UUID tenantId,
+            @Param("role") UserRole role,
+            @Param("status") UserStatus status);
+
     default Page<AppUser> findTenantUsers(
             UUID tenantId, UserRole role, UserStatus status, String search, Pageable pageable) {
         Specification<AppUser> specification =
