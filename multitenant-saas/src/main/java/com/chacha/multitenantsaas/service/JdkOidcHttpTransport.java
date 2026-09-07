@@ -9,6 +9,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
@@ -24,6 +25,7 @@ public class JdkOidcHttpTransport implements OidcHttpTransport {
     private final JsonMapper jsonMapper;
     private final HttpClient httpClient;
 
+    @Autowired
     public JdkOidcHttpTransport(JsonMapper jsonMapper) {
         this(
                 jsonMapper,
