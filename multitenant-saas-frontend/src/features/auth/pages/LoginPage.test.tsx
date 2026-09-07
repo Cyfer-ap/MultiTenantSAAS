@@ -7,6 +7,7 @@ import { MemoryRouter } from 'react-router'
 import { appTheme } from '../../../theme/appTheme'
 import { authApi } from '../api/authApi'
 import { AuthContext } from '../context/AuthContext'
+import type { WorkspaceAuthenticationMode } from '../types/auth'
 import { LoginPage } from './LoginPage'
 
 function renderLoginPage(state: Record<string, unknown> = {}) {
@@ -33,6 +34,28 @@ function renderLoginPage(state: Record<string, unknown> = {}) {
             </AuthContext.Provider>
         </ThemeProvider>,
     )
+}
+
+function mockTrustedWorkspace(
+    authenticationMode: WorkspaceAuthenticationMode,
+    identityProviderDisplayName: string | null = null,
+) {
+    vi.spyOn(authApi, 'startWorkspaceDiscovery').mockResolvedValue({
+        verificationRequired: false,
+        challengeId: null,
+        workspaces: [
+            {
+                tenantId: 'tenant-1',
+                name: 'Research Lab',
+                slug: 'research-lab',
+                authenticationMode,
+                identityProviderDisplayName,
+            },
+        ],
+        workspaceGrantId: 'grant-1',
+        expiresInSeconds: 0,
+        message: 'Trusted browser.',
+    })
 }
 
 describe('LoginPage', () => {
@@ -82,30 +105,58 @@ describe('LoginPage', () => {
         expect(screen.getByText(/grace@example.com/i)).toBeInTheDocument()
     })
 
-    it('skips the code step for a trusted browser and shows the password for one workspace', async () => {
+    it('shows only password login for PASSWORD_ONLY', async () => {
         const user = userEvent.setup()
-
-        vi.spyOn(authApi, 'startWorkspaceDiscovery').mockResolvedValue({
-            verificationRequired: false,
-            challengeId: null,
-            workspaces: [
-                {
-                    tenantId: 'tenant-1',
-                    name: 'Research Lab',
-                    slug: 'research-lab',
-                },
-            ],
-            workspaceGrantId: 'grant-1',
-            expiresInSeconds: 0,
-            message: 'Trusted browser.',
-        })
-
+        mockTrustedWorkspace('PASSWORD_ONLY')
         renderLoginPage({ email: 'grace@example.com' })
 
         await user.click(screen.getByRole('button', { name: /^continue$/i }))
 
         expect(await screen.findByLabelText(/password/i)).toBeInTheDocument()
-        expect(screen.getByText(/workspace: research lab/i)).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /sign in with password/i })).toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: /continue with/i })).not.toBeInTheDocument()
         expect(screen.getByRole('checkbox', { name: /keep me signed in/i })).not.toBeChecked()
+    })
+
+    it('shows SSO and password choices for PASSWORD_OR_SSO', async () => {
+        const user = userEvent.setup()
+        mockTrustedWorkspace('PASSWORD_OR_SSO', 'Acme Identity')
+        renderLoginPage({ email: 'grace@example.com' })
+
+        await user.click(screen.getByRole('button', { name: /^continue$/i }))
+
+        expect(
+            await screen.findByRole('button', { name: /continue with acme identity/i }),
+        ).toBeInTheDocument()
+        expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
+        expect(screen.getByText(/^or$/i)).toBeInTheDocument()
+    })
+
+    it('does not expose password login for a single SSO_ONLY workspace', async () => {
+        const user = userEvent.setup()
+        mockTrustedWorkspace('SSO_ONLY', 'Acme Identity')
+        renderLoginPage({ email: 'grace@example.com' })
+
+        await user.click(screen.getByRole('button', { name: /^continue$/i }))
+
+        expect(
+            await screen.findByRole('button', { name: /continue with acme identity/i }),
+        ).toBeInTheDocument()
+        expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: /sign in with password/i })).not.toBeInTheDocument()
+    })
+
+    it('does not expose password login for SSO_REQUIRED', async () => {
+        const user = userEvent.setup()
+        mockTrustedWorkspace('SSO_REQUIRED', 'Acme Identity')
+        renderLoginPage({ email: 'grace@example.com' })
+
+        await user.click(screen.getByRole('button', { name: /^continue$/i }))
+
+        expect(
+            await screen.findByRole('button', { name: /continue with acme identity/i }),
+        ).toBeInTheDocument()
+        expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument()
+        expect(screen.getByText(/corporate sso required/i)).toBeInTheDocument()
     })
 })
