@@ -7,6 +7,7 @@ import {
     useTenantSubscription,
     useUpdateSubscriptionPlanStatus,
 } from '../features/subscriptions/hooks/useSystemSubscriptions'
+import { useSystemTenantSubscriptionHistory } from '../features/subscriptions/hooks/useSubscriptionHistory'
 import { useSystemTenants } from '../features/system-admin/hooks/useSystemTenants'
 import { appTheme } from '../theme/appTheme'
 import { SystemSubscriptionsPage } from './SystemSubscriptionsPage'
@@ -15,6 +16,9 @@ vi.mock('../features/subscriptions/hooks/useSystemSubscriptions', () => ({
     useSubscriptionPlans: vi.fn(),
     useTenantSubscription: vi.fn(),
     useUpdateSubscriptionPlanStatus: vi.fn(),
+}))
+vi.mock('../features/subscriptions/hooks/useSubscriptionHistory', () => ({
+    useSystemTenantSubscriptionHistory: vi.fn(),
 }))
 vi.mock('../features/system-admin/hooks/useSystemTenants', () => ({
     useSystemTenants: vi.fn(),
@@ -67,12 +71,21 @@ describe('SystemSubscriptionsPage', () => {
             isError: false,
             isFetching: false,
             error: null,
+            refetch: vi.fn(),
         } as never)
         vi.mocked(useTenantSubscription).mockReturnValue({
             data: undefined,
             isError: false,
+            isFetching: false,
             isLoading: false,
             error: null,
+            refetch: vi.fn(),
+        } as never)
+        vi.mocked(useSystemTenantSubscriptionHistory).mockReturnValue({
+            data: undefined,
+            error: null,
+            isFetching: false,
+            isPending: false,
             refetch: vi.fn(),
         } as never)
         vi.mocked(useUpdateSubscriptionPlanStatus).mockReturnValue({
@@ -95,5 +108,23 @@ describe('SystemSubscriptionsPage', () => {
         fireEvent.click(screen.getByRole('tab', { name: 'Tenant subscriptions' }))
         expect(screen.getByLabelText('Find tenant')).toBeInTheDocument()
         expect(screen.queryByLabelText(/uuid/i)).not.toBeInTheDocument()
+    })
+
+    it('treats retired plans as terminal instead of offering reactivation', () => {
+        vi.mocked(useSubscriptionPlans).mockReturnValue({
+            data: [{ ...plan, status: 'RETIRED' }],
+            isError: false,
+            isFetching: false,
+            isLoading: false,
+            refetch: vi.fn(),
+            error: null,
+        } as never)
+
+        renderPage()
+
+        expect(screen.getByText('Retired')).toBeInTheDocument()
+        expect(screen.getByText('No further changes')).toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: 'Activate' })).not.toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
     })
 })
