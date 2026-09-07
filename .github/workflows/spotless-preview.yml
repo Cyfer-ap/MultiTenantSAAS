@@ -34,11 +34,13 @@ jobs:
       - name: Apply backend formatting
         run: ./mvnw --batch-mode spotless:apply
 
-      - name: Upload formatted Java sources
+      - name: Capture formatting diff
+        shell: bash
+        run: git diff -- src/main/java src/test/java > ../spotless.patch
+
+      - name: Upload formatting diff
         uses: actions/upload-artifact@v4
         with:
-          name: spotless-formatted-java
-          path: |
-            multitenant-saas/src/main/java/
-            multitenant-saas/src/test/java/
+          name: spotless-formatting-diff
+          path: multitenant-saas/../spotless.patch
           retention-days: 1
