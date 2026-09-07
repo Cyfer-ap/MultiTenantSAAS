@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Apply MUI v9 compatibility fixes
+      - name: Harden replay availability
         shell: bash
         run: |
           python - <<'PY'
@@ -40,35 +40,25 @@ jobs:
 
           path = Path('src/pages/OutboundWebhooksPage.tsx')
           text = path.read_text()
-
-          substitutions = [
-              (r'inputProps=\{\{\s*readOnly:\s*true\s*\}\}', "slotProps={{ input: { readOnly: true } }}", 1),
-              (r'<Stack\s+alignItems="center"\s+sx=\{\{\s*p:\s*4\s*\}\}\s*>', "<Stack sx={{ alignItems: 'center', p: 4 }}>", 3),
-              (r'<Stack\s+direction="row"\s+flexWrap="wrap"\s+gap=\{0\.5\}\s*>', "<Stack direction=\"row\" sx={{ flexWrap: 'wrap', gap: 0.5 }}>", 1),
-              (r'<Stack\s+direction="row"\s+justifyContent="flex-end"\s+spacing=\{0\.5\}\s*>', "<Stack direction=\"row\" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>", 1),
-          ]
-
-          for pattern, replacement, expected in substitutions:
-              text, count = re.subn(pattern, replacement, text)
-              if count != expected:
-                  raise SystemExit(
-                      f'Expected {expected} replacement(s) for {pattern!r}, found {count}'
-                  )
-
+          pattern = r'endpointById\.get\(\s*deliveryQuery\.data\.delivery\.endpointId\s*\)\s*\?\.enabled\s*===\s*false'
+          replacement = "endpointById.get(deliveryQuery.data.delivery.endpointId)?.enabled !== true"
+          text, count = re.subn(pattern, replacement, text)
+          if count != 1:
+              raise SystemExit(f'Expected one replay guard replacement, found {count}')
           path.write_text(text)
           PY
 
       - name: Format frontend
         run: npm run format
 
-      - name: Commit page fixes
+      - name: Commit replay guard
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/pages/OutboundWebhooksPage.tsx
           if ! git diff --cached --quiet; then
-            git commit -m "fix: align webhook admin page with MUI v9"
+            git commit -m "fix: disable replay for unavailable webhook endpoints"
             git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
           fi
 
