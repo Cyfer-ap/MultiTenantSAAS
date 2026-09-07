@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { normalizeApiError } from '../../../api/apiError'
 import { authApi } from '../api/authApi'
-import { applyCurrentUser, createAuthSession } from '../session/authSession'
+import { applyCurrentUser } from '../session/authSession'
+import { commitLoginResponse } from '../session/commitLoginResponse'
 import { authStorage } from '../storage/authStorage'
 import type { AuthSession, CurrentUserResponse, LoginInput } from '../types/auth'
 import { AuthContext, type AuthContextValue, type AuthStatus } from './AuthContext'
@@ -98,9 +99,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
                 keepSignedIn,
             })
 
-            commitSession(createAuthSession(response))
+            commitLoginResponse(response)
         },
-        [commitSession],
+        [],
     )
 
     const logout = useCallback(async (): Promise<void> => {
