@@ -1,5 +1,6 @@
 package com.chacha.multitenantsaas.billing.razorpay;
 
+import com.chacha.multitenantsaas.billing.entity.BillingProviderEnvironment;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 public class RazorpayBillingProperties {
 
     private boolean enabled;
+    private BillingProviderEnvironment environment = BillingProviderEnvironment.TEST;
     private boolean webhookEnabled;
     private String webhookSecret = "";
     private String keyId = "";
@@ -24,6 +26,14 @@ public class RazorpayBillingProperties {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public BillingProviderEnvironment getEnvironment() {
+        return environment;
+    }
+
+    public void setEnvironment(BillingProviderEnvironment environment) {
+        this.environment = environment;
     }
 
     public boolean isWebhookEnabled() {
