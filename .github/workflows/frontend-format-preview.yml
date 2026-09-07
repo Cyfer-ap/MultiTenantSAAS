@@ -46,7 +46,6 @@ jobs:
               (r'<Stack\s+alignItems="center"\s+sx=\{\{\s*p:\s*4\s*\}\}\s*>', "<Stack sx={{ alignItems: 'center', p: 4 }}>", 3),
               (r'<Stack\s+direction="row"\s+flexWrap="wrap"\s+gap=\{0\.5\}\s*>', "<Stack direction=\"row\" sx={{ flexWrap: 'wrap', gap: 0.5 }}>", 1),
               (r'<Stack\s+direction="row"\s+justifyContent="flex-end"\s+spacing=\{0\.5\}\s*>', "<Stack direction=\"row\" spacing={0.5} sx={{ justifyContent: 'flex-end' }}>", 1),
-              (r'endpointById\.get\(\s*deliveryQuery\.data\.delivery\.endpointId\s*\)\?\.enabled\s*===\s*false', "endpointById.get(deliveryQuery.data.delivery.endpointId)?.enabled !== true", 1),
           ]
 
           for pattern, replacement, expected in substitutions:
