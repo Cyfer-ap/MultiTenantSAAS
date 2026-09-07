@@ -78,7 +78,10 @@ public class SecurityConfig {
                                         .hasAuthority("SYSTEM_ADMIN")
                                         .requestMatchers(
                                                 HttpMethod.POST,
-                                                "/api/tenants/{tenantId}/auth/login")
+                                                "/api/tenants/{tenantId}/auth/login",
+                                                "/api/tenants/{tenantId}/auth/oidc/start")
+                                        .permitAll()
+                                        .requestMatchers(HttpMethod.GET, "/api/auth/oidc/callback")
                                         .permitAll()
                                         .requestMatchers(HttpMethod.POST, "/api/auth/refresh")
                                         .permitAll()
