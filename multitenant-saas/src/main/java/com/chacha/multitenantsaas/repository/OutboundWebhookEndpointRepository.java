@@ -14,4 +14,6 @@ public interface OutboundWebhookEndpointRepository
 
     Optional<OutboundWebhookEndpoint> findByIdAndTenant_IdAndArchivedAtIsNull(
             UUID id, UUID tenantId);
+
+    Optional<OutboundWebhookEndpoint> findByIdAndTenant_Id(UUID id, UUID tenantId);
 }
