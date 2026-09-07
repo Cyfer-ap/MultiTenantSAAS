@@ -1,9 +1,5 @@
 import type { PageResponse } from '../../../types/api'
-import type {
-    BillingInterval,
-    BillingProvider,
-    TenantSubscriptionStatus,
-} from './subscriptions'
+import type { BillingInterval, BillingProvider, TenantSubscriptionStatus } from './subscriptions'
 
 export type TenantSubscriptionHistoryEventType =
     | 'MIGRATED_CURRENT_STATE'

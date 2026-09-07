@@ -460,7 +460,9 @@ export function SystemSubscriptionsPage() {
 
                         {selectedTenant && noSubscription && (
                             <Paper sx={{ mt: 3, p: 3 }} variant="outlined">
-                                <Typography variant="h6">No current subscription assigned</Typography>
+                                <Typography variant="h6">
+                                    No current subscription assigned
+                                </Typography>
                                 <Typography color="text.secondary" sx={{ mt: 0.5 }}>
                                     {selectedTenant.name} does not have a current subscription. Any
                                     preserved previous lifecycle remains available in history below.

@@ -4,7 +4,8 @@ import { subscriptionHistoryApi } from '../api/subscriptionHistoryApi'
 
 export const subscriptionHistoryQueryKeys = {
     all: ['subscription-history'] as const,
-    tenant: (tenantId: string) => [...subscriptionHistoryQueryKeys.all, 'tenant', tenantId] as const,
+    tenant: (tenantId: string) =>
+        [...subscriptionHistoryQueryKeys.all, 'tenant', tenantId] as const,
     tenantPage: (tenantId: string, page: number, size: number) =>
         [...subscriptionHistoryQueryKeys.tenant(tenantId), page, size] as const,
     systemTenant: (tenantId: string) =>
@@ -22,11 +23,7 @@ export function useTenantSubscriptionHistory(tenantId: string, page = 0, size = 
     })
 }
 
-export function useSystemTenantSubscriptionHistory(
-    tenantId: string | null,
-    page = 0,
-    size = 20,
-) {
+export function useSystemTenantSubscriptionHistory(tenantId: string | null, page = 0, size = 20) {
     const resolvedTenantId = tenantId ?? ''
     return useQuery({
         queryKey: subscriptionHistoryQueryKeys.systemTenantPage(resolvedTenantId, page, size),
