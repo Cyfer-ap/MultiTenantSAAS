@@ -35,7 +35,8 @@ public class OidcAuthorizationService {
         OidcProviderRuntimeSnapshot provider = stateService.loadVerifiedProvider(tenantId);
         OidcProviderMetadata metadata = metadataService.loadAndValidate(provider.issuerUri());
 
-        // Fail before redirecting the browser if the server can no longer decrypt provider credentials.
+        // Fail before redirecting the browser if the server can no longer decrypt provider
+        // credentials.
         secretCipher.decrypt(provider.clientSecretCiphertext());
 
         String state = OidcSecuritySupport.randomBase64Url(secureRandom, RANDOM_BYTES);

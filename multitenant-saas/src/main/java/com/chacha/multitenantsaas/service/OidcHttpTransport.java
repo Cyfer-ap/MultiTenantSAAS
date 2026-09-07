@@ -9,6 +9,7 @@ public interface OidcHttpTransport {
 
     default Map<String, Object> postFormJson(
             URI uri, Map<String, String> form, String basicClientId, String basicClientSecret) {
-        throw new UnsupportedOperationException("OIDC form POST is not supported by this transport");
+        throw new UnsupportedOperationException(
+                "OIDC form POST is not supported by this transport");
     }
 }

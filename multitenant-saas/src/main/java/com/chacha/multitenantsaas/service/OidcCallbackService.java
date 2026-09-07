@@ -45,11 +45,7 @@ public class OidcCallbackService {
                 secretCipher.decryptTransactionSecret(transaction.pkceVerifierCiphertext());
         String idToken =
                 tokenExchangeService.exchange(
-                        metadata,
-                        transaction.clientId(),
-                        clientSecret,
-                        code,
-                        pkceVerifier);
+                        metadata, transaction.clientId(), clientSecret, code, pkceVerifier);
         OidcVerifiedIdentity identity =
                 idTokenValidator.validate(
                         idToken, metadata, transaction.clientId(), transaction.nonceHash());

@@ -59,7 +59,8 @@ public class IdentityProviderSecretCipher {
             packed.put(encrypted);
             return Base64.getEncoder().encodeToString(packed.array());
         } catch (GeneralSecurityException exception) {
-            throw new IdentityFederationUnavailableException("Could not protect " + label, exception);
+            throw new IdentityFederationUnavailableException(
+                    "Could not protect " + label, exception);
         }
     }
 
@@ -83,7 +84,8 @@ public class IdentityProviderSecretCipher {
             cipher.init(Cipher.DECRYPT_MODE, key(), new GCMParameterSpec(TAG_BITS, iv));
             return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
         } catch (IllegalArgumentException | GeneralSecurityException exception) {
-            throw new IdentityFederationUnavailableException("Could not decrypt " + label, exception);
+            throw new IdentityFederationUnavailableException(
+                    "Could not decrypt " + label, exception);
         }
     }
 

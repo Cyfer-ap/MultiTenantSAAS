@@ -26,9 +26,7 @@ import java.util.UUID;
                     columnNames = {"identity_provider_id", "user_id", "issuer_hash"})
         },
         indexes = {
-            @Index(
-                    name = "idx_tenant_federated_identity_user",
-                    columnList = "tenant_id, user_id"),
+            @Index(name = "idx_tenant_federated_identity_user", columnList = "tenant_id, user_id"),
             @Index(
                     name = "idx_tenant_federated_identity_provider",
                     columnList = "identity_provider_id, last_login_at")

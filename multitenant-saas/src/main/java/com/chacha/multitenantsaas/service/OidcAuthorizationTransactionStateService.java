@@ -107,9 +107,7 @@ public class OidcAuthorizationTransactionStateService {
 
     private TenantIdentityProvider requireVerifiedProvider(UUID tenantId) {
         TenantIdentityProvider provider =
-                identityProviderRepository
-                        .findByTenant_Id(tenantId)
-                        .orElseThrow(this::unavailable);
+                identityProviderRepository.findByTenant_Id(tenantId).orElseThrow(this::unavailable);
         if (provider.getTenant().getStatus() != TenantStatus.ACTIVE
                 || provider.getStatus() != TenantIdentityProviderStatus.VERIFIED
                 || provider.getProtocol() != IdentityProviderProtocol.OIDC) {
@@ -144,6 +142,7 @@ public class OidcAuthorizationTransactionStateService {
     }
 
     private AuthenticationFailedException invalidTransaction() {
-        return new AuthenticationFailedException("Invalid or expired OIDC authentication transaction");
+        return new AuthenticationFailedException(
+                "Invalid or expired OIDC authentication transaction");
     }
 }

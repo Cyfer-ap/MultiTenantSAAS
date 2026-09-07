@@ -37,7 +37,8 @@ public class OidcLoginProperties {
         try {
             uri = URI.create(redirectUri.trim());
         } catch (IllegalArgumentException exception) {
-            throw new IllegalStateException("OIDC redirect URI must be a valid absolute URI", exception);
+            throw new IllegalStateException(
+                    "OIDC redirect URI must be a valid absolute URI", exception);
         }
 
         if (uri.getHost() == null || uri.getHost().isBlank()) {
@@ -50,7 +51,8 @@ public class OidcLoginProperties {
 
         boolean https = "https".equalsIgnoreCase(uri.getScheme());
         boolean localHttp =
-                "http".equalsIgnoreCase(uri.getScheme()) && isLoopbackDevelopmentHost(uri.getHost());
+                "http".equalsIgnoreCase(uri.getScheme())
+                        && isLoopbackDevelopmentHost(uri.getHost());
         if (!https && !localHttp) {
             throw new IllegalStateException(
                     "OIDC redirect URI must use HTTPS except for a loopback local-development URI");
