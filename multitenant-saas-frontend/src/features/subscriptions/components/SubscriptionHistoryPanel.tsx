@@ -107,6 +107,7 @@ export function SubscriptionHistoryPanel({
 }: SubscriptionHistoryPanelProps) {
     const totalPages = data?.totalPages ?? 0
     const totalElements = data?.totalElements ?? 0
+    const hasError = Boolean(error)
 
     return (
         <Paper sx={{ p: { xs: 2, md: 3 } }} variant="outlined">
@@ -144,7 +145,7 @@ export function SubscriptionHistoryPanel({
                 </Button>
             </Stack>
 
-            {error && (
+            {hasError && (
                 <Alert severity="error" sx={{ mt: 2 }}>
                     {error instanceof Error
                         ? error.message
@@ -161,7 +162,7 @@ export function SubscriptionHistoryPanel({
                 </Stack>
             )}
 
-            {!loading && !error && data && data.content.length === 0 && (
+            {!loading && !hasError && data && data.content.length === 0 && (
                 <Box sx={{ py: 5, textAlign: 'center' }}>
                     <Typography color="text.secondary">
                         No subscription history has been recorded yet.
@@ -169,7 +170,7 @@ export function SubscriptionHistoryPanel({
                 </Box>
             )}
 
-            {!loading && !error && data && data.content.length > 0 && (
+            {!loading && !hasError && data && data.content.length > 0 && (
                 <>
                     <TableContainer sx={{ mt: 2 }}>
                         <Table aria-label="Subscription history">
