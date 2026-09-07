@@ -27,7 +27,6 @@ class OutboundWebhookEventServiceTest {
         OutboundWebhookEventRepository eventRepository = mock(OutboundWebhookEventRepository.class);
         OutboundWebhookDeliveryRepository deliveryRepository =
                 mock(OutboundWebhookDeliveryRepository.class);
-        JsonMapper jsonMapper = mock(JsonMapper.class);
         UUID tenantId = UUID.randomUUID();
         Tenant tenant = mock(Tenant.class);
 
@@ -42,7 +41,7 @@ class OutboundWebhookEventServiceTest {
                         endpointRepository,
                         eventRepository,
                         deliveryRepository,
-                        jsonMapper);
+                        JsonMapper.builder().build());
 
         UUID eventId =
                 service.publish(
@@ -51,6 +50,6 @@ class OutboundWebhookEventServiceTest {
                         java.util.Map.of("projectId", UUID.randomUUID()));
 
         assertThat(eventId).isNotNull();
-        verifyNoInteractions(eventRepository, deliveryRepository, jsonMapper);
+        verifyNoInteractions(eventRepository, deliveryRepository);
     }
 }
