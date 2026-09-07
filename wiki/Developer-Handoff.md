@@ -2,58 +2,75 @@
 
 Repository: `Cyfer-ap/MultiTenantSAAS`
 Default branch: `main`
-Reviewed state: post-PR #98 (`87319f8`)
-Date: 2026-09-06
+Reviewed state: post-PR #106 (`486f592`)
+Date: 2026-09-07
 
 ## Current phase
 
-**Billing & Payments complete at application level; next product milestone selection**
+**Billing/catalog lifecycle complete at application level; outbound webhooks next**
 
-Delivered through PR #98:
+Delivered through PR #106:
 
 - provider-neutral Stripe/Razorpay billing
 - professional tenant plan/provider checkout UX
 - signed durable provider webhooks
 - webhook-driven subscription synchronization
-- provider-aware cancellation and stale-linkage recovery
-- cross-provider overwrite protection
-- idempotent repair for already-terminal provider subscriptions
-- billing event/subscription views and read-only reconciliation
-- durable usage metering
-- tenant API keys and isolated external API authentication
-- per-plan API-request quotas
-- subscription recovery checkout for read-only workspaces
+- verified provider-aware period-end cancellation and stale-linkage recovery
+- cross-provider overwrite protection and terminal-state repair
+- durable TEST/LIVE provider catalog mappings
+- automatic Stripe Product/Price provisioning and Price version replacement
+- automatic Razorpay Plan provisioning and replacement mappings
+- terminal safe plan retirement with existing paid-period entitlement preserved
+- durable provider-retirement operations/retry
+- immutable purchased-plan snapshots and tenant subscription history
+- tenant/system-admin billing-history UX
+- billing operations visibility/reconciliation
+- durable usage metering, tenant API keys and plan-level API quotas
 
-## Stripe
+## Provider status
 
-Stripe is working in deployed Test Mode. Hosted Checkout completes, signed lifecycle webhooks synchronize local state, and provider-side cancellation was confirmed.
+Stripe is the validated deployed Test Mode path. Razorpay application integration and managed Plan provisioning are implemented, but recurring Test Mode authorization remains externally provider-sandbox blocked.
 
-The final cancellation discrepancy was caused by the Stripe webhook endpoint not subscribing to `customer.subscription.deleted`. Stripe cancelled correctly but local state remained `ACTIVE`. The endpoint is now configured for created/updated/deleted subscription events, and PR #98 handles already-terminal provider state idempotently.
+Do not extend application billing just to work around the Razorpay sandbox.
 
-## Razorpay
+## Plan/provider lifecycle
 
-Razorpay application integration is implemented, but hosted Test Mode recurring authorization remains externally blocked. Attempted sandbox cards fail within Razorpay before recurring authorization. Keep live mode deferred; do not treat this provider limitation as unfinished application billing work.
+Application plans remain separate from provider objects but are linked durably per TEST/LIVE environment.
 
-## Plan/provider boundary
+- `ACTIVE`: purchasable
+- `INACTIVE`: administrative hard-disable
+- `RETIRED`: terminal/no new checkout; valid existing subscriptions remain entitled through their current period and are scheduled not to renew
 
-Application plan creation does not automatically provision Stripe Products/Prices or Razorpay Plans. Provider checkout requires explicit server-side mappings. Automatic provider provisioning is future optional work.
+Stripe economic edits create replacement Prices. Razorpay provider-visible edits create replacement Plans. Historical provider mappings remain retained for existing subscriptions and billing history.
 
 ## Preserve these boundaries
 
 - authentication, tenant isolation, authorization, subscription access and quotas are independent
-- checkout bypasses only lifecycle read-only enforcement and still requires `tenant.update`
+- checkout bypasses only lifecycle read-only enforcement and still requires tenant authorization
 - provider webhooks remain authoritative for normal local lifecycle synchronization
-- verified provider lookup may repair stale terminal local state
-- provider plan/price IDs, API keys and secrets remain server-side
+- verified provider lookup/reconciliation may repair stale terminal local state
+- provider IDs, API keys and secrets remain server-side
+- purchased-plan and subscription-history snapshots are immutable historical records
 - tenant API keys authenticate only `/api/external/**` and never impersonate users
+
+## Database checkpoint
+
+Common Flyway migrations extend through **V36**. Never rewrite an applied migration.
 
 ## Resume sequence
 
-1. consider Billing & Payments closed at application level
-2. start tenant-configurable outbound webhooks as the recommended next product milestone
+1. treat billing/catalog lifecycle as closed at application level
+2. start tenant-configurable outbound webhooks
 3. keep Stripe/Razorpay live readiness separate from feature development
-4. subsequently consider enterprise SSO, explain-access/delegation and deeper operational hardening
+4. then consider enterprise SSO, explain-access/delegation and deeper operational hardening
+
+Recommended webhook sequence:
+
+1. endpoint registration/event subscriptions/signing secrets + SSRF-safe URL validation
+2. durable outbox/delivery engine, HMAC, retry/backoff, leasing and idempotency
+3. project/task/collaboration/membership/subscription event integration + replay
+4. tenant-admin endpoint and delivery-history UX
 
 ## Verification
 
-GitHub Actions remains authoritative where local Docker is unavailable. Require backend, PostgreSQL/Flyway, frontend, repository hygiene, security, container and Qodana checks before merge.
+GitHub Actions remains authoritative where local Docker is unavailable. Require Backend, PostgreSQL/Flyway, Frontend, Repository Hygiene, Security, Container CI and Qodana before merge.
