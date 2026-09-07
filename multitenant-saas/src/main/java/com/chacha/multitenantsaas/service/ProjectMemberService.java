@@ -223,11 +223,7 @@ public class ProjectMemberService {
         ProjectMember membership =
                 new ProjectMember(project, creator, creator, ProjectMemberRole.PROJECT_LEAD);
 
-        ProjectMember savedMembership = projectMemberRepository.save(membership);
-        publish(
-                project.getTenant().getId(),
-                OutboundWebhookEventType.MEMBER_ADDED,
-                mapToResponse(savedMembership));
+        projectMemberRepository.save(membership);
     }
 
     private Project getProjectOrThrow(UUID tenantId, UUID projectId) {
