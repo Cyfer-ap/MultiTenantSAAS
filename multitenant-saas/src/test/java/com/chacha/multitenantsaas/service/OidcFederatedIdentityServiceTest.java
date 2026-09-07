@@ -91,7 +91,8 @@ class OidcFederatedIdentityServiceTest {
 
         verify(appUserRepository, never())
                 .findByTenantIdAndEmailForUpdate(any(UUID.class), any(String.class));
-        verify(federatedIdentityRepository, never()).saveAndFlush(any(TenantFederatedIdentity.class));
+        verify(federatedIdentityRepository, never())
+                .saveAndFlush(any(TenantFederatedIdentity.class));
     }
 
     @Test
@@ -114,8 +115,7 @@ class OidcFederatedIdentityServiceTest {
         UUID resolved =
                 service.resolveUser(
                         transaction,
-                        new OidcVerifiedIdentity(
-                                issuer, "subject-1", " User@Example.com ", true));
+                        new OidcVerifiedIdentity(issuer, "subject-1", " User@Example.com ", true));
 
         assertThat(resolved).isEqualTo(userId);
         verify(federatedIdentityRepository).saveAndFlush(any(TenantFederatedIdentity.class));
@@ -144,18 +144,17 @@ class OidcFederatedIdentityServiceTest {
                                 service.resolveUser(
                                         transaction,
                                         new OidcVerifiedIdentity(
-                                                issuer,
-                                                "subject-2",
-                                                "missing@example.com",
-                                                true)))
+                                                issuer, "subject-2", "missing@example.com", true)))
                 .isInstanceOf(AuthenticationFailedException.class)
                 .hasMessage("OIDC authentication failed");
 
-        verify(federatedIdentityRepository, never()).saveAndFlush(any(TenantFederatedIdentity.class));
+        verify(federatedIdentityRepository, never())
+                .saveAndFlush(any(TenantFederatedIdentity.class));
     }
 
     private void stubCurrentProvider() {
-        when(identityProviderRepository.findByTenant_Id(tenantId)).thenReturn(Optional.of(provider));
+        when(identityProviderRepository.findByTenant_Id(tenantId))
+                .thenReturn(Optional.of(provider));
         when(provider.getTenant()).thenReturn(tenant);
         when(tenant.getStatus()).thenReturn(TenantStatus.ACTIVE);
         when(provider.getStatus()).thenReturn(TenantIdentityProviderStatus.VERIFIED);

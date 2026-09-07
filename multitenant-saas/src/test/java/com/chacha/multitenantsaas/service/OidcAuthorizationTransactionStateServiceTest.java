@@ -64,7 +64,8 @@ class OidcAuthorizationTransactionStateServiceTest {
         when(transactionRepository.findByStateHashForUpdate(OidcSecuritySupport.sha256Hex(state)))
                 .thenReturn(Optional.of(transaction));
         when(transaction.isConsumed()).thenReturn(false);
-        when(transaction.isExpired(org.mockito.ArgumentMatchers.any(Instant.class))).thenReturn(true);
+        when(transaction.isExpired(org.mockito.ArgumentMatchers.any(Instant.class)))
+                .thenReturn(true);
 
         assertThatThrownBy(() -> service.consume(state))
                 .isInstanceOf(AuthenticationFailedException.class)
@@ -82,7 +83,8 @@ class OidcAuthorizationTransactionStateServiceTest {
         when(transactionRepository.findByStateHashForUpdate(OidcSecuritySupport.sha256Hex(state)))
                 .thenReturn(Optional.of(transaction));
         when(transaction.isConsumed()).thenReturn(false);
-        when(transaction.isExpired(org.mockito.ArgumentMatchers.any(Instant.class))).thenReturn(false);
+        when(transaction.isExpired(org.mockito.ArgumentMatchers.any(Instant.class)))
+                .thenReturn(false);
         when(transaction.getTenant()).thenReturn(tenant);
         when(tenant.getStatus()).thenReturn(TenantStatus.ACTIVE);
         when(tenant.getId()).thenReturn(tenantId);
