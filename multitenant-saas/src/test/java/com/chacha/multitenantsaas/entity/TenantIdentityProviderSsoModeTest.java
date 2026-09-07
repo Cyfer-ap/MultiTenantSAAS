@@ -66,8 +66,7 @@ class TenantIdentityProviderSsoModeTest {
     void clientSecretRotationDropsRequiredSsoBackToOptional() {
         enableRequiredSso();
 
-        identityProvider.rotateClientSecret(
-                "new-ciphertext", "****new", actor, now.plusSeconds(3));
+        identityProvider.rotateClientSecret("new-ciphertext", "****new", actor, now.plusSeconds(3));
 
         assertThat(identityProvider.getStatus()).isEqualTo(TenantIdentityProviderStatus.DRAFT);
         assertThat(identityProvider.getSsoMode()).isEqualTo(TenantSsoMode.OPTIONAL);

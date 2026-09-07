@@ -46,7 +46,8 @@ class WorkspaceLoginOptionFactoryTest {
 
         var option = factory.create(user);
 
-        assertThat(option.authenticationMode()).isEqualTo(WorkspaceAuthenticationMode.PASSWORD_ONLY);
+        assertThat(option.authenticationMode())
+                .isEqualTo(WorkspaceAuthenticationMode.PASSWORD_ONLY);
         assertThat(option.identityProviderDisplayName()).isNull();
     }
 

@@ -164,11 +164,13 @@ public class TenantIdentityProvider {
     public void updateSsoMode(TenantSsoMode mode, AppUser actor, Instant now) {
         TenantSsoMode requestedMode = Objects.requireNonNull(mode, "SSO mode must not be null");
         if (status == TenantIdentityProviderStatus.DISABLED) {
-            throw new IllegalStateException("Disabled identity-provider configuration has no SSO policy");
+            throw new IllegalStateException(
+                    "Disabled identity-provider configuration has no SSO policy");
         }
         if (requestedMode == TenantSsoMode.REQUIRED
                 && status != TenantIdentityProviderStatus.VERIFIED) {
-            throw new IllegalStateException("SSO can only be required for a verified identity provider");
+            throw new IllegalStateException(
+                    "SSO can only be required for a verified identity provider");
         }
         ssoMode = requestedMode;
         updatedByUser = actor;

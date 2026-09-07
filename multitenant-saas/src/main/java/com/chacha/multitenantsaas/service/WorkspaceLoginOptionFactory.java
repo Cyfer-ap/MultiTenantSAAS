@@ -16,7 +16,8 @@ public class WorkspaceLoginOptionFactory {
     private final TenantIdentityProviderRepository identityProviderRepository;
 
     @Autowired
-    public WorkspaceLoginOptionFactory(TenantIdentityProviderRepository identityProviderRepository) {
+    public WorkspaceLoginOptionFactory(
+            TenantIdentityProviderRepository identityProviderRepository) {
         this.identityProviderRepository = identityProviderRepository;
     }
 
