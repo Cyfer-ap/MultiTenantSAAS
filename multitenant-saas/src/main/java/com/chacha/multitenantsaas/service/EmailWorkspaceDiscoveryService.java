@@ -8,7 +8,6 @@ import com.chacha.multitenantsaas.dto.WorkspaceDiscoveryVerifyResponse;
 import com.chacha.multitenantsaas.dto.WorkspaceLoginOptionResponse;
 import com.chacha.multitenantsaas.email.EmailMessage;
 import com.chacha.multitenantsaas.email.EmailSender;
-import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.EmailVerificationChallenge;
 import com.chacha.multitenantsaas.entity.TenantStatus;
 import com.chacha.multitenantsaas.entity.TrustedEmailBrowser;
@@ -28,6 +27,7 @@ import java.util.Locale;
 import java.util.UUID;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +45,7 @@ public class EmailWorkspaceDiscoveryService {
     private final EmailSender emailSender;
     private final SecureTokenService secureTokenService;
     private final PublicAuthIdentityRateLimiter publicAuthIdentityRateLimiter;
+    private final WorkspaceLoginOptionFactory workspaceLoginOptionFactory;
     private final long expirationMinutes;
     private final int maxAttempts;
     private final long trustedBrowserDays;
@@ -52,6 +53,7 @@ public class EmailWorkspaceDiscoveryService {
     private final boolean requireLoginGrant;
     private final SecureRandom secureRandom = new SecureRandom();
 
+    @Autowired
     public EmailWorkspaceDiscoveryService(
             AppUserRepository appUserRepository,
             EmailVerificationChallengeRepository challengeRepository,
@@ -59,13 +61,15 @@ public class EmailWorkspaceDiscoveryService {
             EmailSender emailSender,
             SecureTokenService secureTokenService,
             PublicAuthIdentityRateLimiter publicAuthIdentityRateLimiter,
-            EmailVerificationProperties properties) {
+            EmailVerificationProperties properties,
+            WorkspaceLoginOptionFactory workspaceLoginOptionFactory) {
         this.appUserRepository = appUserRepository;
         this.challengeRepository = challengeRepository;
         this.trustedEmailBrowserRepository = trustedEmailBrowserRepository;
         this.emailSender = emailSender;
         this.secureTokenService = secureTokenService;
         this.publicAuthIdentityRateLimiter = publicAuthIdentityRateLimiter;
+        this.workspaceLoginOptionFactory = workspaceLoginOptionFactory;
 
         if (properties.getExpirationMinutes() <= 0L
                 || properties.getMaxAttempts() <= 0
@@ -82,6 +86,25 @@ public class EmailWorkspaceDiscoveryService {
         this.trustedBrowserDays = properties.getTrustedBrowserDays();
         this.verificationSecret = properties.getSecret().getBytes(StandardCharsets.UTF_8);
         this.requireLoginGrant = properties.isRequireLoginGrant();
+    }
+
+    public EmailWorkspaceDiscoveryService(
+            AppUserRepository appUserRepository,
+            EmailVerificationChallengeRepository challengeRepository,
+            TrustedEmailBrowserRepository trustedEmailBrowserRepository,
+            EmailSender emailSender,
+            SecureTokenService secureTokenService,
+            PublicAuthIdentityRateLimiter publicAuthIdentityRateLimiter,
+            EmailVerificationProperties properties) {
+        this(
+                appUserRepository,
+                challengeRepository,
+                trustedEmailBrowserRepository,
+                emailSender,
+                secureTokenService,
+                publicAuthIdentityRateLimiter,
+                properties,
+                new WorkspaceLoginOptionFactory());
     }
 
     @Transactional
@@ -299,18 +322,9 @@ public class EmailWorkspaceDiscoveryService {
         return appUserRepository.findByEmailWithTenant(normalizedEmail).stream()
                 .filter(user -> user.getStatus() == UserStatus.ACTIVE)
                 .filter(user -> user.getTenant().getStatus() == TenantStatus.ACTIVE)
-                .filter(this::hasUsablePassword)
-                .map(
-                        user ->
-                                new WorkspaceLoginOptionResponse(
-                                        user.getTenant().getId(),
-                                        user.getTenant().getName(),
-                                        user.getTenant().getSlug()))
+                .map(workspaceLoginOptionFactory::create)
+                .filter(option -> option != null)
                 .toList();
-    }
-
-    private boolean hasUsablePassword(AppUser user) {
-        return user.getPasswordHash() != null && !user.getPasswordHash().isBlank();
     }
 
     private void sendVerificationEmail(String email, String code) {
