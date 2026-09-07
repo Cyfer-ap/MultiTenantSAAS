@@ -30,10 +30,8 @@ class OutboundWebhookUrlValidatorTest {
 
     @Test
     void rejectsLoopbackAndPrivateDestinations() throws Exception {
-        HostAddressResolver loopback =
-                host -> List.of(InetAddress.getByName("127.0.0.1"));
-        HostAddressResolver privateAddress =
-                host -> List.of(InetAddress.getByName("10.10.10.10"));
+        HostAddressResolver loopback = host -> List.of(InetAddress.getByName("127.0.0.1"));
+        HostAddressResolver privateAddress = host -> List.of(InetAddress.getByName("10.10.10.10"));
 
         assertThatIllegalArgumentException()
                 .isThrownBy(

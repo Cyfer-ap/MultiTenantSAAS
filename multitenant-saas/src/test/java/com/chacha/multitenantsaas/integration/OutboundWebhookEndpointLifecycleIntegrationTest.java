@@ -80,8 +80,7 @@ class OutboundWebhookEndpointLifecycleIntegrationTest {
 
         assertThat(updated.enabled()).isFalse();
         assertThat(updated.url()).isEqualTo("https://8.8.4.4/webhooks/events");
-        assertThat(updated.events())
-                .containsExactly(OutboundWebhookEventType.SUBSCRIPTION_UPDATED);
+        assertThat(updated.events()).containsExactly(OutboundWebhookEventType.SUBSCRIPTION_UPDATED);
 
         var rotated = endpointService.rotateSecret(tenant.getId(), stored.getId(), actor);
         OutboundWebhookEndpoint afterRotation =
@@ -129,8 +128,7 @@ class OutboundWebhookEndpointLifecycleIntegrationTest {
                                                 "Other endpoint",
                                                 "https://8.8.4.4/hooks",
                                                 true,
-                                                Set.of(
-                                                        OutboundWebhookEventType.PROJECT_UPDATED))))
+                                                Set.of(OutboundWebhookEventType.PROJECT_UPDATED))))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessage("Outbound webhook endpoint not found");
     }

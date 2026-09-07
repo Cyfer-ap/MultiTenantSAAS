@@ -51,7 +51,8 @@ public class OutboundWebhookEndpoint {
             joinColumns = @JoinColumn(name = "endpoint_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false, length = 60)
-    private Set<OutboundWebhookEventType> eventTypes = EnumSet.noneOf(OutboundWebhookEventType.class);
+    private Set<OutboundWebhookEventType> eventTypes =
+            EnumSet.noneOf(OutboundWebhookEventType.class);
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by_user_id", nullable = false)

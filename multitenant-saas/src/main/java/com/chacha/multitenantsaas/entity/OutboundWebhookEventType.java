@@ -37,6 +37,9 @@ public enum OutboundWebhookEventType {
         return Arrays.stream(values())
                 .filter(type -> type.wireName.equalsIgnoreCase(value.trim()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Unsupported webhook event type: " + value));
+                .orElseThrow(
+                        () ->
+                                new IllegalArgumentException(
+                                        "Unsupported webhook event type: " + value));
     }
 }

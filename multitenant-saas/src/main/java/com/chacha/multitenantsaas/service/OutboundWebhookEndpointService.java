@@ -136,8 +136,7 @@ public class OutboundWebhookEndpointService {
         String rawSecret = generateSecret();
         Instant now = Instant.now();
 
-        endpoint.rotateSecret(
-                secretCipher.encrypt(rawSecret), secretHint(rawSecret), actor, now);
+        endpoint.rotateSecret(secretCipher.encrypt(rawSecret), secretHint(rawSecret), actor, now);
         endpointRepository.save(endpoint);
         auditLogService.recordSelfSuccess(
                 tenant,
@@ -154,8 +153,7 @@ public class OutboundWebhookEndpointService {
     }
 
     @Transactional
-    public OutboundWebhookEndpointResponse archive(
-            UUID tenantId, UUID endpointId, AppUser actor) {
+    public OutboundWebhookEndpointResponse archive(UUID tenantId, UUID endpointId, AppUser actor) {
         Tenant tenant = requireTenant(tenantId);
         requireTenantActor(tenantId, actor);
         OutboundWebhookEndpoint endpoint =
@@ -229,8 +227,7 @@ public class OutboundWebhookEndpointService {
         return normalized;
     }
 
-    private Set<OutboundWebhookEventType> normalizeEvents(
-            Set<OutboundWebhookEventType> events) {
+    private Set<OutboundWebhookEventType> normalizeEvents(Set<OutboundWebhookEventType> events) {
         if (events == null || events.isEmpty()) {
             throw new IllegalArgumentException(
                     "At least one outbound webhook event must be selected");

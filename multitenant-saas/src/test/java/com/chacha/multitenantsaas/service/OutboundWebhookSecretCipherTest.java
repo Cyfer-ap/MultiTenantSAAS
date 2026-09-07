@@ -12,8 +12,7 @@ class OutboundWebhookSecretCipherTest {
     @Test
     void encryptsAndDecryptsWithoutPersistingPlaintext() {
         OutboundWebhookProperties properties = new OutboundWebhookProperties();
-        properties.setEncryptionKey(
-                "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=");
+        properties.setEncryptionKey("MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=");
         OutboundWebhookSecretCipher cipher = new OutboundWebhookSecretCipher(properties);
 
         String encrypted = cipher.encrypt("mwh_example-secret");
