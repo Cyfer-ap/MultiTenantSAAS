@@ -7,6 +7,7 @@ import com.chacha.multitenantsaas.entity.TenantIdentityProvider;
 import com.chacha.multitenantsaas.entity.TenantIdentityProviderStatus;
 import com.chacha.multitenantsaas.entity.TenantSsoMode;
 import com.chacha.multitenantsaas.repository.TenantIdentityProviderRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,6 +15,7 @@ public class WorkspaceLoginOptionFactory {
 
     private final TenantIdentityProviderRepository identityProviderRepository;
 
+    @Autowired
     public WorkspaceLoginOptionFactory(TenantIdentityProviderRepository identityProviderRepository) {
         this.identityProviderRepository = identityProviderRepository;
     }
