@@ -4,7 +4,7 @@ MultiTenantSAAS is a full-stack multi-tenant SaaS platform with tenant isolation
 
 Version-controlled Wiki source lives under `wiki/`. See [[Wiki-Maintenance]].
 
-Current snapshot: **post-PR #98 (`87319f8`), 2026-09-06**.
+Current snapshot: **post-PR #106 (`486f592`), 2026-09-07**.
 
 ## Current platform state
 
@@ -20,41 +20,38 @@ Implemented capabilities include:
 - provider-neutral billing with Stripe and Razorpay adapters
 - professional plan/provider checkout UX
 - signed durable webhooks and webhook-driven lifecycle synchronization
-- provider-aware cancellation, linkage recovery and stale-terminal-state repair
+- verified provider-aware cancellation, linkage recovery and stale-terminal-state repair
+- durable TEST/LIVE provider catalog mappings
+- automatic Stripe Product/Price provisioning and immutable Price replacement
+- automatic Razorpay Plan provisioning and replacement mappings
+- terminal safe plan retirement with paid-period continuation
+- immutable purchased-plan snapshots and subscription history
+- tenant/system-admin billing-history UX
 - billing operations visibility and read-only reconciliation
 - durable billing usage events
-- tenant API-key lifecycle and authentication under `/api/external/**`
-- plan-level API request quotas
+- tenant API-key lifecycle and plan-level API request quotas
 - PostgreSQL 17, Flyway, Testcontainers, CI, security and container checks
 
-## Billing milestone
+## Billing/catalog milestone
 
-**Billing & Payments is complete at application level.**
+**Billing, cancellation hardening and managed provider catalogs are complete at application level through PR #106.**
 
-Stripe works in deployed Test Mode for hosted subscription Checkout, signed lifecycle webhooks and provider-side cancellation. During final validation, Stripe cancellations succeeded but the application remained locally `ACTIVE` because `customer.subscription.deleted` was missing from the webhook endpoint's enabled events. The endpoint now includes created/updated/deleted subscription events, and PR #98 adds idempotent state repair for already-terminal provider subscriptions.
+Stripe is the validated deployed Test Mode payment path. Razorpay application integration and managed catalog provisioning are implemented, while recurring Test Mode authorization remains provider-sandbox blocked.
 
-Razorpay remains available but recurring Test Mode authorization is provider-sandbox blocked: hosted checkout opens while attempted test cards fail before recurring authorization. This external limitation does not keep the application billing milestone open.
+## Provider catalog lifecycle
 
-## Provider plan boundary
+Application plans and provider objects remain separate but are linked through durable environment-specific mappings.
 
-Application plans and provider billing objects are separate. Creating a system-admin application plan does not automatically provision a Stripe Product/Price or Razorpay Plan. Provider checkout currently requires explicit server-side plan-code mappings.
+- Stripe: managed Product/Price creation, immutable replacement pricing and retirement from new sales.
+- Razorpay: managed Plan creation and replacement mappings; historical provider Plan references remain preserved.
+- `RETIRED`: no new checkout; existing valid subscriptions retain entitlement through the current paid period and are scheduled not to renew.
+- `INACTIVE`: administrative hard-disable.
 
-## Architecture boundary
-
-```text
-authentication
-  -> tenant isolation
-  -> authorization
-  -> subscription access
-  -> resource/API quotas
-  -> domain invariants
-```
-
-Provider plan/price IDs and secrets stay server-side.
+Provider identifiers and secrets stay server-side.
 
 ## Database checkpoint
 
-Portable common migrations extend through **V33**. V28-V33 add billing persistence, provider linkage, usage metering, tenant API keys and plan usage limits.
+Portable common migrations extend through **V36**. V34 adds provider catalog mappings and purchased-plan snapshots, V35 durable retirement operations, and V36 immutable tenant subscription history.
 
 ## Start here
 
@@ -69,4 +66,4 @@ Portable common migrations extend through **V33**. V28-V33 add billing persisten
 
 ## Current next step
 
-Begin the next major product milestone rather than extending billing for provider-sandbox behavior. Recommended: **tenant-configurable outbound webhooks**. Enterprise SSO, authorization delegation/explain-access and deeper operational recovery/load testing follow on the roadmap.
+Begin **tenant-configurable outbound webhooks**. Recommended order: endpoint/signing foundation → durable delivery engine → product event integration/replay → tenant-admin delivery UX. Enterprise SSO follows afterward.
