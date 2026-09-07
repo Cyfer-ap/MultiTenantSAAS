@@ -11,6 +11,7 @@ import com.chacha.multitenantsaas.entity.SubscriptionPlan;
 import com.chacha.multitenantsaas.repository.SubscriptionPlanRepository;
 import java.time.Instant;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -30,6 +31,7 @@ public class StripePlanRetirementProvisioner implements SubscriptionPlanCatalogP
     private final SubscriptionPlanRepository planRepository;
     private final RestClient restClient;
 
+    @Autowired
     public StripePlanRetirementProvisioner(
             StripeBillingProperties properties,
             SubscriptionPlanProviderMappingRepository mappingRepository,
