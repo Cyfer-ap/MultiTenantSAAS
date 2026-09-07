@@ -89,6 +89,10 @@ export function getDefaultAuthorizedPath(context: CurrentAuthorizationContext): 
         return '/authorization'
     }
 
+    if (hasTenantPermission(context, authorizationPermissionCodes.TENANT_UPDATE)) {
+        return '/integrations'
+    }
+
     if (hasTenantPermission(context, authorizationPermissionCodes.SUBSCRIPTION_READ)) {
         return '/subscription'
     }
