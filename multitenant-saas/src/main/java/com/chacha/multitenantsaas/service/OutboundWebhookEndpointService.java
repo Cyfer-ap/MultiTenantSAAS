@@ -232,7 +232,7 @@ public class OutboundWebhookEndpointService {
             throw new IllegalArgumentException(
                     "At least one outbound webhook event must be selected");
         }
-        if (events.contains(null)) {
+        if (events.stream().anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("Webhook event selection must not contain null");
         }
         return EnumSet.copyOf(events);
