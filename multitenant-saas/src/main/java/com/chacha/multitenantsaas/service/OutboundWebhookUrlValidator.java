@@ -17,6 +17,10 @@ public class OutboundWebhookUrlValidator {
         this.hostAddressResolver = hostAddressResolver;
     }
 
+    /**
+     * Validates the stored destination. The delivery engine must call this again immediately before
+     * every outbound request so DNS rebinding cannot bypass the address policy after configuration.
+     */
     public String validateAndNormalize(String value) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("Webhook URL must not be blank");
@@ -41,7 +45,7 @@ public class OutboundWebhookUrlValidator {
         if (uri.getFragment() != null) {
             throw new IllegalArgumentException("Webhook URL must not include a fragment");
         }
-        if (uri.getPort() == 0 || uri.getPort() < -1) {
+        if (uri.getPort() == 0 || uri.getPort() < -1 || uri.getPort() > 65535) {
             throw new IllegalArgumentException("Webhook URL contains an invalid port");
         }
 
