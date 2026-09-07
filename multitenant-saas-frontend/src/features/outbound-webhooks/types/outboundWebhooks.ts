@@ -14,12 +14,7 @@ export type OutboundWebhookEventType =
     | 'subscription.updated'
     | 'subscription.cancelled'
 
-export type OutboundWebhookDeliveryStatus =
-    | 'PENDING'
-    | 'PROCESSING'
-    | 'RETRY'
-    | 'SENT'
-    | 'FAILED'
+export type OutboundWebhookDeliveryStatus = 'PENDING' | 'PROCESSING' | 'RETRY' | 'SENT' | 'FAILED'
 
 export type OutboundWebhookDeliveryAttemptOutcome = 'PROCESSING' | 'SUCCESS' | 'FAILURE'
 

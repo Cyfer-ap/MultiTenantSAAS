@@ -271,7 +271,9 @@ export function AppRoutes() {
                         <Route
                             element={
                                 <TenantPermissionProtectedRoute
-                                    requiredPermissions={[authorizationPermissionCodes.TENANT_UPDATE]}
+                                    requiredPermissions={[
+                                        authorizationPermissionCodes.TENANT_UPDATE,
+                                    ]}
                                 />
                             }
                         >

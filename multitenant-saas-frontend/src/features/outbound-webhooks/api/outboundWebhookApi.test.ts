@@ -143,7 +143,9 @@ describe('outboundWebhookApi', () => {
         await expect(outboundWebhookApi.rotateSecret('tenant-1', endpoint.id)).resolves.toEqual(
             rotated,
         )
-        await expect(outboundWebhookApi.replayDelivery('tenant-1', delivery.id)).resolves.toMatchObject({
+        await expect(
+            outboundWebhookApi.replayDelivery('tenant-1', delivery.id),
+        ).resolves.toMatchObject({
             id: delivery.id,
             status: 'PENDING',
             replayCount: 1,

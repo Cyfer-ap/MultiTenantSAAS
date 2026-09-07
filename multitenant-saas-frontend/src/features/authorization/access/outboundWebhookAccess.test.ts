@@ -22,8 +22,8 @@ describe('outbound webhook access', () => {
             permissionCodes: [authorizationPermissionCodes.SUBSCRIPTION_READ],
         })
 
-        expect(getAvailableWorkspaceNavigationItems(context).map((item) => item.label)).not.toContain(
-            'Integrations',
-        )
+        expect(
+            getAvailableWorkspaceNavigationItems(context).map((item) => item.label),
+        ).not.toContain('Integrations')
     })
 })

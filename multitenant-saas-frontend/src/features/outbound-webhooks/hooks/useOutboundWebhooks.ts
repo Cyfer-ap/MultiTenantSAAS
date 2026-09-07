@@ -9,7 +9,8 @@ import type {
 export const outboundWebhookQueryKeys = {
     all: ['outbound-webhooks'] as const,
     tenant: (tenantId: string) => [...outboundWebhookQueryKeys.all, tenantId] as const,
-    endpoints: (tenantId: string) => [...outboundWebhookQueryKeys.tenant(tenantId), 'endpoints'] as const,
+    endpoints: (tenantId: string) =>
+        [...outboundWebhookQueryKeys.tenant(tenantId), 'endpoints'] as const,
     eventCatalog: (tenantId: string) =>
         [...outboundWebhookQueryKeys.tenant(tenantId), 'event-catalog'] as const,
     deliveriesRoot: (tenantId: string) =>
@@ -74,8 +75,13 @@ export function useUpdateOutboundWebhookEndpoint(tenantId: string) {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: ({ endpointId, input }: { endpointId: string; input: OutboundWebhookEndpointInput }) =>
-            outboundWebhookApi.updateEndpoint(tenantId, endpointId, input),
+        mutationFn: ({
+            endpointId,
+            input,
+        }: {
+            endpointId: string
+            input: OutboundWebhookEndpointInput
+        }) => outboundWebhookApi.updateEndpoint(tenantId, endpointId, input),
         onSuccess: async () => {
             await Promise.all([
                 queryClient.invalidateQueries({
@@ -106,7 +112,8 @@ export function useArchiveOutboundWebhookEndpoint(tenantId: string) {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: (endpointId: string) => outboundWebhookApi.archiveEndpoint(tenantId, endpointId),
+        mutationFn: (endpointId: string) =>
+            outboundWebhookApi.archiveEndpoint(tenantId, endpointId),
         onSuccess: async () => {
             await Promise.all([
                 queryClient.invalidateQueries({

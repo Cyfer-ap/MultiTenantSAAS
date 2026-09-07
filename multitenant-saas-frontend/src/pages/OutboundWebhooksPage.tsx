@@ -156,7 +156,9 @@ function EndpointDialog({
 
     return (
         <Dialog fullWidth maxWidth="sm" onClose={saving ? undefined : onClose} open={open}>
-            <DialogTitle>{endpoint ? 'Edit webhook endpoint' : 'Create webhook endpoint'}</DialogTitle>
+            <DialogTitle>
+                {endpoint ? 'Edit webhook endpoint' : 'Create webhook endpoint'}
+            </DialogTitle>
             <DialogContent>
                 <Stack spacing={2.25} sx={{ pt: 1 }}>
                     <TextField
@@ -221,7 +223,13 @@ function EndpointDialog({
                     }
                     variant="contained"
                 >
-                    {saving ? <CircularProgress color="inherit" size={20} /> : endpoint ? 'Save' : 'Create'}
+                    {saving ? (
+                        <CircularProgress color="inherit" size={20} />
+                    ) : endpoint ? (
+                        'Save'
+                    ) : (
+                        'Create'
+                    )}
                 </Button>
             </DialogActions>
         </Dialog>
@@ -254,7 +262,8 @@ function SecretDialog({ open, secret, title, onClose }: SecretDialogProps) {
             <DialogTitle>{title}</DialogTitle>
             <DialogContent>
                 <Alert severity="warning" sx={{ mb: 2 }}>
-                    Store this signing secret now. It will not be shown again after this dialog is closed.
+                    Store this signing secret now. It will not be shown again after this dialog is
+                    closed.
                 </Alert>
                 <TextField
                     fullWidth
@@ -428,7 +437,10 @@ export function OutboundWebhooksPage() {
 
             {mutationError && (
                 <Alert severity="error" sx={{ mt: 2 }}>
-                    {getErrorMessage(mutationError, 'The webhook operation could not be completed.')}
+                    {getErrorMessage(
+                        mutationError,
+                        'The webhook operation could not be completed.',
+                    )}
                 </Alert>
             )}
 
@@ -449,7 +461,10 @@ export function OutboundWebhooksPage() {
 
                 {endpointsQuery.isError && (
                     <Alert severity="error" sx={{ m: 2 }}>
-                        {getErrorMessage(endpointsQuery.error, 'Webhook endpoints could not be loaded.')}
+                        {getErrorMessage(
+                            endpointsQuery.error,
+                            'Webhook endpoints could not be loaded.',
+                        )}
                     </Alert>
                 )}
 
@@ -496,13 +511,19 @@ export function OutboundWebhooksPage() {
                                             />
                                         </TableCell>
                                         <TableCell>
-                                            <Typography variant="body2">{endpoint.secretHint}</Typography>
+                                            <Typography variant="body2">
+                                                {endpoint.secretHint}
+                                            </Typography>
                                             <Typography color="text.secondary" variant="caption">
                                                 Version {endpoint.secretVersion}
                                             </Typography>
                                         </TableCell>
                                         <TableCell align="right">
-                                            <Stack direction="row" justifyContent="flex-end" spacing={0.5}>
+                                            <Stack
+                                                direction="row"
+                                                justifyContent="flex-end"
+                                                spacing={0.5}
+                                            >
                                                 <Button
                                                     onClick={() => openEditDialog(endpoint)}
                                                     size="small"
@@ -554,7 +575,8 @@ export function OutboundWebhooksPage() {
                     <Box>
                         <Typography variant="h6">Delivery history</Typography>
                         <Typography color="text.secondary" variant="body2">
-                            Inspect attempts, failures, stored payloads, and replay terminal deliveries.
+                            Inspect attempts, failures, stored payloads, and replay terminal
+                            deliveries.
                         </Typography>
                     </Box>
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
@@ -583,7 +605,9 @@ export function OutboundWebhooksPage() {
                                 label="Status"
                                 labelId="webhook-status-filter-label"
                                 onChange={(event) => {
-                                    setStatusFilter(event.target.value as 'ALL' | OutboundWebhookDeliveryStatus)
+                                    setStatusFilter(
+                                        event.target.value as 'ALL' | OutboundWebhookDeliveryStatus,
+                                    )
                                     setPage(0)
                                 }}
                                 value={statusFilter}
@@ -608,7 +632,10 @@ export function OutboundWebhooksPage() {
 
                 {deliveriesQuery.isError && (
                     <Alert severity="error" sx={{ m: 2 }}>
-                        {getErrorMessage(deliveriesQuery.error, 'Webhook deliveries could not be loaded.')}
+                        {getErrorMessage(
+                            deliveriesQuery.error,
+                            'Webhook deliveries could not be loaded.',
+                        )}
                     </Alert>
                 )}
 
@@ -646,10 +673,14 @@ export function OutboundWebhooksPage() {
                                                     : ''}
                                             </TableCell>
                                             <TableCell>{delivery.lastHttpStatus ?? '—'}</TableCell>
-                                            <TableCell>{formatDateTime(delivery.createdAt)}</TableCell>
+                                            <TableCell>
+                                                {formatDateTime(delivery.createdAt)}
+                                            </TableCell>
                                             <TableCell align="right">
                                                 <Button
-                                                    onClick={() => setSelectedDeliveryId(delivery.id)}
+                                                    onClick={() =>
+                                                        setSelectedDeliveryId(delivery.id)
+                                                    }
                                                     size="small"
                                                 >
                                                     View
@@ -664,7 +695,8 @@ export function OutboundWebhooksPage() {
                             <Box sx={{ p: 4, textAlign: 'center' }}>
                                 <Typography variant="h6">No deliveries found</Typography>
                                 <Typography color="text.secondary" variant="body2">
-                                    Deliveries will appear here after subscribed tenant events occur.
+                                    Deliveries will appear here after subscribed tenant events
+                                    occur.
                                 </Typography>
                             </Box>
                         )}
@@ -713,7 +745,10 @@ export function OutboundWebhooksPage() {
                     </Typography>
                 </DialogContent>
                 <DialogActions>
-                    <Button disabled={archiveEndpoint.isPending} onClick={() => setArchiveTarget(null)}>
+                    <Button
+                        disabled={archiveEndpoint.isPending}
+                        onClick={() => setArchiveTarget(null)}
+                    >
                         Cancel
                     </Button>
                     <Button
@@ -742,7 +777,10 @@ export function OutboundWebhooksPage() {
                     )}
                     {deliveryQuery.isError && (
                         <Alert severity="error">
-                            {getErrorMessage(deliveryQuery.error, 'Delivery details could not be loaded.')}
+                            {getErrorMessage(
+                                deliveryQuery.error,
+                                'Delivery details could not be loaded.',
+                            )}
                         </Alert>
                     )}
                     {deliveryQuery.data && (
@@ -752,13 +790,17 @@ export function OutboundWebhooksPage() {
                                     <Typography color="text.secondary" variant="caption">
                                         Event
                                     </Typography>
-                                    <Typography>{eventLabel(deliveryQuery.data.delivery.eventType)}</Typography>
+                                    <Typography>
+                                        {eventLabel(deliveryQuery.data.delivery.eventType)}
+                                    </Typography>
                                 </Box>
                                 <Box sx={{ flex: 1 }}>
                                     <Typography color="text.secondary" variant="caption">
                                         Endpoint
                                     </Typography>
-                                    <Typography>{deliveryQuery.data.delivery.endpointName}</Typography>
+                                    <Typography>
+                                        {deliveryQuery.data.delivery.endpointName}
+                                    </Typography>
                                 </Box>
                                 <Box>
                                     <Typography color="text.secondary" variant="caption">
@@ -775,7 +817,9 @@ export function OutboundWebhooksPage() {
                             </Stack>
 
                             {deliveryQuery.data.delivery.lastError && (
-                                <Alert severity="error">{deliveryQuery.data.delivery.lastError}</Alert>
+                                <Alert severity="error">
+                                    {deliveryQuery.data.delivery.lastError}
+                                </Alert>
                             )}
 
                             <Box>
@@ -823,8 +867,12 @@ export function OutboundWebhooksPage() {
                                                     <TableCell>{attempt.replayNumber}</TableCell>
                                                     <TableCell>{attempt.attemptNumber}</TableCell>
                                                     <TableCell>{attempt.outcome}</TableCell>
-                                                    <TableCell>{attempt.httpStatus ?? '—'}</TableCell>
-                                                    <TableCell>{formatDateTime(attempt.startedAt)}</TableCell>
+                                                    <TableCell>
+                                                        {attempt.httpStatus ?? '—'}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {formatDateTime(attempt.startedAt)}
+                                                    </TableCell>
                                                     <TableCell>{attempt.error ?? '—'}</TableCell>
                                                 </TableRow>
                                             ))}
@@ -832,7 +880,11 @@ export function OutboundWebhooksPage() {
                                     </Table>
                                 </TableContainer>
                                 {deliveryQuery.data.attempts.length === 0 && (
-                                    <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
+                                    <Typography
+                                        color="text.secondary"
+                                        sx={{ mt: 1 }}
+                                        variant="body2"
+                                    >
                                         No delivery attempt has been recorded yet.
                                     </Typography>
                                 )}
@@ -847,7 +899,8 @@ export function OutboundWebhooksPage() {
                             <Button
                                 disabled={
                                     replayDelivery.isPending ||
-                                    endpointById.get(deliveryQuery.data.delivery.endpointId)?.enabled === false
+                                    endpointById.get(deliveryQuery.data.delivery.endpointId)
+                                        ?.enabled === false
                                 }
                                 onClick={() => replaySelectedDelivery(deliveryQuery.data.delivery)}
                                 startIcon={<ReplayRoundedIcon />}
