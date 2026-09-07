@@ -6,6 +6,7 @@ import {
     Button,
     Checkbox,
     Container,
+    Divider,
     FormControlLabel,
     Paper,
     Stack,
@@ -18,11 +19,11 @@ import { useLocation, useNavigate } from 'react-router'
 import { normalizeApiError } from '../../../api/apiError'
 import { authApi } from '../api/authApi'
 import { useAuth } from '../hooks/useAuth'
-import type { WorkspaceLoginOption } from '../types/auth'
+import type { WorkspaceAuthenticationMode, WorkspaceLoginOption } from '../types/auth'
 
 const LEGACY_TRUSTED_BROWSER_TOKEN_KEY = 'multitenant-saas.trusted-email-browser'
 
-type LoginStep = 'email' | 'code' | 'workspace' | 'password'
+type LoginStep = 'email' | 'code' | 'workspace' | 'authentication'
 
 interface LoginRouteState {
     from?: unknown
@@ -51,6 +52,32 @@ function resolveRedirectPath(state: unknown): string {
 
 function isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+function supportsPassword(mode: WorkspaceAuthenticationMode): boolean {
+    return mode === 'PASSWORD_ONLY' || mode === 'PASSWORD_OR_SSO'
+}
+
+function supportsSso(mode: WorkspaceAuthenticationMode): boolean {
+    return mode !== 'PASSWORD_ONLY'
+}
+
+function authenticationDescription(workspace: WorkspaceLoginOption): string {
+    switch (workspace.authenticationMode) {
+        case 'PASSWORD_ONLY':
+            return 'Password'
+        case 'PASSWORD_OR_SSO':
+            return 'Password or corporate SSO'
+        case 'SSO_ONLY':
+            return 'Corporate SSO'
+        case 'SSO_REQUIRED':
+            return 'Corporate SSO required'
+    }
+}
+
+function ssoButtonLabel(workspace: WorkspaceLoginOption): string {
+    const providerName = workspace.identityProviderDisplayName?.trim()
+    return providerName ? `Continue with ${providerName}` : 'Continue with Single sign-on'
 }
 
 export function LoginPage() {
@@ -84,6 +111,13 @@ export function LoginPage() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [infoMessage, setInfoMessage] = useState<string | null>(null)
 
+    const selectWorkspace = (workspace: WorkspaceLoginOption): void => {
+        setSelectedWorkspace(workspace)
+        setPassword('')
+        setErrorMessage(null)
+        setStep('authentication')
+    }
+
     const moveToWorkspaces = (
         availableWorkspaces: WorkspaceLoginOption[],
         grantId: string | null,
@@ -106,8 +140,7 @@ export function LoginPage() {
         setWorkspaceGrantId(grantId)
 
         if (availableWorkspaces.length === 1) {
-            setSelectedWorkspace(availableWorkspaces[0])
-            setStep('password')
+            selectWorkspace(availableWorkspaces[0])
             return
         }
 
@@ -188,11 +221,43 @@ export function LoginPage() {
         }
     }
 
+    const startSso = async (): Promise<void> => {
+        setErrorMessage(null)
+
+        if (!selectedWorkspace) {
+            setStep('workspace')
+            return
+        }
+
+        if (!supportsSso(selectedWorkspace.authenticationMode)) {
+            setErrorMessage('Single sign-on is not available for this workspace.')
+            return
+        }
+
+        setBusy(true)
+
+        try {
+            const response = await authApi.startOidcLogin(selectedWorkspace.tenantId, {
+                keepSignedIn,
+            })
+            window.location.assign(response.authorizationUrl)
+        } catch (error: unknown) {
+            setErrorMessage(normalizeApiError(error).message)
+        } finally {
+            setBusy(false)
+        }
+    }
+
     const submitPassword = async (): Promise<void> => {
         setErrorMessage(null)
 
         if (!selectedWorkspace) {
             setStep('workspace')
+            return
+        }
+
+        if (!supportsPassword(selectedWorkspace.authenticationMode)) {
+            setErrorMessage('Password sign-in is not available for this workspace.')
             return
         }
 
@@ -282,7 +347,7 @@ export function LoginPage() {
                                 {step === 'email' && 'Start with your work email'}
                                 {step === 'code' && 'Verify your email address'}
                                 {step === 'workspace' && 'Choose a workspace'}
-                                {step === 'password' &&
+                                {step === 'authentication' &&
                                     `Sign in to ${selectedWorkspace?.name ?? 'your workspace'}`}
                             </Typography>
                         </Box>
@@ -446,13 +511,23 @@ export function LoginPage() {
                                             variant="outlined"
                                             disabled={busy}
                                             onClick={() => {
-                                                setSelectedWorkspace(workspace)
-                                                setPassword('')
-                                                setStep('password')
+                                                selectWorkspace(workspace)
                                             }}
                                             sx={{ justifyContent: 'flex-start', py: 1.5 }}
                                         >
-                                            {workspace.name}
+                                            <Box sx={{ textAlign: 'left' }}>
+                                                <Typography component="span" display="block">
+                                                    {workspace.name}
+                                                </Typography>
+                                                <Typography
+                                                    component="span"
+                                                    display="block"
+                                                    variant="caption"
+                                                    sx={{ color: 'text.secondary' }}
+                                                >
+                                                    {authenticationDescription(workspace)}
+                                                </Typography>
+                                            </Box>
                                         </Button>
                                     ))}
 
@@ -462,32 +537,15 @@ export function LoginPage() {
                                 </>
                             )}
 
-                            {step === 'password' && selectedWorkspace && (
+                            {step === 'authentication' && selectedWorkspace && (
                                 <>
                                     <Alert severity="info">
                                         {email}
                                         <br />
                                         Workspace: {selectedWorkspace.name}
+                                        <br />
+                                        Sign-in method: {authenticationDescription(selectedWorkspace)}
                                     </Alert>
-
-                                    <TextField
-                                        autoFocus
-                                        fullWidth
-                                        label="Password"
-                                        type="password"
-                                        autoComplete="current-password"
-                                        value={password}
-                                        disabled={busy}
-                                        onChange={(event) => {
-                                            setPassword(event.target.value)
-                                        }}
-                                        onKeyDown={(event) => {
-                                            if (event.key === 'Enter') {
-                                                event.preventDefault()
-                                                void submitPassword()
-                                            }
-                                        }}
-                                    />
 
                                     <FormControlLabel
                                         control={
@@ -502,17 +560,65 @@ export function LoginPage() {
                                         label="Keep me signed in"
                                     />
 
-                                    <Button
-                                        fullWidth
-                                        variant="contained"
-                                        size="large"
-                                        disabled={busy}
-                                        onClick={() => {
-                                            void submitPassword()
-                                        }}
-                                    >
-                                        {busy ? 'Signing in...' : 'Sign in'}
-                                    </Button>
+                                    {supportsSso(selectedWorkspace.authenticationMode) && (
+                                        <Button
+                                            fullWidth
+                                            variant="contained"
+                                            size="large"
+                                            disabled={busy}
+                                            onClick={() => {
+                                                void startSso()
+                                            }}
+                                        >
+                                            {busy
+                                                ? 'Redirecting...'
+                                                : ssoButtonLabel(selectedWorkspace)}
+                                        </Button>
+                                    )}
+
+                                    {selectedWorkspace.authenticationMode === 'PASSWORD_OR_SSO' && (
+                                        <Divider>or</Divider>
+                                    )}
+
+                                    {supportsPassword(selectedWorkspace.authenticationMode) && (
+                                        <>
+                                            <TextField
+                                                autoFocus
+                                                fullWidth
+                                                label="Password"
+                                                type="password"
+                                                autoComplete="current-password"
+                                                value={password}
+                                                disabled={busy}
+                                                onChange={(event) => {
+                                                    setPassword(event.target.value)
+                                                }}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === 'Enter') {
+                                                        event.preventDefault()
+                                                        void submitPassword()
+                                                    }
+                                                }}
+                                            />
+
+                                            <Button
+                                                fullWidth
+                                                variant={
+                                                    selectedWorkspace.authenticationMode ===
+                                                    'PASSWORD_ONLY'
+                                                        ? 'contained'
+                                                        : 'outlined'
+                                                }
+                                                size="large"
+                                                disabled={busy}
+                                                onClick={() => {
+                                                    void submitPassword()
+                                                }}
+                                            >
+                                                {busy ? 'Signing in...' : 'Sign in with password'}
+                                            </Button>
+                                        </>
+                                    )}
 
                                     {workspaces.length > 1 && (
                                         <Button
