@@ -64,10 +64,9 @@ public interface OutboundWebhookDeliveryRepository
     Page<OutboundWebhookDelivery> findAllByTenant_IdAndStatusOrderByCreatedAtDesc(
             UUID tenantId, OutboundWebhookDeliveryStatus status, Pageable pageable);
 
-    Page<OutboundWebhookDelivery>
-            findAllByTenant_IdAndEndpoint_IdAndStatusOrderByCreatedAtDesc(
-                    UUID tenantId,
-                    UUID endpointId,
-                    OutboundWebhookDeliveryStatus status,
-                    Pageable pageable);
+    Page<OutboundWebhookDelivery> findAllByTenant_IdAndEndpoint_IdAndStatusOrderByCreatedAtDesc(
+            UUID tenantId,
+            UUID endpointId,
+            OutboundWebhookDeliveryStatus status,
+            Pageable pageable);
 }

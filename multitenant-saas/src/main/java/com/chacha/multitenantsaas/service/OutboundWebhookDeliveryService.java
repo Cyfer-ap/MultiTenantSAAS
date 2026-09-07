@@ -128,8 +128,7 @@ public class OutboundWebhookDeliveryService {
         return true;
     }
 
-    private void markAttemptSuccess(
-            UUID deliveryId, UUID leaseToken, Instant now, int httpStatus) {
+    private void markAttemptSuccess(UUID deliveryId, UUID leaseToken, Instant now, int httpStatus) {
         if (attemptRepository == null) {
             return;
         }
@@ -139,11 +138,7 @@ public class OutboundWebhookDeliveryService {
     }
 
     private void markAttemptFailure(
-            UUID deliveryId,
-            UUID leaseToken,
-            Instant now,
-            Integer httpStatus,
-            String error) {
+            UUID deliveryId, UUID leaseToken, Instant now, Integer httpStatus, String error) {
         if (attemptRepository == null) {
             return;
         }

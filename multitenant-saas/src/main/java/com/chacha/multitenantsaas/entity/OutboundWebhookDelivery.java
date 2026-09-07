@@ -151,7 +151,8 @@ public class OutboundWebhookDelivery {
     public void replay(Instant now) {
         if (status != OutboundWebhookDeliveryStatus.SENT
                 && status != OutboundWebhookDeliveryStatus.FAILED) {
-            throw new IllegalArgumentException("Only sent or failed webhook deliveries can be replayed");
+            throw new IllegalArgumentException(
+                    "Only sent or failed webhook deliveries can be replayed");
         }
         status = OutboundWebhookDeliveryStatus.PENDING;
         attemptCount = 0;

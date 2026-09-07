@@ -65,7 +65,8 @@ public class OutboundWebhookDeliveryManagementService {
                     deliveryRepository.findAllByTenant_IdAndStatusOrderByCreatedAtDesc(
                             tenantId, status, pageable);
         } else {
-            deliveries = deliveryRepository.findAllByTenant_IdOrderByCreatedAtDesc(tenantId, pageable);
+            deliveries =
+                    deliveryRepository.findAllByTenant_IdOrderByCreatedAtDesc(tenantId, pageable);
         }
 
         return new PageResponse<>(
@@ -85,16 +86,13 @@ public class OutboundWebhookDeliveryManagementService {
         return new OutboundWebhookDeliveryDetailResponse(
                 mapDelivery(delivery),
                 delivery.getEvent().getPayloadJson(),
-                attemptRepository
-                        .findAllByDelivery_IdOrderByStartedAtAscIdAsc(deliveryId)
-                        .stream()
+                attemptRepository.findAllByDelivery_IdOrderByStartedAtAscIdAsc(deliveryId).stream()
                         .map(this::mapAttempt)
                         .toList());
     }
 
     @Transactional
-    public OutboundWebhookDeliveryResponse replay(
-            UUID tenantId, UUID deliveryId, AppUser actor) {
+    public OutboundWebhookDeliveryResponse replay(UUID tenantId, UUID deliveryId, AppUser actor) {
         requireTenantActor(tenantId, actor);
         OutboundWebhookDelivery delivery =
                 deliveryRepository
@@ -108,7 +106,8 @@ public class OutboundWebhookDeliveryManagementService {
             throw new IllegalArgumentException("Archived webhook endpoints cannot be replayed");
         }
         if (!endpoint.isEnabled()) {
-            throw new IllegalArgumentException("Enable the webhook endpoint before replaying delivery");
+            throw new IllegalArgumentException(
+                    "Enable the webhook endpoint before replaying delivery");
         }
 
         delivery.replay(Instant.now());
