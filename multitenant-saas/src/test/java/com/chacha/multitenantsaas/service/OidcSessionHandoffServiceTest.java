@@ -53,7 +53,8 @@ class OidcSessionHandoffServiceTest {
 
         OidcSessionHandoffService.IssuedHandoff issued = service.issue(tenantId, userId, true);
 
-        ArgumentCaptor<OidcSessionHandoff> captor = ArgumentCaptor.forClass(OidcSessionHandoff.class);
+        ArgumentCaptor<OidcSessionHandoff> captor =
+                ArgumentCaptor.forClass(OidcSessionHandoff.class);
         verify(handoffRepository).save(captor.capture());
         OidcSessionHandoff stored = captor.getValue();
 

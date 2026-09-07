@@ -49,13 +49,13 @@ class OidcAuthenticationControllerTest {
                         new OidcSessionHandoffService.IssuedHandoff(
                                 "opaque-handoff", Instant.now().plusSeconds(60)));
 
-        ResponseEntity<Void> response =
-                controller.callback("state-value", "provider-code", null);
+        ResponseEntity<Void> response = controller.callback("state-value", "provider-code", null);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SEE_OTHER);
         URI location = response.getHeaders().getLocation();
         assertThat(location)
-                .isEqualTo(URI.create("http://localhost:8080/auth/oidc/complete?code=opaque-handoff"));
+                .isEqualTo(
+                        URI.create("http://localhost:8080/auth/oidc/complete?code=opaque-handoff"));
         assertThat(location.toString())
                 .doesNotContain("accessToken", "refreshToken", "csrfToken", "Bearer");
     }

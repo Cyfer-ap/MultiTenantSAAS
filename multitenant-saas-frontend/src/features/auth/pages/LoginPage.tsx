@@ -544,7 +544,8 @@ export function LoginPage() {
                                         <br />
                                         Workspace: {selectedWorkspace.name}
                                         <br />
-                                        Sign-in method: {authenticationDescription(selectedWorkspace)}
+                                        Sign-in method:{' '}
+                                        {authenticationDescription(selectedWorkspace)}
                                     </Alert>
 
                                     <FormControlLabel

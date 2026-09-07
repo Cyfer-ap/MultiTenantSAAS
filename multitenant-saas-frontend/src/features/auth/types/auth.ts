@@ -3,10 +3,7 @@ export type TenantRole = 'TENANT_ADMIN' | 'TENANT_MANAGER' | 'TENANT_USER'
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 
 export type WorkspaceAuthenticationMode =
-    | 'PASSWORD_ONLY'
-    | 'PASSWORD_OR_SSO'
-    | 'SSO_ONLY'
-    | 'SSO_REQUIRED'
+    'PASSWORD_ONLY' | 'PASSWORD_OR_SSO' | 'SSO_ONLY' | 'SSO_REQUIRED'
 
 export interface LoginRequest {
     email: string

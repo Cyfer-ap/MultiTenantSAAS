@@ -46,7 +46,9 @@ export function OidcCompletePage() {
         }
 
         if (!code) {
-            setErrorMessage('The single sign-on session is missing or invalid. Please sign in again.')
+            setErrorMessage(
+                'The single sign-on session is missing or invalid. Please sign in again.',
+            )
             setBusy(false)
             return
         }

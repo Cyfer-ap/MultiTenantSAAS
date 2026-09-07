@@ -143,7 +143,9 @@ describe('LoginPage', () => {
             await screen.findByRole('button', { name: /continue with acme identity/i }),
         ).toBeInTheDocument()
         expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument()
-        expect(screen.queryByRole('button', { name: /sign in with password/i })).not.toBeInTheDocument()
+        expect(
+            screen.queryByRole('button', { name: /sign in with password/i }),
+        ).not.toBeInTheDocument()
     })
 
     it('does not expose password login for SSO_REQUIRED', async () => {
