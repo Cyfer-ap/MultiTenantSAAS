@@ -35,12 +35,11 @@ class WorkspaceLoginOptionFactoryTest {
         tenantId = UUID.randomUUID();
         when(user.getTenant()).thenReturn(tenant);
         when(tenant.getId()).thenReturn(tenantId);
-        when(tenant.getName()).thenReturn("Acme");
-        when(tenant.getSlug()).thenReturn("acme");
     }
 
     @Test
     void exposesPasswordOnlyWhenNoVerifiedProviderExists() {
+        stubWorkspaceIdentity();
         when(user.getPasswordHash()).thenReturn("hash");
         when(identityProviderRepository.findByTenant_Id(tenantId)).thenReturn(Optional.empty());
 
@@ -53,6 +52,7 @@ class WorkspaceLoginOptionFactoryTest {
 
     @Test
     void exposesPasswordOrSsoForOptionalVerifiedProvider() {
+        stubWorkspaceIdentity();
         stubVerifiedProvider(TenantSsoMode.OPTIONAL);
         when(user.getPasswordHash()).thenReturn("hash");
 
@@ -65,6 +65,7 @@ class WorkspaceLoginOptionFactoryTest {
 
     @Test
     void exposesSsoOnlyForPasswordlessUserWithOptionalVerifiedProvider() {
+        stubWorkspaceIdentity();
         stubVerifiedProvider(TenantSsoMode.OPTIONAL);
         when(user.getPasswordHash()).thenReturn(null);
 
@@ -75,6 +76,7 @@ class WorkspaceLoginOptionFactoryTest {
 
     @Test
     void exposesSsoRequiredWhenVerifiedProviderEnforcesSso() {
+        stubWorkspaceIdentity();
         stubVerifiedProvider(TenantSsoMode.REQUIRED);
         when(user.getPasswordHash()).thenReturn("hash");
 
@@ -91,6 +93,11 @@ class WorkspaceLoginOptionFactoryTest {
         when(identityProvider.getStatus()).thenReturn(TenantIdentityProviderStatus.DRAFT);
 
         assertThat(factory.create(user)).isNull();
+    }
+
+    private void stubWorkspaceIdentity() {
+        when(tenant.getName()).thenReturn("Acme");
+        when(tenant.getSlug()).thenReturn("acme");
     }
 
     private void stubVerifiedProvider(TenantSsoMode ssoMode) {
