@@ -42,5 +42,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: spotless-formatting-diff
-          path: multitenant-saas/../spotless.patch
+          path: spotless.patch
           retention-days: 1
