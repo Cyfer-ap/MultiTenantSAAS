@@ -1,7 +1,6 @@
 package com.chacha.multitenantsaas.service;
 
 import com.chacha.multitenantsaas.entity.IdentityProviderProtocol;
-import com.chacha.multitenantsaas.entity.TenantIdentityProvider;
 import com.chacha.multitenantsaas.exception.IdentityProviderVerificationException;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrations;
@@ -20,25 +19,24 @@ public class OidcProviderVerificationService {
         this.secretCipher = secretCipher;
     }
 
-    public OidcProviderVerificationResult verify(TenantIdentityProvider identityProvider) {
-        if (identityProvider.getProtocol() != IdentityProviderProtocol.OIDC) {
+    public OidcProviderVerificationResult verify(OidcProviderVerificationInput input) {
+        if (input.protocol() != IdentityProviderProtocol.OIDC) {
             throw new IdentityProviderVerificationException(
                     "Only OIDC identity providers can be verified by this runtime");
         }
 
-        OidcProviderMetadata metadata =
-                metadataService.loadAndValidate(identityProvider.getIssuerUri());
-        String clientSecret = secretCipher.decrypt(identityProvider.getClientSecretCiphertext());
+        OidcProviderMetadata metadata = metadataService.loadAndValidate(input.issuerUri());
+        String clientSecret = secretCipher.decrypt(input.clientSecretCiphertext());
 
         try {
             ClientRegistration registration =
                     ClientRegistrations.fromOidcConfiguration(metadata.configuration())
-                            .registrationId("tenant-" + identityProvider.getTenant().getId())
-                            .clientId(identityProvider.getClientId())
+                            .registrationId("tenant-" + input.tenantId())
+                            .clientId(input.clientId())
                             .clientSecret(clientSecret)
-                            .scope(identityProvider.getScopes())
+                            .scope(input.scopes())
                             .redirectUri("{baseUrl}/api/auth/oidc/callback/{registrationId}")
-                            .clientName(identityProvider.getDisplayName())
+                            .clientName(input.displayName())
                             .build();
 
             if (!metadata.issuer().equals(registration.getProviderDetails().getIssuerUri())) {
