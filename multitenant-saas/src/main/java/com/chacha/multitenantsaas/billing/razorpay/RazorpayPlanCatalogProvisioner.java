@@ -445,5 +445,6 @@ public class RazorpayPlanCatalogProvisioner implements SubscriptionPlanCatalogPr
     private record RazorpayPlanRequest(
             String period, int interval, RazorpayPlanItem item, Map<String, String> notes) {}
 
-    private record RazorpayPlanItem(String name, long amount, String currency, String description) {}
+    private record RazorpayPlanItem(
+            String name, long amount, String currency, String description) {}
 }

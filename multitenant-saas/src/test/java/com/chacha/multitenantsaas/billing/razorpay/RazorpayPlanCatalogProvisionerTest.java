@@ -89,7 +89,11 @@ class RazorpayPlanCatalogProvisionerTest {
                 .andExpect(content().string(containsString("\"period\":\"monthly\"")))
                 .andExpect(content().string(containsString("\"amount\":49900")))
                 .andExpect(content().string(containsString("\"currency\":\"INR\"")))
-                .andExpect(content().string(containsString("\"mtsaas_local_plan_id\":\"" + planId + "\"")))
+                .andExpect(
+                        content()
+                                .string(
+                                        containsString(
+                                                "\"mtsaas_local_plan_id\":\"" + planId + "\"")))
                 .andRespond(
                         withSuccess(
                                 "{\"id\":\"plan_managed\",\"entity\":\"plan\"}",
@@ -204,8 +208,7 @@ class RazorpayPlanCatalogProvisionerTest {
         ArgumentCaptor<SubscriptionPlanProviderMapping> mappingCaptor =
                 ArgumentCaptor.forClass(SubscriptionPlanProviderMapping.class);
         verify(mappingRepository).saveAndFlush(mappingCaptor.capture());
-        assertThat(mappingCaptor.getValue().getProviderPlanId())
-                .isEqualTo("plan_existing_managed");
+        assertThat(mappingCaptor.getValue().getProviderPlanId()).isEqualTo("plan_existing_managed");
         server.verify();
     }
 
@@ -242,7 +245,8 @@ class RazorpayPlanCatalogProvisionerTest {
                         properties(), mappingRepository, planRepository, builder);
 
         server.expect(requestTo("https://api.razorpay.com/v1/plans/plan_pro_legacy"))
-                .andRespond(withSuccess("{\"id\":\"plan_pro_legacy\"}", MediaType.APPLICATION_JSON));
+                .andRespond(
+                        withSuccess("{\"id\":\"plan_pro_legacy\"}", MediaType.APPLICATION_JSON));
 
         provisioner.planRetired(plan(planId, "499.00", BillingInterval.MONTHLY, "Pro", null));
 
