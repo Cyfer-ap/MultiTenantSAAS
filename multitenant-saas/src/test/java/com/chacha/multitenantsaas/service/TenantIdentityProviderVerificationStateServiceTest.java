@@ -87,7 +87,10 @@ class TenantIdentityProviderVerificationStateServiceTest {
                 .hasMessage(
                         "Identity-provider configuration changed during verification; verify it again");
 
-        verify(identityProvider, never()).markVerified(actor, Instant.now());
+        verify(identityProvider, never())
+                .markVerified(
+                        org.mockito.ArgumentMatchers.eq(actor),
+                        org.mockito.ArgumentMatchers.any(Instant.class));
         verify(identityProviderRepository, never()).save(identityProvider);
     }
 
