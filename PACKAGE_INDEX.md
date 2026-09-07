@@ -1,29 +1,28 @@
 # Documentation Package Index
 
-Current snapshot: post-PR #98 (`87319f8`), 2026-09-06.
+Current snapshot: post-PR #106 (`486f592`), 2026-09-07.
 
 ## Primary status documents
 
-- `readme.md` — platform overview, current provider status and next milestone
+- `readme.md` — platform overview, provider/catalog status and next milestone
 - `CHECKPOINT.md` — concise verified application checkpoint
 - `HANDOFF.md` — session-independent resume instructions
-- `guides/README.md` — guide routing and source-of-truth rules
-- `guides/subscription_billing.md` — billing contracts, provider boundaries and closure status
+- `guides/subscription_billing.md` — billing contracts, provider catalog lifecycle and closure status
 - `guides/DEFERRED_PLATFORM_WORK.md` — remaining platform/live-readiness work
 - `wiki/Home.md` — version-controlled Wiki entry point
 - `wiki/Roadmap.md` — current platform sequence
 - `wiki/Wiki-Maintenance.md` — automatic Wiki synchronization policy
 - `MANIFEST.json` — machine-readable documentation inventory
 
-## Billing milestone status
+## Billing/catalog milestone status
 
-**Billing & Payments is complete at application level.**
+**Billing, cancellation hardening and managed provider catalogs are complete at application level through PR #106.**
 
-Stripe is the validated deployed Test Mode provider for hosted checkout, signed lifecycle synchronization and cancellation. The Stripe webhook endpoint now includes `customer.subscription.deleted`, and PR #98 provides idempotent recovery when provider state is already terminal but local state is stale.
+Stripe remains the validated deployed Test Mode payment path and now supports managed Product/Price provisioning/versioning. Razorpay application integration and managed Plan provisioning are implemented, while recurring Test Mode authorization remains provider-sandbox blocked.
 
-Razorpay remains implemented but Test Mode recurring authorization is provider-sandbox blocked. This does not keep the application billing milestone open.
+System-admin paid-plan management now uses durable TEST/LIVE provider mappings. Safe terminal retirement preserves existing paid-period entitlement, immutable purchased-plan snapshots/history preserve prior terms, and tenant/system-admin billing history is available in the UI.
 
-Application plan creation remains separate from provider catalog provisioning: a system-admin-created plan is not automatically created as a Stripe Product/Price or Razorpay Plan.
+Common Flyway migrations extend through **V36**.
 
 ## Wiki publishing
 
@@ -31,7 +30,7 @@ The main repository `wiki/` directory is canonical. `.github/workflows/wiki-sync
 
 ## Historical material
 
-Step 39/40 notes, Authorization V2 plans, `Plan.txt`, `Details.txt`, `Wild_Thoughts.md` and other older planning/recovery files are retained for implementation history. They are not rewritten to masquerade as current specifications. Where historical material conflicts with current code/tests, migrations, checkpoint documents or focused current guides, the current sources win.
+Older planning/recovery files remain implementation history. They are not current specifications where they conflict with code/tests, migrations, checkpoint documents or focused current guides.
 
 ## Next product milestone
 

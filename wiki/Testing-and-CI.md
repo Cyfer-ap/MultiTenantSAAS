@@ -1,22 +1,20 @@
 # Testing and CI
 
-Reviewed through PR #98 on 2026-09-06.
+Reviewed through PR #106 on 2026-09-07.
 
 ## Authoritative gates
 
 GitHub Actions is authoritative where local Docker is unavailable. Required repository coverage includes:
 
-- repository hygiene
-- backend tests and Maven verification
+- Repository Hygiene
+- Backend tests and Maven verification
 - PostgreSQL/Flyway integration
-- frontend formatting, lint, tests and build
-- security scanning
-- Compose and backend/frontend container validation
+- Frontend formatting, lint, tests and build
+- Security/Trivy
+- Container CI
 - Qodana
 
-The billing hardening sequence through PR #98 was validated through the required CI families.
-
-## Billing coverage in CI
+## Billing/catalog coverage in CI
 
 Automated tests cover:
 
@@ -25,38 +23,59 @@ Automated tests cover:
 - signature verification, replay/duplicate handling and durable events
 - lifecycle mapping and out-of-order/terminal-state safety
 - cross-provider subscription overwrite protection
-- provider ownership and durable-history cancellation recovery
+- verified provider ownership/history cancellation recovery
 - Stripe period-end cancellation request semantics
 - idempotent reconciliation when a provider is already terminal
-- cancellation and reconciliation
+- managed Stripe Product/Price provisioning and replacement
+- Stripe retirement Product/Price archival and mapping retention
+- managed Razorpay Plan provisioning/replacement
+- retry adoption of fingerprinted Razorpay Plans
+- DB-first provider mapping resolution and legacy import/fallback
+- durable plan-retirement operation behavior and partial-failure retry
+- purchased-plan snapshot semantics
+- immutable subscription-history persistence/APIs
+- tenant/system-admin history privacy and pagination
+- retired-plan terminal frontend lifecycle behavior
+- Spring bean/startup regression for Stripe retirement provisioner
 - usage event idempotency and period aggregation
 - tenant API-key lifecycle/authentication/metering
 - plan-level API request quotas
-- checkout configuration and duplicate-subscription protection
 - checkout recovery through the read-only interceptor
 - HTTP-level webhook authentication/security boundaries
+
+## Database coverage
+
+PostgreSQL/Flyway integration extends through **V36** and validates the managed catalog/history schema:
+
+- V34 provider mappings and purchased-plan snapshots
+- V35 durable plan-retirement operations
+- V36 immutable tenant subscription history
+
+Never rewrite an applied migration.
 
 ## Provider E2E boundary
 
 Stripe has passed deployed Test Mode checkout, signed lifecycle synchronization and provider-side cancellation validation.
 
-A critical deployment lesson from final cancellation testing: CI correctly covered the application mapper for `customer.subscription.deleted`, but the Stripe Dashboard webhook endpoint had not enabled that event. Stripe therefore cancelled successfully while the application missed the terminal event. The Test Mode endpoint now enables created/updated/deleted subscription events, and PR #98 provides defensive stale-state repair.
+The earlier missing `customer.subscription.deleted` endpoint configuration remains an operational lesson: provider contract tests cannot prove external dashboard/event-subscription configuration. The endpoint has since been corrected and stale terminal state is defensively recoverable.
 
-Razorpay sandbox availability cannot be proven by CI. Hosted Test Mode checkout opens, but attempted sandbox cards currently fail before recurring authorization.
+Razorpay sandbox availability cannot be proven by CI. Application integration/catalog provisioning are covered, but attempted recurring Test Mode card authorization currently fails at the provider sandbox.
 
-## Billing closure verification
+## Billing/catalog closure verification
 
-Application-level Billing & Payments is considered complete because:
+Application-level billing/catalog lifecycle is considered complete because:
 
-1. Stripe checkout is validated against the real Test Mode provider
-2. signed webhook synchronization is validated
-3. provider-side cancellation is validated
-4. missed terminal webhook state is recoverable idempotently
-5. invalid/unsigned webhook paths fail closed
-6. reconciliation and provider-linkage recovery are covered
-7. the full CI matrix protects regressions
-8. Razorpay's remaining failure occurs at external sandbox authorization rather than missing application architecture
+1. Stripe checkout/webhook/cancellation are validated against the real Test Mode provider
+2. cancellation/reconciliation and stale-linkage recovery are covered
+3. managed provider catalog create/update/retirement behavior is covered
+4. existing paid-period entitlement survives safe plan retirement
+5. purchased/history snapshots preserve immutable customer terms
+6. invalid/unsigned webhook paths fail closed
+7. PostgreSQL/Flyway protects V34-V36 schema behavior
+8. frontend lifecycle/history UX is regression tested
+9. the required CI matrix protects the sequence
+10. Razorpay's remaining recurring-card failure occurs at external sandbox authorization rather than missing application architecture
 
 ## Without local Docker
 
-Contributors may rely on GitHub Actions for PostgreSQL and container validation, then perform provider smoke testing only in deployed Test Mode. Live-provider configuration is outside the current application test scope.
+Contributors may rely on GitHub Actions for PostgreSQL and container validation, then perform provider smoke testing only in deployed Test Mode. Live-provider configuration remains outside the application test scope.

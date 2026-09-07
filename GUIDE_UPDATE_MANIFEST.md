@@ -4,9 +4,9 @@ Current documentation refresh:
 
 ```text
 Repository: Cyfer-ap/MultiTenantSAAS
-Reviewed application state: post-PR #98 (87319f8)
-Snapshot date: 2026-09-06
-Phase: Billing & Payments complete at application level
+Reviewed application state: post-PR #106 (486f592)
+Snapshot date: 2026-09-07
+Phase: billing/catalog lifecycle complete at application level
 Next recommended product milestone: tenant-configurable outbound webhooks
 ```
 
@@ -23,44 +23,39 @@ Root:
 
 Guides:
 
-- `guides/README.md`
 - `guides/progress.md`
 - `guides/CHECKPOINT.md`
-- `guides/HANDOFF.md`
 - `guides/subscription_billing.md`
-- `guides/current_architecture.md`
-- `guides/DEFERRED_PLATFORM_WORK.md`
-- `guides/collaboration_and_notifications.md`
 
 Wiki source:
 
 - `wiki/Home.md`
-- `wiki/Architecture.md`
 - `wiki/Developer-Handoff.md`
 - `wiki/Roadmap.md`
 - `wiki/Subscriptions-and-Quotas.md`
-- `wiki/Production-Deployment.md`
-- `wiki/Testing-and-CI.md`
-- `wiki/Notifications.md`
-- `wiki/Wiki-Maintenance.md`
-
-Automation:
-
-- `scripts/publish-wiki.ps1`
-- `.github/workflows/wiki-sync.yml`
 
 ## Status recorded
 
-The refresh closes the billing milestone at the application boundary and records the implementation/hardening sequence through PR #98.
+This refresh supersedes the post-#98/#99 statement that provider catalog provisioning was future work.
 
-Stripe is the validated deployed Test Mode path: hosted Checkout, signed subscription lifecycle synchronization and provider-side cancellation are working. The final cancellation synchronization problem was traced to the Stripe webhook endpoint not subscribing to `customer.subscription.deleted`; that endpoint has been corrected and PR #98 adds idempotent repair when Stripe is already terminal but local state is stale.
+PRs #100–#106 add:
 
-Razorpay remains implemented and available, but Test Mode recurring authorization is blocked by provider-side sandbox/card behavior. This is recorded as an external provider limitation rather than unfinished application billing architecture.
+- `ACTIVE` / `INACTIVE` / terminal `RETIRED` plan lifecycle
+- durable TEST/LIVE provider catalog mappings
+- immutable purchased-plan snapshots
+- automatic Stripe Product/Price provisioning and Price replacement
+- safe Stripe/Razorpay plan retirement with period-end/cycle-end cancellation
+- durable retirement operations
+- immutable tenant subscription history
+- tenant/system-admin billing-history UX
+- automatic Razorpay Plan provisioning/replacement and legacy mapping compatibility
 
-System-admin-created application plans do not currently auto-provision Stripe Products/Prices or Razorpay Plans. Provider plan/price mapping remains explicit server-side configuration; automatic provider catalog provisioning is optional future work.
+Stripe remains the validated deployed Test Mode payment path. Razorpay integration and managed Plan provisioning are implemented, while recurring Test Mode authorization remains provider-sandbox blocked.
+
+Common Flyway migrations now extend through V36.
 
 No credentials, webhook secrets or provider plan/price IDs are recorded in documentation.
 
 ## Wiki synchronization
 
-`wiki/*.md` remains the canonical Wiki source. After this refresh reaches `main`, the `Wiki Sync` GitHub Actions workflow automatically publishes the source to `MultiTenantSAAS.wiki.git`; manual Wiki publishing is retained only as a fallback.
+`wiki/*.md` remains canonical Wiki source. After this refresh reaches `main`, the `Wiki Sync` workflow automatically publishes the source to `MultiTenantSAAS.wiki.git`; manual Wiki publishing remains fallback-only.

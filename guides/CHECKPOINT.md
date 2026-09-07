@@ -1,43 +1,39 @@
 # MultiTenantSAAS Documentation Checkpoint
 
-Date: 2026-09-06
+Date: 2026-09-07
 Repository: `Cyfer-ap/MultiTenantSAAS`
-Base reviewed state: post-PR #98 (`87319f8`)
+Base reviewed state: post-PR #106 (`486f592`)
 
 ## Documentation status
 
-The repository and version-controlled Wiki now record **Billing & Payments as complete at application level** through PR #98. Older PR #90 billing-validation language is historical.
+The repository and version-controlled Wiki record billing/catalog lifecycle as complete at application level through PR #106. The older post-#98 statements that provider provisioning was future work are superseded.
 
 ## Delivered state
 
 - provider-neutral Stripe/Razorpay checkout
 - professional tenant subscription UX
 - signed durable webhook ingestion and lifecycle synchronization
-- provider-aware cancellation, linkage recovery and stale-state repair
+- verified provider-aware period-end cancellation, linkage recovery and stale-state repair
+- managed Stripe Product/Price provisioning and version replacement
+- managed Razorpay Plan provisioning and replacement mappings
+- TEST/LIVE durable provider mapping persistence
+- terminal `RETIRED` lifecycle with safe paid-period continuation
+- durable retirement operations and provider cleanup retry
+- immutable purchased-plan snapshots
+- immutable tenant subscription history and tenant/system-admin history APIs/UI
 - billing operations visibility and reconciliation
-- durable usage metering
-- tenant API keys and external API authentication
-- plan-level API-request quotas
-- checkout as a safe subscription recovery action
-- billing lifecycle/security regression coverage
-- deployed Stripe Test Mode checkout, lifecycle webhook and provider-side cancellation validation
+- durable usage metering, tenant API keys and plan-level API quotas
 
 ## Provider validation status
 
-Stripe works in deployed Test Mode. The final cancellation synchronization defect was traced to the Stripe webhook endpoint missing `customer.subscription.deleted`; the endpoint now includes created/updated/deleted subscription lifecycle events and PR #98 repairs already-terminal provider state idempotently.
-
-Razorpay hosted Test Mode checkout remains externally blocked before recurring authorization. This provider sandbox limitation no longer keeps the application billing milestone open.
-
-## Plan provisioning boundary
-
-System-admin-created application plans are not automatically provisioned to Stripe or Razorpay. Current provider checkout requires explicit server-side mappings to provider Price/Plan IDs. Automatic provider provisioning is future optional work.
+Stripe remains the validated deployed Test Mode path. Razorpay integration and catalog provisioning are implemented, while recurring Test Mode card authorization remains provider-sandbox blocked.
 
 ## Migration state
 
-Common migrations extend through **V33**. V28-V33 cover billing, provider linkage, usage events, API keys and plan usage limits.
+Common migrations extend through **V36**. V34 adds provider catalog mappings/purchased snapshots, V35 durable retirement operations, and V36 immutable tenant subscription history.
 
 ## Next checkpoint
 
-The next checkpoint should belong to the next product milestone, recommended: **tenant-configurable outbound webhooks**.
+The next checkpoint belongs to the **tenant-configurable outbound webhooks** milestone.
 
 Code/tests and Flyway migrations remain authoritative.
