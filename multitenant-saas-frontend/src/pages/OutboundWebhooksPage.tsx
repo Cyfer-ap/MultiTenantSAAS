@@ -903,7 +903,7 @@ export function OutboundWebhooksPage() {
                                 disabled={
                                     replayDelivery.isPending ||
                                     endpointById.get(deliveryQuery.data.delivery.endpointId)
-                                        ?.enabled === false
+                                        ?.enabled !== true
                                 }
                                 onClick={() => replaySelectedDelivery(deliveryQuery.data.delivery)}
                                 startIcon={<ReplayRoundedIcon />}
