@@ -84,7 +84,7 @@ class TenantAuthorizationProvisioningIntegrationTest {
         AuthorizationRoleResponse memberRole =
                 authorizationRoleService.getRoleByCode(tenantId, SystemRoleCodes.MEMBER);
 
-        assertEquals(20, adminRole.permissions().size());
+        assertEquals(21, adminRole.permissions().size());
 
         assertTrue(
                 adminRole.permissions().stream()
