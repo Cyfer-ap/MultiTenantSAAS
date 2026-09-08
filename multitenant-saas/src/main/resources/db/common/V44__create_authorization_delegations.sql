@@ -30,33 +30,6 @@ WHERE NOT EXISTS (
       AND code = 'authorization.delegate'
 );
 
-INSERT INTO authorization_role_permissions (
-    id,
-    tenant_id,
-    role_id,
-    permission_id,
-    created_at
-)
-SELECT
-    RANDOM_UUID(),
-    role.tenant_id,
-    role.id,
-    permission.id,
-    CURRENT_TIMESTAMP
-FROM authorization_roles role
-JOIN authorization_permissions permission
-  ON permission.catalog_key = 'PLATFORM'
- AND permission.code = 'authorization.delegate'
-WHERE role.code = 'ADMIN'
-  AND role.source = 'SYSTEM'
-  AND NOT EXISTS (
-      SELECT 1
-      FROM authorization_role_permissions mapping
-      WHERE mapping.tenant_id = role.tenant_id
-        AND mapping.role_id = role.id
-        AND mapping.permission_id = permission.id
-  );
-
 CREATE TABLE authorization_delegations (
     id UUID PRIMARY KEY,
     tenant_id UUID NOT NULL,
