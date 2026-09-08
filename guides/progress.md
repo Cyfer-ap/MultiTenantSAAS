@@ -1,7 +1,7 @@
 # Progress
 
-Snapshot date: 2026-09-08  
-Reviewed state: post-PR #119 (`c36de3f`)  
+Snapshot date: 2026-09-08
+Reviewed state: post-PR #119 (`c36de3f`)
 Current stage: **enterprise OIDC SSO complete; authorization delegation/explain-access next**
 
 This is a concise index. Code, tests, migrations, `CHECKPOINT.md` and focused guides are authoritative.

@@ -1,6 +1,6 @@
 # Enterprise SSO / identity federation
 
-Reviewed state: post-PR #119 (`c36de3f`).  
+Reviewed state: post-PR #119 (`c36de3f`).
 Status: **OIDC enterprise SSO complete at application level**.
 
 ## Scope

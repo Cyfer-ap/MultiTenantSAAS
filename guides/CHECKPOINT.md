@@ -1,6 +1,6 @@
 # Guides Checkpoint
 
-Snapshot date: 2026-09-08  
+Snapshot date: 2026-09-08
 Reviewed state: post-PR #119 (`c36de3f`)
 
 ## Completed application milestones

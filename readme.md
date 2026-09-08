@@ -4,10 +4,10 @@ A production-oriented full-stack multi-tenant SaaS platform focused on tenant is
 
 > **Current documentation snapshot**
 >
-> Repository: `Cyfer-ap/MultiTenantSAAS`  
-> Branch: `main`  
-> Application state reviewed through: PR #119 (`c36de3f`)  
-> Snapshot date: 2026-09-08  
+> Repository: `Cyfer-ap/MultiTenantSAAS`
+> Branch: `main`
+> Application state reviewed through: PR #119 (`c36de3f`)
+> Snapshot date: 2026-09-08
 > Current phase: **Enterprise OIDC SSO complete; authorization delegation/explain-access next**
 
 ## Platform capabilities

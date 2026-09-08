@@ -1,8 +1,8 @@
 # MultiTenantSAAS — Checkpoint
 
-Repository: `Cyfer-ap/MultiTenantSAAS`  
-Branch: `main`  
-Date: 2026-09-08  
+Repository: `Cyfer-ap/MultiTenantSAAS`
+Branch: `main`
+Date: 2026-09-08
 Base reviewed state: post-PR #119 (`c36de3f`)
 
 ## Current phase
