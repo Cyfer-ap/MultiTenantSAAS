@@ -21,6 +21,12 @@ const LoginPage = lazy(() =>
     })),
 )
 
+const OidcCompletePage = lazy(() =>
+    import('../features/auth/pages/OidcCompletePage').then((module) => ({
+        default: module.OidcCompletePage,
+    })),
+)
+
 const AppShell = lazy(() =>
     import('../layouts/AppShell').then((module) => ({
         default: module.AppShell,
@@ -197,6 +203,8 @@ export function AppRoutes() {
                         <Route path="*" element={<NotFoundPage />} />
                     </Route>
                 </Route>
+
+                <Route path="auth/oidc/complete" element={<OidcCompletePage />} />
 
                 <Route element={<PublicOnlyRoute />}>
                     <Route path="login" element={<LoginPage />} />

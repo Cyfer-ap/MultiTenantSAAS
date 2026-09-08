@@ -2,6 +2,9 @@ export type TenantRole = 'TENANT_ADMIN' | 'TENANT_MANAGER' | 'TENANT_USER'
 
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 
+export type WorkspaceAuthenticationMode =
+    'PASSWORD_ONLY' | 'PASSWORD_OR_SSO' | 'SSO_ONLY' | 'SSO_REQUIRED'
+
 export interface LoginRequest {
     email: string
     password: string
@@ -17,6 +20,8 @@ export interface WorkspaceLoginOption {
     tenantId: string
     name: string
     slug: string
+    authenticationMode: WorkspaceAuthenticationMode
+    identityProviderDisplayName: string | null
 }
 
 export interface WorkspaceDiscoveryStartRequest {
@@ -43,6 +48,19 @@ export interface WorkspaceDiscoveryVerifyResponse {
     workspaceGrantId: string | null
     trustedBrowserToken: string | null
     message: string
+}
+
+export interface OidcAuthorizationStartRequest {
+    keepSignedIn: boolean
+}
+
+export interface OidcAuthorizationStartResponse {
+    authorizationUrl: string
+    expiresAt: string
+}
+
+export interface OidcSessionExchangeRequest {
+    code: string
 }
 
 export interface TokenPairResponse {

@@ -69,7 +69,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV42AndMatchesJpaMappings() {
+    void postgresSchemaReachesV43AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -81,7 +81,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("42");
+        assertThat(version).isEqualTo("43");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -121,6 +121,7 @@ class PostgreSqlSchemaIntegrationTest {
         assertTableExists("tenant_identity_provider_scopes");
         assertTableExists("oidc_authorization_transactions");
         assertTableExists("tenant_federated_identities");
+        assertTableExists("oidc_session_handoffs");
         assertColumnExists("subscription_plan_usage_limits", "plan_id");
         assertColumnExists("subscription_plan_usage_limits", "metric_code");
         assertColumnExists("subscription_plan_usage_limits", "period_limit");
@@ -258,6 +259,13 @@ class PostgreSqlSchemaIntegrationTest {
         assertColumnExists("tenant_federated_identities", "email_at_link");
         assertColumnExists("tenant_federated_identities", "linked_at");
         assertColumnExists("tenant_federated_identities", "last_login_at");
+        assertColumnExists("oidc_session_handoffs", "code_hash");
+        assertColumnExists("oidc_session_handoffs", "tenant_id");
+        assertColumnExists("oidc_session_handoffs", "user_id");
+        assertColumnExists("oidc_session_handoffs", "persistent_session");
+        assertColumnExists("oidc_session_handoffs", "created_at");
+        assertColumnExists("oidc_session_handoffs", "expires_at");
+        assertColumnExists("oidc_session_handoffs", "consumed_at");
     }
 
     @Test

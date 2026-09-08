@@ -7,6 +7,9 @@ import type {
     LoginRequest,
     LoginResponse,
     LogoutResponse,
+    OidcAuthorizationStartRequest,
+    OidcAuthorizationStartResponse,
+    OidcSessionExchangeRequest,
     TokenRefreshResponse,
     WorkspaceDiscoveryStartRequest,
     WorkspaceDiscoveryStartResponse,
@@ -41,6 +44,28 @@ async function verifyWorkspaceDiscovery(
 ): Promise<WorkspaceDiscoveryVerifyResponse> {
     const response = await publicHttpClient.post<ApiResponse<WorkspaceDiscoveryVerifyResponse>>(
         '/api/auth/workspaces/verify',
+        request,
+    )
+
+    return response.data.data
+}
+
+async function startOidcLogin(
+    tenantId: string,
+    request: OidcAuthorizationStartRequest,
+): Promise<OidcAuthorizationStartResponse> {
+    const response = await publicHttpClient.post<ApiResponse<OidcAuthorizationStartResponse>>(
+        `/api/tenants/${encodeURIComponent(tenantId)}/auth/oidc/start`,
+        request,
+    )
+
+    return response.data.data
+}
+
+async function completeOidcLogin(code: string): Promise<LoginResponse> {
+    const request: OidcSessionExchangeRequest = { code }
+    const response = await publicHttpClient.post<ApiResponse<LoginResponse>>(
+        '/api/auth/oidc/session',
         request,
     )
 
@@ -94,6 +119,8 @@ export const authApi = {
     login,
     startWorkspaceDiscovery,
     verifyWorkspaceDiscovery,
+    startOidcLogin,
+    completeOidcLogin,
     refreshToken,
     getCurrentUser,
     logout,
