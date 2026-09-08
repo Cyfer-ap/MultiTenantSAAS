@@ -1,33 +1,25 @@
 {
   "repository": "Cyfer-ap/MultiTenantSAAS",
   "branch": "main",
-  "reviewed_state": "post-PR #112",
-  "reviewed_commit": "8324ae9f9551145b86c7fa54d4d7e60a0d7e58c2",
-  "generated_date": "2026-09-07",
-  "phase": "Tenant-configurable outbound webhooks complete at application level",
-  "next_recommended_milestone": "Enterprise SSO / identity federation",
-  "stripe_status": "Validated deployed Test Mode checkout, signed lifecycle webhooks, cancellation and reconciliation; managed Product/Price provisioning/versioning implemented.",
+  "reviewed_state": "post-PR #119",
+  "reviewed_commit": "c36de3fb2d766cbb796e5994f3e86a72697f9e70",
+  "generated_date": "2026-09-08",
+  "phase": "Enterprise OIDC SSO complete at application level",
+  "next_recommended_milestone": "Authorization delegation and explain-access",
+  "current_migration": "V43",
+  "stripe_status": "Working and validated in deployed Test Mode for hosted checkout, signed lifecycle synchronization, provider-side cancellation and reconciliation; managed Product/Price provisioning remains implemented.",
   "razorpay_status": "Application integration and managed Plan provisioning implemented; recurring Test Mode authorization remains provider-sandbox blocked.",
-  "outbound_webhooks": "Tenant endpoint/event-subscription lifecycle, encrypted rotatable signing secrets, SSRF-safe HTTPS validation, durable HMAC-signed delivery, retries/backoff/leases/timeouts, transactional domain events, immutable attempt history, replay and tenant Integrations UX implemented through PR #112.",
-  "outbound_event_catalog": [
-    "project.created",
-    "project.updated",
-    "project.archived",
-    "task.created",
-    "task.updated",
-    "task.completed",
-    "comment.created",
-    "comment.replied",
-    "member.added",
-    "member.removed",
-    "subscription.updated",
-    "subscription.cancelled"
-  ],
-  "plan_provisioning": "System-admin paid-plan management provisions enabled managed Stripe/Razorpay catalogs through durable TEST/LIVE mappings; legacy configured mappings remain compatibility/import paths.",
-  "plan_lifecycle": "ACTIVE purchasable; INACTIVE administrative hard-disable; RETIRED terminal/no new checkout with existing valid subscriptions honored through current paid period and provider cancellation scheduled at period/cycle end.",
-  "subscription_history": "Immutable purchased-plan snapshots plus V36 tenant subscription history are exposed to tenant and system-admin billing UX.",
+  "outbound_webhooks": "Complete at application level through PR #112.",
+  "enterprise_sso": {
+    "status": "Complete at application level through PR #119",
+    "protocol": "OIDC",
+    "sequence": [114, 115, 116, 117, 118, 119],
+    "auth_modes": ["PASSWORD_ONLY", "PASSWORD_OR_SSO", "SSO_ONLY", "SSO_REQUIRED"],
+    "policy_modes": ["OPTIONAL", "REQUIRED"],
+    "migrations": ["V40", "V41", "V42", "V43"],
+    "saml": "Deferred until a concrete enterprise requirement justifies it"
+  },
   "wiki_sync": "Automatic on main through .github/workflows/wiki-sync.yml using scripts/publish-wiki.ps1.",
-  "current_migration": "V39",
   "contents": {
     "root": [
       "readme.md",
@@ -35,35 +27,34 @@
       "HANDOFF.md",
       "GUIDE_UPDATE_MANIFEST.md",
       "PACKAGE_INDEX.md",
-      "MANIFEST.json"
+      "MANIFEST.json",
+      ".env.example",
+      ".env.production.example"
     ],
     "guides": [
       "README.md",
       "progress.md",
       "CHECKPOINT.md",
       "HANDOFF.md",
-      "current_architecture.md",
+      "enterprise-sso-foundation.md",
+      "authorization_model.md",
       "subscription_billing.md",
       "outbound-webhook-events.md",
       "outbound-webhook-delivery-history.md",
       "outbound-webhook-admin-ux.md",
-      "DEFERRED_PLATFORM_WORK.md",
-      "collaboration_and_notifications.md"
+      "DEFERRED_PLATFORM_WORK.md"
     ],
     "wiki": [
       "Home.md",
       "Architecture.md",
+      "Security-and-Authentication.md",
+      "Enterprise-SSO.md",
       "Developer-Handoff.md",
       "Roadmap.md",
       "Subscriptions-and-Quotas.md",
       "Production-Deployment.md",
       "Testing-and-CI.md",
-      "Notifications.md",
       "Wiki-Maintenance.md"
-    ],
-    "automation": [
-      "scripts/publish-wiki.ps1",
-      ".github/workflows/wiki-sync.yml"
     ]
   }
 }

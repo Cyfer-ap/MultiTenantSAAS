@@ -7,87 +7,90 @@ Use this document to resume without relying on chat history.
 ```text
 Repository: Cyfer-ap/MultiTenantSAAS
 Branch: main
-Application state reviewed through: PR #112 (8324ae9)
-Date: 2026-09-07
-Current phase: outbound webhooks complete at application level
-Recommended next product milestone: enterprise SSO / identity federation
+Application state reviewed through: PR #119 (c36de3f)
+Date: 2026-09-08
+Current phase: enterprise OIDC SSO complete at application level
+Recommended next product milestone: authorization delegation and explain-access
 ```
 
 ## Read first
 
 1. `readme.md`
 2. `CHECKPOINT.md`
-3. `guides/outbound-webhook-events.md`
-4. `guides/outbound-webhook-delivery-history.md`
-5. `guides/outbound-webhook-admin-ux.md`
+3. `guides/enterprise-sso-foundation.md`
+4. `guides/authorization_model.md`
+5. `wiki/Security-and-Authentication.md`
 6. `wiki/Production-Deployment.md`
 7. `wiki/Testing-and-CI.md`
 8. `wiki/Roadmap.md`
 
 ## Current result
 
-Billing/catalog lifecycle remains complete at application level. Stripe is the validated deployed Test Mode payment path; Razorpay application integration and managed Plan provisioning are implemented, while recurring Test Mode authorization remains provider-sandbox blocked.
+Completed application-level milestones now include billing/catalog lifecycle, tenant-configurable outbound webhooks and enterprise OIDC SSO.
 
-Tenant-configurable outbound webhooks are now also complete through PR #112.
+The SSO sequence through PR #119 provides:
 
-Implemented webhook capabilities include:
+- tenant-scoped OIDC provider configuration with `DRAFT`, `VERIFIED` and `DISABLED` lifecycle
+- AES-256-GCM encrypted, write-only client secrets
+- controlled discovery/JWKS verification with SSRF-safe HTTPS/public-DNS enforcement
+- tenant-bound OIDC state/nonce/PKCE authorization runtime
+- strict ID-token validation
+- safe account linking to existing active tenant users only; no federation auto-provisioning
+- verified workspace discovery with `PASSWORD_ONLY`, `PASSWORD_OR_SSO`, `SSO_ONLY` and `SSO_REQUIRED`
+- persisted `OPTIONAL`/`REQUIRED` SSO policy
+- guarded tenant-admin password break-glass path
+- safe fallback to `OPTIONAL` when provider verification is invalidated
+- opaque single-use browser session handoff after callback
+- permission-gated Authentication admin UX
+- provider verify/re-verify, secret rotation, disable and recoverable re-enable-to-draft lifecycle
+- tenant-scoped success/failure audit events without storing sensitive federation material
 
-- tenant-scoped endpoint registration, update, enable/disable and soft archive
-- event-subscription selection from a bounded server catalogue
-- generated signing secrets, one-time plaintext exposure and secret rotation
-- AES-256-GCM at-rest secret encryption
-- HTTPS/public-routable URL validation with delivery-time DNS/SSRF revalidation
-- durable immutable event envelopes and endpoint-specific delivery records
-- HMAC-SHA256 signing over timestamp, stable event ID and exact request body
-- lease-safe asynchronous processing with retries, exponential backoff, timeouts and stale-lease recovery
-- transactional publication from project, task, comment, membership and subscription mutations
-- immutable delivery-attempt history
-- tenant-scoped history/detail APIs and terminal-delivery replay
-- permission-gated Integrations UX with endpoint lifecycle, one-time secret handling, filters, payload/attempt detail and replay
+## SSO boundaries to preserve
 
-## Outbound webhook boundaries to preserve
-
-- `tenant.update` remains the management authorization boundary
-- endpoints, deliveries and attempts remain tenant isolated
-- secrets stay server-side and plaintext is shown only on create/rotation
-- redirects stay disabled
-- public-routable DNS validation occurs both when configuring and immediately before dispatch
-- event ID/body do not change across retries or replay
-- archived/disabled/missing endpoints cannot be replayed
-- event publication occurs transactionally with the domain mutation
-- avoid unbounded outbox growth when no enabled endpoint subscribes
+- backend policy is authoritative; never rely on frontend guards for enforcement
+- client secrets, state, nonce, PKCE verifiers, codes and provider tokens remain server-side
+- do not auto-provision a tenant user from an IdP claim
+- do not link identities across tenant boundaries
+- provider edits/secret rotation must invalidate verification
+- a disabled provider must not regain `VERIFIED` on enable
+- `REQUIRED` must remain impossible without a tested password-capable tenant-admin recovery path
+- invalid/untrusted OIDC state must not be attributed to a tenant audit record
+- callback URLs must not carry platform access/refresh tokens
+- remote provider requests keep SSRF protections, bounded responses/timeouts and disabled redirects
 
 ## Database checkpoint
 
-Common migrations extend through **V39**. Never rewrite an applied Flyway migration.
+Common portable migrations extend through **V43**. Never rewrite an applied Flyway migration.
 
-- V37: outbound webhook endpoints/event subscriptions
-- V38: durable events/deliveries
-- V39: immutable delivery-attempt ledger
+- V40: tenant identity-provider configuration
+- V41: OIDC authorization transactions and tenant federated identities
+- V42: tenant SSO policy
+- V43: one-time OIDC browser session handoffs
+
+## Deployment checkpoint
+
+Configure a stable Base64-encoded 32-byte `IDENTITY_FEDERATION_ENCRYPTION_KEY` plus explicit hosted `OIDC_REDIRECT_URI` and `OIDC_FRONTEND_COMPLETION_URI`. The IdP redirect/callback registration must match the backend callback exactly.
+
+See `guides/enterprise-sso-foundation.md` for setup and test procedure.
 
 ## Billing/provider boundary
 
-- provider webhooks remain authoritative for normal local billing lifecycle synchronization
-- verified provider lookup/reconciliation may repair stale terminal state
-- managed Stripe/Razorpay catalog mappings stay server-side and environment scoped
-- provider live readiness is independent of feature development
-- do not resume Razorpay sandbox-card debugging as core application work
+- Stripe is working and validated in deployed Test Mode
+- Razorpay integration and managed Plan provisioning remain implemented, but recurring Test Mode authorization is provider-sandbox blocked
+- keep both providers; live readiness remains an independent operational review
 
 ## Next action
 
-Start **enterprise SSO / identity federation**.
+Start **authorization delegation and explain-access**.
 
-Recommended rollout:
+Recommended first slice:
 
-1. tenant identity-provider configuration model, secret handling and authorization
-2. provider-neutral federation boundary with OIDC as the first concrete provider/protocol path
-3. domain/email discovery and safe account linking to existing tenant users
-4. tenant policy for optional vs enforced SSO with recovery/break-glass protections
-5. login/admin UX, audit events, tests and deployment documentation
-6. add SAML through the same boundary only where enterprise requirements justify it
+1. model safe delegation boundaries and revocation rules without weakening current permission evaluation
+2. build an explain-access service that traces effective tenant/scoped grants and produces a non-sensitive decision explanation
+3. expose permission-gated admin APIs/UI plus audit events and cross-tenant regression coverage
 
-Then consider authorization delegation/explain-access and deeper operational recovery/load testing.
+After that, move to backup/restore drills, monitoring/alerts/runbooks and broader failure-recovery/load testing. SAML remains optional until a real enterprise requirement appears.
 
 ## Verification
 
-GitHub Actions remains authoritative where local Docker is unavailable. Before merge require Backend, PostgreSQL/Flyway, Frontend, Repository Hygiene, Security, Container CI and Qodana to pass. Wiki source changes should also pass `Wiki Sync / Validate Wiki Source`.
+GitHub Actions remains authoritative where local Docker is unavailable. Before merge require Backend, PostgreSQL/Flyway, Frontend, Repository Hygiene, Security, Container CI and Qodana to pass. Wiki source changes should also satisfy Wiki Sync validation.

@@ -1,70 +1,43 @@
 # Developer Handoff
 
-Repository: `Cyfer-ap/MultiTenantSAAS`
-Default branch: `main`
-Reviewed state: post-PR #112 (`8324ae9`)
-Date: 2026-09-07
+Current snapshot: post-PR #119 (`c36de3f`), 2026-09-08.
 
 ## Current phase
 
-**Tenant-configurable outbound webhooks complete at application level; enterprise SSO next**
+**Enterprise OIDC SSO complete at application level; authorization delegation/explain-access next.**
 
-Billing/catalog lifecycle remains complete. Stripe is the validated deployed Test Mode path. Razorpay application integration and managed Plan provisioning are implemented, but recurring Test Mode authorization remains externally provider-sandbox blocked.
+Billing/catalog and outbound-webhook milestones remain closed.
 
-Do not extend application billing just to work around the Razorpay sandbox.
+## Resume reading
 
-## Outbound webhook result
+1. [[Home]]
+2. [[Enterprise-SSO]]
+3. [[Security-and-Authentication]]
+4. [[Authorization]]
+5. [[Production-Deployment]]
+6. [[Testing-and-CI]]
+7. [[Roadmap]]
 
-Delivered through PRs #108–#112:
+## Preserve these SSO invariants
 
-- tenant-scoped endpoint/event-subscription management
-- generated high-entropy signing secrets, rotation and AES-256-GCM at-rest encryption
-- HTTPS/public-routable SSRF validation with delivery-time DNS revalidation
-- durable immutable event envelopes and endpoint-specific deliveries
-- stable event IDs and exact request bodies across retries/replay
-- HMAC-SHA256 signing over `timestamp.eventId.body`
-- lease-safe workers, retries/backoff/timeouts and stale-lease recovery
-- transactional project/task/comment/member/subscription event publication
-- immutable V39 attempt history
-- tenant-scoped delivery history/detail APIs and guarded manual replay
-- permission-gated tenant Integrations UX
+- tenant-scoped provider configuration and identity linkage
+- write-only encrypted client secret
+- fresh HTTPS/public-routable provider validation and disabled redirects
+- state/nonce/PKCE protections and single-use callback transaction
+- no user auto-provisioning from IdP claims
+- verified-email first linking only to an existing active user in the same tenant
+- backend-authoritative optional/required policy
+- tenant-admin password break-glass prerequisite for `REQUIRED`
+- provider invalidation safely falling back from enforced SSO
+- opaque one-time browser session handoff instead of platform tokens in URLs
+- no sensitive provider material in audit/frontend/log output
 
-## Preserve these boundaries
+Portable migrations extend through V43.
 
-- authentication, tenant isolation, authorization, subscription access and quotas are independent
-- endpoint administration uses `tenant.update`
-- webhook endpoints/deliveries/attempts remain tenant isolated
-- outbound signing secrets stay server-side and plaintext appears only on create/rotation
-- redirects remain disabled and endpoint DNS/SSRF validation is repeated immediately before dispatch
-- retries/replay retain original event identity/body
-- archived, disabled or missing endpoints cannot be replayed
-- product event publication stays transactional with the domain mutation
-- provider billing webhooks remain authoritative for normal local subscription lifecycle
-- provider IDs, API keys and secrets remain server-side
-- tenant API keys authenticate only `/api/external/**` and never impersonate users
+## Provider status
 
-## Database checkpoint
+Stripe is working/validated in deployed Test Mode. Razorpay application/catalog integration is implemented, but recurring Test Mode authorization remains provider-sandbox blocked.
 
-Common Flyway migrations extend through **V39**. Never rewrite an applied migration.
+## Next
 
-## Resume sequence
-
-1. treat billing/catalog lifecycle as closed at application level
-2. treat tenant-configurable outbound webhooks as closed at application level
-3. keep Stripe/Razorpay live readiness separate from feature development
-4. start enterprise SSO / identity federation
-5. then consider explain-access/delegation and deeper operational hardening
-
-Recommended SSO sequence:
-
-1. tenant identity-provider configuration and secure secret storage
-2. provider-neutral federation boundary
-3. OIDC first
-4. safe existing-user account linking and tenant/domain discovery
-5. optional/enforced SSO policy with recovery/break-glass protections
-6. login/admin UX, auditing and regression coverage
-7. SAML through the same boundary when enterprise requirements justify it
-
-## Verification
-
-GitHub Actions remains authoritative where local Docker is unavailable. Require Backend, PostgreSQL/Flyway, Frontend, Repository Hygiene, Security, Container CI and Qodana before merge.
+Build authorization delegation and explain-access. Do not weaken the current authorization evaluator to make delegation easier; delegation should feed a well-defined effective-permission model and remain auditable/revocable.

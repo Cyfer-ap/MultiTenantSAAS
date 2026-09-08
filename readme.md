@@ -1,14 +1,14 @@
 # Multi-Tenant SaaS Platform
 
-A full-stack multi-tenant SaaS platform focused on tenant isolation, permission-oriented authorization, project collaboration, subscription enforcement, external billing, durable outbound integrations, PostgreSQL correctness and production-oriented engineering.
+A production-oriented full-stack multi-tenant SaaS platform focused on tenant isolation, permission-oriented authorization, collaboration, subscription enforcement, external billing, durable integrations, enterprise OIDC SSO, PostgreSQL correctness and operational hardening.
 
 > **Current documentation snapshot**
 >
-> Repository: `Cyfer-ap/MultiTenantSAAS`
-> Branch: `main`
-> Application state reviewed through: PR #112 (`8324ae9`)
-> Snapshot date: 2026-09-07
-> Current phase: **Tenant-configurable outbound webhooks complete; enterprise SSO next**
+> Repository: `Cyfer-ap/MultiTenantSAAS`  
+> Branch: `main`  
+> Application state reviewed through: PR #119 (`c36de3f`)  
+> Snapshot date: 2026-09-08  
+> Current phase: **Enterprise OIDC SSO complete; authorization delegation/explain-access next**
 
 ## Platform capabilities
 
@@ -18,24 +18,19 @@ A full-stack multi-tenant SaaS platform focused on tenant isolation, permission-
 - scoped permission-oriented authorization
 - projects, tasks, comments, mentions, replies, pins and activity history
 - S3/R2-compatible attachments
-- durable in-app/email notifications and recipient preferences
-- subscription visibility, lifecycle restrictions, recovery actions and quotas
-- professional paid-plan selection and hosted provider checkout
-- provider-backed cancellation, safe period-end retirement and subscription reconciliation
-- immutable subscription purchase/history snapshots
-- tenant API keys restricted to `/api/external/**`
-- metered and plan-limited external API requests
-- tenant-configurable outbound webhook endpoints and event subscriptions
-- HMAC-signed durable webhook delivery with retry/backoff, history and replay
-- tenant-admin Integrations UX for endpoint lifecycle and delivery observability
+- durable in-app/email notifications and preferences
+- subscription lifecycle restrictions, quotas and professional hosted checkout
+- provider-backed cancellation, reconciliation and immutable subscription history
+- tenant API keys restricted to `/api/external/**` with metering/plan limits
+- tenant-configurable HMAC-signed outbound webhooks with retries/history/replay
+- enterprise OIDC SSO with safe account linking, optional/required policy, break-glass recovery and tenant-admin configuration UX
 
 ### System plane
 
 - separate system-admin identity/control plane
 - tenant, user, subscription-plan and subscription administration
 - managed Stripe/Razorpay provider catalog provisioning
-- billing subscription/event/history visibility
-- read-only provider reconciliation
+- billing event/history visibility and read-only provider reconciliation
 - durable usage summaries and plan-level API limits
 - tenant/platform audit logs
 
@@ -43,14 +38,14 @@ System administrators are not tenant users with an elevated tenant role.
 
 ## Technology stack
 
-**Backend:** Java 21, Spring Boot 4.0.8, Spring Security/JWT, Spring Data JPA/Hibernate, Flyway, PostgreSQL 17, Testcontainers, AWS SDK v2 and Actuator/Micrometer.
+**Backend:** Java 21, Spring Boot 4.0.8, Spring Security/JWT/OIDC, Spring Data JPA/Hibernate, Flyway, PostgreSQL 17, Testcontainers, AWS SDK v2 and Actuator/Micrometer.
 
 **Frontend:** React 19.2, TypeScript 6, Vite 8, Material UI 9, React Router 7, TanStack React Query, Axios, React Hook Form/Zod, Vitest and Testing Library.
 
 ## Enforcement pipeline
 
 ```text
-authentication
+authentication / federation
     ↓
 tenant isolation
     ↓
@@ -63,170 +58,90 @@ resource and API-usage quotas
 domain invariants
 ```
 
-Billing checkout is explicitly permitted as a subscription-recovery action for a read-only workspace, while normal tenant authorization still applies.
-
-Tenant API keys are stored as hashes, revealed only at creation and accepted only under `/api/external/**`. They cannot impersonate browser users.
+The backend is authoritative at every enforcement boundary.
 
 # Billing & Payments
 
-## Milestone status
-
 **Billing, cancellation hardening and managed provider catalogs are complete at application level through PR #106.**
 
-Implemented:
-
-- provider-neutral Stripe/Razorpay boundary
-- professional plan → provider → hosted-checkout UX
-- signed provider webhook verification
-- durable/idempotent provider-event persistence
-- webhook-driven subscription lifecycle synchronization
-- verified provider-aware cancellation and provider-history recovery
-- cross-provider overwrite protection
-- period-end cancellation semantics
-- idempotent repair when provider state is terminal but local state is stale
-- `ACTIVE`, `INACTIVE` and terminal `RETIRED` catalog lifecycle
-- safe plan retirement that blocks new sales immediately while preserving existing entitlement through the paid period
-- durable TEST/LIVE provider catalog mappings
-- automatic Stripe Product + recurring Price provisioning
-- immutable Stripe Price replacement for price/currency/interval edits
-- Stripe Product/Price archival for new sales during retirement
-- automatic Razorpay Plan provisioning and replacement on provider-visible edits
-- retry-safe Razorpay Plan adoption through deterministic provider metadata
-- immutable purchased-plan snapshots and durable tenant subscription history
-- tenant/system-admin billing-history UX
-- billing operations/admin visibility and read-only reconciliation
-- usage metering, tenant API keys and API request quotas
-
-Live-provider production readiness is intentionally separate from the completed application milestone.
-
-## Provider catalog lifecycle
-
-Application plans live in the platform database; provider billing objects remain separate and are linked through durable provider mappings.
-
-For enabled managed providers:
-
-```text
-System-admin plan create/update
-        ↓
-provider-neutral catalog coordinator
-        ↓
-Stripe Product/Price and/or Razorpay Plan
-        ↓
-subscription_plan_provider_mappings
-        ↓
-new hosted checkout
-```
-
-Provider catalog environment is separated as TEST/LIVE. Existing legacy environment mappings remain supported as compatibility fallback/import paths.
+Implemented capabilities include provider-neutral Stripe/Razorpay checkout, signed provider webhooks, durable/idempotent lifecycle synchronization, provider-aware cancellation/reconciliation, safe terminal plan retirement, durable TEST/LIVE provider catalog mappings, managed Stripe Product/Price provisioning, managed Razorpay Plan provisioning, immutable purchased-plan snapshots, subscription history, usage metering, API keys and quotas.
 
 ### Stripe
 
-New paid application plans can provision a Stripe Product and recurring Price automatically. Provider-visible price/currency/billing-interval changes create a replacement Price; the previous Price remains retained for historical/existing subscription references and is inactive for new purchase. Retiring a plan removes the active Product/Price from new sale while preserving historical provider references.
+**Stripe is working and validated in deployed Test Mode.** Hosted Checkout, signed subscription lifecycle webhooks, provider-side cancellation and reconciliation have been validated. This is not a live-production readiness claim.
 
 ### Razorpay
 
-New paid application plans can provision Razorpay Plans automatically. Razorpay does not expose the same mutable/deactivation lifecycle as Stripe, so provider-visible edits create a replacement Plan and archive the old **local mapping**. Existing subscriptions can continue resolving the historical Plan ID while new checkout uses the active replacement mapping.
-
-## Subscription history and retirement
-
-Purchased terms are snapshotted independently of the mutable catalog plan. Historical plan name, description, interval, price/currency and resource limits therefore remain accurate after later plan edits or retirement.
-
-`RETIRED` means:
-
-- unavailable for new checkout immediately
-- not editable/reactivatable through normal catalog lifecycle
-- valid existing subscriptions remain entitled through their current paid period
-- provider subscriptions are scheduled to end at period/cycle boundary
-- local subscription state remains webhook-authoritative
-- durable retirement operations can retry incomplete provider cleanup
-
-`INACTIVE` remains the administrative hard-disable state.
-
-## Stripe Test Mode
-
-**Stripe is the validated deployed Test Mode provider.**
-
-Confirmed:
-
-- hosted subscription Checkout completes with Stripe Test Mode cards
-- signed subscription lifecycle webhooks update local state
-- cancellation reaches Stripe
-- provider/local reconciliation works
-- webhook endpoint listens for `customer.subscription.created`, `customer.subscription.updated` and `customer.subscription.deleted`
-
-The prior stale cancellation incident was caused by `customer.subscription.deleted` being absent from the configured webhook endpoint. That configuration was corrected and the application now includes defensive terminal-state reconciliation.
-
-This is Test Mode validation, not a live-production claim.
-
-## Razorpay Test Mode
-
-**Razorpay application integration and managed catalog provisioning are implemented, but recurring Test Mode authorization remains provider-sandbox blocked.**
-
-The application can create/manage Razorpay Plans, create test subscriptions and reach hosted checkout, but attempted sandbox cards fail inside Razorpay before recurring authorization completes. This external provider behavior does not keep the application billing milestone open.
-
-Current decision:
-
-- Stripe remains the validated Test Mode payment path
-- Razorpay remains implemented but provider-sandbox blocked for recurring-card E2E validation
-- live-provider credentials/catalog readiness remain deferred until a separate provider-specific review
-- never commit keys, API secrets, webhook secrets or provider plan/price IDs
-
-Webhook targets:
-
-```text
-POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/stripe
-POST https://multitenantsaas-akxn.onrender.com/api/billing/webhooks/razorpay
-```
-
-Opening these URLs in a browser sends GET and is not a webhook test.
+**Razorpay application integration and managed catalog provisioning are implemented, but recurring Test Mode authorization remains provider-sandbox blocked.** Keep Razorpay available; treat live/provider readiness separately from core application completeness.
 
 # Tenant Outbound Webhooks
 
-## Milestone status
-
 **Tenant-configurable outbound webhooks are complete at application level through PR #112.**
 
-Implemented across PRs #108–#112:
-
-- tenant-scoped endpoint registration, update, enable/disable and soft archive
-- event-subscription selection from a server-owned event catalogue
-- generated high-entropy signing secrets and secret rotation
-- one-time plaintext secret exposure; AES-256-GCM encrypted storage at rest
-- HTTPS-only endpoint validation and public-routable DNS/SSRF protection
-- delivery-time DNS/SSRF revalidation and disabled redirects
-- immutable event envelopes with stable event IDs and exact stored request bodies
-- endpoint-specific durable delivery records
-- HMAC-SHA256 signatures over `timestamp.eventId.body`
-- lease-safe asynchronous worker processing
-- bounded retries, exponential backoff, timeouts, stale-lease recovery and terminal failure
-- transactional publication from project/task/comment/member/subscription mutations
-- immutable attempt history and replay cycles
-- tenant-scoped paginated delivery history/detail APIs
-- guarded manual replay for terminal deliveries only
-- permission-gated Integrations navigation and full tenant-admin endpoint/delivery UX
-
-Initial events:
-
-```text
-project.created
-project.updated
-project.archived
-task.created
-task.updated
-task.completed
-comment.created
-comment.replied
-member.added
-member.removed
-subscription.updated
-subscription.cancelled
-```
+The platform supports tenant endpoint lifecycle, event subscriptions, generated/rotatable encrypted signing secrets, HTTPS/public-routable SSRF validation, durable HMAC-SHA256 delivery, retries/backoff/leases/timeouts, transactional domain events, immutable delivery attempts, tenant-scoped history and guarded replay through the Integrations workspace.
 
 Focused guides:
 
 - `guides/outbound-webhook-events.md`
 - `guides/outbound-webhook-delivery-history.md`
 - `guides/outbound-webhook-admin-ux.md`
+
+# Enterprise OIDC SSO
+
+**Enterprise OIDC SSO / identity federation is complete at application level through PR #119.**
+
+The implementation sequence is:
+
+- #114 — tenant IdP configuration, encrypted write-only secret and lifecycle
+- #115 — controlled OIDC discovery/JWKS verification
+- #116 — tenant-bound state/nonce/PKCE callback runtime and safe identity linking
+- #117 — workspace auth-mode discovery, `OPTIONAL`/`REQUIRED` policy and break-glass
+- #118 — browser SSO UX and one-time opaque session handoff
+- #119 — Authentication admin UX, recoverable enable/disable lifecycle and federation audit visibility
+
+### Security model
+
+- provider secrets are server-only and encrypted with AES-256-GCM
+- provider destination URLs are HTTPS/public-routable and revalidated before remote requests
+- redirects are disabled for provider HTTP calls
+- state/nonce are high entropy and hashed at rest; PKCE verifier is encrypted
+- authorization transactions are tenant/provider/version bound and single use
+- ID-token signature/algorithm, issuer, audience/authorized party, time claims and nonce are validated
+- federation does not auto-provision application users
+- first link requires `email_verified=true` and an existing active user in the same tenant
+- `REQUIRED` policy needs a verified IdP plus an active password-capable tenant-admin break-glass path
+- invalidating provider verification safely returns the tenant to `OPTIONAL`
+- backend callback redirects only a short-lived opaque handoff code to the frontend completion route
+- audit records omit provider tokens, authorization codes, state, nonce, PKCE, client secrets and sensitive provider payloads
+
+### Tenant authentication modes
+
+Workspace discovery can expose:
+
+```text
+PASSWORD_ONLY
+PASSWORD_OR_SSO
+SSO_ONLY
+SSO_REQUIRED
+```
+
+The tenant Authentication page is available under the existing `tenant.update` permission and supports provider create/edit, verify/re-verify, client-secret rotation, disable/re-enable and policy control.
+
+### Deployment variables
+
+```dotenv
+IDENTITY_FEDERATION_ENCRYPTION_KEY=<Base64 of exactly 32 random bytes>
+OIDC_REDIRECT_URI=https://YOUR_BACKEND_DOMAIN/api/auth/oidc/callback
+OIDC_FRONTEND_COMPLETION_URI=https://YOUR_FRONTEND_DOMAIN/auth/oidc/complete
+OIDC_AUTHORIZATION_TRANSACTION_MINUTES=5
+OIDC_SESSION_HANDOFF_MINUTES=2
+```
+
+The backend callback URI must be registered exactly with the IdP. Keep the encryption key stable while encrypted federation data exists.
+
+Full setup/test procedure: `guides/enterprise-sso-foundation.md`.
+
+SAML is intentionally deferred unless a concrete enterprise requirement justifies another protocol adapter.
 
 ## Database checkpoint
 
@@ -236,30 +151,21 @@ multitenant-saas/src/main/resources/db/postgresql  PostgreSQL V17 baseline
 multitenant-saas/src/main/resources/db/common      portable V18+
 ```
 
-Shared migrations currently extend through **V39**:
+Shared migrations currently extend through **V43**. The most recent milestone migrations are:
 
-- V28 billing foundation
-- V29 provider subscription linkage
-- V30 billing usage events
-- V31 tenant API keys
-- V32 API-key last-used metadata
-- V33 subscription-plan usage limits
-- V34 provider catalog mappings and immutable purchased-plan snapshots
-- V35 durable plan-retirement operations
-- V36 immutable tenant subscription history
-- V37 outbound webhook endpoints and event subscriptions
-- V38 durable outbound webhook events and deliveries
+- V37 outbound webhook endpoints/event subscriptions
+- V38 outbound webhook events/deliveries
 - V39 outbound webhook delivery attempts
+- V40 tenant identity-provider configuration
+- V41 OIDC authorization transactions and tenant federated identities
+- V42 tenant SSO policy
+- V43 OIDC browser session handoffs
 
 Never rewrite an applied Flyway migration.
 
 ## Verification
 
-Required GitHub Actions gates include Backend, PostgreSQL/Flyway, Frontend, Repository Hygiene, Security/Trivy, Container CI and Qodana.
-
-The #108–#112 outbound-webhook sequence was developed under those gates. The final #112 head additionally passed React 19 lint rules, TypeScript/MUI 9 production build, frontend tests/coverage and container build/scan.
-
-Mock/provider-contract coverage validates application behavior; it does not prove Razorpay sandbox availability, live-provider billing readiness or third-party webhook receiver correctness.
+Required GitHub Actions gates include Backend, PostgreSQL/Flyway, Frontend, Repository Hygiene, Security/Trivy, Container CI and Qodana. PR #119 passed all of them on its final head before merge.
 
 ## Deployment
 
@@ -267,38 +173,29 @@ Mock/provider-contract coverage validates application behavior; it does not prov
 - Backend: `https://multitenantsaas-akxn.onrender.com`
 - Production profile: `SPRING_PROFILES_ACTIVE=postgres,production`
 
-All secrets remain environment configured. Outbound webhook endpoint creation/secret rotation also requires the server-side encryption key documented in the application/environment templates.
+Use `.env.production.example` as the deployment variable inventory; never commit real keys or secrets.
 
 ## Documentation and Wiki
-
-Source-of-truth order:
-
-1. current code and tests
-2. current Flyway migrations
-3. focused current guides
-4. historical planning/progress notes
 
 Start with:
 
 - `CHECKPOINT.md`
 - `HANDOFF.md`
-- `guides/outbound-webhook-events.md`
-- `guides/outbound-webhook-delivery-history.md`
-- `guides/outbound-webhook-admin-ux.md`
+- `guides/enterprise-sso-foundation.md`
 - `guides/subscription_billing.md`
 - `wiki/Home.md`
+- `wiki/Security-and-Authentication.md`
+- `wiki/Production-Deployment.md`
 - `wiki/Roadmap.md`
 
-The repository `wiki/` directory is canonical Wiki source. `.github/workflows/wiki-sync.yml` validates Wiki source on relevant pull requests and automatically publishes merged `main` changes to the live GitHub Wiki using `scripts/publish-wiki.ps1`.
+The repository `wiki/` directory is canonical Wiki source. `.github/workflows/wiki-sync.yml` validates relevant changes and publishes merged `main` Wiki updates using `scripts/publish-wiki.ps1`.
 
 ## Next platform milestone
 
-Billing/catalog lifecycle and tenant-configurable outbound webhooks are closed at the application level. The recommended next major product sequence is:
+The recommended product sequence is now:
 
-1. **enterprise SSO / identity federation**
-2. authorization delegation and explain-access
-3. backup/restore drills, monitoring, alerts and operational runbooks
-4. broader load/failure-recovery and production R2 validation
+1. **authorization delegation and explain-access**
+2. backup/restore drills, monitoring, alerts and operational runbooks
+3. broader load/failure-recovery and production R2 verification
+4. optional SAML where a concrete enterprise requirement exists
 5. optional notification expansion such as digests/live browser delivery
-
-For SSO, prefer a provider-neutral federation model with OIDC first, then add SAML only where enterprise requirements justify it. Provider-specific live billing readiness can proceed independently when required.
