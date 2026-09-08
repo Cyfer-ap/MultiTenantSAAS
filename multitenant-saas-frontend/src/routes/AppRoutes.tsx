@@ -159,6 +159,12 @@ const SystemTenantsPage = lazy(() =>
     })),
 )
 
+const TenantAuthenticationPage = lazy(() =>
+    import('../pages/TenantAuthenticationPage').then((module) => ({
+        default: module.TenantAuthenticationPage,
+    })),
+)
+
 const TenantChangePasswordPage = lazy(() =>
     import('../pages/TenantChangePasswordPage').then((module) => ({
         default: module.TenantChangePasswordPage,
@@ -208,13 +214,9 @@ export function AppRoutes() {
 
                 <Route element={<PublicOnlyRoute />}>
                     <Route path="login" element={<LoginPage />} />
-
                     <Route path="accept-invitation" element={<AcceptInvitationPage />} />
-
                     <Route path="forgot-password" element={<ForgotPasswordPage />} />
-
                     <Route path="reset-password" element={<ResetPasswordPage />} />
-
                     <Route path="register" element={<TenantOnboardingPage />} />
                 </Route>
 
@@ -285,6 +287,7 @@ export function AppRoutes() {
                                 />
                             }
                         >
+                            <Route path="authentication" element={<TenantAuthenticationPage />} />
                             <Route path="integrations" element={<OutboundWebhooksPage />} />
                         </Route>
 
@@ -333,12 +336,10 @@ export function AppRoutes() {
                         </Route>
 
                         <Route path="account" element={<AccountSettingsPage />} />
-
                         <Route
                             path="account/change-password"
                             element={<TenantChangePasswordPage />}
                         />
-
                         <Route path="*" element={<NotFoundPage />} />
                     </Route>
                 </Route>

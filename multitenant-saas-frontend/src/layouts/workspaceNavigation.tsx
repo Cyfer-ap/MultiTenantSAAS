@@ -6,6 +6,7 @@ import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded'
 import PersonAddAltRoundedIcon from '@mui/icons-material/PersonAddAltRounded'
+import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded'
 import WebhookRoundedIcon from '@mui/icons-material/WebhookRounded'
 import type { ReactNode } from 'react'
 
@@ -63,6 +64,12 @@ export const workspaceNavigationItems: readonly WorkspaceNavigationItem[] = [
         path: '/authorization',
         icon: <AdminPanelSettingsRoundedIcon />,
         requiredTenantPermissions: [authorizationPermissionCodes.AUTHORIZATION_MANAGE],
+    },
+    {
+        label: 'Authentication',
+        path: '/authentication',
+        icon: <SecurityRoundedIcon />,
+        requiredTenantPermissions: [authorizationPermissionCodes.TENANT_UPDATE],
     },
     {
         label: 'Integrations',
