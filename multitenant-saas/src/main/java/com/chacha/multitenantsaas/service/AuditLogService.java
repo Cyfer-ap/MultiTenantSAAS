@@ -79,6 +79,10 @@ public class AuditLogService {
         recordFailure(tenant, user, user, action, message);
     }
 
+    public void recordSystemSuccess(Tenant tenant, AuditAction action, String message) {
+        recordSuccess(tenant, null, null, action, message);
+    }
+
     public void recordSystemFailure(Tenant tenant, AuditAction action, String message) {
         recordFailure(tenant, null, null, action, message);
     }

@@ -134,6 +134,19 @@ public class TenantIdentityProviderController {
     }
 
     @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId, 'tenant.update')")
+    @PostMapping("/enable")
+    public ResponseEntity<ApiResponse<TenantIdentityProviderResponse>> enable(
+            @PathVariable UUID tenantId, @AuthenticationPrincipal Jwt jwt) {
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(
+                        ApiResponse.success(
+                                "Tenant identity-provider configuration enabled in draft state",
+                                identityProviderService.enable(tenantId, actor)));
+    }
+
+    @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId, 'tenant.update')")
     @DeleteMapping
     public ResponseEntity<ApiResponse<TenantIdentityProviderResponse>> disable(
             @PathVariable UUID tenantId, @AuthenticationPrincipal Jwt jwt) {
