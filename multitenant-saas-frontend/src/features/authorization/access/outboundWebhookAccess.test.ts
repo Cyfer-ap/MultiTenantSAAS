@@ -5,25 +5,26 @@ import { createTenantAuthorizationContext } from '../test/authorizationTestData'
 import { authorizationPermissionCodes } from '../types/authorization'
 import { getDefaultAuthorizedPath } from './authorizationAccess'
 
-describe('outbound webhook access', () => {
-    it('exposes integrations and uses it as the default route for tenant.update', () => {
+describe('tenant.update workspace access', () => {
+    it('exposes authentication and integrations while preserving integrations as the default route', () => {
         const context = createTenantAuthorizationContext({
             permissionCodes: [authorizationPermissionCodes.TENANT_UPDATE],
         })
 
         expect(getAvailableWorkspaceNavigationItems(context).map((item) => item.label)).toEqual([
+            'Authentication',
             'Integrations',
         ])
         expect(getDefaultAuthorizedPath(context)).toBe('/integrations')
     })
 
-    it('does not expose integrations without tenant.update', () => {
+    it('does not expose authentication or integrations without tenant.update', () => {
         const context = createTenantAuthorizationContext({
             permissionCodes: [authorizationPermissionCodes.SUBSCRIPTION_READ],
         })
+        const labels = getAvailableWorkspaceNavigationItems(context).map((item) => item.label)
 
-        expect(
-            getAvailableWorkspaceNavigationItems(context).map((item) => item.label),
-        ).not.toContain('Integrations')
+        expect(labels).not.toContain('Authentication')
+        expect(labels).not.toContain('Integrations')
     })
 })
