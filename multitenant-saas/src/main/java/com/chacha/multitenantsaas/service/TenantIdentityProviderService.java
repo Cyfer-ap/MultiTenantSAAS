@@ -191,6 +191,25 @@ public class TenantIdentityProviderService {
     }
 
     @Transactional
+    public TenantIdentityProviderResponse enable(UUID tenantId, AppUser actor) {
+        Tenant tenant = getActiveTenant(tenantId);
+        requireTenantActor(tenantId, actor);
+        TenantIdentityProvider identityProvider = requireConfiguration(tenantId);
+
+        if (identityProvider.getStatus() == TenantIdentityProviderStatus.DISABLED) {
+            identityProvider.enable(actor, Instant.now());
+            identityProviderRepository.save(identityProvider);
+            auditLogService.recordSelfSuccess(
+                    tenant,
+                    actor,
+                    AuditAction.IDENTITY_PROVIDER_ENABLED,
+                    "Enabled tenant identity provider " + identityProvider.getId()
+                            + " in draft state; verification is required before SSO can be used");
+        }
+        return mapResponse(identityProvider);
+    }
+
+    @Transactional
     public TenantIdentityProviderResponse disable(UUID tenantId, AppUser actor) {
         Tenant tenant = getActiveTenant(tenantId);
         requireTenantActor(tenantId, actor);

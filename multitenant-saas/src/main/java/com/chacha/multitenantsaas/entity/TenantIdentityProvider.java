@@ -177,6 +177,17 @@ public class TenantIdentityProvider {
         updatedAt = now;
     }
 
+    public void enable(AppUser actor, Instant now) {
+        if (status == TenantIdentityProviderStatus.DISABLED) {
+            status = TenantIdentityProviderStatus.DRAFT;
+            ssoMode = TenantSsoMode.OPTIONAL;
+            verifiedAt = null;
+            disabledAt = null;
+            updatedByUser = actor;
+            updatedAt = now;
+        }
+    }
+
     public void disable(AppUser actor, Instant now) {
         ssoMode = TenantSsoMode.OPTIONAL;
         if (status != TenantIdentityProviderStatus.DISABLED) {
