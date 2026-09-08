@@ -68,7 +68,11 @@ describe('identityProviderApi', () => {
         await identityProviderApi.create('tenant-1', createInput)
         await identityProviderApi.rotateClientSecret('tenant-1', 'replacement-secret')
 
-        expect(post).toHaveBeenNthCalledWith(1, '/api/tenants/tenant-1/identity-provider', createInput)
+        expect(post).toHaveBeenNthCalledWith(
+            1,
+            '/api/tenants/tenant-1/identity-provider',
+            createInput,
+        )
         expect(post).toHaveBeenNthCalledWith(
             2,
             '/api/tenants/tenant-1/identity-provider/rotate-client-secret',
