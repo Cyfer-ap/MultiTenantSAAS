@@ -20,11 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/tenants/{tenantId}/authorization")
 public class AuthorizationExplainAccessController {
 
-    private final AuthorizationAccessExplanationCommandService authorizationAccessExplanationCommandService;
+    private final AuthorizationAccessExplanationCommandService
+            authorizationAccessExplanationCommandService;
 
     public AuthorizationExplainAccessController(
-            AuthorizationAccessExplanationCommandService authorizationAccessExplanationCommandService) {
-        this.authorizationAccessExplanationCommandService = authorizationAccessExplanationCommandService;
+            AuthorizationAccessExplanationCommandService
+                    authorizationAccessExplanationCommandService) {
+        this.authorizationAccessExplanationCommandService =
+                authorizationAccessExplanationCommandService;
     }
 
     @PreAuthorize(

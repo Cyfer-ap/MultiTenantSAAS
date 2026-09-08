@@ -87,31 +87,51 @@ class AuthorizationExplainAccessIntegrationTest {
 
         String accessToken = login(context.tenant().getId(), manager.getEmail());
 
-        explain(accessToken, context.tenant().getId(), manager.getId(),
-                        PlatformPermissionCodes.AUTHORIZATION_MANAGE, "TENANT", null)
+        explain(
+                        accessToken,
+                        context.tenant().getId(),
+                        manager.getId(),
+                        PlatformPermissionCodes.AUTHORIZATION_MANAGE,
+                        "TENANT",
+                        null)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.granted").value(true))
                 .andExpect(jsonPath("$.data.reason").value("GRANTED_BY_ROLE_ASSIGNMENT"))
                 .andExpect(jsonPath("$.data.matchedGrant.roleCode").value("EXPLAIN_ACCESS_MANAGER"))
                 .andExpect(jsonPath("$.data.matchedGrant.scopeType").value("TENANT"));
 
-        explain(accessToken, context.tenant().getId(), manager.getId(),
-                        PlatformPermissionCodes.USER_READ, "USER", manager.getId())
+        explain(
+                        accessToken,
+                        context.tenant().getId(),
+                        manager.getId(),
+                        PlatformPermissionCodes.USER_READ,
+                        "USER",
+                        manager.getId())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.granted").value(true))
                 .andExpect(jsonPath("$.data.reason").value("GRANTED_BY_ROLE_ASSIGNMENT"))
                 .andExpect(jsonPath("$.data.matchedGrant.roleCode").value("SELF_USER_READER"))
                 .andExpect(jsonPath("$.data.matchedGrant.scopeType").value("SELF"));
 
-        explain(accessToken, context.tenant().getId(), manager.getId(),
-                        PlatformPermissionCodes.USER_READ, "USER", anotherUser.getId())
+        explain(
+                        accessToken,
+                        context.tenant().getId(),
+                        manager.getId(),
+                        PlatformPermissionCodes.USER_READ,
+                        "USER",
+                        anotherUser.getId())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.granted").value(false))
                 .andExpect(jsonPath("$.data.reason").value("SCOPE_NOT_SATISFIED"))
                 .andExpect(jsonPath("$.data.matchedGrant").isEmpty());
 
-        explain(accessToken, context.tenant().getId(), manager.getId(),
-                        PlatformPermissionCodes.AUDIT_READ, "TENANT", null)
+        explain(
+                        accessToken,
+                        context.tenant().getId(),
+                        manager.getId(),
+                        PlatformPermissionCodes.AUDIT_READ,
+                        "TENANT",
+                        null)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.granted").value(false))
                 .andExpect(jsonPath("$.data.reason").value("NO_EFFECTIVE_GRANT"))
@@ -133,15 +153,25 @@ class AuthorizationExplainAccessIntegrationTest {
 
         String managerToken = login(context.tenant().getId(), manager.getEmail());
 
-        explain(managerToken, context.tenant().getId(), anotherTenant.administrator().getId(),
-                        PlatformPermissionCodes.TENANT_READ, "TENANT", null)
+        explain(
+                        managerToken,
+                        context.tenant().getId(),
+                        anotherTenant.administrator().getId(),
+                        PlatformPermissionCodes.TENANT_READ,
+                        "TENANT",
+                        null)
                 .andExpect(status().isNotFound());
 
         AppUser ordinaryUser = createUser(context.tenant(), "No Explain Permission");
         String ordinaryToken = login(context.tenant().getId(), ordinaryUser.getEmail());
 
-        explain(ordinaryToken, context.tenant().getId(), ordinaryUser.getId(),
-                        PlatformPermissionCodes.TENANT_READ, "TENANT", null)
+        explain(
+                        ordinaryToken,
+                        context.tenant().getId(),
+                        ordinaryUser.getId(),
+                        PlatformPermissionCodes.TENANT_READ,
+                        "TENANT",
+                        null)
                 .andExpect(status().isForbidden());
     }
 

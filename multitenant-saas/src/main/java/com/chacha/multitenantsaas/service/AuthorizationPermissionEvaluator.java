@@ -66,7 +66,8 @@ public class AuthorizationPermissionEvaluator {
             UUID userId,
             String permissionCode,
             AuthorizationEvaluationContext context) {
-        return evaluatePermission(tenantId, userId, permissionCode, context, Instant.now()).granted();
+        return evaluatePermission(tenantId, userId, permissionCode, context, Instant.now())
+                .granted();
     }
 
     @Transactional(readOnly = true)

@@ -211,7 +211,8 @@ public class AuthorizationAccessExplanationService {
 
     private UUID requireTarget(AuthorizationAccessContextType contextType, UUID targetId) {
         if (targetId == null) {
-            throw new IllegalArgumentException(contextType + " access context requires a target id.");
+            throw new IllegalArgumentException(
+                    contextType + " access context requires a target id.");
         }
         return targetId;
     }
