@@ -156,7 +156,8 @@ public class AuthorizationDelegationService {
         AuthorizationDelegation delegation = getDelegationOrThrow(tenantId, delegationId);
 
         if (!delegation.getDelegatorUser().getId().equals(actor.getId()) && !canManageAll) {
-            throw new AccessDeniedException("Only the delegator or an authorization administrator can revoke this delegation.");
+            throw new AccessDeniedException(
+                    "Only the delegator or an authorization administrator can revoke this delegation.");
         }
 
         if (delegation.getStatus() == AuthorizationDelegationStatus.REVOKED) {
@@ -275,6 +276,13 @@ public class AuthorizationDelegationService {
             Instant now,
             Instant validFrom,
             Instant validUntil) {
+        if (parentAssignment.getValidFrom().isAfter(now)) {
+            throw new IllegalArgumentException(
+                    "Parent authority assignment must already be effective.");
+        }
+        if (validFrom.isBefore(now)) {
+            throw new IllegalArgumentException("Delegation valid-from time cannot be in the past.");
+        }
         if (!validUntil.isAfter(validFrom) || !validUntil.isAfter(now)) {
             throw new IllegalArgumentException(
                     "Delegation valid-until time must be after valid-from and current time.");

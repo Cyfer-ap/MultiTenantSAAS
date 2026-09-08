@@ -28,6 +28,7 @@ import com.chacha.multitenantsaas.repository.TenantRepository;
 import com.chacha.multitenantsaas.security.AuthorizationAccessDecisionReason;
 import com.chacha.multitenantsaas.security.AuthorizationEvaluationContext;
 import com.chacha.multitenantsaas.security.AuthorizationPermissionDecision;
+import com.chacha.multitenantsaas.security.PlatformPermissionCodes;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -196,6 +197,10 @@ public class AuthorizationPermissionEvaluator {
             AuthorizationDelegation delegation,
             AuthorizationEvaluationContext context,
             Instant effectiveAt) {
+        if (PlatformPermissionCodes.AUTHORIZATION_MANAGE.equals(permissionCode)
+                || PlatformPermissionCodes.AUTHORIZATION_DELEGATE.equals(permissionCode)) {
+            return false;
+        }
         if (delegation.getStatus() != AuthorizationDelegationStatus.ACTIVE
                 || delegation.getRevokedAt() != null
                 || !delegation.getDelegateUser().getId().equals(delegatedGrant.getUser().getId())

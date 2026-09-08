@@ -69,7 +69,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV43AndMatchesJpaMappings() {
+    void postgresSchemaReachesV44AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -81,18 +81,19 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("43");
+        assertThat(version).isEqualTo("44");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
                         "SELECT COUNT(*) FROM authorization_permissions", Integer.class);
 
-        assertThat(permissionCount).isEqualTo(20);
+        assertThat(permissionCount).isEqualTo(21);
 
         assertTableExists("tenants");
         assertTableExists("app_users");
         assertTableExists("organizational_units");
         assertTableExists("authorization_user_role_assignments");
+        assertTableExists("authorization_delegations");
         assertTableExists("subscription_plans");
         assertTableExists("tenant_subscriptions");
         assertTableExists("tenant_subscription_history");
@@ -122,6 +123,15 @@ class PostgreSqlSchemaIntegrationTest {
         assertTableExists("oidc_authorization_transactions");
         assertTableExists("tenant_federated_identities");
         assertTableExists("oidc_session_handoffs");
+        assertColumnExists("authorization_delegations", "tenant_id");
+        assertColumnExists("authorization_delegations", "delegator_user_id");
+        assertColumnExists("authorization_delegations", "delegate_user_id");
+        assertColumnExists("authorization_delegations", "parent_authority_assignment_id");
+        assertColumnExists("authorization_delegations", "delegated_assignment_id");
+        assertColumnExists("authorization_delegations", "status");
+        assertColumnExists("authorization_delegations", "created_at");
+        assertColumnExists("authorization_delegations", "revoked_at");
+        assertColumnExists("authorization_delegations", "revoked_by_user_id");
         assertColumnExists("subscription_plan_usage_limits", "plan_id");
         assertColumnExists("subscription_plan_usage_limits", "metric_code");
         assertColumnExists("subscription_plan_usage_limits", "period_limit");
