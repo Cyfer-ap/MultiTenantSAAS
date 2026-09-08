@@ -19,7 +19,9 @@ import com.chacha.multitenantsaas.repository.AuthorizationUserRoleAssignmentRepo
 import com.chacha.multitenantsaas.repository.OrganizationalUnitRepository;
 import com.chacha.multitenantsaas.repository.ProjectRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
+import com.chacha.multitenantsaas.security.AuthorizationAccessDecisionReason;
 import com.chacha.multitenantsaas.security.AuthorizationEvaluationContext;
+import com.chacha.multitenantsaas.security.AuthorizationPermissionDecision;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -51,15 +53,10 @@ public class AuthorizationPermissionEvaluator {
             ProjectRepository projectRepository,
             AuthorizationScopeQueryService authorizationScopeQueryService) {
         this.tenantRepository = tenantRepository;
-
         this.appUserRepository = appUserRepository;
-
         this.assignmentRepository = assignmentRepository;
-
         this.organizationalUnitRepository = organizationalUnitRepository;
-
         this.projectRepository = projectRepository;
-
         this.authorizationScopeQueryService = authorizationScopeQueryService;
     }
 
@@ -69,7 +66,7 @@ public class AuthorizationPermissionEvaluator {
             UUID userId,
             String permissionCode,
             AuthorizationEvaluationContext context) {
-        return hasPermission(tenantId, userId, permissionCode, context, Instant.now());
+        return evaluatePermission(tenantId, userId, permissionCode, context, Instant.now()).granted();
     }
 
     @Transactional(readOnly = true)
@@ -79,29 +76,57 @@ public class AuthorizationPermissionEvaluator {
             String permissionCode,
             AuthorizationEvaluationContext context,
             Instant effectiveAt) {
+        return evaluatePermission(tenantId, userId, permissionCode, context, effectiveAt).granted();
+    }
+
+    @Transactional(readOnly = true)
+    public AuthorizationPermissionDecision evaluatePermission(
+            UUID tenantId,
+            UUID userId,
+            String permissionCode,
+            AuthorizationEvaluationContext context) {
+        return evaluatePermission(tenantId, userId, permissionCode, context, Instant.now());
+    }
+
+    @Transactional(readOnly = true)
+    public AuthorizationPermissionDecision evaluatePermission(
+            UUID tenantId,
+            UUID userId,
+            String permissionCode,
+            AuthorizationEvaluationContext context,
+            Instant effectiveAt) {
+        Instant decisionAt =
+                (effectiveAt == null ? Instant.now() : effectiveAt).truncatedTo(ChronoUnit.MICROS);
+
         if (tenantId == null || userId == null || permissionCode == null || effectiveAt == null) {
-            return false;
+            return AuthorizationPermissionDecision.denied(
+                    AuthorizationAccessDecisionReason.INVALID_INPUT, null, decisionAt);
         }
 
         String normalizedPermissionCode = normalizePermissionCode(permissionCode);
 
         if (normalizedPermissionCode == null) {
-            return false;
+            return AuthorizationPermissionDecision.denied(
+                    AuthorizationAccessDecisionReason.INVALID_PERMISSION_CODE, null, decisionAt);
         }
 
         Tenant tenant = tenantRepository.findById(tenantId).orElse(null);
 
         if (tenant == null || tenant.getStatus() != TenantStatus.ACTIVE) {
-            return false;
+            return AuthorizationPermissionDecision.denied(
+                    AuthorizationAccessDecisionReason.TENANT_UNAVAILABLE,
+                    normalizedPermissionCode,
+                    decisionAt);
         }
 
         AppUser user = appUserRepository.findByTenantIdAndId(tenantId, userId).orElse(null);
 
         if (user == null || user.getStatus() != UserStatus.ACTIVE) {
-            return false;
+            return AuthorizationPermissionDecision.denied(
+                    AuthorizationAccessDecisionReason.SUBJECT_UNAVAILABLE,
+                    normalizedPermissionCode,
+                    decisionAt);
         }
-
-        Instant normalizedEffectiveAt = effectiveAt.truncatedTo(ChronoUnit.MICROS);
 
         AuthorizationEvaluationContext resolvedContext =
                 context == null ? AuthorizationEvaluationContext.tenant() : context;
@@ -115,15 +140,26 @@ public class AuthorizationPermissionEvaluator {
                         AuthorizationRoleStatus.ACTIVE,
                         AuthorizationPermissionStatus.ACTIVE,
                         AuthorizationPermissionSource.PLATFORM,
-                        normalizedEffectiveAt);
+                        decisionAt);
+
+        if (effectiveGrants.isEmpty()) {
+            return AuthorizationPermissionDecision.denied(
+                    AuthorizationAccessDecisionReason.NO_EFFECTIVE_GRANT,
+                    normalizedPermissionCode,
+                    decisionAt);
+        }
 
         for (AuthorizationUserRoleAssignment grant : effectiveGrants) {
-            if (matchesScope(tenantId, userId, grant, resolvedContext, normalizedEffectiveAt)) {
-                return true;
+            if (matchesScope(tenantId, userId, grant, resolvedContext, decisionAt)) {
+                return AuthorizationPermissionDecision.granted(
+                        normalizedPermissionCode, decisionAt, grant);
             }
         }
 
-        return false;
+        return AuthorizationPermissionDecision.denied(
+                AuthorizationAccessDecisionReason.SCOPE_NOT_SATISFIED,
+                normalizedPermissionCode,
+                decisionAt);
     }
 
     private boolean matchesScope(
@@ -140,23 +176,18 @@ public class AuthorizationPermissionEvaluator {
 
         return switch (scopeType) {
             case TENANT -> true;
-
             case SELF -> context.targetUserId() != null && context.targetUserId().equals(userId);
-
             case PROJECT ->
                     matchesProjectScope(tenantId, grant.getScopeTargetId(), context.projectId());
-
             case ORGANIZATIONAL_UNIT ->
                     !context.requireSubtreeScope()
                             && matchesExactUnitScope(
                                     tenantId,
                                     grant.getScopeTargetId(),
                                     context.organizationalUnitId());
-
             case ORGANIZATIONAL_SUBTREE ->
                     matchesSubtreeScope(
                             tenantId, grant.getScopeTargetId(), context.organizationalUnitId());
-
             case DIRECT_REPORTS ->
                     matchesDirectReportsScope(
                             tenantId, userId, grant.getScopeTargetId(), context, effectiveAt);
