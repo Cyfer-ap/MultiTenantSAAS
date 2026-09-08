@@ -21,8 +21,21 @@ export function OidcCompletePage() {
     const location = useLocation()
     const navigate = useNavigate()
     const exchangeStarted = useRef(false)
-    const [busy, setBusy] = useState(true)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [{ code, providerError }] = useState(() => {
+        const parameters = new URLSearchParams(location.search)
+
+        return {
+            code: parameters.get('code')?.trim() ?? '',
+            providerError: parameters.get('error')?.trim() ?? '',
+        }
+    })
+    const [exchangeErrorMessage, setExchangeErrorMessage] = useState<string | null>(null)
+    const initialErrorMessage = providerError
+        ? 'Single sign-on could not be completed. Please return to sign in.'
+        : !code
+          ? 'The single sign-on session is missing or invalid. Please sign in again.'
+          : null
+    const errorMessage = initialErrorMessage ?? exchangeErrorMessage
 
     useEffect(() => {
         if (exchangeStarted.current) {
@@ -31,25 +44,11 @@ export function OidcCompletePage() {
 
         exchangeStarted.current = true
 
-        const parameters = new URLSearchParams(location.search)
-        const code = parameters.get('code')?.trim() ?? ''
-        const providerError = parameters.get('error')?.trim() ?? ''
-
         if (location.search) {
             navigate(location.pathname, { replace: true })
         }
 
-        if (providerError) {
-            setErrorMessage('Single sign-on could not be completed. Please return to sign in.')
-            setBusy(false)
-            return
-        }
-
-        if (!code) {
-            setErrorMessage(
-                'The single sign-on session is missing or invalid. Please sign in again.',
-            )
-            setBusy(false)
+        if (initialErrorMessage) {
             return
         }
 
@@ -59,13 +58,12 @@ export function OidcCompletePage() {
                 commitLoginResponse(response)
                 navigate('/dashboard', { replace: true })
             } catch (error: unknown) {
-                setErrorMessage(normalizeApiError(error).message)
-                setBusy(false)
+                setExchangeErrorMessage(normalizeApiError(error).message)
             }
         }
 
         void completeLogin()
-    }, [location.pathname, location.search, navigate])
+    }, [code, initialErrorMessage, location.pathname, location.search, navigate])
 
     return (
         <Box
@@ -99,7 +97,7 @@ export function OidcCompletePage() {
                             </Typography>
                         </Box>
 
-                        {busy && !errorMessage && (
+                        {!errorMessage && (
                             <CircularProgress aria-label="Completing single sign-on" />
                         )}
 
