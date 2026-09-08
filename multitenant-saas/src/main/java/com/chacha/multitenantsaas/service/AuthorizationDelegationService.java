@@ -85,7 +85,8 @@ public class AuthorizationDelegationService {
         AppUser delegate = getRequiredActiveUser(tenantId, request.delegateUserId(), "Delegate");
 
         if (delegator.getId().equals(delegate.getId())) {
-            throw new IllegalArgumentException("Authorization cannot be delegated to the same user.");
+            throw new IllegalArgumentException(
+                    "Authorization cannot be delegated to the same user.");
         }
 
         AuthorizationUserRoleAssignment parentAssignment =
@@ -95,10 +96,7 @@ public class AuthorizationDelegationService {
         AuthorizationRole delegatedRole = getRequiredActiveRole(tenantId, request.roleId());
         validatePermissionContainment(tenantId, parentAssignment.getRole(), delegatedRole);
         validateScopeContainment(
-                tenantId,
-                parentAssignment,
-                request.scopeType(),
-                request.scopeTargetId());
+                tenantId, parentAssignment, request.scopeType(), request.scopeTargetId());
 
         Instant now = normalizeDatabaseInstant(Instant.now());
         Instant validFrom =
@@ -123,11 +121,7 @@ public class AuthorizationDelegationService {
 
         AuthorizationDelegation delegation =
                 new AuthorizationDelegation(
-                        tenant,
-                        delegator,
-                        delegate,
-                        parentAssignment,
-                        delegatedAssignment);
+                        tenant, delegator, delegate, parentAssignment, delegatedAssignment);
 
         return mapToResponse(delegationRepository.saveAndFlush(delegation));
     }
@@ -196,10 +190,12 @@ public class AuthorizationDelegationService {
     private void validatePermissionContainment(
             UUID tenantId, AuthorizationRole parentRole, AuthorizationRole delegatedRole) {
         Set<String> parentPermissions = getActivePermissionCodes(tenantId, parentRole.getId());
-        Set<String> delegatedPermissions = getActivePermissionCodes(tenantId, delegatedRole.getId());
+        Set<String> delegatedPermissions =
+                getActivePermissionCodes(tenantId, delegatedRole.getId());
 
         if (delegatedPermissions.isEmpty()) {
-            throw new IllegalArgumentException("Delegated role must contain at least one active permission.");
+            throw new IllegalArgumentException(
+                    "Delegated role must contain at least one active permission.");
         }
         if (delegatedPermissions.contains(PlatformPermissionCodes.AUTHORIZATION_MANAGE)
                 || delegatedPermissions.contains(PlatformPermissionCodes.AUTHORIZATION_DELEGATE)) {
@@ -220,7 +216,8 @@ public class AuthorizationDelegationService {
                 .collect(Collectors.toUnmodifiableSet());
     }
 
-    private boolean isActiveAccessiblePermission(UUID tenantId, AuthorizationPermission permission) {
+    private boolean isActiveAccessiblePermission(
+            UUID tenantId, AuthorizationPermission permission) {
         if (permission.getStatus() != AuthorizationPermissionStatus.ACTIVE) {
             return false;
         }
@@ -256,7 +253,8 @@ public class AuthorizationDelegationService {
                     case ORGANIZATIONAL_SUBTREE ->
                             (delegatedScopeType == AuthorizationScopeType.ORGANIZATIONAL_UNIT
                                             || delegatedScopeType
-                                                    == AuthorizationScopeType.ORGANIZATIONAL_SUBTREE)
+                                                    == AuthorizationScopeType
+                                                            .ORGANIZATIONAL_SUBTREE)
                                     && delegatedScopeTargetId != null
                                     && authorizationScopeQueryService.isUnitInSubtree(
                                             tenantId,
@@ -350,7 +348,8 @@ public class AuthorizationDelegationService {
                 .orElseThrow(
                         () ->
                                 new ResourceNotFoundException(
-                                        "Authorization delegation not found with id: " + delegationId));
+                                        "Authorization delegation not found with id: "
+                                                + delegationId));
     }
 
     private Instant normalizeDatabaseInstant(Instant value) {

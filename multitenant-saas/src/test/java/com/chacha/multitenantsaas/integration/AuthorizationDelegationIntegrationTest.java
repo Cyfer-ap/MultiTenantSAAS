@@ -88,12 +88,7 @@ class AuthorizationDelegationIntegrationTest {
                         Set.of(PlatformPermissionCodes.PROJECT_TASK_READ));
         AuthorizationUserRoleAssignmentResponse parentAssignment =
                 assignRole(
-                        context,
-                        delegator,
-                        parentRole,
-                        AuthorizationScopeType.TENANT,
-                        null,
-                        null);
+                        context, delegator, parentRole, AuthorizationScopeType.TENANT, null, null);
 
         String token = login(context.tenant().getId(), delegator.getEmail());
         Instant validUntil = Instant.now().plus(2, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MICROS);
@@ -112,7 +107,8 @@ class AuthorizationDelegationIntegrationTest {
                         .andExpect(jsonPath("$.data.status").value("ACTIVE"))
                         .andExpect(jsonPath("$.data.roleCode").value("DELEGATED_TASK_READER"))
                         .andExpect(jsonPath("$.data.scopeType").value("PROJECT"))
-                        .andExpect(jsonPath("$.data.scopeTargetId").value(project.getId().toString()))
+                        .andExpect(
+                                jsonPath("$.data.scopeTargetId").value(project.getId().toString()))
                         .andExpect(
                                 jsonPath("$.data.parentAssignmentId")
                                         .value(parentAssignment.id().toString()))
@@ -138,7 +134,9 @@ class AuthorizationDelegationIntegrationTest {
                 .isFalse();
 
         mockMvc.perform(
-                        get("/api/tenants/{tenantId}/authorization/delegations", context.tenant().getId())
+                        get(
+                                        "/api/tenants/{tenantId}/authorization/delegations",
+                                        context.tenant().getId())
                                 .header(HttpHeaders.AUTHORIZATION, bearer(token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1))
@@ -183,12 +181,7 @@ class AuthorizationDelegationIntegrationTest {
                         Set.of(PlatformPermissionCodes.PROJECT_TASK_READ));
         AuthorizationUserRoleAssignmentResponse parentAssignment =
                 assignRole(
-                        context,
-                        delegator,
-                        parentRole,
-                        AuthorizationScopeType.TENANT,
-                        null,
-                        null);
+                        context, delegator, parentRole, AuthorizationScopeType.TENANT, null, null);
 
         String token = login(context.tenant().getId(), delegator.getEmail());
         createDelegation(
@@ -237,13 +230,7 @@ class AuthorizationDelegationIntegrationTest {
                         context.tenant(),
                         "DELEGATION_CAPABILITY",
                         Set.of(PlatformPermissionCodes.AUTHORIZATION_DELEGATE));
-        assignRole(
-                context,
-                delegator,
-                capabilityRole,
-                AuthorizationScopeType.TENANT,
-                null,
-                null);
+        assignRole(context, delegator, capabilityRole, AuthorizationScopeType.TENANT, null, null);
 
         AuthorizationRoleResponse parentRole =
                 createRole(
@@ -344,14 +331,8 @@ class AuthorizationDelegationIntegrationTest {
                                 .asText());
 
         assignRole(
-                context,
-                firstDelegate,
-                capabilityRole,
-                AuthorizationScopeType.TENANT,
-                null,
-                null);
-        String firstDelegateToken =
-                login(context.tenant().getId(), firstDelegate.getEmail());
+                context, firstDelegate, capabilityRole, AuthorizationScopeType.TENANT, null, null);
+        String firstDelegateToken = login(context.tenant().getId(), firstDelegate.getEmail());
 
         createDelegation(
                         firstDelegateToken,
@@ -375,8 +356,7 @@ class AuthorizationDelegationIntegrationTest {
             UUID scopeTargetId,
             Instant validUntil)
             throws Exception {
-        String scopeTargetJson =
-                scopeTargetId == null ? "null" : "\"" + scopeTargetId + "\"";
+        String scopeTargetJson = scopeTargetId == null ? "null" : "\"" + scopeTargetId + "\"";
         return mockMvc.perform(
                 post("/api/tenants/{tenantId}/authorization/delegations", tenantId)
                         .header(HttpHeaders.AUTHORIZATION, bearer(token))

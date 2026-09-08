@@ -68,8 +68,7 @@ public class AuthorizationDelegationController {
             @PathVariable UUID delegationId,
             @AuthenticationPrincipal Jwt jwt) {
         AuthorizationDelegationResponse response =
-                authorizationDelegationCommandService.revokeDelegation(
-                        tenantId, delegationId, jwt);
+                authorizationDelegationCommandService.revokeDelegation(tenantId, delegationId, jwt);
         return ResponseEntity.ok(
                 ApiResponse.success("Authorization delegation revoked successfully", response));
     }

@@ -215,7 +215,8 @@ public class AuthorizationPermissionEvaluator {
                 || parent.getRole().getStatus() != AuthorizationRoleStatus.ACTIVE
                 || parent.getUser().getStatus() != UserStatus.ACTIVE
                 || parent.getValidFrom().isAfter(effectiveAt)
-                || (parent.getValidUntil() != null && !parent.getValidUntil().isAfter(effectiveAt))) {
+                || (parent.getValidUntil() != null
+                        && !parent.getValidUntil().isAfter(effectiveAt))) {
             return false;
         }
 
@@ -227,14 +228,15 @@ public class AuthorizationPermissionEvaluator {
             return false;
         }
 
-        return matchesScope(
-                tenantId, parent.getUser().getId(), parent, context, effectiveAt);
+        return matchesScope(tenantId, parent.getUser().getId(), parent, context, effectiveAt);
     }
 
     private boolean roleGrantsPermission(UUID tenantId, UUID roleId, String permissionCode) {
         return rolePermissionRepository.findRolePermissions(tenantId, roleId).stream()
                 .map(AuthorizationRolePermission::getPermission)
-                .filter(permission -> permission.getStatus() == AuthorizationPermissionStatus.ACTIVE)
+                .filter(
+                        permission ->
+                                permission.getStatus() == AuthorizationPermissionStatus.ACTIVE)
                 .filter(
                         permission ->
                                 permission.getSource() == AuthorizationPermissionSource.PLATFORM
