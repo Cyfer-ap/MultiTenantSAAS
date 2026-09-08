@@ -76,7 +76,7 @@ class AuthorizationRoleIntegrationTest {
 
         assertEquals(AuthorizationRoleStatus.ACTIVE, adminRole.status());
 
-        assertEquals(20, adminRole.permissions().size());
+        assertEquals(21, adminRole.permissions().size());
 
         assertTrue(containsPermissionCode(adminRole, PlatformPermissionCodes.SUBSCRIPTION_READ));
 
