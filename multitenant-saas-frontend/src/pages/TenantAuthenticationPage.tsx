@@ -71,7 +71,14 @@ function statusColor(status: TenantIdentityProvider['status']): 'default' | 'suc
 }
 
 function parseScopes(value: string): string[] {
-    return [...new Set(value.split(/[\s,]+/).map((scope) => scope.trim()).filter(Boolean))]
+    return [
+        ...new Set(
+            value
+                .split(/[\s,]+/)
+                .map((scope) => scope.trim())
+                .filter(Boolean),
+        ),
+    ]
 }
 
 interface ProviderConfigurationFormProps {
@@ -91,7 +98,9 @@ function ProviderConfigurationForm({
     const [issuerUri, setIssuerUri] = useState(provider?.issuerUri ?? '')
     const [clientId, setClientId] = useState(provider?.clientId ?? '')
     const [clientSecret, setClientSecret] = useState('')
-    const [scopes, setScopes] = useState((provider?.scopes ?? ['openid', 'profile', 'email']).join(' '))
+    const [scopes, setScopes] = useState(
+        (provider?.scopes ?? ['openid', 'profile', 'email']).join(' '),
+    )
 
     const normalizedScopes = parseScopes(scopes)
     const canSave =
@@ -163,7 +172,13 @@ function ProviderConfigurationForm({
             />
             <Box>
                 <Button disabled={!canSave} onClick={submit} variant="contained">
-                    {saving ? <CircularProgress color="inherit" size={20} /> : provider ? 'Save configuration' : 'Create configuration'}
+                    {saving ? (
+                        <CircularProgress color="inherit" size={20} />
+                    ) : provider ? (
+                        'Save configuration'
+                    ) : (
+                        'Create configuration'
+                    )}
                 </Button>
             </Box>
         </Stack>
@@ -184,7 +199,8 @@ function RotateSecretDialog({ open, saving, onClose, onRotate }: RotateSecretDia
             <DialogTitle>Rotate OIDC client secret</DialogTitle>
             <DialogContent>
                 <Alert severity="warning" sx={{ mb: 2, mt: 0.5 }}>
-                    Rotation invalidates provider verification and returns the tenant to optional SSO until the provider is verified again.
+                    Rotation invalidates provider verification and returns the tenant to optional
+                    SSO until the provider is verified again.
                 </Alert>
                 <TextField
                     autoComplete="new-password"
@@ -196,7 +212,9 @@ function RotateSecretDialog({ open, saving, onClose, onRotate }: RotateSecretDia
                 />
             </DialogContent>
             <DialogActions>
-                <Button disabled={saving} onClick={onClose}>Cancel</Button>
+                <Button disabled={saving} onClick={onClose}>
+                    Cancel
+                </Button>
                 <Button
                     disabled={saving || secret.length < 8}
                     onClick={() => onRotate(secret)}
@@ -251,7 +269,9 @@ export function TenantAuthenticationPage() {
                 sx={{ alignItems: { sm: 'flex-start' }, justifyContent: 'space-between' }}
             >
                 <Box>
-                    <Typography component="h1" variant="h4">Authentication</Typography>
+                    <Typography component="h1" variant="h4">
+                        Authentication
+                    </Typography>
                     <Typography color="text.secondary" sx={{ mt: 0.5 }}>
                         Configure tenant OIDC federation, SSO enforcement, and recovery controls.
                     </Typography>
@@ -273,16 +293,23 @@ export function TenantAuthenticationPage() {
             )}
 
             <Alert icon={<SecurityRoundedIcon />} severity="info" sx={{ mt: 3 }}>
-                Provider secrets remain server-side. SSO enforcement is allowed only after verification and only while at least one active tenant administrator retains a password-based break-glass path.
+                Provider secrets remain server-side. SSO enforcement is allowed only after
+                verification and only while at least one active tenant administrator retains a
+                password-based break-glass path.
             </Alert>
 
             {providerQuery.isPending && (
-                <Stack sx={{ alignItems: 'center', p: 5 }}><CircularProgress /></Stack>
+                <Stack sx={{ alignItems: 'center', p: 5 }}>
+                    <CircularProgress />
+                </Stack>
             )}
 
             {providerQuery.isError && (
                 <Alert severity="error" sx={{ mt: 3 }}>
-                    {getErrorMessage(providerQuery.error, 'Authentication configuration could not be loaded.')}
+                    {getErrorMessage(
+                        providerQuery.error,
+                        'Authentication configuration could not be loaded.',
+                    )}
                 </Alert>
             )}
 
@@ -292,21 +319,41 @@ export function TenantAuthenticationPage() {
                         <Stack
                             direction={{ xs: 'column', md: 'row' }}
                             spacing={2}
-                            sx={{ alignItems: { md: 'center' }, justifyContent: 'space-between', p: 2.5 }}
+                            sx={{
+                                alignItems: { md: 'center' },
+                                justifyContent: 'space-between',
+                                p: 2.5,
+                            }}
                         >
                             <Box>
                                 <Typography variant="h6">OIDC identity provider</Typography>
                                 <Typography color="text.secondary" variant="body2">
-                                    Configuration changes and secret rotation require verification again before federated login is available.
+                                    Configuration changes and secret rotation require verification
+                                    again before federated login is available.
                                 </Typography>
                             </Box>
                             {provider && (
-                                <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                                    <Chip color={statusColor(provider.status)} label={provider.status} size="small" />
+                                <Stack
+                                    direction="row"
+                                    spacing={1}
+                                    sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+                                >
+                                    <Chip
+                                        color={statusColor(provider.status)}
+                                        label={provider.status}
+                                        size="small"
+                                    />
                                     {provider.status === 'DISABLED' ? (
                                         <Button
                                             disabled={enableProvider.isPending}
-                                            onClick={() => enableProvider.mutate(undefined, { onSuccess: () => setFeedback('Identity provider enabled in draft state. Verify it before using SSO.') })}
+                                            onClick={() =>
+                                                enableProvider.mutate(undefined, {
+                                                    onSuccess: () =>
+                                                        setFeedback(
+                                                            'Identity provider enabled in draft state. Verify it before using SSO.',
+                                                        ),
+                                                })
+                                            }
                                             variant="contained"
                                         >
                                             Enable
@@ -316,8 +363,17 @@ export function TenantAuthenticationPage() {
                                             color="error"
                                             disabled={disableProvider.isPending}
                                             onClick={() => {
-                                                if (window.confirm('Disable this identity provider? SSO policy will return to optional and federated login will stop.')) {
-                                                    disableProvider.mutate(undefined, { onSuccess: () => setFeedback('Identity provider disabled.') })
+                                                if (
+                                                    window.confirm(
+                                                        'Disable this identity provider? SSO policy will return to optional and federated login will stop.',
+                                                    )
+                                                ) {
+                                                    disableProvider.mutate(undefined, {
+                                                        onSuccess: () =>
+                                                            setFeedback(
+                                                                'Identity provider disabled.',
+                                                            ),
+                                                    })
                                                 }
                                             }}
                                             variant="outlined"
@@ -332,13 +388,28 @@ export function TenantAuthenticationPage() {
                         <Box sx={{ p: 2.5 }}>
                             {provider?.status === 'DISABLED' && (
                                 <Alert severity="warning" sx={{ mb: 2 }}>
-                                    This provider is disabled. Re-enable it to return it to draft state, then verify it before federated login can resume.
+                                    This provider is disabled. Re-enable it to return it to draft
+                                    state, then verify it before federated login can resume.
                                 </Alert>
                             )}
                             <ProviderConfigurationForm
                                 key={configurationKey}
-                                onCreate={(input) => createProvider.mutate(input, { onSuccess: () => setFeedback('Identity-provider configuration created in draft state.') })}
-                                onUpdate={(input) => updateProvider.mutate(input, { onSuccess: () => setFeedback('Identity-provider configuration updated. Verification is required again.') })}
+                                onCreate={(input) =>
+                                    createProvider.mutate(input, {
+                                        onSuccess: () =>
+                                            setFeedback(
+                                                'Identity-provider configuration created in draft state.',
+                                            ),
+                                    })
+                                }
+                                onUpdate={(input) =>
+                                    updateProvider.mutate(input, {
+                                        onSuccess: () =>
+                                            setFeedback(
+                                                'Identity-provider configuration updated. Verification is required again.',
+                                            ),
+                                    })
+                                }
                                 provider={provider}
                                 saving={createProvider.isPending || updateProvider.isPending}
                             />
@@ -348,9 +419,12 @@ export function TenantAuthenticationPage() {
                     {provider && (
                         <Paper variant="outlined" sx={{ mt: 3 }}>
                             <Box sx={{ p: 2.5 }}>
-                                <Typography variant="h6">Verification and secret lifecycle</Typography>
+                                <Typography variant="h6">
+                                    Verification and secret lifecycle
+                                </Typography>
                                 <Typography color="text.secondary" variant="body2">
-                                    Verify controlled discovery/JWKS metadata before enabling federated authentication.
+                                    Verify controlled discovery/JWKS metadata before enabling
+                                    federated authentication.
                                 </Typography>
                             </Box>
                             <Divider />
@@ -358,25 +432,46 @@ export function TenantAuthenticationPage() {
                                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                                     <Box sx={{ flex: 1 }}>
                                         <Typography variant="subtitle2">Last verified</Typography>
-                                        <Typography color="text.secondary" variant="body2">{formatDateTime(provider.verifiedAt)}</Typography>
+                                        <Typography color="text.secondary" variant="body2">
+                                            {formatDateTime(provider.verifiedAt)}
+                                        </Typography>
                                     </Box>
                                     <Box sx={{ flex: 1 }}>
                                         <Typography variant="subtitle2">Client secret</Typography>
-                                        <Typography color="text.secondary" variant="body2">{provider.clientSecretHint} · version {provider.secretVersion}</Typography>
+                                        <Typography color="text.secondary" variant="body2">
+                                            {provider.clientSecretHint} · version{' '}
+                                            {provider.secretVersion}
+                                        </Typography>
                                     </Box>
                                     <Box sx={{ flex: 1 }}>
                                         <Typography variant="subtitle2">Last rotated</Typography>
-                                        <Typography color="text.secondary" variant="body2">{formatDateTime(provider.secretRotatedAt)}</Typography>
+                                        <Typography color="text.secondary" variant="body2">
+                                            {formatDateTime(provider.secretRotatedAt)}
+                                        </Typography>
                                     </Box>
                                 </Stack>
                                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                                     <Button
-                                        disabled={provider.status === 'DISABLED' || verifyProvider.isPending}
-                                        onClick={() => verifyProvider.mutate(undefined, { onSuccess: () => setFeedback('Identity provider verified successfully.') })}
+                                        disabled={
+                                            provider.status === 'DISABLED' ||
+                                            verifyProvider.isPending
+                                        }
+                                        onClick={() =>
+                                            verifyProvider.mutate(undefined, {
+                                                onSuccess: () =>
+                                                    setFeedback(
+                                                        'Identity provider verified successfully.',
+                                                    ),
+                                            })
+                                        }
                                         startIcon={<CheckCircleOutlineRoundedIcon />}
                                         variant="contained"
                                     >
-                                        {verifyProvider.isPending ? 'Verifying…' : provider.status === 'VERIFIED' ? 'Re-verify provider' : 'Verify provider'}
+                                        {verifyProvider.isPending
+                                            ? 'Verifying…'
+                                            : provider.status === 'VERIFIED'
+                                              ? 'Re-verify provider'
+                                              : 'Verify provider'}
                                     </Button>
                                     <Button
                                         disabled={provider.status === 'DISABLED'}
@@ -396,24 +491,43 @@ export function TenantAuthenticationPage() {
                             <Box sx={{ p: 2.5 }}>
                                 <Typography variant="h6">SSO policy</Typography>
                                 <Typography color="text.secondary" variant="body2">
-                                    Choose whether workspace members may use passwords or must use the verified identity provider.
+                                    Choose whether workspace members may use passwords or must use
+                                    the verified identity provider.
                                 </Typography>
                             </Box>
                             <Divider />
                             <Stack spacing={2} sx={{ p: 2.5 }}>
                                 <Alert severity="warning">
-                                    Required SSO never removes the tenant-admin password break-glass path. The backend rejects enforcement unless an active tenant administrator with a password remains available.
+                                    Required SSO never removes the tenant-admin password break-glass
+                                    path. The backend rejects enforcement unless an active tenant
+                                    administrator with a password remains available.
                                 </Alert>
-                                <FormControl disabled={provider.status === 'DISABLED' || updatePolicy.isPending} sx={{ maxWidth: 360 }}>
-                                    <InputLabel id="tenant-sso-mode-label">Workspace SSO mode</InputLabel>
+                                <FormControl
+                                    disabled={
+                                        provider.status === 'DISABLED' || updatePolicy.isPending
+                                    }
+                                    sx={{ maxWidth: 360 }}
+                                >
+                                    <InputLabel id="tenant-sso-mode-label">
+                                        Workspace SSO mode
+                                    </InputLabel>
                                     <Select
                                         label="Workspace SSO mode"
                                         labelId="tenant-sso-mode-label"
-                                        onChange={(event) => changePolicy(event.target.value as TenantSsoMode)}
+                                        onChange={(event) =>
+                                            changePolicy(event.target.value as TenantSsoMode)
+                                        }
                                         value={provider.ssoMode}
                                     >
-                                        <MenuItem value="OPTIONAL">Optional — password or SSO</MenuItem>
-                                        <MenuItem disabled={provider.status !== 'VERIFIED'} value="REQUIRED">Required — SSO for normal users</MenuItem>
+                                        <MenuItem value="OPTIONAL">
+                                            Optional — password or SSO
+                                        </MenuItem>
+                                        <MenuItem
+                                            disabled={provider.status !== 'VERIFIED'}
+                                            value="REQUIRED"
+                                        >
+                                            Required — SSO for normal users
+                                        </MenuItem>
                                     </Select>
                                 </FormControl>
                                 {provider.status !== 'VERIFIED' && (
@@ -430,12 +544,16 @@ export function TenantAuthenticationPage() {
             <RotateSecretDialog
                 key={rotateDialogOpen ? 'rotate-open' : 'rotate-closed'}
                 onClose={() => setRotateDialogOpen(false)}
-                onRotate={(secret) => rotateSecret.mutate(secret, {
-                    onSuccess: () => {
-                        setRotateDialogOpen(false)
-                        setFeedback('Client secret rotated. Re-verify the provider before using SSO.')
-                    },
-                })}
+                onRotate={(secret) =>
+                    rotateSecret.mutate(secret, {
+                        onSuccess: () => {
+                            setRotateDialogOpen(false)
+                            setFeedback(
+                                'Client secret rotated. Re-verify the provider before using SSO.',
+                            )
+                        },
+                    })
+                }
                 open={rotateDialogOpen}
                 saving={rotateSecret.isPending}
             />

@@ -51,7 +51,8 @@ public class OidcCallbackService {
                 throw failed();
             }
 
-            OidcProviderMetadata metadata = metadataService.loadAndValidate(transaction.issuerUri());
+            OidcProviderMetadata metadata =
+                    metadataService.loadAndValidate(transaction.issuerUri());
             String clientSecret = secretCipher.decrypt(transaction.clientSecretCiphertext());
             String pkceVerifier =
                     secretCipher.decryptTransactionSecret(transaction.pkceVerifierCiphertext());

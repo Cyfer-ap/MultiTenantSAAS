@@ -203,7 +203,8 @@ public class TenantIdentityProviderService {
                     tenant,
                     actor,
                     AuditAction.IDENTITY_PROVIDER_ENABLED,
-                    "Enabled tenant identity provider " + identityProvider.getId()
+                    "Enabled tenant identity provider "
+                            + identityProvider.getId()
                             + " in draft state; verification is required before SSO can be used");
         }
         return mapResponse(identityProvider);

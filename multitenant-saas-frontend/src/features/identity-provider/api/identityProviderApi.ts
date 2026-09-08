@@ -10,8 +10,7 @@ import type {
     TenantSsoMode,
 } from '../types/identityProvider'
 
-const providerPath = (tenantId: string): string =>
-    `/api/tenants/${tenantId}/identity-provider`
+const providerPath = (tenantId: string): string => `/api/tenants/${tenantId}/identity-provider`
 
 async function get(tenantId: string): Promise<TenantIdentityProvider | null> {
     try {
