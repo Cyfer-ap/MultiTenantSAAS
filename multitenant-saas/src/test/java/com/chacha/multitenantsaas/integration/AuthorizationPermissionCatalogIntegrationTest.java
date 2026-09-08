@@ -45,7 +45,7 @@ class AuthorizationPermissionCatalogIntegrationTest {
                         AuthorizationPermissionSource.PLATFORM,
                         AuthorizationPermissionStatus.ACTIVE);
 
-        assertEquals(20, platformPermissions.size());
+        assertEquals(21, platformPermissions.size());
 
         assertTrue(
                 platformPermissions.stream()
