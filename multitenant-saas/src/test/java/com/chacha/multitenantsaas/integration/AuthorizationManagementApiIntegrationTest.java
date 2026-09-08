@@ -79,7 +79,7 @@ class AuthorizationManagementApiIntegrationTest {
                                 .header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data", hasSize(20)))
+                .andExpect(jsonPath("$.data", hasSize(21)))
                 .andExpect(
                         jsonPath(
                                 "$.data[*].code",
