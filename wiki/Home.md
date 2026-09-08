@@ -1,67 +1,50 @@
 # MultiTenantSAAS Wiki
 
-MultiTenantSAAS is a full-stack multi-tenant SaaS platform with tenant isolation, scoped authorization, project collaboration, subscription enforcement, external billing, durable outbound integrations, usage metering, API keys and PostgreSQL-oriented production engineering.
+MultiTenantSAAS is a full-stack multi-tenant SaaS platform with tenant isolation, scoped authorization, collaboration, subscription enforcement, external billing, durable outbound integrations, enterprise OIDC SSO, usage metering, API keys and PostgreSQL-oriented production engineering.
 
 Version-controlled Wiki source lives under `wiki/`. See [[Wiki-Maintenance]].
 
-Current snapshot: **post-PR #112 (`8324ae9`), 2026-09-07**.
+Current snapshot: **post-PR #119 (`c36de3f`), 2026-09-08**.
 
 ## Current platform state
 
 Implemented capabilities include:
 
 - separate tenant and system-admin control planes
-- secure JWT/browser sessions, invitations and account recovery
+- JWT/browser sessions, invitations, password recovery and workspace discovery
 - shared-schema tenant isolation and scoped permission authorization
-- organization hierarchy, projects, tasks and collaboration
-- R2/S3-compatible attachments
-- durable notifications, email delivery and preferences
-- internal subscription lifecycle, read-only enforcement and quotas
-- provider-neutral billing with Stripe and Razorpay adapters
-- professional plan/provider checkout UX
-- signed durable provider webhooks and webhook-driven lifecycle synchronization
-- verified provider-aware cancellation, linkage recovery and stale-terminal-state repair
-- durable TEST/LIVE provider catalog mappings
-- automatic Stripe Product/Price provisioning and immutable Price replacement
-- automatic Razorpay Plan provisioning and replacement mappings
-- terminal safe plan retirement with paid-period continuation
-- immutable purchased-plan snapshots and subscription history
-- tenant/system-admin billing-history UX
-- billing operations visibility and read-only reconciliation
-- durable billing usage events
-- tenant API-key lifecycle and plan-level API request quotas
-- tenant-configurable outbound webhook endpoints/event subscriptions
-- generated/rotatable encrypted signing secrets
-- durable HMAC-signed webhook delivery with retry/backoff/leases/timeouts
-- transactional project/task/comment/member/subscription event publication
-- immutable delivery-attempt history and manual replay
-- tenant Integrations UX for endpoint administration and delivery observability
+- organization hierarchy, projects/tasks/collaboration and R2 attachments
+- durable notifications/email delivery/preferences
+- subscription lifecycle, quotas, API keys and usage metering
+- provider-neutral billing with Stripe and Razorpay
+- durable provider catalog mappings, signed webhooks, cancellation/reconciliation and subscription history
+- tenant-configurable HMAC-signed outbound webhooks with durable delivery/history/replay
+- enterprise OIDC SSO with tenant IdP configuration, provider verification, state/nonce/PKCE, safe existing-user linking, optional/required policy, break-glass recovery, browser completion, Authentication admin UX and federation audit events
 - PostgreSQL 17, Flyway, Testcontainers, CI, security and container checks
 
 ## Completed milestones
 
 ### Billing/catalog
 
-**Billing, cancellation hardening and managed provider catalogs are complete at application level through PR #106.**
-
-Stripe is the validated deployed Test Mode payment path. Razorpay application integration and managed catalog provisioning are implemented, while recurring Test Mode authorization remains provider-sandbox blocked.
+Complete at application level through PR #106. Stripe is the validated deployed Test Mode payment path. Razorpay application/catalog integration is implemented while recurring Test Mode authorization remains provider-sandbox blocked.
 
 ### Tenant outbound webhooks
 
-**Tenant-configurable outbound webhooks are complete at application level through PR #112.**
+Complete at application level through PR #112.
 
-The platform now supports tenant endpoint lifecycle, event subscriptions, secure signing-secret rotation/storage, SSRF-safe HTTPS validation, durable signed delivery, retries/backoff/leasing, delivery history/attempts, guarded replay and a permission-gated Integrations workspace.
+### Enterprise OIDC SSO
 
-Initial events cover project, task, comment/reply, membership and selected subscription lifecycle mutations.
+Complete at application level through PR #119. See [[Enterprise-SSO]]. SAML is intentionally optional/demand-driven.
 
 ## Database checkpoint
 
-Portable common migrations extend through **V39**. V37 adds outbound webhook endpoints/event subscriptions, V38 durable events/deliveries and V39 immutable delivery attempts.
+Portable common migrations extend through **V43**. V40–V43 implement the enterprise SSO persistence layers.
 
 ## Start here
 
 - [[Architecture]]
 - [[Security-and-Authentication]]
+- [[Enterprise-SSO]]
 - [[Authorization]]
 - [[Subscriptions-and-Quotas]]
 - [[Notifications]]
@@ -72,4 +55,4 @@ Portable common migrations extend through **V39**. V37 adds outbound webhook end
 
 ## Current next step
 
-Begin **enterprise SSO / identity federation**. Prefer a provider-neutral federation boundary with OIDC first, safe account linking/domain discovery, optional/enforced tenant policy and recovery controls. Add SAML through the same boundary where enterprise requirements justify it.
+Start **authorization delegation and explain-access**. Preserve backend-authoritative authorization and tenant isolation while adding controlled delegation and auditable access-decision explanations.

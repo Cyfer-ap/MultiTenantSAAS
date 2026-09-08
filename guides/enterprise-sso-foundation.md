@@ -1,57 +1,59 @@
 # Enterprise SSO / identity federation
 
-Reviewed state: PR #116 tenant-bound OIDC login/callback runtime.
+Reviewed state: post-PR #119 (`c36de3f`).
+Status: **OIDC enterprise SSO complete at application level**.
 
 ## Scope
 
-Enterprise identity federation now has three application layers: the tenant-scoped OIDC configuration/security foundation from PR #114, provider verification from PR #115, and the tenant-bound authorization/callback runtime in PR #116. Existing local/password authentication remains available and SSO enforcement is intentionally deferred until tenant policy and recovery controls are implemented.
+The OIDC federation milestone spans PRs #114–#119 and now includes tenant configuration, provider verification, secure authorization/callback runtime, workspace discovery, optional/required policy, browser completion, tenant-admin UX and audit visibility.
 
-The runtime boundary prevents an unverified or changed IdP configuration from being used for sign-in and prevents a provider identity from implicitly creating or crossing tenant accounts.
+The provider boundary remains protocol-oriented so SAML can be added later if a concrete enterprise requirement justifies it. SAML is not required to consider the current OIDC milestone complete.
 
 ## Configuration model
 
-Each tenant may have one identity-provider configuration. The provider-neutral model currently supports `OIDC` and can later be extended with a SAML adapter without placing protocol-specific credentials on the tenant record.
+Each tenant may have one identity-provider configuration. Current protocol: `OIDC`.
 
-Configuration states are:
+Lifecycle states:
 
-- `DRAFT` — configured or changed, but not runtime-verified
-- `VERIFIED` — OIDC discovery, remote-endpoint policy, JWKS and Spring client-model checks passed
+- `DRAFT` — configured/changed/re-enabled but not verified for runtime use
+- `VERIFIED` — discovery/JWKS/client validation passed
 - `DISABLED` — administratively unavailable
 
-Changing the issuer/client ID/scopes or rotating the client secret invalidates a previous verification and returns the configuration to `DRAFT`.
+Changing issuer/client ID/scopes or rotating the client secret invalidates verification and returns the provider to `DRAFT`. Re-enabling a disabled provider also returns it to `DRAFT`; verification must be performed again.
 
-Stored fields include tenant/protocol, display name, issuer URI, client ID, encrypted client secret, non-sensitive secret hint/version, OIDC scopes, lifecycle timestamps, creator/updater metadata and optimistic locking. `openid` is mandatory; omitted scopes default to `openid profile email`.
+`openid` is mandatory. Default scopes are `openid profile email`.
 
 ## Secret handling
 
-The IdP client secret is write-only through the API and is never returned by normal reads, rotation responses or verification responses. Opaque client-secret values are preserved exactly rather than trimmed or normalized.
+The IdP client secret is write-only. Reads, verification and rotation responses do not expose it.
 
-At rest the secret is protected with AES-256-GCM using:
+At rest it is protected with AES-256-GCM using:
 
 ```text
 IDENTITY_FEDERATION_ENCRYPTION_KEY
 ```
 
-The value must be Base64 encoding of exactly 32 bytes. The application can start without the key, but operations that require IdP credential encryption/decryption fail closed with `503 IDENTITY_FEDERATION_UNAVAILABLE`.
+The value must be Base64 encoding of exactly 32 bytes. Keep it stable while encrypted federation data exists. The same key protects stored PKCE verifiers. Rotation of this application encryption key requires a deliberate re-encryption migration.
 
-The same federation key protects stored PKCE verifiers for short-lived authorization transactions. Keep the key stable while encrypted federation data exists. Key rotation requires a deliberate re-encryption migration.
+If the key is unavailable/invalid, credential operations fail closed with `503 IDENTITY_FEDERATION_UNAVAILABLE`.
 
-## OIDC verification and remote-request safety
+## Provider verification and SSRF safety
 
-Configuration-time issuer validation is not treated as sufficient protection for server-side OIDC requests. Verification and login re-resolve and validate provider destinations immediately before discovery, JWKS and token operations to reduce DNS-rebinding/SSRF risk.
+Verification/runtime remote requests require:
 
-The runtime requires:
+- HTTPS issuer and provider endpoints
+- no embedded credentials/fragments
+- public-routable DNS only; mixed public/private answers are rejected
+- exact configured/discovered issuer equality
+- valid authorization, token and JWKS endpoints
+- safe optional UserInfo endpoint when present
+- non-empty JWKS key set
+- bounded connection/request timeouts and response sizes
+- redirects disabled
 
-- HTTPS for issuer and OIDC remote endpoints
-- no embedded credentials or fragments; endpoint query strings are accepted only where protocol metadata requires them
-- public-routable DNS answers only; mixed public/private answers are rejected
-- exact equality between configured issuer and discovery-document `issuer`
-- valid authorization, token and JWKS endpoint metadata
-- optional UserInfo endpoint safety when present
-- a JWKS document containing at least one key
-- compatibility with Spring Security's OIDC client model using already-validated metadata
+Provider destinations are re-resolved/revalidated around runtime remote requests rather than trusting configuration-time validation alone.
 
-Provider HTTP requests do not follow redirects, use bounded connection/request timeouts and cap provider JSON responses. A provider/discovery/JWKS validation failure returns `502 IDENTITY_PROVIDER_VERIFICATION_FAILED`; missing or invalid application-side federation encryption configuration remains a separate `503 IDENTITY_FEDERATION_UNAVAILABLE` condition.
+Verification/provider failures are mapped without leaking sensitive remote data.
 
 ## Tenant management API
 
@@ -61,64 +63,154 @@ Base path:
 /api/tenants/{tenantId}/identity-provider
 ```
 
-All management operations require `tenant.update`.
+Management requires `tenant.update`.
 
-- `POST` — create the tenant's draft OIDC configuration
-- `GET` — read non-secret configuration metadata
+- `POST` — create draft provider
+- `GET` — read non-secret metadata
 - `PUT` — update display name, issuer, client ID and scopes
-- `POST /verify` — perform controlled discovery/JWKS/client-model verification and transition to `VERIFIED`
-- `POST /rotate-client-secret` — replace the encrypted client secret and invalidate prior verification
-- `DELETE` — disable the configuration without deleting its audit boundary
+- `POST /verify` — verify and transition to `VERIFIED`
+- `POST /rotate-client-secret` — replace secret and invalidate verification
+- `DELETE` — disable provider
+- `POST /enable` — re-enable as `DRAFT`; verification is still required
 
-Verification success is audited. A disabled configuration cannot be verified.
+Tenant SSO policy APIs persist `OPTIONAL` or `REQUIRED` and enforce prerequisites server-side.
 
 ## OIDC sign-in runtime
 
-The public OIDC runtime is tenant-bound. Sign-in begins only for a `VERIFIED` provider and creates a short-lived durable authorization transaction containing no raw `state` or nonce values.
+The public OIDC runtime is tenant bound and uses:
 
-Security controls include:
-
-- high-entropy `state` and OIDC nonce values with only SHA-256 hashes persisted
-- PKCE S256 with an encrypted verifier at rest
-- transaction binding to tenant, provider and provider optimistic-lock version
-- single-use transaction consumption before provider token exchange, preventing callback replay even when the provider request later fails
-- fresh provider metadata/JWKS validation around external requests
-- authorization-code exchange only through the validated token endpoint
+- high-entropy state and nonce; only SHA-256 hashes persisted
+- PKCE S256 with encrypted verifier
+- transaction binding to tenant/provider/configuration version
+- single-use transaction consumption before provider token exchange
+- fresh provider endpoint/JWKS safety validation
+- validated authorization-code exchange
 - ID-token signature and signing-algorithm validation
 - issuer, audience/authorized-party, expiry, issued-at/not-before and nonce validation
 
-A successful callback does not automatically create an application user. The first identity link requires a cryptographically verified OIDC identity with `email_verified=true` whose normalized email already belongs to an active user in the same tenant. The durable binding then uses the provider issuer and immutable OIDC `sub` for subsequent sign-ins.
+Federation never automatically creates an application user. First identity linking requires a cryptographically verified OIDC identity with `email_verified=true` whose normalized email already belongs to an active user in the same tenant. Durable linkage then uses the provider issuer plus immutable `sub`.
 
-Only after that tenant-scoped identity resolution succeeds does the application issue its existing JWT and refresh/browser session credentials.
+## Workspace discovery and policy
 
-## Database runtime state
+Verified workspace discovery can return:
 
-Flyway V41 adds:
+```text
+PASSWORD_ONLY
+PASSWORD_OR_SSO
+SSO_ONLY
+SSO_REQUIRED
+```
 
-- `oidc_authorization_transactions` — short-lived, single-use state/nonce/PKCE transaction records
-- `tenant_federated_identities` — durable provider-subject-to-existing-user bindings scoped to the tenant and issuer
+Tenant policy is:
 
-The PostgreSQL schema contract test verifies V41 and the security-critical columns for both tables.
+- `OPTIONAL` — password and/or SSO availability depends on verified provider state
+- `REQUIRED` — normal member/manager password login is blocked and SSO is required
 
-## Authentication safety boundary
+`REQUIRED` is accepted only when:
 
-PR #116 deliberately does **not** enforce SSO. Local/password authentication remains available until policy and recovery controls are implemented.
+1. the IdP is currently `VERIFIED`; and
+2. at least one active tenant administrator has a usable password-based break-glass path.
 
-The next policy layer must ensure that:
+Provider disable, verification invalidation or client-secret rotation cannot leave a tenant stranded in enforced SSO; policy safely falls back to `OPTIONAL`.
 
-- SSO can be `OPTIONAL` or explicitly `REQUIRED`
-- `REQUIRED` is allowed only for a verified provider
-- changing, rotating or disabling the provider cannot strand the tenant in an enforced-but-invalid SSO state
-- a tested tenant-administrator break-glass path remains available
+Tenant-admin break-glass password authentication remains deliberate and auditable.
 
-## Next phase
+## Browser login completion
 
-Implement tenant discovery and SSO policy enforcement:
+The IdP redirects to the **backend** callback. After successful provider validation and tenant identity resolution, the backend does not put platform access/refresh tokens in the redirect URL.
 
-1. expose the appropriate authentication mode during the existing verified-email workspace-discovery flow
-2. add tenant `OPTIONAL` versus `REQUIRED` SSO policy
-3. allow `REQUIRED` only while the provider is verified and recovery prerequisites are satisfied
-4. block normal member/manager password login under `REQUIRED` while preserving a guarded tenant-admin break-glass path
-5. automatically return policy to a safe non-enforced state when provider configuration loses verification
-6. audit policy changes and failed/enforced federation decisions
-7. add the corresponding tenant-admin and login UX in the following frontend slice
+Instead it creates a short-lived, opaque, single-use session handoff and redirects the browser to:
+
+```text
+OIDC_FRONTEND_COMPLETION_URI?code=<opaque-handoff>
+```
+
+The frontend completion route exchanges the code server-side and commits the normal browser session using the same session architecture as password login. The query is removed from browser history after capture.
+
+## Tenant-admin UX and observability
+
+The permission-gated **Authentication** workspace supports:
+
+- provider create/edit
+- status display: `DRAFT`, `VERIFIED`, `DISABLED`
+- verify/re-verify
+- write-only client-secret entry and rotation
+- disable and recoverable enable-to-draft
+- `OPTIONAL`/`REQUIRED` policy control
+- prerequisite/error feedback and break-glass warning
+
+Existing tenant audit infrastructure records provider configuration/verification/lifecycle/policy events plus trusted tenant-attributed OIDC authentication success/failure. Audit messages deliberately omit raw provider errors, authorization codes, state, nonce, PKCE, provider tokens, client secrets and sensitive identity/provider payloads.
+
+Invalid/untrusted callback state is not attributed to a tenant audit log.
+
+## Database state
+
+Portable migrations:
+
+- **V40** — tenant identity-provider configuration
+- **V41** — `oidc_authorization_transactions` and `tenant_federated_identities`
+- **V42** — tenant SSO policy
+- **V43** — one-time `oidc_session_handoffs`
+
+Never rewrite applied migrations.
+
+## Deployment variables
+
+Required/important values:
+
+```dotenv
+IDENTITY_FEDERATION_ENCRYPTION_KEY=<Base64 of exactly 32 random bytes>
+OIDC_REDIRECT_URI=https://YOUR_BACKEND_DOMAIN/api/auth/oidc/callback
+OIDC_FRONTEND_COMPLETION_URI=https://YOUR_FRONTEND_DOMAIN/auth/oidc/complete
+OIDC_AUTHORIZATION_TRANSACTION_MINUTES=5
+OIDC_SESSION_HANDOFF_MINUTES=2
+```
+
+Local defaults are:
+
+```text
+OIDC_REDIRECT_URI=http://localhost:8081/api/auth/oidc/callback
+OIDC_FRONTEND_COMPLETION_URI=http://localhost:8080/auth/oidc/complete
+OIDC_AUTHORIZATION_TRANSACTION_MINUTES=5
+OIDC_SESSION_HANDOFF_MINUTES=2
+```
+
+In hosted environments, register `OIDC_REDIRECT_URI` exactly as an allowed redirect/callback URI in the external IdP. The frontend completion URI is application navigation and normally is not registered as the IdP callback.
+
+## IdP setup procedure
+
+1. Create a confidential web/OIDC client in the identity provider.
+2. Register the exact backend callback URI, for example `https://multitenantsaas-akxn.onrender.com/api/auth/oidc/callback`.
+3. Ensure the IdP supports authorization code flow and the scopes/claims needed by the tenant; `openid` is mandatory and verified email is needed for first link.
+4. Configure `IDENTITY_FEDERATION_ENCRYPTION_KEY`, hosted callback/completion URIs and normal production CORS/cookie settings on the backend deployment.
+5. Sign in as a tenant administrator with `tenant.update` and open **Authentication**.
+6. Enter display name, issuer URI, client ID, client secret and scopes; save as `DRAFT`.
+7. Run **Verify**. Do not enable `REQUIRED` until status is `VERIFIED` and the break-glass prerequisite is satisfied.
+8. Test `PASSWORD_OR_SSO`/SSO sign-in using an IdP identity whose verified email already maps to an active tenant user.
+9. Confirm browser completion establishes the normal tenant session and that federation success is visible in tenant audit logs.
+10. Only then test `REQUIRED`; separately verify a tenant administrator can still use the guarded break-glass password path.
+
+## Regression/security test checklist
+
+- wrong/missing state fails and is not tenant-attributed when state cannot be trusted
+- callback replay fails because the authorization transaction is single use
+- handoff replay/expiry fails
+- wrong nonce/issuer/audience/azp/signature/algorithm/time claims fail
+- unverified email cannot create the first identity link
+- unknown email does not auto-provision a tenant user
+- existing federated identity cannot cross tenant boundaries
+- provider configuration/secret changes invalidate verification
+- disable stops SSO; re-enable returns only to `DRAFT`
+- `REQUIRED` cannot be enabled without verified provider + password-capable active tenant-admin recovery
+- no platform tokens appear in callback/completion URLs
+- no secret/provider token/state/nonce/PKCE data appears in logs/audit/frontend responses
+
+## Milestone closure and deferred work
+
+OIDC enterprise SSO is complete at application level. Deferred/demand-driven identity work includes:
+
+- SAML adapter through the existing provider-neutral boundary, only when justified
+- optional provider metadata/JWKS caching if performance/scale measurements require it; current runtime favors fresh validated remote data
+- broader enterprise directory/provisioning protocols such as SCIM if later required
+
+The next core product milestone is **authorization delegation and explain-access**.

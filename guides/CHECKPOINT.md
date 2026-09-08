@@ -1,46 +1,34 @@
-# MultiTenantSAAS Documentation Checkpoint
+# Guides Checkpoint
 
-Date: 2026-09-07
-Repository: `Cyfer-ap/MultiTenantSAAS`
-Base reviewed state: post-PR #112 (`8324ae9`)
+Snapshot date: 2026-09-08
+Reviewed state: post-PR #119 (`c36de3f`)
 
-## Documentation status
+## Completed application milestones
 
-The repository and version-controlled Wiki now record both billing/catalog lifecycle and tenant-configurable outbound webhooks as complete at application level.
+- billing/catalog lifecycle through PR #106
+- tenant-configurable outbound webhooks through PR #112
+- enterprise OIDC SSO / identity federation through PR #119
 
-## Delivered state
+## Enterprise SSO checkpoint
 
-Billing/API platform remains complete with provider-neutral Stripe/Razorpay checkout, managed provider catalogs, verified cancellation/reconciliation, immutable purchased/history snapshots, metering, tenant API keys and plan-level API quotas.
+PRs #114–#119 deliver tenant-scoped OIDC configuration, encrypted client secrets, controlled provider verification, state/nonce/PKCE callback runtime, safe existing-user linking, verified workspace auth-mode discovery, `OPTIONAL`/`REQUIRED` policy, password-capable tenant-admin break-glass, browser SSO completion, tenant-admin Authentication UX and tenant audit visibility.
 
-Outbound webhook milestone PRs #108–#112 add:
+Portable migrations extend through **V43**:
 
-- tenant-scoped endpoint/event-subscription management
-- generated and rotatable signing secrets encrypted at rest
-- HTTPS/public-routable SSRF validation with delivery-time revalidation
-- durable immutable events and endpoint-specific deliveries
-- HMAC-SHA256 signing
-- lease-safe retry/backoff/timeout processing
-- transactional project/task/comment/member/subscription event publication
-- immutable delivery-attempt history
-- tenant delivery history/detail APIs and guarded manual replay
-- permission-gated tenant Integrations UX
-
-## Provider validation status
-
-Stripe remains the validated deployed Test Mode path. Razorpay integration and catalog provisioning are implemented, while recurring Test Mode card authorization remains provider-sandbox blocked.
-
-## Migration state
-
-Common migrations extend through **V39**:
-
-- V37 outbound webhook endpoints/event subscriptions
-- V38 durable outbound webhook events/deliveries
-- V39 outbound webhook delivery attempts
+- V40 identity-provider configuration
+- V41 OIDC authorization transactions + federated identities
+- V42 tenant SSO policy
+- V43 one-time browser session handoffs
 
 Never rewrite an applied migration.
 
+## Provider status
+
+- Stripe: working and validated in deployed Test Mode
+- Razorpay: application/catalog integration implemented; recurring Test Mode authorization remains provider-sandbox blocked
+
 ## Next checkpoint
 
-The next product checkpoint belongs to **enterprise SSO / identity federation**. Prefer a provider-neutral federation model with OIDC first and SAML added only where enterprise requirements justify it.
+The next product checkpoint belongs to **authorization delegation and explain-access**. SAML is optional/demand-driven and does not keep the current OIDC milestone open.
 
-Code/tests and Flyway migrations remain authoritative.
+Code/tests and current migrations remain authoritative over historical planning documents.

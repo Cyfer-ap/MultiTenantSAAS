@@ -2,101 +2,107 @@
 
 Repository: `Cyfer-ap/MultiTenantSAAS`
 Branch: `main`
-Date: 2026-09-07
-Base reviewed state: post-PR #112 (`8324ae9`)
+Date: 2026-09-08
+Base reviewed state: post-PR #119 (`c36de3f`)
 
 ## Current phase
 
-**Tenant-configurable outbound webhooks — COMPLETE at application level**
+**Enterprise OIDC SSO / identity federation — COMPLETE at application level**
 
-Billing/catalog lifecycle remains closed at application level. PRs #108–#112 complete the next platform milestone by adding tenant-managed outbound integrations with secure endpoint configuration, durable signed delivery, domain-event publication, replay/history and a tenant-admin Integrations UX.
+Billing/catalog lifecycle and tenant-configurable outbound webhooks remain closed at application level. PRs #114–#119 complete the OIDC federation milestone: tenant-scoped IdP configuration, verification, secure OIDC runtime, workspace discovery, optional/required policy, browser login UX, tenant-admin administration and federation audit visibility.
 
-Live-provider billing readiness and external webhook receiver readiness remain deployment/operations concerns rather than unfinished application architecture.
+SAML is intentionally deferred until a concrete enterprise requirement justifies another protocol adapter. Live-provider billing readiness and production operations remain independent tracks.
 
-## Delivered outbound-webhook sequence
+## Delivered SSO sequence
 
-- PR #108: tenant-scoped endpoint/event-subscription model, generated/rotatable signing secrets, AES-256-GCM secret storage, `tenant.update` authorization and SSRF-safe HTTPS validation
-- PR #109: V38 durable events/deliveries, HMAC-SHA256 signing, delivery-time SSRF revalidation, lease-safe workers, retries/backoff, timeouts and terminal failure
-- PR #110: transactional publication from project/task/comment/member/subscription mutations with provider-neutral payloads
-- PR #111: V39 immutable delivery-attempt ledger, tenant-scoped history/detail APIs and guarded manual replay
-- PR #112: permission-gated Integrations route, endpoint lifecycle UX, one-time secret handling, delivery filtering/detail/attempt history and replay controls
+- PR #114: tenant identity-provider model, OIDC configuration lifecycle, encrypted write-only client secret and `tenant.update` authorization
+- PR #115: controlled OIDC discovery/JWKS/provider verification with SSRF-safe remote-request validation
+- PR #116: tenant-bound OIDC authorization/callback runtime with state, nonce, PKCE, ID-token validation and safe linking to existing tenant users only
+- PR #117: verified workspace discovery, `OPTIONAL`/`REQUIRED` tenant SSO policy and tenant-admin password break-glass protection
+- PR #118: browser SSO UX plus short-lived, opaque, single-use backend-to-frontend session handoff
+- PR #119: tenant-admin Authentication workspace, provider enable/disable/re-enable lifecycle, policy UX and tenant-scoped OIDC success/failure auditing
 
-## Outbound webhook invariants
+## SSO security invariants
 
-- endpoint management is tenant scoped and authorized through `tenant.update`
-- destination URLs must be HTTPS and public-routable; DNS/SSRF validation is repeated immediately before delivery
-- redirects are disabled
-- signing secrets are generated server-side, encrypted at rest and exposed only on create/rotation
-- delivery signature uses HMAC-SHA256 over `timestamp.eventId.body`
-- event IDs and exact stored payloads remain stable across retries and replay
-- queue state is durable; workers use leases and stale-lease recovery
-- replay is limited to terminal deliveries and requires an active/enabled endpoint
-- tenant isolation applies to endpoints, deliveries, attempts and replay
+- one IdP configuration is tenant scoped; current protocol is OIDC
+- client secrets are write-only and AES-256-GCM encrypted with `IDENTITY_FEDERATION_ENCRYPTION_KEY`
+- changing provider configuration or rotating its secret invalidates verification
+- disabled providers re-enable only to `DRAFT`; they never silently regain `VERIFIED`
+- issuer/provider endpoints must be HTTPS and public-routable; redirects are disabled and destinations are revalidated before remote requests
+- authorization transactions hash state/nonce at rest and encrypt PKCE verifiers
+- callback transactions are single-use before external token exchange
+- ID tokens are validated for signature/algorithm, issuer, audience/authorized party, time claims and nonce
+- federation never auto-provisions users; first link requires verified provider email matching an existing active user in the same tenant
+- `REQUIRED` SSO is permitted only with a verified IdP and an active password-capable tenant-admin break-glass path
+- provider invalidation safely returns policy to `OPTIONAL`
+- browser completion receives only a short-lived opaque one-time handoff code, never platform tokens in the redirect URL
+- audit records avoid provider tokens, codes, state, nonce, PKCE, client secrets and sensitive provider payloads
 
-## Initial outbound event catalogue
+## Authentication modes
+
+Verified workspace discovery can return:
 
 ```text
-project.created
-project.updated
-project.archived
-task.created
-task.updated
-task.completed
-comment.created
-comment.replied
-member.added
-member.removed
-subscription.updated
-subscription.cancelled
+PASSWORD_ONLY
+PASSWORD_OR_SSO
+SSO_ONLY
+SSO_REQUIRED
 ```
+
+The backend remains authoritative. Frontend mode-specific rendering is UX only.
+
+## Database checkpoint
+
+Portable common migrations extend through **V43**:
+
+```text
+V37 outbound webhook endpoints + event subscriptions
+V38 outbound webhook events + durable deliveries
+V39 outbound webhook delivery attempts
+V40 tenant identity-provider configuration
+V41 OIDC authorization transactions + tenant federated identities
+V42 tenant SSO policy
+V43 OIDC browser session handoffs
+```
+
+Never rewrite an applied migration.
 
 ## Billing/provider status
 
 ### Stripe
 
-**Validated deployed Test Mode path.** Hosted checkout, Test cards, signed lifecycle webhooks, provider-side cancellation and reconciliation have been validated. Managed Product/Price provisioning/versioning remains implemented.
+**Working and validated in deployed Test Mode.** Hosted checkout, signed lifecycle webhooks, provider-side cancellation and reconciliation are implemented and validated. Managed Product/Price provisioning/versioning remains implemented.
 
 ### Razorpay
 
-**Application integration/catalog provisioning implemented; recurring Test Mode authorization remains provider-sandbox blocked.** Managed Plan creation/replacement remains available, but sandbox cards fail before recurring authorization completes. Keep live-readiness separate.
+**Application integration/catalog provisioning implemented; recurring Test Mode authorization remains provider-sandbox blocked.** Keep Razorpay available, but do not treat sandbox-card authorization failures as unfinished core billing architecture.
 
-## Database checkpoint
+## Deployment requirements for SSO
 
-Portable common migrations extend through **V39**:
+Required server-side federation configuration includes:
 
 ```text
-V28 billing foundation
-V29 provider subscription linkage
-V30 durable billing usage events
-V31 tenant API keys
-V32 API-key last-used metadata
-V33 subscription-plan usage limits
-V34 provider catalog mappings + purchased-plan snapshots
-V35 durable plan-retirement operations
-V36 immutable tenant subscription history
-V37 outbound webhook endpoints + event subscriptions
-V38 outbound webhook events + durable deliveries
-V39 outbound webhook delivery attempts
+IDENTITY_FEDERATION_ENCRYPTION_KEY
+OIDC_REDIRECT_URI
+OIDC_FRONTEND_COMPLETION_URI
+OIDC_AUTHORIZATION_TRANSACTION_MINUTES
+OIDC_SESSION_HANDOFF_MINUTES
 ```
 
-Never rewrite an applied migration.
+For hosted deployment, `OIDC_REDIRECT_URI` must be the backend callback and must also be registered with the IdP. `OIDC_FRONTEND_COMPLETION_URI` is the frontend `/auth/oidc/complete` route.
+
+See `guides/enterprise-sso-foundation.md` and `wiki/Production-Deployment.md`.
 
 ## Verification checkpoint
 
-PRs #108–#112 were developed under Backend, PostgreSQL/Flyway, Frontend, Repository Hygiene, Security/Trivy, Container CI and Qodana gates. #112 additionally verifies React 19 lint rules, TypeScript/MUI 9 production compilation and frontend container build/scan on its final clean head.
+PR #119 passed Backend, PostgreSQL/Flyway, Frontend formatting/tests/lint/build, Repository Hygiene, Security/Trivy, Container CI and Qodana on its final head before merge.
 
 ## Documentation/Wiki
-
-Focused webhook guides now include:
-
-- `guides/outbound-webhook-events.md`
-- `guides/outbound-webhook-delivery-history.md`
-- `guides/outbound-webhook-admin-ux.md`
 
 `wiki/*.md` remains canonical Wiki source and is automatically published from merged `main` by `.github/workflows/wiki-sync.yml` using `scripts/publish-wiki.ps1`.
 
 ## Next platform milestone
 
-Start **enterprise SSO / identity federation**. Recommended scope: tenant identity configuration → OIDC first → account linking/domain discovery → login enforcement/recovery → audit/admin UX. SAML can follow through the same provider-neutral identity boundary where justified.
+Start **authorization delegation and explain-access**: controlled permission delegation plus an auditable explanation of why a user can access a resource.
 
-After SSO: authorization delegation/explain-access, backup/restore drills, monitoring/alerts/runbooks, broader failure-recovery/load validation and production R2 verification.
+After that: backup/restore drills, monitoring/alerts/runbooks, broader load/failure-recovery testing and production R2 verification. Optional SAML and notification expansion remain separate demand-driven work.

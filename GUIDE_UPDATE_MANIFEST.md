@@ -1,67 +1,51 @@
 # Guide Update Manifest
 
-Current documentation refresh:
-
 ```text
 Repository: Cyfer-ap/MultiTenantSAAS
-Reviewed application state: post-PR #112 (8324ae9)
-Snapshot date: 2026-09-07
-Phase: tenant-configurable outbound webhooks complete at application level
-Next recommended product milestone: enterprise SSO / identity federation
+Reviewed application state: post-PR #119 (c36de3f)
+Snapshot date: 2026-09-08
+Phase: enterprise OIDC SSO complete at application level
+Next recommended product milestone: authorization delegation and explain-access
 ```
 
 ## Updated status documents
 
-Root:
-
 - `readme.md`
 - `CHECKPOINT.md`
 - `HANDOFF.md`
-- `PACKAGE_INDEX.md`
-- `MANIFEST.json`
-- `GUIDE_UPDATE_MANIFEST.md`
-
-Guides:
-
 - `guides/README.md`
-- `guides/progress.md`
 - `guides/CHECKPOINT.md`
 - `guides/HANDOFF.md`
+- `guides/progress.md`
 - `guides/DEFERRED_PLATFORM_WORK.md`
-- `guides/outbound-webhook-events.md`
-- `guides/outbound-webhook-delivery-history.md`
-- `guides/outbound-webhook-admin-ux.md`
+- `PACKAGE_INDEX.md`
+- `MANIFEST.json`
 
-Wiki source:
+## SSO guide/deployment updates
+
+- `guides/enterprise-sso-foundation.md` upgraded from the #116 foundation snapshot to full #119 milestone documentation
+- `.env.example` now includes backend callback, frontend completion and OIDC transaction/handoff settings
+- `.env.production.example` now includes explicit hosted SSO callback/completion variables
+- `wiki/Enterprise-SSO.md` added as a focused live-Wiki source page
+- `wiki/Security-and-Authentication.md` expanded with SSO policy/runtime security
+- `wiki/Production-Deployment.md` expanded with IdP registration and environment setup
+
+## Wiki status updates
 
 - `wiki/Home.md`
-- `wiki/Developer-Handoff.md`
 - `wiki/Roadmap.md`
-- `wiki/Notifications.md`
+- `wiki/Developer-Handoff.md`
+- `wiki/Security-and-Authentication.md`
+- `wiki/Production-Deployment.md`
+- `wiki/Enterprise-SSO.md`
 
-## Status recorded
+## Milestone truth captured
 
-This refresh advances the repository from the post-#106 billing/catalog checkpoint through the completed outbound-webhook sequence.
+- OIDC SSO is complete through PRs #114–#119
+- portable Flyway migrations extend through V43
+- Stripe is working/validated in deployed Test Mode
+- Razorpay recurring Test Mode authorization remains provider-sandbox blocked while application/catalog integration remains implemented
+- SAML remains optional/demand-driven
+- next core milestone is authorization delegation/explain-access
 
-PRs #108–#112 add:
-
-- V37 tenant-scoped endpoint/event-subscription configuration
-- generated/rotatable signing secrets encrypted at rest
-- HTTPS/public-routable SSRF protections
-- V38 immutable outbound events and durable endpoint-specific deliveries
-- HMAC-SHA256 signing with stable event identity/body
-- lease-safe retries/backoff/timeouts/stale-lease recovery
-- transactional project/task/comment/member/subscription event publication
-- V39 immutable delivery-attempt history
-- tenant-scoped delivery history/detail and guarded manual replay
-- permission-gated tenant Integrations endpoint/delivery UX
-
-Billing/provider status is unchanged: Stripe remains the validated deployed Test Mode payment path. Razorpay integration and managed Plan provisioning are implemented, while recurring Test Mode authorization remains provider-sandbox blocked.
-
-Common Flyway migrations now extend through V39.
-
-No credentials, outbound signing secrets or provider plan/price IDs are recorded in documentation.
-
-## Wiki synchronization
-
-`wiki/*.md` remains canonical Wiki source. After this refresh reaches `main`, the `Wiki Sync` workflow automatically publishes the source to `MultiTenantSAAS.wiki.git`; manual Wiki publishing remains fallback-only.
+Wiki source under `wiki/` is published from merged `main` by `.github/workflows/wiki-sync.yml` via `scripts/publish-wiki.ps1`.
