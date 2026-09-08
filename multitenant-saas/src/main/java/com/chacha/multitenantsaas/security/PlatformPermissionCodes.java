@@ -40,6 +40,8 @@ public final class PlatformPermissionCodes {
 
     public static final String AUTHORIZATION_MANAGE = "authorization.manage";
 
+    public static final String AUTHORIZATION_DELEGATE = "authorization.delegate";
+
     public static final String SUBSCRIPTION_READ = "subscription.read";
 
     private PlatformPermissionCodes() {}
