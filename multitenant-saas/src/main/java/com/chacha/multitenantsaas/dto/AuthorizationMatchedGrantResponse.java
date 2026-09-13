@@ -1,6 +1,7 @@
 package com.chacha.multitenantsaas.dto;
 
 import com.chacha.multitenantsaas.entity.AuthorizationScopeType;
+import com.chacha.multitenantsaas.security.AuthorizationGrantSource;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -11,4 +12,9 @@ public record AuthorizationMatchedGrantResponse(
         AuthorizationScopeType scopeType,
         UUID scopeTargetId,
         Instant validFrom,
-        Instant validUntil) {}
+        Instant validUntil,
+        AuthorizationGrantSource grantSource,
+        UUID delegationId,
+        UUID parentAssignmentId,
+        UUID delegatorUserId,
+        String delegatorEmail) {}
