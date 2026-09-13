@@ -157,19 +157,8 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Emit formatted authorization pages
-        shell: bash
-        run: |
-          npx prettier src/pages/AuthorizationDelegationsPage.tsx src/pages/AuthorizationExplainAccessPage.tsx --write
-          echo '===AUTHORIZATION_DELEGATIONS_BASE64_BEGIN==='
-          base64 -w0 src/pages/AuthorizationDelegationsPage.tsx
-          echo
-          echo '===AUTHORIZATION_DELEGATIONS_BASE64_END==='
-          echo '===AUTHORIZATION_EXPLAIN_BASE64_BEGIN==='
-          base64 -w0 src/pages/AuthorizationExplainAccessPage.tsx
-          echo
-          echo '===AUTHORIZATION_EXPLAIN_BASE64_END==='
-          exit 1
+      - name: Check frontend formatting
+        run: npm run format:check
 
       - name: Run frontend tests with coverage
         run: npm run test:coverage
