@@ -184,12 +184,15 @@ export function GlobalSearch({ tenantId }: GlobalSearchProps) {
                     <Box sx={{ borderTop: 1, borderColor: 'divider', minHeight: 220 }}>
                         {query.trim().length < 2 ? (
                             <Stack
-                                alignItems="center"
-                                justifyContent="center"
-                                sx={{ minHeight: 220, px: 3 }}
+                                sx={{
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    minHeight: 220,
+                                    px: 3,
+                                }}
                             >
                                 <SearchRoundedIcon color="disabled" sx={{ fontSize: 38, mb: 1 }} />
-                                <Typography color="text.secondary" textAlign="center">
+                                <Typography color="text.secondary" sx={{ textAlign: 'center' }}>
                                     Type at least two characters to search the workspace.
                                 </Typography>
                             </Stack>
@@ -199,15 +202,18 @@ export function GlobalSearch({ tenantId }: GlobalSearchProps) {
                             </Alert>
                         ) : !searchQuery.isFetching && results.length === 0 ? (
                             <Stack
-                                alignItems="center"
-                                justifyContent="center"
-                                sx={{ minHeight: 220, px: 3 }}
+                                sx={{
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    minHeight: 220,
+                                    px: 3,
+                                }}
                             >
                                 <Typography sx={{ fontWeight: 650 }}>No results</Typography>
                                 <Typography
                                     color="text.secondary"
-                                    textAlign="center"
                                     variant="body2"
+                                    sx={{ textAlign: 'center' }}
                                 >
                                     No accessible projects, tasks, or people match this search.
                                 </Typography>
@@ -228,7 +234,6 @@ export function GlobalSearch({ tenantId }: GlobalSearchProps) {
                                             secondary={
                                                 result.subtitle ?? resultTypeLabels[result.type]
                                             }
-                                            primaryTypographyProps={{ fontWeight: 650 }}
                                         />
                                         <Chip
                                             label={resultTypeLabels[result.type]}
