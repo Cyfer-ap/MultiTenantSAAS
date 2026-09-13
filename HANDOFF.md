@@ -26,6 +26,7 @@ Major application foundations are complete through:
 - product vision/Wild Thoughts refresh: #127
 - documentation/engineering-governance consolidation: #128
 - permission-aware Global Search: #129
+- capability-aware Command Palette: #130
 
 Portable common Flyway migrations extend through V44.
 
@@ -35,18 +36,17 @@ Stripe is the validated deployed Test Mode billing path. Razorpay integration/ca
 
 Build **Product Experience & Work Management Enrichment** before returning to the deferred operations/DR milestone.
 
-Global Search is the first completed enrichment slice. The next implementation slice is the **Command Palette**.
+Global Search and Command Palette are complete. The next implementation slice is **Favorites + Recently Viewed**.
 
 Recommended sequence:
 
-1. Command Palette on the Global Search/discovery foundation
-2. favorites + recently viewed
-3. My Work
-4. saved views + dashboard refresh
-5. Kanban/calendar + richer task relationships
-6. templates/recurring work/bulk/import/export
-7. custom fields/forms/workflows/knowledge
-8. analytics + selected differentiated experiments
+1. favorites + recently viewed
+2. My Work
+3. saved views + dashboard refresh
+4. calendar/deadline view + richer task relationships
+5. templates/recurring work/bulk/import/export
+6. custom fields/forms/workflows/knowledge
+7. analytics + selected differentiated experiments
 
 ## Architecture rule from this point forward
 
@@ -60,9 +60,9 @@ Existing large services should not receive more dependencies casually. If new wo
 
 Important boundary rules should gain architecture/static regression tests when practical.
 
-## Global Search foundation to reuse
+## Discovery + command foundation to reuse
 
-PR #129 establishes:
+PR #129 establishes the backend discovery layer:
 
 ```text
 backend search coordinator
@@ -76,29 +76,48 @@ bounded permission-aware candidate queries
 authoritative scoped revalidation where required
 ```
 
-Frontend structure:
+PR #130 adds a separate frontend orchestration domain:
 
 ```text
-features/search/
-    api/
-    components/
-    hooks/
-    types/
+features/command-palette
+        ↓
+features/search query contract
+        ↓
+permission-filtered workspace navigation
+        ↓
+existing project/invitation domain dialogs for mutations
 ```
 
-Current API:
+Current search API:
 
 ```text
 GET /api/tenants/{tenantId}/search?q=<query>&limit=<bounded-limit>
 ```
 
-The Command Palette should reuse this foundation for discovery and add a separate narrow action registry for commands such as create/open/navigation actions. Do not duplicate search ranking or authorization logic in the palette.
+The palette must not become a second authorization/search/business-logic layer. New commands should call owning feature contracts/components or narrow command adapters.
+
+Create Task is deliberately absent from the global palette for now. Task-management authority can arise from project-lead membership in addition to scoped authorization, so a future global Create Task action needs a project-aware capability/picker contract rather than shell-side permission guessing.
+
+## Next feature guidance — Favorites + Recently Viewed
+
+Treat personal productivity state as an explicit domain, not component-local storage scattered across pages.
+
+Design goals:
+
+- tenant-bound favorites and recent entities
+- permission-aware resolution: saving an identifier never grants continued access
+- bounded/reasonable recency history
+- stable entity references for initially supported project/task destinations
+- reusable UI/query contract for later My Work, command palette, mobile and dashboard consumers
+- graceful handling when an entity is deleted, archived, moved out of scope or access is revoked
+
+Do not mix this with semantic search, recommendations or analytics yet.
 
 ## Invariants to preserve
 
 - backend authorization remains authoritative
 - tenant isolation precedes resource access
-- search/discovery must constrain access before returning results
+- search/discovery and saved/recent resolution must constrain access before returning entity data
 - Explain Access and enforcement share the evaluator
 - delegated authority remains a current permission/scope/validity subset of its direct source
 - `authorization.manage` and `authorization.delegate` remain non-delegable
