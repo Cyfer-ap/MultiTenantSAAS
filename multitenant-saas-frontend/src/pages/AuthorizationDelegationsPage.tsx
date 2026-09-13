@@ -23,7 +23,7 @@ import {
     TextField,
     Typography,
 } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { useAuth } from '../features/auth/hooks/useAuth'
 import {
@@ -155,17 +155,13 @@ function CreateDelegationDialog({
         (assignment) => assignment.id === parentAssignmentId,
     )
     const allowedScopeTypes = getAllowedScopeTypes(parentAssignment)
-    const eligibleRoles = useMemo(() => {
-        if (!parentAssignment) {
-            return []
-        }
-
-        return referenceData.roles.filter((role) =>
-            role.permissions.every((permission) =>
-                parentAssignment.permissionCodes.includes(permission.code),
-            ),
-        )
-    }, [parentAssignment, referenceData.roles])
+    const eligibleRoles = parentAssignment
+        ? referenceData.roles.filter((role) =>
+              role.permissions.every((permission) =>
+                  parentAssignment.permissionCodes.includes(permission.code),
+              ),
+          )
+        : []
 
     const targetOptions =
         scopeType === 'PROJECT'
@@ -178,17 +174,24 @@ function CreateDelegationDialog({
             ? targetOptions
             : targetOptions.filter((option) => option.id === parentAssignment?.scopeTargetId)
 
-    useEffect(() => {
+    const handleParentAssignmentChange = (nextParentAssignmentId: string): void => {
+        const nextParentAssignment = referenceData.parentAssignments.find(
+            (assignment) => assignment.id === nextParentAssignmentId,
+        )
+        const nextScope = getAllowedScopeTypes(nextParentAssignment)[0] ?? ''
+
+        setParentAssignmentId(nextParentAssignmentId)
         setRoleId('')
-        const nextScope = getAllowedScopeTypes(parentAssignment)[0] ?? ''
         setScopeType(nextScope)
         setScopeTargetId(
-            nextScope && scopeRequiresTarget(nextScope) && parentAssignment?.scopeType !== 'TENANT'
-                ? (parentAssignment?.scopeTargetId ?? '')
+            nextScope &&
+                scopeRequiresTarget(nextScope) &&
+                nextParentAssignment?.scopeType !== 'TENANT'
+                ? (nextParentAssignment?.scopeTargetId ?? '')
                 : '',
         )
         setValidationError(null)
-    }, [parentAssignment])
+    }
 
     const handleScopeChange = (nextScope: AuthorizationScopeType): void => {
         setScopeType(nextScope)
@@ -270,7 +273,7 @@ function CreateDelegationDialog({
                         helperText="Delegated authority cannot be used as a new parent."
                         label="Parent authority"
                         onChange={(event) => {
-                            setParentAssignmentId(event.target.value)
+                            handleParentAssignmentChange(event.target.value)
                         }}
                         select
                         value={parentAssignmentId}
@@ -391,6 +394,7 @@ export function AuthorizationDelegationsPage() {
 
     const isRefreshing = referenceDataQuery.isFetching || delegationsQuery.isFetching
     const dataError = referenceDataQuery.error ?? delegationsQuery.error
+    const delegationsEvaluatedAt = delegationsQuery.dataUpdatedAt
 
     return (
         <Box>
@@ -468,7 +472,8 @@ export function AuthorizationDelegationsPage() {
                                 {delegationsQuery.data.map((delegation) => {
                                     const expired =
                                         delegation.status === 'ACTIVE' &&
-                                        new Date(delegation.validUntil).getTime() <= Date.now()
+                                        new Date(delegation.validUntil).getTime() <=
+                                            delegationsEvaluatedAt
                                     const statusLabel =
                                         delegation.status === 'REVOKED'
                                             ? 'Revoked'
