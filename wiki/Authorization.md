@@ -2,22 +2,11 @@
 
 ## Model
 
-Authorization is permission-oriented rather than being limited to a single fixed role enum.
+Authorization is permission-oriented rather than being limited to a fixed role enum.
 
-Core concepts include:
-
-- permission catalogue
-- authorization roles
-- role-to-permission mapping
-- user role assignments
-- assignment validity windows
-- target scopes
-- relationship-aware evaluation
-- policy/rule evaluation
+Core concepts include permissions, roles, role assignments, assignment validity windows, target scopes, relationship-aware evaluation, bounded delegation provenance and structured access decisions.
 
 ## Supported scope concepts
-
-Authorization assignments can target bounded scope types such as:
 
 ```text
 TENANT
@@ -28,53 +17,75 @@ PROJECT
 SELF
 ```
 
-The evaluator must validate both the permission and the requested target relationship.
+The evaluator validates both the permission and requested target relationship. Tenant isolation remains a separate mandatory boundary.
 
-## Compatibility roles
+## Explain Access
 
-Tenant compatibility roles remain available where required:
+PR #121 introduced a structured decision model from the same evaluator used by enforcement.
 
-```text
-TENANT_ADMIN
-TENANT_MANAGER
-TENANT_USER
-```
-
-Project membership roles include:
+Tenant authorization managers can query:
 
 ```text
-PROJECT_LEAD
-MEMBER
+POST /api/tenants/{tenantId}/authorization/explain-access
 ```
 
-These role names are not substitutes for tenant isolation.
+The response explains whether the requested subject/permission/context is granted and can expose the matched assignment/role/scope required for diagnosis without listing unrelated grants.
+
+PR #125 adds matched-grant source provenance:
+
+```text
+DIRECT
+DELEGATED
+```
+
+For a delegated grant, Explain Access can identify the delegation, parent assignment and delegator.
+
+## Bounded delegation
+
+V44 adds `authorization.delegate` and durable `authorization_delegations` provenance.
+
+Lifecycle:
+
+```text
+POST  /api/tenants/{tenantId}/authorization/delegations
+GET   /api/tenants/{tenantId}/authorization/delegations
+PATCH /api/tenants/{tenantId}/authorization/delegations/{delegationId}/revoke
+GET   /api/tenants/{tenantId}/authorization/delegations/reference-data
+```
+
+Core invariant:
+
+```text
+delegated authority ⊆ delegator's current direct authority
+```
+
+A delegation must derive from one direct effective parent assignment. Child permissions, scope and validity must remain contained by that parent. Delegated assignments cannot be re-delegated, and `authorization.manage` / `authorization.delegate` cannot be delegated.
+
+The evaluator revalidates delegation source authority at access time. A revoked, expired, inactive or narrowed parent invalidates the child grant even if the child assignment still exists.
+
+Revoking the delegation deactivates its generated assignment.
+
+## Authorization workspace
+
+`authorization.manage` users can access Management, Delegations and Explain Access.
+
+`authorization.delegate` users without management permission can access Delegations only. Delegation reference data is intentionally narrower than the administration reference-data surface.
+
+Frontend filtering is not a security boundary; the backend repeats all containment and authorization checks.
 
 ## Evaluation order
-
-A useful mental model is:
 
 ```text
 authenticated identity
   -> tenant boundary
-  -> permission / role assignment
-  -> assignment validity
+  -> effective assignment
+  -> permission + validity
   -> target scope / relationship
+  -> delegation source revalidation if delegated
   -> subscription lifecycle access
   -> quota / domain invariant
 ```
 
 ## Authorization vs subscription
 
-Authorization answers:
-
-> Is this principal permitted to perform this operation on this target?
-
-Subscription enforcement answers:
-
-> Is this tenant currently entitled to perform this class of mutation?
-
-Both checks may be required. They intentionally produce different error semantics.
-
-## Frontend rule
-
-The frontend may hide routes/actions for usability, but backend security and authorization remain authoritative.
+Authorization answers whether a principal may perform an operation on a target. Subscription enforcement answers whether the tenant is currently entitled to perform that class of mutation. Both checks may be required and intentionally have different error semantics.

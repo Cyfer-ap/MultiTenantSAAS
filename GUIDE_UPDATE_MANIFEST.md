@@ -2,10 +2,10 @@
 
 ```text
 Repository: Cyfer-ap/MultiTenantSAAS
-Reviewed application state: post-PR #119 (c36de3f)
-Snapshot date: 2026-09-08
-Phase: enterprise OIDC SSO complete at application level
-Next recommended product milestone: authorization delegation and explain-access
+Reviewed application state: post-PR #125 (0694403)
+Snapshot date: 2026-09-13
+Phase: authorization delegation and Explain Access complete at application level
+Next recommended product milestone: Production Operations & Disaster Recovery
 ```
 
 ## Updated status documents
@@ -17,35 +17,35 @@ Next recommended product milestone: authorization delegation and explain-access
 - `guides/CHECKPOINT.md`
 - `guides/HANDOFF.md`
 - `guides/progress.md`
+- `guides/authorization_model.md`
 - `guides/DEFERRED_PLATFORM_WORK.md`
 - `PACKAGE_INDEX.md`
 - `MANIFEST.json`
 
-## SSO guide/deployment updates
+## Authorization documentation updates
 
-- `guides/enterprise-sso-foundation.md` upgraded from the #116 foundation snapshot to full #119 milestone documentation
-- `.env.example` now includes backend callback, frontend completion and OIDC transaction/handoff settings
-- `.env.production.example` now includes explicit hosted SSO callback/completion variables
-- `wiki/Enterprise-SSO.md` added as a focused live-Wiki source page
-- `wiki/Security-and-Authentication.md` expanded with SSO policy/runtime security
-- `wiki/Production-Deployment.md` expanded with IdP registration and environment setup
+- records #121 Explain Access foundation using the enforcement evaluator
+- records #122 V44 bounded delegation/provenance/runtime source revalidation
+- records #125 delegation-safe reference data, direct/delegated provenance and tenant Authorization UX
+- documents one-level delegation, permission/scope/validity containment and protected permissions
+- documents manager versus delegate-only workspace behavior
+- advances portable Flyway status from V43 to V44
 
 ## Wiki status updates
 
 - `wiki/Home.md`
+- `wiki/Authorization.md`
 - `wiki/Roadmap.md`
 - `wiki/Developer-Handoff.md`
-- `wiki/Security-and-Authentication.md`
-- `wiki/Production-Deployment.md`
-- `wiki/Enterprise-SSO.md`
 
 ## Milestone truth captured
 
-- OIDC SSO is complete through PRs #114–#119
-- portable Flyway migrations extend through V43
-- Stripe is working/validated in deployed Test Mode
+- authorization delegation and Explain Access are complete through PR #125
+- portable Flyway migrations extend through V44
+- billing/catalog, outbound webhooks and enterprise OIDC SSO remain closed application milestones
+- Stripe remains the working/validated deployed Test Mode path
 - Razorpay recurring Test Mode authorization remains provider-sandbox blocked while application/catalog integration remains implemented
-- SAML remains optional/demand-driven
-- next core milestone is authorization delegation/explain-access
+- next core milestone is Production Operations & Disaster Recovery
+- SAML/SCIM and notification expansion remain optional/demand-driven
 
 Wiki source under `wiki/` is published from merged `main` by `.github/workflows/wiki-sync.yml` via `scripts/publish-wiki.ps1`.

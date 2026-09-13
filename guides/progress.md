@@ -1,8 +1,8 @@
 # Progress
 
-Snapshot date: 2026-09-08
-Reviewed state: post-PR #119 (`c36de3f`)
-Current stage: **enterprise OIDC SSO complete; authorization delegation/explain-access next**
+Snapshot date: 2026-09-13
+Reviewed state: post-PR #125 (`0694403`)
+Current stage: **authorization delegation and Explain Access complete; Production Operations & Disaster Recovery next**
 
 This is a concise index. Code, tests, migrations, `CHECKPOINT.md` and focused guides are authoritative.
 
@@ -11,19 +11,17 @@ This is a concise index. Code, tests, migrations, `CHECKPOINT.md` and focused gu
 - billing/catalog lifecycle through #106
 - outbound webhooks through #112
 - enterprise OIDC SSO through #119
+- authorization Explain Access/delegation through #125
 
-## SSO progression
+## Authorization progression
 
 ```text
-#114 config/secret foundation
-→ #115 verification
-→ #116 secure callback/linking
-→ #117 discovery/policy/break-glass
-→ #118 browser completion/handoff
-→ #119 admin UX/audit/lifecycle recovery
+#121 shared structured evaluator + Explain Access
+→ #122 V44 bounded delegation/provenance/source revalidation
+→ #125 delegation/reference-data UX + direct/delegated explanation provenance
 ```
 
-Database migrations now extend through V43.
+Database migrations now extend through V44.
 
 ## Current external-provider note
 
@@ -31,4 +29,4 @@ Stripe is working in deployed Test Mode. Razorpay recurring Test Mode authorizat
 
 ## Next
 
-Authorization delegation and explain-access, followed by operational recovery/monitoring/load hardening. SAML is optional and demand-driven.
+Production Operations & Disaster Recovery, followed by broader load/failure-recovery and production R2 verification. SAML/SCIM and notification expansion are optional and demand-driven.
