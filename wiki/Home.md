@@ -4,7 +4,7 @@ MultiTenantSAAS is a full-stack multi-tenant SaaS platform with tenant isolation
 
 Version-controlled Wiki source lives under `wiki/`. See [[Wiki-Maintenance]].
 
-Current snapshot: **post-PR #125 (`0694403`), 2026-09-13**.
+Current snapshot: **post-PR #126 (`5013260`), 2026-09-13**.
 
 ## Current platform state
 
@@ -39,7 +39,7 @@ Complete through PR #119. See [[Enterprise-SSO]].
 
 ### Authorization delegation and Explain Access
 
-Complete through PR #125. See [[Authorization]].
+Complete through PR #125, with documentation closure in PR #126. See [[Authorization]].
 
 ## Database checkpoint
 
@@ -58,6 +58,10 @@ Portable common migrations extend through **V44**. V44 adds authorization delega
 - [[Roadmap]]
 - [[Developer-Handoff]]
 
+Repository-side `guides/Wild_Thoughts.md` is the living product-idea vault and now includes a current implementation audit, core product gaps and differentiated experiments.
+
 ## Current next step
 
-Start **Production Operations & Disaster Recovery**: PostgreSQL backup/restore drills, monitoring, alerts and operational runbooks, followed by broader failure-recovery/load and production R2 verification.
+Start **Product Experience & Work Management Enrichment**: discoverability/search/commands, My Work and saved views, dashboard improvements, deeper task/project views and relationships, then templates/custom fields/workflows/knowledge/analytics.
+
+Production Operations & Disaster Recovery remains important but is deliberately deferred until after the current user-facing enrichment phase.

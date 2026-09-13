@@ -1,14 +1,14 @@
 # Multi-Tenant SaaS Platform
 
-A production-oriented full-stack multi-tenant SaaS platform focused on tenant isolation, permission-oriented authorization, collaboration, subscription enforcement, external billing, durable integrations, enterprise OIDC SSO, PostgreSQL correctness and operational hardening.
+A production-oriented full-stack multi-tenant SaaS platform focused on tenant isolation, permission-oriented authorization, collaboration, subscription enforcement, external billing, durable integrations, enterprise OIDC SSO, PostgreSQL correctness and a growing work-management/product layer.
 
 > **Current documentation snapshot**
 >
 > Repository: `Cyfer-ap/MultiTenantSAAS`
 > Branch: `main`
-> Application state reviewed through: PR #125 (`0694403`)
+> Application state reviewed through: PR #126 (`5013260`)
 > Snapshot date: 2026-09-13
-> Current phase: **Authorization delegation and Explain Access complete; Production Operations & Disaster Recovery next**
+> Current phase: **Authorization delegation and Explain Access complete; Product Experience & Work Management Enrichment next**
 
 ## Platform capabilities
 
@@ -125,7 +125,7 @@ Never rewrite an applied Flyway migration.
 
 ## Verification
 
-Required GitHub Actions gates include Backend, PostgreSQL/Flyway, Frontend, Repository Hygiene, Security, Container CI and Qodana. PR #125 passed all required gates on its final head; frontend coverage reported 71 test files / 240 tests passing.
+Required GitHub Actions gates include Backend, PostgreSQL/Flyway, Frontend, Repository Hygiene, Security, Container CI and Qodana. PR #125 passed all required gates on its final head; frontend coverage reported 71 test files / 240 tests passing. PR #126 closed the authorization milestone documentation and passed CI, Security, Qodana and Wiki validation.
 
 ## Deployment
 
@@ -141,6 +141,7 @@ Start with:
 
 - `CHECKPOINT.md`
 - `HANDOFF.md`
+- `guides/Wild_Thoughts.md`
 - `guides/authorization_model.md`
 - `guides/enterprise-sso-foundation.md`
 - `guides/subscription_billing.md`
@@ -151,11 +152,16 @@ Start with:
 
 The repository `wiki/` directory is canonical Wiki source. `.github/workflows/wiki-sync.yml` validates relevant changes and publishes merged `main` Wiki updates using `scripts/publish-wiki.ps1`.
 
-## Next platform milestone
+## Next product milestone
 
-The recommended product sequence is now:
+The immediate direction is **Product Experience & Work Management Enrichment** rather than operations/DR.
 
-1. **Production Operations & Disaster Recovery** — PostgreSQL backup/restore drills, monitoring, alerts and operational runbooks
-2. broader load/failure-recovery and production R2 verification
-3. optional SAML/SCIM where concrete enterprise requirements exist
-4. optional notification expansion such as digests/live browser delivery
+Recommended sequence:
+
+1. discoverability: global search, command palette, favorites/recent items
+2. personal productivity: My Work, saved views, capability-aware dashboard
+3. work-management depth: Kanban/calendar, subtasks/dependencies/labels, recurring work/templates
+4. adaptability: custom fields/forms, workflows/approvals, knowledge/documents
+5. insights/differentiation: product analytics plus selected experiments from `guides/Wild_Thoughts.md`
+
+Production Operations & Disaster Recovery, broader load/failure-recovery and production R2 verification remain important but are deliberately deferred until after the current user-facing enrichment phase. Optional SAML/SCIM and additional notification channels remain demand-driven.

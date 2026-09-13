@@ -3,21 +3,20 @@
 Repository: `Cyfer-ap/MultiTenantSAAS`
 Branch: `main`
 Date: 2026-09-13
-Base reviewed state: post-PR #125 (`0694403`)
+Base reviewed state: post-PR #126 (`5013260`)
 
 ## Current phase
 
 **Authorization delegation and Explain Access — COMPLETE at application level**
 
-Billing/catalog, tenant-configurable outbound webhooks and enterprise OIDC SSO remain closed application milestones. PRs #121, #122 and #125 complete the authorization follow-up: shared explain-access evaluation, bounded delegation with runtime non-escalation, direct/delegated provenance, and tenant Authorization UX.
+Billing/catalog, tenant-configurable outbound webhooks and enterprise OIDC SSO remain closed application milestones. PRs #121, #122 and #125 complete the authorization follow-up: shared explain-access evaluation, bounded delegation with runtime non-escalation, direct/delegated provenance, and tenant Authorization UX. PR #126 closed the milestone documentation.
 
 ## Delivered authorization sequence
 
 - PR #121: structured authorization decisions and tenant-admin Explain Access API using the same evaluator as enforcement
 - PR #122: V44 bounded authorization delegation, create/list/revoke lifecycle, provenance persistence, audit events and runtime parent-authority revalidation
 - PR #125: delegation-safe reference data, direct-vs-delegated Explain Access provenance, Delegations/Explain Access UI and delegate-only workspace navigation
-
-PRs #123 and #124 were dependency maintenance and are not part of the authorization capability sequence.
+- PR #126: documentation/checkpoint closure and roadmap handoff
 
 ## Authorization invariants
 
@@ -73,22 +72,44 @@ Never rewrite an applied migration.
 
 **Application integration/catalog provisioning implemented; recurring Test Mode authorization remains provider-sandbox blocked.** Keep Razorpay available; live/provider readiness remains separate from core application completeness.
 
+## Product-core gap checkpoint
+
+The platform foundation is now broad. The largest remaining core gaps are user-facing rather than tenancy/billing/authorization plumbing:
+
+- global search + command palette
+- favorites/recent items and saved views
+- My Work / unified attention queue
+- role/capability-aware dashboard
+- richer task views: Kanban/calendar, subtasks, dependencies, labels and recurring work
+- project/task templates
+- custom fields/forms
+- workflow/approval automation
+- knowledge/documents beyond task attachments
+- user-facing analytics/reporting
+- import/export and bulk productivity
+- smoother multi-workspace switching/personalization
+
+See `guides/Wild_Thoughts.md` for the audited feature vault and differentiated experiments.
+
 ## Verification checkpoint
 
-PR #125 passed Repository Hygiene, PostgreSQL/Flyway, Backend, Frontend formatting/tests/lint/build, Security, Container CI and Qodana on its final head before merge. Frontend coverage executed 71 test files / 240 tests successfully.
+PR #125 passed Repository Hygiene, PostgreSQL/Flyway, Backend, Frontend formatting/tests/lint/build, Security, Container CI and Qodana on its final head before merge. Frontend coverage executed 71 test files / 240 tests successfully. PR #126 passed CI, Security, Qodana and Wiki validation before merge.
 
 ## Documentation/Wiki
 
 `wiki/*.md` remains canonical Wiki source and is automatically published from merged `main` by `.github/workflows/wiki-sync.yml` using `scripts/publish-wiki.ps1`.
 
-## Next platform milestone
+## Next product milestone
 
-Start **Production Operations & Disaster Recovery**:
+Start **Product Experience & Work Management Enrichment**.
 
-1. PostgreSQL backup strategy and isolated restore drills
-2. health/readiness and operational metrics
-3. alerting for application/database/integration/provider failures
-4. incident and recovery runbooks
-5. broader load/failure-recovery and production R2 verification after the recovery baseline
+Recommended progression:
 
-Optional SAML/SCIM and notification expansion remain demand-driven work.
+1. global search + command palette + favorites/recent items
+2. My Work + saved views + capability-aware dashboard
+3. Kanban/calendar and richer task relationships such as subtasks/dependencies/labels
+4. recurring work/project templates and practical bulk/import/export UX
+5. custom fields/forms, workflow/approval and knowledge/document capabilities
+6. analytics plus selected differentiated experiments from `guides/Wild_Thoughts.md`
+
+**Production Operations & Disaster Recovery is intentionally deferred from the immediate sequence** while user-facing product depth is expanded. It remains an important later milestone together with load/failure-recovery and production R2 verification. Optional SAML/SCIM and notification expansion remain demand-driven work.
