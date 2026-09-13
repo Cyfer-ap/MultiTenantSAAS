@@ -82,6 +82,7 @@ Current mature domains include:
 - users, invitations and organization hierarchy
 - scoped authorization, delegation and Explain Access
 - projects, members, tasks and task collaboration
+- permission-aware Global Search
 - attachments through S3/R2-compatible storage
 - in-app/email notifications and preferences
 - subscription plans, tenant subscriptions, quotas and usage metering
@@ -93,7 +94,7 @@ Current mature domains include:
 - tenant/platform audit trails
 - production hardening and observability
 
-Product-enrichment domains such as Global Search, My Work, saved views, Kanban/calendar, workflows and knowledge are the next development stage.
+Product-enrichment domains such as Command Palette, My Work, saved views, Kanban/calendar, workflows and knowledge are the next development stage.
 
 ## Authorization architecture
 
@@ -104,6 +105,36 @@ Important scopes include tenant, project, organizational unit, organizational su
 Explain Access uses the same evaluator as enforcement so diagnostic output cannot drift into a second permission model.
 
 See `authorization_model.md` for the complete model.
+
+## Search/discovery architecture
+
+Global Search is the first new product feature built under the explicit domain-boundary standard.
+
+The coordinator does not import project/task/user repositories. Instead:
+
+```text
+GlobalSearchService
+        ↓
+GlobalSearchContributor contract
+        ↓
++----------------+----------------+----------------+
+| project adapter| task adapter   | user adapter   |
++----------------+----------------+----------------+
+        ↓                 ↓                ↓
+domain-owned bounded queries and authorization rules
+```
+
+Important properties:
+
+- tenant identity is validated at the API boundary
+- candidate queries are bounded before data is materialized
+- user search requires tenant-level `user.read`
+- project search uses tenant-wide or explicit project-grant scope and revalidates scoped hits through the authorization evaluator
+- task search uses tenant-wide permission, explicit project scope or current project membership and revalidates through the same task-read rule used by task APIs
+- ranking is a search-domain concern; access policy remains a domain/authorization concern
+- the frontend `features/search` module is reusable by future command-palette and mobile clients
+
+This contributor pattern is the preferred template when a cross-cutting read feature needs data from several domains: central orchestration owns composition, while each domain retains its query/access knowledge behind a narrow contract.
 
 ## Persistence and tenancy
 
@@ -148,6 +179,8 @@ features/<domain>/
 
 Server state is managed with React Query. Route/permission guards improve navigation and UX but do not replace backend enforcement.
 
+Global Search follows this shape under `features/search/`, with its API client, query hook, types and reusable search surface isolated from `AppShell` except for one integration point.
+
 The main future risk is growth of central routing/navigation aggregation. New modules should expose narrow integration metadata where appropriate rather than moving domain logic into central application files.
 
 ## API boundary
@@ -156,11 +189,21 @@ Public APIs use explicit request/response DTOs and validation rather than return
 
 The current web client maintains TypeScript API contracts manually. That is acceptable for the current single-client web application, but a generated/shared contract strategy should be adopted before a substantial mobile client is added so backend/web/mobile models do not drift independently.
 
+Global Search exposes a bounded read API:
+
+```text
+GET /api/tenants/{tenantId}/search?q=<query>&limit=<limit>
+```
+
+It is intentionally suitable for reuse by the web application now and future command-palette/mobile clients later.
+
 ## Scalability model
 
 The Spring application is designed to remain stateless enough for horizontal application replication. PostgreSQL is intentionally the primary coordination/persistence layer.
 
 This architecture should comfortably support significant product growth before distributed infrastructure becomes justified.
+
+Global Search v1 uses bounded PostgreSQL substring queries and deliberately avoids adding a separate search engine. If measured large-tenant latency later requires it, PostgreSQL trigram/full-text indexing should be considered before external search infrastructure.
 
 The following remain unproven until measured:
 
@@ -192,4 +235,4 @@ All new functionality must follow this rule:
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Global Search will be the first new product domain implemented under this standard and should become the template for subsequent modules.
+Global Search implements this standard through a small coordinator, contributor SPI and domain-owned search adapters. The Command Palette should reuse that discovery layer and add commands through similarly narrow action contracts instead of becoming a second monolithic service.
