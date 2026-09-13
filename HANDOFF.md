@@ -1,98 +1,134 @@
 # MultiTenantSAAS — Development Handoff
 
-Use this document to resume without relying on chat history.
+Updated: 2026-09-14
 
-## Repository checkpoint
-
-```text
-Repository: Cyfer-ap/MultiTenantSAAS
-Branch: main
-Application state reviewed through: PR #126 (5013260)
-Date: 2026-09-13
-Current phase: authorization delegation and Explain Access complete at application level
-Recommended next product milestone: Product Experience & Work Management Enrichment
-```
+This is the **single repository-side resume document**. Current status lives in `CHECKPOINT.md`; architecture/quality rules live in `AGENTS.md` and `guides/ENGINEERING_STANDARDS.md`.
 
 ## Read first
 
-1. `readme.md`
+1. `AGENTS.md`
 2. `CHECKPOINT.md`
-3. `guides/Wild_Thoughts.md`
-4. `guides/authorization_model.md`
-5. `guides/enterprise-sso-foundation.md`
-6. `wiki/Authorization.md`
-7. `wiki/Roadmap.md`
-8. `wiki/Testing-and-CI.md`
+3. `guides/current_architecture.md`
+4. `guides/ENGINEERING_STANDARDS.md`
+5. `guides/Wild_Thoughts.md`
+6. the focused guide for the domain being changed
+7. `wiki/Roadmap.md` when planning product direction
 
-## Current result
+## Current state
 
-Completed application-level milestones now include billing/catalog lifecycle, tenant-configurable outbound webhooks, enterprise OIDC SSO, and authorization delegation/Explain Access.
+Major application foundations are complete through:
 
-Authorization completion through PR #125 provides:
+- billing/catalog: #106
+- tenant outbound webhooks: #112
+- enterprise OIDC SSO: #119
+- authorization delegation + Explain Access: #125
+- authorization milestone closure: #126
+- product vision/Wild Thoughts refresh: #127
 
-- structured access decisions from the same evaluator used for enforcement
-- tenant-admin Explain Access with stable grant/denial reasoning
-- V44 durable delegation provenance and `authorization.delegate`
-- bounded create/list/revoke delegation lifecycle
-- one direct parent assignment for each delegated grant
-- permission/scope/validity subset enforcement
-- no re-delegation and no delegation of protected authorization permissions
-- runtime parent-source revalidation so later source revocation/expiry/narrowing invalidates delegated access
-- delegation-safe reference data for non-admin delegators
-- direct-vs-delegated Explain Access provenance
-- manager Authorization workspace plus delegate-only Delegations access
+Portable common Flyway migrations extend through V44.
 
-PR #126 closed the authorization milestone documentation.
+Stripe is the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
-## Authorization boundaries to preserve
+## Current direction
 
-- backend evaluator remains authoritative
-- delegation must never create authority the delegator does not currently hold directly
-- do not trust a delegated role assignment without validating its delegation source
-- `authorization.manage` and `authorization.delegate` remain non-delegable
-- cross-tenant subjects/resources remain invalid
-- Explain Access must not expose unrelated grants or tenant data
-- frontend filtering is convenience only; API validation remains final
+Build **Product Experience & Work Management Enrichment** before returning to the deferred operations/DR milestone.
 
-## Database checkpoint
+The next implementation slice is **Global Search**.
 
-Common portable migrations extend through **V44**. Never rewrite an applied Flyway migration.
+Recommended sequence:
 
-- V40 identity-provider configuration
-- V41 OIDC authorization transactions and tenant federated identities
-- V42 tenant SSO policy
-- V43 one-time OIDC browser session handoffs
-- V44 authorization delegation provenance and delegation permission
-
-## Provider boundary
-
-- Stripe is working and validated in deployed Test Mode
-- Razorpay integration and managed Plan provisioning remain implemented, but recurring Test Mode authorization is provider-sandbox blocked
-- keep both providers; live readiness remains an independent operational review
-
-## Product direction
-
-The immediate goal is to make the application materially more useful and pleasant before returning to operations/DR work.
-
-The audited idea vault is `guides/Wild_Thoughts.md`. It distinguishes built foundations, partial ideas, core product gaps and experimental/differentiated ideas.
-
-## Next action
-
-Start **Product Experience & Work Management Enrichment**.
-
-Recommended initial sequence:
-
-1. global search foundation
-2. command palette layered on search/navigation/actions
+1. Global Search
+2. command palette
 3. favorites + recently viewed
-4. My Work / personal attention queue
-5. saved filters/views and dashboard refresh
-6. richer task views/relationships: Kanban/calendar, subtasks, dependencies, labels and recurring work
+4. My Work
+5. saved views + dashboard refresh
+6. Kanban/calendar + richer task relationships
+7. templates/recurring work/bulk/import/export
+8. custom fields/forms/workflows/knowledge
+9. analytics + selected differentiated experiments
 
-Then expand into templates, custom fields/forms, workflows/approvals, knowledge/documents and product analytics.
+## Architecture rule from this point forward
 
-Production Operations & Disaster Recovery, broader load/failure-recovery and production R2 verification remain important but are intentionally deferred from the immediate product sequence. SAML/SCIM and richer notification channels remain optional until requirements justify them.
+> **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-## Verification
+For backend features, prefer explicit domain packages rather than expanding the global `service/controller/entity/repository/dto` buckets.
 
-GitHub Actions remains authoritative where local Docker is unavailable. Before merge require Backend, PostgreSQL/Flyway, Frontend, Repository Hygiene, Security, Container CI and Qodana to pass where those workflows are applicable. Wiki source changes should also satisfy Wiki Sync validation.
+For frontend features, preserve feature locality under `features/<domain>/...`.
+
+Existing large services should not receive more dependencies casually. If new work would do that, extract an orchestrator, narrow query/service contract, or application/domain event as appropriate.
+
+Important boundary rules should gain architecture/static regression tests when practical.
+
+## Global Search implementation constraint
+
+Global Search should become the first feature built under the new architecture standard.
+
+Recommended backend shape:
+
+```text
+com.chacha.multitenantsaas.search/
+    controller/
+    dto/
+    query/
+    service/
+```
+
+Recommended frontend shape:
+
+```text
+features/search/
+    api/
+    components/
+    hooks/
+    pages/
+    types/
+```
+
+Search must be tenant-scoped and authorization-filtered before results leave the backend. It should consume narrow query capabilities from projects/tasks/users rather than importing and orchestrating unrelated repositories directly.
+
+The contract should be reusable by the web UI now and future command-palette/mobile/AI consumers later.
+
+## Invariants to preserve
+
+- backend authorization remains authoritative
+- tenant isolation precedes resource access
+- Explain Access and enforcement share the evaluator
+- delegated authority remains a current permission/scope/validity subset of its direct source
+- `authorization.manage` and `authorization.delegate` remain non-delegable
+- provider/webhook lifecycle remains verified and auditable
+- applied Flyway migrations are append-only
+- provider secrets and sensitive identifiers remain server-side
+- unbounded collections are paginated
+- concurrency/idempotency is considered for retryable or competing mutations
+
+## Validation workflow
+
+Use branch-first PR development. GitHub Actions is authoritative where local environments cannot cover the full stack.
+
+Before merge, applicable gates should be green:
+
+- Repository Hygiene
+- Backend
+- PostgreSQL/Flyway
+- Frontend format/tests/lint/build
+- Security
+- Container CI
+- Qodana
+- Wiki validation when Wiki source changes
+
+Do not bypass failing checks to finish quickly; inspect and repair the root cause.
+
+## Deferred work
+
+Do not accidentally pull the project back into operations work before the current product-enrichment phase is developed.
+
+Deferred but still important:
+
+- PostgreSQL backup/restore drills
+- monitoring/alerting/runbooks
+- broader failure-recovery/load validation
+- production R2 verification
+- optional SAML/SCIM
+- optional MFA/passkeys/device-management expansion
+
+See `guides/DEFERRED_PLATFORM_WORK.md`.

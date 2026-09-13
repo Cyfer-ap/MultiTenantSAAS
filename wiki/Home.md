@@ -4,18 +4,18 @@ MultiTenantSAAS is a full-stack multi-tenant SaaS platform with tenant isolation
 
 Version-controlled Wiki source lives under `wiki/`. See [[Wiki-Maintenance]].
 
-Current snapshot: **post-PR #126 (`5013260`), 2026-09-13**.
+The Wiki intentionally avoids duplicating the repository's volatile current checkpoint. Repository-side `CHECKPOINT.md` owns current status and `HANDOFF.md` owns the current resume point.
 
-## Current platform state
+## Platform state
 
-Implemented capabilities include:
+Implemented foundations include:
 
 - separate tenant and system-admin control planes
 - JWT/browser sessions, invitations, password recovery and workspace discovery
 - shared-schema tenant isolation and scoped permission authorization
 - bounded one-level authorization delegation with runtime source revalidation
 - Explain Access with direct/delegated matched-grant provenance
-- organization hierarchy, projects/tasks/collaboration and R2 attachments
+- organization hierarchy, projects/tasks/collaboration and R2/S3-compatible attachments
 - durable notifications/email delivery/preferences
 - subscription lifecycle, quotas, API keys and usage metering
 - provider-neutral billing with Stripe and Razorpay
@@ -23,27 +23,17 @@ Implemented capabilities include:
 - enterprise OIDC SSO with tenant IdP configuration, secure runtime, optional/required policy, break-glass recovery, browser completion, admin UX and audit events
 - PostgreSQL 17, Flyway, Testcontainers, CI, security and container checks
 
-## Completed milestones
+## Architecture direction
 
-### Billing/catalog
+MultiTenantSAAS remains an intentional modular monolith. Future features must follow a stronger domain-boundary rule:
 
-Complete through PR #106. Stripe is the validated deployed Test Mode payment path. Razorpay application/catalog integration is implemented while recurring Test Mode authorization remains provider-sandbox blocked.
+> **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-### Tenant outbound webhooks
-
-Complete through PR #112.
-
-### Enterprise OIDC SSO
-
-Complete through PR #119. See [[Enterprise-SSO]].
-
-### Authorization delegation and Explain Access
-
-Complete through PR #125, with documentation closure in PR #126. See [[Authorization]].
+See [[Architecture]] for the current architecture and known debt.
 
 ## Database checkpoint
 
-Portable common migrations extend through **V44**. V44 adds authorization delegation provenance and `authorization.delegate`.
+Portable common migrations currently extend through **V44**. Applied Flyway migrations remain append-only.
 
 ## Start here
 
@@ -51,17 +41,18 @@ Portable common migrations extend through **V44**. V44 adds authorization delega
 - [[Security-and-Authentication]]
 - [[Enterprise-SSO]]
 - [[Authorization]]
+- [[Tenancy-and-Data-Model]]
 - [[Subscriptions-and-Quotas]]
+- [[Projects-and-Tasks]]
 - [[Notifications]]
-- [[Production-Deployment]]
 - [[Testing-and-CI]]
 - [[Roadmap]]
 - [[Developer-Handoff]]
 
-Repository-side `guides/Wild_Thoughts.md` is the living product-idea vault and now includes a current implementation audit, core product gaps and differentiated experiments.
+Repository-side `guides/Wild_Thoughts.md` is the living idea vault; `guides/ENGINEERING_STANDARDS.md` is the technical-health and engineering-rules guide.
 
-## Current next step
+## Current product direction
 
-Start **Product Experience & Work Management Enrichment**: discoverability/search/commands, My Work and saved views, dashboard improvements, deeper task/project views and relationships, then templates/custom fields/workflows/knowledge/analytics.
+The active product phase is **Product Experience & Work Management Enrichment**, beginning with Global Search and followed by command/navigation productivity, My Work/saved views, richer work-management views, tenant adaptability, analytics and selected differentiated experiments.
 
-Production Operations & Disaster Recovery remains important but is deliberately deferred until after the current user-facing enrichment phase.
+Production Operations & Disaster Recovery remains important but deliberately deferred behind the current user-facing enrichment phase. See [[Roadmap]].

@@ -1,52 +1,53 @@
 # Developer Handoff
 
-Current snapshot: post-PR #126 (`5013260`), 2026-09-13.
+Use this page as the reader-facing Wiki pointer for resuming development. Repository-internal current status lives in `CHECKPOINT.md`; resume instructions live in `HANDOFF.md`.
 
 ## Current phase
 
-**Authorization delegation and Explain Access complete at application level; Product Experience & Work Management Enrichment next.**
+**Product Experience & Work Management Enrichment**
 
-Billing/catalog, outbound-webhook and enterprise OIDC SSO milestones remain closed.
+The next implementation slice is **Global Search**.
 
-## Resume reading
+## Read first
 
-1. [[Home]]
+Inside the Wiki:
+
+1. [[Architecture]]
 2. [[Authorization]]
-3. [[Enterprise-SSO]]
-4. [[Security-and-Authentication]]
-5. [[Roadmap]]
-6. [[Testing-and-CI]]
-7. [[Production-Deployment]]
+3. [[Security-and-Authentication]]
+4. [[Roadmap]]
+5. [[Testing-and-CI]]
 
-Also read repository-side `guides/Wild_Thoughts.md` before planning major user-facing features; it contains the current idea audit and differentiated backlog.
+Inside the repository:
 
-## Preserve these authorization invariants
+1. `AGENTS.md`
+2. `CHECKPOINT.md`
+3. `HANDOFF.md`
+4. `guides/current_architecture.md`
+5. `guides/ENGINEERING_STANDARDS.md`
+6. the focused guide for the domain being changed
 
-- tenant isolation precedes permission evaluation
-- Explain Access and enforcement share the same evaluator
-- every delegated grant derives from one direct parent authority assignment
-- delegated permission/scope/validity never exceed the current parent authority
-- delegated assignments cannot be re-delegated
-- `authorization.manage` and `authorization.delegate` remain non-delegable
-- source authority is revalidated during access evaluation
-- frontend filtering never replaces backend validation
-- cross-tenant subjects/resources remain invalid
-- explanations expose matched provenance only, not unrelated grants
+## Engineering rule from this point forward
 
-Portable migrations extend through V44.
+> **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-## Preserve these SSO invariants
+Global Search should be the first new domain implemented under this standard.
 
-Keep tenant-bound identity linking, encrypted write-only provider secrets, SSRF-safe provider validation, state/nonce/PKCE protections, no IdP auto-provisioning, backend-authoritative SSO policy, tenant-admin break-glass and opaque one-time browser handoff.
+## Preserve these system invariants
 
-## Provider status
+- tenant isolation precedes resource access
+- backend authorization is authoritative
+- Explain Access and enforcement use the same evaluator
+- delegated authority never exceeds its current direct parent authority
+- protected authorization permissions remain non-delegable
+- public APIs expose DTOs rather than persistence entities
+- applied Flyway migrations remain append-only
+- provider secrets remain server-side
+- retryable/concurrent flows consider idempotency and locking
+- new search/analytics/automation/AI paths must filter through tenant and authorization boundaries before exposing results
 
-Stripe is working/validated in deployed Test Mode. Razorpay application/catalog integration is implemented, but recurring Test Mode authorization remains provider-sandbox blocked.
+## Deferred work
 
-## Next
+Production Operations & Disaster Recovery remains deliberately deferred behind the current product-enrichment phase. It still includes restore drills, alert/runbook work, broader load/failure-recovery validation and production R2 verification.
 
-Build **Product Experience & Work Management Enrichment**.
-
-Start with search/command palette/recents/favorites, then My Work/saved views/dashboard, followed by richer task/project views and relationships. After those foundations, consider templates, custom fields/forms, workflows/approvals, knowledge/documents, analytics and carefully selected experiments from `guides/Wild_Thoughts.md`.
-
-Production Operations & Disaster Recovery is intentionally deferred until after the current user-facing enrichment phase; it remains followed by broader failure-recovery/load and production R2 verification.
+See [[Roadmap]] for product direction and the repository `guides/DEFERRED_PLATFORM_WORK.md` for deferred platform work.

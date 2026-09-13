@@ -1,10 +1,6 @@
 # Deferred / Following Platform Work
 
-Reviewed state: post-PR #126 (`5013260`), 2026-09-13.
-
-Billing/catalog, tenant outbound webhooks, enterprise OIDC SSO, and authorization delegation/Explain Access are complete at application level.
-
-The immediate development direction is **Product Experience & Work Management Enrichment**. This file now records platform work intentionally deferred behind that user-facing phase.
+This file records important platform work intentionally deferred behind the current user-facing product-enrichment phase. Current repository status belongs in `../CHECKPOINT.md`.
 
 ## Deferred platform work
 
@@ -36,9 +32,11 @@ The immediate development direction is **Product Experience & Work Management En
 
 See:
 
-- `Wild_Thoughts.md` for the audited product idea vault and core product gaps
-- `../wiki/Roadmap.md` for the current enrichment sequence
-- `../CHECKPOINT.md` for the authoritative current checkpoint
+- `../CHECKPOINT.md` for current repository/application status
+- `../HANDOFF.md` for the current resume point
+- `Wild_Thoughts.md` for the audited product-idea vault
+- `../wiki/Roadmap.md` for product direction
+- `ENGINEERING_STANDARDS.md` for architecture-quality rules and the technical-debt register
 
 ## Independent provider/live-readiness track
 
@@ -47,4 +45,4 @@ See:
 - live billing credentials/catalog/compliance readiness is separate from application feature completeness
 - production outbound-webhook receiver readiness is deployment-specific
 
-Do not reopen completed application milestones solely because an external provider sandbox or production readiness task is pending.
+Do not reopen completed application milestones solely because an external provider sandbox or production-readiness task is pending.

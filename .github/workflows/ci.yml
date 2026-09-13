@@ -39,6 +39,35 @@ jobs:
             git diff --check HEAD^ HEAD
           fi
 
+      - name: Enforce documentation source-of-truth policy
+        shell: bash
+        run: |
+          deprecated_docs=(
+            "GUIDE_UPDATE_MANIFEST.md"
+            "PACKAGE_INDEX.md"
+            "MANIFEST.json"
+            "guides/CHECKPOINT.md"
+            "guides/HANDOFF.md"
+            "guides/progress.md"
+            "guides/RECOVERY_INDEX.md"
+            "guides/Plan.txt"
+            "guides/Details.txt"
+            "guides/API's"
+          )
+
+          failed=0
+          for path in "${deprecated_docs[@]}"; do
+            if [[ -e "$path" ]]; then
+              echo "Deprecated duplicate/stale documentation must not be reintroduced: $path"
+              failed=1
+            fi
+          done
+
+          if [[ "$failed" -ne 0 ]]; then
+            echo "Use CHECKPOINT.md, HANDOFF.md, guides/README.md, focused guides and wiki source according to AGENTS.md."
+            exit 1
+          fi
+
 
   backend:
     name: Backend
@@ -105,6 +134,7 @@ jobs:
 
     steps:
       - name: Check out repository
+
         uses: actions/checkout@v4
 
       - name: Set up Java 21

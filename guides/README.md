@@ -1,40 +1,59 @@
 # MultiTenantSAAS Guides
 
-Current snapshot: post-PR #126 (`5013260`), 2026-09-13.
+This directory contains focused technical guides. It is **not** a second checkpoint/handoff system.
 
-These guides supplement code, tests and Flyway migrations. When historical notes conflict with current implementation, prefer current code/tests, migrations and focused guides.
+## Documentation ownership
 
-## Start here
+Use one source of truth per kind of information:
 
-- `../CHECKPOINT.md` — repository checkpoint
-- `../HANDOFF.md` — resume instructions
-- `Wild_Thoughts.md` — audited product-idea vault, core gaps and differentiated experiments
+- `../readme.md` — stable public platform overview
+- `../CHECKPOINT.md` — current repository/application status
+- `../HANDOFF.md` — current resume instructions and next action
+- `../AGENTS.md` — persistent development/quality contract for autonomous work
+- `current_architecture.md` — canonical technical architecture
+- `ENGINEERING_STANDARDS.md` — technical-health assessment, debt register and engineering rules
+- `Wild_Thoughts.md` — audited idea vault and differentiated experiments; not a committed roadmap
+- `DEFERRED_PLATFORM_WORK.md` — deliberately deferred operational/platform work
+- focused guides below — detailed domain contracts and operational notes
+- `../wiki/*.md` — canonical source for the published reader-facing Wiki
+- `../wiki/Roadmap.md` — product direction and deferred milestones
+
+Do **not** create another checkpoint, handoff, progress mirror, package-status manifest or milestone-summary document unless a genuinely different consumer requires it.
+
+When a fact changes, update the document that owns that fact rather than copying the update into every guide.
+
+## Read first for development
+
+1. `../AGENTS.md`
+2. `../CHECKPOINT.md`
+3. `../HANDOFF.md`
+4. `current_architecture.md`
+5. `ENGINEERING_STANDARDS.md`
+6. the focused guide for the domain being changed
+
+## Core architecture and platform guides
+
+- `current_architecture.md` — current modular-monolith architecture and system boundaries
+- `ENGINEERING_STANDARDS.md` — mandatory modularity rules, technical debt and quality gates
 - `authorization_model.md` — scoped authorization, delegation and Explain Access
-- `enterprise-sso-foundation.md` — complete OIDC SSO architecture, deployment and test procedure
-- `current_architecture.md` — platform architecture
-- `subscription_billing.md` — billing lifecycle/provider model
-- `outbound-webhook-events.md` — outbound integration event contract
-- `outbound-webhook-delivery-history.md` — delivery/attempt/replay behavior
+- `enterprise-sso-foundation.md` — OIDC SSO architecture, administration, deployment and testing
+- `subscription_billing.md` — subscription and provider lifecycle
+- `collaboration_and_notifications.md` — collaboration/notification behavior
+- `data_model.md` — data-model notes
+- `postgresql_and_migrations.md` — PostgreSQL/Flyway behavior
+- `outbound-webhook-events.md` — outbound event contract
+- `outbound-webhook-delivery-history.md` — durable deliveries/attempts/replay
 - `outbound-webhook-admin-ux.md` — tenant Integrations UX
 
-## Current milestone status
+## Planning material
 
-- Billing/catalog: complete through PR #106
-- Tenant outbound webhooks: complete through PR #112
-- Enterprise OIDC SSO: complete through PR #119
-- Authorization delegation and Explain Access: complete through PR #125
-- Authorization documentation closure: PR #126
+- `Wild_Thoughts.md` — broad product/experiment vault
+- `DEFERRED_PLATFORM_WORK.md` — important work intentionally postponed
 
-Portable common Flyway migrations extend through **V44**.
+Historical planning/recovery files may remain for provenance, but they are not current specifications. Code, tests, migrations and the canonical documents above take precedence.
 
-## Provider status
+## Current direction
 
-Stripe is working and validated in deployed Test Mode. Razorpay application/catalog integration remains implemented, while recurring Test Mode authorization is provider-sandbox blocked. Live-provider readiness is separate.
+The active product phase is **Product Experience & Work Management Enrichment**. Global Search is the next implementation slice and should be the first new backend/frontend domain built under the explicit modularity contract in `ENGINEERING_STANDARDS.md`.
 
-## Next product milestone
-
-Recommended next major milestone: **Product Experience & Work Management Enrichment**.
-
-Start with discoverability and daily-work UX (search, command palette, recents/favorites, My Work, saved views/dashboard), then deepen work management (Kanban/calendar, task relationships, recurring work/templates) before moving into custom fields/forms, workflows/approvals, knowledge/documents and analytics.
-
-Production Operations & Disaster Recovery remains an important deferred milestone, followed later by load/failure-recovery and production R2 verification. SAML/SCIM and richer notifications remain optional/demand-driven.
+Production Operations & Disaster Recovery remains important but intentionally deferred until after the current user-facing enrichment phase.
