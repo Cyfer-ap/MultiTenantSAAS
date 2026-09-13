@@ -1,10 +1,10 @@
 # Developer Handoff
 
-Current snapshot: post-PR #125 (`0694403`), 2026-09-13.
+Current snapshot: post-PR #126 (`5013260`), 2026-09-13.
 
 ## Current phase
 
-**Authorization delegation and Explain Access complete at application level; Production Operations & Disaster Recovery next.**
+**Authorization delegation and Explain Access complete at application level; Product Experience & Work Management Enrichment next.**
 
 Billing/catalog, outbound-webhook and enterprise OIDC SSO milestones remain closed.
 
@@ -14,9 +14,11 @@ Billing/catalog, outbound-webhook and enterprise OIDC SSO milestones remain clos
 2. [[Authorization]]
 3. [[Enterprise-SSO]]
 4. [[Security-and-Authentication]]
-5. [[Production-Deployment]]
+5. [[Roadmap]]
 6. [[Testing-and-CI]]
-7. [[Roadmap]]
+7. [[Production-Deployment]]
+
+Also read repository-side `guides/Wild_Thoughts.md` before planning major user-facing features; it contains the current idea audit and differentiated backlog.
 
 ## Preserve these authorization invariants
 
@@ -43,4 +45,8 @@ Stripe is working/validated in deployed Test Mode. Razorpay application/catalog 
 
 ## Next
 
-Build the **Production Operations & Disaster Recovery** milestone: backup/restore drills, monitoring, alerts and operational runbooks, then broaden failure-recovery/load and production R2 verification.
+Build **Product Experience & Work Management Enrichment**.
+
+Start with search/command palette/recents/favorites, then My Work/saved views/dashboard, followed by richer task/project views and relationships. After those foundations, consider templates, custom fields/forms, workflows/approvals, knowledge/documents, analytics and carefully selected experiments from `guides/Wild_Thoughts.md`.
+
+Production Operations & Disaster Recovery is intentionally deferred until after the current user-facing enrichment phase; it remains followed by broader failure-recovery/load and production R2 verification.
