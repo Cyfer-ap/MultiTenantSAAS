@@ -2,10 +2,10 @@
 
 ```text
 Repository: Cyfer-ap/MultiTenantSAAS
-Reviewed application state: post-PR #125 (0694403)
+Reviewed application state: post-PR #126 (5013260)
 Snapshot date: 2026-09-13
 Phase: authorization delegation and Explain Access complete at application level
-Next recommended product milestone: Production Operations & Disaster Recovery
+Next recommended product milestone: Product Experience & Work Management Enrichment
 ```
 
 ## Updated status documents
@@ -17,35 +17,51 @@ Next recommended product milestone: Production Operations & Disaster Recovery
 - `guides/CHECKPOINT.md`
 - `guides/HANDOFF.md`
 - `guides/progress.md`
-- `guides/authorization_model.md`
+- `guides/Wild_Thoughts.md`
 - `guides/DEFERRED_PLATFORM_WORK.md`
 - `PACKAGE_INDEX.md`
 - `MANIFEST.json`
 
-## Authorization documentation updates
+## Wild Thoughts refresh
 
-- records #121 Explain Access foundation using the enforcement evaluator
-- records #122 V44 bounded delegation/provenance/runtime source revalidation
-- records #125 delegation-safe reference data, direct/delegated provenance and tenant Authorization UX
-- documents one-level delegation, permission/scope/validity containment and protected permissions
-- documents manager versus delegate-only workspace behavior
-- advances portable Flyway status from V43 to V44
+`guides/Wild_Thoughts.md` was rewritten from a stale brainstorming snapshot into a living product vault:
 
-## Wiki status updates
+- fixes the old encoding damage
+- audits which original platform/core ideas are already built
+- distinguishes complete, partial, open, experimental and deferred ideas
+- records the remaining product-core gaps
+- separates table-stakes features from possible differentiation
+- adds a concrete near-term enrichment backlog
+- preserves high-value original wild ideas
+- adds new differentiated experiments #104–#140
+
+## Product-direction update
+
+The immediate sequence is now intentionally user-facing:
+
+1. search + command palette + recents/favorites
+2. My Work + saved views + capability-aware dashboard
+3. Kanban/calendar + richer task relationships
+4. recurring work/templates + bulk/import/export productivity
+5. custom fields/forms + workflow/approval + knowledge/documents
+6. analytics and selected differentiated experiments
+
+Production Operations & Disaster Recovery is preserved as deferred platform work rather than the immediate next milestone.
+
+## Wiki updates
 
 - `wiki/Home.md`
-- `wiki/Authorization.md`
 - `wiki/Roadmap.md`
 - `wiki/Developer-Handoff.md`
 
-## Milestone truth captured
+## Milestone truth preserved
 
-- authorization delegation and Explain Access are complete through PR #125
-- portable Flyway migrations extend through V44
+- authorization delegation and Explain Access remain complete through PR #125
+- PR #126 remains the authorization milestone documentation closure
+- portable Flyway migrations remain through V44
 - billing/catalog, outbound webhooks and enterprise OIDC SSO remain closed application milestones
 - Stripe remains the working/validated deployed Test Mode path
 - Razorpay recurring Test Mode authorization remains provider-sandbox blocked while application/catalog integration remains implemented
-- next core milestone is Production Operations & Disaster Recovery
 - SAML/SCIM and notification expansion remain optional/demand-driven
 
 Wiki source under `wiki/` is published from merged `main` by `.github/workflows/wiki-sync.yml` via `scripts/publish-wiki.ps1`.
