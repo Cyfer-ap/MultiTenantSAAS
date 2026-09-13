@@ -133,6 +133,43 @@ class AuthorizationDelegationIntegrationTest {
                                 AuthorizationEvaluationContext.project(otherProject.getId())))
                 .isFalse();
 
+        String administratorToken =
+                login(context.tenant().getId(), context.administrator().getEmail());
+        mockMvc.perform(
+                        post(
+                                        "/api/tenants/{tenantId}/authorization/explain-access",
+                                        context.tenant().getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(administratorToken))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {
+                                          "userId": "%s",
+                                          "permissionCode": "%s",
+                                          "contextType": "PROJECT",
+                                          "targetId": "%s"
+                                        }
+                                        """
+                                                .formatted(
+                                                        delegate.getId(),
+                                                        PlatformPermissionCodes.PROJECT_TASK_READ,
+                                                        project.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.granted").value(true))
+                .andExpect(jsonPath("$.data.matchedGrant.grantSource").value("DELEGATED"))
+                .andExpect(
+                        jsonPath("$.data.matchedGrant.delegationId")
+                                .value(delegationId.toString()))
+                .andExpect(
+                        jsonPath("$.data.matchedGrant.parentAssignmentId")
+                                .value(parentAssignment.id().toString()))
+                .andExpect(
+                        jsonPath("$.data.matchedGrant.delegatorUserId")
+                                .value(delegator.getId().toString()))
+                .andExpect(
+                        jsonPath("$.data.matchedGrant.delegatorEmail")
+                                .value(delegator.getEmail()));
+
         mockMvc.perform(
                         get(
                                         "/api/tenants/{tenantId}/authorization/delegations",
@@ -158,6 +195,59 @@ class AuthorizationDelegationIntegrationTest {
                                 PlatformPermissionCodes.PROJECT_TASK_READ,
                                 AuthorizationEvaluationContext.project(project.getId())))
                 .isFalse();
+    }
+
+    @Test
+    void delegateOnlyReferenceDataExposesBoundedChoicesWithoutManagementAccess() throws Exception {
+        TestContext context = createContext("delegation-reference");
+        AppUser delegator = createUser(context.tenant(), "Reference Delegator");
+        AppUser delegate = createUser(context.tenant(), "Reference Delegate");
+
+        AuthorizationRoleResponse parentRole =
+                createRole(
+                        context.tenant(),
+                        "REFERENCE_PARENT",
+                        Set.of(
+                                PlatformPermissionCodes.AUTHORIZATION_DELEGATE,
+                                PlatformPermissionCodes.PROJECT_TASK_READ));
+        AuthorizationRoleResponse childRole =
+                createRole(
+                        context.tenant(),
+                        "REFERENCE_CHILD",
+                        Set.of(PlatformPermissionCodes.PROJECT_TASK_READ));
+        AuthorizationUserRoleAssignmentResponse parentAssignment =
+                assignRole(
+                        context, delegator, parentRole, AuthorizationScopeType.TENANT, null, null);
+
+        String token = login(context.tenant().getId(), delegator.getEmail());
+
+        MvcResult referenceResult =
+                mockMvc.perform(
+                                get(
+                                                "/api/tenants/{tenantId}/authorization/delegations/reference-data",
+                                                context.tenant().getId())
+                                        .header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        JsonNode referenceData =
+                jsonMapper.readTree(referenceResult.getResponse().getContentAsString()).path("data");
+
+        assertThat(fieldValues(referenceData.path("users"), "id"))
+                .contains(delegate.getId().toString())
+                .doesNotContain(delegator.getId().toString());
+        assertThat(fieldValues(referenceData.path("roles"), "id"))
+                .contains(childRole.id().toString())
+                .doesNotContain(parentRole.id().toString());
+        assertThat(fieldValues(referenceData.path("parentAssignments"), "id"))
+                .containsExactly(parentAssignment.id().toString());
+
+        mockMvc.perform(
+                        get(
+                                        "/api/tenants/{tenantId}/authorization/assignment-reference-data",
+                                        context.tenant().getId())
+                                .header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -452,6 +542,12 @@ class AuthorizationDelegationIntegrationTest {
                         scopeTargetId,
                         Instant.now().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MICROS),
                         validUntil));
+    }
+
+    private Set<String> fieldValues(JsonNode array, String fieldName) {
+        return java.util.stream.StreamSupport.stream(array.spliterator(), false)
+                .map(item -> item.path(fieldName).asText())
+                .collect(java.util.stream.Collectors.toSet());
     }
 
     private String login(UUID tenantId, String email) throws Exception {
