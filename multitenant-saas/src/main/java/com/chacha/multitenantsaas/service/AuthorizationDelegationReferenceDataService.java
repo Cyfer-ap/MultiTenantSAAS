@@ -2,6 +2,7 @@ package com.chacha.multitenantsaas.service;
 
 import com.chacha.multitenantsaas.dto.AuthorizationAssignmentReferenceDataResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationDelegationReferenceDataResponse;
+import com.chacha.multitenantsaas.dto.AuthorizationDelegationReferenceDataResponse.ParentAssignmentOption;
 import com.chacha.multitenantsaas.dto.AuthorizationPermissionResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationRoleResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationUserRoleAssignmentResponse;
@@ -10,7 +11,10 @@ import com.chacha.multitenantsaas.repository.AuthorizationDelegationRepository;
 import com.chacha.multitenantsaas.security.PlatformPermissionCodes;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,13 +42,15 @@ public class AuthorizationDelegationReferenceDataService {
             UUID tenantId, UUID delegatorUserId) {
         AuthorizationAssignmentReferenceDataResponse assignmentReferenceData =
                 assignmentReferenceDataService.getReferenceData(tenantId);
+        List<AuthorizationRoleResponse> activeRoles = authorizationRoleService.getActiveRoles(tenantId);
+        Map<UUID, AuthorizationRoleResponse> rolesById =
+                activeRoles.stream()
+                        .collect(Collectors.toMap(AuthorizationRoleResponse::id, Function.identity()));
 
         List<AuthorizationRoleResponse> roles =
-                authorizationRoleService.getActiveRoles(tenantId).stream()
-                        .filter(this::isDelegableRole)
-                        .toList();
+                activeRoles.stream().filter(this::isDelegableRole).toList();
 
-        List<AuthorizationUserRoleAssignmentResponse> parentAssignments =
+        List<ParentAssignmentOption> parentAssignments =
                 assignmentService.getEffectiveUserAssignments(tenantId, delegatorUserId, Instant.now())
                         .stream()
                         .filter(this::isDelegableParentScope)
@@ -53,6 +59,7 @@ public class AuthorizationDelegationReferenceDataService {
                                         !delegationRepository
                                                 .existsByTenant_IdAndDelegatedAssignment_Id(
                                                         tenantId, assignment.id()))
+                        .map(assignment -> mapParentAssignment(assignment, rolesById))
                         .toList();
 
         return new AuthorizationDelegationReferenceDataResponse(
@@ -63,6 +70,27 @@ public class AuthorizationDelegationReferenceDataService {
                 parentAssignments,
                 assignmentReferenceData.organizationalUnits(),
                 assignmentReferenceData.projects());
+    }
+
+    private ParentAssignmentOption mapParentAssignment(
+            AuthorizationUserRoleAssignmentResponse assignment,
+            Map<UUID, AuthorizationRoleResponse> rolesById) {
+        AuthorizationRoleResponse role = rolesById.get(assignment.roleId());
+        if (role == null) {
+            throw new IllegalStateException(
+                    "Active parent authorization role is unavailable: " + assignment.roleId());
+        }
+
+        return new ParentAssignmentOption(
+                assignment.id(),
+                assignment.roleId(),
+                assignment.roleCode(),
+                assignment.roleName(),
+                assignment.scopeType(),
+                assignment.scopeTargetId(),
+                assignment.validFrom(),
+                assignment.validUntil(),
+                role.permissions().stream().map(AuthorizationPermissionResponse::code).toList());
     }
 
     private boolean isDelegableRole(AuthorizationRoleResponse role) {
