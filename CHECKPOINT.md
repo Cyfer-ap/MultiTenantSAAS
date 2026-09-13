@@ -1,54 +1,33 @@
-# MultiTenantSAAS — Checkpoint
+# MultiTenantSAAS — Current Checkpoint
 
+Updated: 2026-09-14
 Repository: `Cyfer-ap/MultiTenantSAAS`
 Branch: `main`
-Date: 2026-09-13
-Base reviewed state: post-PR #126 (`5013260`)
+
+This file is the **single repository-side source of truth for current project status**. Do not create additional progress/checkpoint mirrors.
 
 ## Current phase
 
-**Authorization delegation and Explain Access — COMPLETE at application level**
+**Product Experience & Work Management Enrichment**
 
-Billing/catalog, tenant-configurable outbound webhooks and enterprise OIDC SSO remain closed application milestones. PRs #121, #122 and #125 complete the authorization follow-up: shared explain-access evaluation, bounded delegation with runtime non-escalation, direct/delegated provenance, and tenant Authorization UX. PR #126 closed the milestone documentation.
+The platform foundation is broad enough that current development should prioritize daily user value and product depth rather than additional infrastructure expansion.
 
-## Delivered authorization sequence
+The next implementation slice is **Global Search**.
 
-- PR #121: structured authorization decisions and tenant-admin Explain Access API using the same evaluator as enforcement
-- PR #122: V44 bounded authorization delegation, create/list/revoke lifecycle, provenance persistence, audit events and runtime parent-authority revalidation
-- PR #125: delegation-safe reference data, direct-vs-delegated Explain Access provenance, Delegations/Explain Access UI and delegate-only workspace navigation
-- PR #126: documentation/checkpoint closure and roadmap handoff
+## Completed application foundations
 
-## Authorization invariants
+- billing/catalog lifecycle through PR #106
+- tenant-configurable outbound webhooks through PR #112
+- enterprise OIDC SSO / identity federation through PR #119
+- authorization Explain Access/delegation through PR #125
+- authorization milestone closure through PR #126
+- product vision / Wild Thoughts audit through PR #127
 
-- tenant isolation remains mandatory before authorization evaluation
-- backend authorization remains authoritative; frontend guards are UX only
-- Explain Access uses the same evaluator as enforcement rather than a parallel permission model
-- every delegated grant has one explicit direct parent authority assignment
-- delegated authority must remain a permission, scope and validity subset of its current direct source
-- delegated assignments cannot be re-delegated
-- `authorization.manage` and `authorization.delegate` cannot be delegated
-- unsupported delegation sources/scopes remain rejected rather than approximated
-- parent authority is revalidated at access time; revoked, expired, inactive or narrowed source authority invalidates the child grant
-- revoking a delegation deactivates the generated assignment
-- Explain Access exposes only the matched grant/provenance required to explain the decision
-
-## Authorization workspace
-
-Managers with `authorization.manage` can use:
-
-```text
-/authorization/manage
-/authorization/delegations
-/authorization/explain
-```
-
-Users with `authorization.delegate` but not `authorization.manage` can enter the Authorization workspace and use Delegations only.
-
-Delegation UI supports bounded create/list/status/expiry/revoke behavior. Explain Access distinguishes `DIRECT` from `DELEGATED` grant source and, for delegated grants, exposes delegation/parent/delegator provenance.
+Other established capabilities include projects/tasks/collaboration, R2/S3-compatible attachments, durable notifications/email, API keys, usage metering/quotas, tenant/platform audit, PostgreSQL/Flyway correctness, production hardening and CI/security gates.
 
 ## Database checkpoint
 
-Portable common migrations extend through **V44**.
+Portable common Flyway migrations extend through **V44**.
 
 Recent milestone migrations:
 
@@ -57,59 +36,99 @@ V40 tenant identity-provider configuration
 V41 OIDC authorization transactions + tenant federated identities
 V42 tenant SSO policy
 V43 OIDC browser session handoffs
-V44 authorization delegation provenance + authorization.delegate permission
+V44 authorization delegation provenance + authorization.delegate
 ```
 
 Never rewrite an applied migration.
 
-## Billing/provider status
+## Provider status
 
 ### Stripe
 
-**Working and validated in deployed Test Mode.** Hosted checkout, signed lifecycle webhooks, provider-side cancellation and reconciliation are implemented and validated. Managed Product/Price provisioning remains implemented.
+Working and validated in deployed Test Mode. Hosted checkout, signed lifecycle synchronization, provider-side cancellation, reconciliation and managed Product/Price provisioning are implemented.
 
 ### Razorpay
 
-**Application integration/catalog provisioning implemented; recurring Test Mode authorization remains provider-sandbox blocked.** Keep Razorpay available; live/provider readiness remains separate from core application completeness.
+Application integration and managed Plan provisioning are implemented. Recurring Test Mode authorization remains provider-sandbox blocked. Keep the provider integration available; live readiness is a separate track.
 
-## Product-core gap checkpoint
+## Product-core gaps
 
-The platform foundation is now broad. The largest remaining core gaps are user-facing rather than tenancy/billing/authorization plumbing:
+The largest remaining gaps are now user-facing:
 
-- global search + command palette
-- favorites/recent items and saved views
+- global authorized search and command palette
+- favorites/recent items
 - My Work / unified attention queue
-- role/capability-aware dashboard
-- richer task views: Kanban/calendar, subtasks, dependencies, labels and recurring work
+- saved filters/views and stronger dashboard UX
+- Kanban/calendar views
+- subtasks, dependencies, labels and recurring work
 - project/task templates
+- bulk actions and import/export
 - custom fields/forms
-- workflow/approval automation
-- knowledge/documents beyond task attachments
+- workflows/approvals
+- first-class knowledge/documents
 - user-facing analytics/reporting
-- import/export and bulk productivity
-- smoother multi-workspace switching/personalization
+- smoother workspace switching and personalization
 
-See `guides/Wild_Thoughts.md` for the audited feature vault and differentiated experiments.
+`guides/Wild_Thoughts.md` contains the broader audited idea vault and differentiated experiments.
 
-## Verification checkpoint
+## Engineering-health checkpoint
 
-PR #125 passed Repository Hygiene, PostgreSQL/Flyway, Backend, Frontend formatting/tests/lint/build, Security, Container CI and Qodana on its final head before merge. Frontend coverage executed 71 test files / 240 tests successfully. PR #126 passed CI, Security, Qodana and Wiki validation before merge.
+The codebase remains feasible for continued feature development without a rewrite, but future growth must actively control coupling.
 
-## Documentation/Wiki
+Current priority debt:
 
-`wiki/*.md` remains canonical Wiki source and is automatically published from merged `main` by `.github/workflows/wiki-sync.yml` using `scripts/publish-wiki.ps1`.
+1. inconsistent backend domain/package boundaries
+2. large application services accumulating orchestration dependencies
+3. tenant isolation relying partly on repository/query discipline
+4. manually duplicated backend/frontend API contracts
+5. growing frontend route/navigation aggregation points
+6. scale/load characteristics not yet measured comprehensively
+7. deferred operational maturity: backup/restore drills, broader recovery/load validation and production R2 verification
 
-## Next product milestone
+Canonical assessment and rules: `guides/ENGINEERING_STANDARDS.md`.
 
-Start **Product Experience & Work Management Enrichment**.
+## Non-negotiable architecture rule
 
-Recommended progression:
+> **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-1. global search + command palette + favorites/recent items
-2. My Work + saved views + capability-aware dashboard
-3. Kanban/calendar and richer task relationships such as subtasks/dependencies/labels
-4. recurring work/project templates and practical bulk/import/export UX
-5. custom fields/forms, workflow/approval and knowledge/document capabilities
-6. analytics plus selected differentiated experiments from `guides/Wild_Thoughts.md`
+This rule is enforced as repository policy in `AGENTS.md` and applies from Global Search onward.
 
-**Production Operations & Disaster Recovery is intentionally deferred from the immediate sequence** while user-facing product depth is expanded. It remains an important later milestone together with load/failure-recovery and production R2 verification. Optional SAML/SCIM and notification expansion remain demand-driven work.
+## Next product sequence
+
+1. Global Search foundation
+2. command palette + quick navigation/actions
+3. favorites + recently viewed
+4. My Work
+5. saved views + dashboard refresh
+6. Kanban/calendar + richer task relationships
+7. templates, recurring work, bulk/import/export
+8. custom fields/forms + workflows/approvals + knowledge/documents
+9. analytics and selected differentiated experiments
+
+Global Search should become a dedicated `search` domain with permission-aware query contracts rather than another generic service.
+
+## Deferred platform work
+
+Production Operations & Disaster Recovery remains important but intentionally deferred from the immediate product sequence:
+
+- PostgreSQL backup/restore drills
+- health/readiness/metrics review and alerting
+- incident/recovery runbooks
+- broader failure-recovery/load validation
+- production R2 verification
+
+Optional SAML/SCIM, MFA/passkeys/device management and richer notification channels remain demand-driven.
+
+## Documentation ownership
+
+- `CHECKPOINT.md` — current status
+- `HANDOFF.md` — current resume instructions
+- `AGENTS.md` — persistent engineering contract
+- `guides/README.md` — documentation ownership/index
+- `guides/current_architecture.md` — canonical architecture
+- `guides/ENGINEERING_STANDARDS.md` — technical-health assessment and quality rules
+- focused guides — domain-specific behavior
+- `wiki/*.md` — canonical reader-facing Wiki source
+- `wiki/Roadmap.md` — product direction
+
+Do not recreate duplicate checkpoint/progress/manifests.
