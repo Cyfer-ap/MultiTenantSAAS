@@ -7,23 +7,22 @@ Use this document to resume without relying on chat history.
 ```text
 Repository: Cyfer-ap/MultiTenantSAAS
 Branch: main
-Application state reviewed through: PR #125 (0694403)
+Application state reviewed through: PR #126 (5013260)
 Date: 2026-09-13
 Current phase: authorization delegation and Explain Access complete at application level
-Recommended next product milestone: Production Operations & Disaster Recovery
+Recommended next product milestone: Product Experience & Work Management Enrichment
 ```
 
 ## Read first
 
 1. `readme.md`
 2. `CHECKPOINT.md`
-3. `guides/authorization_model.md`
-4. `guides/enterprise-sso-foundation.md`
-5. `wiki/Authorization.md`
-6. `wiki/Security-and-Authentication.md`
-7. `wiki/Production-Deployment.md`
+3. `guides/Wild_Thoughts.md`
+4. `guides/authorization_model.md`
+5. `guides/enterprise-sso-foundation.md`
+6. `wiki/Authorization.md`
+7. `wiki/Roadmap.md`
 8. `wiki/Testing-and-CI.md`
-9. `wiki/Roadmap.md`
 
 ## Current result
 
@@ -42,6 +41,8 @@ Authorization completion through PR #125 provides:
 - delegation-safe reference data for non-admin delegators
 - direct-vs-delegated Explain Access provenance
 - manager Authorization workspace plus delegate-only Delegations access
+
+PR #126 closed the authorization milestone documentation.
 
 ## Authorization boundaries to preserve
 
@@ -69,19 +70,29 @@ Common portable migrations extend through **V44**. Never rewrite an applied Flyw
 - Razorpay integration and managed Plan provisioning remain implemented, but recurring Test Mode authorization is provider-sandbox blocked
 - keep both providers; live readiness remains an independent operational review
 
+## Product direction
+
+The immediate goal is to make the application materially more useful and pleasant before returning to operations/DR work.
+
+The audited idea vault is `guides/Wild_Thoughts.md`. It distinguishes built foundations, partial ideas, core product gaps and experimental/differentiated ideas.
+
 ## Next action
 
-Start **Production Operations & Disaster Recovery**.
+Start **Product Experience & Work Management Enrichment**.
 
-Recommended first slice:
+Recommended initial sequence:
 
-1. define PostgreSQL backup retention/export and a safe isolated restore-drill procedure
-2. add/verify health, readiness, metrics and alertable failure signals
-3. document runbooks for deployment failure, DB recovery, SSO/provider outage, billing/webhook incidents and secret rotation
-4. follow with load/failure-recovery testing and production R2 verification
+1. global search foundation
+2. command palette layered on search/navigation/actions
+3. favorites + recently viewed
+4. My Work / personal attention queue
+5. saved filters/views and dashboard refresh
+6. richer task views/relationships: Kanban/calendar, subtasks, dependencies, labels and recurring work
 
-SAML/SCIM and richer notification channels remain optional until requirements justify them.
+Then expand into templates, custom fields/forms, workflows/approvals, knowledge/documents and product analytics.
+
+Production Operations & Disaster Recovery, broader load/failure-recovery and production R2 verification remain important but are intentionally deferred from the immediate product sequence. SAML/SCIM and richer notification channels remain optional until requirements justify them.
 
 ## Verification
 
-GitHub Actions remains authoritative where local Docker is unavailable. Before merge require Backend, PostgreSQL/Flyway, Frontend, Repository Hygiene, Security, Container CI and Qodana to pass. Wiki source changes should also satisfy Wiki Sync validation.
+GitHub Actions remains authoritative where local Docker is unavailable. Before merge require Backend, PostgreSQL/Flyway, Frontend, Repository Hygiene, Security, Container CI and Qodana to pass where those workflows are applicable. Wiki source changes should also satisfy Wiki Sync validation.
