@@ -23,6 +23,7 @@ export const authorizationPermissionCodes = {
 
     AUDIT_READ: 'audit.read',
     AUTHORIZATION_MANAGE: 'authorization.manage',
+    AUTHORIZATION_DELEGATE: 'authorization.delegate',
 
     SUBSCRIPTION_READ: 'subscription.read',
 } as const
@@ -151,4 +152,114 @@ export interface CreateAuthorizationUserRoleAssignmentInput {
     scopeTargetId: string | null
     validFrom: string | null
     validUntil: string | null
+}
+
+export type AuthorizationDelegationStatus = 'ACTIVE' | 'REVOKED'
+
+export interface AuthorizationDelegationParentAssignmentOption {
+    id: string
+    roleId: string
+    roleCode: string
+    roleName: string
+    scopeType: AuthorizationScopeType
+    scopeTargetId: string | null
+    validFrom: string
+    validUntil: string | null
+    permissionCodes: string[]
+}
+
+export interface AuthorizationDelegationReferenceData {
+    users: AuthorizationAssignmentUserOption[]
+    roles: AuthorizationRole[]
+    parentAssignments: AuthorizationDelegationParentAssignmentOption[]
+    organizationalUnits: AuthorizationAssignmentScopeTargetOption[]
+    projects: AuthorizationAssignmentScopeTargetOption[]
+}
+
+export interface AuthorizationDelegation {
+    id: string
+    tenantId: string
+    delegatorUserId: string
+    delegatorEmail: string
+    delegateUserId: string
+    delegateEmail: string
+    parentAssignmentId: string
+    delegatedAssignmentId: string
+    roleId: string
+    roleCode: string
+    roleName: string
+    scopeType: AuthorizationScopeType
+    scopeTargetId: string | null
+    status: AuthorizationDelegationStatus
+    validFrom: string
+    validUntil: string
+    createdAt: string
+    revokedAt: string | null
+    revokedByUserId: string | null
+    revokedByEmail: string | null
+}
+
+export interface CreateAuthorizationDelegationInput {
+    delegateUserId: string
+    parentAssignmentId: string
+    roleId: string
+    scopeType: AuthorizationScopeType
+    scopeTargetId: string | null
+    validFrom: string | null
+    validUntil: string
+}
+
+export type AuthorizationAccessContextType =
+    | 'TENANT'
+    | 'USER'
+    | 'PROJECT'
+    | 'ORGANIZATIONAL_UNIT'
+    | 'ORGANIZATIONAL_SUBTREE'
+    | 'DIRECT_REPORTS_ANCHOR'
+
+export type AuthorizationAccessDecisionReason =
+    | 'GRANTED_BY_ROLE_ASSIGNMENT'
+    | 'INVALID_INPUT'
+    | 'INVALID_PERMISSION_CODE'
+    | 'TENANT_UNAVAILABLE'
+    | 'SUBJECT_UNAVAILABLE'
+    | 'NO_EFFECTIVE_GRANT'
+    | 'SCOPE_NOT_SATISFIED'
+    | 'DELEGATION_SOURCE_UNAVAILABLE'
+
+export type AuthorizationGrantSource = 'DIRECT' | 'DELEGATED'
+
+export interface AuthorizationMatchedGrant {
+    assignmentId: string
+    roleId: string
+    roleCode: string
+    scopeType: AuthorizationScopeType
+    scopeTargetId: string | null
+    validFrom: string
+    validUntil: string | null
+    grantSource: AuthorizationGrantSource
+    delegationId: string | null
+    parentAssignmentId: string | null
+    delegatorUserId: string | null
+    delegatorEmail: string | null
+}
+
+export interface ExplainAuthorizationAccessInput {
+    userId: string
+    permissionCode: string
+    contextType: AuthorizationAccessContextType
+    targetId: string | null
+    effectiveAt: string | null
+}
+
+export interface AuthorizationExplainAccessResult {
+    tenantId: string
+    userId: string
+    permissionCode: string
+    contextType: AuthorizationAccessContextType
+    targetId: string | null
+    granted: boolean
+    reason: AuthorizationAccessDecisionReason
+    evaluatedAt: string
+    matchedGrant: AuthorizationMatchedGrant | null
 }
