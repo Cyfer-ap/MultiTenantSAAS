@@ -5,6 +5,7 @@ import com.chacha.multitenantsaas.dto.AuthorizationExplainAccessRequest;
 import com.chacha.multitenantsaas.dto.AuthorizationExplainAccessResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationMatchedGrantResponse;
 import com.chacha.multitenantsaas.entity.AppUser;
+import com.chacha.multitenantsaas.entity.AuthorizationDelegation;
 import com.chacha.multitenantsaas.entity.OrganizationAssignmentStatus;
 import com.chacha.multitenantsaas.entity.OrganizationalUnit;
 import com.chacha.multitenantsaas.entity.OrganizationalUnitStatus;
@@ -14,10 +15,12 @@ import com.chacha.multitenantsaas.entity.UserOrganizationAssignment;
 import com.chacha.multitenantsaas.entity.UserStatus;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.AppUserRepository;
+import com.chacha.multitenantsaas.repository.AuthorizationDelegationRepository;
 import com.chacha.multitenantsaas.repository.OrganizationalUnitRepository;
 import com.chacha.multitenantsaas.repository.ProjectRepository;
 import com.chacha.multitenantsaas.repository.UserOrganizationAssignmentRepository;
 import com.chacha.multitenantsaas.security.AuthorizationEvaluationContext;
+import com.chacha.multitenantsaas.security.AuthorizationGrantSource;
 import com.chacha.multitenantsaas.security.AuthorizationPermissionDecision;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -40,19 +43,23 @@ public class AuthorizationAccessExplanationService {
 
     private final AuthorizationPermissionEvaluator authorizationPermissionEvaluator;
 
+    private final AuthorizationDelegationRepository authorizationDelegationRepository;
+
     public AuthorizationAccessExplanationService(
             TenantLookupService tenantLookupService,
             AppUserRepository appUserRepository,
             ProjectRepository projectRepository,
             OrganizationalUnitRepository organizationalUnitRepository,
             UserOrganizationAssignmentRepository userOrganizationAssignmentRepository,
-            AuthorizationPermissionEvaluator authorizationPermissionEvaluator) {
+            AuthorizationPermissionEvaluator authorizationPermissionEvaluator,
+            AuthorizationDelegationRepository authorizationDelegationRepository) {
         this.tenantLookupService = tenantLookupService;
         this.appUserRepository = appUserRepository;
         this.projectRepository = projectRepository;
         this.organizationalUnitRepository = organizationalUnitRepository;
         this.userOrganizationAssignmentRepository = userOrganizationAssignmentRepository;
         this.authorizationPermissionEvaluator = authorizationPermissionEvaluator;
+        this.authorizationDelegationRepository = authorizationDelegationRepository;
     }
 
     @Transactional(readOnly = true)
@@ -78,16 +85,7 @@ public class AuthorizationAccessExplanationService {
                         effectiveAt);
 
         AuthorizationMatchedGrantResponse matchedGrant =
-                decision.granted()
-                        ? new AuthorizationMatchedGrantResponse(
-                                decision.assignmentId(),
-                                decision.roleId(),
-                                decision.roleCode(),
-                                decision.scopeType(),
-                                decision.scopeTargetId(),
-                                decision.validFrom(),
-                                decision.validUntil())
-                        : null;
+                decision.granted() ? buildMatchedGrant(tenantId, decision) : null;
 
         return new AuthorizationExplainAccessResponse(
                 tenantId,
@@ -99,6 +97,44 @@ public class AuthorizationAccessExplanationService {
                 decision.reason(),
                 decision.evaluatedAt(),
                 matchedGrant);
+    }
+
+    private AuthorizationMatchedGrantResponse buildMatchedGrant(
+            UUID tenantId, AuthorizationPermissionDecision decision) {
+        AuthorizationDelegation delegation =
+                authorizationDelegationRepository
+                        .findByTenant_IdAndDelegatedAssignment_Id(tenantId, decision.assignmentId())
+                        .orElse(null);
+
+        if (delegation == null) {
+            return new AuthorizationMatchedGrantResponse(
+                    decision.assignmentId(),
+                    decision.roleId(),
+                    decision.roleCode(),
+                    decision.scopeType(),
+                    decision.scopeTargetId(),
+                    decision.validFrom(),
+                    decision.validUntil(),
+                    AuthorizationGrantSource.DIRECT,
+                    null,
+                    null,
+                    null,
+                    null);
+        }
+
+        return new AuthorizationMatchedGrantResponse(
+                decision.assignmentId(),
+                decision.roleId(),
+                decision.roleCode(),
+                decision.scopeType(),
+                decision.scopeTargetId(),
+                decision.validFrom(),
+                decision.validUntil(),
+                AuthorizationGrantSource.DELEGATED,
+                delegation.getId(),
+                delegation.getParentAuthorityAssignment().getId(),
+                delegation.getDelegatorUser().getId(),
+                delegation.getDelegatorUser().getEmail());
     }
 
     private AuthorizationEvaluationContext buildAndValidateContext(
