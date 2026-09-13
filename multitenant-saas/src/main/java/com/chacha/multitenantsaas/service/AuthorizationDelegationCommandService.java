@@ -1,6 +1,7 @@
 package com.chacha.multitenantsaas.service;
 
 import com.chacha.multitenantsaas.dto.AuthorizationDelegationCreateRequest;
+import com.chacha.multitenantsaas.dto.AuthorizationDelegationReferenceDataResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationDelegationResponse;
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.AuditAction;
@@ -16,16 +17,21 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthorizationDelegationCommandService {
 
     private final AuthorizationDelegationService authorizationDelegationService;
+    private final AuthorizationDelegationReferenceDataService
+            authorizationDelegationReferenceDataService;
     private final AuthorizationPermissionEvaluator authorizationPermissionEvaluator;
     private final CurrentActorService currentActorService;
     private final AuditLogService auditLogService;
 
     public AuthorizationDelegationCommandService(
             AuthorizationDelegationService authorizationDelegationService,
+            AuthorizationDelegationReferenceDataService authorizationDelegationReferenceDataService,
             AuthorizationPermissionEvaluator authorizationPermissionEvaluator,
             CurrentActorService currentActorService,
             AuditLogService auditLogService) {
         this.authorizationDelegationService = authorizationDelegationService;
+        this.authorizationDelegationReferenceDataService =
+                authorizationDelegationReferenceDataService;
         this.authorizationPermissionEvaluator = authorizationPermissionEvaluator;
         this.currentActorService = currentActorService;
         this.auditLogService = auditLogService;
@@ -66,6 +72,13 @@ public class AuthorizationDelegationCommandService {
         AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
         return authorizationDelegationService.getVisibleDelegations(
                 tenantId, actor.getId(), canManageAuthorization(tenantId, actor.getId()));
+    }
+
+    @Transactional(readOnly = true)
+    public AuthorizationDelegationReferenceDataResponse getReferenceData(UUID tenantId, Jwt jwt) {
+        AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
+        return authorizationDelegationReferenceDataService.getReferenceData(
+                tenantId, actor.getId());
     }
 
     @Transactional

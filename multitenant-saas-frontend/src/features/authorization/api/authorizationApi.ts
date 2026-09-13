@@ -2,17 +2,26 @@ import { httpClient } from '../../../api/httpClient'
 import type { ApiResponse } from '../../../types/api'
 import type {
     AuthorizationAssignmentReferenceData,
+    AuthorizationDelegation,
+    AuthorizationDelegationReferenceData,
+    AuthorizationExplainAccessResult,
     AuthorizationPermission,
     AuthorizationRole,
     AuthorizationUserRoleAssignment,
+    CreateAuthorizationDelegationInput,
     CreateAuthorizationRoleInput,
     CreateAuthorizationUserRoleAssignmentInput,
     CurrentAuthorizationContext,
+    ExplainAuthorizationAccessInput,
     ReplaceAuthorizationRolePermissionsInput,
 } from '../types/authorization'
 
 function authorizationBasePath(tenantId: string): string {
     return `/api/tenants/${encodeURIComponent(tenantId)}/authorization`
+}
+
+function delegationBasePath(tenantId: string): string {
+    return `${authorizationBasePath(tenantId)}/delegations`
 }
 
 async function getCurrentAuthorizationContext(
@@ -131,6 +140,59 @@ async function deactivateAssignment(
     return response.data.data
 }
 
+async function getDelegationReferenceData(
+    tenantId: string,
+): Promise<AuthorizationDelegationReferenceData> {
+    const response = await httpClient.get<ApiResponse<AuthorizationDelegationReferenceData>>(
+        `${delegationBasePath(tenantId)}/reference-data`,
+    )
+
+    return response.data.data
+}
+
+async function getDelegations(tenantId: string): Promise<AuthorizationDelegation[]> {
+    const response = await httpClient.get<ApiResponse<AuthorizationDelegation[]>>(
+        delegationBasePath(tenantId),
+    )
+
+    return response.data.data
+}
+
+async function createDelegation(
+    tenantId: string,
+    input: CreateAuthorizationDelegationInput,
+): Promise<AuthorizationDelegation> {
+    const response = await httpClient.post<ApiResponse<AuthorizationDelegation>>(
+        delegationBasePath(tenantId),
+        input,
+    )
+
+    return response.data.data
+}
+
+async function revokeDelegation(
+    tenantId: string,
+    delegationId: string,
+): Promise<AuthorizationDelegation> {
+    const response = await httpClient.patch<ApiResponse<AuthorizationDelegation>>(
+        `${delegationBasePath(tenantId)}/${encodeURIComponent(delegationId)}/revoke`,
+    )
+
+    return response.data.data
+}
+
+async function explainAccess(
+    tenantId: string,
+    input: ExplainAuthorizationAccessInput,
+): Promise<AuthorizationExplainAccessResult> {
+    const response = await httpClient.post<ApiResponse<AuthorizationExplainAccessResult>>(
+        `${authorizationBasePath(tenantId)}/explain-access`,
+        input,
+    )
+
+    return response.data.data
+}
+
 export const authorizationApi = {
     getCurrentAuthorizationContext,
     getPermissions,
@@ -143,4 +205,9 @@ export const authorizationApi = {
     getUserAssignments,
     createAssignment,
     deactivateAssignment,
+    getDelegationReferenceData,
+    getDelegations,
+    createDelegation,
+    revokeDelegation,
+    explainAccess,
 }

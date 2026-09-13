@@ -2,6 +2,7 @@ package com.chacha.multitenantsaas.controller;
 
 import com.chacha.multitenantsaas.common.ApiResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationDelegationCreateRequest;
+import com.chacha.multitenantsaas.dto.AuthorizationDelegationReferenceDataResponse;
 import com.chacha.multitenantsaas.dto.AuthorizationDelegationResponse;
 import com.chacha.multitenantsaas.service.AuthorizationDelegationCommandService;
 import jakarta.validation.Valid;
@@ -43,6 +44,21 @@ public class AuthorizationDelegationController {
                 authorizationDelegationCommandService.createDelegation(tenantId, request, jwt);
         return ResponseEntity.ok(
                 ApiResponse.success("Authorization delegated successfully", response));
+    }
+
+    @PreAuthorize(
+            "@authorizationSecurity.hasTenantPermission(#tenantId,'authorization.delegate')"
+                    + " or @authorizationSecurity.hasTenantPermission("
+                    + "#tenantId,'authorization.manage')")
+    @GetMapping("/reference-data")
+    public ResponseEntity<ApiResponse<AuthorizationDelegationReferenceDataResponse>>
+            getDelegationReferenceData(
+                    @PathVariable UUID tenantId, @AuthenticationPrincipal Jwt jwt) {
+        AuthorizationDelegationReferenceDataResponse response =
+                authorizationDelegationCommandService.getReferenceData(tenantId, jwt);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Authorization delegation reference data fetched successfully", response));
     }
 
     @PreAuthorize(

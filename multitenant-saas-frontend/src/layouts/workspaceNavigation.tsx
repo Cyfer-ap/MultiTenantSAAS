@@ -63,7 +63,11 @@ export const workspaceNavigationItems: readonly WorkspaceNavigationItem[] = [
         label: 'Authorization',
         path: '/authorization',
         icon: <AdminPanelSettingsRoundedIcon />,
-        requiredTenantPermissions: [authorizationPermissionCodes.AUTHORIZATION_MANAGE],
+        requiredTenantPermissions: [
+            authorizationPermissionCodes.AUTHORIZATION_MANAGE,
+            authorizationPermissionCodes.AUTHORIZATION_DELEGATE,
+        ],
+        match: 'any',
     },
     {
         label: 'Authentication',

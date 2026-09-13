@@ -57,9 +57,33 @@ const AuditLogsPage = lazy(() =>
     })),
 )
 
+const AuthorizationDelegationsPage = lazy(() =>
+    import('../pages/AuthorizationDelegationsPage').then((module) => ({
+        default: module.AuthorizationDelegationsPage,
+    })),
+)
+
+const AuthorizationExplainAccessPage = lazy(() =>
+    import('../pages/AuthorizationExplainAccessPage').then((module) => ({
+        default: module.AuthorizationExplainAccessPage,
+    })),
+)
+
 const AuthorizationManagementPage = lazy(() =>
     import('../pages/AuthorizationManagementPage').then((module) => ({
         default: module.AuthorizationManagementPage,
+    })),
+)
+
+const AuthorizationWorkspaceLayout = lazy(() =>
+    import('../pages/AuthorizationWorkspaceLayout').then((module) => ({
+        default: module.AuthorizationWorkspaceLayout,
+    })),
+)
+
+const AuthorizationWorkspaceRedirect = lazy(() =>
+    import('../pages/AuthorizationWorkspaceLayout').then((module) => ({
+        default: module.AuthorizationWorkspaceRedirect,
     })),
 )
 
@@ -269,13 +293,39 @@ export function AppRoutes() {
                         <Route
                             element={
                                 <TenantPermissionProtectedRoute
+                                    match="any"
                                     requiredPermissions={[
                                         authorizationPermissionCodes.AUTHORIZATION_MANAGE,
+                                        authorizationPermissionCodes.AUTHORIZATION_DELEGATE,
                                     ]}
                                 />
                             }
                         >
-                            <Route path="authorization" element={<AuthorizationManagementPage />} />
+                            <Route path="authorization" element={<AuthorizationWorkspaceLayout />}>
+                                <Route index element={<AuthorizationWorkspaceRedirect />} />
+                                <Route
+                                    path="delegations"
+                                    element={<AuthorizationDelegationsPage />}
+                                />
+                                <Route
+                                    element={
+                                        <TenantPermissionProtectedRoute
+                                            requiredPermissions={[
+                                                authorizationPermissionCodes.AUTHORIZATION_MANAGE,
+                                            ]}
+                                        />
+                                    }
+                                >
+                                    <Route
+                                        path="manage"
+                                        element={<AuthorizationManagementPage />}
+                                    />
+                                    <Route
+                                        path="explain"
+                                        element={<AuthorizationExplainAccessPage />}
+                                    />
+                                </Route>
+                            </Route>
                         </Route>
 
                         <Route
