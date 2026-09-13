@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ProjectMemberRepository
         extends JpaRepository<ProjectMember, UUID>, JpaSpecificationExecutor<ProjectMember> {
@@ -25,6 +27,19 @@ public interface ProjectMemberRepository
             UUID tenantId, UUID projectId, UUID userId);
 
     long countByProject_Tenant_Id(UUID tenantId);
+
+    @Query(
+            """
+            SELECT projectMember.project.id
+            FROM ProjectMember projectMember
+            WHERE projectMember.project.tenant.id = :tenantId
+              AND projectMember.user.id = :userId
+            ORDER BY projectMember.project.name ASC
+            """)
+    Page<UUID> findProjectIdsByTenantAndUser(
+            @Param("tenantId") UUID tenantId,
+            @Param("userId") UUID userId,
+            Pageable pageable);
 
     default Page<ProjectMember> findProjectMembers(
             UUID tenantId,
