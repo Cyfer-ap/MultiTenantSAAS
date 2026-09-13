@@ -1,12 +1,12 @@
 package com.chacha.multitenantsaas.search.service;
 
 import com.chacha.multitenantsaas.dto.CurrentAuthorizationContextResponse;
-import com.chacha.multitenantsaas.service.CurrentAuthorizationContextService;
 import com.chacha.multitenantsaas.search.model.GlobalSearchResponse;
 import com.chacha.multitenantsaas.search.model.GlobalSearchResult;
 import com.chacha.multitenantsaas.search.spi.GlobalSearchContext;
 import com.chacha.multitenantsaas.search.spi.GlobalSearchContributor;
 import com.chacha.multitenantsaas.search.spi.GlobalSearchHit;
+import com.chacha.multitenantsaas.service.CurrentAuthorizationContextService;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -57,12 +57,13 @@ public class GlobalSearchService {
                 contributors.stream()
                         .flatMap(
                                 contributor ->
-                                        contributor.search(context, normalizedQuery, boundedLimit).stream())
+                                        contributor
+                                                .search(context, normalizedQuery, boundedLimit)
+                                                .stream())
                         .sorted(
                                 Comparator.comparingInt(GlobalSearchHit::score)
                                         .reversed()
-                                        .thenComparing(
-                                                hit -> hit.result().type().name())
+                                        .thenComparing(hit -> hit.result().type().name())
                                         .thenComparing(
                                                 hit -> hit.result().title(),
                                                 String.CASE_INSENSITIVE_ORDER))

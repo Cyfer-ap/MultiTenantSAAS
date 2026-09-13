@@ -25,7 +25,8 @@ public class UserSearchContributor implements GlobalSearchContributor {
     private final AuthorizationSecurityService authorizationSecurity;
 
     public UserSearchContributor(
-            AppUserRepository appUserRepository, AuthorizationSecurityService authorizationSecurity) {
+            AppUserRepository appUserRepository,
+            AuthorizationSecurityService authorizationSecurity) {
         this.appUserRepository = appUserRepository;
         this.authorizationSecurity = authorizationSecurity;
     }

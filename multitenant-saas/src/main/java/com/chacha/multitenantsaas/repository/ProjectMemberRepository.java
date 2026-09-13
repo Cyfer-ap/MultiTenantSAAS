@@ -37,9 +37,7 @@ public interface ProjectMemberRepository
             ORDER BY projectMember.project.name ASC
             """)
     Page<UUID> findProjectIdsByTenantAndUser(
-            @Param("tenantId") UUID tenantId,
-            @Param("userId") UUID userId,
-            Pageable pageable);
+            @Param("tenantId") UUID tenantId, @Param("userId") UUID userId, Pageable pageable);
 
     default Page<ProjectMember> findProjectMembers(
             UUID tenantId,

@@ -25,12 +25,15 @@ class UserSearchContributorTest {
     void doesNotQueryUsersWithoutTenantUserReadPermission() {
         UUID tenantId = UUID.randomUUID();
         AppUserRepository repository = mock(AppUserRepository.class);
-        AuthorizationSecurityService authorizationSecurity = mock(AuthorizationSecurityService.class);
+        AuthorizationSecurityService authorizationSecurity =
+                mock(AuthorizationSecurityService.class);
         when(authorizationSecurity.hasTenantPermission(tenantId, PlatformPermissionCodes.USER_READ))
                 .thenReturn(false);
 
         var context = new GlobalSearchContext(tenantId, UUID.randomUUID(), List.of());
-        var hits = new UserSearchContributor(repository, authorizationSecurity).search(context, "ada", 12);
+        var hits =
+                new UserSearchContributor(repository, authorizationSecurity)
+                        .search(context, "ada", 12);
 
         assertThat(hits).isEmpty();
         verifyNoInteractions(repository);
@@ -41,7 +44,8 @@ class UserSearchContributorTest {
     void returnsUsersWhenTenantReadPermissionIsPresent() {
         UUID tenantId = UUID.randomUUID();
         AppUserRepository repository = mock(AppUserRepository.class);
-        AuthorizationSecurityService authorizationSecurity = mock(AuthorizationSecurityService.class);
+        AuthorizationSecurityService authorizationSecurity =
+                mock(AuthorizationSecurityService.class);
         when(authorizationSecurity.hasTenantPermission(tenantId, PlatformPermissionCodes.USER_READ))
                 .thenReturn(true);
 
@@ -54,7 +58,9 @@ class UserSearchContributorTest {
                 .thenReturn(new PageImpl<>(List.of(user)));
 
         var context = new GlobalSearchContext(tenantId, UUID.randomUUID(), List.of());
-        var hits = new UserSearchContributor(repository, authorizationSecurity).search(context, "ada", 12);
+        var hits =
+                new UserSearchContributor(repository, authorizationSecurity)
+                        .search(context, "ada", 12);
 
         assertThat(hits).hasSize(1);
         assertThat(hits.getFirst().result().type()).isEqualTo(GlobalSearchResultType.USER);

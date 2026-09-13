@@ -80,7 +80,8 @@ class GlobalSearchServiceTest {
         var response = service.search(tenantId, "  PHOENIX ", 2, jwt);
 
         assertThat(response.query()).isEqualTo("phoenix");
-        assertThat(response.results()).extracting(GlobalSearchResult::type)
+        assertThat(response.results())
+                .extracting(GlobalSearchResult::type)
                 .containsExactly(GlobalSearchResultType.USER, GlobalSearchResultType.TASK);
     }
 

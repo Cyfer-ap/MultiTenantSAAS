@@ -71,7 +71,8 @@ public class TaskSearchContributor implements GlobalSearchContributor {
                                             ProjectStatus.ARCHIVED),
                                     criteriaBuilder.or(
                                             criteriaBuilder.like(
-                                                    criteriaBuilder.lower(root.<String>get("title")),
+                                                    criteriaBuilder.lower(
+                                                            root.<String>get("title")),
                                                     pattern),
                                             criteriaBuilder.like(
                                                     criteriaBuilder.lower(

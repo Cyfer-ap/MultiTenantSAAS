@@ -2,7 +2,6 @@ package com.chacha.multitenantsaas.tasks.search;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -33,7 +32,8 @@ class TaskSearchContributorTest {
         ProjectTaskRepository repository = mock(ProjectTaskRepository.class);
         ProjectMembershipSearchQueryService membershipQuery =
                 mock(ProjectMembershipSearchQueryService.class);
-        AuthorizationSecurityService authorizationSecurity = mock(AuthorizationSecurityService.class);
+        AuthorizationSecurityService authorizationSecurity =
+                mock(AuthorizationSecurityService.class);
 
         Project project = new Project();
         project.setId(projectId);

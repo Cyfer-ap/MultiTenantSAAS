@@ -55,7 +55,10 @@ describe('GlobalSearch', () => {
 
         renderSearch()
         await user.click(screen.getByRole('button', { name: /search workspace/i }))
-        await user.type(screen.getByPlaceholderText(/search projects, tasks, and people/i), 'phoenix')
+        await user.type(
+            screen.getByPlaceholderText(/search projects, tasks, and people/i),
+            'phoenix',
+        )
 
         const result = await screen.findByRole('button', { name: /phoenix launch checklist/i })
         expect(search).toHaveBeenCalledWith('tenant-1', 'phoenix', 12)
@@ -72,7 +75,10 @@ describe('GlobalSearch', () => {
 
         renderSearch()
         await user.click(screen.getByRole('button', { name: /search workspace/i }))
-        await user.type(screen.getByPlaceholderText(/search projects, tasks, and people/i), 'missing')
+        await user.type(
+            screen.getByPlaceholderText(/search projects, tasks, and people/i),
+            'missing',
+        )
 
         expect(await screen.findByText('No results')).toBeInTheDocument()
         expect(screen.getByText(/no accessible projects, tasks, or people/i)).toBeInTheDocument()
@@ -84,7 +90,10 @@ describe('GlobalSearch', () => {
 
         renderSearch()
         await user.click(screen.getByRole('button', { name: /search workspace/i }))
-        await user.type(screen.getByPlaceholderText(/search projects, tasks, and people/i), 'broken')
+        await user.type(
+            screen.getByPlaceholderText(/search projects, tasks, and people/i),
+            'broken',
+        )
 
         await waitFor(() => {
             expect(screen.getByText(/search could not be completed/i)).toBeInTheDocument()

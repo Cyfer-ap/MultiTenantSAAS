@@ -30,7 +30,8 @@ public class ProjectSearchContributor implements GlobalSearchContributor {
     private final AuthorizationSecurityService authorizationSecurity;
 
     public ProjectSearchContributor(
-            ProjectRepository projectRepository, AuthorizationSecurityService authorizationSecurity) {
+            ProjectRepository projectRepository,
+            AuthorizationSecurityService authorizationSecurity) {
         this.projectRepository = projectRepository;
         this.authorizationSecurity = authorizationSecurity;
     }
@@ -42,7 +43,8 @@ public class ProjectSearchContributor implements GlobalSearchContributor {
                 authorizationSecurity.hasTenantPermission(
                         context.tenantId(), PlatformPermissionCodes.PROJECT_READ);
 
-        Set<UUID> scopedProjectIds = projectScopedIds(context, PlatformPermissionCodes.PROJECT_READ);
+        Set<UUID> scopedProjectIds =
+                projectScopedIds(context, PlatformPermissionCodes.PROJECT_READ);
         if (!tenantWide && scopedProjectIds.isEmpty()) {
             return List.of();
         }
@@ -71,8 +73,7 @@ public class ProjectSearchContributor implements GlobalSearchContributor {
 
                     if (!tenantWide) {
                         predicate =
-                                criteriaBuilder.and(
-                                        predicate, root.get("id").in(scopedProjectIds));
+                                criteriaBuilder.and(predicate, root.get("id").in(scopedProjectIds));
                     }
                     return predicate;
                 };
@@ -116,6 +117,9 @@ public class ProjectSearchContributor implements GlobalSearchContributor {
         return new GlobalSearchHit(
                 result,
                 GlobalSearchScoring.score(
-                        query, project.getName(), project.getDescription(), project.getStatus().name()));
+                        query,
+                        project.getName(),
+                        project.getDescription(),
+                        project.getStatus().name()));
     }
 }

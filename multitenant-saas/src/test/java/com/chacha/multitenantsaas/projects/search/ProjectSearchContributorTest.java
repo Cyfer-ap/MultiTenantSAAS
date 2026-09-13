@@ -2,7 +2,6 @@ package com.chacha.multitenantsaas.projects.search;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -31,7 +30,8 @@ class ProjectSearchContributorTest {
         UUID userId = UUID.randomUUID();
         UUID projectId = UUID.randomUUID();
         ProjectRepository repository = mock(ProjectRepository.class);
-        AuthorizationSecurityService authorizationSecurity = mock(AuthorizationSecurityService.class);
+        AuthorizationSecurityService authorizationSecurity =
+                mock(AuthorizationSecurityService.class);
 
         Project project = new Project();
         project.setId(projectId);
@@ -58,7 +58,9 @@ class ProjectSearchContributorTest {
                                         projectId,
                                         List.of(PlatformPermissionCodes.PROJECT_READ))));
 
-        var hits = new ProjectSearchContributor(repository, authorizationSecurity).search(context, "phoenix", 12);
+        var hits =
+                new ProjectSearchContributor(repository, authorizationSecurity)
+                        .search(context, "phoenix", 12);
 
         assertThat(hits).hasSize(1);
         assertThat(hits.getFirst().result().type()).isEqualTo(GlobalSearchResultType.PROJECT);
@@ -69,14 +71,17 @@ class ProjectSearchContributorTest {
     void doesNotQueryProjectsWhenCallerHasNoSearchableProjectScope() {
         UUID tenantId = UUID.randomUUID();
         ProjectRepository repository = mock(ProjectRepository.class);
-        AuthorizationSecurityService authorizationSecurity = mock(AuthorizationSecurityService.class);
+        AuthorizationSecurityService authorizationSecurity =
+                mock(AuthorizationSecurityService.class);
         when(authorizationSecurity.hasTenantPermission(
                         tenantId, PlatformPermissionCodes.PROJECT_READ))
                 .thenReturn(false);
 
         var context = new GlobalSearchContext(tenantId, UUID.randomUUID(), List.of());
 
-        var hits = new ProjectSearchContributor(repository, authorizationSecurity).search(context, "phoenix", 12);
+        var hits =
+                new ProjectSearchContributor(repository, authorizationSecurity)
+                        .search(context, "phoenix", 12);
 
         assertThat(hits).isEmpty();
         verifyNoInteractions(repository);
