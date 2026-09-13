@@ -2,67 +2,63 @@
 
 Repository: `Cyfer-ap/MultiTenantSAAS`
 Branch: `main`
-Date: 2026-09-08
-Base reviewed state: post-PR #119 (`c36de3f`)
+Date: 2026-09-13
+Base reviewed state: post-PR #125 (`0694403`)
 
 ## Current phase
 
-**Enterprise OIDC SSO / identity federation — COMPLETE at application level**
+**Authorization delegation and Explain Access — COMPLETE at application level**
 
-Billing/catalog lifecycle and tenant-configurable outbound webhooks remain closed at application level. PRs #114–#119 complete the OIDC federation milestone: tenant-scoped IdP configuration, verification, secure OIDC runtime, workspace discovery, optional/required policy, browser login UX, tenant-admin administration and federation audit visibility.
+Billing/catalog, tenant-configurable outbound webhooks and enterprise OIDC SSO remain closed application milestones. PRs #121, #122 and #125 complete the authorization follow-up: shared explain-access evaluation, bounded delegation with runtime non-escalation, direct/delegated provenance, and tenant Authorization UX.
 
-SAML is intentionally deferred until a concrete enterprise requirement justifies another protocol adapter. Live-provider billing readiness and production operations remain independent tracks.
+## Delivered authorization sequence
 
-## Delivered SSO sequence
+- PR #121: structured authorization decisions and tenant-admin Explain Access API using the same evaluator as enforcement
+- PR #122: V44 bounded authorization delegation, create/list/revoke lifecycle, provenance persistence, audit events and runtime parent-authority revalidation
+- PR #125: delegation-safe reference data, direct-vs-delegated Explain Access provenance, Delegations/Explain Access UI and delegate-only workspace navigation
 
-- PR #114: tenant identity-provider model, OIDC configuration lifecycle, encrypted write-only client secret and `tenant.update` authorization
-- PR #115: controlled OIDC discovery/JWKS/provider verification with SSRF-safe remote-request validation
-- PR #116: tenant-bound OIDC authorization/callback runtime with state, nonce, PKCE, ID-token validation and safe linking to existing tenant users only
-- PR #117: verified workspace discovery, `OPTIONAL`/`REQUIRED` tenant SSO policy and tenant-admin password break-glass protection
-- PR #118: browser SSO UX plus short-lived, opaque, single-use backend-to-frontend session handoff
-- PR #119: tenant-admin Authentication workspace, provider enable/disable/re-enable lifecycle, policy UX and tenant-scoped OIDC success/failure auditing
+PRs #123 and #124 were dependency maintenance and are not part of the authorization capability sequence.
 
-## SSO security invariants
+## Authorization invariants
 
-- one IdP configuration is tenant scoped; current protocol is OIDC
-- client secrets are write-only and AES-256-GCM encrypted with `IDENTITY_FEDERATION_ENCRYPTION_KEY`
-- changing provider configuration or rotating its secret invalidates verification
-- disabled providers re-enable only to `DRAFT`; they never silently regain `VERIFIED`
-- issuer/provider endpoints must be HTTPS and public-routable; redirects are disabled and destinations are revalidated before remote requests
-- authorization transactions hash state/nonce at rest and encrypt PKCE verifiers
-- callback transactions are single-use before external token exchange
-- ID tokens are validated for signature/algorithm, issuer, audience/authorized party, time claims and nonce
-- federation never auto-provisions users; first link requires verified provider email matching an existing active user in the same tenant
-- `REQUIRED` SSO is permitted only with a verified IdP and an active password-capable tenant-admin break-glass path
-- provider invalidation safely returns policy to `OPTIONAL`
-- browser completion receives only a short-lived opaque one-time handoff code, never platform tokens in the redirect URL
-- audit records avoid provider tokens, codes, state, nonce, PKCE, client secrets and sensitive provider payloads
+- tenant isolation remains mandatory before authorization evaluation
+- backend authorization remains authoritative; frontend guards are UX only
+- Explain Access uses the same evaluator as enforcement rather than a parallel permission model
+- every delegated grant has one explicit direct parent authority assignment
+- delegated authority must remain a permission, scope and validity subset of its current direct source
+- delegated assignments cannot be re-delegated
+- `authorization.manage` and `authorization.delegate` cannot be delegated
+- unsupported delegation sources/scopes remain rejected rather than approximated
+- parent authority is revalidated at access time; revoked, expired, inactive or narrowed source authority invalidates the child grant
+- revoking a delegation deactivates the generated assignment
+- Explain Access exposes only the matched grant/provenance required to explain the decision
 
-## Authentication modes
+## Authorization workspace
 
-Verified workspace discovery can return:
+Managers with `authorization.manage` can use:
 
 ```text
-PASSWORD_ONLY
-PASSWORD_OR_SSO
-SSO_ONLY
-SSO_REQUIRED
+/authorization/manage
+/authorization/delegations
+/authorization/explain
 ```
 
-The backend remains authoritative. Frontend mode-specific rendering is UX only.
+Users with `authorization.delegate` but not `authorization.manage` can enter the Authorization workspace and use Delegations only.
+
+Delegation UI supports bounded create/list/status/expiry/revoke behavior. Explain Access distinguishes `DIRECT` from `DELEGATED` grant source and, for delegated grants, exposes delegation/parent/delegator provenance.
 
 ## Database checkpoint
 
-Portable common migrations extend through **V43**:
+Portable common migrations extend through **V44**.
+
+Recent milestone migrations:
 
 ```text
-V37 outbound webhook endpoints + event subscriptions
-V38 outbound webhook events + durable deliveries
-V39 outbound webhook delivery attempts
 V40 tenant identity-provider configuration
 V41 OIDC authorization transactions + tenant federated identities
 V42 tenant SSO policy
 V43 OIDC browser session handoffs
+V44 authorization delegation provenance + authorization.delegate permission
 ```
 
 Never rewrite an applied migration.
@@ -71,31 +67,15 @@ Never rewrite an applied migration.
 
 ### Stripe
 
-**Working and validated in deployed Test Mode.** Hosted checkout, signed lifecycle webhooks, provider-side cancellation and reconciliation are implemented and validated. Managed Product/Price provisioning/versioning remains implemented.
+**Working and validated in deployed Test Mode.** Hosted checkout, signed lifecycle webhooks, provider-side cancellation and reconciliation are implemented and validated. Managed Product/Price provisioning remains implemented.
 
 ### Razorpay
 
-**Application integration/catalog provisioning implemented; recurring Test Mode authorization remains provider-sandbox blocked.** Keep Razorpay available, but do not treat sandbox-card authorization failures as unfinished core billing architecture.
-
-## Deployment requirements for SSO
-
-Required server-side federation configuration includes:
-
-```text
-IDENTITY_FEDERATION_ENCRYPTION_KEY
-OIDC_REDIRECT_URI
-OIDC_FRONTEND_COMPLETION_URI
-OIDC_AUTHORIZATION_TRANSACTION_MINUTES
-OIDC_SESSION_HANDOFF_MINUTES
-```
-
-For hosted deployment, `OIDC_REDIRECT_URI` must be the backend callback and must also be registered with the IdP. `OIDC_FRONTEND_COMPLETION_URI` is the frontend `/auth/oidc/complete` route.
-
-See `guides/enterprise-sso-foundation.md` and `wiki/Production-Deployment.md`.
+**Application integration/catalog provisioning implemented; recurring Test Mode authorization remains provider-sandbox blocked.** Keep Razorpay available; live/provider readiness remains separate from core application completeness.
 
 ## Verification checkpoint
 
-PR #119 passed Backend, PostgreSQL/Flyway, Frontend formatting/tests/lint/build, Repository Hygiene, Security/Trivy, Container CI and Qodana on its final head before merge.
+PR #125 passed Repository Hygiene, PostgreSQL/Flyway, Backend, Frontend formatting/tests/lint/build, Security, Container CI and Qodana on its final head before merge. Frontend coverage executed 71 test files / 240 tests successfully.
 
 ## Documentation/Wiki
 
@@ -103,6 +83,12 @@ PR #119 passed Backend, PostgreSQL/Flyway, Frontend formatting/tests/lint/build,
 
 ## Next platform milestone
 
-Start **authorization delegation and explain-access**: controlled permission delegation plus an auditable explanation of why a user can access a resource.
+Start **Production Operations & Disaster Recovery**:
 
-After that: backup/restore drills, monitoring/alerts/runbooks, broader load/failure-recovery testing and production R2 verification. Optional SAML and notification expansion remain separate demand-driven work.
+1. PostgreSQL backup strategy and isolated restore drills
+2. health/readiness and operational metrics
+3. alerting for application/database/integration/provider failures
+4. incident and recovery runbooks
+5. broader load/failure-recovery and production R2 verification after the recovery baseline
+
+Optional SAML/SCIM and notification expansion remain demand-driven work.

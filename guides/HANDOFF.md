@@ -1,38 +1,32 @@
 # Development Handoff
 
-Snapshot date: 2026-09-08
-Reviewed state: post-PR #119 (`c36de3f`)
+Snapshot date: 2026-09-13
+Reviewed state: post-PR #125 (`0694403`)
 
 ## Current phase
 
-**Enterprise OIDC SSO complete at application level; authorization delegation/explain-access next.**
+**Authorization delegation and Explain Access complete at application level; Production Operations & Disaster Recovery next.**
 
-Billing/catalog and tenant-configurable outbound-webhook milestones remain closed.
+Billing/catalog, tenant outbound webhooks and enterprise OIDC SSO remain closed.
 
 ## Resume from
 
 Read:
 
 1. `../CHECKPOINT.md`
-2. `enterprise-sso-foundation.md`
-3. `authorization_model.md`
-4. `../wiki/Security-and-Authentication.md`
-5. `../wiki/Roadmap.md`
+2. `authorization_model.md`
+3. `enterprise-sso-foundation.md`
+4. `../wiki/Authorization.md`
+5. `../wiki/Production-Deployment.md`
+6. `../wiki/Roadmap.md`
 
-## OIDC SSO completed sequence
+## Authorization completed sequence
 
-- #114 provider model + encrypted secret
-- #115 provider verification
-- #116 secure tenant-bound OIDC runtime/linking
-- #117 discovery + optional/required policy + break-glass
-- #118 browser completion + opaque one-time session handoff
-- #119 admin Authentication UX + provider lifecycle recovery + audit visibility
+- #121 structured authorization decision + Explain Access
+- #122 V44 bounded delegation/provenance/runtime source revalidation
+- #125 safe reference data + direct/delegated provenance + Authorization UX
 
-Preserve no-auto-provisioning, tenant-bound identity linking, fresh SSRF-safe provider validation, single-use authorization/handoff state, server-only secrets/tokens and backend-authoritative policy.
-
-## Deployment
-
-Hosted SSO needs a stable `IDENTITY_FEDERATION_ENCRYPTION_KEY`, exact backend `OIDC_REDIRECT_URI` registered with the IdP, and frontend `OIDC_FRONTEND_COMPLETION_URI`. See `enterprise-sso-foundation.md`.
+Preserve tenant isolation, backend-authoritative evaluation, direct-parent source validation, one-level delegation, non-delegable protected permissions and non-sensitive explanations.
 
 ## Provider truth
 
@@ -40,4 +34,4 @@ Stripe is working. Razorpay is the provider whose recurring Test Mode card autho
 
 ## Next action
 
-Implement **authorization delegation and explain-access** without weakening current scoped permission evaluation or tenant isolation. Prefer an auditable explanation model over frontend-only permission inference.
+Start **Production Operations & Disaster Recovery** with PostgreSQL backup/restore drills, monitoring/alerts and incident runbooks, then broaden failure-recovery/load and production R2 verification.

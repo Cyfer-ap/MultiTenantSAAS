@@ -14,53 +14,51 @@ Closed through PR #112.
 
 Closed through PR #119.
 
-Completed capabilities:
+### Authorization delegation and Explain Access
 
-- tenant-scoped OIDC provider configuration
-- encrypted write-only client secrets
-- controlled discovery/JWKS verification with SSRF-safe provider requests
-- tenant-bound state/nonce/PKCE authorization runtime
-- strict ID-token validation
-- safe linking to existing active tenant users only; no federation auto-provisioning
-- verified workspace auth-mode discovery
-- persisted `OPTIONAL`/`REQUIRED` SSO policy
-- guarded tenant-admin password break-glass path
-- safe policy fallback when provider verification is invalidated
-- browser SSO UX using opaque single-use session handoff
-- tenant-admin Authentication configuration/verification/lifecycle UX
-- federation success/failure audit visibility without sensitive provider material
+Closed through PR #125.
 
-SAML remains an optional adapter to add only when enterprise requirements justify it. Provider metadata/JWKS caching is also optional performance work; the current runtime favors fresh validated provider data.
+Completed authorization capabilities include:
+
+- structured access decisions from the enforcement evaluator
+- tenant-admin Explain Access with stable decision reasoning
+- V44 durable delegation provenance and `authorization.delegate`
+- create/list/revoke delegation lifecycle and audit events
+- explicit direct parent assignment for each delegated grant
+- permission/scope/validity non-escalation enforcement
+- one-level delegation only and protected authorization permissions
+- runtime source revalidation after parent revocation/expiry/narrowing
+- delegation-safe reference data for delegate-only actors
+- direct-vs-delegated Explain Access provenance
+- manager and delegate-only Authorization workspace UX
 
 ## Next major product milestone
 
-### 1. Authorization delegation and explain-access
+### 1. Production Operations & Disaster Recovery
 
 Target capabilities:
 
-- controlled delegation of existing permissions without bypassing backend authorization
-- explicit scope, delegator/delegatee and revocation semantics
-- optional expiry where useful
-- an explain-access service that traces effective tenant/scoped grants for a user/resource/action
-- stable reason codes suitable for admin UX and audit logs
-- no leakage of secrets or unrelated tenant authorization data
-- tenant-admin APIs/UX behind appropriate authorization
-- cross-tenant and privilege-escalation regression coverage
+- defined PostgreSQL backup/export and retention strategy
+- repeatable isolated restore drill with validation
+- health/readiness and operational metrics review
+- actionable alerts for application, database, integration and provider failures
+- deployment/database/SSO/billing/webhook incident runbooks
+- secret/key rotation and recovery procedures
+- evidence that recovery procedures work rather than documentation-only readiness
 
 Recommended sequence:
 
-1. define delegation invariants/data model and effective-permission interaction
-2. implement backend delegation lifecycle and audit events
-3. implement explain-access decision model/service
-4. add permission-gated admin UX
-5. hardening, tests and documentation
+1. inventory current Render/PostgreSQL operational capabilities and failure signals
+2. implement/document backup and isolated restore drill
+3. verify Actuator/readiness/metrics and define alert thresholds
+4. write incident/runbook procedures around real failure modes
+5. exercise recovery paths and capture expected evidence
 
 ## Following platform work
 
-2. backup/restore drills, monitoring, alerts and operational runbooks
-3. broader load/failure-recovery and production R2 verification
-4. optional SAML/SCIM where concrete enterprise requirements exist
-5. optional notification expansion such as digests/live browser delivery
+2. broader load/failure-recovery and production R2 verification
+3. optional SAML/SCIM where concrete enterprise requirements exist
+4. optional notification expansion such as digests/live browser delivery
 
 ## Independent provider/live-readiness track
 
@@ -71,4 +69,4 @@ Recommended sequence:
 
 ## Engineering rules
 
-Preserve tenant isolation, backend-authoritative authorization, verified provider reconciliation, webhook-authoritative normal billing state, immutable history, Flyway invariants, database-backed concurrency, auditability, SSRF protections and server-only secrets/provider identifiers.
+Preserve tenant isolation, backend-authoritative authorization, delegation non-escalation, verified provider reconciliation, webhook-authoritative normal billing state, immutable history, Flyway invariants, database-backed concurrency, auditability, SSRF protections and server-only secrets/provider identifiers.

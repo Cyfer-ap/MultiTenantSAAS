@@ -1,38 +1,41 @@
 # Developer Handoff
 
-Current snapshot: post-PR #119 (`c36de3f`), 2026-09-08.
+Current snapshot: post-PR #125 (`0694403`), 2026-09-13.
 
 ## Current phase
 
-**Enterprise OIDC SSO complete at application level; authorization delegation/explain-access next.**
+**Authorization delegation and Explain Access complete at application level; Production Operations & Disaster Recovery next.**
 
-Billing/catalog and outbound-webhook milestones remain closed.
+Billing/catalog, outbound-webhook and enterprise OIDC SSO milestones remain closed.
 
 ## Resume reading
 
 1. [[Home]]
-2. [[Enterprise-SSO]]
-3. [[Security-and-Authentication]]
-4. [[Authorization]]
+2. [[Authorization]]
+3. [[Enterprise-SSO]]
+4. [[Security-and-Authentication]]
 5. [[Production-Deployment]]
 6. [[Testing-and-CI]]
 7. [[Roadmap]]
 
+## Preserve these authorization invariants
+
+- tenant isolation precedes permission evaluation
+- Explain Access and enforcement share the same evaluator
+- every delegated grant derives from one direct parent authority assignment
+- delegated permission/scope/validity never exceed the current parent authority
+- delegated assignments cannot be re-delegated
+- `authorization.manage` and `authorization.delegate` remain non-delegable
+- source authority is revalidated during access evaluation
+- frontend filtering never replaces backend validation
+- cross-tenant subjects/resources remain invalid
+- explanations expose matched provenance only, not unrelated grants
+
+Portable migrations extend through V44.
+
 ## Preserve these SSO invariants
 
-- tenant-scoped provider configuration and identity linkage
-- write-only encrypted client secret
-- fresh HTTPS/public-routable provider validation and disabled redirects
-- state/nonce/PKCE protections and single-use callback transaction
-- no user auto-provisioning from IdP claims
-- verified-email first linking only to an existing active user in the same tenant
-- backend-authoritative optional/required policy
-- tenant-admin password break-glass prerequisite for `REQUIRED`
-- provider invalidation safely falling back from enforced SSO
-- opaque one-time browser session handoff instead of platform tokens in URLs
-- no sensitive provider material in audit/frontend/log output
-
-Portable migrations extend through V43.
+Keep tenant-bound identity linking, encrypted write-only provider secrets, SSRF-safe provider validation, state/nonce/PKCE protections, no IdP auto-provisioning, backend-authoritative SSO policy, tenant-admin break-glass and opaque one-time browser handoff.
 
 ## Provider status
 
@@ -40,4 +43,4 @@ Stripe is working/validated in deployed Test Mode. Razorpay application/catalog 
 
 ## Next
 
-Build authorization delegation and explain-access. Do not weaken the current authorization evaluator to make delegation easier; delegation should feed a well-defined effective-permission model and remain auditable/revocable.
+Build the **Production Operations & Disaster Recovery** milestone: backup/restore drills, monitoring, alerts and operational runbooks, then broaden failure-recovery/load and production R2 verification.

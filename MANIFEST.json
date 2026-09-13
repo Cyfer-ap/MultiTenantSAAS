@@ -1,12 +1,12 @@
 {
   "repository": "Cyfer-ap/MultiTenantSAAS",
   "branch": "main",
-  "reviewed_state": "post-PR #119",
-  "reviewed_commit": "c36de3fb2d766cbb796e5994f3e86a72697f9e70",
-  "generated_date": "2026-09-08",
-  "phase": "Enterprise OIDC SSO complete at application level",
-  "next_recommended_milestone": "Authorization delegation and explain-access",
-  "current_migration": "V43",
+  "reviewed_state": "post-PR #125",
+  "reviewed_commit": "0694403c5ff941b9c496f9a41d1b6670f8631b9c",
+  "generated_date": "2026-09-13",
+  "phase": "Authorization delegation and Explain Access complete at application level",
+  "next_recommended_milestone": "Production Operations & Disaster Recovery",
+  "current_migration": "V44",
   "stripe_status": "Working and validated in deployed Test Mode for hosted checkout, signed lifecycle synchronization, provider-side cancellation and reconciliation; managed Product/Price provisioning remains implemented.",
   "razorpay_status": "Application integration and managed Plan provisioning implemented; recurring Test Mode authorization remains provider-sandbox blocked.",
   "outbound_webhooks": "Complete at application level through PR #112.",
@@ -19,42 +19,18 @@
     "migrations": ["V40", "V41", "V42", "V43"],
     "saml": "Deferred until a concrete enterprise requirement justifies it"
   },
+  "authorization_delegation": {
+    "status": "Complete at application level through PR #125",
+    "sequence": [121, 122, 125],
+    "migration": "V44",
+    "protected_permissions": ["authorization.manage", "authorization.delegate"],
+    "provenance": ["DIRECT", "DELEGATED"],
+    "next_step": "Operational hardening rather than additional authorization architecture"
+  },
   "wiki_sync": "Automatic on main through .github/workflows/wiki-sync.yml using scripts/publish-wiki.ps1.",
   "contents": {
-    "root": [
-      "readme.md",
-      "CHECKPOINT.md",
-      "HANDOFF.md",
-      "GUIDE_UPDATE_MANIFEST.md",
-      "PACKAGE_INDEX.md",
-      "MANIFEST.json",
-      ".env.example",
-      ".env.production.example"
-    ],
-    "guides": [
-      "README.md",
-      "progress.md",
-      "CHECKPOINT.md",
-      "HANDOFF.md",
-      "enterprise-sso-foundation.md",
-      "authorization_model.md",
-      "subscription_billing.md",
-      "outbound-webhook-events.md",
-      "outbound-webhook-delivery-history.md",
-      "outbound-webhook-admin-ux.md",
-      "DEFERRED_PLATFORM_WORK.md"
-    ],
-    "wiki": [
-      "Home.md",
-      "Architecture.md",
-      "Security-and-Authentication.md",
-      "Enterprise-SSO.md",
-      "Developer-Handoff.md",
-      "Roadmap.md",
-      "Subscriptions-and-Quotas.md",
-      "Production-Deployment.md",
-      "Testing-and-CI.md",
-      "Wiki-Maintenance.md"
-    ]
+    "root": ["readme.md", "CHECKPOINT.md", "HANDOFF.md", "GUIDE_UPDATE_MANIFEST.md", "PACKAGE_INDEX.md", "MANIFEST.json", ".env.example", ".env.production.example"],
+    "guides": ["README.md", "progress.md", "CHECKPOINT.md", "HANDOFF.md", "enterprise-sso-foundation.md", "authorization_model.md", "subscription_billing.md", "outbound-webhook-events.md", "outbound-webhook-delivery-history.md", "outbound-webhook-admin-ux.md", "DEFERRED_PLATFORM_WORK.md"],
+    "wiki": ["Home.md", "Architecture.md", "Security-and-Authentication.md", "Enterprise-SSO.md", "Authorization.md", "Developer-Handoff.md", "Roadmap.md", "Subscriptions-and-Quotas.md", "Production-Deployment.md", "Testing-and-CI.md", "Wiki-Maintenance.md"]
   }
 }
