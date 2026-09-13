@@ -83,6 +83,7 @@ Current mature domains include:
 - scoped authorization, delegation and Explain Access
 - projects, members, tasks and task collaboration
 - permission-aware Global Search
+- capability-aware Command Palette
 - attachments through S3/R2-compatible storage
 - in-app/email notifications and preferences
 - subscription plans, tenant subscriptions, quotas and usage metering
@@ -94,7 +95,7 @@ Current mature domains include:
 - tenant/platform audit trails
 - production hardening and observability
 
-Product-enrichment domains such as Command Palette, My Work, saved views, Kanban/calendar, workflows and knowledge are the next development stage.
+Product-enrichment domains such as Favorites/Recent, My Work, saved views, calendar/deadline views, workflows and knowledge are the next development stage.
 
 ## Authorization architecture
 
@@ -132,9 +133,28 @@ Important properties:
 - project search uses tenant-wide or explicit project-grant scope and revalidates scoped hits through the authorization evaluator
 - task search uses tenant-wide permission, explicit project scope or current project membership and revalidates through the same task-read rule used by task APIs
 - ranking is a search-domain concern; access policy remains a domain/authorization concern
-- the frontend `features/search` module is reusable by future command-palette and mobile clients
+- the frontend `features/search` module owns the reusable API client, query hook and types rather than a product-specific shell UI
 
 This contributor pattern is the preferred template when a cross-cutting read feature needs data from several domains: central orchestration owns composition, while each domain retains its query/access knowledge behind a narrow contract.
+
+## Command-palette architecture
+
+The Command Palette is a separate frontend orchestration domain under `features/command-palette`. It consumes discovery rather than owning discovery.
+
+```text
+features/command-palette
+        ├── capability-filtered navigation commands
+        ├── direct quick actions
+        └── accessible search results
+                 ↓
+       features/search hook/API
+```
+
+Mutation commands do not duplicate forms, API calls, validation or cache logic. Create Project and Invite User invoke the existing project/invitation domain dialogs. Visibility requires the relevant authorization capability and current subscription entitlement; the backend remains authoritative when the mutation executes.
+
+This is the preferred frontend boundary pattern for cross-cutting action surfaces: the shell/palette composes **intent**, while the owning feature retains business behavior.
+
+Create Task is intentionally not exposed globally yet. Effective task-management authority can derive from project-lead membership as well as scoped authorization. A future global Create Task action should therefore use a project-aware capability/picker contract supplied by the project/task domain instead of rebuilding task access logic in `AppShell` or the palette.
 
 ## Persistence and tenancy
 
@@ -179,7 +199,7 @@ features/<domain>/
 
 Server state is managed with React Query. Route/permission guards improve navigation and UX but do not replace backend enforcement.
 
-Global Search follows this shape under `features/search/`, with its API client, query hook, types and reusable search surface isolated from `AppShell` except for one integration point.
+Global Search now keeps its reusable discovery contracts under `features/search/`; the product-level command surface lives separately under `features/command-palette/`. `AppShell` supplies only current capabilities/navigation/tenant integration and does not own project or invitation mutation logic.
 
 The main future risk is growth of central routing/navigation aggregation. New modules should expose narrow integration metadata where appropriate rather than moving domain logic into central application files.
 
@@ -195,7 +215,7 @@ Global Search exposes a bounded read API:
 GET /api/tenants/{tenantId}/search?q=<query>&limit=<limit>
 ```
 
-It is intentionally suitable for reuse by the web application now and future command-palette/mobile clients later.
+It is intentionally suitable for reuse by the web command palette now and future mobile clients later.
 
 ## Scalability model
 
@@ -235,4 +255,4 @@ All new functionality must follow this rule:
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Global Search implements this standard through a small coordinator, contributor SPI and domain-owned search adapters. The Command Palette should reuse that discovery layer and add commands through similarly narrow action contracts instead of becoming a second monolithic service.
+Global Search implements this standard through a small coordinator, contributor SPI and domain-owned search adapters. Command Palette follows the same rule on the frontend by remaining a separate composition domain and delegating discovery/mutations to their owning feature contracts. Favorites + Recently Viewed should continue this pattern as a tenant-bound personal-productivity domain rather than page-local state scattered across the application.

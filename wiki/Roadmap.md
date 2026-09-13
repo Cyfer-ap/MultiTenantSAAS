@@ -40,16 +40,30 @@ Consolidated through PR #128. Current status, handoff, architecture and engineer
 
 Completed through PR #129.
 
-The first Product Experience enrichment slice provides:
+Provides:
 
 - tenant-aware search of accessible projects, tasks and people
 - bounded database queries and result limits
 - exact/prefix/substring relevance ranking
 - permission/project-membership-aware candidate selection
 - authoritative project/task access revalidation
-- top-bar workspace search and `/` shortcut
-- project/task deep links and user-workspace navigation
-- reusable backend contributor contracts and frontend search module for later consumers
+- reusable backend contributor contracts and frontend search query contracts
+
+### Command Palette
+
+Completed through PR #130.
+
+Provides:
+
+- `Ctrl/Cmd + K` and `/` workspace quick-open
+- global authorized search reuse rather than a second discovery path
+- Arrow Up/Down + Enter keyboard operation
+- permission-filtered workspace navigation commands
+- direct Create Project and Invite User actions through existing domain dialogs
+- authorization + subscription-entitlement gating for quick-create actions
+- separate `features/command-palette` UI orchestration domain
+
+Create Task remains intentionally outside the global palette until a project-aware task capability/picker contract can represent project-lead membership and scoped authorization without duplicating task-access logic in the shell.
 
 ## Current major product milestone
 
@@ -60,18 +74,18 @@ The platform foundation is broad enough that the immediate priority is now user-
 #### Phase A — discoverability and personal productivity
 
 - ✅ global authorized search
-- ⬜ `Ctrl/Cmd + K` command palette and quick actions — **next**
-- ⬜ favorites and recently viewed items
+- ✅ `Ctrl/Cmd + K` command palette and quick actions
+- ⬜ favorites and recently viewed items — **next**
 - ⬜ My Work / unified attention queue
 - ⬜ saved filters/views
 - ⬜ capability-aware dashboard refresh
 - ⬜ better empty states/onboarding and quick-create UX
 
-The Command Palette should reuse the Global Search discovery contract rather than implementing a second search path.
+Favorites/Recent should be tenant-bound and permission-aware. A saved/recent identifier must never preserve access after the user loses authorization to the referenced resource.
 
 #### Phase B — deeper work management
 
-- Kanban board
+- existing Kanban task board should be iterated rather than rebuilt
 - calendar/deadline view
 - subtasks
 - task dependencies
@@ -112,10 +126,9 @@ No experiment becomes a roadmap commitment merely because it is listed.
 Before calling the product layer mature, revisit:
 
 - smooth post-login multi-workspace switching
-- command palette/quick actions
 - favorites/recent items
 - My Work and saved views
-- richer task/project relationships and views
+- richer task/project relationships and calendar views
 - templates
 - custom fields/forms
 - workflow/approval engine
@@ -166,6 +179,6 @@ Follow the operations/DR baseline later.
 
 Preserve tenant isolation, backend-authoritative authorization, delegation non-escalation, verified provider reconciliation, webhook-authoritative normal billing state, immutable history, Flyway invariants, database-backed concurrency, auditability, SSRF protections and server-only secrets/provider identifiers.
 
-New user-facing features must remain permission-aware and tenant-safe. Search, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
+New user-facing features must remain permission-aware and tenant-safe. Search, favorites/recent resolution, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
 
-New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Global Search is the first reference implementation of this rule for a new cross-cutting product feature.
+New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Global Search and Command Palette are the first product-enrichment reference implementations of this rule.
