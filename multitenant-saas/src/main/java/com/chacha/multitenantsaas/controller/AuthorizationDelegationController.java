@@ -57,7 +57,8 @@ public class AuthorizationDelegationController {
         AuthorizationDelegationReferenceDataResponse response =
                 authorizationDelegationCommandService.getReferenceData(tenantId, jwt);
         return ResponseEntity.ok(
-                ApiResponse.success("Authorization delegation reference data fetched successfully", response));
+                ApiResponse.success(
+                        "Authorization delegation reference data fetched successfully", response));
     }
 
     @PreAuthorize(

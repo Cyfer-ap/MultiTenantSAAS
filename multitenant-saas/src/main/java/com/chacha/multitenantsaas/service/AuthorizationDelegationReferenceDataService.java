@@ -42,16 +42,20 @@ public class AuthorizationDelegationReferenceDataService {
             UUID tenantId, UUID delegatorUserId) {
         AuthorizationAssignmentReferenceDataResponse assignmentReferenceData =
                 assignmentReferenceDataService.getReferenceData(tenantId);
-        List<AuthorizationRoleResponse> activeRoles = authorizationRoleService.getActiveRoles(tenantId);
+        List<AuthorizationRoleResponse> activeRoles =
+                authorizationRoleService.getActiveRoles(tenantId);
         Map<UUID, AuthorizationRoleResponse> rolesById =
                 activeRoles.stream()
-                        .collect(Collectors.toMap(AuthorizationRoleResponse::id, Function.identity()));
+                        .collect(
+                                Collectors.toMap(
+                                        AuthorizationRoleResponse::id, Function.identity()));
 
         List<AuthorizationRoleResponse> roles =
                 activeRoles.stream().filter(this::isDelegableRole).toList();
 
         List<ParentAssignmentOption> parentAssignments =
-                assignmentService.getEffectiveUserAssignments(tenantId, delegatorUserId, Instant.now())
+                assignmentService
+                        .getEffectiveUserAssignments(tenantId, delegatorUserId, Instant.now())
                         .stream()
                         .filter(this::isDelegableParentScope)
                         .filter(

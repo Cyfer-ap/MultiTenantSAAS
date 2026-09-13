@@ -158,8 +158,7 @@ class AuthorizationDelegationIntegrationTest {
                 .andExpect(jsonPath("$.data.granted").value(true))
                 .andExpect(jsonPath("$.data.matchedGrant.grantSource").value("DELEGATED"))
                 .andExpect(
-                        jsonPath("$.data.matchedGrant.delegationId")
-                                .value(delegationId.toString()))
+                        jsonPath("$.data.matchedGrant.delegationId").value(delegationId.toString()))
                 .andExpect(
                         jsonPath("$.data.matchedGrant.parentAssignmentId")
                                 .value(parentAssignment.id().toString()))
@@ -167,8 +166,7 @@ class AuthorizationDelegationIntegrationTest {
                         jsonPath("$.data.matchedGrant.delegatorUserId")
                                 .value(delegator.getId().toString()))
                 .andExpect(
-                        jsonPath("$.data.matchedGrant.delegatorEmail")
-                                .value(delegator.getEmail()));
+                        jsonPath("$.data.matchedGrant.delegatorEmail").value(delegator.getEmail()));
 
         mockMvc.perform(
                         get(
@@ -231,7 +229,9 @@ class AuthorizationDelegationIntegrationTest {
                         .andReturn();
 
         JsonNode referenceData =
-                jsonMapper.readTree(referenceResult.getResponse().getContentAsString()).path("data");
+                jsonMapper
+                        .readTree(referenceResult.getResponse().getContentAsString())
+                        .path("data");
 
         assertThat(fieldValues(referenceData.path("users"), "id"))
                 .contains(delegate.getId().toString())

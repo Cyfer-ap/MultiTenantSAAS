@@ -367,11 +367,7 @@ function CreateDelegationDialog({
                 <Button disabled={createMutation.isPending} onClick={onClose}>
                     Cancel
                 </Button>
-                <Button
-                    disabled={createMutation.isPending}
-                    onClick={submit}
-                    variant="contained"
-                >
+                <Button disabled={createMutation.isPending} onClick={submit} variant="contained">
                     {createMutation.isPending ? 'Creating…' : 'Create delegation'}
                 </Button>
             </DialogActions>
@@ -440,7 +436,10 @@ export function AuthorizationDelegationsPage() {
 
             {dataError && (
                 <Alert severity="error" sx={{ marginTop: 2 }}>
-                    {getErrorMessage(dataError, 'Authorization delegation data could not be loaded.')}
+                    {getErrorMessage(
+                        dataError,
+                        'Authorization delegation data could not be loaded.',
+                    )}
                 </Alert>
             )}
 
@@ -486,10 +485,16 @@ export function AuthorizationDelegationsPage() {
                                             <TableCell>{delegation.delegatorEmail}</TableCell>
                                             <TableCell>{delegation.delegateEmail}</TableCell>
                                             <TableCell>
-                                                <Typography sx={{ fontWeight: 700 }} variant="body2">
+                                                <Typography
+                                                    sx={{ fontWeight: 700 }}
+                                                    variant="body2"
+                                                >
                                                     {delegation.roleName}
                                                 </Typography>
-                                                <Typography color="text.secondary" variant="caption">
+                                                <Typography
+                                                    color="text.secondary"
+                                                    variant="caption"
+                                                >
                                                     {delegation.roleCode}
                                                 </Typography>
                                             </TableCell>
@@ -508,7 +513,11 @@ export function AuthorizationDelegationsPage() {
                                             </TableCell>
                                             <TableCell>
                                                 <Chip
-                                                    color={statusLabel === 'Active' ? 'success' : 'default'}
+                                                    color={
+                                                        statusLabel === 'Active'
+                                                            ? 'success'
+                                                            : 'default'
+                                                    }
                                                     label={statusLabel}
                                                     size="small"
                                                 />
@@ -517,7 +526,10 @@ export function AuthorizationDelegationsPage() {
                                                 <Typography variant="body2">
                                                     {formatDateTime(delegation.validFrom)}
                                                 </Typography>
-                                                <Typography color="text.secondary" variant="caption">
+                                                <Typography
+                                                    color="text.secondary"
+                                                    variant="caption"
+                                                >
                                                     to {formatDateTime(delegation.validUntil)}
                                                 </Typography>
                                             </TableCell>

@@ -207,7 +207,10 @@ export function AuthorizationExplainAccessPage() {
 
             {dataError && (
                 <Alert severity="error" sx={{ marginTop: 2 }}>
-                    {getErrorMessage(dataError, 'Authorization reference data could not be loaded.')}
+                    {getErrorMessage(
+                        dataError,
+                        'Authorization reference data could not be loaded.',
+                    )}
                 </Alert>
             )}
 

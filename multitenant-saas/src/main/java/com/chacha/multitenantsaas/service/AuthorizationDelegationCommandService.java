@@ -17,7 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthorizationDelegationCommandService {
 
     private final AuthorizationDelegationService authorizationDelegationService;
-    private final AuthorizationDelegationReferenceDataService authorizationDelegationReferenceDataService;
+    private final AuthorizationDelegationReferenceDataService
+            authorizationDelegationReferenceDataService;
     private final AuthorizationPermissionEvaluator authorizationPermissionEvaluator;
     private final CurrentActorService currentActorService;
     private final AuditLogService auditLogService;
