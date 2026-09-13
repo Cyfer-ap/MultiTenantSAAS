@@ -215,8 +215,8 @@ function CreateDelegationDialog({
         }
 
         const validUntilDate = new Date(validUntil)
-        if (Number.isNaN(validUntilDate.getTime()) || validUntilDate.getTime() <= Date.now()) {
-            setValidationError('Delegation expiry must be in the future.')
+        if (Number.isNaN(validUntilDate.getTime())) {
+            setValidationError('Enter a valid delegation expiry.')
             return
         }
         if (
