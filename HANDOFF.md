@@ -24,6 +24,8 @@ Major application foundations are complete through:
 - authorization delegation + Explain Access: #125
 - authorization milestone closure: #126
 - product vision/Wild Thoughts refresh: #127
+- documentation/engineering-governance consolidation: #128
+- permission-aware Global Search: #129
 
 Portable common Flyway migrations extend through V44.
 
@@ -33,19 +35,18 @@ Stripe is the validated deployed Test Mode billing path. Razorpay integration/ca
 
 Build **Product Experience & Work Management Enrichment** before returning to the deferred operations/DR milestone.
 
-The next implementation slice is **Global Search**.
+Global Search is the first completed enrichment slice. The next implementation slice is the **Command Palette**.
 
 Recommended sequence:
 
-1. Global Search
-2. command palette
-3. favorites + recently viewed
-4. My Work
-5. saved views + dashboard refresh
-6. Kanban/calendar + richer task relationships
-7. templates/recurring work/bulk/import/export
-8. custom fields/forms/workflows/knowledge
-9. analytics + selected differentiated experiments
+1. Command Palette on the Global Search/discovery foundation
+2. favorites + recently viewed
+3. My Work
+4. saved views + dashboard refresh
+5. Kanban/calendar + richer task relationships
+6. templates/recurring work/bulk/import/export
+7. custom fields/forms/workflows/knowledge
+8. analytics + selected differentiated experiments
 
 ## Architecture rule from this point forward
 
@@ -59,46 +60,52 @@ Existing large services should not receive more dependencies casually. If new wo
 
 Important boundary rules should gain architecture/static regression tests when practical.
 
-## Global Search implementation constraint
+## Global Search foundation to reuse
 
-Global Search should become the first feature built under the new architecture standard.
-
-Recommended backend shape:
+PR #129 establishes:
 
 ```text
-com.chacha.multitenantsaas.search/
-    controller/
-    dto/
-    query/
-    service/
+backend search coordinator
+        ↓
+GlobalSearchContributor contracts
+        ↓
+project / task / user search adapters
+        ↓
+bounded permission-aware candidate queries
+        ↓
+authoritative scoped revalidation where required
 ```
 
-Recommended frontend shape:
+Frontend structure:
 
 ```text
 features/search/
     api/
     components/
     hooks/
-    pages/
     types/
 ```
 
-Search must be tenant-scoped and authorization-filtered before results leave the backend. It should consume narrow query capabilities from projects/tasks/users rather than importing and orchestrating unrelated repositories directly.
+Current API:
 
-The contract should be reusable by the web UI now and future command-palette/mobile/AI consumers later.
+```text
+GET /api/tenants/{tenantId}/search?q=<query>&limit=<bounded-limit>
+```
+
+The Command Palette should reuse this foundation for discovery and add a separate narrow action registry for commands such as create/open/navigation actions. Do not duplicate search ranking or authorization logic in the palette.
 
 ## Invariants to preserve
 
 - backend authorization remains authoritative
 - tenant isolation precedes resource access
+- search/discovery must constrain access before returning results
 - Explain Access and enforcement share the evaluator
 - delegated authority remains a current permission/scope/validity subset of its direct source
 - `authorization.manage` and `authorization.delegate` remain non-delegable
 - provider/webhook lifecycle remains verified and auditable
 - applied Flyway migrations are append-only
 - provider secrets and sensitive identifiers remain server-side
-- unbounded collections are paginated
+- unbounded collections are paginated/bounded
 - concurrency/idempotency is considered for retryable or competing mutations
 
 ## Validation workflow
