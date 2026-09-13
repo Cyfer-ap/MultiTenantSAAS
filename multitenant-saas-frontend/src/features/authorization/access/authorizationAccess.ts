@@ -85,7 +85,12 @@ export function getDefaultAuthorizedPath(context: CurrentAuthorizationContext): 
         return '/organization'
     }
 
-    if (hasTenantPermission(context, authorizationPermissionCodes.AUTHORIZATION_MANAGE)) {
+    if (
+        hasAnyTenantPermission(context, [
+            authorizationPermissionCodes.AUTHORIZATION_MANAGE,
+            authorizationPermissionCodes.AUTHORIZATION_DELEGATE,
+        ])
+    ) {
         return '/authorization'
     }
 
