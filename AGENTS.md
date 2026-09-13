@@ -13,6 +13,8 @@ The default operating model is autonomous, branch-first development with CI as t
 - `compose.yaml` and related Compose files — local/container orchestration
 - `.github/workflows/` — CI, security, container, Qodana, and formatting workflows
 - Flyway migrations live under the backend resources and are append-only
+- `guides/current_architecture.md` — canonical architecture description
+- `guides/ENGINEERING_STANDARDS.md` — canonical technical-health and engineering standards guide
 
 ## Core stack
 
@@ -46,6 +48,64 @@ The default operating model is autonomous, branch-first development with CI as t
 5. Avoid unnecessary dependencies. Prefer the JDK, Spring Boot, and existing project libraries when sufficient.
 6. Do not introduce distributed infrastructure such as Kafka, RabbitMQ, Redis, Kubernetes, or microservices unless the requirement clearly justifies it.
 7. Keep changes production-oriented but proportionate to the current system.
+8. Improve architecture incrementally when touching a weak boundary; do not launch speculative repository-wide rewrites.
+
+## Architecture and modularity contract
+
+This rule is mandatory for new feature development:
+
+> **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
+
+### Backend rules
+
+Prefer domain-oriented packages for new work, for example:
+
+```text
+com.chacha.multitenantsaas.search/
+    controller/
+    dto/
+    query/
+    service/
+```
+
+Rules:
+
+1. A new domain must have clear ownership and a small public integration surface.
+2. Do not use another domain's repository as the normal cross-domain integration mechanism. Use a narrow query/service contract.
+3. Do not pass JPA entities across domain boundaries unless they intentionally belong to a shared kernel. Prefer IDs or explicit application/domain DTOs.
+4. Do not add unrelated responsibilities or more collaborators to an existing large service merely because it is convenient.
+5. Use direct calls for synchronous invariants that belong in the same transaction; use application/domain events for secondary reactions when they improve ownership and decoupling.
+6. Avoid circular domain dependencies. Extract a narrow shared contract or redesign the orchestration boundary instead.
+7. Keep `common`/shared infrastructure small. It must not become a dumping ground for domain logic.
+
+Constructor size is a design alarm, not an absolute metric. For new or materially modified application services:
+
+- 1–5 collaborators: normal
+- 6–7 collaborators: review cohesion and decomposition
+- 8+ collaborators: decomposition or explicit architectural justification is expected
+
+Existing large services should not receive additional dependencies casually.
+
+### Frontend rules
+
+New product capabilities should remain feature-local, normally under:
+
+```text
+features/<domain>/
+    api/
+    components/
+    hooks/
+    pages/
+    types/
+```
+
+Do not turn central route/navigation/application files into owners of feature business logic. Prefer narrow feature exports or route/navigation metadata when that reduces central coupling.
+
+### Boundary enforcement
+
+When an architectural invariant can regress silently, add an architecture/static regression test in the same PR where practical. Important tenant isolation, authorization, dependency-direction, and legacy-fallback rules should become machine-enforced over time rather than remaining review-only conventions.
+
+For the current debt register and rationale, read `guides/ENGINEERING_STANDARDS.md` before substantial architectural work.
 
 ## Git and PR workflow
 
@@ -198,9 +258,11 @@ Never weaken security boundaries merely to make a test pass.
 
 Do not trust tenant IDs, project IDs, task IDs, attachment IDs, user IDs, or other resource IDs supplied by clients without validating that the authenticated principal is authorized for the corresponding tenant/resource.
 
+New search, analytics, automation, reporting and future AI features must apply tenant isolation and authorization before results are exposed. Never fetch broad cross-scope data and attempt to repair visibility after retrieval.
+
 ## Authentication and identity
 
-The repository has undergone substantial authentication hardening, including email-oriented workspace discovery/login, verified-email login, browser-session hardening, password recovery, rate limiting, and related security tests.
+The repository has undergone substantial authentication hardening, including email-oriented workspace discovery/login, verified-email login, browser-session hardening, password recovery, rate limiting, OIDC SSO, and related security tests.
 
 When changing authentication code:
 
@@ -223,6 +285,9 @@ Rules:
 4. Update PostgreSQL/Flyway integration expectations when a new latest version is introduced.
 5. Preserve production data semantics and backwards safety where practical.
 6. Keep JPA mappings synchronized with the migrated schema.
+7. Prefer tenant-scoped repository/query APIs for tenant-owned data.
+8. Use locking/database constraints when correctness depends on concurrency.
+9. Add indexes for demonstrated query patterns; do not guess at scale problems.
 
 ## Object storage and attachments
 
@@ -280,18 +345,21 @@ Do not expose stack traces, internal exceptions, credentials, database details, 
 
 ## API design
 
-Follow existing controller/service/DTO conventions.
+For new work, follow the explicit domain-module convention rather than expanding generic controller/service/DTO buckets.
 
 Prefer:
 
 - explicit request/response DTOs
 - bean validation at boundaries
-- service-layer authorization and business invariants
+- backend-authoritative authorization and business invariants
 - consistent status codes
 - pagination for potentially unbounded collections
 - idempotent semantics where retries are expected
+- narrow cross-domain query/service contracts
 
-Avoid returning persistence entities directly from public APIs unless the existing architecture explicitly does so and there is no data-leak risk.
+Avoid returning persistence entities directly from public APIs.
+
+A backend API-contract change must update all affected frontend TypeScript types, clients and tests in the same PR. Before substantial mobile-client development, prefer an OpenAPI-derived/shared TypeScript contract or generated client so web/mobile models do not drift independently.
 
 ## Frontend conventions
 
@@ -304,6 +372,29 @@ When changing UI behavior:
 - handle loading, empty, error, and success states
 - do not duplicate server authorization logic as a security mechanism; frontend checks are UX only
 - preserve deep-link behavior where existing features support it
+- keep feature code inside its feature module unless the abstraction is genuinely cross-cutting
+
+## Documentation source-of-truth policy
+
+Do not duplicate volatile project state across many files.
+
+Ownership is:
+
+- `readme.md` — stable public overview
+- `CHECKPOINT.md` — single current status/checkpoint
+- `HANDOFF.md` — single repository resume/next-action document
+- `AGENTS.md` — persistent development contract
+- `guides/README.md` — documentation index and ownership map
+- `guides/current_architecture.md` — canonical architecture
+- `guides/ENGINEERING_STANDARDS.md` — technical-health debt register and quality rules
+- focused guides — domain-specific contracts/operations
+- `guides/Wild_Thoughts.md` — exploratory idea vault, not committed roadmap
+- `wiki/*.md` — canonical source for the published reader-facing Wiki
+- `wiki/Roadmap.md` — product direction/deferred milestones
+
+Do not create another checkpoint, handoff, progress mirror, package-status manifest or milestone-summary file unless a genuinely different consumer requires it.
+
+When status changes, update the owner document rather than every document that happens to mention the same fact. Reader-facing Wiki pages should summarize and link rather than clone internal checkpoint text.
 
 ## Efficiency rules
 
