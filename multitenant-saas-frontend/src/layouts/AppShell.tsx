@@ -24,9 +24,11 @@ import { Outlet, useLocation, useNavigate } from 'react-router'
 
 import { UserMenu } from '../features/auth/components/UserMenu'
 import { useAuth } from '../features/auth/hooks/useAuth'
+import { hasTenantPermission } from '../features/authorization/access/authorizationAccess'
 import { useCurrentAuthorization } from '../features/authorization/hooks/useCurrentAuthorization'
+import { authorizationPermissionCodes } from '../features/authorization/types/authorization'
+import { CommandPalette } from '../features/command-palette/components/CommandPalette'
 import { NotificationCenter } from '../features/notifications/components/NotificationCenter'
-import { GlobalSearch } from '../features/search/components/GlobalSearch'
 import { WorkspaceSubscriptionAccessProvider } from '../features/subscriptions/context/WorkspaceSubscriptionAccessContext'
 import { useWorkspaceSubscriptionAccess } from '../features/subscriptions/hooks/useWorkspaceSubscription'
 import { ThemeModeToggle } from '../theme/ThemeModeToggle'
@@ -57,6 +59,12 @@ export function AppShell() {
     const availableNavigationItems = authorization.data
         ? getAvailableWorkspaceNavigationItems(authorization.data)
         : []
+    const canCreateProject =
+        hasTenantPermission(authorization.data, authorizationPermissionCodes.PROJECT_CREATE) &&
+        subscriptionAccess?.projectCreationAllowed === true
+    const canInviteUser =
+        hasTenantPermission(authorization.data, authorizationPermissionCodes.USER_CREATE) &&
+        subscriptionAccess?.userCreationAllowed === true
 
     function navigateTo(path: string) {
         navigate(path)
@@ -240,7 +248,12 @@ export function AppShell() {
                         </Typography>
                     </Box>
 
-                    <GlobalSearch tenantId={tenantId} />
+                    <CommandPalette
+                        canCreateProject={canCreateProject}
+                        canInviteUser={canInviteUser}
+                        navigationItems={availableNavigationItems}
+                        tenantId={tenantId}
+                    />
                     <NotificationCenter tenantId={tenantId} />
                     <ThemeModeToggle size="small" />
                     <UserMenu />
