@@ -12,7 +12,7 @@ This file is the **single repository-side source of truth for current project st
 
 The platform foundation is broad enough that current development should prioritize daily user value and product depth rather than additional infrastructure expansion.
 
-The next implementation slice is **Global Search**.
+**Global Search is delivered through PR #129.** The next implementation slice is the **Command Palette**, built on the same search/discovery foundation.
 
 ## Completed application foundations
 
@@ -22,8 +22,28 @@ The next implementation slice is **Global Search**.
 - authorization Explain Access/delegation through PR #125
 - authorization milestone closure through PR #126
 - product vision / Wild Thoughts audit through PR #127
+- documentation/engineering-governance consolidation through PR #128
+- permission-aware Global Search through PR #129
 
 Other established capabilities include projects/tasks/collaboration, R2/S3-compatible attachments, durable notifications/email, API keys, usage metering/quotas, tenant/platform audit, PostgreSQL/Flyway correctness, production hardening and CI/security gates.
+
+## Global Search checkpoint
+
+Global Search is implemented as the first feature under the strengthened modularity rules.
+
+Current v1 behavior:
+
+- tenant-aware endpoint: `GET /api/tenants/{tenantId}/search`
+- searches accessible projects, tasks and people
+- query length and result counts are bounded
+- exact/prefix/substring relevance scoring
+- candidate queries are constrained by tenant/permission/project-membership scope before results are returned
+- scoped project/task results are revalidated through authoritative authorization rules
+- top-bar workspace search with `/` keyboard shortcut
+- project/task deep links and user-workspace navigation
+- reusable frontend query/API module for later command-palette/mobile consumers
+
+No Flyway migration was required.
 
 ## Database checkpoint
 
@@ -55,7 +75,7 @@ Application integration and managed Plan provisioning are implemented. Recurring
 
 The largest remaining gaps are now user-facing:
 
-- global authorized search and command palette
+- command palette and quick actions
 - favorites/recent items
 - My Work / unified attention queue
 - saved filters/views and stronger dashboard UX
@@ -77,7 +97,7 @@ The codebase remains feasible for continued feature development without a rewrit
 
 Current priority debt:
 
-1. inconsistent backend domain/package boundaries
+1. inconsistent backend domain/package boundaries in older code
 2. large application services accumulating orchestration dependencies
 3. tenant isolation relying partly on repository/query discipline
 4. manually duplicated backend/frontend API contracts
@@ -91,21 +111,20 @@ Canonical assessment and rules: `guides/ENGINEERING_STANDARDS.md`.
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-This rule is enforced as repository policy in `AGENTS.md` and applies from Global Search onward.
+Global Search follows this rule with a search coordinator plus contributor contracts and narrow cross-domain query services. Subsequent features must continue the pattern.
 
 ## Next product sequence
 
-1. Global Search foundation
-2. command palette + quick navigation/actions
-3. favorites + recently viewed
-4. My Work
-5. saved views + dashboard refresh
-6. Kanban/calendar + richer task relationships
-7. templates, recurring work, bulk/import/export
-8. custom fields/forms + workflows/approvals + knowledge/documents
-9. analytics and selected differentiated experiments
+1. Command Palette + quick navigation/actions
+2. favorites + recently viewed
+3. My Work
+4. saved views + dashboard refresh
+5. Kanban/calendar + richer task relationships
+6. templates, recurring work, bulk/import/export
+7. custom fields/forms + workflows/approvals + knowledge/documents
+8. analytics and selected differentiated experiments
 
-Global Search should become a dedicated `search` domain with permission-aware query contracts rather than another generic service.
+The Command Palette should reuse Global Search contracts rather than introducing a second discovery implementation.
 
 ## Deferred platform work
 

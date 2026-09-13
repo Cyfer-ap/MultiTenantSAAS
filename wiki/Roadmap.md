@@ -32,7 +32,26 @@ Completed authorization capabilities include:
 - direct-vs-delegated Explain Access provenance
 - manager and delegate-only Authorization workspace UX
 
-## Next major product milestone
+### Engineering/documentation governance
+
+Consolidated through PR #128. Current status, handoff, architecture and engineering standards now have single canonical owners, with PR/CI guardrails against documentation drift and new domain-coupling debt.
+
+### Global Search
+
+Completed through PR #129.
+
+The first Product Experience enrichment slice provides:
+
+- tenant-aware search of accessible projects, tasks and people
+- bounded database queries and result limits
+- exact/prefix/substring relevance ranking
+- permission/project-membership-aware candidate selection
+- authoritative project/task access revalidation
+- top-bar workspace search and `/` shortcut
+- project/task deep links and user-workspace navigation
+- reusable backend contributor contracts and frontend search module for later consumers
+
+## Current major product milestone
 
 ### 1. Product Experience & Work Management Enrichment
 
@@ -40,13 +59,15 @@ The platform foundation is broad enough that the immediate priority is now user-
 
 #### Phase A — discoverability and personal productivity
 
-- global authorized search
-- `Ctrl/Cmd + K` command palette
-- favorites and recently viewed items
-- My Work / unified attention queue
-- saved filters/views
-- capability-aware dashboard refresh
-- better empty states/onboarding and quick-create UX
+- ✅ global authorized search
+- ⬜ `Ctrl/Cmd + K` command palette and quick actions — **next**
+- ⬜ favorites and recently viewed items
+- ⬜ My Work / unified attention queue
+- ⬜ saved filters/views
+- ⬜ capability-aware dashboard refresh
+- ⬜ better empty states/onboarding and quick-create UX
+
+The Command Palette should reuse the Global Search discovery contract rather than implementing a second search path.
 
 #### Phase B — deeper work management
 
@@ -91,7 +112,8 @@ No experiment becomes a roadmap commitment merely because it is listed.
 Before calling the product layer mature, revisit:
 
 - smooth post-login multi-workspace switching
-- global search/commands
+- command palette/quick actions
+- favorites/recent items
 - My Work and saved views
 - richer task/project relationships and views
 - templates
@@ -145,3 +167,5 @@ Follow the operations/DR baseline later.
 Preserve tenant isolation, backend-authoritative authorization, delegation non-escalation, verified provider reconciliation, webhook-authoritative normal billing state, immutable history, Flyway invariants, database-backed concurrency, auditability, SSRF protections and server-only secrets/provider identifiers.
 
 New user-facing features must remain permission-aware and tenant-safe. Search, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
+
+New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Global Search is the first reference implementation of this rule for a new cross-cutting product feature.
