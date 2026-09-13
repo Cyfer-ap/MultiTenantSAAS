@@ -16,7 +16,7 @@ Closed through PR #119.
 
 ### Authorization delegation and Explain Access
 
-Closed through PR #125.
+Closed through PR #125, with milestone documentation closed in PR #126.
 
 Completed authorization capabilities include:
 
@@ -34,31 +34,104 @@ Completed authorization capabilities include:
 
 ## Next major product milestone
 
-### 1. Production Operations & Disaster Recovery
+### 1. Product Experience & Work Management Enrichment
 
-Target capabilities:
+The platform foundation is broad enough that the immediate priority is now user-facing product depth and daily usability.
 
-- defined PostgreSQL backup/export and retention strategy
-- repeatable isolated restore drill with validation
-- health/readiness and operational metrics review
-- actionable alerts for application, database, integration and provider failures
-- deployment/database/SSO/billing/webhook incident runbooks
-- secret/key rotation and recovery procedures
-- evidence that recovery procedures work rather than documentation-only readiness
+#### Phase A — discoverability and personal productivity
 
-Recommended sequence:
+- global authorized search
+- `Ctrl/Cmd + K` command palette
+- favorites and recently viewed items
+- My Work / unified attention queue
+- saved filters/views
+- capability-aware dashboard refresh
+- better empty states/onboarding and quick-create UX
 
-1. inventory current Render/PostgreSQL operational capabilities and failure signals
-2. implement/document backup and isolated restore drill
-3. verify Actuator/readiness/metrics and define alert thresholds
-4. write incident/runbook procedures around real failure modes
-5. exercise recovery paths and capture expected evidence
+#### Phase B — deeper work management
 
-## Following platform work
+- Kanban board
+- calendar/deadline view
+- subtasks
+- task dependencies
+- labels/tags
+- recurring work
+- milestones/templates
+- bulk actions and CSV import/export
 
-2. broader load/failure-recovery and production R2 verification
-3. optional SAML/SCIM where concrete enterprise requirements exist
-4. optional notification expansion such as digests/live browser delivery
+#### Phase C — tenant adaptability
+
+- custom fields
+- forms
+- workflow/approval automation
+- knowledge/documents beyond attachments
+- user-facing analytics/reporting
+
+#### Phase D — selected differentiators
+
+Use `guides/Wild_Thoughts.md` as the idea vault. Candidate experiments include:
+
+- Permission Lens
+- Context Capsules
+- Change Blast-Radius Preview
+- Alternate-Reality Planning
+- Responsibility Gap Detector
+- Assumption Register
+- Contradiction Radar
+- Context Compression Checkpoints
+- Project Necromancer
+- Bureaucracy Detector
+- Reality-vs-Plan Drift
+- Human Checkpoints for automation/AI
+
+No experiment becomes a roadmap commitment merely because it is listed.
+
+## Core product gaps to keep visible
+
+Before calling the product layer mature, revisit:
+
+- smooth post-login multi-workspace switching
+- global search/commands
+- My Work and saved views
+- richer task/project relationships and views
+- templates
+- custom fields/forms
+- workflow/approval engine
+- first-class knowledge/documents
+- user-facing analytics/reporting
+- import/export and bulk productivity
+- richer personalization/timezone/locale UX
+
+## Deferred platform work
+
+### 2. Production Operations & Disaster Recovery
+
+Still important, but deliberately deferred from the immediate sequence while the product is enriched.
+
+Target capabilities remain:
+
+- PostgreSQL backup/export and retention strategy
+- repeatable isolated restore drills
+- health/readiness/metrics review
+- actionable alerts
+- incident/recovery runbooks
+- secret/key rotation procedures
+
+### 3. Broader failure-recovery/load and production R2 verification
+
+Follow the operations/DR baseline later.
+
+### 4. Optional enterprise expansion
+
+- SAML where required
+- SCIM/directory provisioning where required
+- richer session/device/MFA/passkey controls when prioritized
+
+### 5. Optional notification expansion
+
+- digests
+- live browser delivery
+- web/mobile push where justified
 
 ## Independent provider/live-readiness track
 
@@ -70,3 +143,5 @@ Recommended sequence:
 ## Engineering rules
 
 Preserve tenant isolation, backend-authoritative authorization, delegation non-escalation, verified provider reconciliation, webhook-authoritative normal billing state, immutable history, Flyway invariants, database-backed concurrency, auditability, SSRF protections and server-only secrets/provider identifiers.
+
+New user-facing features must remain permission-aware and tenant-safe. Search, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
