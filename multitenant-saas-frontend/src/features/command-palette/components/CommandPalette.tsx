@@ -131,7 +131,7 @@ export function CommandPalette({
     const navigate = useNavigate()
     const theme = useTheme()
     const compact = useMediaQuery(theme.breakpoints.down('sm'))
-    const shortcutLabel = useMemo(getShortcutLabel, [])
+    const shortcutLabel = getShortcutLabel()
     const [open, setOpen] = useState(false)
     const [query, setQuery] = useState('')
     const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -151,6 +151,7 @@ export function CommandPalette({
 
             if (commandShortcut) {
                 event.preventDefault()
+                setActiveIndex(0)
                 setOpen(true)
                 return
             }
@@ -160,6 +161,7 @@ export function CommandPalette({
                     return
                 }
                 event.preventDefault()
+                setActiveIndex(0)
                 setOpen(true)
             }
         }
@@ -258,22 +260,19 @@ export function CommandPalette({
         () => new Map(entries.map((entry, index) => [entry.key, index])),
         [entries],
     )
-
-    useEffect(() => {
-        setActiveIndex(0)
-    }, [open, query])
-
-    useEffect(() => {
-        if (activeIndex >= entries.length) {
-            setActiveIndex(Math.max(0, entries.length - 1))
-        }
-    }, [activeIndex, entries.length])
+    const effectiveActiveIndex =
+        entries.length === 0 ? 0 : Math.min(activeIndex, entries.length - 1)
 
     const closePalette = () => {
         setOpen(false)
         setQuery('')
         setDebouncedQuery('')
         setActiveIndex(0)
+    }
+
+    const openPalette = () => {
+        setActiveIndex(0)
+        setOpen(true)
     }
 
     const executeEntry = (entry: PaletteEntry) => {
@@ -308,7 +307,7 @@ export function CommandPalette({
 
         if (event.key === 'Enter') {
             event.preventDefault()
-            const activeEntry = entries[activeIndex]
+            const activeEntry = entries[effectiveActiveIndex]
             if (activeEntry) {
                 executeEntry(activeEntry)
             }
@@ -335,7 +334,7 @@ export function CommandPalette({
                         return (
                             <ListItemButton
                                 key={entry.key}
-                                selected={index === activeIndex}
+                                selected={index === effectiveActiveIndex}
                                 onClick={() => executeEntry(entry)}
                                 onMouseEnter={() => setActiveIndex(index)}
                                 sx={{ px: 2, py: 1.05 }}
@@ -368,7 +367,7 @@ export function CommandPalette({
         <>
             {compact ? (
                 <Tooltip title={`Command palette (${shortcutLabel})`}>
-                    <IconButton aria-label="Open command palette" onClick={() => setOpen(true)}>
+                    <IconButton aria-label="Open command palette" onClick={openPalette}>
                         <SearchRoundedIcon />
                     </IconButton>
                 </Tooltip>
@@ -376,7 +375,7 @@ export function CommandPalette({
                 <Button
                     aria-label="Open command palette"
                     color="inherit"
-                    onClick={() => setOpen(true)}
+                    onClick={openPalette}
                     startIcon={<SearchRoundedIcon />}
                     variant="outlined"
                     sx={{
@@ -419,7 +418,10 @@ export function CommandPalette({
                             autoFocus
                             fullWidth
                             value={query}
-                            onChange={(event) => setQuery(event.target.value)}
+                            onChange={(event) => {
+                                setQuery(event.target.value)
+                                setActiveIndex(0)
+                            }}
                             onKeyDown={handleInputKeyDown}
                             placeholder="Search or type a command"
                             slotProps={{
