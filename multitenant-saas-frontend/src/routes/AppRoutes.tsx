@@ -123,6 +123,12 @@ const OutboundWebhooksPage = lazy(() =>
     })),
 )
 
+const PersonalWorkspacePage = lazy(() =>
+    import('../features/personal-workspace/pages/PersonalWorkspacePage').then((module) => ({
+        default: module.PersonalWorkspacePage,
+    })),
+)
+
 const PlatformAuditLogsPage = lazy(() =>
     import('../pages/PlatformAuditLogsPage').then((module) => ({
         default: module.PlatformAuditLogsPage,
@@ -257,6 +263,8 @@ export function AppRoutes() {
                         >
                             <Route path="dashboard" element={<DashboardPage />} />
                         </Route>
+
+                        <Route path="personal" element={<PersonalWorkspacePage />} />
 
                         <Route
                             element={

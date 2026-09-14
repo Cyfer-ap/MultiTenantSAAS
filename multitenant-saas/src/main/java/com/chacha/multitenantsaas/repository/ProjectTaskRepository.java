@@ -20,6 +20,8 @@ public interface ProjectTaskRepository
     Optional<ProjectTask> findByProject_Tenant_IdAndProject_IdAndId(
             UUID tenantId, UUID projectId, UUID taskId);
 
+    Optional<ProjectTask> findByTenant_IdAndId(UUID tenantId, UUID taskId);
+
     long countByTenant_Id(UUID tenantId);
 
     long countByTenant_IdAndStatus(UUID tenantId, ProjectTaskStatus status);

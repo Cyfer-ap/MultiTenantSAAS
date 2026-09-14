@@ -12,6 +12,7 @@ describe('authorization workspace access', () => {
         })
 
         expect(getAvailableWorkspaceNavigationItems(context).map((item) => item.label)).toEqual([
+            'Favorites',
             'Authorization',
         ])
         expect(getDefaultAuthorizedPath(context)).toBe('/authorization')
@@ -23,6 +24,7 @@ describe('authorization workspace access', () => {
         })
 
         expect(getAvailableWorkspaceNavigationItems(context).map((item) => item.label)).toEqual([
+            'Favorites',
             'Authorization',
         ])
         expect(getDefaultAuthorizedPath(context)).toBe('/authorization')
