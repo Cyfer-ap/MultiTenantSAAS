@@ -1,5 +1,6 @@
 import AccountTreeRoundedIcon from '@mui/icons-material/AccountTreeRounded'
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded'
+import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded'
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
 import FolderRoundedIcon from '@mui/icons-material/FolderRounded'
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
@@ -35,6 +36,12 @@ export const workspaceNavigationItems: readonly WorkspaceNavigationItem[] = [
         path: '/dashboard',
         icon: <DashboardRoundedIcon />,
         requiredTenantPermissions: dashboardRequiredTenantPermissions,
+    },
+    {
+        label: 'My Work',
+        path: '/my-work',
+        icon: <AssignmentRoundedIcon />,
+        requiredTenantPermissions: [],
     },
     {
         label: 'Favorites',
