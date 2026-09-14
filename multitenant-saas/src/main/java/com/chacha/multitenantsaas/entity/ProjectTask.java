@@ -13,7 +13,10 @@ import java.util.UUID;
             @Index(name = "idx_project_task_assignee", columnList = "assignee_user_id"),
             @Index(name = "idx_project_task_project_status", columnList = "project_id,status"),
             @Index(name = "idx_project_task_project_priority", columnList = "project_id,priority"),
-            @Index(name = "idx_project_task_due_at", columnList = "due_at")
+            @Index(name = "idx_project_task_due_at", columnList = "due_at"),
+            @Index(
+                    name = "idx_project_task_parent",
+                    columnList = "tenant_id,project_id,parent_task_id")
         })
 public class ProjectTask {
 
@@ -28,6 +31,10 @@ public class ProjectTask {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_task_id")
+    private ProjectTask parentTask;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by_user_id", nullable = false)
@@ -106,6 +113,10 @@ public class ProjectTask {
         return project;
     }
 
+    public ProjectTask getParentTask() {
+        return parentTask;
+    }
+
     public AppUser getCreatedByUser() {
         return createdByUser;
     }
@@ -156,6 +167,10 @@ public class ProjectTask {
 
     public void setProject(Project project) {
         this.project = project;
+    }
+
+    public void setParentTask(ProjectTask parentTask) {
+        this.parentTask = parentTask;
     }
 
     public void setCreatedByUser(AppUser createdByUser) {
