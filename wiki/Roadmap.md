@@ -118,6 +118,22 @@ Provides:
 - local degradation when personal widgets fail
 - frontend composition only; no new dashboard backend service or schema migration
 
+### Calendar / Deadline View
+
+Completed through PR #137.
+
+Provides:
+
+- `/calendar` workspace route and shared navigation entry
+- local-time Monday-start six-week month grid
+- previous/next month and Today navigation
+- selected-day agenda with task status, priority, project context and deep links
+- task due dates only; projects currently have no deadline field and no synthetic project dates are introduced
+- explicit backend `calendar` domain with narrow `CalendarDeadlineSource`
+- task-owned deadline adapter with tenant/date/project narrowing and authoritative task-read revalidation
+- maximum 93-day request range and 500 returned deadlines with explicit truncation signaling
+- reuse of the existing indexed task `due_at` field; no new Flyway migration
+
 ## Current major product milestone
 
 ### 1. Product Experience & Work Management Enrichment
@@ -139,16 +155,16 @@ Phase A now has a coherent daily-use foundation. Onboarding/empty-state polish r
 
 #### Phase B — deeper work management
 
-- calendar/deadline view — **next**
+- ✅ calendar/deadline view
 - existing Kanban task board should be iterated rather than rebuilt
-- subtasks
-- task dependencies
-- labels/tags
+- subtasks — **next**
+- task dependencies — **next**
+- labels/tags — **next**
 - recurring work
 - milestones/templates
 - bulk actions and CSV import/export
 
-The first calendar slice should be a bounded, authorization-safe projection of existing task/project dates. It should not become a meeting/resource scheduling platform.
+The next slice should establish explicit task-relationship invariants before UI expansion: same-tenant/project hierarchy rules, dependency direction and cycle prevention, bounded traversal, deterministic cleanup behavior and label ownership/uniqueness.
 
 #### Phase C — tenant adaptability
 
@@ -179,20 +195,19 @@ No experiment becomes a roadmap commitment merely because it is listed.
 
 ## Immediate sequence
 
-1. calendar/deadline view
-2. subtasks, task dependencies and labels/tags
-3. recurring work + project/task templates
-4. bulk actions + CSV import/export
-5. custom fields/forms + workflows/approvals + knowledge/documents
-6. user-facing analytics/reporting
-7. selected differentiated experiments after the core product layer is strong
+1. subtasks + task dependencies + labels/tags
+2. recurring work + project/task templates
+3. bulk actions + CSV import/export
+4. custom fields/forms + workflows/approvals + knowledge/documents
+5. user-facing analytics/reporting
+6. selected differentiated experiments after the core product layer is strong
 
 ## Core product gaps to keep visible
 
 Before calling the product layer mature, revisit:
 
 - smooth post-login multi-workspace switching
-- calendar/deadline views and richer task/project relationships
+- richer task/project relationships
 - recurring work and templates
 - custom fields/forms
 - workflow/approval engine
@@ -245,4 +260,4 @@ Preserve tenant isolation, backend-authoritative authorization, delegation non-e
 
 New user-facing features must remain permission-aware and tenant-safe. Search, favorites/recent resolution, My Work, saved views, calendar projections, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
 
-New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work and Saved Views are backend reference implementations; the Dashboard Refresh is the frontend composition reference. The Calendar/Deadline View must preserve those boundaries rather than duplicating task/project access rules.
+New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work, Saved Views and Calendar are backend reference implementations; Dashboard is the frontend composition reference. Task hierarchy/dependency/label work must preserve those boundaries and must not become generic graph infrastructure prematurely.
