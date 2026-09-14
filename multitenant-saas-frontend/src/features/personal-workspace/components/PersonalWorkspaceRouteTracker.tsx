@@ -57,7 +57,8 @@ export function PersonalWorkspaceRouteTracker({ tenantId }: { tenantId: string }
     const isFavorite = Boolean(
         workspaceQuery.data?.favorites.some(
             (item) =>
-                item.type === currentResource.type && item.resourceId === currentResource.resourceId,
+                item.type === currentResource.type &&
+                item.resourceId === currentResource.resourceId,
         ),
     )
     const pending = favoriteMutation.isPending || unfavoriteMutation.isPending
