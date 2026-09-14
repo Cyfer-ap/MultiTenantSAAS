@@ -236,12 +236,7 @@ export function TaskTemplatesPanel({ tenantId, projectId, canManage }: TaskTempl
                             </Typography>
                         ) : null}
                         {canManage ? (
-                            <Stack
-                                direction="row"
-                                spacing={1}
-                                useFlexGap
-                                sx={{ flexWrap: 'wrap' }}
-                            >
+                            <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
                                 <Button
                                     size="small"
                                     variant="contained"

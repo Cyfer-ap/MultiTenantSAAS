@@ -317,12 +317,7 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
                             <Typography variant="body2">{rule.description}</Typography>
                         ) : null}
                         {rule.lastError ? <Alert severity="warning">{rule.lastError}</Alert> : null}
-                        <Stack
-                            direction="row"
-                            spacing={1}
-                            useFlexGap
-                            sx={{ flexWrap: 'wrap' }}
-                        >
+                        <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
                             <Button size="small" onClick={() => setHistoryId(rule.id)}>
                                 History
                             </Button>
