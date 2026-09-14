@@ -58,6 +58,10 @@ The application currently contains mature capabilities for:
 - users, invitations and organization hierarchy
 - scoped authorization, delegation and Explain Access
 - projects, tasks and collaboration
+- Global Search and capability-aware Command Palette
+- Favorites/Recently Viewed, My Work and Saved Views
+- capability-aware Dashboard composition
+- authorization-safe Calendar / Deadline View
 - attachments and notifications
 - subscriptions, plans, quotas and usage metering
 - Stripe/Razorpay provider integration
@@ -67,11 +71,38 @@ The application currently contains mature capabilities for:
 - tenant API keys/external APIs
 - auditability and observability
 
-The current product phase adds user-facing domains such as Global Search, My Work, richer task views, workflows, knowledge and analytics.
+The next product slice deepens task relationships through subtasks, directed dependencies and labels/tags, followed by recurring work/templates, bulk productivity, tenant adaptability, workflows/knowledge and analytics.
+
+## Cross-domain composition patterns
+
+Recent product work intentionally avoids central god-services:
+
+```text
+Global Search
+    coordinator → contributor contracts → owning-domain adapters
+
+Personal Workspace
+    coordinator → resource resolver contracts → project/task adapters
+
+My Work
+    attention coordinator → MyWorkTaskSource → task adapter
+
+Dashboard
+    frontend composition → existing authorized feature contracts
+
+Calendar
+    CalendarDeadlineService → CalendarDeadlineSource → task-owned deadline adapter
+```
+
+Search and Calendar share the neutral `projects.query.ProjectMembershipQueryService` rather than making one product domain depend on another product-specific package.
+
+Calendar reads are tenant/date bounded, use existing task due dates, and revalidate project/task readability before exposure. The API caps ranges at 93 days and results at 500, with explicit truncation signaling. Calendar #137 requires no schema migration because the indexed task `due_at` field already exists.
 
 ## Authorization
 
 Authorization is permission- and scope-oriented rather than role-name-only. Explain Access and enforcement use the same evaluator. Delegated authority is bounded by a direct parent assignment and revalidated at access time.
+
+Cross-cutting views such as Search, My Work, Personal Workspace and Calendar do not become alternative permission models; they filter or resolve through the same authoritative resource-access rules.
 
 See [[Authorization]].
 
@@ -79,7 +110,7 @@ See [[Authorization]].
 
 Production uses shared-schema tenancy. Tenant-owned data is accessed through tenant-scoped repository/query behavior and cross-tenant IDs must never be trusted without ownership validation.
 
-Flyway owns schema evolution. Applied migrations are append-only.
+Flyway owns schema evolution. Applied migrations are append-only. Portable common migrations currently extend through **V46**; any upcoming task-relationship schema must use new migration(s) after that baseline.
 
 See [[Tenancy-and-Data-Model]] and [[PostgreSQL-and-Flyway]].
 
@@ -100,6 +131,8 @@ The most important rule for future development is:
 New backend features should prefer domain-oriented packages instead of expanding broad global `service`, `controller`, `entity`, `repository` and `dto` buckets.
 
 New frontend features should remain local under `features/<domain>/...` and should not push business logic into central routing/navigation files.
+
+For the next task-relationship slice, parent/child hierarchy, dependency edges and labels should be task/project-owned concepts with explicit tenant/project invariants, database constraints and bounded traversal. Do not introduce a generic graph engine before those product rules are defined.
 
 When a boundary is important enough to regress silently, add architecture/static tests so the rule is machine-enforced rather than relying only on review discipline.
 
@@ -123,9 +156,10 @@ The application tier can remain horizontally replicated and stateless while Post
 
 The current strategy is PostgreSQL-first and evidence-driven:
 
-- paginate unbounded reads
+- paginate or otherwise bound unbounded reads
+- bound graph traversal and date-window projections
 - use database locking/constraints for correctness
 - add indexes for real query patterns
-- measure search/query/load behavior before adding distributed infrastructure
+- measure search/calendar/query/load behavior before adding distributed infrastructure
 
-Global Search will be the first new product domain built explicitly under the strengthened modularity rules.
+Search, My Work, Personal Workspace, Saved Views and Calendar are already designed around bounded server-side reads rather than tenant-wide browser materialization.
