@@ -9,9 +9,6 @@ import com.chacha.multitenantsaas.savedviews.entity.SavedView;
 import com.chacha.multitenantsaas.savedviews.model.SavedViewTarget;
 import com.chacha.multitenantsaas.savedviews.repository.SavedViewRepository;
 import com.chacha.multitenantsaas.savedviews.spi.SavedViewContextValidator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,6 +19,9 @@ import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 @Service
 public class SavedViewService {
@@ -53,15 +53,15 @@ public class SavedViewService {
             Set.of("createdAt", "updatedAt", "title", "status", "priority", "dueAt");
 
     private final SavedViewRepository repository;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
     private final Map<SavedViewTarget, SavedViewContextValidator> contextValidators;
 
     public SavedViewService(
             SavedViewRepository repository,
-            ObjectMapper objectMapper,
+            JsonMapper jsonMapper,
             List<SavedViewContextValidator> validators) {
         this.repository = repository;
-        this.objectMapper = objectMapper;
+        this.jsonMapper = jsonMapper;
         this.contextValidators = new EnumMap<>(SavedViewTarget.class);
         for (SavedViewContextValidator validator : validators) {
             SavedViewContextValidator existing =
@@ -235,12 +235,12 @@ public class SavedViewService {
 
     private String serialize(Map<String, String> definition) {
         try {
-            String serialized = objectMapper.writeValueAsString(definition);
+            String serialized = jsonMapper.writeValueAsString(definition);
             if (serialized.length() > MAX_DEFINITION_JSON_LENGTH) {
                 throw new IllegalArgumentException("Saved view definition is too large");
             }
             return serialized;
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             throw new IllegalArgumentException(
                     "Saved view definition could not be serialized", exception);
         }
@@ -248,9 +248,9 @@ public class SavedViewService {
 
     private Map<String, String> deserialize(String definitionJson) {
         try {
-            return objectMapper.readValue(
+            return jsonMapper.readValue(
                     definitionJson, new TypeReference<Map<String, String>>() {});
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             throw new IllegalStateException("Stored saved view definition is invalid", exception);
         }
     }
