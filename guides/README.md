@@ -39,6 +39,7 @@ When a fact changes, update the document that owns that fact rather than copying
 - `enterprise-sso-foundation.md` — OIDC SSO architecture, administration, deployment and testing
 - `subscription_billing.md` — subscription and provider lifecycle
 - `collaboration_and_notifications.md` — collaboration/notification behavior
+- `task_relationships.md` — subtasks, directed dependencies, project-scoped labels and Task Planning ownership
 - `data_model.md` — data-model notes
 - `postgresql_and_migrations.md` — PostgreSQL/Flyway behavior
 - `outbound-webhook-events.md` — outbound event contract
@@ -54,8 +55,8 @@ Historical planning/recovery files may remain for provenance, but they are not c
 
 ## Current direction
 
-The active product phase is **Product Experience & Work Management Enrichment**. Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard and the Calendar / Deadline View are complete through PR #137.
+The active product phase is **Product Experience & Work Management Enrichment**. Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar / Deadline View, and the task-relationship/Task Planning foundation are established through PRs #139–#140.
 
-The next implementation slice is **subtasks + task dependencies + labels/tags**. Establish task-relationship invariants, bounded graph behavior and database constraints before expanding the UI; then continue with recurring work/templates, bulk productivity, tenant adaptability and user-facing analytics.
+The next implementation slice is **recurring work + project/task templates**. Define recurrence/timezone/idempotency semantics and template ownership/copy rules before schema work; then continue with bulk productivity, tenant adaptability and user-facing analytics.
 
 Production Operations & Disaster Recovery remains important but intentionally deferred until after the current user-facing enrichment phase.

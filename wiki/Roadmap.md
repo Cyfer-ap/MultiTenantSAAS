@@ -40,99 +40,66 @@ Consolidated through PR #128. Current status, handoff, architecture and engineer
 
 Completed through PR #129.
 
-Provides:
-
-- tenant-aware search of accessible projects, tasks and people
-- bounded database queries and result limits
-- exact/prefix/substring relevance ranking
-- permission/project-membership-aware candidate selection
-- authoritative project/task access revalidation
-- reusable backend contributor contracts and frontend search query contracts
+Provides tenant-aware bounded search of accessible projects, tasks and people with permission/project-membership-aware candidate selection and authoritative project/task access revalidation.
 
 ### Command Palette
 
 Completed through PR #130.
 
-Provides:
-
-- `Ctrl/Cmd + K` and `/` workspace quick-open
-- global authorized search reuse rather than a second discovery path
-- Arrow Up/Down + Enter keyboard operation
-- permission-filtered workspace navigation commands
-- direct Create Project and Invite User actions through existing domain dialogs
-- authorization + subscription-entitlement gating for quick-create actions
-- separate `features/command-palette` UI orchestration domain
-
-Create Task remains intentionally outside the global palette until a project-aware task capability/picker contract can represent project-lead membership and scoped authorization without duplicating task-access logic in the shell.
+Provides `Ctrl/Cmd + K` and `/` quick-open, authorized search reuse, keyboard operation, permission-filtered workspace commands and owning-domain quick actions.
 
 ### Favorites + Recently Viewed
 
-Completed through PR #131, with contextual project/task favorite controls added in PR #132.
-
-Provides:
-
-- server-backed tenant/user-scoped personal workspace state
-- favorite projects and tasks
-- recently viewed project/task tracking
-- permission-aware resolution on writes and reads
-- immediate disappearance of revoked/deleted/inaccessible references
-- idempotent unfavorite even after access is lost
-- reusable personal-workspace contracts for future dashboard/mobile consumers
+Completed through PR #131, with contextual favorite controls in PR #132.
 
 ### My Work
 
-Completed through PR #133.
-
-Provides:
-
-- personal assigned-open-task attention queue
-- overdue, blocked, due-soon, in-progress and remaining-work classification
-- bounded source reads with authoritative readability checks
-- summary counts and deep links
-- explicit `mywork` domain with a narrow `MyWorkTaskSource` contract
+Completed through PR #133 with an explicit `mywork` domain and narrow `MyWorkTaskSource`.
 
 ### Saved Views
 
-Completed through PR #134.
-
-Provides:
-
-- My Work filters for search, attention, status and priority
-- server-backed user-owned saved views
-- create/apply/update/delete lifecycle
-- allow-listed and normalized persisted definitions
-- explicit `savedviews` domain and frontend `features/saved-views`
-- context-validator SPI prepared for later project-task view adoption
-- V46 `saved_views` persistence
+Completed through PR #134 with V46 `saved_views` persistence and a context-validator SPI.
 
 ### Capability-aware Dashboard Refresh
 
-Completed through PR #136.
-
-Provides:
-
-- personal My Work summary and bounded attention preview
-- Favorites and Recently Viewed context on the dashboard
-- capability-aware quick actions using the shared workspace-navigation contract
-- preserved tenant-wide users/projects/tasks health metrics
-- local degradation when personal widgets fail
-- frontend composition only; no new dashboard backend service or schema migration
+Completed through PR #136 as frontend composition over existing authorized contracts.
 
 ### Calendar / Deadline View
 
-Completed through PR #137.
+Completed through PR #137, with UI refinement in PR #138.
 
 Provides:
 
-- `/calendar` workspace route and shared navigation entry
-- local-time Monday-start six-week month grid
-- previous/next month and Today navigation
-- selected-day agenda with task status, priority, project context and deep links
-- task due dates only; projects currently have no deadline field and no synthetic project dates are introduced
-- explicit backend `calendar` domain with narrow `CalendarDeadlineSource`
-- task-owned deadline adapter with tenant/date/project narrowing and authoritative task-read revalidation
-- maximum 93-day request range and 500 returned deadlines with explicit truncation signaling
-- reuse of the existing indexed task `due_at` field; no new Flyway migration
+- `/calendar` workspace
+- local-time Monday-start month view and selected-day agenda
+- task due dates only
+- narrow backend `calendar` domain + `CalendarDeadlineSource`
+- authoritative task-read revalidation
+- maximum 93-day range and 500 returned items with truncation signaling
+- no dedicated schema migration
+
+### Task Relationships + Task Planning
+
+Backend foundation completed through PR #139 and user-facing Task Planning through PR #140.
+
+Provides:
+
+- V47 optional task parent relationship
+- bounded same-project subtask hierarchy
+- self-parent and ancestry-cycle prevention
+- directed `blocking task -> dependent task` dependency edges
+- duplicate/self/directed-cycle prevention for dependencies
+- bounded graph validation and bounded relationship reads
+- project-scoped reusable task labels with normalized uniqueness
+- task-label assignment limits
+- explicit backend `taskrelationships` domain split into query, graph and label responsibilities
+- narrow `TaskRelationshipTaskGateway` and `TaskRelationshipChangeSink`
+- `/task-planning` frontend workspace under `features/task-relationships`
+- authorization-safe task selection through Global Search
+- hierarchy, blocker/dependent and label management UX
+- shared-navigation registration so Command Palette and Dashboard quick actions inherit the workspace
+
+This milestone deliberately does **not** automate task status from relationships and does not create generic graph infrastructure.
 
 ## Current major product milestone
 
@@ -143,28 +110,28 @@ The platform foundation is broad enough that the immediate priority is user-faci
 #### Phase A — discoverability and personal productivity
 
 - ✅ global authorized search
-- ✅ `Ctrl/Cmd + K` command palette and quick actions
-- ✅ favorites and recently viewed items
+- ✅ command palette and quick actions
+- ✅ favorites/recent items
 - ✅ contextual favorite controls
-- ✅ My Work / unified attention queue
-- ✅ saved filters/views for My Work
+- ✅ My Work attention queue
+- ✅ saved views
 - ✅ capability-aware dashboard refresh
-- 🟡 better empty states/onboarding and quick-create UX — continue incrementally with future product slices
-
-Phase A now has a coherent daily-use foundation. Onboarding/empty-state polish remains an ongoing UX concern rather than a blocker for deeper work management.
+- 🟡 onboarding/empty-state/quick-create polish — continue incrementally
 
 #### Phase B — deeper work management
 
 - ✅ calendar/deadline view
+- ✅ subtasks
+- ✅ directed task dependencies
+- ✅ project-scoped labels/tags
 - existing Kanban task board should be iterated rather than rebuilt
-- subtasks — **next**
-- task dependencies — **next**
-- labels/tags — **next**
-- recurring work
-- milestones/templates
+- recurring work — **next**
+- project/task templates — **next**
 - bulk actions and CSV import/export
 
-The next slice should establish explicit task-relationship invariants before UI expansion: same-tenant/project hierarchy rules, dependency direction and cycle prevention, bounded traversal, deterministic cleanup behavior and label ownership/uniqueness.
+The next slice should define recurrence and template semantics before persistence work: timezone/cadence ownership, occurrence idempotency, materialization horizon, pause/edit behavior, template scope, copy/snapshot rules, versioning expectations, authorization and bounded instantiation.
+
+Do not put recurrence generation inside Calendar or task-relationship graph services. Those domains have different lifecycles.
 
 #### Phase C — tenant adaptability
 
@@ -176,38 +143,23 @@ The next slice should establish explicit task-relationship invariants before UI 
 
 #### Phase D — selected differentiators
 
-Use `guides/Wild_Thoughts.md` as the idea vault. Candidate experiments include:
-
-- Permission Lens
-- Context Capsules
-- Change Blast-Radius Preview
-- Alternate-Reality Planning
-- Responsibility Gap Detector
-- Assumption Register
-- Contradiction Radar
-- Context Compression Checkpoints
-- Project Necromancer
-- Bureaucracy Detector
-- Reality-vs-Plan Drift
-- Human Checkpoints for automation/AI
+Use `guides/Wild_Thoughts.md` as the idea vault. Candidate experiments include Permission Lens, Context Capsules, Change Blast-Radius Preview, Alternate-Reality Planning, Responsibility Gap Detector, Assumption Register, Contradiction Radar, Context Compression Checkpoints, Project Necromancer, Bureaucracy Detector, Reality-vs-Plan Drift and Human Checkpoints for automation/AI.
 
 No experiment becomes a roadmap commitment merely because it is listed.
 
 ## Immediate sequence
 
-1. subtasks + task dependencies + labels/tags
-2. recurring work + project/task templates
-3. bulk actions + CSV import/export
-4. custom fields/forms + workflows/approvals + knowledge/documents
-5. user-facing analytics/reporting
-6. selected differentiated experiments after the core product layer is strong
+1. **recurring work + project/task templates**
+2. bulk actions + CSV import/export
+3. custom fields/forms + workflows/approvals + knowledge/documents
+4. user-facing analytics/reporting
+5. selected differentiated experiments after the core product layer is strong
 
 ## Core product gaps to keep visible
 
 Before calling the product layer mature, revisit:
 
 - smooth post-login multi-workspace switching
-- richer task/project relationships
 - recurring work and templates
 - custom fields/forms
 - workflow/approval engine
@@ -258,6 +210,6 @@ Follow the operations/DR baseline later.
 
 Preserve tenant isolation, backend-authoritative authorization, delegation non-escalation, verified provider reconciliation, webhook-authoritative normal billing state, immutable history, Flyway invariants, database-backed concurrency, auditability, SSRF protections and server-only secrets/provider identifiers.
 
-New user-facing features must remain permission-aware and tenant-safe. Search, favorites/recent resolution, My Work, saved views, calendar projections, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
+New user-facing features must remain permission-aware and tenant-safe. Search, favorites/recent resolution, My Work, saved views, calendar projections, Task Planning, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
 
-New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work, Saved Views and Calendar are backend reference implementations; Dashboard is the frontend composition reference. Task hierarchy/dependency/label work must preserve those boundaries and must not become generic graph infrastructure prematurely.
+New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work, Saved Views, Calendar and Task Relationships are backend reference implementations; Dashboard remains the frontend composition reference. Recurring work/templates must use their own owning domain rather than expanding task graph, Calendar or legacy task services.

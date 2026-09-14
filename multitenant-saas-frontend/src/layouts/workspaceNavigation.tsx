@@ -51,6 +51,12 @@ export const workspaceNavigationItems: readonly WorkspaceNavigationItem[] = [
         requiredTenantPermissions: [],
     },
     {
+        label: 'Task Planning',
+        path: '/task-planning',
+        icon: <AccountTreeRoundedIcon />,
+        requiredTenantPermissions: [],
+    },
+    {
         label: 'Favorites',
         path: '/personal',
         icon: <StarRoundedIcon />,

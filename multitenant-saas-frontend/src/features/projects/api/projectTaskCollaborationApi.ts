@@ -261,17 +261,36 @@ async function deleteAttachment(
     return response.data.data
 }
 
+type ServerTaskActivity = Omit<TaskActivity, 'type'> & {
+    type: TaskActivity['type'] | 'PARENT_CHANGED' | 'DEPENDENCY_CHANGED' | 'LABELS_CHANGED'
+}
+
+function normalizeTaskActivity(activity: ServerTaskActivity): TaskActivity {
+    if (
+        activity.type === 'PARENT_CHANGED' ||
+        activity.type === 'DEPENDENCY_CHANGED' ||
+        activity.type === 'LABELS_CHANGED'
+    ) {
+        return { ...activity, type: 'TASK_UPDATED' }
+    }
+    return activity as TaskActivity
+}
+
 async function getActivity(
     tenantId: string,
     projectId: string,
     taskId: string,
     params: TaskCollaborationPageParams,
 ): Promise<PageResponse<TaskActivity>> {
-    const response = await httpClient.get<ApiResponse<PageResponse<TaskActivity>>>(
+    const response = await httpClient.get<ApiResponse<PageResponse<ServerTaskActivity>>>(
         `${taskPath(tenantId, projectId, taskId)}/activity`,
         { params },
     )
-    return response.data.data
+    const data = response.data.data
+    return {
+        ...data,
+        content: data.content.map(normalizeTaskActivity),
+    }
 }
 
 export const projectTaskCollaborationApi = {

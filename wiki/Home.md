@@ -16,6 +16,8 @@ Implemented foundations include:
 - bounded one-level authorization delegation with runtime source revalidation
 - Explain Access with direct/delegated matched-grant provenance
 - organization hierarchy, projects/tasks/collaboration and R2/S3-compatible attachments
+- bounded subtasks, directed dependencies and project-scoped task labels
+- dedicated authorization-safe Task Planning workspace
 - permission-aware Global Search and capability-aware Command Palette
 - server-backed Favorites + Recently Viewed with contextual favorite controls
 - My Work personal attention queue and server-backed Saved Views
@@ -38,9 +40,9 @@ See [[Architecture]] for the current architecture and known debt.
 
 ## Database checkpoint
 
-Portable common migrations currently extend through **V46**. Applied Flyway migrations remain append-only.
+Portable common migrations currently extend through **V47**. Applied Flyway migrations remain append-only.
 
-Recent product migrations are V45 for personal-workspace favorites/recent items and V46 for saved views. Dashboard #136 and Calendar #137 required no migration.
+Recent product migrations are V45 for personal-workspace favorites/recent items, V46 for saved views, and V47 for task parent/dependency/label relationships. Dashboard #136 and Calendar #137 required no migration.
 
 ## Start here
 
@@ -56,10 +58,10 @@ Recent product migrations are V45 for personal-workspace favorites/recent items 
 - [[Roadmap]]
 - [[Developer-Handoff]]
 
-Repository-side `guides/Wild_Thoughts.md` is the living idea vault; `guides/ENGINEERING_STANDARDS.md` is the technical-health and engineering-rules guide.
+Repository-side `guides/Wild_Thoughts.md` is the living idea vault; `guides/ENGINEERING_STANDARDS.md` is the technical-health and engineering-rules guide; `guides/task_relationships.md` owns detailed task hierarchy/dependency/label semantics.
 
 ## Current product direction
 
-The active product phase is **Product Experience & Work Management Enrichment**. Global Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard and Calendar/Deadline View are established foundations. The next slice is **subtasks + task dependencies + labels/tags**, followed by recurring work/templates, bulk productivity and tenant adaptability.
+The active product phase is **Product Experience & Work Management Enrichment**. Global Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View and the task-relationship/Task Planning foundation are established. The next slice is **recurring work + project/task templates**, followed by bulk productivity and tenant adaptability.
 
 Production Operations & Disaster Recovery remains important but deliberately deferred behind the current user-facing enrichment phase. See [[Roadmap]].
