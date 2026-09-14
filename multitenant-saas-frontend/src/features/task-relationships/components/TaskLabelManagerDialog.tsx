@@ -128,17 +128,17 @@ export function TaskLabelManagerDialog({
                             <TextField
                                 autoFocus
                                 fullWidth
-                                inputProps={{ maxLength: 60 }}
                                 label={editing ? 'Label name' : 'New label name'}
                                 onChange={(event) => setName(event.target.value)}
+                                slotProps={{ htmlInput: { maxLength: 60 } }}
                                 value={name}
                             />
                             <TextField
                                 helperText="Optional #RRGGBB"
-                                inputProps={{ maxLength: 7 }}
                                 label="Color"
                                 onChange={(event) => setColor(event.target.value)}
                                 placeholder="#4F46E5"
+                                slotProps={{ htmlInput: { maxLength: 7 } }}
                                 value={color}
                             />
                         </Stack>
