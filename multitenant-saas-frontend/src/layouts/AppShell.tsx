@@ -153,7 +153,17 @@ export function AppShell() {
 
             <Divider />
 
-            <List sx={{ px: compact ? 1.1 : 1.5, py: 1.75 }}>
+            <List
+                sx={{
+                    flex: 1,
+                    minHeight: 0,
+                    overflowY: 'auto',
+                    overscrollBehavior: 'contain',
+                    px: compact ? 1.1 : 1.5,
+                    py: 1.75,
+                    scrollbarGutter: 'stable',
+                }}
+            >
                 {availableNavigationItems.map((item) => (
                     <Tooltip key={item.path} placement="right" title={compact ? item.label : ''}>
                         <ListItemButton
