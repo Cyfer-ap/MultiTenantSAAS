@@ -145,14 +145,14 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
             {canManage ? (
                 <Paper variant="outlined" sx={{ p: 2 }}>
                     <Stack spacing={2}>
-                        <Typography fontWeight={600}>
+                        <Typography sx={{ fontWeight: 600 }}>
                             {editingId ? 'Edit recurring rule' : 'New recurring rule'}
                         </Typography>
                         <TextField
                             label="Task title"
                             value={form.title}
                             onChange={(event) => setForm({ ...form, title: event.target.value })}
-                            inputProps={{ maxLength: 200 }}
+                            slotProps={{ htmlInput: { maxLength: 200 } }}
                             required
                         />
                         <TextField
@@ -163,7 +163,7 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
                             }
                             multiline
                             minRows={2}
-                            inputProps={{ maxLength: 4000 }}
+                            slotProps={{ htmlInput: { maxLength: 4000 } }}
                         />
                         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                             <TextField
@@ -210,7 +210,7 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
                                 onChange={(event) =>
                                     setForm({ ...form, intervalCount: event.target.value })
                                 }
-                                inputProps={{ min: 1, max: 52 }}
+                                slotProps={{ htmlInput: { min: 1, max: 52 } }}
                             />
                         </Stack>
                         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
@@ -230,7 +230,7 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
                                 onChange={(event) =>
                                     setForm({ ...form, nextOccurrenceAt: event.target.value })
                                 }
-                                InputLabelProps={{ shrink: true }}
+                                slotProps={{ inputLabel: { shrink: true } }}
                             />
                         </Stack>
                         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
@@ -242,7 +242,7 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
                                 onChange={(event) =>
                                     setForm({ ...form, dueOffsetMinutes: event.target.value })
                                 }
-                                inputProps={{ min: 0, max: 525600 }}
+                                slotProps={{ htmlInput: { min: 0, max: 525600 } }}
                             />
                             <TextField
                                 fullWidth
@@ -252,7 +252,7 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
                                 onChange={(event) =>
                                     setForm({ ...form, maxOccurrences: event.target.value })
                                 }
-                                inputProps={{ min: 1, max: 10000 }}
+                                slotProps={{ htmlInput: { min: 1, max: 10000 } }}
                             />
                         </Stack>
                         {saveMutation.isError ? (
@@ -298,7 +298,7 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
                             sx={{ justifyContent: 'space-between' }}
                         >
                             <Stack>
-                                <Typography fontWeight={600}>{rule.title}</Typography>
+                                <Typography sx={{ fontWeight: 600 }}>{rule.title}</Typography>
                                 <Typography color="text.secondary" variant="body2">
                                     Every {rule.intervalCount} {rule.cadence.toLowerCase()} · next{' '}
                                     {new Date(rule.nextOccurrenceAt).toLocaleString()}
@@ -317,7 +317,12 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
                             <Typography variant="body2">{rule.description}</Typography>
                         ) : null}
                         {rule.lastError ? <Alert severity="warning">{rule.lastError}</Alert> : null}
-                        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                        <Stack
+                            direction="row"
+                            spacing={1}
+                            useFlexGap
+                            sx={{ flexWrap: 'wrap' }}
+                        >
                             <Button size="small" onClick={() => setHistoryId(rule.id)}>
                                 History
                             </Button>
@@ -351,7 +356,7 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
                 <Paper variant="outlined" sx={{ p: 2 }}>
                     <Stack spacing={1.5}>
                         <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-                            <Typography fontWeight={600}>Occurrence history</Typography>
+                            <Typography sx={{ fontWeight: 600 }}>Occurrence history</Typography>
                             <Button size="small" onClick={() => setHistoryId(null)}>
                                 Close
                             </Button>
