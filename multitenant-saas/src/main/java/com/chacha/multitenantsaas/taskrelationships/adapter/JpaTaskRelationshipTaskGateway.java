@@ -6,7 +6,6 @@ import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.repository.ProjectRepository;
 import com.chacha.multitenantsaas.repository.ProjectTaskRepository;
 import com.chacha.multitenantsaas.taskrelationships.port.TaskRelationshipTaskGateway;
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
@@ -56,16 +55,6 @@ public class JpaTaskRelationshipTaskGateway implements TaskRelationshipTaskGatew
         return projectTaskRepository
                 .findByProject_Tenant_IdAndProject_IdAndParentTask_IdOrderByCreatedAtAsc(
                         tenantId, projectId, parentTaskId, PageRequest.of(0, limit));
-    }
-
-    @Override
-    public List<ProjectTask> findTasks(
-            UUID tenantId, UUID projectId, Collection<UUID> taskIds) {
-        if (taskIds == null || taskIds.isEmpty()) {
-            return List.of();
-        }
-        return projectTaskRepository.findByTenant_IdAndProject_IdAndIdIn(
-                tenantId, projectId, taskIds);
     }
 
     @Override
