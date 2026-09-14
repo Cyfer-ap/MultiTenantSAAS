@@ -1,6 +1,7 @@
 import AccountTreeRoundedIcon from '@mui/icons-material/AccountTreeRounded'
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded'
 import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded'
+import AutoAwesomeMotionRoundedIcon from '@mui/icons-material/AutoAwesomeMotionRounded'
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'
 import FolderRoundedIcon from '@mui/icons-material/FolderRounded'
@@ -54,6 +55,12 @@ export const workspaceNavigationItems: readonly WorkspaceNavigationItem[] = [
         label: 'Task Planning',
         path: '/task-planning',
         icon: <AccountTreeRoundedIcon />,
+        requiredTenantPermissions: [],
+    },
+    {
+        label: 'Automation',
+        path: '/work-automation',
+        icon: <AutoAwesomeMotionRoundedIcon />,
         requiredTenantPermissions: [],
     },
     {
