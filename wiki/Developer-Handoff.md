@@ -6,7 +6,7 @@ Use this page as the reader-facing Wiki pointer for resuming development. Reposi
 
 **Product Experience & Work Management Enrichment**
 
-The next implementation slice is **Global Search**.
+Search, Command Palette, Favorites/Recently Viewed, My Work and Saved Views are complete. The next implementation slice is a **capability-aware Dashboard Refresh**.
 
 ## Read first
 
@@ -31,12 +31,28 @@ Inside the repository:
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Global Search should be the first new domain implemented under this standard.
+Current reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, and the Saved Views context-validator SPI.
+
+For the Dashboard Refresh, compose those existing contracts. Do not build a new dashboard service by injecting project, task, authorization, billing, user and notification services into one orchestrator.
+
+## Dashboard resume guidance
+
+The first dashboard slice should emphasize daily operational value:
+
+- My Work attention summary and a bounded high-priority preview
+- Favorites
+- Recently Viewed
+- capability-aware quick actions that invoke owning feature flows
+- bounded deadline/activity context where an owning domain can supply it cleanly
+- useful empty states/onboarding when data is sparse
+
+Dashboard widgets remain UX composition. Backend authorization remains authoritative and existing domains continue to own their classification, validation and resource-resolution rules.
 
 ## Preserve these system invariants
 
 - tenant isolation precedes resource access
 - backend authorization is authoritative
+- stored favorites/recents/saved-view definitions never grant resource access
 - Explain Access and enforcement use the same evaluator
 - delegated authority never exceeds its current direct parent authority
 - protected authorization permissions remain non-delegable
@@ -44,7 +60,17 @@ Global Search should be the first new domain implemented under this standard.
 - applied Flyway migrations remain append-only
 - provider secrets remain server-side
 - retryable/concurrent flows consider idempotency and locking
-- new search/analytics/automation/AI paths must filter through tenant and authorization boundaries before exposing results
+- new search/dashboard/analytics/automation/AI paths must filter through tenant and authorization boundaries before exposing results
+
+## Immediate product sequence
+
+1. capability-aware dashboard refresh + onboarding/empty-state polish
+2. calendar/deadline view
+3. subtasks, dependencies and labels
+4. recurring work + templates
+5. bulk actions + import/export
+6. custom fields/forms + workflows/approvals + knowledge/documents
+7. user-facing analytics and selected differentiated experiments
 
 ## Deferred work
 
