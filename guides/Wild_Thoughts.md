@@ -2,14 +2,15 @@
 
 > **Purpose:** A living product-idea vault for MultiTenantSAAS.
 >
-> This is **not a roadmap or commitment**. It records completed ideas, partial foundations, useful product gaps, differentiated experiments, and ideas worth resisting.
+> This is **not a roadmap or commitment by default**. It records completed ideas, partial foundations, useful product gaps, differentiated experiments, and ideas worth resisting. The explicit exception is **Section 1.3**, which records the currently committed build sequence.
 >
-> Snapshot: **2026-09-13, post-PR #126**.
+> Snapshot: **2026-09-15, post-PR #143**.
 
 ## Status legend
 
 - ✅ **Built** — implemented at application level and no longer a future idea.
 - 🟡 **Partial** — meaningful foundation exists, but the broader product idea is not complete.
+- 🚧 **Committed now** — explicitly prioritized in the active product sequence.
 - ⬜ **Open** — not meaningfully implemented yet.
 - 🧪 **Experiment** — intentionally unusual/differentiated; validate before committing.
 - ⏸ **Deferred** — valuable, but deliberately not in the current product-enrichment phase.
@@ -73,6 +74,34 @@ These remain useful features, but by themselves they are now table stakes in ser
 - routine task routing
 
 We should still build the ones that make the product usable. The differentiators should sit **on top of** these fundamentals.
+
+## 1.3 Committed differentiated build sequence — active now
+
+This sequence is an explicit product commitment and **takes precedence over the older near-term backlog** until the sequence is completed or deliberately reprioritized. Bulk actions/CSV, custom fields, broader analytics and other backlog work remain valid, but are no longer next.
+
+| Order | Feature | Status | Product intent / overlap |
+|---:|---|---|---|
+| 1 | **Visual Workflow Builder** | 🚧 | Drag/connect `Trigger -> Condition -> Action` workflows with safe execution history, explainability and guardrails. Expands the existing workflow/approval concept and #80/#81/#135/#136. |
+| 2 | **Project Simulation / What-If Engine** | 🚧 queued | Private scenario changes for dates, owners and dependencies with downstream schedule/workload impact before applying anything. Consolidates #41 Scenario/Sandbox Mode, #53 Deadline Reality Check, #108 Change Blast-Radius Preview and #109 Alternate-Reality Planning. |
+| 3 | **Collaborative Whiteboard** | 🚧 queued | Visual planning canvas whose nodes/stickies can become real tasks/projects; later add live presence/cursors. New explicit idea. |
+| 4 | **Project Health / Risk Radar** | 🚧 queued | Explainable project-level risk signals from overdue work, blockers, stale work, dependency criticality and workload pressure. Related to #40 Risk Inbox, #57 Tenant Health Check, #98 Stale Work Detection and #121 Dependency Debt. |
+| 5 | **Forms -> Workflow Engine** | 🚧 queued | Structured internal/public intake that creates authorized work and can launch workflows. Expands §2.9 and the workflow engine. |
+| 6 | **Approval Workflows** | 🚧 queued | Reusable human review/approve/reject stages that compose with workflows rather than creating a separate approval silo. Expands §2.10 and #135 Human Checkpoints. |
+| 7 | **Client / Guest Portal** | 🚧 queued | Bounded external visibility, comments, review requests and approvals without broad tenant membership. New explicit idea; permission boundaries are central. |
+| 8 | **Team Workload Engine** | 🚧 queued | Capacity planning, overload detection and reassignment support using work objects and explicit availability—not surveillance/productivity scoring. Related to #48/#55. |
+| 9 | **Workspace Knowledge Graph** | 🚧 queued | Permission-aware graph connecting projects, tasks, people, decisions, documents and dependencies. Related to #33 Organization Graph and #66 Entity Linking Everywhere. |
+| 10 | **AI / Agent Teammates** | 🚧 queued | Assign bounded work to agents only after workflow + knowledge + authorization context is mature; consequential actions require human checkpoints. Expands §2.28 and #135/#138/#139. |
+
+### Guardrails for the sequence
+
+- Build **#1 first**, then proceed in the exact order above unless a production/security incident requires interruption.
+- Each feature gets an explicit owning domain and narrow cross-domain contracts/events.
+- Automation must not become a god-service that directly injects every domain service.
+- Visual configuration must compile to a validated backend contract; the canvas is not the source of truth by itself.
+- Every consequential automated/agent action must be permission-aware, auditable and explainable.
+- No arbitrary user-supplied code execution in workflow nodes.
+- Simulation and risk features must remain advisory until a human explicitly applies changes.
+- Workload/risk signals must not become opaque employee scoring.
 
 ---
 
@@ -223,7 +252,9 @@ Potential field types:
 
 Forms can then create structured tasks/requests.
 
-## 2.10 Workflow/approval automation — ⬜
+## 2.10 Workflow/approval automation — 🚧
+
+This is now being built deliberately across committed sequence features #1, #5 and #6.
 
 A reusable engine for:
 
@@ -276,6 +307,8 @@ A practical SaaS core feature family that the old vault under-emphasized:
 - downloadable error rows,
 - permission-aware export.
 
+This remains useful but is explicitly parked behind the committed sequence in §1.3.
+
 ## 2.14 Onboarding and contextual help — ⬜
 
 Role-aware onboarding, good empty states, contextual help and sample/demo data matter when the platform becomes broad.
@@ -305,21 +338,21 @@ The original vault predated many major implementation milestones. This is the up
 | 11. Email / External Communication | 🟡 | Provider-backed email delivery exists; many future message types/digests remain open. |
 | 12. Projects and Tasks | 🟡 | Strong basics + collaboration built; richer work-management depth remains open. |
 | 13. Files, Documents and Knowledge | 🟡 | R2 attachments built; file workspace/knowledge base/versioning remain open. |
-| 14. Workflow and Approval Engine | ⬜ | Open. |
+| 14. Workflow and Approval Engine | 🚧 | Active now through committed sequence features #1, #5 and #6. |
 | 15. Assets / Facilities / Booking | ⬜ | Open. |
 | 16. Workforce / HR-like Features | 🟡 | Users/org hierarchy exist; workforce product modules remain open. |
 | 17. CRM / External Relationships | ⬜ | Open. |
 | 18. Analytics and Reporting | 🟡 | Admin/billing/usage visibility exists; end-user analytics/reporting remains open. |
-| 19. Search | ⬜ | High-priority product gap. |
+| 19. Search | ✅ | Global authorized search is built. |
 | 20. API Keys / Developer Platform | 🟡 | Tenant API keys + usage limits built; service accounts/OAuth apps/richer scopes remain open. |
 | 21. Outbound Webhooks / Integrations | ✅ | Core tenant-configurable webhook lifecycle/history/replay delivered through PR #112. Third-party app integrations remain optional. |
 | 22. Billing / Subscription Depth | ✅ | Core external billing/catalog/cancellation/reconciliation/history is complete through PR #106. Advanced add-ons/usage pricing remain optional. |
 | 23. Custom Fields | ⬜ | Open. |
 | 24. Organizational Hierarchy | ✅ | Core hierarchy/relationship/scoped authorization exists. Multi-site/enterprise-group modeling can extend it later. |
 | 25. Security Expansion | 🟡 | OIDC SSO, delegation, validity, Explain Access and SSO break-glass built; MFA/passkeys/SAML/SCIM/access reviews remain open. |
-| 26. UI/UX Modernization | 🟡 | Modern React/MUI app exists; command palette, richer tables, saved views, dark mode/accessibility polish remain open. |
+| 26. UI/UX Modernization | 🟡 | Modern React/MUI app plus command palette/search/personal work surfaces exist; richer tables and accessibility polish remain open. |
 | 27. Branding / Personalization | 🟡 | Foundations/settings exist; complete user/tenant personalization remains open. |
-| 28. Useful AI | ⬜ | No need to rush; should come after search/knowledge/workflows are strong. |
+| 28. Useful AI | 🚧 queued | Agent teammates are committed as feature #10, after workflow and knowledge context mature. |
 
 ---
 
@@ -347,30 +380,30 @@ The original #29–#100 ideas remain useful. Their implementation state is now:
 
 ## High-value original ideas still open
 
-These remain especially worth preserving:
+These remain especially worth preserving. Entries absorbed into the committed sequence are marked accordingly.
 
 - ⬜ **#29 Organizational Memory**
 - ⬜ **#30 Decision Records Everywhere**
 - ⬜ **#31 Time Travel / Historical State Explorer**
-- ⬜ **#33 Organization Graph**
+- 🚧 **#33 Organization Graph** — related to committed #9 Workspace Knowledge Graph.
 - ⬜ **#34 Bus-Factor Radar**
 - ⬜ **#35 Meeting Debt**
 - ⬜ **#36 Quiet Organization Mode**
 - ⬜ **#37 Smart Handoffs**
 - ⬜ **#38 What Am I Blocking?**
 - ⬜ **#39 Reverse Dependency View**
-- ⬜ **#40 Risk Inbox**
-- ⬜ **#41 Scenario / Sandbox Mode**
+- 🚧 **#40 Risk Inbox** — feeds committed #4 Project Health / Risk Radar.
+- 🚧 **#41 Scenario / Sandbox Mode** — absorbed into committed #2 Project Simulation / What-If Engine.
 - ⬜ **#42 Synthetic Tenant Generator**
 - ⬜ **#43 Feature Laboratory**
-- ⬜ **#48 Consent-Based Workload Heatmap**
+- 🚧 **#48 Consent-Based Workload Heatmap** — related to committed #8 Team Workload Engine.
 - ⬜ **#49 Organization Pulse**
 - ⬜ **#50 Smart Daily Brief**
 - ⬜ **#51 End-of-Day Handoff**
 - ⬜ **#52 Follow-the-Sun Operations**
-- ⬜ **#53 Deadline Reality Check**
+- 🚧 **#53 Deadline Reality Check** — absorbed into committed #2.
 - ⬜ **#54 Do-Not-Schedule Context**
-- ⬜ **#55 Conflict-Aware Resource Scheduling**
+- 🚧 **#55 Conflict-Aware Resource Scheduling** — related to committed #8.
 - ⬜ **#56 Escalation Without Spam**
 - ⬜ **#58 Security Posture Dashboard**
 - ⬜ **#62 Redaction Instead of Binary Access**
@@ -389,8 +422,8 @@ These remain especially worth preserving:
 - ⬜ **#77 What Changed Since I Was Away?**
 - ⬜ **#78 Attention Heatmap**
 - ⬜ **#79 Organizational Drift Detection**
-- ⬜ **#80 Explainable Automation**
-- ⬜ **#81 Automation Guardrails**
+- 🚧 **#80 Explainable Automation** — required by committed #1.
+- 🚧 **#81 Automation Guardrails** — required by committed #1.
 - ⬜ **#82 Operational Digital Twin**
 - ⬜ **#84 Organizational Memory With Expiration**
 - ⬜ **#85 Cross-Tenant Collaboration Spaces**
@@ -404,12 +437,14 @@ These remain especially worth preserving:
 - ⬜ **#95 Offboarding Wizard**
 - ⬜ **#96 Role-Aware Onboarding Journey**
 - ⬜ **#97 Knowledge Ownership**
-- ⬜ **#98 Stale Work Detection**
+- 🚧 **#98 Stale Work Detection** — one signal for committed #4.
 - ⬜ **#99 Noise-vs-Signal Analytics**
 
 ---
 
 # 5. Near-Term Product-Enrichment Backlog
+
+**Priority override:** the committed sequence in §1.3 now runs before the backlog below. These tiers remain useful reference material and may supply prerequisites, but they are not the active order of execution.
 
 This section is deliberately closer to buildable product work than the wild experiments below.
 
@@ -513,15 +548,15 @@ Urgent events pass through; everything else is released as a compact context-awa
 
 Goal: protect attention without losing responsibility.
 
-## 108. Change Blast-Radius Preview — 🧪
+## 108. Change Blast-Radius Preview — 🚧
 
 Before changing a deadline, owner, project status or workflow state, preview downstream effects:
 
 > Moving Phoenix by 7 days affects 12 tasks, 3 people and 2 dependent milestones.
 
-This is the work-management equivalent of a database migration preview.
+This is the work-management equivalent of a database migration preview and is now part of committed #2 Project Simulation / What-If Engine.
 
-## 109. Alternate-Reality Planning — 🧪
+## 109. Alternate-Reality Planning — 🚧
 
 A user can temporarily change dates/owners/dependencies in a private scenario without saving them.
 
@@ -533,7 +568,7 @@ Then compare:
 - workload changes,
 - newly blocked work.
 
-Only explicitly applying the scenario changes real data.
+Only explicitly applying the scenario changes real data. This is now part of committed #2.
 
 ## 110. Role Ghost / "View As" Without Impersonation — 🧪
 
@@ -830,7 +865,7 @@ The UI temporarily composes relevant projects, tasks, people, files, deadlines a
 
 This is a possible long-term differentiator for a horizontal platform.
 
-## 135. Human Checkpoints for Automation/AI — 🧪
+## 135. Human Checkpoints for Automation/AI — 🚧
 
 Allow policies such as:
 
@@ -839,9 +874,9 @@ Allow policies such as:
 - agent may edit tasks but not change authorization,
 - billing/subscription mutations always require human confirmation.
 
-Treat human review as a first-class workflow primitive rather than an afterthought.
+Treat human review as a first-class workflow primitive rather than an afterthought. This is a guardrail for committed features #1, #6 and #10.
 
-## 136. Automation Circuit Breaker — 🧪
+## 136. Automation Circuit Breaker — 🚧
 
 If an automation suddenly matches far more events than its historical baseline, pause it automatically or require confirmation.
 
@@ -849,7 +884,7 @@ Example:
 
 > This rule normally affects 4–8 tasks/day. It is about to affect 1,842 tasks.
 
-This goes beyond pre-deployment simulation and protects against runtime accidents.
+This goes beyond pre-deployment simulation and protects against runtime accidents. Circuit-breaker foundations should be considered while building committed #1.
 
 ## 137. "Can the Product Say No?" — 🧪
 
@@ -991,35 +1026,25 @@ A weird idea is good only if we can define:
 
 # 9. Current Direction
 
-For the next development phase, prioritize **Product Experience & Work Management Enrichment** before returning to the deferred operations/DR milestone.
-
-A reasonable progression is:
+The current development direction is the explicit sequence in §1.3. It overrides the previous generic progression until completed or deliberately reprioritized.
 
 ```text
-Discoverability
-  -> global search
-  -> command palette
-  -> recents/favorites
+1. Visual Workflow Builder                 <- ACTIVE NOW
+2. Project Simulation / What-If Engine
+3. Collaborative Whiteboard
+4. Project Health / Risk Radar
+5. Forms -> Workflow Engine
+6. Approval Workflows
+7. Client / Guest Portal
+8. Team Workload Engine
+9. Workspace Knowledge Graph
+10. AI / Agent Teammates
 
-Personal productivity
-  -> My Work
-  -> saved views
-  -> better dashboard
-
-Work-management depth
-  -> Kanban/calendar
-  -> subtasks/dependencies/labels
-  -> recurring work/templates
-
-Adaptability
-  -> custom fields/forms
-  -> workflow/approval engine
-  -> knowledge/documents
-
-Insights and differentiation
-  -> analytics
-  -> risk/context features
-  -> selected experiments from #104+
+then resume remaining backlog
+  -> bulk actions / CSV import-export
+  -> custom fields and other adaptability work
+  -> knowledge/documents and broader analytics
+  -> other selected experiments
 ```
 
 Operations/disaster recovery, load/failure testing and production R2 verification remain important, but are deliberately **deferred from the immediate product sequence** while the application is enriched with user-facing capability.
@@ -1038,8 +1063,8 @@ Use this for ideas discovered during implementation that are not ready for a num
 
 ---
 
-**Status:** Living Idea Vault
+**Status:** Living Idea Vault + explicit committed sequence in §1.3
 
-**Last audited:** 2026-09-13
+**Last audited:** 2026-09-15
 
-**Rule:** Nothing here becomes a roadmap item merely because it exists here.
+**Rule:** Nothing here becomes a roadmap item merely because it exists here, **except items explicitly promoted into §1.3**.
