@@ -103,7 +103,8 @@ public class TaskCalendarDeadlineSource implements CalendarDeadlineSource {
         for (CalendarDeadlineContext.Grant grant : context.grants()) {
             if (grant.scopeType() == AuthorizationScopeType.PROJECT
                     && grant.scopeTargetId() != null
-                    && grant.permissionCodes().contains(PlatformPermissionCodes.PROJECT_TASK_READ)) {
+                    && grant.permissionCodes()
+                            .contains(PlatformPermissionCodes.PROJECT_TASK_READ)) {
                 projectIds.add(grant.scopeTargetId());
             }
         }

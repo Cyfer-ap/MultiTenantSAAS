@@ -95,7 +95,8 @@ export function CalendarMonthGrid({
                             {range.days.map((day) => {
                                 const key = localDateKey(day)
                                 const dayItems = deadlinesByDay.get(key) ?? []
-                                const inCurrentMonth = day.getMonth() === range.monthStart.getMonth()
+                                const inCurrentMonth =
+                                    day.getMonth() === range.monthStart.getMonth()
                                 const isToday = isSameLocalDay(day, today)
                                 const selected = key === selectedDayKey
                                 const hiddenCount = Math.max(0, dayItems.length - 3)
@@ -109,7 +110,9 @@ export function CalendarMonthGrid({
                                         type="button"
                                         sx={{
                                             appearance: 'none',
-                                            bgcolor: selected ? 'action.selected' : 'background.paper',
+                                            bgcolor: selected
+                                                ? 'action.selected'
+                                                : 'background.paper',
                                             border: 1,
                                             borderColor: isToday ? 'primary.main' : 'divider',
                                             borderRadius: 1.5,
@@ -142,7 +145,10 @@ export function CalendarMonthGrid({
                                                 {day.getDate()}
                                             </Typography>
                                             {dayItems.length > 0 && (
-                                                <Typography color="text.secondary" variant="caption">
+                                                <Typography
+                                                    color="text.secondary"
+                                                    variant="caption"
+                                                >
                                                     {dayItems.length}
                                                 </Typography>
                                             )}
@@ -176,7 +182,10 @@ export function CalendarMonthGrid({
                                                 </Box>
                                             ))}
                                             {hiddenCount > 0 && (
-                                                <Typography color="text.secondary" variant="caption">
+                                                <Typography
+                                                    color="text.secondary"
+                                                    variant="caption"
+                                                >
                                                     +{hiddenCount} more
                                                 </Typography>
                                             )}

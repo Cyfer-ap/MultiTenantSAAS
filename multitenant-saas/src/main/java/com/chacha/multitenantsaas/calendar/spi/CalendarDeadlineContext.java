@@ -7,7 +7,5 @@ import java.util.UUID;
 public record CalendarDeadlineContext(UUID tenantId, UUID userId, List<Grant> grants) {
 
     public record Grant(
-            AuthorizationScopeType scopeType,
-            UUID scopeTargetId,
-            List<String> permissionCodes) {}
+            AuthorizationScopeType scopeType, UUID scopeTargetId, List<String> permissionCodes) {}
 }

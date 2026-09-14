@@ -38,7 +38,8 @@ class TaskCalendarDeadlineSourceTest {
 
         ProjectTaskRepository repository = mock(ProjectTaskRepository.class);
         ProjectMembershipQueryService membershipQuery = mock(ProjectMembershipQueryService.class);
-        AuthorizationSecurityService authorizationSecurity = mock(AuthorizationSecurityService.class);
+        AuthorizationSecurityService authorizationSecurity =
+                mock(AuthorizationSecurityService.class);
 
         Project project = new Project();
         project.setId(projectId);
@@ -63,7 +64,8 @@ class TaskCalendarDeadlineSourceTest {
                         tenantId, projectId, PlatformPermissionCodes.PROJECT_TASK_READ))
                 .thenReturn(true);
 
-        var source = new TaskCalendarDeadlineSource(repository, membershipQuery, authorizationSecurity);
+        var source =
+                new TaskCalendarDeadlineSource(repository, membershipQuery, authorizationSecurity);
         var context = new CalendarDeadlineContext(tenantId, userId, List.of());
 
         var deadlines = source.findDeadlines(context, from, to, 25);
@@ -81,14 +83,16 @@ class TaskCalendarDeadlineSourceTest {
         UUID userId = UUID.randomUUID();
         ProjectTaskRepository repository = mock(ProjectTaskRepository.class);
         ProjectMembershipQueryService membershipQuery = mock(ProjectMembershipQueryService.class);
-        AuthorizationSecurityService authorizationSecurity = mock(AuthorizationSecurityService.class);
+        AuthorizationSecurityService authorizationSecurity =
+                mock(AuthorizationSecurityService.class);
 
         when(authorizationSecurity.hasTenantPermission(
                         tenantId, PlatformPermissionCodes.PROJECT_TASK_READ))
                 .thenReturn(false);
         when(membershipQuery.findProjectIdsForUser(tenantId, userId)).thenReturn(Set.of());
 
-        var source = new TaskCalendarDeadlineSource(repository, membershipQuery, authorizationSecurity);
+        var source =
+                new TaskCalendarDeadlineSource(repository, membershipQuery, authorizationSecurity);
         var context = new CalendarDeadlineContext(tenantId, userId, List.of());
 
         var deadlines =

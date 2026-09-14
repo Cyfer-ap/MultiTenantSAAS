@@ -1,5 +1,15 @@
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded'
-import { Box, Button, Card, CardContent, Chip, Divider, Paper, Stack, Typography } from '@mui/material'
+import {
+    Box,
+    Button,
+    Card,
+    CardContent,
+    Chip,
+    Divider,
+    Paper,
+    Stack,
+    Typography,
+} from '@mui/material'
 import { Link } from 'react-router'
 
 import type { CalendarDeadlineItem } from '../types/calendar'
@@ -42,7 +52,11 @@ function DeadlineAgendaItem({ item }: { item: CalendarDeadlineItem }) {
                 sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between' }}
             >
                 <Box sx={{ minWidth: 0 }}>
-                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+                    >
                         <Typography sx={{ fontWeight: 750 }}>{item.title}</Typography>
                         <Chip
                             color={statusColor(item.status)}

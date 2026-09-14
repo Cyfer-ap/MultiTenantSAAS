@@ -87,7 +87,8 @@ public class CalendarDeadlineService {
 
     private void validateRange(Instant from, Instant to) {
         if (from == null || to == null) {
-            throw new IllegalArgumentException("Calendar range requires both from and to timestamps.");
+            throw new IllegalArgumentException(
+                    "Calendar range requires both from and to timestamps.");
         }
         if (!to.isAfter(from)) {
             throw new IllegalArgumentException("Calendar range end must be after its start.");
