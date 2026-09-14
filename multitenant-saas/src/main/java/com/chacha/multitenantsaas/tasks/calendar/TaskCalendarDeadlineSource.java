@@ -4,6 +4,7 @@ import com.chacha.multitenantsaas.calendar.spi.CalendarDeadlineContext;
 import com.chacha.multitenantsaas.calendar.spi.CalendarDeadlineSnapshot;
 import com.chacha.multitenantsaas.calendar.spi.CalendarDeadlineSource;
 import com.chacha.multitenantsaas.entity.AuthorizationScopeType;
+import com.chacha.multitenantsaas.entity.ProjectTask;
 import com.chacha.multitenantsaas.projects.query.ProjectMembershipQueryService;
 import com.chacha.multitenantsaas.repository.ProjectTaskRepository;
 import com.chacha.multitenantsaas.security.AuthorizationSecurityService;
@@ -23,7 +24,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TaskCalendarDeadlineSource implements CalendarDeadlineSource {
 
-    private static final int MAX_FETCH = 500;
+    private static final int MAX_FETCH = 501;
 
     private final ProjectTaskRepository projectTaskRepository;
     private final ProjectMembershipQueryService projectMembershipQueryService;
@@ -64,7 +65,7 @@ public class TaskCalendarDeadlineSource implements CalendarDeadlineSource {
                                 Sort.Order.desc("updatedAt"),
                                 Sort.Order.asc("id")));
 
-        Page<com.chacha.multitenantsaas.entity.ProjectTask> candidates =
+        Page<ProjectTask> candidates =
                 tenantWide
                         ? projectTaskRepository
                                 .findByTenant_IdAndDueAtGreaterThanEqualAndDueAtLessThan(
