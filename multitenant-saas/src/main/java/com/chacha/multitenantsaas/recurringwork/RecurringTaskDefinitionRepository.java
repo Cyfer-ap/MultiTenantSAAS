@@ -24,11 +24,14 @@ public interface RecurringTaskDefinitionRepository
             """
             SELECT definition.id
             FROM RecurringTaskDefinition definition
-            WHERE definition.status = com.chacha.multitenantsaas.recurringwork.RecurrenceStatus.ACTIVE
+            WHERE definition.status = :status
               AND definition.nextOccurrenceAt <= :now
             ORDER BY definition.nextOccurrenceAt ASC
             """)
-    Page<UUID> findDueDefinitionIds(@Param("now") Instant now, Pageable pageable);
+    Page<UUID> findDueDefinitionIds(
+            @Param("status") RecurrenceStatus status,
+            @Param("now") Instant now,
+            Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT definition FROM RecurringTaskDefinition definition WHERE definition.id = :id")
