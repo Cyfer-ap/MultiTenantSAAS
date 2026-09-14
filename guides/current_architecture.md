@@ -84,6 +84,9 @@ Current mature domains include:
 - projects, members, tasks and task collaboration
 - permission-aware Global Search
 - capability-aware Command Palette
+- Personal Workspace: Favorites + Recently Viewed
+- My Work personal attention queue
+- Saved Views
 - attachments through S3/R2-compatible storage
 - in-app/email notifications and preferences
 - subscription plans, tenant subscriptions, quotas and usage metering
@@ -95,7 +98,7 @@ Current mature domains include:
 - tenant/platform audit trails
 - production hardening and observability
 
-Product-enrichment domains such as Favorites/Recent, My Work, saved views, calendar/deadline views, workflows and knowledge are the next development stage.
+The next product-enrichment stage is a capability-aware dashboard refresh, followed by calendar/deadline views, richer task relationships, recurring work/templates, bulk productivity, tenant adaptability, workflows/knowledge and user-facing analytics.
 
 ## Authorization architecture
 
@@ -109,7 +112,7 @@ See `authorization_model.md` for the complete model.
 
 ## Search/discovery architecture
 
-Global Search is the first new product feature built under the explicit domain-boundary standard.
+Global Search established the reference backend pattern for cross-domain read composition.
 
 The coordinator does not import project/task/user repositories. Instead:
 
@@ -135,7 +138,7 @@ Important properties:
 - ranking is a search-domain concern; access policy remains a domain/authorization concern
 - the frontend `features/search` module owns the reusable API client, query hook and types rather than a product-specific shell UI
 
-This contributor pattern is the preferred template when a cross-cutting read feature needs data from several domains: central orchestration owns composition, while each domain retains its query/access knowledge behind a narrow contract.
+This contributor pattern is preferred when a cross-cutting read feature needs data from several domains: central orchestration owns composition, while each domain retains its query/access knowledge behind a narrow contract.
 
 ## Command-palette architecture
 
@@ -156,13 +159,112 @@ This is the preferred frontend boundary pattern for cross-cutting action surface
 
 Create Task is intentionally not exposed globally yet. Effective task-management authority can derive from project-lead membership as well as scoped authorization. A future global Create Task action should therefore use a project-aware capability/picker contract supplied by the project/task domain instead of rebuilding task access logic in `AppShell` or the palette.
 
+## Personal Workspace architecture
+
+Favorites and Recently Viewed are server-backed personal-productivity state rather than browser-local page state.
+
+```text
+personal-workspace coordinator
+        ↓
+resource resolver contract
+        ↓
++----------------+----------------+
+| project adapter| task adapter   |
++----------------+----------------+
+        ↓                 ↓
+domain-owned tenant/access checks
+```
+
+Important properties:
+
+- persistence is scoped by tenant, user, resource type and resource ID
+- storing a resource identifier never grants continued access
+- writes resolve the resource through an owning-domain authorization adapter
+- reads re-resolve stored references, so deleted, revoked or otherwise inaccessible resources disappear safely
+- unfavorite is idempotent and remains possible after access is lost
+- recent history is bounded
+- project/task repositories are not imported into the personal-workspace coordinator
+
+The frontend `features/personal-workspace` domain owns the consolidated Favorites/Recent surface and contextual favorite integration.
+
+## My Work architecture
+
+My Work is an attention composition domain, not another task repository/service layer.
+
+```text
+MyWorkService
+      ↓
+MyWorkTaskSource
+      ↓
+TaskMyWorkSource adapter
+      ↓
+tenant/user-scoped candidate query + project/task readability checks
+```
+
+The current source returns assigned open tasks only. Attention classification belongs to My Work and currently distinguishes overdue, blocked, due-soon, in-progress and remaining assigned work.
+
+The source read is bounded and authorization checks are memoized per project within the request. This leaves room for future sources such as mentions, approvals or other actionable work without injecting unrelated repositories into `MyWorkService`.
+
+## Saved Views architecture
+
+Saved Views persist normalized user-owned view definitions independently of the surfaces that consume them.
+
+```text
+SavedViewService
+      ↓
+normalized/allow-listed definitions
+      ↓
+SavedViewContextValidator SPI
+      ↓
+optional owning-domain context adapter
+```
+
+Important properties:
+
+- views are tenant/user scoped
+- definitions are allow-listed and normalized by target before persistence
+- My Work does not require external context validation
+- the contract is prepared for `PROJECT_TASKS` with project/task context validation behind a narrow adapter
+- saved definitions never store authorization results or grant access
+- applying a view filters an already-authorized surface
+
+The frontend `features/saved-views` domain owns API/query/mutation/UI behavior and is currently integrated with My Work.
+
+## Dashboard architecture direction
+
+The next Dashboard Refresh must be a **composition surface**, not a new source of truth.
+
+The preferred shape is:
+
+```text
+Dashboard UI
+   ├── My Work query/summary
+   ├── Personal Workspace query
+   ├── capability-aware actions
+   └── bounded domain summaries where needed
+```
+
+Rules:
+
+- reuse existing frontend/domain contracts where the required data already exists
+- do not build a dashboard service that directly injects many repositories/services from unrelated domains
+- if a backend aggregate is justified, depend on narrow summary-provider contracts supplied by owning domains
+- dashboard widgets never become an alternative permission model
+- do not duplicate My Work classification, Personal Workspace resolution or Saved Views validation
+- keep collection sizes bounded and make capability checks explicit
+
 ## Persistence and tenancy
 
 The production database uses shared-schema multi-tenancy with tenant ownership represented explicitly in tenant-owned data.
 
 Repository/query methods for tenant-owned resources should include tenant scope. Cross-tenant resource IDs must never be trusted without ownership validation.
 
-Flyway exclusively owns production schema evolution. Portable common migrations currently extend through V44.
+Flyway exclusively owns production schema evolution. Portable common migrations currently extend through **V46**.
+
+Recent product migrations:
+
+- V45 — personal workspace favorites/recent items
+- V46 — saved views
 
 The architecture intentionally uses PostgreSQL locking/constraints where correctness depends on concurrent mutations, including sensitive subscription/delivery flows.
 
@@ -199,7 +301,15 @@ features/<domain>/
 
 Server state is managed with React Query. Route/permission guards improve navigation and UX but do not replace backend enforcement.
 
-Global Search now keeps its reusable discovery contracts under `features/search/`; the product-level command surface lives separately under `features/command-palette/`. `AppShell` supplies only current capabilities/navigation/tenant integration and does not own project or invitation mutation logic.
+Current product-enrichment ownership is intentionally split:
+
+- `features/search` — reusable discovery contracts
+- `features/command-palette` — command/navigation composition
+- `features/personal-workspace` — Favorites/Recent state and views
+- `features/my-work` — personal attention queue
+- `features/saved-views` — reusable persisted view definitions
+
+`AppShell` should remain integration/navigation infrastructure and must not absorb domain business rules as new product surfaces are added.
 
 The main future risk is growth of central routing/navigation aggregation. New modules should expose narrow integration metadata where appropriate rather than moving domain logic into central application files.
 
@@ -209,13 +319,22 @@ Public APIs use explicit request/response DTOs and validation rather than return
 
 The current web client maintains TypeScript API contracts manually. That is acceptable for the current single-client web application, but a generated/shared contract strategy should be adopted before a substantial mobile client is added so backend/web/mobile models do not drift independently.
 
-Global Search exposes a bounded read API:
+Current product-enrichment APIs include:
 
 ```text
-GET /api/tenants/{tenantId}/search?q=<query>&limit=<limit>
+GET    /api/tenants/{tenantId}/search
+GET    /api/tenants/{tenantId}/personal-workspace
+PUT    /api/tenants/{tenantId}/personal-workspace/favorites/{type}/{resourceId}
+DELETE /api/tenants/{tenantId}/personal-workspace/favorites/{type}/{resourceId}
+POST   /api/tenants/{tenantId}/personal-workspace/recent/{type}/{resourceId}
+GET    /api/tenants/{tenantId}/my-work
+GET    /api/tenants/{tenantId}/saved-views
+POST   /api/tenants/{tenantId}/saved-views
+PUT    /api/tenants/{tenantId}/saved-views/{viewId}
+DELETE /api/tenants/{tenantId}/saved-views/{viewId}
 ```
 
-It is intentionally suitable for reuse by the web command palette now and future mobile clients later.
+These boundaries are designed for reuse by additional web surfaces and future clients without bypassing tenant/access rules.
 
 ## Scalability model
 
@@ -224,6 +343,8 @@ The Spring application is designed to remain stateless enough for horizontal app
 This architecture should comfortably support significant product growth before distributed infrastructure becomes justified.
 
 Global Search v1 uses bounded PostgreSQL substring queries and deliberately avoids adding a separate search engine. If measured large-tenant latency later requires it, PostgreSQL trigram/full-text indexing should be considered before external search infrastructure.
+
+Personal Workspace, My Work and Saved Views also use bounded reads/writes rather than unbounded tenant-wide materialization.
 
 The following remain unproven until measured:
 
@@ -255,4 +376,4 @@ All new functionality must follow this rule:
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Global Search implements this standard through a small coordinator, contributor SPI and domain-owned search adapters. Command Palette follows the same rule on the frontend by remaining a separate composition domain and delegating discovery/mutations to their owning feature contracts. Favorites + Recently Viewed should continue this pattern as a tenant-bound personal-productivity domain rather than page-local state scattered across the application.
+The product-enrichment sequence now provides several concrete reference implementations: Search uses contributor contracts; Command Palette composes owning frontend features; Personal Workspace uses resolver adapters; My Work uses a narrow source contract; Saved Views uses a context-validator SPI. The Dashboard Refresh must compose these capabilities without collapsing them back into a single coupled orchestration service.

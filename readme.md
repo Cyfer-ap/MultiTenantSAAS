@@ -12,6 +12,9 @@ For current project status and next work, use **`CHECKPOINT.md`** and **`HANDOFF
 - users and organization hierarchy
 - scoped permission authorization with bounded delegation and Explain Access
 - projects, tasks, priorities, due dates, assignees, comments, replies, mentions, pins and activity
+- permission-aware Global Search and capability-aware Command Palette
+- server-backed Favorites + Recently Viewed with contextual favorite controls
+- My Work personal attention queue and server-backed Saved Views
 - S3/R2-compatible attachments
 - durable in-app/email notifications and preferences
 - subscription lifecycle enforcement, quotas and usage metering
@@ -88,18 +91,22 @@ This rule is part of the persistent repository contract in `AGENTS.md`.
 - enterprise OIDC SSO / identity federation
 - scoped authorization, bounded delegation and Explain Access
 - collaboration, notifications, attachments, API keys, usage limits and auditability
+- permission-aware Global Search and capability-aware Command Palette
+- personal-workspace Favorites/Recently Viewed, My Work and Saved Views
 
 Stripe is the validated deployed Test Mode payment path. Razorpay application/catalog integration remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
 ## Database
 
-Production schema evolution is owned by Flyway. Shared portable migrations currently extend through **V44**. Never rewrite an applied migration.
+Production schema evolution is owned by Flyway. Shared portable migrations currently extend through **V46**. Never rewrite an applied migration.
 
 ```text
 multitenant-saas/src/main/resources/db/migration    historical H2 migrations
 multitenant-saas/src/main/resources/db/postgresql  PostgreSQL baseline
 multitenant-saas/src/main/resources/db/common      portable shared migrations
 ```
+
+Recent product migrations include V45 for personal-workspace favorites/recent items and V46 for saved views.
 
 ## Verification
 
@@ -141,6 +148,6 @@ The Wiki is automatically validated and published from merged `main` by `.github
 
 ## Current product direction
 
-The active phase is **Product Experience & Work Management Enrichment**. Global Search is the next implementation slice, followed by command/navigation productivity, My Work/saved views, richer task/project views, tenant adaptability, analytics and selected differentiated experiments.
+The active phase is **Product Experience & Work Management Enrichment**. Search, Command Palette, Favorites/Recently Viewed, My Work and Saved Views are established foundations. The next slice is a **capability-aware dashboard refresh**, followed by calendar/deadline views, richer task relationships, recurring work/templates, bulk productivity, tenant adaptability, analytics and selected differentiated experiments.
 
 Production Operations & Disaster Recovery remains an important deferred milestone rather than the immediate development focus.

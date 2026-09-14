@@ -12,7 +12,16 @@ This file is the **single repository-side source of truth for current project st
 
 The platform foundation is broad enough that current development should prioritize daily user value and product depth rather than additional infrastructure expansion.
 
-**Global Search is delivered through PR #129. Command Palette is delivered through PR #130.** The next implementation slice is **Favorites + Recently Viewed**, followed by My Work.
+The first personal-productivity sequence is now delivered through **PR #134**:
+
+- Global Search — #129
+- Command Palette — #130
+- Favorites + Recently Viewed — #131
+- contextual favorite controls — #132
+- My Work attention queue — #133
+- server-backed Saved Views — #134
+
+The next implementation slice is a **capability-aware dashboard refresh** that composes these existing domains into a useful operational home without introducing a dashboard god-service.
 
 ## Completed application foundations
 
@@ -25,34 +34,56 @@ The platform foundation is broad enough that current development should prioriti
 - documentation/engineering-governance consolidation through PR #128
 - permission-aware Global Search through PR #129
 - capability-aware Command Palette through PR #130
+- server-backed Favorites + Recently Viewed through PR #131
+- contextual favorite controls through PR #132
+- My Work / unified personal attention queue through PR #133
+- server-backed Saved Views through PR #134
 
 Other established capabilities include projects/tasks/collaboration, R2/S3-compatible attachments, durable notifications/email, API keys, usage metering/quotas, tenant/platform audit, PostgreSQL/Flyway correctness, production hardening and CI/security gates.
 
-## Discoverability checkpoint
+## Personal-productivity checkpoint
 
-Global Search and Command Palette now form the shared workspace discovery surface.
+The product-enrichment foundation now provides a connected set of reusable personal-workspace capabilities.
 
-Current behavior:
+### Discovery and navigation
 
-- tenant-aware endpoint: `GET /api/tenants/{tenantId}/search`
-- searches accessible projects, tasks and people
+- tenant-aware Global Search across accessible projects, tasks and people
 - bounded query/result sizes with exact/prefix/substring ranking
-- access is constrained before results are returned and scoped hits are revalidated through authoritative rules
-- `Ctrl/Cmd + K` command palette plus `/` quick-open shortcut
-- keyboard navigation with Arrow Up/Down + Enter
-- capability-aware workspace navigation commands
-- direct Create Project and Invite User actions using the owning domain dialogs
-- quick-create actions require both authorization and subscription entitlement
-- account settings command for authenticated workspace users
-- reusable search API/hook/types remain separate from command-palette UI orchestration
+- authoritative authorization revalidation for scoped project/task results
+- `Ctrl/Cmd + K` Command Palette plus `/` quick-open
+- keyboard navigation and capability-aware workspace commands
+- direct Create Project and Invite User actions through the owning domains
 
-No Flyway migration was required for either feature.
+### Favorites and recent work
 
-Create Task is intentionally not yet a global command. Effective task-management authority can come from project-lead membership as well as scoped authorization, so a future global Create Task action must use a project-aware capability contract/picker rather than duplicating task-access logic in the application shell.
+- server-backed tenant/user-scoped personal workspace state
+- permission-aware project/task resolution on both writes and reads
+- revoked/deleted/inaccessible resources do not leak through stored references
+- contextual project/task favorite controls
+- recently viewed project/task tracking
+
+### My Work
+
+- tenant-safe assigned open-task attention queue
+- attention ordering for overdue, blocked, due-soon, in-progress and remaining assigned work
+- summary counts and deep links into the owning project/task surfaces
+- bounded source reads with project/task readability revalidation
+- backend `mywork` domain depends on the narrow `MyWorkTaskSource` contract rather than project/task repositories
+
+### Saved Views
+
+- server-backed tenant/user-scoped saved filters
+- My Work filters for search, attention, status and priority
+- create/apply/update/delete view lifecycle
+- allow-listed normalized definitions rather than arbitrary persisted client state
+- backend `savedviews` domain uses a narrow context-validator SPI for contextual surfaces
+- contract is prepared for future `PROJECT_TASKS` adoption without moving project repositories into the Saved Views service
+
+Create Task remains intentionally absent from the global palette. Effective task-management authority can come from project-lead membership as well as scoped authorization, so a future global Create Task action must use a project-aware capability contract/picker rather than duplicating task-access logic in the application shell.
 
 ## Database checkpoint
 
-Portable common Flyway migrations extend through **V44**.
+Portable common Flyway migrations extend through **V46**.
 
 Recent milestone migrations:
 
@@ -62,6 +93,8 @@ V41 OIDC authorization transactions + tenant federated identities
 V42 tenant SSO policy
 V43 OIDC browser session handoffs
 V44 authorization delegation provenance + authorization.delegate
+V45 personal workspace favorites/recent items
+V46 saved views
 ```
 
 Never rewrite an applied migration.
@@ -80,9 +113,7 @@ Application integration and managed Plan provisioning are implemented. Recurring
 
 The largest remaining gaps are now user-facing:
 
-- favorites/recent items
-- My Work / unified attention queue
-- saved filters/views and stronger dashboard UX
+- capability-aware dashboard refresh and stronger onboarding/empty states
 - calendar/deadline views
 - subtasks, dependencies, labels and recurring work
 - project/task templates
@@ -115,19 +146,27 @@ Canonical assessment and rules: `guides/ENGINEERING_STANDARDS.md`.
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Global Search follows this rule with a search coordinator plus contributor contracts and narrow cross-domain query services. Command Palette continues it by living in its own frontend feature domain, consuming the search contract and delegating mutations to existing project/invitation domain components instead of reimplementing them.
+Recent product work demonstrates the intended pattern:
+
+- Global Search: coordinator + contributor contracts + domain-owned query adapters
+- Command Palette: frontend composition domain consuming owning feature contracts
+- Personal Workspace: personal state coordinator + project/task resolver adapters
+- My Work: attention coordinator + narrow `MyWorkTaskSource`
+- Saved Views: persistence/definition domain + narrow context-validator SPI
+
+The Dashboard Refresh must continue this pattern. It should compose authorized summaries from existing feature contracts and only introduce new narrow summary/query contracts when a required datum does not already have a suitable owner.
 
 ## Next product sequence
 
-1. favorites + recently viewed
-2. My Work
-3. saved views + dashboard refresh
-4. calendar/deadline view + richer task relationships
-5. templates, recurring work, bulk/import/export
+1. capability-aware dashboard refresh + onboarding/empty-state polish
+2. calendar/deadline view + richer task relationships
+3. subtasks, dependencies and labels
+4. recurring work + templates
+5. bulk actions + import/export
 6. custom fields/forms + workflows/approvals + knowledge/documents
-7. analytics and selected differentiated experiments
+7. user-facing analytics + selected differentiated experiments
 
-Favorites/Recent should become a reusable personal-productivity domain rather than state hidden inside individual pages. It should respect tenant boundaries and authoritative access when resolving saved/recent entities.
+The dashboard should become a useful personal operational cockpit: attention summary, favorites, recent context, quick actions and bounded deadline/activity signals. It must not duplicate authorization, My Work classification, saved-view logic or personal-workspace resolution.
 
 ## Deferred platform work
 
