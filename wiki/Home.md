@@ -16,6 +16,9 @@ Implemented foundations include:
 - bounded one-level authorization delegation with runtime source revalidation
 - Explain Access with direct/delegated matched-grant provenance
 - organization hierarchy, projects/tasks/collaboration and R2/S3-compatible attachments
+- permission-aware Global Search and capability-aware Command Palette
+- server-backed Favorites + Recently Viewed with contextual favorite controls
+- My Work personal attention queue and server-backed Saved Views
 - durable notifications/email delivery/preferences
 - subscription lifecycle, quotas, API keys and usage metering
 - provider-neutral billing with Stripe and Razorpay
@@ -33,7 +36,9 @@ See [[Architecture]] for the current architecture and known debt.
 
 ## Database checkpoint
 
-Portable common migrations currently extend through **V44**. Applied Flyway migrations remain append-only.
+Portable common migrations currently extend through **V46**. Applied Flyway migrations remain append-only.
+
+Recent product migrations are V45 for personal-workspace favorites/recent items and V46 for saved views.
 
 ## Start here
 
@@ -53,6 +58,6 @@ Repository-side `guides/Wild_Thoughts.md` is the living idea vault; `guides/ENGI
 
 ## Current product direction
 
-The active product phase is **Product Experience & Work Management Enrichment**, beginning with Global Search and followed by command/navigation productivity, My Work/saved views, richer work-management views, tenant adaptability, analytics and selected differentiated experiments.
+The active product phase is **Product Experience & Work Management Enrichment**. Global Search, Command Palette, Favorites/Recently Viewed, My Work and Saved Views are established foundations. The next slice is a **capability-aware dashboard refresh**, followed by calendar/deadline views, richer work-management relationships, recurring work/templates, bulk productivity and tenant adaptability.
 
 Production Operations & Disaster Recovery remains important but deliberately deferred behind the current user-facing enrichment phase. See [[Roadmap]].
