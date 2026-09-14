@@ -59,6 +59,8 @@ Established capabilities include:
 - scoped authorization, delegation and Explain Access
 - projects, tasks and collaboration
 - subtasks, directed task dependencies and project-scoped labels
+- recurring-task definitions/materialization
+- project-scoped task templates
 - Global Search and capability-aware Command Palette
 - Favorites/Recently Viewed, My Work and Saved Views
 - capability-aware Dashboard composition
@@ -73,7 +75,7 @@ Established capabilities include:
 - tenant API keys/external APIs
 - auditability and observability
 
-The next product slice is **recurring work + project/task templates**, followed by bulk productivity, tenant adaptability, workflows/knowledge and analytics.
+The current product slice is finishing **Recurring Work + Project/Task Templates** with tenant-scoped project templates and frontend management.
 
 ## Cross-domain composition patterns
 
@@ -104,41 +106,46 @@ Task Relationships
     TaskRelationshipTaskGateway + TaskRelationshipChangeSink
         ↓
     existing task persistence + audit/activity
-```
 
-Search and Calendar share the neutral `projects.query.ProjectMembershipQueryService` instead of depending on one another's product package.
+Recurring Work / Task Templates
+    recurringwork + tasktemplates
+        ↓
+    TaskCreationPort
+        ↓
+    task-owned creation adapter
+```
 
 ## Task Relationships and Task Planning
 
-Backend PR #139 and V47 establish:
+Backend PR #139 and V47 establish bounded same-project parent hierarchy, cycle-safe directed dependencies and project-scoped normalized labels. Frontend PR #140 owns `/task-planning` under `features/task-relationships` and uses authorization-safe Global Search task selection.
 
-- one optional same-project parent per task
-- self-parent and ancestry-cycle prevention
-- bounded parent traversal
-- directed `blocking -> dependent` dependency edges
-- self/duplicate/directed-cycle prevention for dependencies
-- bounded dependency validation/reads
-- project-scoped normalized labels
-- explicit task/label assignment limits
-- existing task read/manage authorization as the authoritative access model
+Relationship metadata does not automate task status and does not become generic graph infrastructure.
 
-Frontend PR #140 owns `/task-planning` under `features/task-relationships`.
+## Recurring Work and task templates
 
-Task selection uses Global Search so the shell does not guess project/task access. Hierarchy, dependencies and labels remain owned by the task-relationships feature instead of being pushed into the already-large project task section, Dashboard or Calendar.
+PR #141 and V48 establish the backend generation boundary.
 
-See repository guide `guides/task_relationships.md` for detailed limits and API contracts.
+Recurring work owns schedule definition, timezone/cadence semantics, materialization state and occurrence history. V1 supports `DAILY`, `WEEKLY` and `MONTHLY` rules with explicit IANA timezone, bounded scheduler batches/catch-up, pause/resume and optional end/count/due-offset semantics.
 
-## Calendar boundary
+Correctness uses PostgreSQL coordination:
 
-Calendar reads are tenant/date bounded, use existing task due dates, and revalidate project/task readability before exposure. The API caps ranges at 93 days and results at 500 with explicit truncation signaling.
+- pessimistic write lock per definition during materialization
+- optimistic entity versioning for ordinary definition updates
+- unique `(definition_id, scheduled_for)` occurrence key
+- transactional task + occurrence + cursor update
+- failed materialization pauses the definition rather than retrying indefinitely
 
-Calendar is a projection, not a scheduling engine. Recurrence/reminders/meetings/resource booking do not belong in `CalendarDeadlineService`.
+Project-scoped task templates own reusable task snapshots. Instantiation crosses the task boundary through the narrow `TaskCreationPort`, preserving normal task activity, audit, assignment notification and `TASK_CREATED` webhook behavior without injecting the full legacy `ProjectTaskService`.
+
+Calendar remains a projection of materialized task deadlines; it is not the recurrence scheduler.
+
+Detailed semantics live in repository guide `guides/recurring_work_and_templates.md`.
 
 ## Authorization
 
 Authorization is permission- and scope-oriented rather than role-name-only. Explain Access and enforcement use the same evaluator. Delegated authority is bounded by a direct parent assignment and revalidated at access time.
 
-Cross-cutting views such as Search, My Work, Personal Workspace, Calendar and Task Planning do not become alternative permission models; they filter or resolve through authoritative resource-access rules.
+Cross-cutting views and generation/configuration APIs reuse authoritative project/task access rules instead of creating alternative permission models.
 
 See [[Authorization]].
 
@@ -146,13 +153,14 @@ See [[Authorization]].
 
 Production uses shared-schema tenancy. Tenant-owned data is accessed through tenant-scoped repository/query behavior and cross-tenant IDs must never be trusted without ownership validation.
 
-Flyway owns schema evolution. Applied migrations are append-only. Portable common migrations currently extend through **V47**.
+Flyway owns schema evolution. Applied migrations are append-only. Portable common migrations currently extend through **V48**.
 
 Recent work-management migrations:
 
 - V45 personal workspace favorites/recent items
 - V46 saved views
 - V47 task parent/dependency/project-label relationships
+- V48 recurring task definitions/occurrences + project task templates
 
 See [[Tenancy-and-Data-Model]] and [[PostgreSQL-and-Flyway]].
 
@@ -170,13 +178,9 @@ The most important rule for future development is:
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-New backend features should prefer domain-oriented packages instead of expanding broad global `service`, `controller`, `entity`, `repository` and `dto` buckets.
+The next project-template backend must cross into project creation through a **project-owned narrow creation contract** that preserves quota, actor validation, owner membership, audit and lifecycle behavior. Do not inject the full `ProjectService` into a generic template god-service.
 
-New frontend features should remain local under `features/<domain>/...` and should not push business logic into central routing/navigation files.
-
-For recurring work/templates, define cadence/timezone/idempotency and template scope/copy/version semantics before schema work. Build an explicit owning domain that consumes narrow task/project creation contracts. Do not add recurrence/template orchestration to `TaskGraphService`, `TaskLabelService`, `ProjectTaskService`, Calendar or shell components.
-
-When a boundary is important enough to regress silently, add architecture/static tests so the rule is machine-enforced rather than relying only on review discipline.
+Frontend recurring/template work should remain feature-local and must not push lifecycle behavior into Calendar, `ProjectTasksSection` or `AppShell`.
 
 ## Known architecture debt
 
@@ -196,12 +200,4 @@ Improve these incrementally during feature work rather than through a speculativ
 
 The application tier can remain horizontally replicated and stateless while PostgreSQL acts as the primary durable coordination layer.
 
-The current strategy is PostgreSQL-first and evidence-driven:
-
-- paginate or otherwise bound unbounded reads
-- bound graph traversal and date-window projections
-- use database locking/constraints for correctness
-- add indexes for real query patterns
-- measure search/calendar/relationship/load behavior before adding distributed infrastructure
-
-Search, My Work, Personal Workspace, Saved Views, Calendar and Task Relationships are designed around bounded server-side reads rather than tenant-wide browser materialization.
+The current strategy is PostgreSQL-first and evidence-driven: bound reads/generation, use database locking/constraints for correctness, add indexes for real query patterns, and measure before introducing distributed infrastructure.
