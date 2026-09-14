@@ -96,7 +96,11 @@ export function CalendarMonthGrid({
                     py: 1.5,
                 }}
             >
-                <Stack direction="row" spacing={1.75} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                <Stack
+                    direction="row"
+                    spacing={1.75}
+                    sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+                >
                     <Box>
                         <Typography component="h2" variant="h5" sx={{ lineHeight: 1.1 }}>
                             {formatMonth(range.monthStart)}
@@ -127,7 +131,11 @@ export function CalendarMonthGrid({
 
                 <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                     <Tooltip title="Previous month">
-                        <IconButton aria-label="Previous month" onClick={onPreviousMonth} size="small">
+                        <IconButton
+                            aria-label="Previous month"
+                            onClick={onPreviousMonth}
+                            size="small"
+                        >
                             <ChevronLeftRoundedIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
@@ -237,12 +245,18 @@ export function CalendarMonthGrid({
                                 >
                                     <Stack
                                         direction="row"
-                                        sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 0.55 }}
+                                        sx={{
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            mb: 0.55,
+                                        }}
                                     >
                                         <Box
                                             sx={(theme) => ({
                                                 alignItems: 'center',
-                                                bgcolor: isToday ? theme.palette.primary.main : 'transparent',
+                                                bgcolor: isToday
+                                                    ? theme.palette.primary.main
+                                                    : 'transparent',
                                                 borderRadius: '50%',
                                                 color: isToday
                                                     ? theme.palette.primary.contrastText
@@ -307,7 +321,10 @@ export function CalendarMonthGrid({
                                                     variant="caption"
                                                     sx={{ display: 'block', fontSize: '0.68rem' }}
                                                 >
-                                                    <Box component="span" sx={{ fontWeight: 800, mr: 0.5 }}>
+                                                    <Box
+                                                        component="span"
+                                                        sx={{ fontWeight: 800, mr: 0.5 }}
+                                                    >
                                                         {formatTime(item.dueAt)}
                                                     </Box>
                                                     {item.title}
@@ -318,7 +335,11 @@ export function CalendarMonthGrid({
                                             <Typography
                                                 color="text.secondary"
                                                 variant="caption"
-                                                sx={{ fontSize: '0.66rem', fontWeight: 700, pl: 0.4 }}
+                                                sx={{
+                                                    fontSize: '0.66rem',
+                                                    fontWeight: 700,
+                                                    pl: 0.4,
+                                                }}
                                             >
                                                 +{hiddenCount} more
                                             </Typography>

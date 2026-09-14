@@ -91,7 +91,9 @@ function DeadlineAgendaItem({ item, index }: { item: CalendarDeadlineItem; index
             <Stack spacing={1.1} sx={{ p: 1.4, pl: 1.65 }}>
                 <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography sx={{ fontWeight: 780, lineHeight: 1.25 }}>{item.title}</Typography>
+                        <Typography sx={{ fontWeight: 780, lineHeight: 1.25 }}>
+                            {item.title}
+                        </Typography>
                         <Typography color="text.secondary" variant="caption" sx={{ mt: 0.25 }}>
                             {item.projectName}
                         </Typography>
@@ -102,7 +104,10 @@ function DeadlineAgendaItem({ item, index }: { item: CalendarDeadlineItem; index
                             label={readableLabel(item.status)}
                             size="small"
                             variant="outlined"
-                            sx={{ height: 23, '& .MuiChip-label': { px: 0.8, fontSize: '0.66rem' } }}
+                            sx={{
+                                height: 23,
+                                '& .MuiChip-label': { px: 0.8, fontSize: '0.66rem' },
+                            }}
                         />
                     </Stack>
                 </Stack>
@@ -114,7 +119,11 @@ function DeadlineAgendaItem({ item, index }: { item: CalendarDeadlineItem; index
                 >
                     <Stack direction="row" spacing={0.65} sx={{ alignItems: 'center' }}>
                         <AccessTimeRoundedIcon color="action" sx={{ fontSize: 15 }} />
-                        <Typography color="text.secondary" variant="caption" sx={{ fontWeight: 700 }}>
+                        <Typography
+                            color="text.secondary"
+                            variant="caption"
+                            sx={{ fontWeight: 700 }}
+                        >
                             {formatTime(item.dueAt)}
                         </Typography>
                         <Box sx={{ bgcolor: 'divider', borderRadius: 99, height: 3, width: 3 }} />
@@ -183,13 +192,22 @@ export function CalendarDeadlineAgenda({ selectedDate, items }: CalendarDeadline
                         <Typography
                             color="text.secondary"
                             variant="caption"
-                            sx={{ fontSize: '0.62rem', fontWeight: 800, mt: 0.35, textTransform: 'uppercase' }}
+                            sx={{
+                                fontSize: '0.62rem',
+                                fontWeight: 800,
+                                mt: 0.35,
+                                textTransform: 'uppercase',
+                            }}
                         >
                             {formatMonth(selectedDate)}
                         </Typography>
                     </Box>
                     <Box sx={{ minWidth: 0 }}>
-                        <Typography color="text.secondary" variant="caption" sx={{ fontWeight: 700 }}>
+                        <Typography
+                            color="text.secondary"
+                            variant="caption"
+                            sx={{ fontWeight: 700 }}
+                        >
                             Selected day
                         </Typography>
                         <Typography component="h2" variant="h6" sx={{ mt: 0.1 }}>
