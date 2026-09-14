@@ -36,18 +36,9 @@ class CalendarDeadlineServiceTest {
         CalendarDeadlineSource deadlineSource = mock(CalendarDeadlineSource.class);
 
         when(authorizationContextService.getCurrentAuthorizationContext(tenantId, jwt))
-                .thenReturn(
-                        new CurrentAuthorizationContextResponse(
-                                tenantId,
-                                userId,
-                                "Example User",
-                                "user@example.test",
-                                Instant.now(),
-                                List.of(),
-                                List.of(),
-                                List.of()));
+                .thenReturn(authorizationContext(tenantId, userId));
         when(deadlineSource.findDeadlines(
-                        any(CalendarDeadlineContext.class), eq(from), eq(to), eq(25)))
+                        any(CalendarDeadlineContext.class), eq(from), eq(to), eq(26)))
                 .thenReturn(
                         List.of(
                                 new CalendarDeadlineSnapshot(
@@ -65,9 +56,53 @@ class CalendarDeadlineServiceTest {
         assertThat(response.from()).isEqualTo(from);
         assertThat(response.to()).isEqualTo(to);
         assertThat(response.returnedCount()).isEqualTo(1);
+        assertThat(response.truncated()).isFalse();
         assertThat(response.items().getFirst().taskId()).isEqualTo(taskId);
         assertThat(response.items().getFirst().targetUrl())
                 .isEqualTo("/projects/" + projectId + "?task=" + taskId);
+    }
+
+    @Test
+    void reportsWhenAuthorizedResultsExceedTheRequestedLimit() {
+        UUID tenantId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID projectId = UUID.randomUUID();
+        Instant from = Instant.parse("2026-09-01T00:00:00Z");
+        Instant to = Instant.parse("2026-10-01T00:00:00Z");
+        Jwt jwt = mock(Jwt.class);
+        CurrentAuthorizationContextService authorizationContextService =
+                mock(CurrentAuthorizationContextService.class);
+        CalendarDeadlineSource deadlineSource = mock(CalendarDeadlineSource.class);
+
+        when(authorizationContextService.getCurrentAuthorizationContext(tenantId, jwt))
+                .thenReturn(authorizationContext(tenantId, userId));
+        when(deadlineSource.findDeadlines(
+                        any(CalendarDeadlineContext.class), eq(from), eq(to), eq(2)))
+                .thenReturn(
+                        List.of(
+                                new CalendarDeadlineSnapshot(
+                                        UUID.randomUUID(),
+                                        projectId,
+                                        "First",
+                                        "Phoenix",
+                                        "TODO",
+                                        "HIGH",
+                                        Instant.parse("2026-09-10T08:00:00Z")),
+                                new CalendarDeadlineSnapshot(
+                                        UUID.randomUUID(),
+                                        projectId,
+                                        "Second",
+                                        "Phoenix",
+                                        "TODO",
+                                        "LOW",
+                                        Instant.parse("2026-09-11T08:00:00Z"))));
+
+        var service = new CalendarDeadlineService(authorizationContextService, deadlineSource);
+        var response = service.getDeadlines(tenantId, from, to, 1, jwt);
+
+        assertThat(response.returnedCount()).isEqualTo(1);
+        assertThat(response.truncated()).isTrue();
+        assertThat(response.items()).extracting("title").containsExactly("First");
     }
 
     @Test
@@ -89,5 +124,17 @@ class CalendarDeadlineServiceTest {
                 .hasMessageContaining("93 days");
 
         verifyNoInteractions(authorizationContextService, deadlineSource);
+    }
+
+    private CurrentAuthorizationContextResponse authorizationContext(UUID tenantId, UUID userId) {
+        return new CurrentAuthorizationContextResponse(
+                tenantId,
+                userId,
+                "Example User",
+                "user@example.test",
+                Instant.now(),
+                List.of(),
+                List.of(),
+                List.of());
     }
 }
