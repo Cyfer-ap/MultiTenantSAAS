@@ -88,6 +88,7 @@ Current mature domains include:
 - My Work personal attention queue
 - Saved Views
 - capability-aware tenant Dashboard composition
+- authorization-safe Calendar / Deadline View
 - attachments through S3/R2-compatible storage
 - in-app/email notifications and preferences
 - subscription plans, tenant subscriptions, quotas and usage metering
@@ -99,7 +100,7 @@ Current mature domains include:
 - tenant/platform audit trails
 - production hardening and observability
 
-The next product-enrichment stage is a calendar/deadline view, followed by richer task relationships, recurring work/templates, bulk productivity, tenant adaptability, workflows/knowledge and user-facing analytics.
+The next product-enrichment stage is richer task relationships—subtasks, dependencies and labels—followed by recurring work/templates, bulk productivity, tenant adaptability, workflows/knowledge and user-facing analytics.
 
 ## Authorization architecture
 
@@ -136,6 +137,7 @@ Important properties:
 - user search requires tenant-level `user.read`
 - project search uses tenant-wide or explicit project-grant scope and revalidates scoped hits through the authorization evaluator
 - task search uses tenant-wide permission, explicit project scope or current project membership and revalidates through the same task-read rule used by task APIs
+- generic project membership lookup is owned by `projects.query.ProjectMembershipQueryService`, not by Search, so other authorized projections can reuse the same narrow contract
 - ranking is a search-domain concern; access policy remains a domain/authorization concern
 - the frontend `features/search` module owns the reusable API client, query hook and types rather than a product-specific shell UI
 
@@ -255,34 +257,56 @@ Important properties:
 - collection previews are bounded
 - focused dashboard components keep the composition surface from becoming another large frontend god-component
 
-The dashboard is now the reference pattern for frontend composition over several authorized feature domains: compose presentation and intent, but leave business rules and access policy with the owning domains.
+The dashboard is the reference pattern for frontend composition over several authorized feature domains: compose presentation and intent, but leave business rules and access policy with the owning domains.
 
-## Calendar/deadline architecture direction
+## Calendar / Deadline architecture
 
-The next Calendar / Deadline View should be a **time-oriented projection of authorized work**, not a second task-management system.
-
-Preferred first-slice shape, if a dedicated backend aggregate is needed:
+PR #137 implements Calendar as a **time-oriented projection of authorized task work**, not a second task-management system.
 
 ```text
-CalendarQueryService
+CalendarDeadlineController
         ↓
-CalendarDeadlineSource
+CalendarDeadlineService
+        ↓
+CalendarDeadlineSource SPI
         ↓
 TaskCalendarDeadlineSource
         ↓
-tenant/date-bounded authorized task query
+tenant/date-bounded task query
+        ↓
+project grant / membership narrowing
+        ↓
+authoritative task-read revalidation
 ```
 
-Rules:
+Important properties:
 
-- start with existing task due dates and, where safely exposed, project deadlines
-- date-range bound all reads; do not load all tenant tasks and filter in the browser
-- preserve project/task authorization before returning calendar entries
-- do not duplicate task lifecycle/status semantics
-- do not make the calendar service import several unrelated repositories
-- use narrow owning-domain source contracts for cross-domain composition
-- design timezone interpretation/rendering explicitly from the first version
-- defer meetings, room/resource booking, leave management and external calendar synchronization
+- the calendar domain owns range validation, response composition and projection contracts; task data/access logic remains task-owned
+- Calendar v1 uses existing task `dueAt` values only; `Project` has no deadline field and no synthetic project dates are introduced
+- reads use half-open `[from,to)` instant ranges
+- a request cannot exceed 93 days
+- returned results are capped at 500; the API exposes `truncated=true` when the authorized set exceeds the requested bound
+- tenant-wide task-read permission, explicit project-scoped task-read grants and current project membership can contribute candidate projects
+- candidate data is narrowed by tenant/date/project before materialization and revalidated through `AuthorizationSecurityService.canReadProjectTasks` per project
+- project access decisions are memoized within the adapter request
+- the existing `project_tasks.due_at` index is reused; #137 requires no Flyway migration
+- the generic `ProjectMembershipQueryService` is shared by Search and Calendar instead of making Calendar depend on a Search-specific service
+
+Frontend ownership is under `features/calendar`:
+
+```text
+CalendarPage
+    ├── useCalendarDeadlines
+    ├── CalendarMonthGrid
+    ├── CalendarDeadlineAgenda
+    └── local calendar-date utilities
+```
+
+The browser computes month/grid boundaries in local calendar time and sends the resulting instants to the backend. The API remains timezone-neutral because it accepts/returns instants; presentation groups deadlines by the browser's local date.
+
+Calendar is exposed as a general tenant workspace destination without inventing a frontend calendar permission. The backend result itself remains authoritative and contains only tasks currently readable by the actor.
+
+Meetings, room/resource booking, leave management, recurrence/reminders and external calendar synchronization are not part of this domain today.
 
 ## Persistence and tenancy
 
@@ -297,7 +321,7 @@ Recent product migrations:
 - V45 — personal workspace favorites/recent items
 - V46 — saved views
 
-The Dashboard Refresh requires no migration.
+Dashboard #136 and Calendar #137 require no schema migration.
 
 The architecture intentionally uses PostgreSQL locking/constraints where correctness depends on concurrent mutations, including sensitive subscription/delivery flows.
 
@@ -341,7 +365,8 @@ Current product-enrichment ownership is intentionally split:
 - `features/personal-workspace` — Favorites/Recent state and views
 - `features/my-work` — personal attention queue
 - `features/saved-views` — reusable persisted view definitions
-- `features/dashboard` — dashboard-only composition components consuming the owning domains above
+- `features/dashboard` — dashboard-only composition components consuming owning domains
+- `features/calendar` — date-range query/view composition over authorized task deadline contracts
 
 `AppShell` should remain integration/navigation infrastructure and must not absorb domain business rules as new product surfaces are added.
 
@@ -366,9 +391,10 @@ GET    /api/tenants/{tenantId}/saved-views
 POST   /api/tenants/{tenantId}/saved-views
 PUT    /api/tenants/{tenantId}/saved-views/{viewId}
 DELETE /api/tenants/{tenantId}/saved-views/{viewId}
+GET    /api/tenants/{tenantId}/calendar/deadlines?from=<instant>&to=<instant>&limit=<n>
 ```
 
-The Dashboard Refresh reuses these contracts and the existing dashboard summary; it does not add an API.
+The Dashboard Refresh reuses existing contracts and the dashboard summary; it does not add an API. Calendar adds one bounded read projection and no mutation API.
 
 ## Scalability model
 
@@ -378,11 +404,12 @@ This architecture should comfortably support significant product growth before d
 
 Global Search v1 uses bounded PostgreSQL substring queries and deliberately avoids adding a separate search engine. If measured large-tenant latency later requires it, PostgreSQL trigram/full-text indexing should be considered before external search infrastructure.
 
-Personal Workspace, My Work and Saved Views also use bounded reads/writes rather than unbounded tenant-wide materialization. Dashboard previews remain bounded and reuse those existing queries.
+Personal Workspace, My Work and Saved Views use bounded reads/writes rather than unbounded tenant-wide materialization. Dashboard previews remain bounded and reuse those existing queries. Calendar reads are restricted by tenant, project-access candidates, a maximum 93-day range and a 500-item result cap while reusing the existing due-date index.
 
 The following remain unproven until measured:
 
 - large-tenant search/query latency
+- dense-calendar query behavior near the 500-item bound
 - sustained concurrent mutation throughput
 - database contention envelopes
 - background delivery throughput at scale
@@ -410,4 +437,6 @@ All new functionality must follow this rule:
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-The product-enrichment sequence now provides several concrete reference implementations: Search uses contributor contracts; Command Palette composes owning frontend features; Personal Workspace uses resolver adapters; My Work uses a narrow source contract; Saved Views uses a context-validator SPI; Dashboard composes their authorized frontend contracts without collapsing ownership. The Calendar / Deadline View must continue this pattern with date-bounded authorized projections and narrow owning-domain source contracts where aggregation is required.
+The product-enrichment sequence now provides concrete reference implementations: Search uses contributor contracts; Command Palette composes owning frontend features; Personal Workspace uses resolver adapters; My Work uses a narrow source contract; Saved Views uses a context-validator SPI; Dashboard composes authorized frontend contracts; Calendar uses a projection coordinator plus a task-owned deadline source.
+
+The next task-relationship slice should preserve the same discipline. Subtask hierarchy, dependency edges and labels belong to task/project-owned domain contracts with explicit tenant/project invariants, bounded graph traversal and database constraints. Do not implement them by expanding Dashboard, Calendar, `AppShell`, or a generic graph service into new sources of truth.
