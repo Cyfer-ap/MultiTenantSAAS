@@ -44,9 +44,7 @@ public class TaskRelationshipController {
                     + "#tenantId,#projectId,'project.task.read')")
     @GetMapping("/tasks/{taskId}/relationships")
     public ResponseEntity<ApiResponse<TaskRelationshipsResponse>> getRelationships(
-            @PathVariable UUID tenantId,
-            @PathVariable UUID projectId,
-            @PathVariable UUID taskId) {
+            @PathVariable UUID tenantId, @PathVariable UUID projectId, @PathVariable UUID taskId) {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Task relationships fetched successfully",

@@ -14,7 +14,9 @@ import java.util.UUID;
             @Index(name = "idx_project_task_project_status", columnList = "project_id,status"),
             @Index(name = "idx_project_task_project_priority", columnList = "project_id,priority"),
             @Index(name = "idx_project_task_due_at", columnList = "due_at"),
-            @Index(name = "idx_project_task_parent", columnList = "tenant_id,project_id,parent_task_id")
+            @Index(
+                    name = "idx_project_task_parent",
+                    columnList = "tenant_id,project_id,parent_task_id")
         })
 public class ProjectTask {
 

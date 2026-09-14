@@ -14,9 +14,8 @@ public interface ProjectTaskLabelAssignmentRepository
     List<ProjectTaskLabelAssignment> findByTenant_IdAndProject_IdAndTask_IdOrderByAssignedAtAsc(
             UUID tenantId, UUID projectId, UUID taskId);
 
-    Optional<ProjectTaskLabelAssignment>
-            findByTenant_IdAndProject_IdAndTask_IdAndLabel_Id(
-                    UUID tenantId, UUID projectId, UUID taskId, UUID labelId);
+    Optional<ProjectTaskLabelAssignment> findByTenant_IdAndProject_IdAndTask_IdAndLabel_Id(
+            UUID tenantId, UUID projectId, UUID taskId, UUID labelId);
 
     long countByTenant_IdAndProject_IdAndTask_Id(UUID tenantId, UUID projectId, UUID taskId);
 

@@ -64,7 +64,8 @@ class TaskLabelServiceTest {
                                 service.createLabel(
                                         tenantId,
                                         projectId,
-                                        new ProjectTaskLabelRequest("  Urgent   Review ", "#AA5500"),
+                                        new ProjectTaskLabelRequest(
+                                                "  Urgent   Review ", "#AA5500"),
                                         jwt))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("already exists");
@@ -89,8 +90,7 @@ class TaskLabelServiceTest {
                         tenantId, projectId, taskId))
                 .thenReturn((long) TaskLabelService.MAX_LABELS_PER_TASK);
 
-        assertThatThrownBy(
-                        () -> service.assignLabel(tenantId, projectId, taskId, labelId, jwt))
+        assertThatThrownBy(() -> service.assignLabel(tenantId, projectId, taskId, labelId, jwt))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("at most");
 

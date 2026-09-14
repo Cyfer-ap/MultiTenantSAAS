@@ -44,9 +44,7 @@ class TaskGraphServiceTest {
 
     @BeforeEach
     void setUp() {
-        service =
-                new TaskGraphService(
-                        taskGateway, dependencyRepository, changeSink, queryService);
+        service = new TaskGraphService(taskGateway, dependencyRepository, changeSink, queryService);
     }
 
     @Test
@@ -55,8 +53,7 @@ class TaskGraphServiceTest {
         when(taskGateway.requireProject(tenantId, projectId)).thenReturn(activeProject());
         when(taskGateway.requireTask(tenantId, projectId, taskId)).thenReturn(task(taskId));
 
-        assertThatThrownBy(
-                        () -> service.updateParent(tenantId, projectId, taskId, taskId, jwt))
+        assertThatThrownBy(() -> service.updateParent(tenantId, projectId, taskId, taskId, jwt))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("own parent");
 
@@ -74,8 +71,7 @@ class TaskGraphServiceTest {
         when(taskGateway.requireTask(tenantId, projectId, childId)).thenReturn(child);
         when(taskGateway.requireTask(tenantId, projectId, parentId)).thenReturn(parent);
 
-        assertThatThrownBy(
-                        () -> service.updateParent(tenantId, projectId, childId, parentId, jwt))
+        assertThatThrownBy(() -> service.updateParent(tenantId, projectId, childId, parentId, jwt))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("hierarchy cycle");
 
@@ -105,11 +101,7 @@ class TaskGraphServiceTest {
         assertThatThrownBy(
                         () ->
                                 service.addDependency(
-                                        tenantId,
-                                        projectId,
-                                        dependentId,
-                                        blockingId,
-                                        jwt))
+                                        tenantId, projectId, dependentId, blockingId, jwt))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("directed cycle");
 
@@ -136,8 +128,7 @@ class TaskGraphServiceTest {
 
         assertThat(result).isSameAs(expected);
         verify(dependencyRepository, never()).save(any());
-        verify(changeSink, never())
-                .record(any(), any(), any(), any(), any(), any(), any());
+        verify(changeSink, never()).record(any(), any(), any(), any(), any(), any(), any());
     }
 
     private Project activeProject() {

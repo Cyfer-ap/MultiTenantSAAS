@@ -95,11 +95,7 @@ public class TaskLabelService {
 
     @Transactional
     public TaskLabelResponse updateLabel(
-            UUID tenantId,
-            UUID projectId,
-            UUID labelId,
-            ProjectTaskLabelRequest request,
-            Jwt jwt) {
+            UUID tenantId, UUID projectId, UUID labelId, ProjectTaskLabelRequest request, Jwt jwt) {
         requireModifiableProject(tenantId, projectId);
         ProjectTaskLabel label = requireLabel(tenantId, projectId, labelId);
         String displayName = normalizeDisplayName(request.name());
@@ -224,11 +220,11 @@ public class TaskLabelService {
                 excludedLabelId == null
                         ? labelRepository.existsByTenant_IdAndProject_IdAndNormalizedName(
                                 tenantId, projectId, normalizedName)
-                        : labelRepository
-                                .existsByTenant_IdAndProject_IdAndNormalizedNameAndIdNot(
-                                        tenantId, projectId, normalizedName, excludedLabelId);
+                        : labelRepository.existsByTenant_IdAndProject_IdAndNormalizedNameAndIdNot(
+                                tenantId, projectId, normalizedName, excludedLabelId);
         if (exists) {
-            throw new IllegalArgumentException("A label with this name already exists in the project");
+            throw new IllegalArgumentException(
+                    "A label with this name already exists in the project");
         }
     }
 

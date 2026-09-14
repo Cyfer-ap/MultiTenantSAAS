@@ -25,7 +25,10 @@ import java.util.UUID;
                 @UniqueConstraint(
                         name = "uk_task_dependency_edge",
                         columnNames = {
-                            "tenant_id", "project_id", "blocking_task_id", "dependent_task_id"
+                            "tenant_id",
+                            "project_id",
+                            "blocking_task_id",
+                            "dependent_task_id"
                         }),
         indexes = {
             @Index(

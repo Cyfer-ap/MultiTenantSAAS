@@ -38,8 +38,7 @@ public class TaskRelationshipQueryService {
         ProjectTask task = taskGateway.requireTask(tenantId, projectId, taskId);
 
         List<ProjectTask> children =
-                taskGateway.findChildren(
-                        tenantId, projectId, taskId, MAX_RELATED_TASKS + 1);
+                taskGateway.findChildren(tenantId, projectId, taskId, MAX_RELATED_TASKS + 1);
         boolean childrenTruncated = children.size() > MAX_RELATED_TASKS;
         if (childrenTruncated) {
             children = children.subList(0, MAX_RELATED_TASKS);

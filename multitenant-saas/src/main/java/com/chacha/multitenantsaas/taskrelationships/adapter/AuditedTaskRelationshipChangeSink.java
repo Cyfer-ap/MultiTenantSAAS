@@ -59,8 +59,7 @@ public class AuditedTaskRelationshipChangeSink implements TaskRelationshipChange
         if (taskId != null && activityType != null) {
             ProjectTask task =
                     projectTaskRepository
-                            .findByProject_Tenant_IdAndProject_IdAndId(
-                                    tenantId, projectId, taskId)
+                            .findByProject_Tenant_IdAndProject_IdAndId(tenantId, projectId, taskId)
                             .orElseThrow(
                                     () ->
                                             new ResourceNotFoundException(

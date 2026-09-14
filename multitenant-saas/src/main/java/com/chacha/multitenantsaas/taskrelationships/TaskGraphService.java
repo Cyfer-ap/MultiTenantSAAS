@@ -53,8 +53,7 @@ public class TaskGraphService {
         ProjectTask task = taskGateway.requireTask(tenantId, projectId, taskId);
         ensureTaskMutable(task);
 
-        UUID currentParentId =
-                task.getParentTask() == null ? null : task.getParentTask().getId();
+        UUID currentParentId = task.getParentTask() == null ? null : task.getParentTask().getId();
         if (java.util.Objects.equals(currentParentId, parentTaskId)) {
             return queryService.getRelationships(tenantId, projectId, taskId);
         }
@@ -88,11 +87,7 @@ public class TaskGraphService {
 
     @Transactional
     public TaskRelationshipsResponse addDependency(
-            UUID tenantId,
-            UUID projectId,
-            UUID dependentTaskId,
-            UUID blockingTaskId,
-            Jwt jwt) {
+            UUID tenantId, UUID projectId, UUID dependentTaskId, UUID blockingTaskId, Jwt jwt) {
         Project project = requireModifiableProject(tenantId, projectId);
         ProjectTask dependent = taskGateway.requireTask(tenantId, projectId, dependentTaskId);
         ProjectTask blocking = taskGateway.requireTask(tenantId, projectId, blockingTaskId);
@@ -125,11 +120,7 @@ public class TaskGraphService {
 
     @Transactional
     public TaskRelationshipsResponse removeDependency(
-            UUID tenantId,
-            UUID projectId,
-            UUID dependentTaskId,
-            UUID blockingTaskId,
-            Jwt jwt) {
+            UUID tenantId, UUID projectId, UUID dependentTaskId, UUID blockingTaskId, Jwt jwt) {
         requireModifiableProject(tenantId, projectId);
         ProjectTask dependent = taskGateway.requireTask(tenantId, projectId, dependentTaskId);
         ensureTaskMutable(dependent);
@@ -201,7 +192,8 @@ public class TaskGraphService {
                 throw new IllegalArgumentException("Task dependency would create a directed cycle");
             }
             if (visited.size() > MAX_DEPENDENCY_EDGES + 1) {
-                throw new IllegalArgumentException("Dependency traversal exceeded its safety bound");
+                throw new IllegalArgumentException(
+                        "Dependency traversal exceeded its safety bound");
             }
             queue.addAll(adjacency.getOrDefault(current, List.of()));
         }
@@ -210,7 +202,8 @@ public class TaskGraphService {
     private Project requireModifiableProject(UUID tenantId, UUID projectId) {
         Project project = taskGateway.requireProject(tenantId, projectId);
         if (project.getStatus() == ProjectStatus.ARCHIVED) {
-            throw new IllegalArgumentException("Archived project task relationships cannot be modified");
+            throw new IllegalArgumentException(
+                    "Archived project task relationships cannot be modified");
         }
         return project;
     }

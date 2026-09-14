@@ -65,11 +65,7 @@ public class ProjectTaskLabel {
     public ProjectTaskLabel() {}
 
     public ProjectTaskLabel(
-            Tenant tenant,
-            Project project,
-            String name,
-            String normalizedName,
-            String color) {
+            Tenant tenant, Project project, String name, String normalizedName, String color) {
         this.tenant = tenant;
         this.project = project;
         this.name = name;
