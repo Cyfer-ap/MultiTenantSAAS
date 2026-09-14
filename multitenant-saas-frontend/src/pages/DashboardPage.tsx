@@ -1,3 +1,8 @@
+import FolderRoundedIcon from '@mui/icons-material/FolderRounded'
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
+import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
+import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import {
     Alert,
     Box,
@@ -11,16 +16,17 @@ import {
     Stack,
     Typography,
 } from '@mui/material'
-import FolderRoundedIcon from '@mui/icons-material/FolderRounded'
-import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
-import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
-import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import type { ReactNode } from 'react'
 
+import { useCurrentAuthorization } from '../features/authorization/hooks/useCurrentAuthorization'
+import {
+    DashboardWorkspaceOverview,
+    type DashboardQuickAction,
+} from '../features/dashboard/components/DashboardWorkspaceOverview'
 import { useDashboardSummary } from '../features/dashboard/hooks/useDashboardSummary'
-import { SubscriptionEndingSoonAlert } from '../features/subscriptions/components/SubscriptionEndingSoonAlert'
 import type { TenantDashboardSummary } from '../features/dashboard/types/dashboard'
+import { SubscriptionEndingSoonAlert } from '../features/subscriptions/components/SubscriptionEndingSoonAlert'
+import { getAvailableWorkspaceNavigationItems } from '../layouts/workspaceNavigation'
 
 interface MetricCardProps {
     label: string
@@ -137,7 +143,13 @@ function getErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : 'The dashboard could not be loaded.'
 }
 
-function DashboardContent({ summary }: { summary: TenantDashboardSummary }) {
+function DashboardContent({
+    summary,
+    quickActions,
+}: {
+    summary: TenantDashboardSummary
+    quickActions: readonly DashboardQuickAction[]
+}) {
     const completionPercentage = Math.min(100, Math.max(0, summary.taskCompletionPercentage))
 
     return (
@@ -159,7 +171,7 @@ function DashboardContent({ summary }: { summary: TenantDashboardSummary }) {
                     </Typography>
 
                     <Typography color="text.secondary" sx={{ marginTop: 0.5 }}>
-                        Tenant workspace overview
+                        Your workspace overview and current priorities
                     </Typography>
                 </Box>
 
@@ -171,6 +183,18 @@ function DashboardContent({ summary }: { summary: TenantDashboardSummary }) {
                 />
             </Stack>
 
+            <DashboardWorkspaceOverview
+                quickActions={quickActions}
+                tenantId={summary.tenantId}
+            />
+
+            <Typography component="h2" variant="h5" sx={{ fontWeight: 800, marginTop: 4 }}>
+                Workspace health
+            </Typography>
+            <Typography color="text.secondary" variant="body2" sx={{ marginTop: 0.5 }}>
+                Tenant-wide operational totals available to your dashboard access.
+            </Typography>
+
             <Box
                 sx={{
                     display: 'grid',
@@ -180,7 +204,7 @@ function DashboardContent({ summary }: { summary: TenantDashboardSummary }) {
                         sm: 'repeat(2, minmax(0, 1fr))',
                         xl: 'repeat(4, minmax(0, 1fr))',
                     },
-                    marginTop: 3,
+                    marginTop: 2,
                 }}
             >
                 <MetricCard
@@ -229,7 +253,7 @@ function DashboardContent({ summary }: { summary: TenantDashboardSummary }) {
             >
                 <Card variant="outlined">
                     <CardContent>
-                        <Typography component="h2" variant="h6">
+                        <Typography component="h3" variant="h6">
                             Users
                         </Typography>
 
@@ -249,7 +273,7 @@ function DashboardContent({ summary }: { summary: TenantDashboardSummary }) {
 
                 <Card variant="outlined">
                     <CardContent>
-                        <Typography component="h2" variant="h6">
+                        <Typography component="h3" variant="h6">
                             Projects
                         </Typography>
 
@@ -279,7 +303,7 @@ function DashboardContent({ summary }: { summary: TenantDashboardSummary }) {
                                 justifyContent: 'space-between',
                             }}
                         >
-                            <Typography component="h2" variant="h6">
+                            <Typography component="h3" variant="h6">
                                 Tasks
                             </Typography>
 
@@ -313,6 +337,7 @@ function DashboardContent({ summary }: { summary: TenantDashboardSummary }) {
 
 export function DashboardPage() {
     const dashboardQuery = useDashboardSummary()
+    const authorizationQuery = useCurrentAuthorization()
 
     if (dashboardQuery.isPending) {
         return <DashboardSkeleton />
@@ -346,6 +371,12 @@ export function DashboardPage() {
         )
     }
 
+    const quickActions: DashboardQuickAction[] = authorizationQuery.data
+        ? getAvailableWorkspaceNavigationItems(authorizationQuery.data)
+              .filter((item) => item.path !== '/dashboard')
+              .map((item) => ({ label: item.label, path: item.path, icon: item.icon }))
+        : []
+
     return (
         <Box>
             <Stack
@@ -376,7 +407,7 @@ export function DashboardPage() {
 
             <SubscriptionEndingSoonAlert />
 
-            <DashboardContent summary={dashboardQuery.data} />
+            <DashboardContent quickActions={quickActions} summary={dashboardQuery.data} />
         </Box>
     )
 }
