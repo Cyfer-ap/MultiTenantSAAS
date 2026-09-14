@@ -18,35 +18,17 @@ Closed through PR #119.
 
 Closed through PR #125, with milestone documentation closed in PR #126.
 
-Completed authorization capabilities include:
-
-- structured access decisions from the enforcement evaluator
-- tenant-admin Explain Access with stable decision reasoning
-- V44 durable delegation provenance and `authorization.delegate`
-- create/list/revoke delegation lifecycle and audit events
-- explicit direct parent assignment for each delegated grant
-- permission/scope/validity non-escalation enforcement
-- one-level delegation only and protected authorization permissions
-- runtime source revalidation after parent revocation/expiry/narrowing
-- delegation-safe reference data for delegate-only actors
-- direct-vs-delegated Explain Access provenance
-- manager and delegate-only Authorization workspace UX
-
 ### Engineering/documentation governance
 
-Consolidated through PR #128. Current status, handoff, architecture and engineering standards have single canonical owners, with PR/CI guardrails against documentation drift and new domain-coupling debt.
+Consolidated through PR #128.
 
 ### Global Search
 
 Completed through PR #129.
 
-Provides tenant-aware bounded search of accessible projects, tasks and people with permission/project-membership-aware candidate selection and authoritative project/task access revalidation.
-
 ### Command Palette
 
 Completed through PR #130.
-
-Provides `Ctrl/Cmd + K` and `/` quick-open, authorized search reuse, keyboard operation, permission-filtered workspace commands and owning-domain quick actions.
 
 ### Favorites + Recently Viewed
 
@@ -54,58 +36,49 @@ Completed through PR #131, with contextual favorite controls in PR #132.
 
 ### My Work
 
-Completed through PR #133 with an explicit `mywork` domain and narrow `MyWorkTaskSource`.
+Completed through PR #133.
 
 ### Saved Views
 
-Completed through PR #134 with V46 `saved_views` persistence and a context-validator SPI.
+Completed through PR #134 with V46 persistence.
 
 ### Capability-aware Dashboard Refresh
 
-Completed through PR #136 as frontend composition over existing authorized contracts.
+Completed through PR #136.
 
 ### Calendar / Deadline View
 
 Completed through PR #137, with UI refinement in PR #138.
 
-Provides:
-
-- `/calendar` workspace
-- local-time Monday-start month view and selected-day agenda
-- task due dates only
-- narrow backend `calendar` domain + `CalendarDeadlineSource`
-- authoritative task-read revalidation
-- maximum 93-day range and 500 returned items with truncation signaling
-- no dedicated schema migration
-
 ### Task Relationships + Task Planning
 
 Backend foundation completed through PR #139 and user-facing Task Planning through PR #140.
 
+Provides V47 bounded parent hierarchy, directed dependencies, project-scoped labels and the separate `/task-planning` workspace.
+
+### Recurring Work + Task Templates — backend foundation
+
+PR #141 establishes the first backend half of the broader recurring/templates milestone.
+
 Provides:
 
-- V47 optional task parent relationship
-- bounded same-project subtask hierarchy
-- self-parent and ancestry-cycle prevention
-- directed `blocking task -> dependent task` dependency edges
-- duplicate/self/directed-cycle prevention for dependencies
-- bounded graph validation and bounded relationship reads
-- project-scoped reusable task labels with normalized uniqueness
-- task-label assignment limits
-- explicit backend `taskrelationships` domain split into query, graph and label responsibilities
-- narrow `TaskRelationshipTaskGateway` and `TaskRelationshipChangeSink`
-- `/task-planning` frontend workspace under `features/task-relationships`
-- authorization-safe task selection through Global Search
-- hierarchy, blocker/dependent and label management UX
-- shared-navigation registration so Command Palette and Dashboard quick actions inherit the workspace
+- V48 `recurring_task_definitions`
+- V48 `recurring_task_occurrences`
+- V48 `project_task_templates`
+- explicit `recurringwork` and `tasktemplates` backend domains
+- task-owned `TaskCreationPort` reused by recurrence and templates
+- timezone-aware `DAILY` / `WEEKLY` / `MONTHLY` recurrence
+- pause/resume/edit/end/count semantics
+- bounded scheduler discovery and catch-up
+- pessimistic materialization locking and database occurrence idempotency
+- project-scoped task-template catalog with normalized uniqueness and bounded size
+- ordinary task lifecycle side effects preserved for generated/template tasks
 
-This milestone deliberately does **not** automate task status from relationships and does not create generic graph infrastructure.
+This does **not** close the overall recurring/templates milestone. Tenant-scoped project templates and user-facing recurring/template management remain pending.
 
 ## Current major product milestone
 
 ### 1. Product Experience & Work Management Enrichment
-
-The platform foundation is broad enough that the immediate priority is user-facing product depth and daily usability.
 
 #### Phase A — discoverability and personal productivity
 
@@ -125,13 +98,16 @@ The platform foundation is broad enough that the immediate priority is user-faci
 - ✅ directed task dependencies
 - ✅ project-scoped labels/tags
 - existing Kanban task board should be iterated rather than rebuilt
-- recurring work — **next**
-- project/task templates — **next**
+- 🟡 recurring work — backend foundation complete; frontend management pending
+- 🟡 task templates — project-scoped backend foundation complete; frontend pending
+- 🟡 project templates — tenant-scoped backend + frontend pending
 - bulk actions and CSV import/export
 
-The next slice should define recurrence and template semantics before persistence work: timezone/cadence ownership, occurrence idempotency, materialization horizon, pause/edit behavior, template scope, copy/snapshot rules, versioning expectations, authorization and bounded instantiation.
+The immediate work is to finish the recurring/templates milestone rather than start another domain.
 
-Do not put recurrence generation inside Calendar or task-relationship graph services. Those domains have different lifecycles.
+Project-template creation must use a project-owned narrow creation contract preserving project quota, actor validation, owner membership, audit and lifecycle behavior. Do not inject the full legacy `ProjectService` into a template god-service.
+
+Do not put recurrence generation inside Calendar or task-relationship graph services.
 
 #### Phase C — tenant adaptability
 
@@ -149,7 +125,7 @@ No experiment becomes a roadmap commitment merely because it is listed.
 
 ## Immediate sequence
 
-1. **recurring work + project/task templates**
+1. **finish recurring work + project/task templates: project templates + frontend UX**
 2. bulk actions + CSV import/export
 3. custom fields/forms + workflows/approvals + knowledge/documents
 4. user-facing analytics/reporting
@@ -160,7 +136,7 @@ No experiment becomes a roadmap commitment merely because it is listed.
 Before calling the product layer mature, revisit:
 
 - smooth post-login multi-workspace switching
-- recurring work and templates
+- project-template and recurring/template UX completion
 - custom fields/forms
 - workflow/approval engine
 - first-class knowledge/documents
@@ -210,6 +186,6 @@ Follow the operations/DR baseline later.
 
 Preserve tenant isolation, backend-authoritative authorization, delegation non-escalation, verified provider reconciliation, webhook-authoritative normal billing state, immutable history, Flyway invariants, database-backed concurrency, auditability, SSRF protections and server-only secrets/provider identifiers.
 
-New user-facing features must remain permission-aware and tenant-safe. Search, favorites/recent resolution, My Work, saved views, calendar projections, Task Planning, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
+New user-facing features must remain permission-aware and tenant-safe. Search, favorites/recent resolution, My Work, saved views, calendar projections, Task Planning, recurring work, templates, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
 
-New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work, Saved Views, Calendar and Task Relationships are backend reference implementations; Dashboard remains the frontend composition reference. Recurring work/templates must use their own owning domain rather than expanding task graph, Calendar or legacy task services.
+New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work, Saved Views, Calendar, Task Relationships and the V48 work-generation boundary are backend reference implementations; Dashboard remains the frontend composition reference.
