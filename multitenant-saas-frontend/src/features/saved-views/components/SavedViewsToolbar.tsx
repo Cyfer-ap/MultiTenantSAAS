@@ -160,10 +160,10 @@ export function SavedViewsToolbar({
                     <TextField
                         autoFocus
                         fullWidth
-                        inputProps={{ maxLength: 80 }}
                         label="View name"
                         margin="dense"
                         onChange={(event) => setName(event.target.value)}
+                        slotProps={{ htmlInput: { maxLength: 80 } }}
                         value={name}
                     />
                 </DialogContent>
