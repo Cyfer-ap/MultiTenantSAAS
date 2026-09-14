@@ -83,7 +83,43 @@ The milestone is complete. Recurrence remains outside Calendar and template gene
 
 ## Current major product milestone
 
-### 1. Product Experience & Work Management Enrichment
+### 1. Differentiated Work Platform Sequence
+
+The previous plan to move directly into bulk actions/CSV is deliberately paused. The next product sequence is now committed in this order and should be completed before returning to the older backlog unless a production/security issue forces reprioritization.
+
+1. **Visual Workflow Builder** — drag/connect `Trigger -> Condition -> Action` automations with execution history, guardrails and explainability.
+2. **Project Simulation / What-If Engine** — private scenario changes for dates, owners and dependencies with downstream schedule/workload impact before applying anything.
+3. **Collaborative Whiteboard** — visual planning canvas with nodes/stickies that can become real projects/tasks and later support live collaboration.
+4. **Project Health / Risk Radar** — explainable project-risk signals for overdue work, blockers, dependency criticality, stale work and workload pressure.
+5. **Forms -> Workflow Engine** — internal/public structured intake that creates authorized work and can trigger workflows.
+6. **Approval Workflows** — reusable human review/approve/reject stages that compose with the workflow engine.
+7. **Client / Guest Portal** — bounded external project visibility, comments, review requests and approvals without broad tenant membership.
+8. **Team Workload Engine** — capacity planning, overload detection and reassignment support without employee surveillance scoring.
+9. **Workspace Knowledge Graph** — permission-aware graph of projects, tasks, people, decisions, documents and dependencies.
+10. **AI / Agent Teammates** — assign bounded work to agents only after workflow, knowledge and authorization context are mature; human checkpoints remain mandatory for consequential actions.
+
+`guides/Wild_Thoughts.md` is the detailed idea vault and records overlap with older experiments such as Scenario/Sandbox Mode, Deadline Reality Check, Risk Inbox, Change Blast-Radius Preview and Human Checkpoints for Automation/AI.
+
+### Feature 1 — Visual Workflow Builder — ACTIVE
+
+Start with a product workflow engine, not a general BPMN clone.
+
+First milestone:
+
+- tenant-scoped workflow definitions
+- explicit trigger, condition and action model
+- draft/active/paused lifecycle
+- safe bounded graph validation
+- execution history with success/failure/skipped reasons
+- idempotent event handling
+- permission-aware action execution through narrow domain-owned ports
+- audit/explanation for every execution
+- frontend visual canvas for nodes/edges after the backend contract is stable
+- runtime guardrails/circuit-breaker foundations rather than unrestricted arbitrary code
+
+Initial trigger/action coverage should stay intentionally narrow and task/project-oriented so the engine remains understandable and testable.
+
+### 2. Product Experience & Work Management Enrichment — PAUSED BEHIND THE SEQUENCE ABOVE
 
 #### Phase A — discoverability and personal productivity
 
@@ -94,7 +130,7 @@ The milestone is complete. Recurrence remains outside Calendar and template gene
 - ✅ My Work attention queue
 - ✅ saved views
 - ✅ capability-aware dashboard refresh
-- 🟡 onboarding/empty-state/quick-create polish — continue incrementally
+- 🟡 onboarding/empty-state/quick-create polish — continue incrementally only when it supports active work
 
 #### Phase B — deeper work management
 
@@ -107,47 +143,50 @@ The milestone is complete. Recurrence remains outside Calendar and template gene
 - ✅ tenant-scoped project templates
 - ✅ Work Automation & Templates workspace
 - existing Kanban task board should be iterated rather than rebuilt
-- **next: bulk actions and CSV import/export**
+- bulk actions and CSV import/export remain valuable but are no longer the immediate next slice
 
 #### Phase C — tenant adaptability
 
 - custom fields
-- forms
-- workflow/approval automation
+- forms — now scheduled as committed feature #5
+- workflow/approval automation — now split across committed features #1 and #6
 - knowledge/documents beyond attachments
 - user-facing analytics/reporting
 
 #### Phase D — selected differentiators
 
-Use `guides/Wild_Thoughts.md` as the idea vault. Candidate experiments include Permission Lens, Context Capsules, Change Blast-Radius Preview, Alternate-Reality Planning, Responsibility Gap Detector, Assumption Register, Contradiction Radar, Context Compression Checkpoints, Project Necromancer, Bureaucracy Detector, Reality-vs-Plan Drift and Human Checkpoints for automation/AI.
-
-No experiment becomes a roadmap commitment merely because it is listed.
+Use `guides/Wild_Thoughts.md` as the idea vault. Candidate experiments remain available, but the ten-feature sequence above is now an explicit roadmap commitment rather than a loose experiment list.
 
 ## Immediate sequence
 
-1. **bulk actions + CSV import/export**
-2. custom fields/forms
-3. workflows/approvals + knowledge/documents
-4. user-facing analytics/reporting
-5. selected differentiated experiments after the core product layer is strong
+1. **Visual Workflow Builder** — active now
+2. **Project Simulation / What-If Engine**
+3. **Collaborative Whiteboard**
+4. **Project Health / Risk Radar**
+5. **Forms -> Workflow Engine**
+6. **Approval Workflows**
+7. **Client / Guest Portal**
+8. **Team Workload Engine**
+9. **Workspace Knowledge Graph**
+10. **AI / Agent Teammates**
+11. Resume remaining product backlog such as bulk actions/CSV, custom fields, knowledge/documents and broader analytics after this sequence unless priorities explicitly change.
 
-For each new slice, choose the owning domain and narrow cross-domain contracts before implementation. Do not add bulk/import/custom-field behavior by expanding existing god-services.
+For each slice, choose the owning domain and narrow cross-domain contracts before implementation. Do not implement workflow actions by injecting existing god-services into a central automation service.
 
 ## Core product gaps to keep visible
 
-Before calling the product layer mature, revisit:
+These remain useful but sit behind the committed sequence unless they are prerequisites for one of its features:
 
 - smooth post-login multi-workspace switching
 - bulk productivity and import/export
-- custom fields/forms
-- workflow/approval engine
+- custom fields
 - first-class knowledge/documents
 - user-facing analytics/reporting
 - richer onboarding, personalization, timezone and locale UX
 
 ## Deferred platform work
 
-### 2. Production Operations & Disaster Recovery
+### 3. Production Operations & Disaster Recovery
 
 Still important, but deliberately deferred from the immediate sequence while the product is enriched.
 
@@ -160,17 +199,17 @@ Target capabilities remain:
 - incident/recovery runbooks
 - secret/key rotation procedures
 
-### 3. Broader failure-recovery/load and production R2 verification
+### 4. Broader failure-recovery/load and production R2 verification
 
 Follow the operations/DR baseline later.
 
-### 4. Optional enterprise expansion
+### 5. Optional enterprise expansion
 
 - SAML where required
 - SCIM/directory provisioning where required
 - richer session/device/MFA/passkey controls when prioritized
 
-### 5. Optional notification expansion
+### 6. Optional notification expansion
 
 - digests
 - live browser delivery
