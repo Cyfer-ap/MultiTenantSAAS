@@ -59,7 +59,6 @@ class WorkflowRuntimeServiceTest {
 
         when(definition.getTenantId()).thenReturn(tenantId);
         when(definition.getId()).thenReturn(workflowId);
-        when(definition.getDefinitionVersion()).thenReturn(3);
         when(definitionRepository.findByTenantIdAndStatusOrderByNameAsc(
                         tenantId, WorkflowStatus.ACTIVE))
                 .thenReturn(List.of(definition));
