@@ -21,6 +21,8 @@ import com.chacha.multitenantsaas.repository.AppUserRepository;
 import com.chacha.multitenantsaas.repository.ProjectMemberRepository;
 import com.chacha.multitenantsaas.repository.ProjectRepository;
 import com.chacha.multitenantsaas.repository.ProjectTaskRepository;
+import com.chacha.multitenantsaas.tasks.events.TaskDomainEvent;
+import com.chacha.multitenantsaas.tasks.events.TaskDomainEventPublisher;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +44,7 @@ public class ProjectTaskService {
     private final TaskActivityService taskActivityService;
     private final TaskNotificationService taskNotificationService;
     private final OutboundWebhookEventService outboundWebhookEventService;
+    private final TaskDomainEventPublisher taskDomainEventPublisher;
 
     public ProjectTaskService(
             ProjectTaskRepository projectTaskRepository,
@@ -61,6 +64,7 @@ public class ProjectTaskService {
                 auditLogService,
                 taskActivityService,
                 taskNotificationService,
+                null,
                 null);
     }
 
@@ -74,7 +78,8 @@ public class ProjectTaskService {
             AuditLogService auditLogService,
             TaskActivityService taskActivityService,
             TaskNotificationService taskNotificationService,
-            OutboundWebhookEventService outboundWebhookEventService) {
+            OutboundWebhookEventService outboundWebhookEventService,
+            TaskDomainEventPublisher taskDomainEventPublisher) {
         this.projectTaskRepository = projectTaskRepository;
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
@@ -84,6 +89,7 @@ public class ProjectTaskService {
         this.taskActivityService = taskActivityService;
         this.taskNotificationService = taskNotificationService;
         this.outboundWebhookEventService = outboundWebhookEventService;
+        this.taskDomainEventPublisher = taskDomainEventPublisher;
     }
 
     @Transactional
@@ -129,6 +135,14 @@ public class ProjectTaskService {
 
         ProjectTaskResponse response = mapToResponse(savedTask);
         publish(tenantId, OutboundWebhookEventType.TASK_CREATED, response);
+        publishTaskDomainEvent(
+                TaskDomainEvent.created(
+                        tenantId,
+                        projectId,
+                        savedTask.getId(),
+                        creator.getId(),
+                        savedTask.getStatus(),
+                        savedTask.getPriority()));
         return response;
     }
 
@@ -266,6 +280,15 @@ public class ProjectTaskService {
                         ? OutboundWebhookEventType.TASK_COMPLETED
                         : OutboundWebhookEventType.TASK_UPDATED,
                 response);
+        publishTaskDomainEvent(
+                TaskDomainEvent.statusChanged(
+                        tenantId,
+                        projectId,
+                        taskId,
+                        actor.getId(),
+                        previousStatus,
+                        updatedTask.getStatus(),
+                        updatedTask.getPriority()));
         return response;
     }
 
@@ -363,6 +386,15 @@ public class ProjectTaskService {
 
         ProjectTaskResponse response = mapToResponse(cancelledTask);
         publish(tenantId, OutboundWebhookEventType.TASK_UPDATED, response);
+        publishTaskDomainEvent(
+                TaskDomainEvent.statusChanged(
+                        tenantId,
+                        projectId,
+                        taskId,
+                        actor.getId(),
+                        previousStatus,
+                        cancelledTask.getStatus(),
+                        cancelledTask.getPriority()));
         return response;
     }
 
@@ -465,6 +497,12 @@ public class ProjectTaskService {
             UUID tenantId, OutboundWebhookEventType eventType, ProjectTaskResponse response) {
         if (outboundWebhookEventService != null) {
             outboundWebhookEventService.publish(tenantId, eventType, response);
+        }
+    }
+
+    private void publishTaskDomainEvent(TaskDomainEvent event) {
+        if (taskDomainEventPublisher != null) {
+            taskDomainEventPublisher.publish(event);
         }
     }
 

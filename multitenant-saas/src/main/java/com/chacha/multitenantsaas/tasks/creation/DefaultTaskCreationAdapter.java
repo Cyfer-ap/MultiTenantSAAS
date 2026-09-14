@@ -18,6 +18,9 @@ import com.chacha.multitenantsaas.service.AuditLogService;
 import com.chacha.multitenantsaas.service.OutboundWebhookEventService;
 import com.chacha.multitenantsaas.service.TaskActivityService;
 import com.chacha.multitenantsaas.service.TaskNotificationService;
+import com.chacha.multitenantsaas.tasks.events.TaskDomainEvent;
+import com.chacha.multitenantsaas.tasks.events.TaskDomainEventPublisher;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +35,7 @@ public class DefaultTaskCreationAdapter implements TaskCreationPort {
     private final AuditLogService auditLogService;
     private final TaskNotificationService taskNotificationService;
     private final OutboundWebhookEventService outboundWebhookEventService;
+    private final TaskDomainEventPublisher taskDomainEventPublisher;
 
     public DefaultTaskCreationAdapter(
             ProjectRepository projectRepository,
@@ -42,6 +46,29 @@ public class DefaultTaskCreationAdapter implements TaskCreationPort {
             AuditLogService auditLogService,
             TaskNotificationService taskNotificationService,
             OutboundWebhookEventService outboundWebhookEventService) {
+        this(
+                projectRepository,
+                projectTaskRepository,
+                appUserRepository,
+                projectMemberRepository,
+                taskActivityService,
+                auditLogService,
+                taskNotificationService,
+                outboundWebhookEventService,
+                null);
+    }
+
+    @Autowired
+    public DefaultTaskCreationAdapter(
+            ProjectRepository projectRepository,
+            ProjectTaskRepository projectTaskRepository,
+            AppUserRepository appUserRepository,
+            ProjectMemberRepository projectMemberRepository,
+            TaskActivityService taskActivityService,
+            AuditLogService auditLogService,
+            TaskNotificationService taskNotificationService,
+            OutboundWebhookEventService outboundWebhookEventService,
+            TaskDomainEventPublisher taskDomainEventPublisher) {
         this.projectRepository = projectRepository;
         this.projectTaskRepository = projectTaskRepository;
         this.appUserRepository = appUserRepository;
@@ -50,6 +77,7 @@ public class DefaultTaskCreationAdapter implements TaskCreationPort {
         this.auditLogService = auditLogService;
         this.taskNotificationService = taskNotificationService;
         this.outboundWebhookEventService = outboundWebhookEventService;
+        this.taskDomainEventPublisher = taskDomainEventPublisher;
     }
 
     @Override
@@ -103,6 +131,16 @@ public class DefaultTaskCreationAdapter implements TaskCreationPort {
         taskNotificationService.notifyAssignment(saved, creator, assignee);
         outboundWebhookEventService.publish(
                 command.tenantId(), OutboundWebhookEventType.TASK_CREATED, mapResponse(saved));
+        if (taskDomainEventPublisher != null) {
+            taskDomainEventPublisher.publish(
+                    TaskDomainEvent.created(
+                            command.tenantId(),
+                            command.projectId(),
+                            saved.getId(),
+                            creator.getId(),
+                            saved.getStatus(),
+                            saved.getPriority()));
+        }
 
         return new TaskCreationResult(saved.getId(), saved.getCreatedAt());
     }
