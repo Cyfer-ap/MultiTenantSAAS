@@ -31,20 +31,29 @@ public class WorkflowGraphValidator {
         Map<String, WorkflowDtos.NodeRequest> nodesByKey = new LinkedHashMap<>();
         WorkflowDtos.NodeRequest trigger = null;
         for (WorkflowDtos.NodeRequest node : nodes) {
-            if (node == null || node.key() == null || node.type() == null || node.operation() == null) {
+            if (node == null
+                    || node.key() == null
+                    || node.type() == null
+                    || node.operation() == null) {
                 throw new IllegalArgumentException("Every workflow node must be complete");
             }
             if (nodesByKey.putIfAbsent(node.key(), node) != null) {
-                throw new IllegalArgumentException("Workflow node keys must be unique: " + node.key());
+                throw new IllegalArgumentException(
+                        "Workflow node keys must be unique: " + node.key());
             }
             if (node.operation().nodeType() != node.type()) {
                 throw new IllegalArgumentException(
-                        "Operation " + node.operation() + " cannot be used as a " + node.type() + " node");
+                        "Operation "
+                                + node.operation()
+                                + " cannot be used as a "
+                                + node.type()
+                                + " node");
             }
             normalizeConfiguration(node.operation(), node.configuration());
             if (node.type() == WorkflowNodeType.TRIGGER) {
                 if (trigger != null) {
-                    throw new IllegalArgumentException("A workflow must contain exactly one trigger");
+                    throw new IllegalArgumentException(
+                            "A workflow must contain exactly one trigger");
                 }
                 trigger = node;
             }
@@ -60,7 +69,8 @@ public class WorkflowGraphValidator {
             if (edge == null
                     || !nodesByKey.containsKey(edge.sourceKey())
                     || !nodesByKey.containsKey(edge.targetKey())) {
-                throw new IllegalArgumentException("Every workflow edge must reference existing nodes");
+                throw new IllegalArgumentException(
+                        "Every workflow edge must reference existing nodes");
             }
             if (edge.sourceKey().equals(edge.targetKey())) {
                 throw new IllegalArgumentException("Workflow edges cannot point to the same node");
@@ -80,8 +90,7 @@ public class WorkflowGraphValidator {
         }
 
         for (WorkflowDtos.NodeRequest node : nodes) {
-            List<WorkflowDtos.EdgeRequest> nodeEdges =
-                    outgoing.getOrDefault(node.key(), List.of());
+            List<WorkflowDtos.EdgeRequest> nodeEdges = outgoing.getOrDefault(node.key(), List.of());
             switch (node.type()) {
                 case TRIGGER -> validateLinearNode(node, nodeEdges, true);
                 case ACTION -> validateLinearNode(node, nodeEdges, false);
@@ -103,7 +112,8 @@ public class WorkflowGraphValidator {
         }
 
         if (supplied.size() != 1 || !supplied.containsKey("value")) {
-            throw new IllegalArgumentException(operation + " requires exactly one configuration key: value");
+            throw new IllegalArgumentException(
+                    operation + " requires exactly one configuration key: value");
         }
         String rawValue = supplied.get("value");
         if (rawValue == null || rawValue.isBlank()) {
@@ -114,7 +124,8 @@ public class WorkflowGraphValidator {
         try {
             if (operation.configurationKind() == WorkflowOperation.ConfigurationKind.PRIORITY) {
                 ProjectTaskPriority.valueOf(value);
-            } else if (operation.configurationKind() == WorkflowOperation.ConfigurationKind.STATUS) {
+            } else if (operation.configurationKind()
+                    == WorkflowOperation.ConfigurationKind.STATUS) {
                 ProjectTaskStatus.valueOf(value);
             }
         } catch (IllegalArgumentException exception) {
@@ -130,7 +141,10 @@ public class WorkflowGraphValidator {
             boolean requireOutgoing) {
         if ((requireOutgoing && edges.size() != 1) || (!requireOutgoing && edges.size() > 1)) {
             throw new IllegalArgumentException(
-                    node.type() + " node " + node.key() + " has an invalid number of outgoing edges");
+                    node.type()
+                            + " node "
+                            + node.key()
+                            + " has an invalid number of outgoing edges");
         }
         if (edges.stream().anyMatch(edge -> edge.branch() != WorkflowEdgeBranch.DEFAULT)) {
             throw new IllegalArgumentException(
@@ -172,7 +186,8 @@ public class WorkflowGraphValidator {
             }
         }
         if (reachable.size() != nodeKeys.size()) {
-            throw new IllegalArgumentException("Every workflow node must be reachable from the trigger");
+            throw new IllegalArgumentException(
+                    "Every workflow node must be reachable from the trigger");
         }
 
         Map<String, Integer> remainingIncoming = new HashMap<>();

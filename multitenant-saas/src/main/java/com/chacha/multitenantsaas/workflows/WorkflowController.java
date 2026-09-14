@@ -34,7 +34,8 @@ public class WorkflowController {
             @PathVariable UUID tenantId, @PageableDefault(size = 50) Pageable pageable) {
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Workflows fetched successfully", workflowService.list(tenantId, pageable)));
+                        "Workflows fetched successfully",
+                        workflowService.list(tenantId, pageable)));
     }
 
     @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId,'project.read')")
@@ -43,7 +44,8 @@ public class WorkflowController {
             @PathVariable UUID tenantId, @PathVariable UUID workflowId) {
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Workflow fetched successfully", workflowService.get(tenantId, workflowId)));
+                        "Workflow fetched successfully",
+                        workflowService.get(tenantId, workflowId)));
     }
 
     @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId,'project.update')")
@@ -54,7 +56,8 @@ public class WorkflowController {
             @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Workflow created successfully", workflowService.create(tenantId, request, jwt)));
+                        "Workflow created successfully",
+                        workflowService.create(tenantId, request, jwt)));
     }
 
     @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId,'project.update')")
@@ -85,6 +88,7 @@ public class WorkflowController {
             @PathVariable UUID tenantId, @PathVariable UUID workflowId) {
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Workflow paused successfully", workflowService.pause(tenantId, workflowId)));
+                        "Workflow paused successfully",
+                        workflowService.pause(tenantId, workflowId)));
     }
 }

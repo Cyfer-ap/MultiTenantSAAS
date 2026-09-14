@@ -98,9 +98,7 @@ public class WorkflowService {
             throw new IllegalArgumentException("A workflow with this name already exists");
         }
         definition.updateDefinition(
-                request.name().trim(),
-                normalizedName,
-                normalizeDescription(request.description()));
+                request.name().trim(), normalizedName, normalizeDescription(request.description()));
         definitionRepository.saveAndFlush(definition);
         replaceGraph(definition, request.nodes(), request.edges());
         return map(definition);
@@ -266,7 +264,8 @@ public class WorkflowService {
         try {
             return objectMapper.writeValueAsString(configuration);
         } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Unable to serialize workflow configuration", exception);
+            throw new IllegalStateException(
+                    "Unable to serialize workflow configuration", exception);
         }
     }
 

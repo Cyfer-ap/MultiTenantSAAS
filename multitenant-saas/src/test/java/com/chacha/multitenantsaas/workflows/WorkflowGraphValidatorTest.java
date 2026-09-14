@@ -116,8 +116,7 @@ class WorkflowGraphValidatorTest {
         return new WorkflowDtos.NodeRequest(key, type, operation, configuration, 100, 100);
     }
 
-    private WorkflowDtos.EdgeRequest edge(
-            String source, String target, WorkflowEdgeBranch branch) {
+    private WorkflowDtos.EdgeRequest edge(String source, String target, WorkflowEdgeBranch branch) {
         return new WorkflowDtos.EdgeRequest(source, target, branch);
     }
 }

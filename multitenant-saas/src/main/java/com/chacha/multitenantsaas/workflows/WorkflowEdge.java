@@ -19,7 +19,10 @@ import java.util.UUID;
                 @UniqueConstraint(
                         name = "uk_workflow_edge_branch",
                         columnNames = {
-                            "tenant_id", "workflow_id", "source_node_key", "branch_type"
+                            "tenant_id",
+                            "workflow_id",
+                            "source_node_key",
+                            "branch_type"
                         }),
         indexes =
                 @Index(
