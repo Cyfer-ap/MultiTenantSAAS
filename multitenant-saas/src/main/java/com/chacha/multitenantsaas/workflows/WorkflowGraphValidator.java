@@ -132,6 +132,12 @@ public class WorkflowGraphValidator {
             throw new IllegalArgumentException(
                     "Unsupported value for " + operation + ": " + rawValue, exception);
         }
+
+        if (operation == WorkflowOperation.ACTION_SET_TASK_STATUS
+                && value.equals(ProjectTaskStatus.CANCELLED.name())) {
+            throw new IllegalArgumentException(
+                    "Workflow status actions cannot cancel tasks; cancellation uses the dedicated task lifecycle operation");
+        }
         return Map.of("value", value);
     }
 

@@ -108,6 +108,23 @@ class WorkflowGraphValidatorTest {
                 .hasMessageContaining("cannot be used");
     }
 
+    @Test
+    void rejectsCancellationAsAStatusActionButAllowsItAsACondition() {
+        assertThatThrownBy(
+                        () ->
+                                validator.normalizeConfiguration(
+                                        WorkflowOperation.ACTION_SET_TASK_STATUS,
+                                        Map.of("value", "cancelled")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("cannot cancel tasks");
+
+        assertThat(
+                        validator.normalizeConfiguration(
+                                WorkflowOperation.CONDITION_TASK_STATUS_EQUALS,
+                                Map.of("value", "cancelled")))
+                .containsEntry("value", "CANCELLED");
+    }
+
     private WorkflowDtos.NodeRequest node(
             String key,
             WorkflowNodeType type,
