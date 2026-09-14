@@ -6,7 +6,7 @@ Use this page as the reader-facing Wiki pointer for resuming development. Reposi
 
 **Product Experience & Work Management Enrichment**
 
-Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View and Task Relationships/Task Planning are established. The next implementation slice is **Recurring Work + Project/Task Templates**.
+Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View and Task Relationships/Task Planning are established. PR #141 adds the V48 recurring-task/project-task-template backend foundation. The broader recurring/templates milestone remains open.
 
 ## Read first
 
@@ -26,94 +26,72 @@ Inside the repository:
 4. `guides/current_architecture.md`
 5. `guides/ENGINEERING_STANDARDS.md`
 6. `guides/task_relationships.md`
-7. the focused guide for the domain being changed
+7. `guides/recurring_work_and_templates.md`
+8. the focused guide for the domain being changed
 
 ## Engineering rule
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Current reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, the Saved Views context-validator SPI, Dashboard frontend composition, Calendar's narrow deadline-source contract, and Task Relationships' task gateway/change sink.
+Current reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, the Saved Views context-validator SPI, Dashboard frontend composition, Calendar's narrow deadline-source contract, Task Relationships' task gateway/change sink, and the V48 `TaskCreationPort` work-generation boundary.
 
-## Task Relationships checkpoint
+## V48 work-generation checkpoint
 
-Backend #139 + frontend #140 establish:
+PR #141 establishes:
 
-- V47 task parent/dependency/project-label persistence
-- same-project parent hierarchy with self/cycle rejection
-- directed `blocking -> dependent` edges with duplicate/self/cycle prevention
-- bounded hierarchy/dependency traversal and reads
-- project-scoped normalized labels
-- explicit `taskrelationships` backend domain split into query/graph/label responsibilities
-- `/task-planning` frontend feature domain using authorization-safe Global Search selection
-- shared-navigation integration so Command Palette and Dashboard quick actions inherit Task Planning
+- `recurringwork` owning recurring definitions/materialization/history
+- `tasktemplates` owning project-scoped task templates
+- task-owned `tasks/creation/TaskCreationPort`
+- V48 recurring definitions, occurrence linkage and project task templates
+- explicit IANA timezone recurrence with `DAILY`, `WEEKLY`, `MONTHLY`
+- bounded due discovery and catch-up generation
+- pessimistic materialization locking + database occurrence uniqueness
+- pause/resume/edit/end/count semantics
+- project-scoped task-template snapshot/copy behavior
+- ordinary activity/audit/assignment-notification/webhook lifecycle for generated tasks
 
-Relationship metadata does not automatically change task status. Do not turn this domain into generic graph infrastructure.
+Calendar remains a deadline projection and Task Relationships remains hierarchy/dependency/label ownership.
 
-Detailed rules live in repository guide `guides/task_relationships.md`.
+Detailed rules live in `guides/recurring_work_and_templates.md`.
 
-## Calendar checkpoint
+## Immediate next slice
 
-Calendar remains a bounded projection over authorized task deadlines:
+Finish the same milestone before starting bulk productivity:
 
-- `/calendar` month grid and selected-day agenda
-- local-time rendering
-- `[from,to)` backend semantics
-- maximum 93-day range and 500 returned deadlines with truncation signaling
-- task-owned candidate retrieval and authoritative task-read revalidation
-- no synthetic project deadlines
+1. tenant-scoped project-template backend
+2. project-owned narrow `ProjectCreationPort`
+3. bounded project-template task snapshots
+4. feature-local recurring-work UI
+5. feature-local task-template UI
+6. project-template catalog/instantiate UI
+7. final recurring/templates milestone documentation and full validation
 
-Do not convert Calendar into a scheduler or recurrence engine.
+Project-template instantiation must preserve project quota, actor validation, initial owner/lead membership, audit and project lifecycle behavior without injecting the full legacy `ProjectService` into the template domain.
 
-## Next feature guidance — Recurring Work + Templates
-
-Before schema/API/UI work, define product semantics explicitly.
-
-Recurring work needs decisions on:
-
-- supported cadence/schedule representation
-- timezone and DST ownership
-- occurrence materialization horizon
-- idempotency/concurrency for occurrence creation
-- pause/resume/edit/end behavior
-- behavior when previous occurrences are incomplete
-- source linkage/auditability for generated tasks
-
-Templates need decisions on:
-
-- tenant versus project scope
-- task versus project templates
-- copy/snapshot semantics and optional versioning
-- which fields, labels, subtasks and dependencies are copied
-- authorization for catalog management versus use
-- bounded template size and instantiation
-
-Recurrence/templates should use an explicit owning domain and narrow task/project creation contracts. Do not add them to `ProjectTaskService`, `TaskGraphService`, Calendar or shell components merely because they touch tasks.
-
-Any persistence change must use new append-only Flyway migration(s) after **V47**.
+Any new persistence starts at **V49+**. Applied V48 and earlier migrations remain immutable.
 
 ## Preserve these system invariants
 
 - tenant isolation precedes resource access
 - backend authorization is authoritative
 - stored favorites/recents/saved-view definitions never grant resource access
-- calendar/deadline and Task Planning data are authorized before exposure
+- Calendar and Task Planning data are authorized before exposure
 - task relationship edges never bypass tenant/project/task authorization
-- graph traversal and collections remain bounded
+- recurring/template generation reuses authoritative project/task access rules
+- graph traversal, reads and generation batches remain bounded
 - Explain Access and enforcement use the same evaluator
 - delegated authority never exceeds its current direct parent authority
-- protected authorization permissions remain non-delegable
 - public APIs expose DTOs rather than persistence entities
-- applied Flyway migrations remain append-only
+- retryable/concurrent flows use idempotency and locking where needed
 - provider secrets remain server-side
-- retryable/concurrent flows consider idempotency and locking
 
 ## Immediate product sequence
 
-1. recurring work + project/task templates
+1. finish recurring work + project/task templates
 2. bulk actions + CSV import/export
 3. custom fields/forms + workflows/approvals + knowledge/documents
 4. user-facing analytics and selected differentiated experiments
-5. ongoing onboarding/workspace-switching/personalization polish
+5. onboarding/workspace-switching/personalization polish
 
 ## Deferred work
 
