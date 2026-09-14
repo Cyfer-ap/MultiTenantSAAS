@@ -3,9 +3,6 @@ package com.chacha.multitenantsaas.workflows;
 import com.chacha.multitenantsaas.dto.PageResponse;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.service.CurrentActorService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -16,6 +13,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class WorkflowService {
@@ -263,7 +263,7 @@ public class WorkflowService {
     private String serializeConfiguration(Map<String, String> configuration) {
         try {
             return objectMapper.writeValueAsString(configuration);
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             throw new IllegalStateException(
                     "Unable to serialize workflow configuration", exception);
         }
@@ -275,7 +275,7 @@ public class WorkflowService {
         }
         try {
             return objectMapper.readValue(configurationJson, CONFIGURATION_TYPE);
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             throw new IllegalStateException("Stored workflow configuration is invalid", exception);
         }
     }
