@@ -52,8 +52,8 @@ public class CalendarDeadlineService {
                                                         grant.permissionCodes()))
                                 .toList());
 
-        var items =
-                deadlineSource.findDeadlines(context, from, to, limit).stream()
+        var candidates =
+                deadlineSource.findDeadlines(context, from, to, limit + 1).stream()
                         .map(
                                 deadline ->
                                         new CalendarDeadlineItemResponse(
@@ -76,10 +76,13 @@ public class CalendarDeadlineService {
                                         .thenComparing(
                                                 CalendarDeadlineItemResponse::title,
                                                 String.CASE_INSENSITIVE_ORDER))
-                        .limit(limit)
+                        .limit(limit + 1L)
                         .toList();
 
-        return new CalendarDeadlineResponse(Instant.now(), from, to, items.size(), items);
+        boolean truncated = candidates.size() > limit;
+        var items = candidates.subList(0, Math.min(limit, candidates.size()));
+        return new CalendarDeadlineResponse(
+                Instant.now(), from, to, items.size(), truncated, items);
     }
 
     private void validateRange(Instant from, Instant to) {
