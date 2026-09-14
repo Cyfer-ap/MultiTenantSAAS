@@ -76,7 +76,7 @@ public class WorkflowService {
         }
         UUID actorUserId = currentActorService.getRequiredActiveActor(tenantId, jwt).getId();
         WorkflowDefinition definition =
-                definitionRepository.save(
+                definitionRepository.saveAndFlush(
                         new WorkflowDefinition(
                                 tenantId,
                                 actorUserId,
@@ -101,7 +101,7 @@ public class WorkflowService {
                 request.name().trim(),
                 normalizedName,
                 normalizeDescription(request.description()));
-        definitionRepository.save(definition);
+        definitionRepository.saveAndFlush(definition);
         replaceGraph(definition, request.nodes(), request.edges());
         return map(definition);
     }
@@ -157,7 +157,9 @@ public class WorkflowService {
             List<WorkflowDtos.NodeRequest> nodeRequests,
             List<WorkflowDtos.EdgeRequest> edgeRequests) {
         edgeRepository.deleteByTenantIdAndWorkflowId(definition.getTenantId(), definition.getId());
+        edgeRepository.flush();
         nodeRepository.deleteByTenantIdAndWorkflowId(definition.getTenantId(), definition.getId());
+        nodeRepository.flush();
 
         List<WorkflowNode> nodes =
                 nodeRequests.stream()
@@ -176,7 +178,7 @@ public class WorkflowService {
                                                 request.x(),
                                                 request.y()))
                         .toList();
-        nodeRepository.saveAll(nodes);
+        nodeRepository.saveAllAndFlush(nodes);
 
         List<WorkflowEdge> edges =
                 edgeRequests.stream()
