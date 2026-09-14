@@ -1,18 +1,28 @@
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
 import {
     Alert,
     Box,
     Button,
     Chip,
     CircularProgress,
+    FormControl,
+    InputAdornment,
+    InputLabel,
+    MenuItem,
     Paper,
+    Select,
     Skeleton,
     Stack,
+    TextField,
     Typography,
 } from '@mui/material'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 
 import { useAuth } from '../../auth/hooks/useAuth'
+import { SavedViewsToolbar } from '../../saved-views/components/SavedViewsToolbar'
+import type { SavedViewDefinition } from '../../saved-views/types/savedViews'
 import { useMyWork } from '../hooks/useMyWork'
 import type { MyWorkAttention, MyWorkItem } from '../types/myWork'
 
@@ -23,6 +33,12 @@ const attentionOrder: MyWorkAttention[] = [
     'IN_PROGRESS',
     'ASSIGNED',
 ]
+const statusOrder: MyWorkItem['status'][] = ['TODO', 'IN_PROGRESS', 'BLOCKED']
+const priorityOrder: MyWorkItem['priority'][] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT']
+
+type AttentionFilter = MyWorkAttention | 'ALL'
+type StatusFilter = MyWorkItem['status'] | 'ALL'
+type PriorityFilter = MyWorkItem['priority'] | 'ALL'
 
 const attentionLabels: Record<MyWorkAttention, string> = {
     OVERDUE: 'Overdue',
@@ -73,6 +89,13 @@ function getPriorityColor(
     if (priority === 'HIGH') return 'warning'
     if (priority === 'MEDIUM') return 'info'
     return 'default'
+}
+
+function readFilter<T extends string>(
+    value: string | undefined,
+    allowed: readonly T[],
+): T | 'ALL' {
+    return value && allowed.includes(value as T) ? (value as T) : 'ALL'
 }
 
 function SummaryCard({
@@ -155,6 +178,50 @@ export function MyWorkPage() {
     const { session } = useAuth()
     const tenantId = session?.tenantId ?? ''
     const workQuery = useMyWork(tenantId, 100)
+    const [search, setSearch] = useState('')
+    const [attention, setAttention] = useState<AttentionFilter>('ALL')
+    const [status, setStatus] = useState<StatusFilter>('ALL')
+    const [priority, setPriority] = useState<PriorityFilter>('ALL')
+
+    const currentDefinition = useMemo<SavedViewDefinition>(() => {
+        const definition: SavedViewDefinition = {}
+        if (search.trim()) definition.search = search.trim()
+        if (attention !== 'ALL') definition.attention = attention
+        if (status !== 'ALL') definition.status = status
+        if (priority !== 'ALL') definition.priority = priority
+        return definition
+    }, [attention, priority, search, status])
+
+    const applyDefinition = (definition: SavedViewDefinition) => {
+        setSearch(definition.search ?? '')
+        setAttention(readFilter(definition.attention, attentionOrder))
+        setStatus(readFilter(definition.status, statusOrder))
+        setPriority(readFilter(definition.priority, priorityOrder))
+    }
+
+    const clearFilters = () => {
+        setSearch('')
+        setAttention('ALL')
+        setStatus('ALL')
+        setPriority('ALL')
+    }
+
+    const filteredItems = useMemo(() => {
+        const query = search.trim().toLowerCase()
+        return (workQuery.data?.items ?? []).filter((item) => {
+            if (attention !== 'ALL' && item.attention !== attention) return false
+            if (status !== 'ALL' && item.status !== status) return false
+            if (priority !== 'ALL' && item.priority !== priority) return false
+            if (
+                query &&
+                !`${item.title} ${item.projectName}`.toLowerCase().includes(query)
+            ) {
+                return false
+            }
+            return true
+        })
+    }, [attention, priority, search, status, workQuery.data?.items])
+    const hasFilters = Object.keys(currentDefinition).length > 0
 
     return (
         <Box>
@@ -245,6 +312,96 @@ export function MyWorkPage() {
                         />
                     </Box>
 
+                    <Paper variant="outlined" sx={{ marginTop: 3, padding: 2 }}>
+                        <Stack spacing={2}>
+                            <SavedViewsToolbar
+                                definition={currentDefinition}
+                                onApply={applyDefinition}
+                                target="MY_WORK"
+                                tenantId={tenantId}
+                            />
+                            <Stack
+                                direction={{ xs: 'column', md: 'row' }}
+                                spacing={1.5}
+                                sx={{ alignItems: { md: 'center' } }}
+                            >
+                                <TextField
+                                    label="Search My Work"
+                                    onChange={(event) => setSearch(event.target.value)}
+                                    size="small"
+                                    slotProps={{
+                                        input: {
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <SearchRoundedIcon fontSize="small" />
+                                                </InputAdornment>
+                                            ),
+                                        },
+                                    }}
+                                    value={search}
+                                />
+                                <FormControl size="small" sx={{ minWidth: 150 }}>
+                                    <InputLabel>Attention</InputLabel>
+                                    <Select
+                                        label="Attention"
+                                        onChange={(event) =>
+                                            setAttention(event.target.value as AttentionFilter)
+                                        }
+                                        value={attention}
+                                    >
+                                        <MenuItem value="ALL">All attention</MenuItem>
+                                        {attentionOrder.map((value) => (
+                                            <MenuItem key={value} value={value}>
+                                                {attentionLabels[value]}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <FormControl size="small" sx={{ minWidth: 145 }}>
+                                    <InputLabel>Status</InputLabel>
+                                    <Select
+                                        label="Status"
+                                        onChange={(event) =>
+                                            setStatus(event.target.value as StatusFilter)
+                                        }
+                                        value={status}
+                                    >
+                                        <MenuItem value="ALL">All statuses</MenuItem>
+                                        {statusOrder.map((value) => (
+                                            <MenuItem key={value} value={value}>
+                                                {statusLabels[value]}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <FormControl size="small" sx={{ minWidth: 145 }}>
+                                    <InputLabel>Priority</InputLabel>
+                                    <Select
+                                        label="Priority"
+                                        onChange={(event) =>
+                                            setPriority(event.target.value as PriorityFilter)
+                                        }
+                                        value={priority}
+                                    >
+                                        <MenuItem value="ALL">All priorities</MenuItem>
+                                        {priorityOrder.map((value) => (
+                                            <MenuItem key={value} value={value}>
+                                                {priorityLabels[value]}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <Button disabled={!hasFilters} onClick={clearFilters} size="small">
+                                    Clear filters
+                                </Button>
+                            </Stack>
+                            <Typography color="text.secondary" variant="caption">
+                                Showing {filteredItems.length} of {workQuery.data.items.length} assigned
+                                open tasks.
+                            </Typography>
+                        </Stack>
+                    </Paper>
+
                     {workQuery.data.items.length === 0 ? (
                         <Paper
                             variant="outlined"
@@ -259,23 +416,36 @@ export function MyWorkPage() {
                                 You do not currently have any readable open tasks assigned to you.
                             </Typography>
                         </Paper>
+                    ) : filteredItems.length === 0 ? (
+                        <Paper
+                            variant="outlined"
+                            sx={{ marginTop: 3, padding: 4, textAlign: 'center' }}
+                        >
+                            <Typography variant="h6">No tasks match this view</Typography>
+                            <Typography color="text.secondary" variant="body2">
+                                Adjust the filters or clear them to see the rest of your assigned work.
+                            </Typography>
+                            <Button onClick={clearFilters} sx={{ marginTop: 1 }} size="small">
+                                Clear filters
+                            </Button>
+                        </Paper>
                     ) : (
                         <Stack spacing={3} sx={{ marginTop: 3 }}>
-                            {attentionOrder.map((attention) => {
-                                const items = workQuery.data.items.filter(
-                                    (item) => item.attention === attention,
+                            {attentionOrder.map((attentionValue) => {
+                                const items = filteredItems.filter(
+                                    (item) => item.attention === attentionValue,
                                 )
                                 if (items.length === 0) return null
 
                                 return (
-                                    <Box key={attention}>
+                                    <Box key={attentionValue}>
                                         <Stack
                                             direction="row"
                                             spacing={1}
                                             sx={{ alignItems: 'baseline', marginBottom: 1 }}
                                         >
                                             <Typography component="h2" variant="h6">
-                                                {attentionLabels[attention]}
+                                                {attentionLabels[attentionValue]}
                                             </Typography>
                                             <Typography color="text.secondary" variant="caption">
                                                 {items.length}

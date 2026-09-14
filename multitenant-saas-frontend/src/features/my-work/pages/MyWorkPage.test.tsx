@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -6,6 +6,12 @@ import { MyWorkPage } from './MyWorkPage'
 
 vi.mock('../../auth/hooks/useAuth', () => ({
     useAuth: () => ({ session: { tenantId: 'tenant-1' } }),
+}))
+
+vi.mock('../../saved-views/components/SavedViewsToolbar', () => ({
+    SavedViewsToolbar: ({ onApply }: { onApply: (definition: Record<string, string>) => void }) => (
+        <button onClick={() => onApply({ attention: 'BLOCKED' })}>Apply blocked view</button>
+    ),
 }))
 
 vi.mock('../hooks/useMyWork', () => ({
@@ -69,5 +75,19 @@ describe('MyWorkPage', () => {
             'href',
             '/projects/project-1?task=task-1',
         )
+    })
+
+    it('applies a saved view definition without changing the authorized source query', () => {
+        render(
+            <MemoryRouter>
+                <MyWorkPage />
+            </MemoryRouter>,
+        )
+
+        fireEvent.click(screen.getByRole('button', { name: 'Apply blocked view' }))
+
+        expect(screen.queryByRole('heading', { name: 'Overdue' })).not.toBeInTheDocument()
+        expect(screen.getByRole('heading', { name: 'Blocked' })).toBeInTheDocument()
+        expect(screen.getByText('Showing 1 of 2 assigned open tasks.')).toBeInTheDocument()
     })
 })
