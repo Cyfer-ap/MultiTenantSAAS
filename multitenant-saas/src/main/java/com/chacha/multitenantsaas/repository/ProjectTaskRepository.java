@@ -11,6 +11,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -21,6 +22,13 @@ public interface ProjectTaskRepository
             UUID tenantId, UUID projectId, UUID taskId);
 
     Optional<ProjectTask> findByTenant_IdAndId(UUID tenantId, UUID taskId);
+
+    @EntityGraph(attributePaths = "project")
+    Page<ProjectTask> findByTenant_IdAndAssigneeUser_IdAndStatusNotIn(
+            UUID tenantId,
+            UUID assigneeUserId,
+            Collection<ProjectTaskStatus> excludedStatuses,
+            Pageable pageable);
 
     long countByTenant_Id(UUID tenantId);
 

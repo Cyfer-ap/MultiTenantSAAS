@@ -12,6 +12,7 @@ describe('authorization workspace access', () => {
         })
 
         expect(getAvailableWorkspaceNavigationItems(context).map((item) => item.label)).toEqual([
+            'My Work',
             'Favorites',
             'Authorization',
         ])
@@ -24,6 +25,7 @@ describe('authorization workspace access', () => {
         })
 
         expect(getAvailableWorkspaceNavigationItems(context).map((item) => item.label)).toEqual([
+            'My Work',
             'Favorites',
             'Authorization',
         ])

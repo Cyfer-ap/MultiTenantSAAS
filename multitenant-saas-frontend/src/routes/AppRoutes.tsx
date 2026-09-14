@@ -105,6 +105,12 @@ const InvitationsPage = lazy(() =>
     })),
 )
 
+const MyWorkPage = lazy(() =>
+    import('../features/my-work/pages/MyWorkPage').then((module) => ({
+        default: module.MyWorkPage,
+    })),
+)
+
 const NotFoundPage = lazy(() =>
     import('../pages/NotFoundPage').then((module) => ({
         default: module.NotFoundPage,
@@ -264,6 +270,7 @@ export function AppRoutes() {
                             <Route path="dashboard" element={<DashboardPage />} />
                         </Route>
 
+                        <Route path="my-work" element={<MyWorkPage />} />
                         <Route path="personal" element={<PersonalWorkspacePage />} />
 
                         <Route
