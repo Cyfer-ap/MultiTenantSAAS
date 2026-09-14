@@ -37,9 +37,7 @@ public class TaskMyWorkSource implements MyWorkTaskSource {
         int limit = Math.max(1, Math.min(requestedLimit, MAX_FETCH));
         var pageable =
                 PageRequest.of(
-                        0,
-                        limit,
-                        Sort.by(Sort.Order.asc("dueAt"), Sort.Order.desc("updatedAt")));
+                        0, limit, Sort.by(Sort.Order.asc("dueAt"), Sort.Order.desc("updatedAt")));
         Map<UUID, Boolean> projectAccess = new HashMap<>();
 
         return projectTaskRepository
