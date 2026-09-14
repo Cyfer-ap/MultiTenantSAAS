@@ -28,10 +28,6 @@ public interface ProjectTaskRepository
     List<ProjectTask> findByProject_Tenant_IdAndProject_IdAndParentTask_IdOrderByCreatedAtAsc(
             UUID tenantId, UUID projectId, UUID parentTaskId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"project", "parentTask"})
-    List<ProjectTask> findByTenant_IdAndProject_IdAndIdIn(
-            UUID tenantId, UUID projectId, Collection<UUID> taskIds);
-
     @EntityGraph(attributePaths = "project")
     Page<ProjectTask> findByTenant_IdAndAssigneeUser_IdAndStatusNotIn(
             UUID tenantId,
