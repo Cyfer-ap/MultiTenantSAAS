@@ -107,7 +107,7 @@ export function WorkAutomationPage() {
 
     if (authorizationQuery.isLoading) {
         return (
-            <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 320 }}>
+            <Stack sx={{ alignItems: 'center', justifyContent: 'center', minHeight: 320 }}>
                 <CircularProgress />
             </Stack>
         )
