@@ -30,7 +30,8 @@ public class MyWorkService {
         this.taskSource = taskSource;
     }
 
-    public MyWorkOverviewResponse getOverview(UUID tenantId, AppUser actor, Integer requestedLimit) {
+    public MyWorkOverviewResponse getOverview(
+            UUID tenantId, AppUser actor, Integer requestedLimit) {
         int limit = normalizeLimit(requestedLimit);
         Instant generatedAt = Instant.now();
         Instant dueSoonCutoff = generatedAt.plus(DUE_SOON_WINDOW);
@@ -44,10 +45,7 @@ public class MyWorkService {
                         .toList();
 
         return new MyWorkOverviewResponse(
-                generatedAt,
-                (int) DUE_SOON_WINDOW.toHours(),
-                summarize(items),
-                items);
+                generatedAt, (int) DUE_SOON_WINDOW.toHours(), summarize(items), items);
     }
 
     private MyWorkItemResponse toResponse(
@@ -90,11 +88,9 @@ public class MyWorkService {
     }
 
     private Comparator<MyWorkItemResponse> itemComparator() {
-        return Comparator.comparingInt(
-                        (MyWorkItemResponse item) -> attentionRank(item.attention()))
+        return Comparator.comparingInt((MyWorkItemResponse item) -> attentionRank(item.attention()))
                 .thenComparing(
-                        MyWorkItemResponse::dueAt,
-                        Comparator.nullsLast(Comparator.naturalOrder()))
+                        MyWorkItemResponse::dueAt, Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparingInt(item -> priorityRank(item.priority()))
                 .thenComparing(MyWorkItemResponse::updatedAt, Comparator.reverseOrder());
     }

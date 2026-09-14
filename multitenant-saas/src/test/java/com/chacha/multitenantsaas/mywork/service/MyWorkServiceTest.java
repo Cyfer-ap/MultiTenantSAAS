@@ -30,7 +30,8 @@ class MyWorkServiceTest {
         when(actor.getId()).thenReturn(userId);
 
         MyWorkTaskSnapshot assigned =
-                snapshot(projectId, "Assigned", "TODO", "LOW", null, now.minus(2, ChronoUnit.HOURS));
+                snapshot(
+                        projectId, "Assigned", "TODO", "LOW", null, now.minus(2, ChronoUnit.HOURS));
         MyWorkTaskSnapshot inProgress =
                 snapshot(
                         projectId,
@@ -41,22 +42,10 @@ class MyWorkServiceTest {
                         now.minus(1, ChronoUnit.HOURS));
         MyWorkTaskSnapshot dueSoon =
                 snapshot(
-                        projectId,
-                        "Due soon",
-                        "TODO",
-                        "HIGH",
-                        now.plus(12, ChronoUnit.HOURS),
-                        now);
-        MyWorkTaskSnapshot blocked =
-                snapshot(projectId, "Blocked", "BLOCKED", "URGENT", null, now);
+                        projectId, "Due soon", "TODO", "HIGH", now.plus(12, ChronoUnit.HOURS), now);
+        MyWorkTaskSnapshot blocked = snapshot(projectId, "Blocked", "BLOCKED", "URGENT", null, now);
         MyWorkTaskSnapshot overdue =
-                snapshot(
-                        projectId,
-                        "Overdue",
-                        "TODO",
-                        "HIGH",
-                        now.minus(6, ChronoUnit.HOURS),
-                        now);
+                snapshot(projectId, "Overdue", "TODO", "HIGH", now.minus(6, ChronoUnit.HOURS), now);
 
         when(source.findAssignedOpenTasks(eq(tenantId), eq(userId), anyInt()))
                 .thenReturn(List.of(assigned, inProgress, dueSoon, blocked, overdue));

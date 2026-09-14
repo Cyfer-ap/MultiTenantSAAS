@@ -31,7 +31,8 @@ class TaskMyWorkSourceTest {
         UUID readableProjectId = UUID.randomUUID();
         UUID hiddenProjectId = UUID.randomUUID();
         ProjectTaskRepository repository = mock(ProjectTaskRepository.class);
-        AuthorizationSecurityService authorizationSecurity = mock(AuthorizationSecurityService.class);
+        AuthorizationSecurityService authorizationSecurity =
+                mock(AuthorizationSecurityService.class);
         ProjectTask readable = task(readableProjectId, "Readable");
         ProjectTask hidden = task(hiddenProjectId, "Hidden");
 
@@ -39,31 +40,25 @@ class TaskMyWorkSourceTest {
                         eq(tenantId), eq(userId), anyCollection(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(readable, hidden)));
         when(authorizationSecurity.canReadProjectTasks(
-                        tenantId,
-                        readableProjectId,
-                        PlatformPermissionCodes.PROJECT_TASK_READ))
+                        tenantId, readableProjectId, PlatformPermissionCodes.PROJECT_TASK_READ))
                 .thenReturn(true);
         when(authorizationSecurity.canReadProjectTasks(
-                        tenantId,
-                        hiddenProjectId,
-                        PlatformPermissionCodes.PROJECT_TASK_READ))
+                        tenantId, hiddenProjectId, PlatformPermissionCodes.PROJECT_TASK_READ))
                 .thenReturn(false);
 
         var results =
                 new TaskMyWorkSource(repository, authorizationSecurity)
                         .findAssignedOpenTasks(tenantId, userId, 50);
 
-        assertThat(results).singleElement().satisfies(item -> assertThat(item.title()).isEqualTo("Readable"));
+        assertThat(results)
+                .singleElement()
+                .satisfies(item -> assertThat(item.title()).isEqualTo("Readable"));
         verify(authorizationSecurity)
                 .canReadProjectTasks(
-                        tenantId,
-                        readableProjectId,
-                        PlatformPermissionCodes.PROJECT_TASK_READ);
+                        tenantId, readableProjectId, PlatformPermissionCodes.PROJECT_TASK_READ);
         verify(authorizationSecurity)
                 .canReadProjectTasks(
-                        tenantId,
-                        hiddenProjectId,
-                        PlatformPermissionCodes.PROJECT_TASK_READ);
+                        tenantId, hiddenProjectId, PlatformPermissionCodes.PROJECT_TASK_READ);
     }
 
     private ProjectTask task(UUID projectId, String title) {

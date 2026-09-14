@@ -39,9 +39,7 @@ public class TaskMyWorkSource implements MyWorkTaskSource {
                 PageRequest.of(
                         0,
                         limit,
-                        Sort.by(
-                                Sort.Order.asc("dueAt").nullsLast(),
-                                Sort.Order.desc("updatedAt")));
+                        Sort.by(Sort.Order.asc("dueAt").nullsLast(), Sort.Order.desc("updatedAt")));
         Map<UUID, Boolean> projectAccess = new HashMap<>();
 
         return projectTaskRepository

@@ -75,7 +75,15 @@ function getPriorityColor(
     return 'default'
 }
 
-function SummaryCard({ label, value, emphasis }: { label: string; value: number; emphasis?: boolean }) {
+function SummaryCard({
+    label,
+    value,
+    emphasis,
+}: {
+    label: string
+    value: number
+    emphasis?: boolean
+}) {
     return (
         <Paper variant="outlined" sx={{ padding: 2 }}>
             <Typography color="text.secondary" variant="caption">
@@ -195,7 +203,11 @@ export function MyWorkPage() {
             {workQuery.isError && (
                 <Alert
                     action={
-                        <Button color="inherit" onClick={() => void workQuery.refetch()} size="small">
+                        <Button
+                            color="inherit"
+                            onClick={() => void workQuery.refetch()}
+                            size="small"
+                        >
                             Retry
                         </Button>
                     }
@@ -227,13 +239,23 @@ export function MyWorkPage() {
                         />
                         <SummaryCard label="Due soon" value={workQuery.data.summary.dueSoon} />
                         <SummaryCard label="Blocked" value={workQuery.data.summary.blocked} />
-                        <SummaryCard label="In progress" value={workQuery.data.summary.inProgress} />
+                        <SummaryCard
+                            label="In progress"
+                            value={workQuery.data.summary.inProgress}
+                        />
                     </Box>
 
                     {workQuery.data.items.length === 0 ? (
-                        <Paper variant="outlined" sx={{ marginTop: 3, padding: 4, textAlign: 'center' }}>
+                        <Paper
+                            variant="outlined"
+                            sx={{ marginTop: 3, padding: 4, textAlign: 'center' }}
+                        >
                             <Typography variant="h6">Nothing needs your attention</Typography>
-                            <Typography color="text.secondary" sx={{ marginTop: 0.5 }} variant="body2">
+                            <Typography
+                                color="text.secondary"
+                                sx={{ marginTop: 0.5 }}
+                                variant="body2"
+                            >
                                 You do not currently have any readable open tasks assigned to you.
                             </Typography>
                         </Paper>
@@ -259,7 +281,11 @@ export function MyWorkPage() {
                                                 {items.length}
                                             </Typography>
                                         </Stack>
-                                        <Stack spacing={1}>{items.map((item) => <WorkItemRow item={item} key={item.taskId} />)}</Stack>
+                                        <Stack spacing={1}>
+                                            {items.map((item) => (
+                                                <WorkItemRow item={item} key={item.taskId} />
+                                            ))}
+                                        </Stack>
                                     </Box>
                                 )
                             })}
@@ -267,8 +293,8 @@ export function MyWorkPage() {
                     )}
 
                     <Typography color="text.secondary" sx={{ marginTop: 3 }} variant="caption">
-                        Due soon means within the next {workQuery.data.dueSoonHours} hours. Completed
-                        and cancelled tasks are excluded.
+                        Due soon means within the next {workQuery.data.dueSoonHours} hours.
+                        Completed and cancelled tasks are excluded.
                     </Typography>
                 </>
             )}
