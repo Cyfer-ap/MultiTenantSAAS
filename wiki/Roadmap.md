@@ -34,7 +34,7 @@ Completed authorization capabilities include:
 
 ### Engineering/documentation governance
 
-Consolidated through PR #128. Current status, handoff, architecture and engineering standards now have single canonical owners, with PR/CI guardrails against documentation drift and new domain-coupling debt.
+Consolidated through PR #128. Current status, handoff, architecture and engineering standards have single canonical owners, with PR/CI guardrails against documentation drift and new domain-coupling debt.
 
 ### Global Search
 
@@ -65,23 +65,64 @@ Provides:
 
 Create Task remains intentionally outside the global palette until a project-aware task capability/picker contract can represent project-lead membership and scoped authorization without duplicating task-access logic in the shell.
 
+### Favorites + Recently Viewed
+
+Completed through PR #131, with contextual project/task favorite controls added in PR #132.
+
+Provides:
+
+- server-backed tenant/user-scoped personal workspace state
+- favorite projects and tasks
+- recently viewed project/task tracking
+- permission-aware resolution on writes and reads
+- immediate disappearance of revoked/deleted/inaccessible references
+- idempotent unfavorite even after access is lost
+- reusable personal-workspace contracts for future dashboard/mobile consumers
+
+### My Work
+
+Completed through PR #133.
+
+Provides:
+
+- personal assigned-open-task attention queue
+- overdue, blocked, due-soon, in-progress and remaining-work classification
+- bounded source reads with authoritative readability checks
+- summary counts and deep links
+- explicit `mywork` domain with a narrow `MyWorkTaskSource` contract
+
+### Saved Views
+
+Completed through PR #134.
+
+Provides:
+
+- My Work filters for search, attention, status and priority
+- server-backed user-owned saved views
+- create/apply/update/delete lifecycle
+- allow-listed and normalized persisted definitions
+- explicit `savedviews` domain and frontend `features/saved-views`
+- context-validator SPI prepared for later project-task view adoption
+- V46 `saved_views` persistence
+
 ## Current major product milestone
 
 ### 1. Product Experience & Work Management Enrichment
 
-The platform foundation is broad enough that the immediate priority is now user-facing product depth and daily usability.
+The platform foundation is broad enough that the immediate priority is user-facing product depth and daily usability.
 
 #### Phase A — discoverability and personal productivity
 
 - ✅ global authorized search
 - ✅ `Ctrl/Cmd + K` command palette and quick actions
-- ⬜ favorites and recently viewed items — **next**
-- ⬜ My Work / unified attention queue
-- ⬜ saved filters/views
-- ⬜ capability-aware dashboard refresh
+- ✅ favorites and recently viewed items
+- ✅ contextual favorite controls
+- ✅ My Work / unified attention queue
+- ✅ saved filters/views for My Work
+- ⬜ capability-aware dashboard refresh — **next**
 - ⬜ better empty states/onboarding and quick-create UX
 
-Favorites/Recent should be tenant-bound and permission-aware. A saved/recent identifier must never preserve access after the user loses authorization to the referenced resource.
+The Dashboard Refresh should compose the existing personal-productivity domains rather than introduce another monolithic backend service. Initial value should come from My Work attention summaries, favorites, recents, capability-aware quick actions and bounded deadline/activity context.
 
 #### Phase B — deeper work management
 
@@ -121,15 +162,25 @@ Use `guides/Wild_Thoughts.md` as the idea vault. Candidate experiments include:
 
 No experiment becomes a roadmap commitment merely because it is listed.
 
+## Immediate sequence
+
+1. capability-aware dashboard refresh + onboarding/empty-state polish
+2. calendar/deadline view
+3. subtasks, task dependencies and labels/tags
+4. recurring work + project/task templates
+5. bulk actions + CSV import/export
+6. custom fields/forms + workflows/approvals + knowledge/documents
+7. user-facing analytics/reporting
+8. selected differentiated experiments after the core product layer is strong
+
 ## Core product gaps to keep visible
 
 Before calling the product layer mature, revisit:
 
 - smooth post-login multi-workspace switching
-- favorites/recent items
-- My Work and saved views
+- capability-aware dashboard and onboarding
 - richer task/project relationships and calendar views
-- templates
+- recurring work and templates
 - custom fields/forms
 - workflow/approval engine
 - first-class knowledge/documents
@@ -179,6 +230,6 @@ Follow the operations/DR baseline later.
 
 Preserve tenant isolation, backend-authoritative authorization, delegation non-escalation, verified provider reconciliation, webhook-authoritative normal billing state, immutable history, Flyway invariants, database-backed concurrency, auditability, SSRF protections and server-only secrets/provider identifiers.
 
-New user-facing features must remain permission-aware and tenant-safe. Search, favorites/recent resolution, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
+New user-facing features must remain permission-aware and tenant-safe. Search, favorites/recent resolution, My Work, saved views, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
 
-New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Global Search and Command Palette are the first product-enrichment reference implementations of this rule.
+New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work and Saved Views are current reference implementations of this rule. The Dashboard Refresh must compose them without collapsing those boundaries.
