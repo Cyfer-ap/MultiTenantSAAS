@@ -52,7 +52,7 @@ class SavedViewServiceTest {
                                 "  Urgent work  ",
                                 SavedViewTarget.MY_WORK,
                                 null,
-                                Map.of("priority", "URGENT", "search", "  billing  "))));
+                                Map.of("priority", "URGENT", "search", "  billing  ")));
 
         assertThat(response.name()).isEqualTo("Urgent work");
         assertThat(response.definition())
