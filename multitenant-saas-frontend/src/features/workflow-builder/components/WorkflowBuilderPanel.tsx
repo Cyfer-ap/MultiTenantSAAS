@@ -50,6 +50,7 @@ const nodeWidth = 210
 const nodeHeight = 92
 const priorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const
 const statuses = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELLED'] as const
+const actionStatuses = statuses.filter((status) => status !== 'CANCELLED')
 
 const operationLabels: Record<WorkflowOperation, string> = {
     TRIGGER_TASK_CREATED: 'Task created',
@@ -641,7 +642,10 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
                                         })
                                     }
                                 >
-                                    {statuses.map((status) => (
+                                    {(selectedNode.operation === 'ACTION_SET_TASK_STATUS'
+                                        ? actionStatuses
+                                        : statuses
+                                    ).map((status) => (
                                         <MenuItem key={status} value={status}>
                                             {status}
                                         </MenuItem>
