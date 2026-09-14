@@ -39,6 +39,16 @@ public class WorkflowController {
     }
 
     @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId,'project.read')")
+    @GetMapping("/executions")
+    public ResponseEntity<ApiResponse<PageResponse<WorkflowDtos.ExecutionResponse>>> executions(
+            @PathVariable UUID tenantId, @PageableDefault(size = 25) Pageable pageable) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Workflow execution history fetched successfully",
+                        workflowService.executionHistory(tenantId, pageable)));
+    }
+
+    @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId,'project.read')")
     @GetMapping("/{workflowId}")
     public ResponseEntity<ApiResponse<WorkflowDtos.Response>> get(
             @PathVariable UUID tenantId, @PathVariable UUID workflowId) {

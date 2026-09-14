@@ -26,6 +26,7 @@ import { projectsApi } from '../../projects/api/projectsApi'
 import { RecurringWorkPanel } from '../../recurring-work/components/RecurringWorkPanel'
 import { TaskTemplatesPanel } from '../../task-templates/components/TaskTemplatesPanel'
 import { WorkflowBuilderPanel } from '../../workflow-builder/components/WorkflowBuilderPanel'
+import { WorkflowExecutionHistoryPanel } from '../../workflow-builder/components/WorkflowExecutionHistoryPanel'
 
 interface ProjectOption {
     id: string
@@ -217,11 +218,17 @@ export function WorkAutomationPage() {
                 />
             ) : null}
             {tab === 'workflows' ? (
-                <WorkflowBuilderPanel
-                    tenantId={tenantId}
-                    canRead={canReadWorkflows}
-                    canManage={canManageWorkflows}
-                />
+                <Stack spacing={2}>
+                    <WorkflowBuilderPanel
+                        tenantId={tenantId}
+                        canRead={canReadWorkflows}
+                        canManage={canManageWorkflows}
+                    />
+                    <WorkflowExecutionHistoryPanel
+                        tenantId={tenantId}
+                        canRead={canReadWorkflows}
+                    />
+                </Stack>
             ) : null}
         </Stack>
     )

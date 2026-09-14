@@ -53,12 +53,9 @@ async function pause(tenantId: string, workflowId: string): Promise<WorkflowDefi
     return response.data.data
 }
 
-async function executions(
-    tenantId: string,
-    workflowId: string,
-): Promise<PageResponse<WorkflowExecution>> {
+async function executions(tenantId: string): Promise<PageResponse<WorkflowExecution>> {
     const response = await httpClient.get<ApiResponse<PageResponse<WorkflowExecution>>>(
-        `${basePath(tenantId)}/${workflowId}/executions`,
+        `${basePath(tenantId)}/executions`,
         { params: { page: 0, size: 25 } },
     )
     return response.data.data

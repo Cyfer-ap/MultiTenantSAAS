@@ -72,6 +72,7 @@ export interface WorkflowExecution {
     workflowId: string
     workflowVersion: number
     triggerOperation: WorkflowOperation
+    sourceEntityType: string | null
     sourceEntityId: string | null
     status: WorkflowExecutionStatus
     explanation: string | null

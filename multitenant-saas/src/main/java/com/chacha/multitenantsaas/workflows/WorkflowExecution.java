@@ -140,6 +140,10 @@ public class WorkflowExecution {
         return triggerOperation;
     }
 
+    public String getSourceEntityType() {
+        return sourceEntityType;
+    }
+
     public UUID getSourceEntityId() {
         return sourceEntityId;
     }

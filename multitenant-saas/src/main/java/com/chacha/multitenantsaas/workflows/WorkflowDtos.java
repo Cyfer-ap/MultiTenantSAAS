@@ -59,4 +59,17 @@ public final class WorkflowDtos {
             List<EdgeResponse> edges,
             Instant createdAt,
             Instant updatedAt) {}
+
+    public record ExecutionResponse(
+            UUID id,
+            UUID workflowId,
+            int workflowVersion,
+            WorkflowOperation triggerOperation,
+            String sourceEntityType,
+            UUID sourceEntityId,
+            WorkflowExecutionStatus status,
+            String explanation,
+            String errorMessage,
+            Instant startedAt,
+            Instant completedAt) {}
 }

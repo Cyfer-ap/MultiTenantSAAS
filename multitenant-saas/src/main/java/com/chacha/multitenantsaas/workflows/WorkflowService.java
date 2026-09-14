@@ -27,6 +27,7 @@ public class WorkflowService {
     private final WorkflowDefinitionRepository definitionRepository;
     private final WorkflowNodeRepository nodeRepository;
     private final WorkflowEdgeRepository edgeRepository;
+    private final WorkflowExecutionRepository executionRepository;
     private final WorkflowGraphValidator graphValidator;
     private final CurrentActorService currentActorService;
     private final ObjectMapper objectMapper;
@@ -35,12 +36,14 @@ public class WorkflowService {
             WorkflowDefinitionRepository definitionRepository,
             WorkflowNodeRepository nodeRepository,
             WorkflowEdgeRepository edgeRepository,
+            WorkflowExecutionRepository executionRepository,
             WorkflowGraphValidator graphValidator,
             CurrentActorService currentActorService,
             ObjectMapper objectMapper) {
         this.definitionRepository = definitionRepository;
         this.nodeRepository = nodeRepository;
         this.edgeRepository = edgeRepository;
+        this.executionRepository = executionRepository;
         this.graphValidator = graphValidator;
         this.currentActorService = currentActorService;
         this.objectMapper = objectMapper;
@@ -64,6 +67,23 @@ public class WorkflowService {
     @Transactional(readOnly = true)
     public WorkflowDtos.Response get(UUID tenantId, UUID workflowId) {
         return map(requireScoped(tenantId, workflowId));
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<WorkflowDtos.ExecutionResponse> executionHistory(
+            UUID tenantId, Pageable pageable) {
+        Page<WorkflowExecution> page =
+                executionRepository.findByTenantIdOrderByStartedAtDesc(tenantId, bounded(pageable));
+        List<WorkflowDtos.ExecutionResponse> content =
+                page.getContent().stream().map(this::mapExecution).toList();
+        return new PageResponse<>(
+                content,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isFirst(),
+                page.isLast());
     }
 
     @Transactional
@@ -234,6 +254,21 @@ public class WorkflowService {
                 edges,
                 definition.getCreatedAt(),
                 definition.getUpdatedAt());
+    }
+
+    private WorkflowDtos.ExecutionResponse mapExecution(WorkflowExecution execution) {
+        return new WorkflowDtos.ExecutionResponse(
+                execution.getId(),
+                execution.getWorkflowId(),
+                execution.getWorkflowVersion(),
+                execution.getTriggerOperation(),
+                execution.getSourceEntityType(),
+                execution.getSourceEntityId(),
+                execution.getStatus(),
+                execution.getExplanation(),
+                execution.getErrorMessage(),
+                execution.getStartedAt(),
+                execution.getCompletedAt());
     }
 
     private WorkflowDefinition requireScoped(UUID tenantId, UUID workflowId) {
