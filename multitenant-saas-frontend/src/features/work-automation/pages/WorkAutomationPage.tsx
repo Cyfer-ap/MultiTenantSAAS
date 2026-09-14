@@ -224,10 +224,7 @@ export function WorkAutomationPage() {
                         canRead={canReadWorkflows}
                         canManage={canManageWorkflows}
                     />
-                    <WorkflowExecutionHistoryPanel
-                        tenantId={tenantId}
-                        canRead={canReadWorkflows}
-                    />
+                    <WorkflowExecutionHistoryPanel tenantId={tenantId} canRead={canReadWorkflows} />
                 </Stack>
             ) : null}
         </Stack>
