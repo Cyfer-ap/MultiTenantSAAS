@@ -88,7 +88,7 @@ describe('PersonalWorkspaceRouteTracker', () => {
         })
     })
 
-    it('does not render a favorite control outside project and task routes', () => {
+    it('keeps the contextual favorite control off unrelated workspace routes', () => {
         renderTracker('/users')
 
         expect(screen.queryByRole('button', { name: /favorites/i })).not.toBeInTheDocument()
