@@ -53,7 +53,6 @@ class ProjectTemplateServiceTest {
 
         when(templateRepository.findByTenantIdAndId(tenantId, templateId))
                 .thenReturn(Optional.of(template));
-        when(template.getId()).thenReturn(templateId);
         when(template.getName()).thenReturn("Launch kit");
         when(template.getProjectNameSeed()).thenReturn("Launch workspace");
         when(template.getProjectDescription()).thenReturn("Prepared from template");
