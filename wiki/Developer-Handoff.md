@@ -6,7 +6,7 @@ Use this page as the reader-facing Wiki pointer for resuming development. Reposi
 
 **Product Experience & Work Management Enrichment**
 
-Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View and Task Relationships/Task Planning are established. PR #141 adds the V48 recurring-task/project-task-template backend foundation. The broader recurring/templates milestone remains open.
+Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View and Task Relationships/Task Planning are established. PR #141 is merged and adds the V48 recurring-task/project-task-template backend foundation. The broader recurring/templates milestone remains open.
 
 ## Read first
 
@@ -37,7 +37,7 @@ Current reference implementations include Search contributor contracts, Personal
 
 ## V48 work-generation checkpoint
 
-PR #141 establishes:
+Merged PR #141 (`3460785aa9a1644768f10c696ccaef27422535f8`) establishes:
 
 - `recurringwork` owning recurring definitions/materialization/history
 - `tasktemplates` owning project-scoped task templates
@@ -56,6 +56,8 @@ Detailed rules live in `guides/recurring_work_and_templates.md`.
 
 ## Immediate next slice
 
+Start from current `main`. New persistence begins at **V49+**. Recommended feature branch: `feat/project-templates-workspace`.
+
 Finish the same milestone before starting bulk productivity:
 
 1. tenant-scoped project-template backend
@@ -68,7 +70,7 @@ Finish the same milestone before starting bulk productivity:
 
 Project-template instantiation must preserve project quota, actor validation, initial owner/lead membership, audit and project lifecycle behavior without injecting the full legacy `ProjectService` into the template domain.
 
-Any new persistence starts at **V49+**. Applied V48 and earlier migrations remain immutable.
+Applied V48 and earlier migrations remain immutable.
 
 ## Preserve these system invariants
 
