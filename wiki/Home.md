@@ -19,7 +19,9 @@ Implemented foundations include:
 - bounded subtasks, directed dependencies and project-scoped task labels
 - dedicated authorization-safe Task Planning workspace
 - recurring-task definitions/materialization with explicit timezone and idempotent occurrence tracking
-- project-scoped reusable task-template backend APIs
+- project-scoped reusable task templates
+- tenant-scoped reusable project templates with bounded starter-task snapshots
+- dedicated Work Automation & Templates workspace
 - permission-aware Global Search and capability-aware Command Palette
 - server-backed Favorites + Recently Viewed with contextual favorite controls
 - My Work personal attention queue and server-backed Saved Views
@@ -34,19 +36,19 @@ Implemented foundations include:
 
 ## Architecture direction
 
-MultiTenantSAAS remains an intentional modular monolith. Future features must follow a stronger domain-boundary rule:
+MultiTenantSAAS remains an intentional modular monolith. Future features must follow the domain-boundary rule:
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Recurring work and project-scoped task templates follow that rule through explicit owning domains and a narrow task-owned creation port rather than expanding the legacy task service.
+Recurring work and task templates cross into task creation through the task-owned `TaskCreationPort`. Tenant project templates cross into project creation through the project-owned `ProjectCreationPort` and create starter tasks through `TaskCreationPort`. These domains do not depend on the full legacy project/task services.
 
 See [[Architecture]] for the current architecture and known debt.
 
 ## Database checkpoint
 
-Portable common migrations currently extend through **V48**. Applied Flyway migrations remain append-only.
+PostgreSQL Flyway migrations currently extend through **V49**. Applied migrations remain append-only; new persistence starts at V50+.
 
-Recent product migrations are V45 for personal-workspace favorites/recent items, V46 for saved views, V47 for task parent/dependency/label relationships, and V48 for recurring task definitions/occurrences plus project task templates. Dashboard #136 and Calendar #137 required no migration.
+Recent product migrations are V45 for personal-workspace favorites/recent items, V46 for saved views, V47 for task parent/dependency/label relationships, V48 for recurring task definitions/occurrences plus project task templates, and V49 for tenant project templates plus bounded starter-task snapshots.
 
 ## Start here
 
@@ -62,10 +64,10 @@ Recent product migrations are V45 for personal-workspace favorites/recent items,
 - [[Roadmap]]
 - [[Developer-Handoff]]
 
-Repository-side `guides/Wild_Thoughts.md` is the living idea vault; `guides/ENGINEERING_STANDARDS.md` is the technical-health and engineering-rules guide; `guides/task_relationships.md` owns task hierarchy/dependency/label semantics; and `guides/recurring_work_and_templates.md` owns recurring-task/task-template generation semantics.
+Repository-side `guides/Wild_Thoughts.md` is the living idea vault; `guides/ENGINEERING_STANDARDS.md` is the technical-health and engineering-rules guide; `guides/task_relationships.md` owns task hierarchy/dependency/label semantics; and `guides/recurring_work_and_templates.md` owns recurring-work/task-template/project-template generation semantics.
 
 ## Current product direction
 
-The active product phase is **Product Experience & Work Management Enrichment**. Global Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Planning, and the V48 recurring-task/project-task-template backend foundation are established. The recurring/templates milestone remains open while tenant-scoped project templates and frontend management are completed; bulk productivity and tenant adaptability follow.
+The active product phase is **Product Experience & Work Management Enrichment**. Global Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Planning, recurring work, task templates, tenant project templates and the Work Automation & Templates workspace are established. The next product slice is bulk actions + CSV import/export, followed by tenant adaptability and analytics.
 
 Production Operations & Disaster Recovery remains important but deliberately deferred behind the current user-facing enrichment phase. See [[Roadmap]].
