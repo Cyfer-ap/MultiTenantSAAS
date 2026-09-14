@@ -40,7 +40,11 @@ function WorkItemRow({ item }: { item: MyWorkItem }) {
                 sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between' }}
             >
                 <Box sx={{ minWidth: 0 }}>
-                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+                    >
                         <Typography noWrap sx={{ fontWeight: 700 }}>
                             {item.title}
                         </Typography>

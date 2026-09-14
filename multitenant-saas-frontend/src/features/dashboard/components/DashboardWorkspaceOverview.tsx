@@ -2,10 +2,7 @@ import { Box, Stack, Typography } from '@mui/material'
 
 import { DashboardMyWorkCard } from './DashboardMyWorkCard'
 import { DashboardPersonalContextCard } from './DashboardPersonalContextCard'
-import {
-    DashboardQuickActionsCard,
-    type DashboardQuickAction,
-} from './DashboardQuickActionsCard'
+import { DashboardQuickActionsCard, type DashboardQuickAction } from './DashboardQuickActionsCard'
 
 export type { DashboardQuickAction } from './DashboardQuickActionsCard'
 

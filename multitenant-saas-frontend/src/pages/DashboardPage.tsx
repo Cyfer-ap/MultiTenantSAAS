@@ -183,10 +183,7 @@ function DashboardContent({
                 />
             </Stack>
 
-            <DashboardWorkspaceOverview
-                quickActions={quickActions}
-                tenantId={summary.tenantId}
-            />
+            <DashboardWorkspaceOverview quickActions={quickActions} tenantId={summary.tenantId} />
 
             <Typography component="h2" variant="h5" sx={{ fontWeight: 800, marginTop: 4 }}>
                 Workspace health

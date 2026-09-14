@@ -1,15 +1,6 @@
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import StarRoundedIcon from '@mui/icons-material/StarRounded'
-import {
-    Alert,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Skeleton,
-    Stack,
-    Typography,
-} from '@mui/material'
+import { Alert, Box, Button, Card, CardContent, Skeleton, Stack, Typography } from '@mui/material'
 import { Link } from 'react-router'
 
 import { usePersonalWorkspace } from '../../personal-workspace/hooks/usePersonalWorkspace'
@@ -59,15 +50,13 @@ export function DashboardPersonalContextCard({ tenantId }: { tenantId: string })
                 {personalWorkspaceQuery.isPending ? (
                     <PersonalContextSkeleton />
                 ) : personalWorkspaceQuery.isError ? (
-                    <Alert severity="warning">Favorites and recent items could not be loaded.</Alert>
+                    <Alert severity="warning">
+                        Favorites and recent items could not be loaded.
+                    </Alert>
                 ) : (
                     <Stack spacing={2}>
                         <Box>
-                            <Stack
-                                direction="row"
-                                spacing={1}
-                                sx={{ alignItems: 'center', mb: 1 }}
-                            >
+                            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
                                 <StarRoundedIcon fontSize="small" />
                                 <Typography
                                     component="h3"
@@ -93,11 +82,7 @@ export function DashboardPersonalContextCard({ tenantId }: { tenantId: string })
                         </Box>
 
                         <Box>
-                            <Stack
-                                direction="row"
-                                spacing={1}
-                                sx={{ alignItems: 'center', mb: 1 }}
-                            >
+                            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
                                 <HistoryRoundedIcon fontSize="small" />
                                 <Typography
                                     component="h3"
