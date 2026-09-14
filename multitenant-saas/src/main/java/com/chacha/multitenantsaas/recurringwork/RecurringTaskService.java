@@ -35,12 +35,13 @@ public class RecurringTaskService {
 
     @Transactional
     public RecurringTaskDtos.Response create(
-            UUID tenantId,
-            UUID projectId,
-            RecurringTaskDtos.CreateRequest request,
-            Jwt jwt) {
+            UUID tenantId, UUID projectId, RecurringTaskDtos.CreateRequest request, Jwt jwt) {
         validateSchedule(
-                request.zoneId(), request.nextOccurrenceAt(), request.endAt(), request.maxOccurrences(), 0);
+                request.zoneId(),
+                request.nextOccurrenceAt(),
+                request.endAt(),
+                request.maxOccurrences(),
+                0);
         UUID creatorUserId = currentActorService.getRequiredActiveActor(tenantId, jwt).getId();
         RecurringTaskDefinition definition =
                 new RecurringTaskDefinition(
@@ -124,7 +125,8 @@ public class RecurringTaskService {
     public RecurringTaskDtos.Response resume(UUID tenantId, UUID projectId, UUID definitionId) {
         RecurringTaskDefinition definition = requireScoped(tenantId, projectId, definitionId);
         if (definition.getStatus() == RecurrenceStatus.ENDED) {
-            throw new IllegalArgumentException("Ended recurrence definitions must be edited before resuming");
+            throw new IllegalArgumentException(
+                    "Ended recurrence definitions must be edited before resuming");
         }
         Instant occurrence = definition.getNextOccurrenceAt();
         Instant now = Instant.now();
@@ -149,8 +151,9 @@ public class RecurringTaskService {
             UUID tenantId, UUID projectId, UUID definitionId, Pageable pageable) {
         requireScoped(tenantId, projectId, definitionId);
         Page<RecurringTaskOccurrence> page =
-                occurrenceRepository.findByTenantIdAndProjectIdAndDefinitionIdOrderByScheduledForDesc(
-                        tenantId, projectId, definitionId, bounded(pageable));
+                occurrenceRepository
+                        .findByTenantIdAndProjectIdAndDefinitionIdOrderByScheduledForDesc(
+                                tenantId, projectId, definitionId, bounded(pageable));
         return new PageResponse<>(
                 page.getContent().stream()
                         .map(
@@ -189,7 +192,8 @@ public class RecurringTaskService {
             int generatedCount) {
         ZoneId.of(zoneId.trim());
         if (endAt != null && endAt.isBefore(nextOccurrenceAt)) {
-            throw new IllegalArgumentException("Recurrence end must not precede the next occurrence");
+            throw new IllegalArgumentException(
+                    "Recurrence end must not precede the next occurrence");
         }
         if (maxOccurrences != null && maxOccurrences <= generatedCount) {
             throw new IllegalArgumentException(

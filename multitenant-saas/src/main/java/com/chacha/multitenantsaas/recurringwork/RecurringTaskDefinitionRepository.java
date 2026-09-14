@@ -29,9 +29,7 @@ public interface RecurringTaskDefinitionRepository
             ORDER BY definition.nextOccurrenceAt ASC
             """)
     Page<UUID> findDueDefinitionIds(
-            @Param("status") RecurrenceStatus status,
-            @Param("now") Instant now,
-            Pageable pageable);
+            @Param("status") RecurrenceStatus status, @Param("now") Instant now, Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT definition FROM RecurringTaskDefinition definition WHERE definition.id = :id")

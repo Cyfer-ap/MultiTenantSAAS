@@ -27,11 +27,17 @@ public class RecurringTaskWorker {
             try {
                 materializer.materializeDueDefinition(definitionId, cutoff);
             } catch (RuntimeException exception) {
-                log.warn("Pausing recurring task definition {} after materialization failure", definitionId, exception);
+                log.warn(
+                        "Pausing recurring task definition {} after materialization failure",
+                        definitionId,
+                        exception);
                 try {
                     materializer.pauseAfterFailure(definitionId, exception.getMessage());
                 } catch (RuntimeException pauseException) {
-                    log.error("Could not pause failed recurring task definition {}", definitionId, pauseException);
+                    log.error(
+                            "Could not pause failed recurring task definition {}",
+                            definitionId,
+                            pauseException);
                 }
             }
         }

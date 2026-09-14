@@ -50,11 +50,7 @@ public class RecurringTaskOccurrence {
     protected RecurringTaskOccurrence() {}
 
     public RecurringTaskOccurrence(
-            UUID tenantId,
-            UUID projectId,
-            UUID definitionId,
-            Instant scheduledFor,
-            UUID taskId) {
+            UUID tenantId, UUID projectId, UUID definitionId, Instant scheduledFor, UUID taskId) {
         this.tenantId = tenantId;
         this.projectId = projectId;
         this.definitionId = definitionId;

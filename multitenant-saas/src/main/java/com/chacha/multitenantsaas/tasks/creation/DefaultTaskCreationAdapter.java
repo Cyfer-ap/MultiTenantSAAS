@@ -72,7 +72,8 @@ public class DefaultTaskCreationAdapter implements TaskCreationPort {
             assignee = requireActiveUser(command.tenantId(), command.assigneeUserId(), "assignee");
             if (!projectMemberRepository.existsByProject_Tenant_IdAndProject_IdAndUser_Id(
                     command.tenantId(), command.projectId(), assignee.getId())) {
-                throw new IllegalStateException("Generated-task assignee is no longer a project member");
+                throw new IllegalStateException(
+                        "Generated-task assignee is no longer a project member");
             }
         }
 
@@ -113,7 +114,10 @@ public class DefaultTaskCreationAdapter implements TaskCreationPort {
                         .orElseThrow(
                                 () ->
                                         new ResourceNotFoundException(
-                                                "Generated-task " + role + " not found: " + userId));
+                                                "Generated-task "
+                                                        + role
+                                                        + " not found: "
+                                                        + userId));
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new IllegalStateException("Generated-task " + role + " is not active");
         }

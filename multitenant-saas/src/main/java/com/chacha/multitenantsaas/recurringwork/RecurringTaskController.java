@@ -118,11 +118,12 @@ public class RecurringTaskController {
             "@authorizationSecurity.canReadProjectTasks("
                     + "#tenantId,#projectId,'project.task.read')")
     @GetMapping("/{definitionId}/occurrences")
-    public ResponseEntity<ApiResponse<PageResponse<RecurringTaskDtos.OccurrenceResponse>>> occurrences(
-            @PathVariable UUID tenantId,
-            @PathVariable UUID projectId,
-            @PathVariable UUID definitionId,
-            @PageableDefault(size = 50) Pageable pageable) {
+    public ResponseEntity<ApiResponse<PageResponse<RecurringTaskDtos.OccurrenceResponse>>>
+            occurrences(
+                    @PathVariable UUID tenantId,
+                    @PathVariable UUID projectId,
+                    @PathVariable UUID definitionId,
+                    @PageableDefault(size = 50) Pageable pageable) {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Recurring task occurrences fetched successfully",

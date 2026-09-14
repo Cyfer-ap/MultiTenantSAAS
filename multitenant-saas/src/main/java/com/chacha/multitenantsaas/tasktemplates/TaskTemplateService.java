@@ -58,10 +58,7 @@ public class TaskTemplateService {
 
     @Transactional
     public TaskTemplateDtos.Response create(
-            UUID tenantId,
-            UUID projectId,
-            TaskTemplateDtos.UpsertRequest request,
-            Jwt jwt) {
+            UUID tenantId, UUID projectId, TaskTemplateDtos.UpsertRequest request, Jwt jwt) {
         if (templateRepository.countByTenantIdAndProjectId(tenantId, projectId)
                 >= MAX_TEMPLATES_PER_PROJECT) {
             throw new IllegalStateException("A project can have at most 100 task templates");

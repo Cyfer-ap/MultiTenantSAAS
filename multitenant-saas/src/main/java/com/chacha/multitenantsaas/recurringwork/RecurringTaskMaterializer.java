@@ -119,9 +119,7 @@ public class RecurringTaskMaterializer {
 
     private String truncate(String message) {
         String safe =
-                message == null || message.isBlank()
-                        ? "Recurring task generation failed"
-                        : message;
+                message == null || message.isBlank() ? "Recurring task generation failed" : message;
         return safe.length() <= 500 ? safe : safe.substring(0, 500);
     }
 }
