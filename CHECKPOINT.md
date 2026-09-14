@@ -10,9 +10,7 @@ This file is the **single repository-side source of truth for current project st
 
 **Product Experience & Work Management Enrichment**
 
-The platform foundation is broad enough that current development should prioritize daily user value and product depth rather than additional infrastructure expansion.
-
-Delivered product-enrichment milestones now include:
+Delivered product-enrichment milestones include:
 
 - Global Search — #129
 - Command Palette — #130
@@ -25,90 +23,69 @@ Delivered product-enrichment milestones now include:
 - Calendar workspace UI refresh — #138
 - task-relationship backend foundation — #139
 - Task Planning UI — #140
+- recurring-task + project-scoped task-template backend foundation — #141
 
-The next implementation slice is **recurring work + project/task templates**.
+The **recurring work + project/task templates milestone is still open**. The next slice is tenant-scoped project templates plus feature-local frontend management for recurring work and templates.
 
-## Completed application foundations
+## Established application foundations
 
-Major established capabilities include:
+Major capabilities now include:
 
-- billing/catalog lifecycle through PR #106
-- tenant-configurable outbound webhooks through PR #112
-- enterprise OIDC SSO / identity federation through PR #119
-- authorization Explain Access/delegation through PR #125
-- authorization milestone closure through PR #126
-- product vision / Wild Thoughts audit through PR #127
-- documentation/engineering-governance consolidation through PR #128
-- discovery/navigation/personal-work productivity through PRs #129–#138
-- task hierarchy/dependencies/labels through backend PR #139 and frontend PR #140
-- projects/tasks/collaboration, R2/S3-compatible attachments, durable notifications/email, API keys, usage metering/quotas, tenant/platform audit, PostgreSQL/Flyway correctness, production hardening and CI/security gates
+- authentication, tenant isolation, invitations, password recovery and workspace discovery
+- scoped authorization, bounded delegation and Explain Access
+- users, organization hierarchy, projects, tasks and collaboration
+- subtasks, directed task dependencies and project-scoped labels
+- Global Search, Command Palette, Favorites/Recent, My Work, Saved Views, Dashboard and Calendar
+- recurring-task backend scheduling/materialization and project-scoped task-template backend APIs
+- R2/S3-compatible attachments
+- durable notifications/email
+- API keys, quotas and usage metering
+- billing/subscriptions with Stripe + Razorpay provider abstractions
+- tenant outbound webhooks
+- enterprise OIDC SSO
+- tenant/platform auditability
+- PostgreSQL/Flyway correctness and CI/security/container gates
 
-## Work-management checkpoint
+## Recurring work + task-template backend checkpoint
 
-### Search, navigation and personal productivity
+PR #141 introduces explicit `recurringwork` and `tasktemplates` backend domains plus a task-owned `tasks/creation` contract rather than expanding `ProjectTaskService`.
 
-- tenant-aware Global Search across accessible projects, tasks and people
-- capability-aware Command Palette and shared workspace navigation contract
-- Favorites + Recently Viewed
-- My Work personal attention queue
-- server-backed Saved Views
-- capability-aware Dashboard composition
-- Calendar / Deadline View over authorized task due dates
-
-### Task relationships and labels
-
-Backend PR #139 establishes an explicit `taskrelationships` domain rather than extending the already-large `ProjectTaskService`.
+### Recurring tasks
 
 V1 semantics:
 
-- one optional parent per task
-- hierarchy remains same-tenant/same-project
-- self-parenting and ancestry cycles rejected
-- parent traversal capped at 64
-- dependencies are directed `blocking task -> dependent task`
-- self-dependencies, duplicates and directed cycles are prevented
-- dependency validation capped at 1,000 project edges
-- relationship reads capped at 200 items per direction with explicit truncation flags
-- labels are project-scoped, normalized unique by project, capped at 200/project and 20/task
-- relationship metadata does **not** automatically change task status
-- existing task read/manage authorization remains authoritative
+- recurring **tasks only**
+- `DAILY`, `WEEKLY`, `MONTHLY` cadence
+- interval 1–52
+- explicit IANA timezone per definition
+- calendar/timezone-aware advancement across DST/month boundaries
+- optional due offset, end instant and max occurrence count
+- edits affect future generated work only
+- pause/resume supported; resume skips occurrences missed while paused
+- previous task completion does not gate the next occurrence
+- definition discovery capped at 50/pass
+- catch-up capped at 5 occurrences/definition/pass
+- pessimistic per-definition materialization lock
+- unique `(definition_id, scheduled_for)` occurrence key for retry/multi-instance idempotency
+- generation failures pause the definition with a bounded diagnostic
 
-Backend shape:
+### Project-scoped task templates
 
-```text
-TaskRelationshipController
-        ├── TaskRelationshipQueryService
-        ├── TaskGraphService
-        └── TaskLabelService
-                  ↓
-       TaskRelationshipTaskGateway
-                  ↓
-       existing project/task persistence
+V1 semantics:
 
-relationship changes
-        ↓
-TaskRelationshipChangeSink
-        ↓
-audit + task activity
-```
+- project-scoped catalog
+- normalized template name unique per project
+- maximum 100 templates/project
+- snapshots title, description, priority, optional assignee and optional due offset
+- instantiation creates a normal task through `TaskCreationPort`
+- template edits never mutate tasks already created from it
+- no subtasks/dependencies/labels/custom fields/workflows inside task templates in this version
 
-Frontend PR #140 adds a separate `features/task-relationships` domain and `/task-planning` workspace rather than expanding `ProjectTasksSection`, Dashboard, Calendar or the collaboration drawer.
-
-Task Planning:
-
-- selects tasks through authorization-safe Global Search
-- shows parent/direct subtasks, blockers/dependents and labels
-- supports bounded same-project parent/blocker picking
-- supports project-label create/edit/delete and task assignment
-- derives mutation capability from the existing task-management permission plus established project-lead membership fallback
-- remains read-only when the actor cannot manage the selected task context
-- is registered in shared workspace navigation, so Command Palette and Dashboard quick actions inherit it without duplicate shell logic
-
-Detailed contract: `guides/task_relationships.md`.
+Detailed contract: `guides/recurring_work_and_templates.md`.
 
 ## Database checkpoint
 
-Portable common Flyway migrations extend through **V47**.
+Portable common Flyway migrations extend through **V48**.
 
 Recent milestone migrations:
 
@@ -121,6 +98,7 @@ V44 authorization delegation provenance + authorization.delegate
 V45 personal workspace favorites/recent items
 V46 saved views
 V47 task parent/dependency/project-label relationships
+V48 recurring task definitions/occurrences + project task templates
 ```
 
 Dashboard #136 and Calendar #137 required no schema change. Never rewrite an applied migration.
@@ -139,8 +117,8 @@ Application integration and managed Plan provisioning are implemented. Recurring
 
 The largest remaining user-facing gaps are now:
 
-- recurring work
-- project/task templates
+- tenant-scoped project templates
+- recurring-work/task-template/project-template frontend UX
 - bulk actions and CSV import/export
 - custom fields/forms
 - workflows/approvals
@@ -170,27 +148,27 @@ Canonical assessment and rules: `guides/ENGINEERING_STANDARDS.md`.
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Recent product work demonstrates the intended pattern:
+Recent reference implementations:
 
-- Global Search: coordinator + contributor contracts + domain-owned query adapters
-- Personal Workspace: personal state coordinator + project/task resolver adapters
-- My Work: attention coordinator + narrow `MyWorkTaskSource`
-- Saved Views: persistence/definition domain + narrow context-validator SPI
-- Dashboard: frontend composition of existing authorized contracts
-- Calendar: calendar coordinator + narrow deadline-source SPI + task-owned authorized adapter
-- Task Relationships: query/graph/label services + narrow task gateway/change sink; separate frontend `features/task-relationships`
+- Global Search — coordinator + contributor contracts + domain-owned adapters
+- Personal Workspace — personal state coordinator + project/task resolver adapters
+- My Work — attention coordinator + narrow task source
+- Saved Views — persistence/definition domain + validator SPI
+- Calendar — calendar coordinator + deadline-source SPI
+- Task Relationships — query/graph/label services + narrow task gateway/change sink
+- Recurring Work / Task Templates — explicit owning domains + task-owned `TaskCreationPort`
 
-The next recurring-work/template slice must continue this pattern. Recurrence scheduling and template lifecycle must not be added to `TaskGraphService`, `TaskLabelService`, `ProjectTaskService`, Calendar, or the application shell merely because they touch tasks.
+Do not move project-template instantiation into `ProjectService`, recurrence into Calendar, or scheduling/template behavior into task-relationship graph services.
 
 ## Next product sequence
 
-1. **recurring work + project/task templates**
+1. **finish recurring work + templates: tenant-scoped project templates + frontend UX**
 2. bulk actions + CSV import/export
 3. custom fields/forms + workflows/approvals + knowledge/documents
 4. user-facing analytics + selected differentiated experiments
-5. onboarding/workspace-switching/personalization polish as product flows deepen
+5. onboarding/workspace-switching/personalization polish
 
-For recurring work/templates, decide ownership and lifecycle semantics before schema work: schedule/timezone behavior, recurrence materialization/idempotency, template versioning/copy semantics, authorization, and bounded generation. Prefer a dedicated owning domain that calls narrow task/project contracts rather than another expansion of existing task services.
+The project-template backend should cross into project creation through a **project-owned narrow creation contract** that preserves quota, owner-membership, audit and lifecycle invariants. Do not inject the full legacy `ProjectService` into a template god-service.
 
 ## Deferred platform work
 
@@ -213,6 +191,7 @@ Optional SAML/SCIM, MFA/passkeys/device management and richer notification chann
 - `guides/current_architecture.md` — canonical architecture
 - `guides/ENGINEERING_STANDARDS.md` — technical-health assessment and quality rules
 - `guides/task_relationships.md` — task hierarchy/dependency/label contract
+- `guides/recurring_work_and_templates.md` — recurring-task/task-template contract
 - focused guides — domain-specific behavior
 - `wiki/*.md` — canonical reader-facing Wiki source
 - `wiki/Roadmap.md` — product direction

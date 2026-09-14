@@ -2,7 +2,7 @@
 
 Reviewed: 2026-09-14
 
-This is the canonical technical architecture overview for MultiTenantSAAS. Detailed domain behavior belongs in focused guides such as `authorization_model.md`, `subscription_billing.md`, `enterprise-sso-foundation.md`, `task_relationships.md`, and the outbound-webhook guides. Engineering rules and the technical-debt register live in `ENGINEERING_STANDARDS.md`.
+This is the canonical technical architecture overview for MultiTenantSAAS. Detailed domain behavior belongs in focused guides such as `authorization_model.md`, `subscription_billing.md`, `enterprise-sso-foundation.md`, `task_relationships.md`, `recurring_work_and_templates.md`, and the outbound-webhook guides. Engineering rules and the technical-debt register live in `ENGINEERING_STANDARDS.md`.
 
 ## Architectural shape
 
@@ -65,6 +65,8 @@ Established domains include:
 - scoped authorization, bounded delegation and Explain Access
 - projects, members, tasks and task collaboration
 - task relationships: subtasks, directed dependencies and project-scoped labels
+- recurring task definitions/materialization
+- project-scoped task templates
 - permission-aware Global Search
 - capability-aware Command Palette
 - Personal Workspace: Favorites + Recently Viewed
@@ -81,7 +83,7 @@ Established domains include:
 - tenant API keys/external APIs
 - tenant/platform audit trails
 
-The next product-enrichment slice is **recurring work + project/task templates**.
+The active product slice is completing **recurring work + project/task templates** with tenant-scoped project templates and frontend management.
 
 ## Reference composition patterns
 
@@ -166,17 +168,12 @@ Backend PR #139 introduces V47 and the explicit `taskrelationships` domain.
 ```text
 TaskRelationshipController
         ├── TaskRelationshipQueryService
-        │       └── bounded relationship projection
         ├── TaskGraphService
-        │       └── parent/dependency mutations + cycle checks
         └── TaskLabelService
-                └── project-label lifecycle + assignment
-
-relationship services
-        ↓
-TaskRelationshipTaskGateway
-        ↓
-existing project/task persistence
+                 ↓
+      TaskRelationshipTaskGateway
+                 ↓
+      existing project/task persistence
 
 relationship changes
         ↓
@@ -215,21 +212,55 @@ TaskRelationshipsPanel
     └── labels → TaskLabelManagerDialog
 ```
 
-This surface is intentionally separate from the already-large `ProjectTasksSection` and collaboration drawer. It uses existing task-management permission plus the established project-lead membership fallback for mutation UX; backend authorization remains authoritative.
+This surface is intentionally separate from the already-large `ProjectTasksSection` and collaboration drawer. Task Planning is registered through shared workspace navigation, so Command Palette and Dashboard quick actions inherit it without duplicating shell logic.
 
-Task Planning is registered through shared workspace navigation, so Command Palette and Dashboard quick actions inherit it without duplicating shell logic.
+## Recurring Work and task-template architecture
+
+PR #141 introduces V48 and three explicit boundaries:
+
+```text
+recurringwork ───────────┐
+                         ├─> TaskCreationPort
+project task templates ──┘          ↓
+                            task-owned adapter
+                                   ↓
+                            normal task lifecycle
+                            ├─ task persistence
+                            ├─ task activity
+                            ├─ audit
+                            ├─ assignment notification
+                            └─ TASK_CREATED webhook
+```
+
+`recurringwork` owns schedule definition, timezone/cadence semantics, occurrence cursor, materialization and occurrence history. `tasktemplates` owns the project-scoped task-template catalog. `tasks/creation` is a narrow task-owned mutation boundary and deliberately does not expose the large `ProjectTaskService`.
+
+Recurring task concurrency is database-backed:
+
+- due definitions are discovered in bounded batches
+- materialization obtains a pessimistic write lock on one definition
+- `@Version` protects ordinary definition updates
+- `(definition_id, scheduled_for)` is unique in PostgreSQL
+- a materialization transaction includes generated task, occurrence linkage and cursor advance
+- a failed generation pauses the definition instead of retrying forever
+
+Schedule arithmetic uses the definition's IANA timezone and calendar increments, preserving local wall time through DST and month-length changes.
+
+Task-template instantiation uses snapshot semantics; existing tasks are not coupled to subsequent template edits.
+
+Detailed semantics: `recurring_work_and_templates.md`.
 
 ## Persistence and tenancy
 
 Production uses shared-schema multi-tenancy with explicit tenant ownership. Repository/query methods for tenant-owned resources should include tenant scope; cross-tenant resource IDs are never trusted without ownership validation.
 
-Flyway exclusively owns production schema evolution. Portable common migrations extend through **V47**.
+Flyway exclusively owns production schema evolution. Portable common migrations extend through **V48**.
 
 Recent product migrations:
 
 - V45 — personal workspace favorites/recent items
 - V46 — saved views
 - V47 — task parent/dependency/project-label relationships
+- V48 — recurring task definitions/occurrences + project task templates
 
 Dashboard #136 and Calendar #137 required no schema migration. Applied migrations are append-only.
 
@@ -265,6 +296,8 @@ Current product-enrichment ownership includes:
 - `features/calendar`
 - `features/task-relationships`
 
+The next frontend slice should preserve explicit ownership for recurring work, task templates and project templates instead of expanding `ProjectTasksSection` or `AppShell` with lifecycle logic.
+
 Server state is managed with React Query. `AppShell` and central routes/navigation are integration infrastructure and must not absorb domain business rules.
 
 Central route/navigation aggregation remains a known growth point. Prefer shared integration metadata/contracts where useful, but do not introduce abstraction merely to hide a small explicit route list.
@@ -275,7 +308,7 @@ Public APIs use explicit request/response DTOs and validation rather than JPA en
 
 The web client currently maintains TypeScript API contracts manually. This is acceptable for one primary client, but generated/shared contracts should be considered before a substantial mobile client is introduced.
 
-Task-relationship APIs are documented in `task_relationships.md`.
+Task-relationship APIs are documented in `task_relationships.md`. Recurring/task-template APIs are documented in `recurring_work_and_templates.md`.
 
 ## Scalability model
 
@@ -290,42 +323,30 @@ Current bounded patterns include:
 - Calendar range/result caps
 - bounded task hierarchy/dependency traversal and relationship lists
 - bounded project label/task assignment counts
+- recurring-work due batches and per-definition catch-up limits
+- bounded task-template catalog sizes
 
-Large-tenant latency, sustained mutation throughput, database contention, delivery throughput and heavy integration workloads remain unproven until measured. Optimize from evidence rather than pre-emptively introducing distributed infrastructure.
+Large-tenant latency, sustained mutation throughput, database contention, scheduler contention, delivery throughput and heavy integration workloads remain unproven until measured. Optimize from evidence rather than pre-emptively introducing distributed infrastructure.
 
-## Next architecture direction — recurring work + templates
+## Next architecture direction — project templates + frontend
 
-Recurring work and templates require their own owning domain. They must not be implemented by expanding `TaskGraphService`, `TaskLabelService`, `ProjectTaskService`, Calendar or application-shell code.
+The V48 task-generation boundary should be reused, not bypassed.
 
-Before schema work, define:
-
-- supported recurrence schedule/cadence model
-- timezone ownership and DST behavior
-- occurrence materialization horizon
-- occurrence idempotency/concurrency key
-- pause/resume/edit/end semantics
-- behavior when previous occurrences remain incomplete
-- task/project template scope
-- copy/snapshot semantics and optional versioning
-- fields/relationships copied during instantiation
-- authorization for template management/use and recurrence management
-- bounded template size/generated work
-
-A likely shape is:
+Tenant-scoped project templates need their own project creation boundary:
 
 ```text
-recurringwork / templates domain
-        ↓
-recurrence definitions + template catalog
-        ↓
-materializer / instantiator
-        ↓
-narrow task/project creation contracts
-        ↓
-existing owning domains
+projecttemplates
+      ↓
+ProjectCreationPort       TaskCreationPort
+      ↓                         ↓
+project-owned adapter      task-owned adapter
 ```
 
-The exact split between recurrence and template modules should follow product semantics, but neither should become another god-service.
+The project-owned adapter must preserve ordinary quota, actor, owner-membership, audit and project lifecycle behavior without injecting the full `ProjectService` into a template domain.
+
+Project-template v1 should use bounded snapshot/copy semantics and avoid importing task-relationship graphs until there is a concrete product need.
+
+Frontend recurring/template lifecycle should remain feature-local. Calendar may display deadlines of materialized recurring tasks, but it does not own or pre-generate recurrence rules.
 
 ## Production boundary
 
