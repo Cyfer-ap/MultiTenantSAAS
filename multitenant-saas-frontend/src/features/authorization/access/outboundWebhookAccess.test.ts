@@ -15,6 +15,7 @@ describe('tenant.update workspace access', () => {
             'My Work',
             'Calendar',
             'Task Planning',
+            'Automation',
             'Favorites',
             'Authentication',
             'Integrations',
