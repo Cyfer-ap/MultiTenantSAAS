@@ -69,7 +69,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV47AndMatchesJpaMappings() {
+    void postgresSchemaReachesV48AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -81,7 +81,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("47");
+        assertThat(version).isEqualTo("48");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -128,7 +128,17 @@ class PostgreSqlSchemaIntegrationTest {
         assertTableExists("task_dependencies");
         assertTableExists("project_task_labels");
         assertTableExists("project_task_label_assignments");
+        assertTableExists("recurring_task_definitions");
+        assertTableExists("recurring_task_occurrences");
+        assertTableExists("project_task_templates");
         assertColumnExists("project_tasks", "parent_task_id");
+        assertColumnExists("recurring_task_definitions", "next_occurrence_at");
+        assertColumnExists("recurring_task_definitions", "status");
+        assertColumnExists("recurring_task_definitions", "version");
+        assertColumnExists("recurring_task_occurrences", "definition_id");
+        assertColumnExists("recurring_task_occurrences", "task_id");
+        assertColumnExists("project_task_templates", "normalized_name");
+        assertColumnExists("project_task_templates", "due_offset_minutes");
         assertColumnExists("authorization_delegations", "tenant_id");
         assertColumnExists("authorization_delegations", "delegator_user_id");
         assertColumnExists("authorization_delegations", "delegate_user_id");
