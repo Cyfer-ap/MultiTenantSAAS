@@ -58,6 +58,7 @@ class SavedViewServiceTest {
                                 Map.of("priority", "URGENT", "search", "  billing  ")));
 
         assertThat(response.name()).isEqualTo("Urgent work");
+        assertThat(response.target()).isEqualTo(SavedViewTarget.MY_WORK);
         assertThat(response.definition())
                 .hasSize(2)
                 .containsEntry("priority", "URGENT")
