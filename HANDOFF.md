@@ -1,6 +1,6 @@
 # MultiTenantSAAS — Development Handoff
 
-Updated: 2026-09-14
+Updated: 2026-09-15
 
 This is the **single repository-side resume document**. Current status lives in `CHECKPOINT.md`; architecture/quality rules live in `AGENTS.md` and `guides/ENGINEERING_STANDARDS.md`.
 
@@ -18,7 +18,7 @@ This is the **single repository-side resume document**. Current status lives in 
 
 ## Current state
 
-Major application/product milestones are complete through:
+Major milestones are complete through the Recurring Work + Project/Task Templates program:
 
 - billing/catalog — #106
 - tenant outbound webhooks — #112
@@ -32,36 +32,14 @@ Major application/product milestones are complete through:
 - Saved Views — #134
 - Dashboard Refresh — #136
 - Calendar / Deadline View — #137/#138
-- task relationships backend — #139
-- Task Planning UI — #140
+- task relationships backend + Task Planning — #139/#140
 - recurring-task + project-scoped task-template backend foundation — #141
+- documentation checkpoint — #142
+- tenant-scoped project templates + Work Automation & Templates workspace — #143
 
-PR #141 is **merged into `main`** at merge commit `3460785aa9a1644768f10c696ccaef27422535f8`.
+Portable PostgreSQL Flyway migrations now extend through **V49**. New persistence must be **V50+**; never modify V49 or earlier applied migrations.
 
-Portable common Flyway migrations extend through **V48**.
-
-Stripe is the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
-
-## Current direction
-
-Continue **Product Experience & Work Management Enrichment**.
-
-The current milestone is **Recurring Work + Project/Task Templates**. Its backend task-generation half is established in merged PR #141, but the milestone is **not closed**.
-
-### Resume here
-
-Start from current `main` and create the next feature branch for the completion slice (recommended: `feat/project-templates-workspace`). New persistence must be **V49+**.
-
-Immediate next work:
-
-1. tenant-scoped project-template backend
-2. project-owned narrow `ProjectCreationPort` preserving quota/owner-membership/audit/lifecycle behavior
-3. bounded project-template task snapshots and deterministic instantiation semantics
-4. feature-local recurring-work and task-template frontend UX
-5. project-template frontend UX
-6. milestone docs/CI closure
-
-Then continue with bulk actions/CSV import-export, tenant adaptability, analytics, and ongoing UX polish.
+Stripe remains the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
 ## Architecture rule
 
@@ -71,7 +49,7 @@ Backend features should use explicit domain packages. Frontend features should p
 
 Do not expand `ProjectTaskService` or `ProjectService` merely because a new feature eventually creates tasks/projects.
 
-## Work-generation architecture established by #141
+## Work automation architecture to preserve
 
 ```text
 recurringwork ───────────┐
@@ -80,22 +58,25 @@ project task templates ──┘          ↓
                             task-owned adapter
                                    ↓
                             normal task lifecycle
-                            ├─ persistence
-                            ├─ activity
-                            ├─ audit
-                            ├─ assignment notification
-                            └─ TASK_CREATED webhook
+
+projecttemplates ──> ProjectCreationPort ──> project-owned adapter ──> normal project lifecycle
+       │
+       └────────────> TaskCreationPort ─────> task-owned adapter ─────> starter tasks
 ```
 
-The owning backend modules are:
+Owning domains/contracts:
 
 - `recurringwork`
 - `tasktemplates`
-- `tasks/creation` for the narrow task creation boundary
+- `projecttemplates`
+- `tasks/creation/TaskCreationPort`
+- `projects/creation/ProjectCreationPort`
 
-Neither recurring work nor templates depends on the full `ProjectTaskService`.
+Ordinary project creation and project-template creation converge on the same project-owned adapter. That adapter preserves tenant/actor validation, subscription project quota, initial `PROJECT_LEAD` membership, persistence, audit, and project lifecycle/webhook behavior.
 
-## Recurring-task checkpoint to preserve
+Project-template orchestration must not inject the full `ProjectService`. Recurring work and templates must not inject the full `ProjectTaskService`.
+
+## Recurring-work checkpoint
 
 V48 tables:
 
@@ -103,97 +84,88 @@ V48 tables:
 - `recurring_task_occurrences`
 - `project_task_templates`
 
-Recurring task rules:
+Rules to preserve:
 
 - task recurrence only in v1
 - `DAILY`, `WEEKLY`, `MONTHLY`
 - explicit IANA timezone
 - interval 1–52
 - optional due offset/end/max occurrences
-- generated tasks are snapshots; editing a definition never rewrites prior tasks
-- previous occurrence completion does not gate later generation
-- pause stops generation
-- resume skips paused-period occurrences and starts at the first future schedule
+- generated tasks are snapshots; editing a rule never rewrites prior tasks
+- pause stops generation; resume skips paused-period occurrences
 - due discovery capped at 50 definitions/pass
 - catch-up capped at 5 occurrences/definition/pass
-- per-definition pessimistic materialization lock
-- occurrence uniqueness `(definition_id, scheduled_for)` provides database idempotency
-- generation failure pauses the definition with a bounded diagnostic
+- pessimistic per-definition materialization lock
+- unique `(definition_id, scheduled_for)` database idempotency
+- generation failure pauses the definition with bounded diagnostics
 - schedule arithmetic preserves local wall time across DST and uses calendar-month semantics
 
 Calendar remains a deadline projection and must not become the recurrence scheduler.
 
-## Project-scoped task-template checkpoint to preserve
+## Task-template checkpoint
 
 - project-scoped catalog
 - maximum 100 templates/project
 - normalized unique name/project
-- template snapshot: title, description, priority, optional assignee, optional due offset
+- snapshot: title, description, priority, optional assignee, optional due offset
 - instantiate through `TaskCreationPort`
-- current actor becomes creator
+- current actor is task creator
+- optional assignee is revalidated through ordinary task creation
 - template edit/delete never mutates existing tasks
-- optional assignee is revalidated as active/project-member at task creation
 - no child/dependency/label/custom-field/workflow snapshot in v1
+
+## Project-template checkpoint
+
+V49 tables:
+
+- `project_templates`
+- `project_template_tasks`
+
+Rules to preserve:
+
+- tenant-scoped catalog
+- normalized unique template name/tenant
+- project name seed, optional description, non-archived initial status
+- maximum 50 ordered starter-task snapshots/template
+- starter snapshot: title, optional description, priority, optional due offset
+- no dependency/subtask/label/custom-field/workflow graph in v1
+- snapshot/copy semantics; later template edits do not mutate instantiated work
+- project created through `ProjectCreationPort`
+- starter tasks created through `TaskCreationPort`
+- actor becomes initial project lead through ordinary lifecycle behavior
+- project quota enforced exactly as ordinary project creation
+- project + starter-task instantiation is transactional
+- task due offsets are relative to the created project's creation instant
 
 Detailed contract: `guides/recurring_work_and_templates.md`.
 
-## Next backend slice — tenant-scoped project templates
+## Frontend checkpoint
 
-Use a dedicated owning domain; do not turn `tasktemplates` into a generic task/project template god-service if separate ownership is clearer.
-
-Recommended v1 semantics:
-
-- tenant-scoped reusable project template catalog
-- normalized unique template name per tenant
-- project metadata snapshot: name seed/title, optional description, initial status/visibility only where existing project model supports them
-- bounded embedded task snapshots, preferably max 50/template
-- task snapshot fields should initially match project task templates: title, description, priority, optional due offset
-- do not include dependency/subtask graph in first version
-- instantiation is snapshot/copy semantics; later template edits never mutate created projects/tasks
-- actor invoking instantiation becomes project owner/lead through existing ownership rules
-- project quota must be enforced exactly as ordinary project creation does
-- project creation + initial owner membership + task creation need deterministic transaction/failure semantics
-
-Required boundary:
-
-```text
-projecttemplates
-      ↓
-ProjectCreationPort       TaskCreationPort
-      ↓                         ↓
-project-owned adapter      task-owned adapter
-```
-
-The project-owned adapter should preserve the ordinary project lifecycle invariants currently embedded in `ProjectService`: tenant validation, quota enforcement, actor validation, owner membership, audit and relevant lifecycle events. Do not simply inject `ProjectService` into the template domain.
-
-## Next frontend slice
-
-Inspect the current project details/navigation surfaces before editing. Prefer explicit feature domains such as:
+The standalone `/work-automation` workspace owns the UX and is split across:
 
 ```text
 features/recurring-work/
 features/task-templates/
 features/project-templates/
+features/work-automation/
 ```
 
-or another equally explicit ownership split based on the final UX.
+It supports:
 
-Requirements:
+- authorization-safe discovery of tenant-wide and project-scoped project access
+- recurring rule create/edit/pause/resume/history with timezone visible
+- task-template create/edit/delete/instantiate
+- project-template create/edit/delete/instantiate
+- optional project-name override
+- bounded 50-row starter-task editor
 
-- permission-aware reads/mutations using existing project-task/project authority
-- recurring rule create/edit/pause/resume with timezone visible to the user
-- clear next-occurrence, status and generation-history presentation
-- task-template catalog + create/edit/delete/instantiate
-- project-template catalog + instantiate flow
-- no recurrence business logic inside Calendar
-- no template business logic inside `ProjectTasksSection` or `AppShell`
-- shared navigation metadata only if a standalone workspace is justified
+Do not move recurrence/template business logic into Calendar, `ProjectTasksSection`, `AppShell`, or task-relationship graph code.
 
 ## Existing boundaries to preserve
 
 ### Task Relationships
 
-V47 owns parent hierarchy, directed dependencies and project-scoped labels. Recurrence/templates are not graph metadata and must stay outside `taskrelationships`.
+V47 owns parent hierarchy, directed dependencies and project-scoped labels. Recurrence/templates are not graph metadata.
 
 ### Calendar
 
@@ -201,15 +173,23 @@ Calendar owns authorization-safe projection of actual task due dates. It does no
 
 ### Dashboard / Command Palette
 
-These are composition/discovery surfaces. They may link into recurring/templates later but do not own their lifecycle.
+These are composition/discovery surfaces. They may link into automation but do not own its lifecycle.
 
-## Database rule
+## Resume here
 
-V48 is the current portable common baseline. New project-template persistence must be **V49+**, append-only. Never rewrite V48 or earlier migrations.
+After #143 is merged green, continue **Product Experience & Work Management Enrichment** in this order:
+
+1. bulk actions + CSV import/export
+2. custom fields/forms
+3. workflows/approvals + knowledge/documents
+4. user-facing analytics/reporting and selected differentiated experiments
+5. onboarding/workspace-switching/personalization polish
+
+For the next slice, first identify the explicit owning domain and its narrow contracts before implementation. Do not bolt bulk/import behavior into existing god-services.
 
 ## Validation before merge
 
-For every slice, require applicable green gates:
+For every slice require applicable green gates:
 
 - Repository Hygiene
 - Backend build/test/verify
