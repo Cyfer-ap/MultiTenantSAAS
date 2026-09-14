@@ -12,6 +12,9 @@ export type TaskActivityType =
     | 'COMMENT_UNPINNED'
     | 'ATTACHMENT_ADDED'
     | 'ATTACHMENT_DELETED'
+    | 'PARENT_CHANGED'
+    | 'DEPENDENCY_CHANGED'
+    | 'LABELS_CHANGED'
 
 export interface TaskCommentMention {
     userId: string
