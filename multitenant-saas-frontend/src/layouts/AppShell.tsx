@@ -29,6 +29,7 @@ import { useCurrentAuthorization } from '../features/authorization/hooks/useCurr
 import { authorizationPermissionCodes } from '../features/authorization/types/authorization'
 import { CommandPalette } from '../features/command-palette/components/CommandPalette'
 import { NotificationCenter } from '../features/notifications/components/NotificationCenter'
+import { PersonalWorkspaceRouteTracker } from '../features/personal-workspace/components/PersonalWorkspaceRouteTracker'
 import { WorkspaceSubscriptionAccessProvider } from '../features/subscriptions/context/WorkspaceSubscriptionAccessContext'
 import { useWorkspaceSubscriptionAccess } from '../features/subscriptions/hooks/useWorkspaceSubscription'
 import { ThemeModeToggle } from '../theme/ThemeModeToggle'
@@ -333,6 +334,7 @@ export function AppShell() {
             >
                 <Box sx={{ mx: 'auto', maxWidth: 1600 }}>
                     <WorkspaceSubscriptionAccessProvider access={subscriptionAccess}>
+                        <PersonalWorkspaceRouteTracker tenantId={tenantId} />
                         <Outlet />
                     </WorkspaceSubscriptionAccessProvider>
                 </Box>
