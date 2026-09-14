@@ -112,8 +112,7 @@ public class WorkflowRuntimeService {
         }
         Map<String, Map<WorkflowEdgeBranch, String>> outgoing = new HashMap<>();
         for (WorkflowEdge edge : edges) {
-            outgoing
-                    .computeIfAbsent(edge.getSourceNodeKey(), ignored -> new HashMap<>())
+            outgoing.computeIfAbsent(edge.getSourceNodeKey(), ignored -> new HashMap<>())
                     .put(edge.getBranchType(), edge.getTargetNodeKey());
         }
 
@@ -126,11 +125,13 @@ public class WorkflowRuntimeService {
 
         while (currentKey != null) {
             if (++visited > MAX_VISITED_NODES) {
-                throw new IllegalStateException("Workflow traversal exceeded the node safety limit");
+                throw new IllegalStateException(
+                        "Workflow traversal exceeded the node safety limit");
             }
             WorkflowNode node = nodesByKey.get(currentKey);
             if (node == null) {
-                throw new IllegalStateException("Workflow edge references missing node: " + currentKey);
+                throw new IllegalStateException(
+                        "Workflow edge references missing node: " + currentKey);
             }
 
             if (node.getNodeType() == WorkflowNodeType.CONDITION) {
@@ -162,8 +163,9 @@ public class WorkflowRuntimeService {
                     snapshot.priority() != null && snapshot.priority().name().equals(value);
             case CONDITION_TASK_STATUS_EQUALS ->
                     snapshot.status() != null && snapshot.status().name().equals(value);
-            default -> throw new IllegalStateException(
-                    "Unsupported workflow condition: " + node.getOperation());
+            default ->
+                    throw new IllegalStateException(
+                            "Unsupported workflow condition: " + node.getOperation());
         };
     }
 
@@ -177,8 +179,9 @@ public class WorkflowRuntimeService {
                 switch (node.getOperation()) {
                     case ACTION_SET_TASK_PRIORITY -> TaskAutomationMutationType.SET_PRIORITY;
                     case ACTION_SET_TASK_STATUS -> TaskAutomationMutationType.SET_STATUS;
-                    default -> throw new IllegalStateException(
-                            "Unsupported workflow action: " + node.getOperation());
+                    default ->
+                            throw new IllegalStateException(
+                                    "Unsupported workflow action: " + node.getOperation());
                 };
         TaskAutomationSnapshot updated =
                 taskMutationPort.mutate(

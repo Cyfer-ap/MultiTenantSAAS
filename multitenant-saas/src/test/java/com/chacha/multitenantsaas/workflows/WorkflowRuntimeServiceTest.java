@@ -63,8 +63,7 @@ class WorkflowRuntimeServiceTest {
         when(definitionRepository.findByTenantIdAndStatusOrderByNameAsc(
                         tenantId, WorkflowStatus.ACTIVE))
                 .thenReturn(List.of(definition));
-        when(nodeRepository.findByTenantIdAndWorkflowIdOrderByNodeKeyAsc(
-                        tenantId, workflowId))
+        when(nodeRepository.findByTenantIdAndWorkflowIdOrderByNodeKeyAsc(tenantId, workflowId))
                 .thenReturn(
                         List.of(
                                 new WorkflowNode(
@@ -142,7 +141,8 @@ class WorkflowRuntimeServiceTest {
                 .succeed(
                         eq(executionId),
                         org.mockito.ArgumentMatchers.argThat(
-                                explanation -> explanation.contains("Applied ACTION_SET_TASK_STATUS")));
+                                explanation ->
+                                        explanation.contains("Applied ACTION_SET_TASK_STATUS")));
     }
 
     @Test
@@ -156,8 +156,7 @@ class WorkflowRuntimeServiceTest {
         when(definitionRepository.findByTenantIdAndStatusOrderByNameAsc(
                         tenantId, WorkflowStatus.ACTIVE))
                 .thenReturn(List.of(definition));
-        when(nodeRepository.findByTenantIdAndWorkflowIdOrderByNodeKeyAsc(
-                        tenantId, workflowId))
+        when(nodeRepository.findByTenantIdAndWorkflowIdOrderByNodeKeyAsc(tenantId, workflowId))
                 .thenReturn(
                         List.of(
                                 new WorkflowNode(
@@ -179,8 +178,7 @@ class WorkflowRuntimeServiceTest {
                         ProjectTaskStatus.TODO,
                         ProjectTaskPriority.MEDIUM));
 
-        verify(executionRecorder, never())
-                .start(any(), any(), anyString(), any());
+        verify(executionRecorder, never()).start(any(), any(), anyString(), any());
         verify(taskMutationPort, never()).mutate(any());
     }
 }
