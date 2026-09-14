@@ -81,6 +81,6 @@ describe('WorkflowExecutionHistoryPanel', () => {
         expect(await screen.findByText('Urgent triage')).toBeInTheDocument()
         expect(screen.getByText('SUCCEEDED')).toBeInTheDocument()
         expect(screen.getByText('Applied ACTION_SET_TASK_STATUS')).toBeInTheDocument()
-        expect(screen.getByText(/task 12345678/i)).toBeInTheDocument()
+        expect(screen.getByText(/task-123/i)).toBeInTheDocument()
     })
 })
