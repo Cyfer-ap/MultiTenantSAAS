@@ -233,7 +233,7 @@ const TenantOnboardingPage = lazy(() =>
 
 const TenantSubscriptionPage = lazy(() =>
     import('../pages/TenantSubscriptionExperiencePage').then((module) => ({
-        default: module.TenantSubscriptionPage,
+        default: module.TenantSubscriptionExperiencePage,
     })),
 )
 
