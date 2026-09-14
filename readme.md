@@ -12,6 +12,8 @@ For current project status and next work, use **`CHECKPOINT.md`** and **`HANDOFF
 - users and organization hierarchy
 - scoped permission authorization with bounded delegation and Explain Access
 - projects, tasks, priorities, due dates, assignees, comments, replies, mentions, pins and activity
+- bounded subtasks, directed task dependencies and project-scoped task labels
+- dedicated Task Planning workspace over authorization-safe task discovery
 - permission-aware Global Search and capability-aware Command Palette
 - server-backed Favorites + Recently Viewed with contextual favorite controls
 - My Work personal attention queue and server-backed Saved Views
@@ -97,12 +99,14 @@ This rule is part of the persistent repository contract in `AGENTS.md`.
 - personal-workspace Favorites/Recently Viewed, My Work and Saved Views
 - capability-aware dashboard composition over existing authorized feature contracts
 - bounded Calendar / Deadline View using task-owned authorization-aware projection contracts
+- task-relationship foundation with bounded parent hierarchy, cycle-safe directed dependencies and project-scoped labels
+- Task Planning workspace implemented as a separate frontend feature domain rather than expanding existing task/dashboard/calendar components
 
 Stripe is the validated deployed Test Mode payment path. Razorpay application/catalog integration remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
 ## Database
 
-Production schema evolution is owned by Flyway. Shared portable migrations currently extend through **V46**. Never rewrite an applied migration.
+Production schema evolution is owned by Flyway. Shared portable migrations currently extend through **V47**. Never rewrite an applied migration.
 
 ```text
 multitenant-saas/src/main/resources/db/migration    historical H2 migrations
@@ -110,7 +114,7 @@ multitenant-saas/src/main/resources/db/postgresql  PostgreSQL baseline
 multitenant-saas/src/main/resources/db/common      portable shared migrations
 ```
 
-Recent product migrations include V45 for personal-workspace favorites/recent items and V46 for saved views. Dashboard #136 and Calendar #137 required no schema migration.
+Recent product migrations include V45 for personal-workspace favorites/recent items, V46 for saved views, and V47 for task parent/dependency/label relationships. Dashboard #136 and Calendar #137 required no schema migration.
 
 ## Verification
 
@@ -143,6 +147,7 @@ Documentation ownership is deliberately narrow to prevent drift:
 - `guides/README.md` — documentation index and ownership policy
 - `guides/current_architecture.md` — canonical technical architecture
 - `guides/ENGINEERING_STANDARDS.md` — technical health, debt and engineering rules
+- `guides/task_relationships.md` — task hierarchy/dependency/label semantics and ownership
 - focused guides — domain-specific behavior
 - `guides/Wild_Thoughts.md` — exploratory idea vault, not a committed roadmap
 - `wiki/*.md` — canonical source for the published reader-facing Wiki
@@ -152,6 +157,6 @@ The Wiki is automatically validated and published from merged `main` by `.github
 
 ## Current product direction
 
-The active phase is **Product Experience & Work Management Enrichment**. Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard and Calendar/Deadline View are established foundations. The next slice is **subtasks + task dependencies + labels/tags**, followed by recurring work/templates, bulk productivity, tenant adaptability, analytics and selected differentiated experiments.
+The active phase is **Product Experience & Work Management Enrichment**. Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, and the task-relationship/Task Planning foundation are established. The next slice is **recurring work + project/task templates**, followed by bulk productivity, tenant adaptability, analytics and selected differentiated experiments.
 
 Production Operations & Disaster Recovery remains an important deferred milestone rather than the immediate development focus.
