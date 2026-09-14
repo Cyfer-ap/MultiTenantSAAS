@@ -2,6 +2,12 @@
 
 This guide owns the recurring-work and template-generation contract. Current milestone status belongs in `../CHECKPOINT.md`; resume instructions belong in `../HANDOFF.md`.
 
+## Implementation status
+
+Backend foundation is merged through PR #141 (`3460785aa9a1644768f10c696ccaef27422535f8`). Portable common migrations are at **V48**.
+
+The broader milestone is still open. The next implementation slice is **V49+ tenant-scoped project templates plus feature-local frontend management for recurring work, task templates, and project templates**.
+
 ## Ownership
 
 Recurring work is an explicit `recurringwork` backend domain. Project-scoped task templates are an explicit `tasktemplates` backend domain. Both create ordinary tasks through the task-owned `tasks/creation/TaskCreationPort` rather than depending on `ProjectTaskService`.
@@ -148,15 +154,15 @@ DELETE /api/tenants/{tenantId}/projects/{projectId}/task-templates/{templateId}
 POST   /api/tenants/{tenantId}/projects/{projectId}/task-templates/{templateId}/instantiate
 ```
 
-## Deliberately deferred from this backend slice
+## Next slice — project templates + frontend completion
 
-The broader milestone is not complete with V48 alone. The next slice owns:
+The next slice owns:
 
-1. tenant-scoped project templates
-2. a project-owned narrow project-creation port preserving quota/owner-membership/audit behavior
+1. tenant-scoped project templates using a new V49+ append-only migration
+2. a project-owned narrow `ProjectCreationPort` preserving quota, actor, owner-membership, audit, and lifecycle behavior
 3. bounded project-template task snapshots and deterministic instantiation failure semantics
 4. feature-local frontend management for recurring work and task templates
-5. project-template frontend flows
+5. project-template catalog/instantiate frontend flows
 6. final milestone documentation/UX closure
 
-Project templates should not inject `ProjectService` into a generic template god-service. Their instantiation should cross the project boundary through a narrow project-owned creation contract, just as task generation crosses through `TaskCreationPort`.
+Project templates must not inject `ProjectService` into a generic template god-service. Their instantiation should cross the project boundary through a narrow project-owned creation contract, just as task generation crosses through `TaskCreationPort`.
