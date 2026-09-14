@@ -14,6 +14,7 @@ describe('tenant.update workspace access', () => {
         expect(getAvailableWorkspaceNavigationItems(context).map((item) => item.label)).toEqual([
             'My Work',
             'Calendar',
+            'Task Planning',
             'Favorites',
             'Authentication',
             'Integrations',
