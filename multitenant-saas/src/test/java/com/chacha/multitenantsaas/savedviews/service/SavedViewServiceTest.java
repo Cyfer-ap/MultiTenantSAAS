@@ -59,6 +59,7 @@ class SavedViewServiceTest {
 
         assertThat(response.name()).isEqualTo("Urgent work");
         assertThat(response.definition())
+                .hasSize(2)
                 .containsEntry("priority", "URGENT")
                 .containsEntry("search", "billing");
         verify(repository).save(any(SavedView.class));
@@ -102,8 +103,7 @@ class SavedViewServiceTest {
         SavedViewContextValidator validator = mock(SavedViewContextValidator.class);
         when(validator.target()).thenReturn(SavedViewTarget.PROJECT_TASKS);
         when(validator.canUse(tenantId, actor.getId(), projectId)).thenReturn(false);
-        service =
-                new SavedViewService(repository, JsonMapper.builder().build(), List.of(validator));
+        service = new SavedViewService(repository, JsonMapper.builder().build(), List.of(validator));
 
         assertThatThrownBy(
                         () ->
