@@ -6,7 +6,7 @@ Use this page as the reader-facing Wiki pointer for resuming development. Reposi
 
 **Product Experience & Work Management Enrichment**
 
-Search, Command Palette, Favorites/Recently Viewed, My Work and Saved Views are complete. The next implementation slice is a **capability-aware Dashboard Refresh**.
+Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views and the capability-aware Dashboard are complete. The next implementation slice is the **Calendar / Deadline View**.
 
 ## Read first
 
@@ -31,20 +31,33 @@ Inside the repository:
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Current reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, and the Saved Views context-validator SPI.
+Current reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, the Saved Views context-validator SPI, and Dashboard frontend composition over existing authorized contracts.
 
-For the Dashboard Refresh, compose those existing contracts. Do not build a new dashboard service by injecting project, task, authorization, billing, user and notification services into one orchestrator.
+For the Calendar / Deadline View, project task dates into a time-oriented surface without rebuilding task authorization or task lifecycle rules inside a new calendar god-service.
 
-## Dashboard resume guidance
+## Calendar resume guidance
 
-The first dashboard slice should emphasize daily operational value:
+The first calendar slice should emphasize deadlines rather than general scheduling:
 
-- My Work attention summary and a bounded high-priority preview
-- Favorites
-- Recently Viewed
-- capability-aware quick actions that invoke owning feature flows
-- bounded deadline/activity context where an owning domain can supply it cleanly
-- useful empty states/onboarding when data is sparse
+- authorized task due dates in a bounded date range
+- existing project deadlines where an owning domain can expose them safely
+- month/list-style views with deep links back to owning work
+- explicit timezone interpretation/rendering
+- useful empty states when a date range has no deadlines
+- bounded date-range queries rather than tenant-wide browser filtering
+
+If an aggregate backend endpoint is justified, prefer a narrow `CalendarDeadlineSource` implemented by the project/task domain. Defer meetings, resource booking, leave management and external calendar synchronization.
+
+## Dashboard checkpoint to preserve
+
+The Dashboard Refresh provides:
+
+- My Work summary + bounded attention preview
+- Favorites + Recently Viewed
+- capability-aware quick actions using the shared workspace-navigation contract
+- existing tenant-wide health metrics
+- local failure isolation for personal widgets
+- no new dashboard backend service or migration
 
 Dashboard widgets remain UX composition. Backend authorization remains authoritative and existing domains continue to own their classification, validation and resource-resolution rules.
 
@@ -53,6 +66,7 @@ Dashboard widgets remain UX composition. Backend authorization remains authorita
 - tenant isolation precedes resource access
 - backend authorization is authoritative
 - stored favorites/recents/saved-view definitions never grant resource access
+- calendar/deadline results are authorized before exposure
 - Explain Access and enforcement use the same evaluator
 - delegated authority never exceeds its current direct parent authority
 - protected authorization permissions remain non-delegable
@@ -60,17 +74,16 @@ Dashboard widgets remain UX composition. Backend authorization remains authorita
 - applied Flyway migrations remain append-only
 - provider secrets remain server-side
 - retryable/concurrent flows consider idempotency and locking
-- new search/dashboard/analytics/automation/AI paths must filter through tenant and authorization boundaries before exposing results
+- new search/calendar/analytics/automation/AI paths must filter through tenant and authorization boundaries before exposing results
 
 ## Immediate product sequence
 
-1. capability-aware dashboard refresh + onboarding/empty-state polish
-2. calendar/deadline view
-3. subtasks, dependencies and labels
-4. recurring work + templates
-5. bulk actions + import/export
-6. custom fields/forms + workflows/approvals + knowledge/documents
-7. user-facing analytics and selected differentiated experiments
+1. calendar/deadline view
+2. subtasks, dependencies and labels
+3. recurring work + templates
+4. bulk actions + import/export
+5. custom fields/forms + workflows/approvals + knowledge/documents
+6. user-facing analytics and selected differentiated experiments
 
 ## Deferred work
 

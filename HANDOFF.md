@@ -31,6 +31,7 @@ Major application foundations are complete through:
 - contextual favorite controls: #132
 - My Work attention queue: #133
 - server-backed Saved Views: #134
+- capability-aware Dashboard Refresh: #136
 
 Portable common Flyway migrations extend through **V46**.
 
@@ -40,17 +41,17 @@ Stripe is the validated deployed Test Mode billing path. Razorpay integration/ca
 
 Continue **Product Experience & Work Management Enrichment** before returning to the deferred operations/DR milestone.
 
-The first personal-productivity sequence is complete: Search, Command Palette, Favorites/Recent, My Work and Saved Views are all delivered. The next implementation slice is a **capability-aware Dashboard Refresh**.
+Search, Command Palette, Favorites/Recent, My Work, Saved Views and the capability-aware Dashboard are complete. The next implementation slice is the **Calendar / Deadline View**.
 
 Recommended sequence:
 
-1. capability-aware dashboard refresh + onboarding/empty-state polish
-2. calendar/deadline view
-3. subtasks, dependencies and labels
-4. recurring work + project/task templates
-5. bulk actions + import/export
-6. custom fields/forms + workflows/approvals + knowledge/documents
-7. user-facing analytics + selected differentiated experiments
+1. calendar/deadline view
+2. subtasks, dependencies and labels
+3. recurring work + project/task templates
+4. bulk actions + import/export
+5. custom fields/forms + workflows/approvals + knowledge/documents
+6. user-facing analytics + selected differentiated experiments
+7. onboarding/workspace-switching/personalization polish as product flows deepen
 
 ## Architecture rule from this point forward
 
@@ -66,7 +67,7 @@ Important boundary rules should gain architecture/static regression tests when p
 
 ## Product-enrichment foundations to reuse
 
-The current product layer already exposes reusable bounded contracts:
+The current product layer exposes reusable bounded contracts:
 
 ```text
 Global Search
@@ -84,37 +85,66 @@ attention coordinator → MyWorkTaskSource
 Saved Views
     ↓
 view persistence/validation → contextual validator SPI
+
+Dashboard
+    ↓
+frontend composition → existing authorized feature queries + workspace navigation contract
 ```
 
-The frontend keeps Search, Command Palette, Personal Workspace, My Work and Saved Views in separate feature domains. Preserve that ownership model.
+The frontend keeps Search, Command Palette, Personal Workspace, My Work, Saved Views and Dashboard composition separate. Preserve that ownership model.
 
 Create Task remains deliberately absent from the global palette. Effective task-management authority can arise from project-lead membership in addition to scoped authorization, so a future global Create Task action needs a project-aware capability/picker contract rather than shell-side permission guessing.
 
-## Next feature guidance — Capability-aware Dashboard Refresh
+## Next feature guidance — Calendar / Deadline View
 
-Treat the dashboard as a **composition surface**, not a new source of truth.
+Treat the calendar as a **time-oriented projection of authorized work**, not a second task-management system.
 
-The first dashboard slice should provide a useful operational home using existing authorized data:
+The first slice should be deliberately bounded:
 
-- My Work attention summary: open, overdue, due soon, blocked and in progress
-- a bounded preview of the highest-priority attention items
-- Favorites
-- Recently Viewed
-- capability-aware quick actions that invoke owning feature flows
-- a bounded deadline/activity snapshot where an existing domain can supply it safely
-- useful empty states and onboarding hints when the workspace has little data
+- show authorized task due dates in month/list-style time views
+- include existing project deadlines only where an owning domain can expose them safely
+- support navigation back to the owning project/task surface
+- preserve task/project authorization before events are returned
+- render timestamps consistently and design timezone handling explicitly
+- provide useful empty states for periods with no deadlines
+- keep queries bounded by date range rather than loading all tenant work
 
 Architecture constraints:
 
-- do not create a dashboard service that injects project, task, authorization, billing, user and notification repositories/services directly
-- reuse existing frontend query contracts where the required information already exists
-- where a combined backend read is justified, introduce narrow summary-provider contracts owned by the relevant domains
-- dashboard visibility must never become an alternative authorization system
-- do not duplicate My Work attention classification, Saved Views validation, or Personal Workspace resolution
-- keep cards/widgets capability-aware rather than hard-coded only to role names
-- keep every collection bounded
+- do not duplicate task-read authorization in a calendar controller/service
+- do not create a calendar service that directly imports many unrelated repositories
+- prefer a narrow calendar/deadline source contract implemented by the project/task domain if a backend aggregate endpoint is justified
+- reuse current task status/due-date semantics rather than inventing calendar-specific copies
+- calendar reads must be tenant-bound and date-bounded
+- no meeting scheduling, room booking, leave management or external calendar sync in the first slice
+- timezone behavior should be explicit from the start so later events/reminders do not inherit ambiguous date handling
 
-The first slice should favor a coherent personal dashboard over manager/admin analytics. Rich workload analytics belong to a later reporting phase.
+A sensible first backend shape, if the existing task APIs cannot support an efficient bounded projection, is:
+
+```text
+CalendarQueryService
+        ↓
+CalendarDeadlineSource
+        ↓
+TaskCalendarDeadlineSource
+        ↓
+tenant/date-bounded authorized task query
+```
+
+Keep the first implementation focused on deadlines. Subtasks/dependencies and richer scheduling semantics come later.
+
+## Dashboard checkpoint to preserve
+
+PR #136 turns the tenant dashboard into a composition surface rather than a new backend domain:
+
+- My Work counts + bounded attention preview
+- Favorites and Recently Viewed
+- quick actions derived from the shared capability-aware navigation contract
+- existing tenant-wide health metrics retained
+- personal widget failures degrade locally
+- no new backend endpoint or migration
+
+Do not later move these concerns into one broad `DashboardService` merely for convenience.
 
 ## Invariants to preserve
 
@@ -122,6 +152,7 @@ The first slice should favor a coherent personal dashboard over manager/admin an
 - tenant isolation precedes resource access
 - search/discovery and saved/recent resolution constrain access before returning entity data
 - stored favorites, recents or saved-view definitions never grant authorization
+- calendar/deadline results must be authorized before exposure
 - Explain Access and enforcement share the evaluator
 - delegated authority remains a current permission/scope/validity subset of its direct source
 - `authorization.manage` and `authorization.delegate` remain non-delegable

@@ -54,8 +54,8 @@ Historical planning/recovery files may remain for provenance, but they are not c
 
 ## Current direction
 
-The active product phase is **Product Experience & Work Management Enrichment**. The first personal-productivity sequence is complete through Search, Command Palette, Favorites/Recently Viewed, My Work and Saved Views. The next implementation slice is a **capability-aware Dashboard Refresh**, which should compose those established domains rather than introduce a new coupled dashboard backend.
+The active product phase is **Product Experience & Work Management Enrichment**. Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views and the capability-aware Dashboard are complete. The next implementation slice is the **Calendar / Deadline View**.
 
-After the dashboard, continue with calendar/deadline views, richer task relationships, recurring work/templates, bulk productivity, tenant adaptability and user-facing analytics.
+The first calendar slice should be a bounded, authorization-safe projection of existing task/project dates with explicit timezone behavior. After that, continue with subtasks/dependencies/labels, recurring work/templates, bulk productivity, tenant adaptability and user-facing analytics.
 
 Production Operations & Disaster Recovery remains important but intentionally deferred until after the current user-facing enrichment phase.

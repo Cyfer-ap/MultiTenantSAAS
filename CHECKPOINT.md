@@ -12,7 +12,7 @@ This file is the **single repository-side source of truth for current project st
 
 The platform foundation is broad enough that current development should prioritize daily user value and product depth rather than additional infrastructure expansion.
 
-The first personal-productivity sequence is now delivered through **PR #134**:
+The first personal-productivity sequence is now delivered through **PR #136**:
 
 - Global Search — #129
 - Command Palette — #130
@@ -20,8 +20,9 @@ The first personal-productivity sequence is now delivered through **PR #134**:
 - contextual favorite controls — #132
 - My Work attention queue — #133
 - server-backed Saved Views — #134
+- capability-aware Dashboard Refresh — #136
 
-The next implementation slice is a **capability-aware dashboard refresh** that composes these existing domains into a useful operational home without introducing a dashboard god-service.
+The next implementation slice is a **calendar/deadline view**, followed by richer task relationships.
 
 ## Completed application foundations
 
@@ -38,6 +39,7 @@ The next implementation slice is a **capability-aware dashboard refresh** that c
 - contextual favorite controls through PR #132
 - My Work / unified personal attention queue through PR #133
 - server-backed Saved Views through PR #134
+- capability-aware Dashboard Refresh through PR #136
 
 Other established capabilities include projects/tasks/collaboration, R2/S3-compatible attachments, durable notifications/email, API keys, usage metering/quotas, tenant/platform audit, PostgreSQL/Flyway correctness, production hardening and CI/security gates.
 
@@ -79,6 +81,15 @@ The product-enrichment foundation now provides a connected set of reusable perso
 - backend `savedviews` domain uses a narrow context-validator SPI for contextual surfaces
 - contract is prepared for future `PROJECT_TASKS` adoption without moving project repositories into the Saved Views service
 
+### Dashboard
+
+- personal My Work summary and bounded attention preview
+- Favorites and Recently Viewed context
+- capability-aware quick actions derived from the shared workspace-navigation authorization contract
+- existing tenant-wide users/projects/tasks health metrics preserved below the personal section
+- personal widget failures degrade locally instead of taking down the entire dashboard
+- frontend composition only: no new dashboard backend service or Flyway migration
+
 Create Task remains intentionally absent from the global palette. Effective task-management authority can come from project-lead membership as well as scoped authorization, so a future global Create Task action must use a project-aware capability contract/picker rather than duplicating task-access logic in the application shell.
 
 ## Database checkpoint
@@ -113,7 +124,6 @@ Application integration and managed Plan provisioning are implemented. Recurring
 
 The largest remaining gaps are now user-facing:
 
-- capability-aware dashboard refresh and stronger onboarding/empty states
 - calendar/deadline views
 - subtasks, dependencies, labels and recurring work
 - project/task templates
@@ -122,7 +132,7 @@ The largest remaining gaps are now user-facing:
 - workflows/approvals
 - first-class knowledge/documents
 - user-facing analytics/reporting
-- smoother workspace switching and personalization
+- smoother workspace switching, onboarding and personalization
 
 `guides/Wild_Thoughts.md` contains the broader audited idea vault and differentiated experiments.
 
@@ -153,20 +163,21 @@ Recent product work demonstrates the intended pattern:
 - Personal Workspace: personal state coordinator + project/task resolver adapters
 - My Work: attention coordinator + narrow `MyWorkTaskSource`
 - Saved Views: persistence/definition domain + narrow context-validator SPI
+- Dashboard: frontend composition of existing authorized contracts and the shared navigation capability contract
 
-The Dashboard Refresh must continue this pattern. It should compose authorized summaries from existing feature contracts and only introduce new narrow summary/query contracts when a required datum does not already have a suitable owner.
+The calendar/deadline view must continue this pattern. Time-oriented presentation may compose project/task dates, but it must not duplicate task authorization or introduce a calendar service that directly owns unrelated project/task repositories.
 
 ## Next product sequence
 
-1. capability-aware dashboard refresh + onboarding/empty-state polish
-2. calendar/deadline view + richer task relationships
-3. subtasks, dependencies and labels
-4. recurring work + templates
-5. bulk actions + import/export
-6. custom fields/forms + workflows/approvals + knowledge/documents
-7. user-facing analytics + selected differentiated experiments
+1. calendar/deadline view
+2. subtasks, dependencies and labels
+3. recurring work + templates
+4. bulk actions + import/export
+5. custom fields/forms + workflows/approvals + knowledge/documents
+6. user-facing analytics + selected differentiated experiments
+7. onboarding/workspace-switching/personalization polish as product flows deepen
 
-The dashboard should become a useful personal operational cockpit: attention summary, favorites, recent context, quick actions and bounded deadline/activity signals. It must not duplicate authorization, My Work classification, saved-view logic or personal-workspace resolution.
+The first calendar slice should be deliberately bounded: start with authorized task due dates and existing project deadlines, render them consistently, and design timezone handling correctly. Do not turn the first slice into a full meeting/resource scheduling platform.
 
 ## Deferred platform work
 

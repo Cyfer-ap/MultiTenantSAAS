@@ -28,17 +28,11 @@ import {
     usePersonalWorkspace,
     useUnfavoritePersonalResource,
 } from '../hooks/usePersonalWorkspace'
+import { getPersonalWorkspaceTarget } from '../navigation/personalWorkspaceTarget'
 import type { PersonalResourceType, PersonalWorkspaceItem } from '../types/personalWorkspace'
 
 function resourceIcon(type: PersonalResourceType): ReactNode {
     return type === 'PROJECT' ? <FolderOutlinedIcon /> : <AssignmentOutlinedIcon />
-}
-
-function targetFor(item: Pick<PersonalWorkspaceItem, 'type' | 'resourceId' | 'parentId'>): string {
-    if (item.type === 'PROJECT') {
-        return `/projects/${item.resourceId}`
-    }
-    return `/projects/${item.parentId}?task=${item.resourceId}`
 }
 
 function formatTime(value: string | null): string {
@@ -79,7 +73,7 @@ function ResourceCard({ item, action }: { item: PersonalWorkspaceItem; action?: 
                     </Typography>
                 </Box>
                 {action}
-                <Button onClick={() => navigate(targetFor(item))} size="small">
+                <Button onClick={() => navigate(getPersonalWorkspaceTarget(item))} size="small">
                     Open
                 </Button>
             </Stack>

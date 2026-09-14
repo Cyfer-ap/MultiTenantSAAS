@@ -105,6 +105,19 @@ Provides:
 - context-validator SPI prepared for later project-task view adoption
 - V46 `saved_views` persistence
 
+### Capability-aware Dashboard Refresh
+
+Completed through PR #136.
+
+Provides:
+
+- personal My Work summary and bounded attention preview
+- Favorites and Recently Viewed context on the dashboard
+- capability-aware quick actions using the shared workspace-navigation contract
+- preserved tenant-wide users/projects/tasks health metrics
+- local degradation when personal widgets fail
+- frontend composition only; no new dashboard backend service or schema migration
+
 ## Current major product milestone
 
 ### 1. Product Experience & Work Management Enrichment
@@ -119,21 +132,23 @@ The platform foundation is broad enough that the immediate priority is user-faci
 - ✅ contextual favorite controls
 - ✅ My Work / unified attention queue
 - ✅ saved filters/views for My Work
-- ⬜ capability-aware dashboard refresh — **next**
-- ⬜ better empty states/onboarding and quick-create UX
+- ✅ capability-aware dashboard refresh
+- 🟡 better empty states/onboarding and quick-create UX — continue incrementally with future product slices
 
-The Dashboard Refresh should compose the existing personal-productivity domains rather than introduce another monolithic backend service. Initial value should come from My Work attention summaries, favorites, recents, capability-aware quick actions and bounded deadline/activity context.
+Phase A now has a coherent daily-use foundation. Onboarding/empty-state polish remains an ongoing UX concern rather than a blocker for deeper work management.
 
 #### Phase B — deeper work management
 
+- calendar/deadline view — **next**
 - existing Kanban task board should be iterated rather than rebuilt
-- calendar/deadline view
 - subtasks
 - task dependencies
 - labels/tags
 - recurring work
 - milestones/templates
 - bulk actions and CSV import/export
+
+The first calendar slice should be a bounded, authorization-safe projection of existing task/project dates. It should not become a meeting/resource scheduling platform.
 
 #### Phase C — tenant adaptability
 
@@ -164,29 +179,27 @@ No experiment becomes a roadmap commitment merely because it is listed.
 
 ## Immediate sequence
 
-1. capability-aware dashboard refresh + onboarding/empty-state polish
-2. calendar/deadline view
-3. subtasks, task dependencies and labels/tags
-4. recurring work + project/task templates
-5. bulk actions + CSV import/export
-6. custom fields/forms + workflows/approvals + knowledge/documents
-7. user-facing analytics/reporting
-8. selected differentiated experiments after the core product layer is strong
+1. calendar/deadline view
+2. subtasks, task dependencies and labels/tags
+3. recurring work + project/task templates
+4. bulk actions + CSV import/export
+5. custom fields/forms + workflows/approvals + knowledge/documents
+6. user-facing analytics/reporting
+7. selected differentiated experiments after the core product layer is strong
 
 ## Core product gaps to keep visible
 
 Before calling the product layer mature, revisit:
 
 - smooth post-login multi-workspace switching
-- capability-aware dashboard and onboarding
-- richer task/project relationships and calendar views
+- calendar/deadline views and richer task/project relationships
 - recurring work and templates
 - custom fields/forms
 - workflow/approval engine
 - first-class knowledge/documents
 - user-facing analytics/reporting
 - import/export and bulk productivity
-- richer personalization/timezone/locale UX
+- richer onboarding, personalization, timezone and locale UX
 
 ## Deferred platform work
 
@@ -230,6 +243,6 @@ Follow the operations/DR baseline later.
 
 Preserve tenant isolation, backend-authoritative authorization, delegation non-escalation, verified provider reconciliation, webhook-authoritative normal billing state, immutable history, Flyway invariants, database-backed concurrency, auditability, SSRF protections and server-only secrets/provider identifiers.
 
-New user-facing features must remain permission-aware and tenant-safe. Search, favorites/recent resolution, My Work, saved views, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
+New user-facing features must remain permission-aware and tenant-safe. Search, favorites/recent resolution, My Work, saved views, calendar projections, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
 
-New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work and Saved Views are current reference implementations of this rule. The Dashboard Refresh must compose them without collapsing those boundaries.
+New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work and Saved Views are backend reference implementations; the Dashboard Refresh is the frontend composition reference. The Calendar/Deadline View must preserve those boundaries rather than duplicating task/project access rules.
