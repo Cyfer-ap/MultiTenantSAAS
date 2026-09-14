@@ -130,12 +130,7 @@ export function TaskRelationshipsPanel({
         sortDir: 'asc',
         ...(pickerSearch.trim() ? { search: pickerSearch.trim() } : {}),
     }
-    const candidateQuery = useProjectTasks(
-        tenantId,
-        projectId,
-        pickerParams,
-        Boolean(pickerMode),
-    )
+    const candidateQuery = useProjectTasks(tenantId, projectId, pickerParams, Boolean(pickerMode))
 
     const candidateTasks = useMemo(
         () =>
@@ -148,7 +143,9 @@ export function TaskRelationshipsPanel({
         () => new Set((relationshipsQuery.data?.labels ?? []).map((label) => label.id)),
         [relationshipsQuery.data?.labels],
     )
-    const availableLabels = (labelsQuery.data ?? []).filter((label) => !assignedLabelIds.has(label.id))
+    const availableLabels = (labelsQuery.data ?? []).filter(
+        (label) => !assignedLabelIds.has(label.id),
+    )
 
     const closePicker = () => {
         setPickerMode(null)
@@ -311,7 +308,11 @@ export function TaskRelationshipsPanel({
                             </Typography>
                         ) : (
                             relationships.children.map((child) => (
-                                <RelatedTaskRow key={child.id} onOpenTask={onOpenTask} task={child} />
+                                <RelatedTaskRow
+                                    key={child.id}
+                                    onOpenTask={onOpenTask}
+                                    task={child}
+                                />
                             ))
                         )}
                         {relationships.childrenTruncated && (
@@ -439,7 +440,9 @@ export function TaskRelationshipsPanel({
                             <Chip
                                 key={label.id}
                                 label={label.name}
-                                onDelete={canManage ? () => void unassignLabel(label.id) : undefined}
+                                onDelete={
+                                    canManage ? () => void unassignLabel(label.id) : undefined
+                                }
                                 size="small"
                                 sx={{
                                     backgroundColor: label.color ? `${label.color}18` : undefined,
@@ -531,7 +534,8 @@ export function TaskRelationshipsPanel({
                         )}
                         {(candidateQuery.data?.totalElements ?? 0) > 50 && (
                             <Alert severity="info">
-                                Showing the first 50 matches. Refine the search to find another task.
+                                Showing the first 50 matches. Refine the search to find another
+                                task.
                             </Alert>
                         )}
                         {mutationError && <Alert severity="error">{mutationError}</Alert>}

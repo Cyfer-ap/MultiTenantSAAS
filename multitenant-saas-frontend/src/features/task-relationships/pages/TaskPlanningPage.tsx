@@ -52,7 +52,10 @@ export function TaskPlanningPage() {
 
     const searchQuery = useGlobalSearch(tenantId, search, { limit: 30 })
     const taskResults = useMemo(
-        () => (searchQuery.data?.results ?? []).filter((result) => result.type === 'TASK' && result.parentId),
+        () =>
+            (searchQuery.data?.results ?? []).filter(
+                (result) => result.type === 'TASK' && result.parentId,
+            ),
         [searchQuery.data?.results],
     )
 
@@ -100,7 +103,8 @@ export function TaskPlanningPage() {
                     </Typography>
                 </Stack>
                 <Typography color="text.secondary" sx={{ marginTop: 0.75 }} variant="body2">
-                    Organize accessible project tasks with subtasks, blockers, dependents and reusable labels.
+                    Organize accessible project tasks with subtasks, blockers, dependents and
+                    reusable labels.
                 </Typography>
             </Box>
 
@@ -139,7 +143,8 @@ export function TaskPlanningPage() {
 
                         {search.trim().length < 2 && (
                             <Typography color="text.secondary" variant="body2">
-                                Search uses the same authorization-safe task discovery as Global Search.
+                                Search uses the same authorization-safe task discovery as Global
+                                Search.
                             </Typography>
                         )}
                         {searchQuery.isPending && search.trim().length >= 2 && (
@@ -153,18 +158,22 @@ export function TaskPlanningPage() {
                                 {getErrorMessage(searchQuery.error, 'Tasks could not be searched.')}
                             </Alert>
                         )}
-                        {searchQuery.isSuccess && search.trim().length >= 2 && taskResults.length === 0 && (
-                            <Typography color="text.secondary" variant="body2">
-                                No accessible tasks match this search.
-                            </Typography>
-                        )}
+                        {searchQuery.isSuccess &&
+                            search.trim().length >= 2 &&
+                            taskResults.length === 0 && (
+                                <Typography color="text.secondary" variant="body2">
+                                    No accessible tasks match this search.
+                                </Typography>
+                            )}
                         {taskResults.length > 0 && (
                             <List disablePadding>
                                 {taskResults.map((result) => (
                                     <ListItemButton
                                         key={`${result.parentId}:${result.id}`}
                                         onClick={() => selectTask(result.parentId ?? '', result.id)}
-                                        selected={result.id === taskId && result.parentId === projectId}
+                                        selected={
+                                            result.id === taskId && result.parentId === projectId
+                                        }
                                     >
                                         <ListItemText
                                             primary={result.title}
@@ -179,13 +188,17 @@ export function TaskPlanningPage() {
 
                 <Box>
                     {!taskId && (
-                        <Paper sx={{ padding: { xs: 3, sm: 5 }, textAlign: 'center' }} variant="outlined">
+                        <Paper
+                            sx={{ padding: { xs: 3, sm: 5 }, textAlign: 'center' }}
+                            variant="outlined"
+                        >
                             <AccountTreeRoundedIcon color="disabled" sx={{ fontSize: 42 }} />
                             <Typography sx={{ marginTop: 1 }} variant="h6">
                                 Select a task to plan
                             </Typography>
                             <Typography color="text.secondary" variant="body2">
-                                Parent/subtask hierarchy, dependency edges and labels stay scoped to the task's project.
+                                Parent/subtask hierarchy, dependency edges and labels stay scoped to
+                                the task's project.
                             </Typography>
                         </Paper>
                     )}
@@ -200,7 +213,10 @@ export function TaskPlanningPage() {
 
                     {taskId && taskQuery.isError && (
                         <Alert severity="error">
-                            {getErrorMessage(taskQuery.error, 'The selected task could not be loaded.')}
+                            {getErrorMessage(
+                                taskQuery.error,
+                                'The selected task could not be loaded.',
+                            )}
                         </Alert>
                     )}
 
@@ -225,14 +241,32 @@ export function TaskPlanningPage() {
                                             </Typography>
                                         )}
                                     </Box>
-                                    <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', gap: 0.75 }}>
-                                        <Chip label={statusLabels[taskQuery.data.status]} size="small" />
-                                        <Chip label={taskQuery.data.priority.toLowerCase()} size="small" variant="outlined" />
+                                    <Stack
+                                        direction="row"
+                                        spacing={0.75}
+                                        sx={{ flexWrap: 'wrap', gap: 0.75 }}
+                                    >
+                                        <Chip
+                                            label={statusLabels[taskQuery.data.status]}
+                                            size="small"
+                                        />
+                                        <Chip
+                                            label={taskQuery.data.priority.toLowerCase()}
+                                            size="small"
+                                            variant="outlined"
+                                        />
                                     </Stack>
                                 </Stack>
-                                <Typography color="text.secondary" sx={{ marginTop: 1.25 }} variant="caption">
-                                    <Link to={`/projects/${projectId}?task=${taskId}`}>Open project task</Link>
-                                    {!canManageRelationships && ' · Relationship changes are read-only for your current access.'}
+                                <Typography
+                                    color="text.secondary"
+                                    sx={{ marginTop: 1.25 }}
+                                    variant="caption"
+                                >
+                                    <Link to={`/projects/${projectId}?task=${taskId}`}>
+                                        Open project task
+                                    </Link>
+                                    {!canManageRelationships &&
+                                        ' · Relationship changes are read-only for your current access.'}
                                 </Typography>
                             </Paper>
 

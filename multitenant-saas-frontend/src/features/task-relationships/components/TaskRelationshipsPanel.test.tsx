@@ -65,15 +65,35 @@ describe('TaskRelationshipsPanel', () => {
         Object.values(mocks).forEach((mockFn) => mockFn.mockReset())
         mocks.useTaskRelationships.mockReturnValue({
             data: {
-                parent: { id: 'task-parent', title: 'Release epic', status: 'TODO', priority: 'HIGH' },
+                parent: {
+                    id: 'task-parent',
+                    title: 'Release epic',
+                    status: 'TODO',
+                    priority: 'HIGH',
+                },
                 children: [
-                    { id: 'task-child', title: 'Publish notes', status: 'TODO', priority: 'MEDIUM' },
+                    {
+                        id: 'task-child',
+                        title: 'Publish notes',
+                        status: 'TODO',
+                        priority: 'MEDIUM',
+                    },
                 ],
                 blockers: [
-                    { id: 'task-blocker', title: 'Security review', status: 'BLOCKED', priority: 'URGENT' },
+                    {
+                        id: 'task-blocker',
+                        title: 'Security review',
+                        status: 'BLOCKED',
+                        priority: 'URGENT',
+                    },
                 ],
                 dependents: [
-                    { id: 'task-dependent', title: 'Announce release', status: 'TODO', priority: 'LOW' },
+                    {
+                        id: 'task-dependent',
+                        title: 'Announce release',
+                        status: 'TODO',
+                        priority: 'LOW',
+                    },
                 ],
                 labels: [{ id: 'label-1', name: 'Release', color: '#4F46E5' }],
                 childrenTruncated: false,
@@ -147,6 +167,8 @@ describe('TaskRelationshipsPanel', () => {
 
         expect(screen.queryByRole('button', { name: /change parent/i })).not.toBeInTheDocument()
         expect(screen.queryByRole('button', { name: /add blocker/i })).not.toBeInTheDocument()
-        expect(screen.queryByRole('button', { name: /manage project labels/i })).not.toBeInTheDocument()
+        expect(
+            screen.queryByRole('button', { name: /manage project labels/i }),
+        ).not.toBeInTheDocument()
     })
 })

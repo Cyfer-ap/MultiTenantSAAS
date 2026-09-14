@@ -138,7 +138,9 @@ describe('TaskPlanningPage', () => {
         await user.type(screen.getByLabelText(/search accessible tasks/i), 'ship')
         await user.click(screen.getByRole('button', { name: /ship release/i }))
 
-        expect(await screen.findByTestId('task-relationships-panel')).toHaveTextContent('Ship release')
+        expect(await screen.findByTestId('task-relationships-panel')).toHaveTextContent(
+            'Ship release',
+        )
         expect(screen.getByRole('link', { name: /open project task/i })).toHaveAttribute(
             'href',
             '/projects/project-1?task=task-1',

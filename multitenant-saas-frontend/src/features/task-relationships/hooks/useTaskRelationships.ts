@@ -140,7 +140,8 @@ export function useDeleteTaskLabel(tenantId: string, projectId: string) {
     const invalidate = useInvalidateLabelCatalog(tenantId, projectId)
 
     return useMutation({
-        mutationFn: (labelId: string) => taskRelationshipsApi.deleteLabel(tenantId, projectId, labelId),
+        mutationFn: (labelId: string) =>
+            taskRelationshipsApi.deleteLabel(tenantId, projectId, labelId),
         onSuccess: invalidate,
     })
 }
