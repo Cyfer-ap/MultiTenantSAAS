@@ -66,7 +66,7 @@ class TaskGraphServiceTest {
         UUID parentId = UUID.randomUUID();
         ProjectTask child = task(childId);
         ProjectTask parent = task(parentId);
-        when(parent.getParentTask()).thenReturn(child);
+        parent.setParentTask(child);
         when(taskGateway.requireProject(tenantId, projectId)).thenReturn(activeProject());
         when(taskGateway.requireTask(tenantId, projectId, childId)).thenReturn(child);
         when(taskGateway.requireTask(tenantId, projectId, parentId)).thenReturn(parent);
@@ -114,7 +114,9 @@ class TaskGraphServiceTest {
         UUID blockingId = UUID.randomUUID();
         ProjectTask dependent = task(dependentId);
         ProjectTask blocking = task(blockingId);
-        TaskRelationshipsResponse expected = mock(TaskRelationshipsResponse.class);
+        TaskRelationshipsResponse expected =
+                new TaskRelationshipsResponse(
+                        null, List.of(), List.of(), List.of(), List.of(), false, false, false);
         when(taskGateway.requireProject(tenantId, projectId)).thenReturn(activeProject());
         when(taskGateway.requireTask(tenantId, projectId, dependentId)).thenReturn(dependent);
         when(taskGateway.requireTask(tenantId, projectId, blockingId)).thenReturn(blocking);
@@ -132,16 +134,16 @@ class TaskGraphServiceTest {
     }
 
     private Project activeProject() {
-        Project project = mock(Project.class);
-        when(project.getId()).thenReturn(projectId);
-        when(project.getStatus()).thenReturn(ProjectStatus.ACTIVE);
+        Project project = new Project();
+        project.setId(projectId);
+        project.setStatus(ProjectStatus.ACTIVE);
         return project;
     }
 
     private ProjectTask task(UUID id) {
-        ProjectTask task = mock(ProjectTask.class);
-        when(task.getId()).thenReturn(id);
-        when(task.getStatus()).thenReturn(ProjectTaskStatus.TODO);
+        ProjectTask task = new ProjectTask();
+        task.setId(id);
+        task.setStatus(ProjectTaskStatus.TODO);
         return task;
     }
 }
