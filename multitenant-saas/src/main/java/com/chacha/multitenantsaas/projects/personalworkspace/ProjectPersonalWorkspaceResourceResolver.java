@@ -11,8 +11,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ProjectPersonalWorkspaceResourceResolver
-        implements PersonalWorkspaceResourceResolver {
+public class ProjectPersonalWorkspaceResourceResolver implements PersonalWorkspaceResourceResolver {
 
     private final ProjectRepository projectRepository;
     private final AuthorizationSecurityService authorizationSecurity;

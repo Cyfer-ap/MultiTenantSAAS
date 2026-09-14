@@ -130,10 +130,7 @@ public class PersonalWorkspaceService {
     private java.util.Optional<PersonalWorkspaceItemResponse> resolveForRead(
             PersonalWorkspaceItem item) {
         return resolver(item.getResourceType())
-                .resolve(
-                        item.getTenant().getId(),
-                        item.getUser().getId(),
-                        item.getResourceId())
+                .resolve(item.getTenant().getId(), item.getUser().getId(), item.getResourceId())
                 .map(resource -> toResponse(resource, item));
     }
 

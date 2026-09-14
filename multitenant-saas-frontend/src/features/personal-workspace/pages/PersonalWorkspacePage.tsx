@@ -59,18 +59,14 @@ function getErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : 'The personal workspace could not be updated.'
 }
 
-function ResourceCard({
-    item,
-    action,
-}: {
-    item: PersonalWorkspaceItem
-    action?: ReactNode
-}) {
+function ResourceCard({ item, action }: { item: PersonalWorkspaceItem; action?: ReactNode }) {
     const navigate = useNavigate()
     return (
         <Paper variant="outlined" sx={{ p: 2 }}>
             <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-                <Box sx={{ color: 'text.secondary', display: 'flex' }}>{resourceIcon(item.type)}</Box>
+                <Box sx={{ color: 'text.secondary', display: 'flex' }}>
+                    {resourceIcon(item.type)}
+                </Box>
                 <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         <Typography noWrap sx={{ fontWeight: 700 }}>
@@ -134,11 +130,7 @@ export function PersonalWorkspacePage() {
     }
 
     if (workspaceQuery.isError) {
-        return (
-            <Alert severity="error">
-                {getErrorMessage(workspaceQuery.error)}
-            </Alert>
-        )
+        return <Alert severity="error">{getErrorMessage(workspaceQuery.error)}</Alert>
     }
 
     const favorites = workspaceQuery.data?.favorites ?? []
@@ -152,7 +144,8 @@ export function PersonalWorkspacePage() {
                     Favorites & recent
                 </Typography>
                 <Typography color="text.secondary">
-                    Pin the work you return to most, and jump back into recently opened projects and tasks.
+                    Pin the work you return to most, and jump back into recently opened projects and
+                    tasks.
                 </Typography>
             </Stack>
 
@@ -186,7 +179,11 @@ export function PersonalWorkspacePage() {
                                 },
                             }}
                         />
-                        <Button type="submit" variant="contained" disabled={searchDraft.trim().length < 2}>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            disabled={searchDraft.trim().length < 2}
+                        >
                             Search
                         </Button>
                     </Stack>
@@ -210,7 +207,11 @@ export function PersonalWorkspacePage() {
                             const isFavorite = favoriteKeys.has(key)
                             return (
                                 <Paper key={key} variant="outlined" sx={{ p: 1.5 }}>
-                                    <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+                                    <Stack
+                                        direction="row"
+                                        spacing={1.5}
+                                        sx={{ alignItems: 'center' }}
+                                    >
                                         <Box sx={{ color: 'text.secondary', display: 'flex' }}>
                                             {resourceIcon(result.type)}
                                         </Box>
@@ -218,12 +219,22 @@ export function PersonalWorkspacePage() {
                                             <Typography noWrap sx={{ fontWeight: 650 }}>
                                                 {result.title}
                                             </Typography>
-                                            <Typography color="text.secondary" noWrap variant="body2">
-                                                {result.subtitle || (result.type === 'PROJECT' ? 'Project' : 'Task')}
+                                            <Typography
+                                                color="text.secondary"
+                                                noWrap
+                                                variant="body2"
+                                            >
+                                                {result.subtitle ||
+                                                    (result.type === 'PROJECT'
+                                                        ? 'Project'
+                                                        : 'Task')}
                                             </Typography>
                                         </Box>
                                         <Button
-                                            disabled={favoriteMutation.isPending || unfavoriteMutation.isPending}
+                                            disabled={
+                                                favoriteMutation.isPending ||
+                                                unfavoriteMutation.isPending
+                                            }
                                             onClick={() => {
                                                 if (isFavorite) {
                                                     unfavoriteMutation.mutate({
@@ -237,7 +248,13 @@ export function PersonalWorkspacePage() {
                                                     })
                                                 }
                                             }}
-                                            startIcon={isFavorite ? <StarRoundedIcon /> : <StarBorderRoundedIcon />}
+                                            startIcon={
+                                                isFavorite ? (
+                                                    <StarRoundedIcon />
+                                                ) : (
+                                                    <StarBorderRoundedIcon />
+                                                )
+                                            }
                                             size="small"
                                         >
                                             {isFavorite ? 'Favorited' : 'Favorite'}
@@ -309,7 +326,11 @@ export function PersonalWorkspacePage() {
                             recent.map((item) => (
                                 <Box key={`${item.type}:${item.resourceId}`}>
                                     <ResourceCard item={item} />
-                                    <Typography color="text.secondary" variant="caption" sx={{ display: 'block', mt: 0.25, ml: 1 }}>
+                                    <Typography
+                                        color="text.secondary"
+                                        variant="caption"
+                                        sx={{ display: 'block', mt: 0.25, ml: 1 }}
+                                    >
                                         Viewed {formatTime(item.lastViewedAt)}
                                     </Typography>
                                 </Box>
