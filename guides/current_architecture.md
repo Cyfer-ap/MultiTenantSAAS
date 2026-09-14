@@ -87,6 +87,7 @@ Current mature domains include:
 - Personal Workspace: Favorites + Recently Viewed
 - My Work personal attention queue
 - Saved Views
+- capability-aware tenant Dashboard composition
 - attachments through S3/R2-compatible storage
 - in-app/email notifications and preferences
 - subscription plans, tenant subscriptions, quotas and usage metering
@@ -98,7 +99,7 @@ Current mature domains include:
 - tenant/platform audit trails
 - production hardening and observability
 
-The next product-enrichment stage is a capability-aware dashboard refresh, followed by calendar/deadline views, richer task relationships, recurring work/templates, bulk productivity, tenant adaptability, workflows/knowledge and user-facing analytics.
+The next product-enrichment stage is a calendar/deadline view, followed by richer task relationships, recurring work/templates, bulk productivity, tenant adaptability, workflows/knowledge and user-facing analytics.
 
 ## Authorization architecture
 
@@ -185,7 +186,7 @@ Important properties:
 - recent history is bounded
 - project/task repositories are not imported into the personal-workspace coordinator
 
-The frontend `features/personal-workspace` domain owns the consolidated Favorites/Recent surface and contextual favorite integration.
+The frontend `features/personal-workspace` domain owns the consolidated Favorites/Recent surface, contextual favorite integration and the reusable project/task target-navigation contract.
 
 ## My Work architecture
 
@@ -230,28 +231,58 @@ Important properties:
 
 The frontend `features/saved-views` domain owns API/query/mutation/UI behavior and is currently integrated with My Work.
 
-## Dashboard architecture direction
+## Dashboard architecture
 
-The next Dashboard Refresh must be a **composition surface**, not a new source of truth.
-
-The preferred shape is:
+PR #136 implements the tenant dashboard as a **frontend composition surface**, not a new source of truth.
 
 ```text
-Dashboard UI
-   ├── My Work query/summary
-   ├── Personal Workspace query
-   ├── capability-aware actions
-   └── bounded domain summaries where needed
+DashboardPage
+    ↓
+features/dashboard composition
+    ├── DashboardMyWorkCard → features/my-work query
+    ├── DashboardPersonalContextCard → features/personal-workspace query
+    ├── DashboardQuickActionsCard → shared workspace-navigation capability contract
+    └── existing tenant dashboard summary → tenant-wide health metrics
+```
+
+Important properties:
+
+- no new dashboard backend service or schema migration
+- My Work classification remains owned by `mywork`
+- Favorites/Recent authorization resolution remains owned by `personal-workspace`
+- quick actions use the same authorization/navigation contract as the workspace shell rather than a second permission model
+- personal widget failures degrade locally instead of blanking the whole dashboard
+- collection previews are bounded
+- focused dashboard components keep the composition surface from becoming another large frontend god-component
+
+The dashboard is now the reference pattern for frontend composition over several authorized feature domains: compose presentation and intent, but leave business rules and access policy with the owning domains.
+
+## Calendar/deadline architecture direction
+
+The next Calendar / Deadline View should be a **time-oriented projection of authorized work**, not a second task-management system.
+
+Preferred first-slice shape, if a dedicated backend aggregate is needed:
+
+```text
+CalendarQueryService
+        ↓
+CalendarDeadlineSource
+        ↓
+TaskCalendarDeadlineSource
+        ↓
+tenant/date-bounded authorized task query
 ```
 
 Rules:
 
-- reuse existing frontend/domain contracts where the required data already exists
-- do not build a dashboard service that directly injects many repositories/services from unrelated domains
-- if a backend aggregate is justified, depend on narrow summary-provider contracts supplied by owning domains
-- dashboard widgets never become an alternative permission model
-- do not duplicate My Work classification, Personal Workspace resolution or Saved Views validation
-- keep collection sizes bounded and make capability checks explicit
+- start with existing task due dates and, where safely exposed, project deadlines
+- date-range bound all reads; do not load all tenant tasks and filter in the browser
+- preserve project/task authorization before returning calendar entries
+- do not duplicate task lifecycle/status semantics
+- do not make the calendar service import several unrelated repositories
+- use narrow owning-domain source contracts for cross-domain composition
+- design timezone interpretation/rendering explicitly from the first version
+- defer meetings, room/resource booking, leave management and external calendar synchronization
 
 ## Persistence and tenancy
 
@@ -265,6 +296,8 @@ Recent product migrations:
 
 - V45 — personal workspace favorites/recent items
 - V46 — saved views
+
+The Dashboard Refresh requires no migration.
 
 The architecture intentionally uses PostgreSQL locking/constraints where correctness depends on concurrent mutations, including sensitive subscription/delivery flows.
 
@@ -308,6 +341,7 @@ Current product-enrichment ownership is intentionally split:
 - `features/personal-workspace` — Favorites/Recent state and views
 - `features/my-work` — personal attention queue
 - `features/saved-views` — reusable persisted view definitions
+- `features/dashboard` — dashboard-only composition components consuming the owning domains above
 
 `AppShell` should remain integration/navigation infrastructure and must not absorb domain business rules as new product surfaces are added.
 
@@ -334,7 +368,7 @@ PUT    /api/tenants/{tenantId}/saved-views/{viewId}
 DELETE /api/tenants/{tenantId}/saved-views/{viewId}
 ```
 
-These boundaries are designed for reuse by additional web surfaces and future clients without bypassing tenant/access rules.
+The Dashboard Refresh reuses these contracts and the existing dashboard summary; it does not add an API.
 
 ## Scalability model
 
@@ -344,7 +378,7 @@ This architecture should comfortably support significant product growth before d
 
 Global Search v1 uses bounded PostgreSQL substring queries and deliberately avoids adding a separate search engine. If measured large-tenant latency later requires it, PostgreSQL trigram/full-text indexing should be considered before external search infrastructure.
 
-Personal Workspace, My Work and Saved Views also use bounded reads/writes rather than unbounded tenant-wide materialization.
+Personal Workspace, My Work and Saved Views also use bounded reads/writes rather than unbounded tenant-wide materialization. Dashboard previews remain bounded and reuse those existing queries.
 
 The following remain unproven until measured:
 
@@ -376,4 +410,4 @@ All new functionality must follow this rule:
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-The product-enrichment sequence now provides several concrete reference implementations: Search uses contributor contracts; Command Palette composes owning frontend features; Personal Workspace uses resolver adapters; My Work uses a narrow source contract; Saved Views uses a context-validator SPI. The Dashboard Refresh must compose these capabilities without collapsing them back into a single coupled orchestration service.
+The product-enrichment sequence now provides several concrete reference implementations: Search uses contributor contracts; Command Palette composes owning frontend features; Personal Workspace uses resolver adapters; My Work uses a narrow source contract; Saved Views uses a context-validator SPI; Dashboard composes their authorized frontend contracts without collapsing ownership. The Calendar / Deadline View must continue this pattern with date-bounded authorized projections and narrow owning-domain source contracts where aggregation is required.
