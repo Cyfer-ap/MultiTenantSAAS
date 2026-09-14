@@ -25,7 +25,9 @@ Delivered product-enrichment milestones include:
 - Task Planning UI — #140
 - recurring-task + project-scoped task-template backend foundation — #141
 
-The **recurring work + project/task templates milestone is still open**. The next slice is tenant-scoped project templates plus feature-local frontend management for recurring work and templates.
+**Latest merged milestone slice:** PR #141, merge commit `3460785aa9a1644768f10c696ccaef27422535f8`. V48 is now part of `main`.
+
+The **recurring work + project/task templates milestone is still open**. The next slice is V49+ tenant-scoped project templates plus feature-local frontend management for recurring work and templates.
 
 ## Established application foundations
 
@@ -48,7 +50,7 @@ Major capabilities now include:
 
 ## Recurring work + task-template backend checkpoint
 
-PR #141 introduces explicit `recurringwork` and `tasktemplates` backend domains plus a task-owned `tasks/creation` contract rather than expanding `ProjectTaskService`.
+Merged PR #141 introduces explicit `recurringwork` and `tasktemplates` backend domains plus a task-owned `tasks/creation` contract rather than expanding `ProjectTaskService`.
 
 ### Recurring tasks
 
@@ -162,7 +164,7 @@ Do not move project-template instantiation into `ProjectService`, recurrence int
 
 ## Next product sequence
 
-1. **finish recurring work + templates: tenant-scoped project templates + frontend UX**
+1. **finish recurring work + templates: V49+ tenant-scoped project templates + frontend UX**
 2. bulk actions + CSV import/export
 3. custom fields/forms + workflows/approvals + knowledge/documents
 4. user-facing analytics + selected differentiated experiments

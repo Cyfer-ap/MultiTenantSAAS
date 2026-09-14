@@ -58,7 +58,7 @@ Provides V47 bounded parent hierarchy, directed dependencies, project-scoped lab
 
 ### Recurring Work + Task Templates — backend foundation
 
-PR #141 establishes the first backend half of the broader recurring/templates milestone.
+PR #141 is merged and establishes the first backend half of the broader recurring/templates milestone. Merge commit: `3460785aa9a1644768f10c696ccaef27422535f8`.
 
 Provides:
 
@@ -98,9 +98,9 @@ This does **not** close the overall recurring/templates milestone. Tenant-scoped
 - ✅ directed task dependencies
 - ✅ project-scoped labels/tags
 - existing Kanban task board should be iterated rather than rebuilt
-- 🟡 recurring work — backend foundation complete; frontend management pending
-- 🟡 task templates — project-scoped backend foundation complete; frontend pending
-- 🟡 project templates — tenant-scoped backend + frontend pending
+- 🟡 recurring work — backend foundation merged; frontend management pending
+- 🟡 task templates — project-scoped backend foundation merged; frontend pending
+- 🟡 project templates — V49+ tenant-scoped backend + frontend pending
 - bulk actions and CSV import/export
 
 The immediate work is to finish the recurring/templates milestone rather than start another domain.
@@ -125,7 +125,7 @@ No experiment becomes a roadmap commitment merely because it is listed.
 
 ## Immediate sequence
 
-1. **finish recurring work + project/task templates: project templates + frontend UX**
+1. **finish recurring work + project/task templates: V49+ project templates + frontend UX**
 2. bulk actions + CSV import/export
 3. custom fields/forms + workflows/approvals + knowledge/documents
 4. user-facing analytics/reporting
