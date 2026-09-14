@@ -17,6 +17,7 @@ import com.chacha.multitenantsaas.repository.UserInvitationRepository;
 import com.chacha.multitenantsaas.repository.UserOrganizationAssignmentRepository;
 import com.chacha.multitenantsaas.service.NotificationDeliveryService;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +70,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV49AndMatchesJpaMappings() {
+    void postgresSchemaReachesV50AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -81,225 +82,251 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("49");
+        assertThat(version).isEqualTo("50");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
                         "SELECT COUNT(*) FROM authorization_permissions", Integer.class);
-
         assertThat(permissionCount).isEqualTo(21);
 
-        assertTableExists("tenants");
-        assertTableExists("app_users");
-        assertTableExists("organizational_units");
-        assertTableExists("authorization_user_role_assignments");
-        assertTableExists("authorization_delegations");
-        assertTableExists("subscription_plans");
-        assertTableExists("tenant_subscriptions");
-        assertTableExists("tenant_subscription_history");
-        assertTableExists("subscription_plan_provider_mappings");
-        assertTableExists("subscription_plan_retirement_operations");
-        assertTableExists("email_verification_challenges");
-        assertTableExists("trusted_email_browsers");
-        assertTableExists("task_comments");
-        assertTableExists("task_comment_mentions");
-        assertTableExists("task_activities");
-        assertTableExists("task_attachments");
-        assertTableExists("notifications");
-        assertTableExists("notification_deliveries");
-        assertTableExists("notification_preferences");
-        assertTableExists("billing_customers");
-        assertTableExists("billing_events");
-        assertTableExists("billing_usage_events");
-        assertTableExists("tenant_api_keys");
-        assertTableExists("subscription_plan_usage_limits");
-        assertTableExists("outbound_webhook_endpoints");
-        assertTableExists("outbound_webhook_endpoint_events");
-        assertTableExists("outbound_webhook_events");
-        assertTableExists("outbound_webhook_deliveries");
-        assertTableExists("outbound_webhook_delivery_attempts");
-        assertTableExists("tenant_identity_providers");
-        assertTableExists("tenant_identity_provider_scopes");
-        assertTableExists("oidc_authorization_transactions");
-        assertTableExists("tenant_federated_identities");
-        assertTableExists("oidc_session_handoffs");
-        assertTableExists("personal_workspace_items");
-        assertTableExists("saved_views");
-        assertTableExists("task_dependencies");
-        assertTableExists("project_task_labels");
-        assertTableExists("project_task_label_assignments");
-        assertTableExists("recurring_task_definitions");
-        assertTableExists("recurring_task_occurrences");
-        assertTableExists("project_task_templates");
-        assertTableExists("project_templates");
-        assertTableExists("project_template_tasks");
-        assertColumnExists("project_tasks", "parent_task_id");
-        assertColumnExists("recurring_task_definitions", "next_occurrence_at");
-        assertColumnExists("recurring_task_definitions", "status");
-        assertColumnExists("recurring_task_definitions", "version");
-        assertColumnExists("recurring_task_occurrences", "definition_id");
-        assertColumnExists("recurring_task_occurrences", "task_id");
-        assertColumnExists("project_task_templates", "normalized_name");
-        assertColumnExists("project_task_templates", "due_offset_minutes");
-        assertColumnExists("project_templates", "normalized_name");
-        assertColumnExists("project_templates", "project_name_seed");
-        assertColumnExists("project_templates", "initial_status");
-        assertColumnExists("project_template_tasks", "template_id");
-        assertColumnExists("project_template_tasks", "position_index");
-        assertColumnExists("project_template_tasks", "due_offset_minutes");
-        assertColumnExists("authorization_delegations", "tenant_id");
-        assertColumnExists("authorization_delegations", "delegator_user_id");
-        assertColumnExists("authorization_delegations", "delegate_user_id");
-        assertColumnExists("authorization_delegations", "parent_authority_assignment_id");
-        assertColumnExists("authorization_delegations", "delegated_assignment_id");
-        assertColumnExists("authorization_delegations", "status");
-        assertColumnExists("authorization_delegations", "created_at");
-        assertColumnExists("authorization_delegations", "revoked_at");
-        assertColumnExists("authorization_delegations", "revoked_by_user_id");
-        assertColumnExists("subscription_plan_usage_limits", "plan_id");
-        assertColumnExists("subscription_plan_usage_limits", "metric_code");
-        assertColumnExists("subscription_plan_usage_limits", "period_limit");
-        assertColumnExists("subscription_plan_provider_mappings", "plan_id");
-        assertColumnExists("subscription_plan_provider_mappings", "provider");
-        assertColumnExists("subscription_plan_provider_mappings", "environment");
-        assertColumnExists("subscription_plan_provider_mappings", "provider_product_id");
-        assertColumnExists("subscription_plan_provider_mappings", "provider_price_id");
-        assertColumnExists("subscription_plan_provider_mappings", "provider_plan_id");
-        assertColumnExists("subscription_plan_provider_mappings", "status");
-        assertColumnExists("subscription_plan_provider_mappings", "archived_at");
-        assertColumnExists("subscription_plan_retirement_operations", "plan_id");
-        assertColumnExists("subscription_plan_retirement_operations", "status");
-        assertColumnExists("subscription_plan_retirement_operations", "attempt_count");
-        assertColumnExists("subscription_plan_retirement_operations", "last_error");
-        assertColumnExists("subscription_plan_retirement_operations", "requested_at");
-        assertColumnExists("subscription_plan_retirement_operations", "started_at");
-        assertColumnExists("subscription_plan_retirement_operations", "completed_at");
-        assertColumnExists("subscription_plan_retirement_operations", "updated_at");
-        assertColumnExists("tenant_subscription_history", "subscription_id");
-        assertColumnExists("tenant_subscription_history", "tenant_id");
-        assertColumnExists("tenant_subscription_history", "tenant_name_snapshot");
-        assertColumnExists("tenant_subscription_history", "plan_id");
-        assertColumnExists("tenant_subscription_history", "plan_code_snapshot");
-        assertColumnExists("tenant_subscription_history", "plan_name_snapshot");
-        assertColumnExists("tenant_subscription_history", "price_snapshot");
-        assertColumnExists("tenant_subscription_history", "currency_snapshot");
-        assertColumnExists("tenant_subscription_history", "status");
-        assertColumnExists("tenant_subscription_history", "billing_provider");
-        assertColumnExists("tenant_subscription_history", "provider_subscription_id");
-        assertColumnExists("tenant_subscription_history", "event_type");
-        assertColumnExists("tenant_subscription_history", "recorded_at");
-        assertColumnExists("tenant_api_keys", "tenant_id");
-        assertColumnExists("tenant_api_keys", "key_prefix");
-        assertColumnExists("tenant_api_keys", "key_hash");
-        assertColumnExists("tenant_api_keys", "created_by_user_id");
-        assertColumnExists("tenant_api_keys", "last_used_at");
-        assertColumnExists("tenant_api_keys", "revoked_at");
-        assertColumnExists("billing_usage_events", "tenant_id");
-        assertColumnExists("billing_usage_events", "metric_code");
-        assertColumnExists("billing_usage_events", "idempotency_key");
-        assertColumnExists("billing_usage_events", "occurred_at");
-        assertColumnExists("tenant_subscriptions", "billing_provider");
-        assertColumnExists("tenant_subscriptions", "provider_subscription_id");
-        assertColumnExists("tenant_subscriptions", "provider_event_created_at");
-        assertColumnExists("tenant_subscriptions", "plan_code_snapshot");
-        assertColumnExists("tenant_subscriptions", "plan_name_snapshot");
-        assertColumnExists("tenant_subscriptions", "plan_description_snapshot");
-        assertColumnExists("tenant_subscriptions", "billing_interval_snapshot");
-        assertColumnExists("tenant_subscriptions", "price_snapshot");
-        assertColumnExists("tenant_subscriptions", "currency_snapshot");
-        assertColumnExists("tenant_subscriptions", "max_users_snapshot");
-        assertColumnExists("tenant_subscriptions", "max_projects_snapshot");
-        assertColumnExists("tenant_subscriptions", "max_storage_mb_snapshot");
-        assertColumnExists("task_attachments", "storage_deleted_at");
-        assertColumnExists("task_comments", "parent_comment_id");
-        assertColumnExists("task_comments", "reply_count");
-        assertColumnExists("task_comments", "pinned_at");
-        assertColumnExists("task_comments", "pinned_by_user_id");
-        assertColumnExists("notifications", "recipient_user_id");
-        assertColumnExists("notifications", "target_url");
-        assertColumnExists("notifications", "read_at");
-        assertColumnExists("notification_deliveries", "lease_token");
-        assertColumnExists("notification_deliveries", "next_attempt_at");
-        assertColumnExists("notification_deliveries", "attempt_count");
-        assertColumnExists("notification_preferences", "recipient_user_id");
-        assertColumnExists("notification_preferences", "type");
-        assertColumnExists("notification_preferences", "email_enabled");
-        assertColumnExists("outbound_webhook_endpoints", "tenant_id");
-        assertColumnExists("outbound_webhook_endpoints", "url");
-        assertColumnExists("outbound_webhook_endpoints", "enabled");
-        assertColumnExists("outbound_webhook_endpoints", "secret_ciphertext");
-        assertColumnExists("outbound_webhook_endpoints", "secret_hint");
-        assertColumnExists("outbound_webhook_endpoints", "secret_version");
-        assertColumnExists("outbound_webhook_endpoints", "secret_rotated_at");
-        assertColumnExists("outbound_webhook_endpoints", "archived_at");
-        assertColumnExists("outbound_webhook_endpoint_events", "endpoint_id");
-        assertColumnExists("outbound_webhook_endpoint_events", "event_type");
-        assertColumnExists("outbound_webhook_events", "tenant_id");
-        assertColumnExists("outbound_webhook_events", "event_type");
-        assertColumnExists("outbound_webhook_events", "payload_json");
-        assertColumnExists("outbound_webhook_events", "occurred_at");
-        assertColumnExists("outbound_webhook_deliveries", "event_id");
-        assertColumnExists("outbound_webhook_deliveries", "endpoint_id");
-        assertColumnExists("outbound_webhook_deliveries", "status");
-        assertColumnExists("outbound_webhook_deliveries", "attempt_count");
-        assertColumnExists("outbound_webhook_deliveries", "replay_count");
-        assertColumnExists("outbound_webhook_deliveries", "next_attempt_at");
-        assertColumnExists("outbound_webhook_deliveries", "processing_started_at");
-        assertColumnExists("outbound_webhook_deliveries", "lease_token");
-        assertColumnExists("outbound_webhook_deliveries", "last_http_status");
-        assertColumnExists("outbound_webhook_delivery_attempts", "tenant_id");
-        assertColumnExists("outbound_webhook_delivery_attempts", "delivery_id");
-        assertColumnExists("outbound_webhook_delivery_attempts", "replay_number");
-        assertColumnExists("outbound_webhook_delivery_attempts", "attempt_number");
-        assertColumnExists("outbound_webhook_delivery_attempts", "lease_token");
-        assertColumnExists("outbound_webhook_delivery_attempts", "outcome");
-        assertColumnExists("outbound_webhook_delivery_attempts", "http_status");
-        assertColumnExists("outbound_webhook_delivery_attempts", "error");
-        assertColumnExists("outbound_webhook_delivery_attempts", "started_at");
-        assertColumnExists("outbound_webhook_delivery_attempts", "completed_at");
-        assertColumnExists("tenant_identity_providers", "tenant_id");
-        assertColumnExists("tenant_identity_providers", "protocol");
-        assertColumnExists("tenant_identity_providers", "display_name");
-        assertColumnExists("tenant_identity_providers", "issuer_uri");
-        assertColumnExists("tenant_identity_providers", "client_id");
-        assertColumnExists("tenant_identity_providers", "client_secret_ciphertext");
-        assertColumnExists("tenant_identity_providers", "client_secret_hint");
-        assertColumnExists("tenant_identity_providers", "secret_version");
-        assertColumnExists("tenant_identity_providers", "status");
-        assertColumnExists("tenant_identity_providers", "sso_mode");
-        assertColumnExists("tenant_identity_providers", "verified_at");
-        assertColumnExists("tenant_identity_providers", "disabled_at");
-        assertColumnExists("tenant_identity_providers", "created_by_user_id");
-        assertColumnExists("tenant_identity_providers", "updated_by_user_id");
-        assertColumnExists("tenant_identity_providers", "secret_rotated_at");
-        assertColumnExists("tenant_identity_provider_scopes", "identity_provider_id");
-        assertColumnExists("tenant_identity_provider_scopes", "scope");
-        assertColumnExists("oidc_authorization_transactions", "tenant_id");
-        assertColumnExists("oidc_authorization_transactions", "identity_provider_id");
-        assertColumnExists("oidc_authorization_transactions", "identity_provider_version");
-        assertColumnExists("oidc_authorization_transactions", "state_hash");
-        assertColumnExists("oidc_authorization_transactions", "nonce_hash");
-        assertColumnExists("oidc_authorization_transactions", "pkce_verifier_ciphertext");
-        assertColumnExists("oidc_authorization_transactions", "persistent_session");
-        assertColumnExists("oidc_authorization_transactions", "created_at");
-        assertColumnExists("oidc_authorization_transactions", "expires_at");
-        assertColumnExists("oidc_authorization_transactions", "consumed_at");
-        assertColumnExists("tenant_federated_identities", "tenant_id");
-        assertColumnExists("tenant_federated_identities", "identity_provider_id");
-        assertColumnExists("tenant_federated_identities", "user_id");
-        assertColumnExists("tenant_federated_identities", "issuer");
-        assertColumnExists("tenant_federated_identities", "issuer_hash");
-        assertColumnExists("tenant_federated_identities", "subject");
-        assertColumnExists("tenant_federated_identities", "email_at_link");
-        assertColumnExists("tenant_federated_identities", "linked_at");
-        assertColumnExists("tenant_federated_identities", "last_login_at");
-        assertColumnExists("oidc_session_handoffs", "code_hash");
-        assertColumnExists("oidc_session_handoffs", "tenant_id");
-        assertColumnExists("oidc_session_handoffs", "user_id");
-        assertColumnExists("oidc_session_handoffs", "persistent_session");
-        assertColumnExists("oidc_session_handoffs", "created_at");
-        assertColumnExists("oidc_session_handoffs", "expires_at");
-        assertColumnExists("oidc_session_handoffs", "consumed_at");
+        List.of(
+                        "tenants",
+                        "app_users",
+                        "organizational_units",
+                        "authorization_user_role_assignments",
+                        "authorization_delegations",
+                        "subscription_plans",
+                        "tenant_subscriptions",
+                        "tenant_subscription_history",
+                        "subscription_plan_provider_mappings",
+                        "subscription_plan_retirement_operations",
+                        "email_verification_challenges",
+                        "trusted_email_browsers",
+                        "task_comments",
+                        "task_comment_mentions",
+                        "task_activities",
+                        "task_attachments",
+                        "notifications",
+                        "notification_deliveries",
+                        "notification_preferences",
+                        "billing_customers",
+                        "billing_events",
+                        "billing_usage_events",
+                        "tenant_api_keys",
+                        "subscription_plan_usage_limits",
+                        "outbound_webhook_endpoints",
+                        "outbound_webhook_endpoint_events",
+                        "outbound_webhook_events",
+                        "outbound_webhook_deliveries",
+                        "outbound_webhook_delivery_attempts",
+                        "tenant_identity_providers",
+                        "tenant_identity_provider_scopes",
+                        "oidc_authorization_transactions",
+                        "tenant_federated_identities",
+                        "oidc_session_handoffs",
+                        "personal_workspace_items",
+                        "saved_views",
+                        "task_dependencies",
+                        "project_task_labels",
+                        "project_task_label_assignments",
+                        "recurring_task_definitions",
+                        "recurring_task_occurrences",
+                        "project_task_templates",
+                        "project_templates",
+                        "project_template_tasks",
+                        "workflow_definitions",
+                        "workflow_nodes",
+                        "workflow_edges",
+                        "workflow_executions")
+                .forEach(this::assertTableExists);
+
+        List<String[]> requiredColumns =
+                List.of(
+                        column("project_tasks", "parent_task_id"),
+                        column("recurring_task_definitions", "next_occurrence_at"),
+                        column("recurring_task_definitions", "status"),
+                        column("recurring_task_definitions", "version"),
+                        column("recurring_task_occurrences", "definition_id"),
+                        column("recurring_task_occurrences", "task_id"),
+                        column("project_task_templates", "normalized_name"),
+                        column("project_task_templates", "due_offset_minutes"),
+                        column("project_templates", "normalized_name"),
+                        column("project_templates", "project_name_seed"),
+                        column("project_templates", "initial_status"),
+                        column("project_template_tasks", "template_id"),
+                        column("project_template_tasks", "position_index"),
+                        column("project_template_tasks", "due_offset_minutes"),
+                        column("workflow_definitions", "normalized_name"),
+                        column("workflow_definitions", "status"),
+                        column("workflow_definitions", "definition_version"),
+                        column("workflow_nodes", "node_key"),
+                        column("workflow_nodes", "node_type"),
+                        column("workflow_nodes", "operation_type"),
+                        column("workflow_nodes", "configuration_json"),
+                        column("workflow_nodes", "position_x"),
+                        column("workflow_nodes", "position_y"),
+                        column("workflow_edges", "source_node_key"),
+                        column("workflow_edges", "target_node_key"),
+                        column("workflow_edges", "branch_type"),
+                        column("workflow_executions", "workflow_version"),
+                        column("workflow_executions", "event_key"),
+                        column("workflow_executions", "trigger_operation"),
+                        column("workflow_executions", "status"),
+                        column("authorization_delegations", "tenant_id"),
+                        column("authorization_delegations", "delegator_user_id"),
+                        column("authorization_delegations", "delegate_user_id"),
+                        column("authorization_delegations", "parent_authority_assignment_id"),
+                        column("authorization_delegations", "delegated_assignment_id"),
+                        column("authorization_delegations", "status"),
+                        column("authorization_delegations", "created_at"),
+                        column("authorization_delegations", "revoked_at"),
+                        column("authorization_delegations", "revoked_by_user_id"),
+                        column("subscription_plan_usage_limits", "plan_id"),
+                        column("subscription_plan_usage_limits", "metric_code"),
+                        column("subscription_plan_usage_limits", "period_limit"),
+                        column("subscription_plan_provider_mappings", "plan_id"),
+                        column("subscription_plan_provider_mappings", "provider"),
+                        column("subscription_plan_provider_mappings", "environment"),
+                        column("subscription_plan_provider_mappings", "provider_product_id"),
+                        column("subscription_plan_provider_mappings", "provider_price_id"),
+                        column("subscription_plan_provider_mappings", "provider_plan_id"),
+                        column("subscription_plan_provider_mappings", "status"),
+                        column("subscription_plan_provider_mappings", "archived_at"),
+                        column("subscription_plan_retirement_operations", "plan_id"),
+                        column("subscription_plan_retirement_operations", "status"),
+                        column("subscription_plan_retirement_operations", "attempt_count"),
+                        column("subscription_plan_retirement_operations", "last_error"),
+                        column("subscription_plan_retirement_operations", "requested_at"),
+                        column("subscription_plan_retirement_operations", "started_at"),
+                        column("subscription_plan_retirement_operations", "completed_at"),
+                        column("subscription_plan_retirement_operations", "updated_at"),
+                        column("tenant_subscription_history", "subscription_id"),
+                        column("tenant_subscription_history", "tenant_id"),
+                        column("tenant_subscription_history", "tenant_name_snapshot"),
+                        column("tenant_subscription_history", "plan_id"),
+                        column("tenant_subscription_history", "plan_code_snapshot"),
+                        column("tenant_subscription_history", "plan_name_snapshot"),
+                        column("tenant_subscription_history", "price_snapshot"),
+                        column("tenant_subscription_history", "currency_snapshot"),
+                        column("tenant_subscription_history", "status"),
+                        column("tenant_subscription_history", "billing_provider"),
+                        column("tenant_subscription_history", "provider_subscription_id"),
+                        column("tenant_subscription_history", "event_type"),
+                        column("tenant_subscription_history", "recorded_at"),
+                        column("tenant_api_keys", "tenant_id"),
+                        column("tenant_api_keys", "key_prefix"),
+                        column("tenant_api_keys", "key_hash"),
+                        column("tenant_api_keys", "created_by_user_id"),
+                        column("tenant_api_keys", "last_used_at"),
+                        column("tenant_api_keys", "revoked_at"),
+                        column("billing_usage_events", "tenant_id"),
+                        column("billing_usage_events", "metric_code"),
+                        column("billing_usage_events", "idempotency_key"),
+                        column("billing_usage_events", "occurred_at"),
+                        column("tenant_subscriptions", "billing_provider"),
+                        column("tenant_subscriptions", "provider_subscription_id"),
+                        column("tenant_subscriptions", "provider_event_created_at"),
+                        column("tenant_subscriptions", "plan_code_snapshot"),
+                        column("tenant_subscriptions", "plan_name_snapshot"),
+                        column("tenant_subscriptions", "plan_description_snapshot"),
+                        column("tenant_subscriptions", "billing_interval_snapshot"),
+                        column("tenant_subscriptions", "price_snapshot"),
+                        column("tenant_subscriptions", "currency_snapshot"),
+                        column("tenant_subscriptions", "max_users_snapshot"),
+                        column("tenant_subscriptions", "max_projects_snapshot"),
+                        column("tenant_subscriptions", "max_storage_mb_snapshot"),
+                        column("task_attachments", "storage_deleted_at"),
+                        column("task_comments", "parent_comment_id"),
+                        column("task_comments", "reply_count"),
+                        column("task_comments", "pinned_at"),
+                        column("task_comments", "pinned_by_user_id"),
+                        column("notifications", "recipient_user_id"),
+                        column("notifications", "target_url"),
+                        column("notifications", "read_at"),
+                        column("notification_deliveries", "lease_token"),
+                        column("notification_deliveries", "next_attempt_at"),
+                        column("notification_deliveries", "attempt_count"),
+                        column("notification_preferences", "recipient_user_id"),
+                        column("notification_preferences", "type"),
+                        column("notification_preferences", "email_enabled"),
+                        column("outbound_webhook_endpoints", "tenant_id"),
+                        column("outbound_webhook_endpoints", "url"),
+                        column("outbound_webhook_endpoints", "enabled"),
+                        column("outbound_webhook_endpoints", "secret_ciphertext"),
+                        column("outbound_webhook_endpoints", "secret_hint"),
+                        column("outbound_webhook_endpoints", "secret_version"),
+                        column("outbound_webhook_endpoints", "secret_rotated_at"),
+                        column("outbound_webhook_endpoints", "archived_at"),
+                        column("outbound_webhook_endpoint_events", "endpoint_id"),
+                        column("outbound_webhook_endpoint_events", "event_type"),
+                        column("outbound_webhook_events", "tenant_id"),
+                        column("outbound_webhook_events", "event_type"),
+                        column("outbound_webhook_events", "payload_json"),
+                        column("outbound_webhook_events", "occurred_at"),
+                        column("outbound_webhook_deliveries", "event_id"),
+                        column("outbound_webhook_deliveries", "endpoint_id"),
+                        column("outbound_webhook_deliveries", "status"),
+                        column("outbound_webhook_deliveries", "attempt_count"),
+                        column("outbound_webhook_deliveries", "replay_count"),
+                        column("outbound_webhook_deliveries", "next_attempt_at"),
+                        column("outbound_webhook_deliveries", "processing_started_at"),
+                        column("outbound_webhook_deliveries", "lease_token"),
+                        column("outbound_webhook_deliveries", "last_http_status"),
+                        column("outbound_webhook_delivery_attempts", "tenant_id"),
+                        column("outbound_webhook_delivery_attempts", "delivery_id"),
+                        column("outbound_webhook_delivery_attempts", "replay_number"),
+                        column("outbound_webhook_delivery_attempts", "attempt_number"),
+                        column("outbound_webhook_delivery_attempts", "lease_token"),
+                        column("outbound_webhook_delivery_attempts", "outcome"),
+                        column("outbound_webhook_delivery_attempts", "http_status"),
+                        column("outbound_webhook_delivery_attempts", "error"),
+                        column("outbound_webhook_delivery_attempts", "started_at"),
+                        column("outbound_webhook_delivery_attempts", "completed_at"),
+                        column("tenant_identity_providers", "tenant_id"),
+                        column("tenant_identity_providers", "protocol"),
+                        column("tenant_identity_providers", "display_name"),
+                        column("tenant_identity_providers", "issuer_uri"),
+                        column("tenant_identity_providers", "client_id"),
+                        column("tenant_identity_providers", "client_secret_ciphertext"),
+                        column("tenant_identity_providers", "client_secret_hint"),
+                        column("tenant_identity_providers", "secret_version"),
+                        column("tenant_identity_providers", "status"),
+                        column("tenant_identity_providers", "sso_mode"),
+                        column("tenant_identity_providers", "verified_at"),
+                        column("tenant_identity_providers", "disabled_at"),
+                        column("tenant_identity_providers", "created_by_user_id"),
+                        column("tenant_identity_providers", "updated_by_user_id"),
+                        column("tenant_identity_providers", "secret_rotated_at"),
+                        column("tenant_identity_provider_scopes", "identity_provider_id"),
+                        column("tenant_identity_provider_scopes", "scope"),
+                        column("oidc_authorization_transactions", "tenant_id"),
+                        column("oidc_authorization_transactions", "identity_provider_id"),
+                        column("oidc_authorization_transactions", "identity_provider_version"),
+                        column("oidc_authorization_transactions", "state_hash"),
+                        column("oidc_authorization_transactions", "nonce_hash"),
+                        column("oidc_authorization_transactions", "pkce_verifier_ciphertext"),
+                        column("oidc_authorization_transactions", "persistent_session"),
+                        column("oidc_authorization_transactions", "created_at"),
+                        column("oidc_authorization_transactions", "expires_at"),
+                        column("oidc_authorization_transactions", "consumed_at"),
+                        column("tenant_federated_identities", "tenant_id"),
+                        column("tenant_federated_identities", "identity_provider_id"),
+                        column("tenant_federated_identities", "user_id"),
+                        column("tenant_federated_identities", "issuer"),
+                        column("tenant_federated_identities", "issuer_hash"),
+                        column("tenant_federated_identities", "subject"),
+                        column("tenant_federated_identities", "email_at_link"),
+                        column("tenant_federated_identities", "linked_at"),
+                        column("tenant_federated_identities", "last_login_at"),
+                        column("oidc_session_handoffs", "code_hash"),
+                        column("oidc_session_handoffs", "tenant_id"),
+                        column("oidc_session_handoffs", "user_id"),
+                        column("oidc_session_handoffs", "persistent_session"),
+                        column("oidc_session_handoffs", "created_at"),
+                        column("oidc_session_handoffs", "expires_at"),
+                        column("oidc_session_handoffs", "consumed_at"));
+
+        requiredColumns.forEach(pair -> assertColumnExists(pair[0], pair[1]));
     }
 
     @Test
@@ -364,6 +391,10 @@ class PostgreSqlSchemaIntegrationTest {
 
         assertThat(openEndedCount).isZero();
         assertThat(boundedCount).isZero();
+    }
+
+    private String[] column(String tableName, String columnName) {
+        return new String[] {tableName, columnName};
     }
 
     private void assertTableExists(String tableName) {
