@@ -1,14 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-    Alert,
-    Button,
-    Chip,
-    MenuItem,
-    Paper,
-    Stack,
-    TextField,
-    Typography,
-} from '@mui/material'
+import { Alert, Button, Chip, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material'
 import { useMemo, useState } from 'react'
 
 import type { ProjectTaskPriority } from '../../projects/types/projectTasks'
@@ -107,8 +98,8 @@ export function TaskTemplatesPanel({ tenantId, projectId, canManage }: TaskTempl
             <Stack spacing={0.5}>
                 <Typography variant="h6">Task templates</Typography>
                 <Typography color="text.secondary" variant="body2">
-                    Store reusable task snapshots inside this project and instantiate them through the
-                    normal task lifecycle.
+                    Store reusable task snapshots inside this project and instantiate them through
+                    the normal task lifecycle.
                 </Typography>
             </Stack>
 

@@ -89,15 +89,13 @@ function formFromTemplate(template: ProjectTemplate): TemplateFormState {
         name: template.name,
         projectNameSeed: template.projectNameSeed,
         projectDescription: template.projectDescription ?? '',
-        initialStatus:
-            template.initialStatus === 'ARCHIVED' ? 'PLANNING' : template.initialStatus,
+        initialStatus: template.initialStatus === 'ARCHIVED' ? 'PLANNING' : template.initialStatus,
         tasks: template.tasks.map((task) => ({
             key: task.id,
             title: task.title,
             description: task.description ?? '',
             priority: task.priority,
-            dueOffsetMinutes:
-                task.dueOffsetMinutes === null ? '' : String(task.dueOffsetMinutes),
+            dueOffsetMinutes: task.dueOffsetMinutes === null ? '' : String(task.dueOffsetMinutes),
         })),
     }
 }
@@ -151,8 +149,8 @@ export function ProjectTemplatesPanel({
     if (!canRead) {
         return (
             <Alert severity="info">
-                Project templates are tenant-wide. Tenant-level project.read permission is required to
-                view this section.
+                Project templates are tenant-wide. Tenant-level project.read permission is required
+                to view this section.
             </Alert>
         )
     }
@@ -175,8 +173,9 @@ export function ProjectTemplatesPanel({
             <Stack spacing={0.5}>
                 <Typography variant="h6">Project templates</Typography>
                 <Typography color="text.secondary" variant="body2">
-                    Capture a project shell plus up to 50 ordered starter-task snapshots. Instantiation
-                    still passes through the normal project and task creation boundaries.
+                    Capture a project shell plus up to 50 ordered starter-task snapshots.
+                    Instantiation still passes through the normal project and task creation
+                    boundaries.
                 </Typography>
             </Stack>
 
@@ -237,8 +236,13 @@ export function ProjectTemplatesPanel({
                             ))}
                         </TextField>
 
-                        <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Typography fontWeight={600}>Starter tasks ({form.tasks.length}/50)</Typography>
+                        <Stack
+                            direction="row"
+                            sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+                        >
+                            <Typography fontWeight={600}>
+                                Starter tasks ({form.tasks.length}/50)
+                            </Typography>
                             <Button
                                 startIcon={<AddRoundedIcon />}
                                 onClick={() =>
@@ -252,7 +256,11 @@ export function ProjectTemplatesPanel({
                         {form.tasks.map((task, index) => (
                             <Paper key={task.key} variant="outlined" sx={{ p: 1.5 }}>
                                 <Stack spacing={1.5}>
-                                    <Stack direction="row" sx={{ alignItems: 'center' }} spacing={1}>
+                                    <Stack
+                                        direction="row"
+                                        sx={{ alignItems: 'center' }}
+                                        spacing={1}
+                                    >
                                         <Typography fontWeight={600} sx={{ flexGrow: 1 }}>
                                             Task {index + 1}
                                         </Typography>
@@ -283,7 +291,9 @@ export function ProjectTemplatesPanel({
                                         label="Description"
                                         value={task.description}
                                         onChange={(event) =>
-                                            updateTask(task.key, { description: event.target.value })
+                                            updateTask(task.key, {
+                                                description: event.target.value,
+                                            })
                                         }
                                         multiline
                                         minRows={2}
@@ -297,7 +307,8 @@ export function ProjectTemplatesPanel({
                                             value={task.priority}
                                             onChange={(event) =>
                                                 updateTask(task.key, {
-                                                    priority: event.target.value as ProjectTaskPriority,
+                                                    priority: event.target
+                                                        .value as ProjectTaskPriority,
                                                 })
                                             }
                                         >
@@ -349,8 +360,8 @@ export function ProjectTemplatesPanel({
                 </Paper>
             ) : (
                 <Alert severity="info">
-                    You can view project templates but project.create permission is required to modify
-                    or instantiate them.
+                    You can view project templates but project.create permission is required to
+                    modify or instantiate them.
                 </Alert>
             )}
 

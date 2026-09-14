@@ -92,7 +92,10 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
     const [editingId, setEditingId] = useState<string | null>(null)
     const [historyId, setHistoryId] = useState<string | null>(null)
 
-    const rulesKey = useMemo(() => ['recurring-work', tenantId, projectId] as const, [tenantId, projectId])
+    const rulesKey = useMemo(
+        () => ['recurring-work', tenantId, projectId] as const,
+        [tenantId, projectId],
+    )
     const rulesQuery = useQuery({
         queryKey: rulesKey,
         queryFn: () => recurringWorkApi.list(tenantId, projectId),
@@ -155,7 +158,9 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
                         <TextField
                             label="Description"
                             value={form.description}
-                            onChange={(event) => setForm({ ...form, description: event.target.value })}
+                            onChange={(event) =>
+                                setForm({ ...form, description: event.target.value })
+                            }
                             multiline
                             minRows={2}
                             inputProps={{ maxLength: 4000 }}
@@ -213,7 +218,9 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
                                 fullWidth
                                 label="Timezone"
                                 value={form.zoneId}
-                                onChange={(event) => setForm({ ...form, zoneId: event.target.value })}
+                                onChange={(event) =>
+                                    setForm({ ...form, zoneId: event.target.value })
+                                }
                             />
                             <TextField
                                 fullWidth
@@ -276,7 +283,9 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
                 <Alert severity="info">You can view recurring work but cannot modify it.</Alert>
             )}
 
-            {rulesQuery.isError ? <Alert severity="error">Unable to load recurring work.</Alert> : null}
+            {rulesQuery.isError ? (
+                <Alert severity="error">Unable to load recurring work.</Alert>
+            ) : null}
             {rulesQuery.data?.content.length === 0 ? (
                 <Alert severity="info">No recurring rules exist for this project.</Alert>
             ) : null}
@@ -297,7 +306,11 @@ export function RecurringWorkPanel({ tenantId, projectId, canManage }: Recurring
                             </Stack>
                             <Stack direction="row" spacing={1}>
                                 <Chip label={rule.status} size="small" />
-                                <Chip label={`${rule.generatedCount} generated`} size="small" variant="outlined" />
+                                <Chip
+                                    label={`${rule.generatedCount} generated`}
+                                    size="small"
+                                    variant="outlined"
+                                />
                             </Stack>
                         </Stack>
                         {rule.description ? (
