@@ -1,3 +1,7 @@
+ALTER TABLE projects
+    ADD CONSTRAINT uk_projects_tenant_id
+        UNIQUE (tenant_id, id);
+
 ALTER TABLE project_tasks
     ADD COLUMN parent_task_id UUID;
 
@@ -59,8 +63,8 @@ CREATE TABLE project_task_labels (
         FOREIGN KEY (tenant_id)
             REFERENCES tenants (id),
     CONSTRAINT fk_project_task_label_project
-        FOREIGN KEY (project_id)
-            REFERENCES projects (id),
+        FOREIGN KEY (tenant_id, project_id)
+            REFERENCES projects (tenant_id, id),
     CONSTRAINT ck_project_task_label_color
         CHECK (color IS NULL OR color LIKE '#______')
 );
