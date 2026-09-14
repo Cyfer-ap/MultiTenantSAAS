@@ -133,10 +133,7 @@ export function WorkAutomationPage() {
         context,
         authorizationPermissionCodes.PROJECT_CREATE,
     )
-    const canReadWorkflows = hasTenantPermission(
-        context,
-        authorizationPermissionCodes.PROJECT_READ,
-    )
+    const canReadWorkflows = hasTenantPermission(context, authorizationPermissionCodes.PROJECT_READ)
     const canManageWorkflows = hasTenantPermission(
         context,
         authorizationPermissionCodes.PROJECT_UPDATE,

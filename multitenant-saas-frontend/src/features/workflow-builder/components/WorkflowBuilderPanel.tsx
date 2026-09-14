@@ -67,7 +67,10 @@ const operationsByType: Record<WorkflowNodeType, WorkflowOperation[]> = {
 }
 
 function defaultConfiguration(operation: WorkflowOperation): Record<string, string> {
-    if (operation === 'CONDITION_TASK_PRIORITY_EQUALS' || operation === 'ACTION_SET_TASK_PRIORITY') {
+    if (
+        operation === 'CONDITION_TASK_PRIORITY_EQUALS' ||
+        operation === 'ACTION_SET_TASK_PRIORITY'
+    ) {
         return { value: 'MEDIUM' }
     }
     if (operation === 'CONDITION_TASK_STATUS_EQUALS' || operation === 'ACTION_SET_TASK_STATUS') {
@@ -273,19 +276,15 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
             return {
                 ...current,
                 edges: targetKey
-                    ? [
-                          ...withoutBranch,
-                          { sourceKey: selectedNode.key, targetKey, branch },
-                      ]
+                    ? [...withoutBranch, { sourceKey: selectedNode.key, targetKey, branch }]
                     : withoutBranch,
             }
         })
     }
 
     const getBranchTarget = (branch: WorkflowEdgeBranch) =>
-        editor.edges.find(
-            (edge) => edge.sourceKey === selectedNode?.key && edge.branch === branch,
-        )?.targetKey ?? ''
+        editor.edges.find((edge) => edge.sourceKey === selectedNode?.key && edge.branch === branch)
+            ?.targetKey ?? ''
 
     const handleDragStart = (event: DragEvent<HTMLElement>, key: string) => {
         event.dataTransfer.setData('application/x-workflow-node', key)
@@ -447,8 +446,14 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
                                         Pause
                                     </Button>
                                 ) : null}
-                                <Chip label={`${editor.nodes.length}/50 nodes`} variant="outlined" />
-                                <Chip label={`${editor.edges.length}/100 edges`} variant="outlined" />
+                                <Chip
+                                    label={`${editor.nodes.length}/50 nodes`}
+                                    variant="outlined"
+                                />
+                                <Chip
+                                    label={`${editor.edges.length}/100 edges`}
+                                    variant="outlined"
+                                />
                             </Stack>
                             {saveMutation.isError ? (
                                 <Alert severity="error">
@@ -501,8 +506,12 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
                             sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
                         >
                             {editor.edges.map((edge) => {
-                                const source = editor.nodes.find((node) => node.key === edge.sourceKey)
-                                const target = editor.nodes.find((node) => node.key === edge.targetKey)
+                                const source = editor.nodes.find(
+                                    (node) => node.key === edge.sourceKey,
+                                )
+                                const target = editor.nodes.find(
+                                    (node) => node.key === edge.targetKey,
+                                )
                                 if (!source || !target) return null
                                 const x1 = source.x + nodeWidth
                                 const y1 = source.y + nodeHeight / 2
@@ -555,7 +564,11 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
                                 }}
                             >
                                 <Stack spacing={0.5}>
-                                    <Chip label={node.type} size="small" sx={{ alignSelf: 'start' }} />
+                                    <Chip
+                                        label={node.type}
+                                        size="small"
+                                        sx={{ alignSelf: 'start' }}
+                                    />
                                     <Typography sx={{ fontWeight: 600 }} variant="body2">
                                         {operationLabels[node.operation]}
                                     </Typography>

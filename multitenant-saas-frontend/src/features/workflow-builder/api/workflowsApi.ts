@@ -20,7 +20,10 @@ async function get(tenantId: string, workflowId: string): Promise<WorkflowDefini
 }
 
 async function create(tenantId: string, input: WorkflowInput): Promise<WorkflowDefinition> {
-    const response = await httpClient.post<ApiResponse<WorkflowDefinition>>(basePath(tenantId), input)
+    const response = await httpClient.post<ApiResponse<WorkflowDefinition>>(
+        basePath(tenantId),
+        input,
+    )
     return response.data.data
 }
 
