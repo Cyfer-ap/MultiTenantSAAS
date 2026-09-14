@@ -8,4 +8,5 @@ public record CalendarDeadlineResponse(
         Instant from,
         Instant to,
         int returnedCount,
+        boolean truncated,
         List<CalendarDeadlineItemResponse> items) {}
