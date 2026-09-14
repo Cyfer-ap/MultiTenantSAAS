@@ -7,6 +7,8 @@ import {
     type DashboardQuickAction,
 } from './DashboardQuickActionsCard'
 
+export type { DashboardQuickAction } from './DashboardQuickActionsCard'
+
 interface DashboardWorkspaceOverviewProps {
     tenantId: string
     quickActions: readonly DashboardQuickAction[]
