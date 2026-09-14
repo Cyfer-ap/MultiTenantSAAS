@@ -26,10 +26,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/tenants/{tenantId}/projects/{projectId}")
 public class TaskRelationshipController {
 
-    private final TaskRelationshipService taskRelationshipService;
+    private final TaskRelationshipQueryService queryService;
+    private final TaskGraphService graphService;
+    private final TaskLabelService labelService;
 
-    public TaskRelationshipController(TaskRelationshipService taskRelationshipService) {
-        this.taskRelationshipService = taskRelationshipService;
+    public TaskRelationshipController(
+            TaskRelationshipQueryService queryService,
+            TaskGraphService graphService,
+            TaskLabelService labelService) {
+        this.queryService = queryService;
+        this.graphService = graphService;
+        this.labelService = labelService;
     }
 
     @PreAuthorize(
@@ -43,7 +50,7 @@ public class TaskRelationshipController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Task relationships fetched successfully",
-                        taskRelationshipService.getRelationships(tenantId, projectId, taskId)));
+                        queryService.getRelationships(tenantId, projectId, taskId)));
     }
 
     @PreAuthorize(
@@ -59,7 +66,7 @@ public class TaskRelationshipController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Task parent updated successfully",
-                        taskRelationshipService.updateParent(
+                        graphService.updateParent(
                                 tenantId, projectId, taskId, request.parentTaskId(), jwt)));
     }
 
@@ -76,7 +83,7 @@ public class TaskRelationshipController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Task dependency added successfully",
-                        taskRelationshipService.addDependency(
+                        graphService.addDependency(
                                 tenantId, projectId, taskId, request.blockingTaskId(), jwt)));
     }
 
@@ -93,7 +100,7 @@ public class TaskRelationshipController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Task dependency removed successfully",
-                        taskRelationshipService.removeDependency(
+                        graphService.removeDependency(
                                 tenantId, projectId, taskId, blockingTaskId, jwt)));
     }
 
@@ -106,7 +113,7 @@ public class TaskRelationshipController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Task labels fetched successfully",
-                        taskRelationshipService.listLabels(tenantId, projectId)));
+                        labelService.listLabels(tenantId, projectId)));
     }
 
     @PreAuthorize(
@@ -121,7 +128,7 @@ public class TaskRelationshipController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Task label created successfully",
-                        taskRelationshipService.createLabel(tenantId, projectId, request, jwt)));
+                        labelService.createLabel(tenantId, projectId, request, jwt)));
     }
 
     @PreAuthorize(
@@ -137,8 +144,7 @@ public class TaskRelationshipController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Task label updated successfully",
-                        taskRelationshipService.updateLabel(
-                                tenantId, projectId, labelId, request, jwt)));
+                        labelService.updateLabel(tenantId, projectId, labelId, request, jwt)));
     }
 
     @PreAuthorize(
@@ -150,7 +156,7 @@ public class TaskRelationshipController {
             @PathVariable UUID projectId,
             @PathVariable UUID labelId,
             @AuthenticationPrincipal Jwt jwt) {
-        taskRelationshipService.deleteLabel(tenantId, projectId, labelId, jwt);
+        labelService.deleteLabel(tenantId, projectId, labelId, jwt);
         return ResponseEntity.ok(ApiResponse.success("Task label deleted successfully", null));
     }
 
@@ -167,8 +173,7 @@ public class TaskRelationshipController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Task label assigned successfully",
-                        taskRelationshipService.assignLabel(
-                                tenantId, projectId, taskId, labelId, jwt)));
+                        labelService.assignLabel(tenantId, projectId, taskId, labelId, jwt)));
     }
 
     @PreAuthorize(
@@ -184,7 +189,6 @@ public class TaskRelationshipController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Task label removed successfully",
-                        taskRelationshipService.unassignLabel(
-                                tenantId, projectId, taskId, labelId, jwt)));
+                        labelService.unassignLabel(tenantId, projectId, taskId, labelId, jwt)));
     }
 }
