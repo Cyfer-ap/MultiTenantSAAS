@@ -1,8 +1,6 @@
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
-import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
-import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
-import TodayRoundedIcon from '@mui/icons-material/TodayRounded'
 import { Alert, Box, Button, Skeleton, Stack, Typography } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { useMemo, useState } from 'react'
 
 import { useAuth } from '../../auth/hooks/useAuth'
@@ -19,10 +17,18 @@ import {
 
 function CalendarLoadingState() {
     return (
-        <Stack spacing={2} aria-label="Loading calendar deadlines" role="status">
-            <Skeleton height={48} width="35%" />
-            <Skeleton height={620} variant="rounded" />
-        </Stack>
+        <Box
+            aria-label="Loading calendar deadlines"
+            role="status"
+            sx={{
+                display: 'grid',
+                gap: 2,
+                gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 360px' },
+            }}
+        >
+            <Skeleton height={650} variant="rounded" />
+            <Skeleton height={420} variant="rounded" />
+        </Box>
     )
 }
 
@@ -65,39 +71,52 @@ export function CalendarPage() {
     }
 
     return (
-        <Box>
+        <Box
+            sx={{
+                '@keyframes calendarPageEnter': {
+                    from: { opacity: 0, transform: 'translateY(8px)' },
+                    to: { opacity: 1, transform: 'translateY(0)' },
+                },
+                animation: 'calendarPageEnter 240ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+            }}
+        >
             <Stack
-                direction={{ xs: 'column', md: 'row' }}
-                spacing={2}
-                sx={{ alignItems: { md: 'center' }, justifyContent: 'space-between', mb: 3 }}
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1.5}
+                sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between', mb: 2.5 }}
             >
-                <Box>
-                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                        <CalendarMonthRoundedIcon />
-                        <Typography component="h1" variant="h4" sx={{ fontWeight: 800 }}>
+                <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
+                    <Box
+                        sx={(theme) => ({
+                            alignItems: 'center',
+                            bgcolor: alpha(theme.palette.primary.main, 0.08),
+                            border: `1px solid ${alpha(theme.palette.primary.main, 0.14)}`,
+                            borderRadius: 2.25,
+                            display: 'flex',
+                            height: 42,
+                            justifyContent: 'center',
+                            width: 42,
+                        })}
+                    >
+                        <CalendarMonthRoundedIcon fontSize="small" />
+                    </Box>
+                    <Box>
+                        <Typography component="h1" variant="h4" sx={{ lineHeight: 1.05 }}>
                             Calendar
                         </Typography>
-                    </Stack>
-                    <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                        Accessible task deadlines shown in {timeZone}.
-                    </Typography>
-                </Box>
-
-                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
-                    <Button
-                        aria-label="Previous month"
-                        onClick={() => moveMonth(-1)}
-                        variant="outlined"
-                    >
-                        <ChevronLeftRoundedIcon />
-                    </Button>
-                    <Button startIcon={<TodayRoundedIcon />} onClick={goToToday} variant="outlined">
-                        Today
-                    </Button>
-                    <Button aria-label="Next month" onClick={() => moveMonth(1)} variant="outlined">
-                        <ChevronRightRoundedIcon />
-                    </Button>
+                        <Typography color="text.secondary" variant="body2" sx={{ mt: 0.4 }}>
+                            Deadlines in {timeZone}
+                        </Typography>
+                    </Box>
                 </Stack>
+
+                <Typography
+                    color="text.secondary"
+                    variant="caption"
+                    sx={{ maxWidth: 390, textAlign: { sm: 'right' } }}
+                >
+                    A live, permission-aware view of task due dates across your accessible projects.
+                </Typography>
             </Stack>
 
             {deadlinesQuery.isPending ? (
@@ -118,22 +137,34 @@ export function CalendarPage() {
                     Calendar deadlines could not be loaded.
                 </Alert>
             ) : (
-                <Stack spacing={2}>
+                <Stack spacing={1.5}>
                     {deadlinesQuery.data?.truncated && (
-                        <Alert severity="warning">
+                        <Alert severity="warning" variant="outlined">
                             This range contains more than 500 accessible deadlines. Open the owning
                             projects for the complete task set.
                         </Alert>
                     )}
 
-                    <CalendarMonthGrid
-                        deadlinesByDay={deadlinesByDay}
-                        items={items}
-                        onSelectDay={setSelectedDayKey}
-                        range={range}
-                        selectedDayKey={selectedDayKey}
-                    />
-                    <CalendarDeadlineAgenda selectedDate={selectedDate} items={selectedItems} />
+                    <Box
+                        sx={{
+                            alignItems: 'start',
+                            display: 'grid',
+                            gap: 2,
+                            gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 360px' },
+                        }}
+                    >
+                        <CalendarMonthGrid
+                            deadlinesByDay={deadlinesByDay}
+                            items={items}
+                            onNextMonth={() => moveMonth(1)}
+                            onPreviousMonth={() => moveMonth(-1)}
+                            onSelectDay={setSelectedDayKey}
+                            onToday={goToToday}
+                            range={range}
+                            selectedDayKey={selectedDayKey}
+                        />
+                        <CalendarDeadlineAgenda selectedDate={selectedDate} items={selectedItems} />
+                    </Box>
                 </Stack>
             )}
         </Box>
