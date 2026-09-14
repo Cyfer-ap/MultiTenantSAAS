@@ -106,7 +106,7 @@ export function TaskTemplatesPanel({ tenantId, projectId, canManage }: TaskTempl
             {canManage ? (
                 <Paper variant="outlined" sx={{ p: 2 }}>
                     <Stack spacing={2}>
-                        <Typography fontWeight={600}>
+                        <Typography sx={{ fontWeight: 600 }}>
                             {editingId ? 'Edit task template' : 'New task template'}
                         </Typography>
                         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
@@ -115,7 +115,7 @@ export function TaskTemplatesPanel({ tenantId, projectId, canManage }: TaskTempl
                                 label="Template name"
                                 value={form.name}
                                 onChange={(event) => setForm({ ...form, name: event.target.value })}
-                                inputProps={{ maxLength: 80 }}
+                                slotProps={{ htmlInput: { maxLength: 80 } }}
                                 required
                             />
                             <TextField
@@ -125,7 +125,7 @@ export function TaskTemplatesPanel({ tenantId, projectId, canManage }: TaskTempl
                                 onChange={(event) =>
                                     setForm({ ...form, taskTitle: event.target.value })
                                 }
-                                inputProps={{ maxLength: 200 }}
+                                slotProps={{ htmlInput: { maxLength: 200 } }}
                                 required
                             />
                         </Stack>
@@ -137,7 +137,7 @@ export function TaskTemplatesPanel({ tenantId, projectId, canManage }: TaskTempl
                             }
                             multiline
                             minRows={2}
-                            inputProps={{ maxLength: 4000 }}
+                            slotProps={{ htmlInput: { maxLength: 4000 } }}
                         />
                         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                             <TextField
@@ -166,7 +166,7 @@ export function TaskTemplatesPanel({ tenantId, projectId, canManage }: TaskTempl
                                 onChange={(event) =>
                                     setForm({ ...form, dueOffsetMinutes: event.target.value })
                                 }
-                                inputProps={{ min: 0, max: 525600 }}
+                                slotProps={{ htmlInput: { min: 0, max: 525600 } }}
                             />
                         </Stack>
                         {saveMutation.isError ? (
@@ -216,7 +216,7 @@ export function TaskTemplatesPanel({ tenantId, projectId, canManage }: TaskTempl
                             sx={{ justifyContent: 'space-between' }}
                         >
                             <Stack>
-                                <Typography fontWeight={600}>{template.name}</Typography>
+                                <Typography sx={{ fontWeight: 600 }}>{template.name}</Typography>
                                 <Typography variant="body2">{template.taskTitle}</Typography>
                             </Stack>
                             <Stack direction="row" spacing={1}>
@@ -236,7 +236,12 @@ export function TaskTemplatesPanel({ tenantId, projectId, canManage }: TaskTempl
                             </Typography>
                         ) : null}
                         {canManage ? (
-                            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                            <Stack
+                                direction="row"
+                                spacing={1}
+                                useFlexGap
+                                sx={{ flexWrap: 'wrap' }}
+                            >
                                 <Button
                                     size="small"
                                     variant="contained"
