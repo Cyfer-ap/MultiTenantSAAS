@@ -56,25 +56,30 @@ Backend foundation completed through PR #139 and user-facing Task Planning throu
 
 Provides V47 bounded parent hierarchy, directed dependencies, project-scoped labels and the separate `/task-planning` workspace.
 
-### Recurring Work + Task Templates — backend foundation
+### Recurring Work + Project/Task Templates
 
-PR #141 is merged and establishes the first backend half of the broader recurring/templates milestone. Merge commit: `3460785aa9a1644768f10c696ccaef27422535f8`.
+Backend recurring/task-template foundation was established in PR #141; PR #143 closes the broader milestone.
 
 Provides:
 
 - V48 `recurring_task_definitions`
 - V48 `recurring_task_occurrences`
 - V48 `project_task_templates`
-- explicit `recurringwork` and `tasktemplates` backend domains
-- task-owned `TaskCreationPort` reused by recurrence and templates
+- V49 `project_templates`
+- V49 `project_template_tasks`
+- explicit `recurringwork`, `tasktemplates`, and `projecttemplates` backend domains
+- task-owned `TaskCreationPort` reused by recurrence and both template flows
+- project-owned `ProjectCreationPort` shared by ordinary and template-driven project creation
+- project quota, active actor/tenant validation, initial `PROJECT_LEAD`, audit, and project lifecycle/webhook invariants preserved through the project-owned adapter
 - timezone-aware `DAILY` / `WEEKLY` / `MONTHLY` recurrence
-- pause/resume/edit/end/count semantics
-- bounded scheduler discovery and catch-up
-- pessimistic materialization locking and database occurrence idempotency
+- pause/resume/edit/end/count semantics and occurrence history
+- bounded scheduler discovery/catch-up with database idempotency and pessimistic materialization locking
 - project-scoped task-template catalog with normalized uniqueness and bounded size
-- ordinary task lifecycle side effects preserved for generated/template tasks
+- tenant-scoped project-template catalog with maximum 50 ordered starter-task snapshots/template
+- transactional project-template instantiation through narrow project/task creation contracts
+- standalone `/work-automation` frontend workspace with recurring-rule, task-template and project-template management
 
-This does **not** close the overall recurring/templates milestone. Tenant-scoped project templates and user-facing recurring/template management remain pending.
+The milestone is complete. Recurrence remains outside Calendar and template generation remains outside legacy project/task god-services.
 
 ## Current major product milestone
 
@@ -97,17 +102,12 @@ This does **not** close the overall recurring/templates milestone. Tenant-scoped
 - ✅ subtasks
 - ✅ directed task dependencies
 - ✅ project-scoped labels/tags
+- ✅ recurring work
+- ✅ project-scoped task templates
+- ✅ tenant-scoped project templates
+- ✅ Work Automation & Templates workspace
 - existing Kanban task board should be iterated rather than rebuilt
-- 🟡 recurring work — backend foundation merged; frontend management pending
-- 🟡 task templates — project-scoped backend foundation merged; frontend pending
-- 🟡 project templates — V49+ tenant-scoped backend + frontend pending
-- bulk actions and CSV import/export
-
-The immediate work is to finish the recurring/templates milestone rather than start another domain.
-
-Project-template creation must use a project-owned narrow creation contract preserving project quota, actor validation, owner membership, audit and lifecycle behavior. Do not inject the full legacy `ProjectService` into a template god-service.
-
-Do not put recurrence generation inside Calendar or task-relationship graph services.
+- **next: bulk actions and CSV import/export**
 
 #### Phase C — tenant adaptability
 
@@ -125,23 +125,24 @@ No experiment becomes a roadmap commitment merely because it is listed.
 
 ## Immediate sequence
 
-1. **finish recurring work + project/task templates: V49+ project templates + frontend UX**
-2. bulk actions + CSV import/export
-3. custom fields/forms + workflows/approvals + knowledge/documents
+1. **bulk actions + CSV import/export**
+2. custom fields/forms
+3. workflows/approvals + knowledge/documents
 4. user-facing analytics/reporting
 5. selected differentiated experiments after the core product layer is strong
+
+For each new slice, choose the owning domain and narrow cross-domain contracts before implementation. Do not add bulk/import/custom-field behavior by expanding existing god-services.
 
 ## Core product gaps to keep visible
 
 Before calling the product layer mature, revisit:
 
 - smooth post-login multi-workspace switching
-- project-template and recurring/template UX completion
+- bulk productivity and import/export
 - custom fields/forms
 - workflow/approval engine
 - first-class knowledge/documents
 - user-facing analytics/reporting
-- import/export and bulk productivity
 - richer onboarding, personalization, timezone and locale UX
 
 ## Deferred platform work
@@ -188,4 +189,4 @@ Preserve tenant isolation, backend-authoritative authorization, delegation non-e
 
 New user-facing features must remain permission-aware and tenant-safe. Search, favorites/recent resolution, My Work, saved views, calendar projections, Task Planning, recurring work, templates, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
 
-New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work, Saved Views, Calendar, Task Relationships and the V48 work-generation boundary are backend reference implementations; Dashboard remains the frontend composition reference.
+New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work, Saved Views, Calendar, Task Relationships, `TaskCreationPort`, and `ProjectCreationPort` are current reference implementations; Dashboard remains the frontend composition reference.
