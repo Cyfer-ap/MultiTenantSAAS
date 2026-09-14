@@ -54,14 +54,17 @@ public class ProjectTemplateService {
         Page<ProjectTemplate> page =
                 templateRepository.findByTenantIdOrderByNameAsc(tenantId, bounded(pageable));
         List<UUID> templateIds = page.getContent().stream().map(ProjectTemplate::getId).toList();
-        Map<UUID, List<ProjectTemplateTask>> tasksByTemplate = loadTasksByTemplate(tenantId, templateIds);
+        Map<UUID, List<ProjectTemplateTask>> tasksByTemplate =
+                loadTasksByTemplate(tenantId, templateIds);
 
         return new PageResponse<>(
                 page.getContent().stream()
-                        .map(template ->
-                                map(
-                                        template,
-                                        tasksByTemplate.getOrDefault(template.getId(), List.of())))
+                        .map(
+                                template ->
+                                        map(
+                                                template,
+                                                tasksByTemplate.getOrDefault(
+                                                        template.getId(), List.of())))
                         .toList(),
                 page.getNumber(),
                 page.getSize(),
@@ -172,8 +175,7 @@ public class ProjectTemplateService {
             Instant dueAt =
                     snapshot.getDueOffsetMinutes() == null
                             ? null
-                            : project.createdAt()
-                                    .plusSeconds(snapshot.getDueOffsetMinutes() * 60L);
+                            : project.createdAt().plusSeconds(snapshot.getDueOffsetMinutes() * 60L);
             taskCreationPort.createTask(
                     new TaskCreationCommand(
                             tenantId,
@@ -241,7 +243,8 @@ public class ProjectTemplateService {
 
     private void validateInitialStatus(ProjectStatus status) {
         if (status == ProjectStatus.ARCHIVED) {
-            throw new IllegalArgumentException("A project template cannot create archived projects");
+            throw new IllegalArgumentException(
+                    "A project template cannot create archived projects");
         }
     }
 
@@ -271,14 +274,15 @@ public class ProjectTemplateService {
                 template.getProjectDescription(),
                 template.getInitialStatus(),
                 tasks.stream()
-                        .map(task ->
-                                new ProjectTemplateDtos.TaskSnapshotResponse(
-                                        task.getId(),
-                                        task.getPositionIndex(),
-                                        task.getTitle(),
-                                        task.getDescription(),
-                                        task.getPriority(),
-                                        task.getDueOffsetMinutes()))
+                        .map(
+                                task ->
+                                        new ProjectTemplateDtos.TaskSnapshotResponse(
+                                                task.getId(),
+                                                task.getPositionIndex(),
+                                                task.getTitle(),
+                                                task.getDescription(),
+                                                task.getPriority(),
+                                                task.getDueOffsetMinutes()))
                         .toList(),
                 template.getCreatedAt(),
                 template.getUpdatedAt());

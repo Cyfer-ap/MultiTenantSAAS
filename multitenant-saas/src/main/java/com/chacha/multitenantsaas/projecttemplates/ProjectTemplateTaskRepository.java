@@ -20,6 +20,5 @@ public interface ProjectTemplateTaskRepository extends JpaRepository<ProjectTemp
     @Query(
             "delete from ProjectTemplateTask task "
                     + "where task.tenantId = :tenantId and task.templateId = :templateId")
-    int deleteSnapshots(
-            @Param("tenantId") UUID tenantId, @Param("templateId") UUID templateId);
+    int deleteSnapshots(@Param("tenantId") UUID tenantId, @Param("templateId") UUID templateId);
 }

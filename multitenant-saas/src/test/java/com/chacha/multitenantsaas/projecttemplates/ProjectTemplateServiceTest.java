@@ -58,7 +58,8 @@ class ProjectTemplateServiceTest {
         when(template.getProjectNameSeed()).thenReturn("Launch workspace");
         when(template.getProjectDescription()).thenReturn("Prepared from template");
         when(template.getInitialStatus()).thenReturn(ProjectStatus.ACTIVE);
-        when(taskRepository.findByTenantIdAndTemplateIdOrderByPositionIndexAsc(tenantId, templateId))
+        when(taskRepository.findByTenantIdAndTemplateIdOrderByPositionIndexAsc(
+                        tenantId, templateId))
                 .thenReturn(List.of(first, second));
         stubTask(first, "Plan", ProjectTaskPriority.HIGH, 60L);
         stubTask(second, "Ship", ProjectTaskPriority.MEDIUM, null);
@@ -97,7 +98,9 @@ class ProjectTemplateServiceTest {
                 ArgumentCaptor.forClass(TaskCreationCommand.class);
         verify(taskCreationPort, org.mockito.Mockito.times(2)).createTask(taskCommands.capture());
         List<TaskCreationCommand> createdTasks = taskCommands.getAllValues();
-        assertThat(createdTasks).extracting(TaskCreationCommand::title).containsExactly("Plan", "Ship");
+        assertThat(createdTasks)
+                .extracting(TaskCreationCommand::title)
+                .containsExactly("Plan", "Ship");
         assertThat(createdTasks.get(0).dueAt()).isEqualTo(createdAt.plusSeconds(3600));
         assertThat(createdTasks.get(1).dueAt()).isNull();
         assertThat(createdTasks).allMatch(command -> command.projectId().equals(projectId));
@@ -115,11 +118,7 @@ class ProjectTemplateServiceTest {
         }
         ProjectTemplateDtos.UpsertRequest request =
                 new ProjectTemplateDtos.UpsertRequest(
-                        "Template",
-                        "Project",
-                        null,
-                        ProjectStatus.PLANNING,
-                        tasks);
+                        "Template", "Project", null, ProjectStatus.PLANNING, tasks);
 
         assertThatThrownBy(() -> service().create(UUID.randomUUID(), request, jwt))
                 .isInstanceOf(IllegalArgumentException.class)

@@ -52,7 +52,8 @@ class DefaultProjectCreationAdapterTest {
 
         when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
         when(tenant.getStatus()).thenReturn(TenantStatus.ACTIVE);
-        when(appUserRepository.findByTenantIdAndId(tenantId, actorId)).thenReturn(Optional.of(actor));
+        when(appUserRepository.findByTenantIdAndId(tenantId, actorId))
+                .thenReturn(Optional.of(actor));
         when(actor.getStatus()).thenReturn(UserStatus.ACTIVE);
         when(actor.getId()).thenReturn(actorId);
         when(actor.getFullName()).thenReturn("Template Owner");

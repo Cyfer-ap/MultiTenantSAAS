@@ -32,8 +32,7 @@ public class ProjectTemplateController {
     @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId,'project.read')")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ProjectTemplateDtos.Response>>> list(
-            @PathVariable UUID tenantId,
-            @PageableDefault(size = 50) Pageable pageable) {
+            @PathVariable UUID tenantId, @PageableDefault(size = 50) Pageable pageable) {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Project templates fetched successfully",
@@ -79,7 +78,8 @@ public class ProjectTemplateController {
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID tenantId, @PathVariable UUID templateId) {
         projectTemplateService.delete(tenantId, templateId);
-        return ResponseEntity.ok(ApiResponse.success("Project template deleted successfully", null));
+        return ResponseEntity.ok(
+                ApiResponse.success("Project template deleted successfully", null));
     }
 
     @PreAuthorize("@authorizationSecurity.hasTenantPermission(#tenantId,'project.create')")

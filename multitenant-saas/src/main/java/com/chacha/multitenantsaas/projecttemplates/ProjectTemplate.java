@@ -23,10 +23,7 @@ import java.util.UUID;
                 @UniqueConstraint(
                         name = "uk_project_template_name",
                         columnNames = {"tenant_id", "normalized_name"}),
-        indexes =
-                @Index(
-                        name = "idx_project_templates_tenant_name",
-                        columnList = "tenant_id,name"))
+        indexes = @Index(name = "idx_project_templates_tenant_name", columnList = "tenant_id,name"))
 public class ProjectTemplate {
 
     @Id
