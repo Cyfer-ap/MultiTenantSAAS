@@ -20,10 +20,14 @@ import java.util.UUID;
                 @UniqueConstraint(
                         name = "uk_workflow_execution_event",
                         columnNames = {"tenant_id", "workflow_id", "event_key"}),
-        indexes =
-                @Index(
-                        name = "idx_workflow_executions_history",
-                        columnList = "tenant_id,workflow_id,started_at"))
+        indexes = {
+            @Index(
+                    name = "idx_workflow_executions_history",
+                    columnList = "tenant_id,workflow_id,started_at"),
+            @Index(
+                    name = "idx_workflow_executions_tenant_started",
+                    columnList = "tenant_id,started_at")
+        })
 public class WorkflowExecution {
 
     @Id

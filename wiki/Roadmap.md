@@ -58,124 +58,124 @@ Provides V47 bounded parent hierarchy, directed dependencies, project-scoped lab
 
 ### Recurring Work + Project/Task Templates
 
-Backend recurring/task-template foundation was established in PR #141; PR #143 closes the broader milestone.
+Completed through PR #143.
+
+Provides V48 recurrence/task-template persistence, V49 tenant project templates, task-owned `TaskCreationPort`, project-owned `ProjectCreationPort`, timezone-aware bounded materialization and the `/work-automation` workspace.
+
+### Visual Workflow Builder
+
+Completed through PR #144 once its final green head is merged.
 
 Provides:
 
-- V48 `recurring_task_definitions`
-- V48 `recurring_task_occurrences`
-- V48 `project_task_templates`
-- V49 `project_templates`
-- V49 `project_template_tasks`
-- explicit `recurringwork`, `tasktemplates`, and `projecttemplates` backend domains
-- task-owned `TaskCreationPort` reused by recurrence and both template flows
-- project-owned `ProjectCreationPort` shared by ordinary and template-driven project creation
-- project quota, active actor/tenant validation, initial `PROJECT_LEAD`, audit, and project lifecycle/webhook invariants preserved through the project-owned adapter
-- timezone-aware `DAILY` / `WEEKLY` / `MONTHLY` recurrence
-- pause/resume/edit/end/count semantics and occurrence history
-- bounded scheduler discovery/catch-up with database idempotency and pessimistic materialization locking
-- project-scoped task-template catalog with normalized uniqueness and bounded size
-- tenant-scoped project-template catalog with maximum 50 ordered starter-task snapshots/template
-- transactional project-template instantiation through narrow project/task creation contracts
-- standalone `/work-automation` frontend workspace with recurring-rule, task-template and project-template management
+- V50 `workflow_definitions`, `workflow_nodes`, `workflow_edges`, `workflow_executions`
+- explicit `workflows` domain
+- `DRAFT` / `ACTIVE` / `PAUSED` lifecycle
+- bounded 2–50-node / 1–100-edge validated graphs
+- exactly one trigger, DAG/reachability validation and typed configuration
+- task-created / task-status-changed triggers
+- task-priority / task-status equality conditions
+- task-priority / task-status actions
+- after-commit task-domain event ingestion
+- idempotent execution recording and success/failure/skipped explanation
+- task-owned `TaskAutomationMutationPort` with current-authority re-check
+- non-recursive workflow-driven mutations in v1 to avoid accidental feedback loops
+- dependency-free draggable visual canvas inside `/work-automation`
+- active-workflow read-only behavior until paused
+- tenant-wide recent workflow execution history
 
-The milestone is complete. Recurrence remains outside Calendar and template generation remains outside legacy project/task god-services.
+The backend graph is authoritative; the visual canvas does not bypass graph validation or task authorization.
 
 ## Current major product milestone
 
-### 1. Differentiated Work Platform Sequence
+### Differentiated Work Platform Sequence
 
-The previous plan to move directly into bulk actions/CSV is deliberately paused. The next product sequence is now committed in this order and should be completed before returning to the older backlog unless a production/security issue forces reprioritization.
+The older plan to move directly into bulk actions/CSV remains deliberately paused. The committed sequence continues in this order unless a production/security issue or explicit product decision reprioritizes it.
 
-1. **Visual Workflow Builder** — drag/connect `Trigger -> Condition -> Action` automations with execution history, guardrails and explainability.
-2. **Project Simulation / What-If Engine** — private scenario changes for dates, owners and dependencies with downstream schedule/workload impact before applying anything.
-3. **Collaborative Whiteboard** — visual planning canvas with nodes/stickies that can become real projects/tasks and later support live collaboration.
-4. **Project Health / Risk Radar** — explainable project-risk signals for overdue work, blockers, dependency criticality, stale work and workload pressure.
-5. **Forms -> Workflow Engine** — internal/public structured intake that creates authorized work and can trigger workflows.
+1. ✅ **Visual Workflow Builder** — completed through #144.
+2. 🚧 **Project Simulation / What-If Engine** — active next. Private scenario changes for dates, owners and dependencies with downstream schedule/workload impact before applying anything.
+3. **Collaborative Whiteboard** — visual planning canvas whose nodes/stickies can become real tasks/projects; later add live presence/cursors.
+4. **Project Health / Risk Radar** — explainable risk signals from overdue work, blockers, stale work, dependency criticality and workload pressure.
+5. **Forms -> Workflow Engine** — structured internal/public intake that creates authorized work and can launch workflows.
 6. **Approval Workflows** — reusable human review/approve/reject stages that compose with the workflow engine.
-7. **Client / Guest Portal** — bounded external project visibility, comments, review requests and approvals without broad tenant membership.
-8. **Team Workload Engine** — capacity planning, overload detection and reassignment support without employee surveillance scoring.
-9. **Workspace Knowledge Graph** — permission-aware graph of projects, tasks, people, decisions, documents and dependencies.
-10. **AI / Agent Teammates** — assign bounded work to agents only after workflow, knowledge and authorization context are mature; human checkpoints remain mandatory for consequential actions.
+7. **Client / Guest Portal** — bounded external visibility, comments, review requests and approvals without broad tenant membership.
+8. **Team Workload Engine** — capacity planning, overload detection and reassignment support without employee-surveillance scoring.
+9. **Workspace Knowledge Graph** — permission-aware graph connecting projects, tasks, people, decisions, documents and dependencies.
+10. **AI / Agent Teammates** — bounded agent work only after workflow, knowledge and authorization context are mature; human checkpoints remain mandatory for consequential actions.
 
-`guides/Wild_Thoughts.md` is the detailed idea vault and records overlap with older experiments such as Scenario/Sandbox Mode, Deadline Reality Check, Risk Inbox, Change Blast-Radius Preview and Human Checkpoints for Automation/AI.
+`guides/Wild_Thoughts.md` is the detailed idea vault and records overlap with earlier experiments such as Scenario/Sandbox Mode, Deadline Reality Check, Risk Inbox, Change Blast-Radius Preview and Human Checkpoints for Automation/AI.
 
-### Feature 1 — Visual Workflow Builder — ACTIVE
+## Feature 2 — Project Simulation / What-If Engine — ACTIVE NEXT
 
-Start with a product workflow engine, not a general BPMN clone.
+The simulation feature must be a private advisory layer over live work, not an alternate mutation path.
 
 First milestone:
 
-- tenant-scoped workflow definitions
-- explicit trigger, condition and action model
-- draft/active/paused lifecycle
-- safe bounded graph validation
-- execution history with success/failure/skipped reasons
-- idempotent event handling
-- permission-aware action execution through narrow domain-owned ports
-- audit/explanation for every execution
-- frontend visual canvas for nodes/edges after the backend contract is stable
-- runtime guardrails/circuit-breaker foundations rather than unrestricted arbitrary code
+- explicit simulation/scenario owning domain
+- authorization-safe snapshot/read contract for project, task and dependency state
+- private scenario sessions owned by a user/tenant/project
+- hypothetical overrides for dates and ownership without changing authoritative rows
+- deterministic downstream schedule/dependency impact calculation
+- workload impact summary using explicit work assignments/capacity inputs only
+- explainable change/blast-radius output
+- comparison between live baseline and scenario
+- discard/reset behavior
+- explicit human **Apply** action only after current authorization and domain invariants are re-checked
+- audit trail for applied scenario changes
 
-Initial trigger/action coverage should stay intentionally narrow and task/project-oriented so the engine remains understandable and testable.
+Guardrails:
 
-### 2. Product Experience & Work Management Enrichment — PAUSED BEHIND THE SEQUENCE ABOVE
+- simulation never silently writes live state
+- no production/project task mutation merely to calculate a scenario
+- no opaque employee productivity score
+- no broad service injection into a simulation god-service
+- scenario reads and apply operations must use narrow domain-owned contracts
+- stale scenarios must detect live-state drift before apply
 
-#### Phase A — discoverability and personal productivity
+## Product Experience & Work Management Enrichment — PARKED BEHIND THE COMMITTED SEQUENCE
 
-- ✅ global authorized search
-- ✅ command palette and quick actions
-- ✅ favorites/recent items
-- ✅ contextual favorite controls
-- ✅ My Work attention queue
-- ✅ saved views
-- ✅ capability-aware dashboard refresh
-- 🟡 onboarding/empty-state/quick-create polish — continue incrementally only when it supports active work
+Already completed foundations include:
 
-#### Phase B — deeper work management
+- global authorized search
+- command palette and quick actions
+- favorites/recent items
+- My Work
+- saved views
+- capability-aware dashboard
+- calendar/deadline view
+- subtasks/dependencies/labels
+- Task Planning
+- recurring work
+- project/task templates
+- Work Automation workspace
+- Visual Workflow Builder
 
-- ✅ calendar/deadline view
-- ✅ subtasks
-- ✅ directed task dependencies
-- ✅ project-scoped labels/tags
-- ✅ recurring work
-- ✅ project-scoped task templates
-- ✅ tenant-scoped project templates
-- ✅ Work Automation & Templates workspace
-- existing Kanban task board should be iterated rather than rebuilt
-- bulk actions and CSV import/export remain valuable but are no longer the immediate next slice
+Still valuable later:
 
-#### Phase C — tenant adaptability
-
+- bulk actions and CSV import/export
 - custom fields
-- forms — now scheduled as committed feature #5
-- workflow/approval automation — now split across committed features #1 and #6
 - knowledge/documents beyond attachments
 - user-facing analytics/reporting
-
-#### Phase D — selected differentiators
-
-Use `guides/Wild_Thoughts.md` as the idea vault. Candidate experiments remain available, but the ten-feature sequence above is now an explicit roadmap commitment rather than a loose experiment list.
+- richer onboarding/workspace-switching/personalization
 
 ## Immediate sequence
 
-1. **Visual Workflow Builder** — active now
-2. **Project Simulation / What-If Engine**
-3. **Collaborative Whiteboard**
-4. **Project Health / Risk Radar**
-5. **Forms -> Workflow Engine**
-6. **Approval Workflows**
-7. **Client / Guest Portal**
-8. **Team Workload Engine**
-9. **Workspace Knowledge Graph**
-10. **AI / Agent Teammates**
-11. Resume remaining product backlog such as bulk actions/CSV, custom fields, knowledge/documents and broader analytics after this sequence unless priorities explicitly change.
+1. **Project Simulation / What-If Engine**
+2. Collaborative Whiteboard
+3. Project Health / Risk Radar
+4. Forms -> Workflow Engine
+5. Approval Workflows
+6. Client / Guest Portal
+7. Team Workload Engine
+8. Workspace Knowledge Graph
+9. AI / Agent Teammates
+10. resume remaining parked backlog such as bulk actions/CSV, custom fields, knowledge/documents and broader analytics
 
-For each slice, choose the owning domain and narrow cross-domain contracts before implementation. Do not implement workflow actions by injecting existing god-services into a central automation service.
+For each slice, choose the owning domain and narrow cross-domain contracts before implementation. Do not implement new behavior by expanding legacy project/task god-services.
 
 ## Core product gaps to keep visible
 
-These remain useful but sit behind the committed sequence unless they are prerequisites for one of its features:
+These remain useful but sit behind the committed sequence unless they become prerequisites:
 
 - smooth post-login multi-workspace switching
 - bulk productivity and import/export
@@ -186,9 +186,9 @@ These remain useful but sit behind the committed sequence unless they are prereq
 
 ## Deferred platform work
 
-### 3. Production Operations & Disaster Recovery
+### Production Operations & Disaster Recovery
 
-Still important, but deliberately deferred from the immediate sequence while the product is enriched.
+Still important, but deliberately deferred from the immediate product sequence.
 
 Target capabilities remain:
 
@@ -198,18 +198,16 @@ Target capabilities remain:
 - actionable alerts
 - incident/recovery runbooks
 - secret/key rotation procedures
+- broader failure-recovery/load validation
+- production R2 verification
 
-### 4. Broader failure-recovery/load and production R2 verification
-
-Follow the operations/DR baseline later.
-
-### 5. Optional enterprise expansion
+### Optional enterprise expansion
 
 - SAML where required
 - SCIM/directory provisioning where required
 - richer session/device/MFA/passkey controls when prioritized
 
-### 6. Optional notification expansion
+### Optional notification expansion
 
 - digests
 - live browser delivery
@@ -226,6 +224,6 @@ Follow the operations/DR baseline later.
 
 Preserve tenant isolation, backend-authoritative authorization, delegation non-escalation, verified provider reconciliation, webhook-authoritative normal billing state, immutable history, Flyway invariants, database-backed concurrency, auditability, SSRF protections and server-only secrets/provider identifiers.
 
-New user-facing features must remain permission-aware and tenant-safe. Search, favorites/recent resolution, My Work, saved views, calendar projections, Task Planning, recurring work, templates, analytics, automation and future AI must filter through the same authorization boundary rather than attempting to repair access after data retrieval.
+New user-facing features must remain permission-aware and tenant-safe. Search, Favorites/Recent resolution, My Work, Saved Views, Calendar, Task Planning, recurrence/templates, workflows, simulation, analytics and future AI must filter through authoritative authorization boundaries rather than attempting to repair access after retrieval.
 
-New functionality must stay inside explicit domain modules and cross domain boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work, Saved Views, Calendar, Task Relationships, `TaskCreationPort`, and `ProjectCreationPort` are current reference implementations; Dashboard remains the frontend composition reference.
+New functionality must stay inside explicit domain modules and cross boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work, Saved Views, Calendar, Task Relationships, `TaskCreationPort`, `ProjectCreationPort`, task-domain workflow events and `TaskAutomationMutationPort` are current reference implementations.

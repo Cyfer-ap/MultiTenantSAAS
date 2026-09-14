@@ -114,3 +114,6 @@ CREATE TABLE workflow_executions (
 
 CREATE INDEX idx_workflow_executions_history
     ON workflow_executions (tenant_id, workflow_id, started_at);
+
+CREATE INDEX idx_workflow_executions_tenant_started
+    ON workflow_executions (tenant_id, started_at DESC);

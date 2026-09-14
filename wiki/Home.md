@@ -21,7 +21,8 @@ Implemented foundations include:
 - recurring-task definitions/materialization with explicit timezone and idempotent occurrence tracking
 - project-scoped reusable task templates
 - tenant-scoped reusable project templates with bounded starter-task snapshots
-- dedicated Work Automation & Templates workspace
+- Work Automation workspace with recurring work, task/project templates and visual workflows
+- Visual Workflow Builder with bounded validated graphs, task-domain event runtime, permission-aware task actions and execution history
 - permission-aware Global Search and capability-aware Command Palette
 - server-backed Favorites + Recently Viewed with contextual favorite controls
 - My Work personal attention queue and server-backed Saved Views
@@ -40,15 +41,17 @@ MultiTenantSAAS remains an intentional modular monolith. Future features must fo
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Recurring work and task templates cross into task creation through the task-owned `TaskCreationPort`. Tenant project templates cross into project creation through the project-owned `ProjectCreationPort` and create starter tasks through `TaskCreationPort`. These domains do not depend on the full legacy project/task services.
+Recurring work and task templates cross into task creation through the task-owned `TaskCreationPort`. Tenant project templates cross into project creation through `ProjectCreationPort` and create starter tasks through `TaskCreationPort`.
+
+Visual workflows consume task-domain events and cross back into task mutation only through `TaskAutomationMutationPort`, which re-checks current authority. The workflow domain does not own task repositories or the full task service.
 
 See [[Architecture]] for the current architecture and known debt.
 
 ## Database checkpoint
 
-PostgreSQL Flyway migrations currently extend through **V49**. Applied migrations remain append-only; new persistence starts at V50+.
+PostgreSQL Flyway migrations extend through **V50** after the Visual Workflow Builder milestone. Applied migrations remain append-only; new persistence begins at **V51+**.
 
-Recent product migrations are V45 for personal-workspace favorites/recent items, V46 for saved views, V47 for task parent/dependency/label relationships, V48 for recurring task definitions/occurrences plus project task templates, and V49 for tenant project templates plus bounded starter-task snapshots.
+Recent product migrations are V45 for personal-workspace favorites/recent items, V46 for saved views, V47 for task parent/dependency/label relationships, V48 for recurring task definitions/occurrences plus project task templates, V49 for tenant project templates plus bounded starter-task snapshots, and V50 for workflow definitions/nodes/edges/executions.
 
 ## Start here
 
@@ -64,10 +67,12 @@ Recent product migrations are V45 for personal-workspace favorites/recent items,
 - [[Roadmap]]
 - [[Developer-Handoff]]
 
-Repository-side `guides/Wild_Thoughts.md` is the living idea vault; `guides/ENGINEERING_STANDARDS.md` is the technical-health and engineering-rules guide; `guides/task_relationships.md` owns task hierarchy/dependency/label semantics; and `guides/recurring_work_and_templates.md` owns recurring-work/task-template/project-template generation semantics.
+Repository-side `guides/Wild_Thoughts.md` is the living idea vault; `guides/ENGINEERING_STANDARDS.md` owns technical-health rules; `guides/task_relationships.md` owns task hierarchy/dependency/label semantics; `guides/recurring_work_and_templates.md` owns work-generation semantics; and `guides/visual_workflow_builder.md` owns workflow graph/runtime/canvas semantics.
 
 ## Current product direction
 
-The active product phase is **Product Experience & Work Management Enrichment**. Global Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Planning, recurring work, task templates, tenant project templates and the Work Automation & Templates workspace are established. The next product slice is bulk actions + CSV import/export, followed by tenant adaptability and analytics.
+Visual Workflow Builder is the first completed item in the committed differentiated sequence. The next product feature is **Project Simulation / What-If Engine**, followed by Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
-Production Operations & Disaster Recovery remains important but deliberately deferred behind the current user-facing enrichment phase. See [[Roadmap]].
+Bulk/CSV, custom fields, knowledge/documents and broader analytics remain parked backlog unless explicitly reprioritized.
+
+Production Operations & Disaster Recovery remains important but deliberately deferred behind the current user-facing product sequence. See [[Roadmap]].
