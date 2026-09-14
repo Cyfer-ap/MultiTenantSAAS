@@ -9,10 +9,12 @@ import static org.mockito.Mockito.when;
 
 import com.chacha.multitenantsaas.entity.AppUser;
 import com.chacha.multitenantsaas.entity.Tenant;
+import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.savedviews.dto.CreateSavedViewRequest;
 import com.chacha.multitenantsaas.savedviews.entity.SavedView;
 import com.chacha.multitenantsaas.savedviews.model.SavedViewTarget;
 import com.chacha.multitenantsaas.savedviews.repository.SavedViewRepository;
+import com.chacha.multitenantsaas.savedviews.spi.SavedViewContextValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
@@ -92,5 +94,27 @@ class SavedViewServiceTest {
                                                 Map.of())))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("cannot have a context id");
+    }
+
+    @Test
+    void rejectsProjectTaskViewWhenContextIsNotReadable() {
+        UUID projectId = UUID.randomUUID();
+        SavedViewContextValidator validator = mock(SavedViewContextValidator.class);
+        when(validator.target()).thenReturn(SavedViewTarget.PROJECT_TASKS);
+        when(validator.canUse(tenantId, actor.getId(), projectId)).thenReturn(false);
+        service = new SavedViewService(repository, new ObjectMapper(), List.of(validator));
+
+        assertThatThrownBy(
+                        () ->
+                                service.create(
+                                        tenantId,
+                                        actor,
+                                        new CreateSavedViewRequest(
+                                                "Project tasks",
+                                                SavedViewTarget.PROJECT_TASKS,
+                                                projectId,
+                                                Map.of("status", "TODO"))))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("not found or is not accessible");
     }
 }
