@@ -8,4 +8,6 @@ public record TaskRelationshipsResponse(
         List<TaskReferenceResponse> blockers,
         List<TaskReferenceResponse> dependents,
         List<TaskLabelResponse> labels,
-        boolean childrenTruncated) {}
+        boolean childrenTruncated,
+        boolean blockersTruncated,
+        boolean dependentsTruncated) {}
