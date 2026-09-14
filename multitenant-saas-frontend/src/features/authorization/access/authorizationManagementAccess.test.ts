@@ -15,6 +15,7 @@ describe('authorization workspace access', () => {
             'My Work',
             'Calendar',
             'Task Planning',
+            'Automation',
             'Favorites',
             'Authorization',
         ])
@@ -30,6 +31,7 @@ describe('authorization workspace access', () => {
             'My Work',
             'Calendar',
             'Task Planning',
+            'Automation',
             'Favorites',
             'Authorization',
         ])
