@@ -19,8 +19,8 @@ public interface TaskDependencyRepository extends JpaRepository<TaskDependency, 
             UUID tenantId, UUID projectId, Pageable pageable);
 
     List<TaskDependency> findByTenant_IdAndProject_IdAndDependentTask_IdOrderByCreatedAtAsc(
-            UUID tenantId, UUID projectId, UUID dependentTaskId);
+            UUID tenantId, UUID projectId, UUID dependentTaskId, Pageable pageable);
 
     List<TaskDependency> findByTenant_IdAndProject_IdAndBlockingTask_IdOrderByCreatedAtAsc(
-            UUID tenantId, UUID projectId, UUID blockingTaskId);
+            UUID tenantId, UUID projectId, UUID blockingTaskId, Pageable pageable);
 }
