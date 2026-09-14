@@ -17,10 +17,7 @@ interface CurrentPersonalResource {
     resourceId: string
 }
 
-function resolveCurrentResource(
-    pathname: string,
-    search: string,
-): CurrentPersonalResource | null {
+function resolveCurrentResource(pathname: string, search: string): CurrentPersonalResource | null {
     const projectMatch = /^\/projects\/([^/]+)$/.exec(pathname)
     if (!projectMatch) {
         return null
