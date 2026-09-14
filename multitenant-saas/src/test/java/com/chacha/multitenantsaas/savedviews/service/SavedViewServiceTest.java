@@ -103,8 +103,7 @@ class SavedViewServiceTest {
         when(validator.target()).thenReturn(SavedViewTarget.PROJECT_TASKS);
         when(validator.canUse(tenantId, actor.getId(), projectId)).thenReturn(false);
         service =
-                new SavedViewService(
-                        repository, JsonMapper.builder().build(), List.of(validator));
+                new SavedViewService(repository, JsonMapper.builder().build(), List.of(validator));
 
         assertThatThrownBy(
                         () ->
