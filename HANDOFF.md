@@ -27,26 +27,30 @@ Major application foundations are complete through:
 - documentation/engineering-governance consolidation: #128
 - permission-aware Global Search: #129
 - capability-aware Command Palette: #130
+- Favorites + Recently Viewed: #131
+- contextual favorite controls: #132
+- My Work attention queue: #133
+- server-backed Saved Views: #134
 
-Portable common Flyway migrations extend through V44.
+Portable common Flyway migrations extend through **V46**.
 
 Stripe is the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
 ## Current direction
 
-Build **Product Experience & Work Management Enrichment** before returning to the deferred operations/DR milestone.
+Continue **Product Experience & Work Management Enrichment** before returning to the deferred operations/DR milestone.
 
-Global Search and Command Palette are complete. The next implementation slice is **Favorites + Recently Viewed**.
+The first personal-productivity sequence is complete: Search, Command Palette, Favorites/Recent, My Work and Saved Views are all delivered. The next implementation slice is a **capability-aware Dashboard Refresh**.
 
 Recommended sequence:
 
-1. favorites + recently viewed
-2. My Work
-3. saved views + dashboard refresh
-4. calendar/deadline view + richer task relationships
-5. templates/recurring work/bulk/import/export
-6. custom fields/forms/workflows/knowledge
-7. analytics + selected differentiated experiments
+1. capability-aware dashboard refresh + onboarding/empty-state polish
+2. calendar/deadline view
+3. subtasks, dependencies and labels
+4. recurring work + project/task templates
+5. bulk actions + import/export
+6. custom fields/forms + workflows/approvals + knowledge/documents
+7. user-facing analytics + selected differentiated experiments
 
 ## Architecture rule from this point forward
 
@@ -60,64 +64,64 @@ Existing large services should not receive more dependencies casually. If new wo
 
 Important boundary rules should gain architecture/static regression tests when practical.
 
-## Discovery + command foundation to reuse
+## Product-enrichment foundations to reuse
 
-PR #129 establishes the backend discovery layer:
-
-```text
-backend search coordinator
-        ↓
-GlobalSearchContributor contracts
-        ↓
-project / task / user search adapters
-        ↓
-bounded permission-aware candidate queries
-        ↓
-authoritative scoped revalidation where required
-```
-
-PR #130 adds a separate frontend orchestration domain:
+The current product layer already exposes reusable bounded contracts:
 
 ```text
-features/command-palette
-        ↓
-features/search query contract
-        ↓
-permission-filtered workspace navigation
-        ↓
-existing project/invitation domain dialogs for mutations
+Global Search
+    ↓
+search coordinator → contributor contracts → project/task/user adapters
+
+Personal Workspace
+    ↓
+personal state coordinator → project/task resolver adapters
+
+My Work
+    ↓
+attention coordinator → MyWorkTaskSource
+
+Saved Views
+    ↓
+view persistence/validation → contextual validator SPI
 ```
 
-Current search API:
+The frontend keeps Search, Command Palette, Personal Workspace, My Work and Saved Views in separate feature domains. Preserve that ownership model.
 
-```text
-GET /api/tenants/{tenantId}/search?q=<query>&limit=<bounded-limit>
-```
+Create Task remains deliberately absent from the global palette. Effective task-management authority can arise from project-lead membership in addition to scoped authorization, so a future global Create Task action needs a project-aware capability/picker contract rather than shell-side permission guessing.
 
-The palette must not become a second authorization/search/business-logic layer. New commands should call owning feature contracts/components or narrow command adapters.
+## Next feature guidance — Capability-aware Dashboard Refresh
 
-Create Task is deliberately absent from the global palette for now. Task-management authority can arise from project-lead membership in addition to scoped authorization, so a future global Create Task action needs a project-aware capability/picker contract rather than shell-side permission guessing.
+Treat the dashboard as a **composition surface**, not a new source of truth.
 
-## Next feature guidance — Favorites + Recently Viewed
+The first dashboard slice should provide a useful operational home using existing authorized data:
 
-Treat personal productivity state as an explicit domain, not component-local storage scattered across pages.
+- My Work attention summary: open, overdue, due soon, blocked and in progress
+- a bounded preview of the highest-priority attention items
+- Favorites
+- Recently Viewed
+- capability-aware quick actions that invoke owning feature flows
+- a bounded deadline/activity snapshot where an existing domain can supply it safely
+- useful empty states and onboarding hints when the workspace has little data
 
-Design goals:
+Architecture constraints:
 
-- tenant-bound favorites and recent entities
-- permission-aware resolution: saving an identifier never grants continued access
-- bounded/reasonable recency history
-- stable entity references for initially supported project/task destinations
-- reusable UI/query contract for later My Work, command palette, mobile and dashboard consumers
-- graceful handling when an entity is deleted, archived, moved out of scope or access is revoked
+- do not create a dashboard service that injects project, task, authorization, billing, user and notification repositories/services directly
+- reuse existing frontend query contracts where the required information already exists
+- where a combined backend read is justified, introduce narrow summary-provider contracts owned by the relevant domains
+- dashboard visibility must never become an alternative authorization system
+- do not duplicate My Work attention classification, Saved Views validation, or Personal Workspace resolution
+- keep cards/widgets capability-aware rather than hard-coded only to role names
+- keep every collection bounded
 
-Do not mix this with semantic search, recommendations or analytics yet.
+The first slice should favor a coherent personal dashboard over manager/admin analytics. Rich workload analytics belong to a later reporting phase.
 
 ## Invariants to preserve
 
 - backend authorization remains authoritative
 - tenant isolation precedes resource access
-- search/discovery and saved/recent resolution must constrain access before returning entity data
+- search/discovery and saved/recent resolution constrain access before returning entity data
+- stored favorites, recents or saved-view definitions never grant authorization
 - Explain Access and enforcement share the evaluator
 - delegated authority remains a current permission/scope/validity subset of its direct source
 - `authorization.manage` and `authorization.delegate` remain non-delegable
