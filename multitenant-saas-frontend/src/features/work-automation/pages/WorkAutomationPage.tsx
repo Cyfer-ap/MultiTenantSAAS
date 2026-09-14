@@ -12,7 +12,7 @@ import {
     TextField,
     Typography,
 } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import {
     hasProjectPermission,
@@ -39,7 +39,7 @@ export function WorkAutomationPage() {
     const context = authorizationQuery.data
     const tenantId = session?.tenantId ?? ''
     const [tab, setTab] = useState<WorkspaceTab>('recurring')
-    const [projectId, setProjectId] = useState('')
+    const [selectedProjectId, setSelectedProjectId] = useState('')
 
     const hasTenantProjectRead = hasTenantPermission(
         context,
@@ -99,11 +99,12 @@ export function WorkAutomationPage() {
         },
     })
 
-    useEffect(() => {
-        if (!projectId && projectsQuery.data?.length) {
-            setProjectId(projectsQuery.data[0].id)
-        }
-    }, [projectId, projectsQuery.data])
+    const selectedProjectAvailable =
+        selectedProjectId.length > 0 &&
+        Boolean(projectsQuery.data?.some((project) => project.id === selectedProjectId))
+    const projectId = selectedProjectAvailable
+        ? selectedProjectId
+        : (projectsQuery.data?.[0]?.id ?? '')
 
     if (authorizationQuery.isLoading) {
         return (
@@ -165,7 +166,7 @@ export function WorkAutomationPage() {
                     select
                     label="Project"
                     value={projectId}
-                    onChange={(event) => setProjectId(event.target.value)}
+                    onChange={(event) => setSelectedProjectId(event.target.value)}
                     disabled={projectsQuery.isLoading || !projectsQuery.data?.length}
                     sx={{ maxWidth: 560 }}
                 >
