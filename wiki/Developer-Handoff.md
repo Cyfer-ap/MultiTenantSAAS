@@ -6,7 +6,7 @@ Use this page as the reader-facing Wiki pointer for resuming development. Reposi
 
 **Product Experience & Work Management Enrichment**
 
-Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views and the capability-aware Dashboard are complete. The next implementation slice is the **Calendar / Deadline View**.
+Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard and Calendar/Deadline View are complete. The next implementation slice is **Subtasks + Task Dependencies + Labels/Tags**.
 
 ## Read first
 
@@ -31,35 +31,33 @@ Inside the repository:
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Current reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, the Saved Views context-validator SPI, and Dashboard frontend composition over existing authorized contracts.
+Current reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, the Saved Views context-validator SPI, Dashboard frontend composition and Calendar's narrow deadline-source contract.
 
-For the Calendar / Deadline View, project task dates into a time-oriented surface without rebuilding task authorization or task lifecycle rules inside a new calendar god-service.
+## Calendar checkpoint
 
-## Calendar resume guidance
+Calendar #137 is a bounded projection over authorized task deadlines:
 
-The first calendar slice should emphasize deadlines rather than general scheduling:
+- `/calendar` month grid and selected-day agenda
+- local-time rendering with previous/next/Today navigation
+- existing task deep links
+- `[from,to)` backend query semantics
+- maximum 93-day request range and 500 returned deadlines with explicit truncation signaling
+- task-owned candidate retrieval and authoritative task-read revalidation
+- no synthetic project deadlines and no schema migration
 
-- authorized task due dates in a bounded date range
-- existing project deadlines where an owning domain can expose them safely
-- month/list-style views with deep links back to owning work
-- explicit timezone interpretation/rendering
-- useful empty states when a date range has no deadlines
-- bounded date-range queries rather than tenant-wide browser filtering
+Do not convert Calendar into a second task system or put unrelated scheduling behavior into its service.
 
-If an aggregate backend endpoint is justified, prefer a narrow `CalendarDeadlineSource` implemented by the project/task domain. Defer meetings, resource booking, leave management and external calendar synchronization.
+## Next feature guidance
 
-## Dashboard checkpoint to preserve
+For subtasks, dependencies and labels, establish product invariants before schema/API/UI work.
 
-The Dashboard Refresh provides:
+Subtasks should use a bounded parent/child model, preferably same-project in v1, with self-parenting and ancestry cycles rejected.
 
-- My Work summary + bounded attention preview
-- Favorites + Recently Viewed
-- capability-aware quick actions using the shared workspace-navigation contract
-- existing tenant-wide health metrics
-- local failure isolation for personal widgets
-- no new dashboard backend service or migration
+Dependencies should be directed edges with no self-edge, no duplicate pair and no directed cycles. Prefer same-project dependencies in v1 unless a concrete cross-project requirement exists.
 
-Dashboard widgets remain UX composition. Backend authorization remains authoritative and existing domains continue to own their classification, validation and resource-resolution rules.
+Labels should be project-scoped in v1 unless tenant-global labels are explicitly required. Normalize names, prevent duplicate names per project, and prevent cross-project task-label assignments.
+
+All three capabilities must preserve tenant isolation and existing task/project authorization. Any persistence changes must use new append-only Flyway migration(s) after V46.
 
 ## Preserve these system invariants
 
@@ -67,6 +65,8 @@ Dashboard widgets remain UX composition. Backend authorization remains authorita
 - backend authorization is authoritative
 - stored favorites/recents/saved-view definitions never grant resource access
 - calendar/deadline results are authorized before exposure
+- task relationship edges never bypass tenant/project/task authorization
+- graph traversal and collections remain bounded
 - Explain Access and enforcement use the same evaluator
 - delegated authority never exceeds its current direct parent authority
 - protected authorization permissions remain non-delegable
@@ -74,16 +74,14 @@ Dashboard widgets remain UX composition. Backend authorization remains authorita
 - applied Flyway migrations remain append-only
 - provider secrets remain server-side
 - retryable/concurrent flows consider idempotency and locking
-- new search/calendar/analytics/automation/AI paths must filter through tenant and authorization boundaries before exposing results
 
 ## Immediate product sequence
 
-1. calendar/deadline view
-2. subtasks, dependencies and labels
-3. recurring work + templates
-4. bulk actions + import/export
-5. custom fields/forms + workflows/approvals + knowledge/documents
-6. user-facing analytics and selected differentiated experiments
+1. subtasks + task dependencies + labels/tags
+2. recurring work + templates
+3. bulk actions + import/export
+4. custom fields/forms + workflows/approvals + knowledge/documents
+5. user-facing analytics and selected differentiated experiments
 
 ## Deferred work
 

@@ -87,6 +87,12 @@ const AuthorizationWorkspaceRedirect = lazy(() =>
     })),
 )
 
+const CalendarPage = lazy(() =>
+    import('../features/calendar/pages/CalendarPage').then((module) => ({
+        default: module.CalendarPage,
+    })),
+)
+
 const DashboardPage = lazy(() =>
     import('../pages/DashboardPage').then((module) => ({
         default: module.DashboardPage,
@@ -271,6 +277,7 @@ export function AppRoutes() {
                         </Route>
 
                         <Route path="my-work" element={<MyWorkPage />} />
+                        <Route path="calendar" element={<CalendarPage />} />
                         <Route path="personal" element={<PersonalWorkspacePage />} />
 
                         <Route

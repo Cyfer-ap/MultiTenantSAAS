@@ -1,4 +1,4 @@
-package com.chacha.multitenantsaas.projects.search;
+package com.chacha.multitenantsaas.projects.query;
 
 import com.chacha.multitenantsaas.repository.ProjectMemberRepository;
 import java.util.LinkedHashSet;
@@ -9,13 +9,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class ProjectMembershipSearchQueryService {
+public class ProjectMembershipQueryService {
 
     private static final int MAX_PROJECT_MEMBERSHIPS = 1000;
 
     private final ProjectMemberRepository projectMemberRepository;
 
-    public ProjectMembershipSearchQueryService(ProjectMemberRepository projectMemberRepository) {
+    public ProjectMembershipQueryService(ProjectMemberRepository projectMemberRepository) {
         this.projectMemberRepository = projectMemberRepository;
     }
 

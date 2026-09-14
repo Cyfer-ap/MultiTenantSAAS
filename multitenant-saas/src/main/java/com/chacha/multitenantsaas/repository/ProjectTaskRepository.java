@@ -30,6 +30,18 @@ public interface ProjectTaskRepository
             Collection<ProjectTaskStatus> excludedStatuses,
             Pageable pageable);
 
+    @EntityGraph(attributePaths = "project")
+    Page<ProjectTask> findByTenant_IdAndDueAtGreaterThanEqualAndDueAtLessThan(
+            UUID tenantId, Instant from, Instant to, Pageable pageable);
+
+    @EntityGraph(attributePaths = "project")
+    Page<ProjectTask> findByTenant_IdAndProject_IdInAndDueAtGreaterThanEqualAndDueAtLessThan(
+            UUID tenantId,
+            Collection<UUID> projectIds,
+            Instant from,
+            Instant to,
+            Pageable pageable);
+
     long countByTenant_Id(UUID tenantId);
 
     long countByTenant_IdAndStatus(UUID tenantId, ProjectTaskStatus status);

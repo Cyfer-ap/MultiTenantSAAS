@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.chacha.multitenantsaas.entity.Project;
 import com.chacha.multitenantsaas.entity.ProjectTask;
-import com.chacha.multitenantsaas.projects.search.ProjectMembershipSearchQueryService;
+import com.chacha.multitenantsaas.projects.query.ProjectMembershipQueryService;
 import com.chacha.multitenantsaas.repository.ProjectTaskRepository;
 import com.chacha.multitenantsaas.search.model.GlobalSearchResultType;
 import com.chacha.multitenantsaas.search.spi.GlobalSearchContext;
@@ -30,8 +30,7 @@ class TaskSearchContributorTest {
         UUID userId = UUID.randomUUID();
         UUID projectId = UUID.randomUUID();
         ProjectTaskRepository repository = mock(ProjectTaskRepository.class);
-        ProjectMembershipSearchQueryService membershipQuery =
-                mock(ProjectMembershipSearchQueryService.class);
+        ProjectMembershipQueryService membershipQuery = mock(ProjectMembershipQueryService.class);
         AuthorizationSecurityService authorizationSecurity =
                 mock(AuthorizationSecurityService.class);
 

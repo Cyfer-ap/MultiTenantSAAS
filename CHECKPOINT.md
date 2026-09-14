@@ -12,7 +12,7 @@ This file is the **single repository-side source of truth for current project st
 
 The platform foundation is broad enough that current development should prioritize daily user value and product depth rather than additional infrastructure expansion.
 
-The first personal-productivity sequence is now delivered through **PR #136**:
+The personal-productivity/work-navigation sequence is now delivered through **PR #137**:
 
 - Global Search — #129
 - Command Palette — #130
@@ -21,8 +21,9 @@ The first personal-productivity sequence is now delivered through **PR #136**:
 - My Work attention queue — #133
 - server-backed Saved Views — #134
 - capability-aware Dashboard Refresh — #136
+- authorization-safe Calendar / Deadline View — #137
 
-The next implementation slice is a **calendar/deadline view**, followed by richer task relationships.
+The next implementation slice is **subtasks + task dependencies + labels/tags**, followed by recurring work and templates.
 
 ## Completed application foundations
 
@@ -40,12 +41,11 @@ The next implementation slice is a **calendar/deadline view**, followed by riche
 - My Work / unified personal attention queue through PR #133
 - server-backed Saved Views through PR #134
 - capability-aware Dashboard Refresh through PR #136
+- authorization-safe Calendar / Deadline View through PR #137
 
 Other established capabilities include projects/tasks/collaboration, R2/S3-compatible attachments, durable notifications/email, API keys, usage metering/quotas, tenant/platform audit, PostgreSQL/Flyway correctness, production hardening and CI/security gates.
 
-## Personal-productivity checkpoint
-
-The product-enrichment foundation now provides a connected set of reusable personal-workspace capabilities.
+## Personal-productivity and work-navigation checkpoint
 
 ### Discovery and navigation
 
@@ -90,6 +90,17 @@ The product-enrichment foundation now provides a connected set of reusable perso
 - personal widget failures degrade locally instead of taking down the entire dashboard
 - frontend composition only: no new dashboard backend service or Flyway migration
 
+### Calendar / Deadline View
+
+- dedicated `/calendar` workspace using existing task due dates; projects currently have no deadline field and no synthetic project dates were introduced
+- local-time Monday-start six-week month grid with previous/next/Today navigation
+- selected-day agenda with status, priority, project context and existing task deep links
+- backend `calendar` domain owns range validation/response composition behind a narrow `CalendarDeadlineSource` SPI
+- task-owned adapter performs tenant/date-bounded candidate reads, project-scope or membership narrowing, then authoritative task-read revalidation
+- `[from,to)` ranges are capped at 93 days; results are capped at 500 with an explicit `truncated` signal
+- existing indexed `project_tasks.due_at` is reused; no new Flyway migration
+- generic project-membership lookup is now neutral under `projects.query`, shared by Search and Calendar rather than owned by Search
+
 Create Task remains intentionally absent from the global palette. Effective task-management authority can come from project-lead membership as well as scoped authorization, so a future global Create Task action must use a project-aware capability contract/picker rather than duplicating task-access logic in the application shell.
 
 ## Database checkpoint
@@ -108,7 +119,7 @@ V45 personal workspace favorites/recent items
 V46 saved views
 ```
 
-Never rewrite an applied migration.
+Calendar #137 required no schema change. Never rewrite an applied migration.
 
 ## Provider status
 
@@ -124,8 +135,8 @@ Application integration and managed Plan provisioning are implemented. Recurring
 
 The largest remaining gaps are now user-facing:
 
-- calendar/deadline views
-- subtasks, dependencies, labels and recurring work
+- subtasks, dependencies and labels/tags
+- recurring work
 - project/task templates
 - bulk actions and import/export
 - custom fields/forms
@@ -164,20 +175,20 @@ Recent product work demonstrates the intended pattern:
 - My Work: attention coordinator + narrow `MyWorkTaskSource`
 - Saved Views: persistence/definition domain + narrow context-validator SPI
 - Dashboard: frontend composition of existing authorized contracts and the shared navigation capability contract
+- Calendar: calendar coordinator + narrow deadline-source SPI + task-owned authorized adapter
 
-The calendar/deadline view must continue this pattern. Time-oriented presentation may compose project/task dates, but it must not duplicate task authorization or introduce a calendar service that directly owns unrelated project/task repositories.
+The next task-relationship work must continue this pattern. Parent/child relationships, dependencies and labels belong to explicit task/project-owned contracts and must not be implemented by expanding unrelated dashboard, calendar or shell components into new sources of truth.
 
 ## Next product sequence
 
-1. calendar/deadline view
-2. subtasks, dependencies and labels
-3. recurring work + templates
-4. bulk actions + import/export
-5. custom fields/forms + workflows/approvals + knowledge/documents
-6. user-facing analytics + selected differentiated experiments
-7. onboarding/workspace-switching/personalization polish as product flows deepen
+1. subtasks + task dependencies + labels/tags
+2. recurring work + project/task templates
+3. bulk actions + import/export
+4. custom fields/forms + workflows/approvals + knowledge/documents
+5. user-facing analytics + selected differentiated experiments
+6. onboarding/workspace-switching/personalization polish as product flows deepen
 
-The first calendar slice should be deliberately bounded: start with authorized task due dates and existing project deadlines, render them consistently, and design timezone handling correctly. Do not turn the first slice into a full meeting/resource scheduling platform.
+For the next slice, establish durable task-relationship invariants first: parent/child ownership, dependency direction/cycle prevention, deletion/archive behavior, authorization, bounded graph traversal and labels scoped cleanly to the tenant/project model. Do not turn task relationships into generic graph infrastructure before the product rules are explicit.
 
 ## Deferred platform work
 

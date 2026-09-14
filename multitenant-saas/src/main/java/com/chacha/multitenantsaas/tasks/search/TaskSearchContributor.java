@@ -3,7 +3,7 @@ package com.chacha.multitenantsaas.tasks.search;
 import com.chacha.multitenantsaas.entity.AuthorizationScopeType;
 import com.chacha.multitenantsaas.entity.ProjectStatus;
 import com.chacha.multitenantsaas.entity.ProjectTask;
-import com.chacha.multitenantsaas.projects.search.ProjectMembershipSearchQueryService;
+import com.chacha.multitenantsaas.projects.query.ProjectMembershipQueryService;
 import com.chacha.multitenantsaas.repository.ProjectTaskRepository;
 import com.chacha.multitenantsaas.search.model.GlobalSearchResult;
 import com.chacha.multitenantsaas.search.model.GlobalSearchResultType;
@@ -28,15 +28,15 @@ public class TaskSearchContributor implements GlobalSearchContributor {
     private static final int MAX_CANDIDATES = 100;
 
     private final ProjectTaskRepository projectTaskRepository;
-    private final ProjectMembershipSearchQueryService projectMembershipSearchQueryService;
+    private final ProjectMembershipQueryService projectMembershipQueryService;
     private final AuthorizationSecurityService authorizationSecurity;
 
     public TaskSearchContributor(
             ProjectTaskRepository projectTaskRepository,
-            ProjectMembershipSearchQueryService projectMembershipSearchQueryService,
+            ProjectMembershipQueryService projectMembershipQueryService,
             AuthorizationSecurityService authorizationSecurity) {
         this.projectTaskRepository = projectTaskRepository;
-        this.projectMembershipSearchQueryService = projectMembershipSearchQueryService;
+        this.projectMembershipQueryService = projectMembershipQueryService;
         this.authorizationSecurity = authorizationSecurity;
     }
 
@@ -50,7 +50,7 @@ public class TaskSearchContributor implements GlobalSearchContributor {
         Set<UUID> readableProjectIds =
                 projectScopedIds(context, PlatformPermissionCodes.PROJECT_TASK_READ);
         readableProjectIds.addAll(
-                projectMembershipSearchQueryService.findProjectIdsForUser(
+                projectMembershipQueryService.findProjectIdsForUser(
                         context.tenantId(), context.userId()));
 
         if (!tenantWide && readableProjectIds.isEmpty()) {
