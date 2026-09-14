@@ -15,6 +15,7 @@ For current project status and next work, use **`CHECKPOINT.md`** and **`HANDOFF
 - permission-aware Global Search and capability-aware Command Palette
 - server-backed Favorites + Recently Viewed with contextual favorite controls
 - My Work personal attention queue and server-backed Saved Views
+- capability-aware dashboard combining personal attention/context with tenant-wide health metrics
 - S3/R2-compatible attachments
 - durable in-app/email notifications and preferences
 - subscription lifecycle enforcement, quotas and usage metering
@@ -93,6 +94,7 @@ This rule is part of the persistent repository contract in `AGENTS.md`.
 - collaboration, notifications, attachments, API keys, usage limits and auditability
 - permission-aware Global Search and capability-aware Command Palette
 - personal-workspace Favorites/Recently Viewed, My Work and Saved Views
+- capability-aware dashboard composition over existing authorized feature contracts
 
 Stripe is the validated deployed Test Mode payment path. Razorpay application/catalog integration remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
@@ -106,7 +108,7 @@ multitenant-saas/src/main/resources/db/postgresql  PostgreSQL baseline
 multitenant-saas/src/main/resources/db/common      portable shared migrations
 ```
 
-Recent product migrations include V45 for personal-workspace favorites/recent items and V46 for saved views.
+Recent product migrations include V45 for personal-workspace favorites/recent items and V46 for saved views. The dashboard refresh required no schema migration.
 
 ## Verification
 
@@ -148,6 +150,6 @@ The Wiki is automatically validated and published from merged `main` by `.github
 
 ## Current product direction
 
-The active phase is **Product Experience & Work Management Enrichment**. Search, Command Palette, Favorites/Recently Viewed, My Work and Saved Views are established foundations. The next slice is a **capability-aware dashboard refresh**, followed by calendar/deadline views, richer task relationships, recurring work/templates, bulk productivity, tenant adaptability, analytics and selected differentiated experiments.
+The active phase is **Product Experience & Work Management Enrichment**. Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views and the capability-aware Dashboard are established foundations. The next slice is a **Calendar / Deadline View**, followed by richer task relationships, recurring work/templates, bulk productivity, tenant adaptability, analytics and selected differentiated experiments.
 
 Production Operations & Disaster Recovery remains an important deferred milestone rather than the immediate development focus.
