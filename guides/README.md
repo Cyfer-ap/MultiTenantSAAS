@@ -40,7 +40,7 @@ When a fact changes, update the document that owns that fact rather than copying
 - `subscription_billing.md` — subscription and provider lifecycle
 - `collaboration_and_notifications.md` — collaboration/notification behavior
 - `task_relationships.md` — subtasks, directed dependencies, project-scoped labels and Task Planning ownership
-- `recurring_work_and_templates.md` — merged V48 recurring-task scheduling/materialization and project-scoped task-template contracts; V49+ project-template/frontend completion next
+- `recurring_work_and_templates.md` — V48 recurring work/task-template contracts, V49 tenant project templates, narrow creation ports and the Work Automation & Templates frontend workspace
 - `data_model.md` — data-model notes
 - `postgresql_and_migrations.md` — PostgreSQL/Flyway behavior
 - `outbound-webhook-events.md` — outbound event contract
@@ -56,8 +56,8 @@ Historical planning/recovery files may remain for provenance, but they are not c
 
 ## Current direction
 
-The active product phase is **Product Experience & Work Management Enrichment**. Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar / Deadline View, and the task-relationship/Task Planning foundation are established through PRs #139–#140.
+The active product phase is **Product Experience & Work Management Enrichment**. Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar / Deadline View, Task Planning, recurring work, project-scoped task templates, tenant-scoped project templates and the Work Automation & Templates workspace are established through PR #143.
 
-Merged PR #141 establishes the backend foundation for recurring tasks and project-scoped task templates on V48. The broader recurring/templates milestone remains open: next implement V49+ tenant-scoped project templates and feature-local frontend management, then continue with bulk productivity, tenant adaptability and user-facing analytics.
+The next product slice is **bulk actions + CSV import/export**, followed by custom fields/forms, workflows/approvals and knowledge/documents, user-facing analytics/reporting, and continued onboarding/personalization polish.
 
 Production Operations & Disaster Recovery remains important but intentionally deferred until after the current user-facing enrichment phase.

@@ -15,7 +15,9 @@ For current project status and next work, use **`CHECKPOINT.md`** and **`HANDOFF
 - bounded subtasks, directed task dependencies and project-scoped task labels
 - dedicated Task Planning workspace over authorization-safe task discovery
 - recurring-task definitions/materialization with explicit timezone and idempotent occurrence tracking
-- project-scoped reusable task-template backend APIs
+- project-scoped reusable task templates
+- tenant-scoped reusable project templates with bounded starter-task snapshots
+- dedicated Work Automation & Templates workspace for recurring rules and task/project template lifecycle
 - permission-aware Global Search and capability-aware Command Palette
 - server-backed Favorites + Recently Viewed with contextual favorite controls
 - My Work personal attention queue and server-backed Saved Views
@@ -103,21 +105,23 @@ This rule is part of the persistent repository contract in `AGENTS.md`.
 - bounded Calendar / Deadline View using task-owned authorization-aware projection contracts
 - task-relationship foundation with bounded parent hierarchy, cycle-safe directed dependencies and project-scoped labels
 - Task Planning workspace implemented as a separate frontend feature domain
-- V48 recurring-task materialization and project-scoped task-template backend foundation using a narrow task-owned creation port
+- recurring work and project-scoped task templates through the task-owned `TaskCreationPort`
+- tenant-scoped project templates through a project-owned `ProjectCreationPort` plus `TaskCreationPort` starter-task snapshots
+- standalone Work Automation & Templates workspace under explicit frontend feature domains
 
 Stripe is the validated deployed Test Mode payment path. Razorpay application/catalog integration remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
 ## Database
 
-Production schema evolution is owned by Flyway. Shared portable migrations currently extend through **V48**. Never rewrite an applied migration.
+Production schema evolution is owned by Flyway. Shared PostgreSQL migrations currently extend through **V49**. Never rewrite an applied migration; new persistence begins at V50+.
 
 ```text
 multitenant-saas/src/main/resources/db/migration    historical H2 migrations
-multitenant-saas/src/main/resources/db/postgresql  PostgreSQL baseline
+multitenant-saas/src/main/resources/db/postgresql  PostgreSQL baseline/current migrations
 multitenant-saas/src/main/resources/db/common      portable shared migrations
 ```
 
-Recent product migrations include V45 for personal-workspace favorites/recent items, V46 for saved views, V47 for task parent/dependency/label relationships, and V48 for recurring task definitions/occurrences plus project task templates. Dashboard #136 and Calendar #137 required no schema migration.
+Recent product migrations include V45 for personal-workspace favorites/recent items, V46 for saved views, V47 for task parent/dependency/label relationships, V48 for recurring task definitions/occurrences plus project task templates, and V49 for tenant project templates with bounded starter-task snapshots.
 
 ## Verification
 
@@ -151,7 +155,7 @@ Documentation ownership is deliberately narrow to prevent drift:
 - `guides/current_architecture.md` — canonical technical architecture
 - `guides/ENGINEERING_STANDARDS.md` — technical health, debt and engineering rules
 - `guides/task_relationships.md` — task hierarchy/dependency/label semantics and ownership
-- `guides/recurring_work_and_templates.md` — recurring-task and task-template generation contract
+- `guides/recurring_work_and_templates.md` — recurring work, task-template and project-template generation contract
 - focused guides — domain-specific behavior
 - `guides/Wild_Thoughts.md` — exploratory idea vault, not a committed roadmap
 - `wiki/*.md` — canonical source for the published reader-facing Wiki
@@ -161,6 +165,6 @@ The Wiki is automatically validated and published from merged `main` by `.github
 
 ## Current product direction
 
-The active phase is **Product Experience & Work Management Enrichment**. Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Planning, and the V48 recurring-task/project-task-template backend foundation are established. The current milestone remains open while tenant-scoped project templates and the recurring/template frontend experience are built; bulk productivity, tenant adaptability and analytics follow.
+The active phase is **Product Experience & Work Management Enrichment**. Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Planning, recurring work, task templates, tenant-scoped project templates, and the Work Automation & Templates workspace are established. The next product slice is bulk actions + CSV import/export, followed by tenant adaptability and analytics.
 
 Production Operations & Disaster Recovery remains an important deferred milestone rather than the immediate development focus.

@@ -4,26 +4,39 @@ This guide owns the recurring-work and template-generation contract. Current mil
 
 ## Implementation status
 
-Backend foundation is merged through PR #141 (`3460785aa9a1644768f10c696ccaef27422535f8`). Portable common migrations are at **V48**.
+The Recurring Work + Project/Task Templates milestone is implemented through PR #143.
 
-The broader milestone is still open. The next implementation slice is **V49+ tenant-scoped project templates plus feature-local frontend management for recurring work, task templates, and project templates**.
+- V48: recurring-task definitions/occurrences + project-scoped task templates
+- V49: tenant-scoped project templates + bounded embedded task snapshots
+- frontend: `Work Automation & Templates` workspace for recurring work, task templates, and project templates
 
-## Ownership
+Applied migrations are append-only. Never rewrite V49 or earlier migrations after merge.
 
-Recurring work is an explicit `recurringwork` backend domain. Project-scoped task templates are an explicit `tasktemplates` backend domain. Both create ordinary tasks through the task-owned `tasks/creation/TaskCreationPort` rather than depending on `ProjectTaskService`.
+## Ownership and cross-domain boundaries
+
+The owning backend domains are:
+
+- `recurringwork`
+- `tasktemplates`
+- `projecttemplates`
+- `tasks/creation` for the task-owned creation contract
+- `projects/creation` for the project-owned creation contract
+
+Generation crosses domain boundaries only through narrow creation ports:
 
 ```text
-recurringwork ───────┐
-                     ├─> TaskCreationPort -> task-owned adapter -> ProjectTask persistence
-project task template┘                                  ├─ activity
-                                                        ├─ audit
-                                                        ├─ assignment notification
-                                                        └─ TASK_CREATED webhook
+recurringwork ───────────┐
+                         ├─> TaskCreationPort -> task-owned adapter -> normal task lifecycle
+project task templates ──┘
+
+projecttemplates ──> ProjectCreationPort -> project-owned adapter -> normal project lifecycle
+       │
+       └────────────> TaskCreationPort    -> task-owned adapter    -> starter tasks
 ```
 
-Calendar remains a deadline projection. Task relationships remain hierarchy/dependency/label ownership. Neither domain owns scheduling or template lifecycle.
+`projecttemplates` does not inject `ProjectService`; recurrence/task templates do not inject `ProjectTaskService`. Calendar remains a deadline projection, and task relationships remain hierarchy/dependency/label ownership.
 
-## V48 persistence
+## V48 recurring-task persistence and contract
 
 V48 adds:
 
@@ -31,103 +44,127 @@ V48 adds:
 - `recurring_task_occurrences`
 - `project_task_templates`
 
-Tenant/project/user scope is enforced with qualified foreign keys. Recurring occurrence idempotency is enforced by a unique `(definition_id, scheduled_for)` key.
+Tenant/project/user scope is enforced with qualified foreign keys. Recurring occurrence idempotency is enforced by unique `(definition_id, scheduled_for)`.
 
-## Recurring-task contract
+Recurring work generates **tasks only**. Supported cadence values are `DAILY`, `WEEKLY`, and `MONTHLY` with interval 1–52 and an explicit IANA timezone.
 
-V1 generates **tasks only**.
+A rule snapshots title, description, priority and optional assignee; it also stores next occurrence, optional due offset/end/max occurrences, generated count, status, and bounded failure diagnostics. Statuses are `ACTIVE`, `PAUSED`, and `ENDED`.
 
-Supported cadence values:
+Schedule advancement uses timezone/calendar arithmetic rather than fixed server-time durations. Daily rules retain local wall time across DST, and monthly rules use calendar-month semantics. A generated task deadline is the scheduled occurrence plus the optional due offset.
 
-- `DAILY`
-- `WEEKLY`
-- `MONTHLY`
+Materialization is bounded and transactional:
 
-Each definition owns:
+- discover at most 50 due definitions/pass
+- catch up at most 5 occurrences/definition/pass
+- pessimistic per-definition materialization lock
+- database uniqueness protects logical occurrence idempotency
+- task creation, occurrence linkage and cursor advance succeed or roll back together
+- generation failure pauses the definition with a bounded diagnostic
 
-- project and tenant scope
-- creator identity
-- optional assignee
-- title/description/priority snapshot used for future generated tasks
-- cadence + interval from 1 through 52
-- explicit IANA timezone
-- next occurrence instant
-- optional due offset
-- optional end instant
-- optional maximum occurrence count
-- generated count and lifecycle status
+Pause stops generation. Resume skips paused-period schedules and resumes at the first future occurrence. Edits affect future generated work only; previous generated tasks remain snapshots. Previous task completion does not gate later occurrences in v1.
 
-Lifecycle statuses are `ACTIVE`, `PAUSED`, and `ENDED`.
+## Project-scoped task templates
 
-### Time behavior
+A project may own at most 100 task templates. Template names are normalized and unique per project.
 
-Schedule advancement uses the configured timezone and calendar arithmetic, not fixed-duration server-time arithmetic. For example, a 09:00 daily rule remains 09:00 local time through a DST boundary. Monthly rules use calendar-month semantics such as January 31 -> February 28 when appropriate.
+A task template snapshots:
 
-A generated task due date is:
-
-```text
-scheduled occurrence instant + optional due offset
-```
-
-No due offset means no generated task deadline.
-
-### Materialization and concurrency
-
-The scheduler discovers at most 50 due definitions per pass. A definition materializes at most five catch-up occurrences in one pass.
-
-Before generation, the definition is loaded with a pessimistic write lock. The occurrence table also protects retries with its database uniqueness constraint. A retry or competing application instance must not create a second logical occurrence.
-
-Materialization is transactional: the task, occurrence linkage and recurrence cursor advance succeed together or roll back together.
-
-A generation failure pauses the definition and stores a bounded diagnostic message. It is not retried indefinitely while still marked active.
-
-### Pause, resume and editing
-
-- pausing stops future generation
-- editing changes future generation only
-- already generated tasks remain immutable snapshots with respect to the rule
-- resume advances past times missed while paused and restarts from the first future occurrence
-- resume does **not** intentionally burst-create every paused-period occurrence
-- ending/max-count rules stop future generation
-- completion of the previous task does not gate the next occurrence in v1
-
-Recurring definitions are retained rather than hard-deleted so occurrence history remains attributable.
-
-## Project-scoped task-template contract
-
-A project may own at most 100 task templates in v1. Template names are normalized and unique per project.
-
-A template snapshots:
-
-- display name
-- task title
-- optional task description
+- name
+- task title and optional description
 - priority
 - optional assignee
 - optional due offset
 
-Instantiating a template creates an ordinary task through `TaskCreationPort`. The current actor becomes the task creator; an optional template assignee must still be an active member of the project when the task is created.
+Instantiation crosses `TaskCreationPort`, so current actor validation, project membership/assignee rules, task persistence, activity, audit, notification and `TASK_CREATED` webhook behavior remain task-owned. Editing/deleting a template never mutates existing tasks.
 
-Editing or deleting a template does not mutate tasks previously created from it.
+Task templates intentionally exclude subtasks, dependencies, labels, custom fields, workflows, and recurrence definitions in v1.
 
-Task templates do not contain subtasks, dependency edges, labels, custom fields, workflow state, or recurring rules in this first version.
+## V49 tenant-scoped project templates
+
+V49 adds:
+
+- `project_templates`
+- `project_template_tasks`
+
+Project templates are tenant-scoped and use normalized unique names per tenant. A template snapshots:
+
+- template name
+- project name seed
+- optional project description
+- initial project status except `ARCHIVED`
+- zero to 50 ordered starter-task snapshots
+
+Each starter-task snapshot contains title, optional description, priority, and optional due offset. The first version deliberately excludes assignee, subtasks, dependencies, labels, custom fields and workflow state.
+
+Instantiation is snapshot/copy semantics. Later template edits never mutate an instantiated project or task.
+
+### Project creation invariants
+
+`ProjectCreationPort` is project-owned. The default adapter preserves the same invariants as ordinary project creation:
+
+- tenant existence/active state
+- active current actor validation
+- subscription project quota
+- project persistence
+- initial `PROJECT_LEAD` membership for the actor
+- project creation audit record
+- normal project lifecycle/webhook behavior
+
+Ordinary project creation and template-driven creation converge on this same adapter to avoid lifecycle drift.
+
+### Transaction semantics
+
+Project-template instantiation creates the project first through `ProjectCreationPort`, then creates starter tasks in deterministic snapshot order through `TaskCreationPort`. The orchestration is transactional; a starter-task failure must not leave a partially instantiated project/template result.
+
+Due offsets are computed from the created project's creation instant so a template produces deterministic relative deadlines.
 
 ## Authorization
 
-Recurring-work reads and task-template reads reuse the established project-task read authorization. Mutations reuse project-task management authority, including the existing project-lead fallback encoded by `AuthorizationSecurityService`.
+Recurring work and task templates reuse project-task authority:
 
-No shell-role guessing or parallel permission system is introduced.
+- reads: project-task read authority
+- mutations/instantiate: project-task manage authority, including the established project-lead fallback
+
+Project templates are tenant-scoped:
+
+- read: tenant `project.read`
+- create/update/delete/instantiate: tenant `project.create`
+
+No parallel role system or shell-side authorization guessing is introduced.
+
+## Frontend workspace
+
+The standalone `/work-automation` workspace is feature-local:
+
+```text
+features/recurring-work/
+features/task-templates/
+features/project-templates/
+features/work-automation/
+```
+
+The workspace provides:
+
+- authorization-safe project discovery for tenant-wide and project-scoped grants
+- recurring rule create/edit/pause/resume
+- visible timezone, next occurrence, status, generated count, and occurrence history
+- task-template create/edit/delete/instantiate
+- tenant project-template create/edit/delete/instantiate
+- explicit project-name override during project-template instantiation
+- bounded project-template starter-task editor capped at 50 rows
+
+Template/recurrence business logic does not live in `ProjectTasksSection`, Calendar, or `AppShell`.
 
 ## Bounded behavior
 
-- recurring-work list pages: maximum 100
-- occurrence list pages: maximum 100
-- scheduler discovery batch: 50 definitions
-- scheduler catch-up: maximum 5 occurrences per definition/pass
+- recurring list/occurrence pages: API-bounded pagination
+- scheduler discovery: 50 definitions/pass
+- scheduler catch-up: 5 occurrences/definition/pass
 - recurrence interval: 1–52
-- recurrence max occurrence count: at most 10,000
-- recurrence/task-template due offset: at most 525,600 minutes
-- task templates: maximum 100/project
+- max occurrence count: 10,000
+- recurrence/task-template/project-template due offset: 525,600 minutes
+- task templates: 100/project
+- project-template starter tasks: 50/template
 
 ## APIs
 
@@ -154,15 +191,17 @@ DELETE /api/tenants/{tenantId}/projects/{projectId}/task-templates/{templateId}
 POST   /api/tenants/{tenantId}/projects/{projectId}/task-templates/{templateId}/instantiate
 ```
 
-## Next slice — project templates + frontend completion
+Project templates:
 
-The next slice owns:
+```text
+GET    /api/tenants/{tenantId}/project-templates
+POST   /api/tenants/{tenantId}/project-templates
+GET    /api/tenants/{tenantId}/project-templates/{templateId}
+PUT    /api/tenants/{tenantId}/project-templates/{templateId}
+DELETE /api/tenants/{tenantId}/project-templates/{templateId}
+POST   /api/tenants/{tenantId}/project-templates/{templateId}/instantiate
+```
 
-1. tenant-scoped project templates using a new V49+ append-only migration
-2. a project-owned narrow `ProjectCreationPort` preserving quota, actor, owner-membership, audit, and lifecycle behavior
-3. bounded project-template task snapshots and deterministic instantiation failure semantics
-4. feature-local frontend management for recurring work and task templates
-5. project-template catalog/instantiate frontend flows
-6. final milestone documentation/UX closure
+## Engineering rule
 
-Project templates must not inject `ProjectService` into a generic template god-service. Their instantiation should cross the project boundary through a narrow project-owned creation contract, just as task generation crosses through `TaskCreationPort`.
+New work-generation behavior must remain domain-owned. Extend narrow contracts when a cross-domain capability is genuinely required; do not make template domains depend on broad legacy services merely because they ultimately create projects or tasks.

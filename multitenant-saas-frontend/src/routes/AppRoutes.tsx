@@ -207,6 +207,12 @@ const TaskPlanningPage = lazy(() =>
     })),
 )
 
+const WorkAutomationPage = lazy(() =>
+    import('../features/work-automation/pages/WorkAutomationPage').then((module) => ({
+        default: module.WorkAutomationPage,
+    })),
+)
+
 const TenantAuthenticationPage = lazy(() =>
     import('../pages/TenantAuthenticationPage').then((module) => ({
         default: module.TenantAuthenticationPage,
@@ -285,6 +291,7 @@ export function AppRoutes() {
                         <Route path="my-work" element={<MyWorkPage />} />
                         <Route path="calendar" element={<CalendarPage />} />
                         <Route path="task-planning" element={<TaskPlanningPage />} />
+                        <Route path="work-automation" element={<WorkAutomationPage />} />
                         <Route path="personal" element={<PersonalWorkspacePage />} />
 
                         <Route

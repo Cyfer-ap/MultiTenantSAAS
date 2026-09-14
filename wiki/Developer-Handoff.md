@@ -6,7 +6,7 @@ Use this page as the reader-facing Wiki pointer for resuming development. Reposi
 
 **Product Experience & Work Management Enrichment**
 
-Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View and Task Relationships/Task Planning are established. PR #141 is merged and adds the V48 recurring-task/project-task-template backend foundation. The broader recurring/templates milestone remains open.
+Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project-scoped task templates, tenant-scoped project templates, and the Work Automation & Templates workspace are established through PR #143.
 
 ## Read first
 
@@ -33,67 +33,58 @@ Inside the repository:
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Current reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, the Saved Views context-validator SPI, Dashboard frontend composition, Calendar's narrow deadline-source contract, Task Relationships' task gateway/change sink, and the V48 `TaskCreationPort` work-generation boundary.
+Current reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, the Saved Views context-validator SPI, Dashboard frontend composition, Calendar's narrow deadline-source contract, Task Relationships' task gateway/change sink, task-owned `TaskCreationPort`, and project-owned `ProjectCreationPort`.
 
-## V48 work-generation checkpoint
+## Work-generation checkpoint
 
-Merged PR #141 (`3460785aa9a1644768f10c696ccaef27422535f8`) establishes:
+V48/V49 establish:
 
 - `recurringwork` owning recurring definitions/materialization/history
 - `tasktemplates` owning project-scoped task templates
+- `projecttemplates` owning tenant-scoped project templates
 - task-owned `tasks/creation/TaskCreationPort`
-- V48 recurring definitions, occurrence linkage and project task templates
+- project-owned `projects/creation/ProjectCreationPort`
 - explicit IANA timezone recurrence with `DAILY`, `WEEKLY`, `MONTHLY`
-- bounded due discovery and catch-up generation
-- pessimistic materialization locking + database occurrence uniqueness
+- bounded due discovery/catch-up generation with locking and occurrence idempotency
 - pause/resume/edit/end/count semantics
 - project-scoped task-template snapshot/copy behavior
-- ordinary activity/audit/assignment-notification/webhook lifecycle for generated tasks
+- tenant project-template snapshot/copy behavior with max 50 ordered starter tasks
+- ordinary project quota/actor/initial-lead/audit/lifecycle behavior preserved by the project-owned adapter
+- ordinary task lifecycle behavior preserved by the task-owned adapter
+- standalone `/work-automation` frontend workspace
 
 Calendar remains a deadline projection and Task Relationships remains hierarchy/dependency/label ownership.
 
 Detailed rules live in `guides/recurring_work_and_templates.md`.
 
-## Immediate next slice
+## Resume here
 
-Start from current `main`. New persistence begins at **V49+**. Recommended feature branch: `feat/project-templates-workspace`.
+Start from current `main`. Portable PostgreSQL migrations extend through **V49**; new persistence begins at **V50+**.
 
-Finish the same milestone before starting bulk productivity:
+The next product slice is **bulk actions + CSV import/export**. Before implementation, choose an explicit owning domain and narrow cross-domain contracts. Do not add import/bulk orchestration by expanding legacy god-services.
 
-1. tenant-scoped project-template backend
-2. project-owned narrow `ProjectCreationPort`
-3. bounded project-template task snapshots
-4. feature-local recurring-work UI
-5. feature-local task-template UI
-6. project-template catalog/instantiate UI
-7. final recurring/templates milestone documentation and full validation
+Then continue with:
 
-Project-template instantiation must preserve project quota, actor validation, initial owner/lead membership, audit and project lifecycle behavior without injecting the full legacy `ProjectService` into the template domain.
-
-Applied V48 and earlier migrations remain immutable.
+1. custom fields/forms
+2. workflows/approvals + knowledge/documents
+3. user-facing analytics/reporting and selected differentiated experiments
+4. onboarding/workspace-switching/personalization polish
 
 ## Preserve these system invariants
 
 - tenant isolation precedes resource access
 - backend authorization is authoritative
 - stored favorites/recents/saved-view definitions never grant resource access
-- Calendar and Task Planning data are authorized before exposure
+- Calendar, Task Planning and Work Automation data are authorized before exposure
 - task relationship edges never bypass tenant/project/task authorization
 - recurring/template generation reuses authoritative project/task access rules
 - graph traversal, reads and generation batches remain bounded
+- project-template creation enforces ordinary project quota and actor/lead/lifecycle rules
 - Explain Access and enforcement use the same evaluator
 - delegated authority never exceeds its current direct parent authority
 - public APIs expose DTOs rather than persistence entities
 - retryable/concurrent flows use idempotency and locking where needed
 - provider secrets remain server-side
-
-## Immediate product sequence
-
-1. finish recurring work + project/task templates
-2. bulk actions + CSV import/export
-3. custom fields/forms + workflows/approvals + knowledge/documents
-4. user-facing analytics and selected differentiated experiments
-5. onboarding/workspace-switching/personalization polish
 
 ## Deferred work
 

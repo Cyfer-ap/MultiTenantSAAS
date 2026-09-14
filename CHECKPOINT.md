@@ -1,8 +1,8 @@
 # MultiTenantSAAS — Current Checkpoint
 
-Updated: 2026-09-14
+Updated: 2026-09-15
 Repository: `Cyfer-ap/MultiTenantSAAS`
-Branch: `main`
+Branch: `main` after PR #143 merge
 
 This file is the **single repository-side source of truth for current project status**. Do not create additional progress/checkpoint mirrors.
 
@@ -10,86 +10,76 @@ This file is the **single repository-side source of truth for current project st
 
 **Product Experience & Work Management Enrichment**
 
-Delivered product-enrichment milestones include:
+Delivered enrichment milestones now include:
 
 - Global Search — #129
 - Command Palette — #130
-- Favorites + Recently Viewed — #131
-- contextual favorite controls — #132
-- My Work attention queue — #133
-- server-backed Saved Views — #134
+- Favorites + Recently Viewed — #131/#132
+- My Work — #133
+- Saved Views — #134
 - capability-aware Dashboard Refresh — #136
-- authorization-safe Calendar / Deadline View — #137
-- Calendar workspace UI refresh — #138
-- task-relationship backend foundation — #139
-- Task Planning UI — #140
+- authorization-safe Calendar / Deadline View — #137/#138
+- task relationships backend + Task Planning UI — #139/#140
 - recurring-task + project-scoped task-template backend foundation — #141
+- documentation/architecture checkpoint — #142
+- tenant-scoped project templates + Work Automation & Templates workspace — #143
 
-**Latest merged milestone slice:** PR #141, merge commit `3460785aa9a1644768f10c696ccaef27422535f8`. V48 is now part of `main`.
+The **Recurring Work + Project/Task Templates milestone is complete with #143**.
 
-The **recurring work + project/task templates milestone is still open**. The next slice is V49+ tenant-scoped project templates plus feature-local frontend management for recurring work and templates.
+## Work automation capability checkpoint
 
-## Established application foundations
+### Recurring work
 
-Major capabilities now include:
-
-- authentication, tenant isolation, invitations, password recovery and workspace discovery
-- scoped authorization, bounded delegation and Explain Access
-- users, organization hierarchy, projects, tasks and collaboration
-- subtasks, directed task dependencies and project-scoped labels
-- Global Search, Command Palette, Favorites/Recent, My Work, Saved Views, Dashboard and Calendar
-- recurring-task backend scheduling/materialization and project-scoped task-template backend APIs
-- R2/S3-compatible attachments
-- durable notifications/email
-- API keys, quotas and usage metering
-- billing/subscriptions with Stripe + Razorpay provider abstractions
-- tenant outbound webhooks
-- enterprise OIDC SSO
-- tenant/platform auditability
-- PostgreSQL/Flyway correctness and CI/security/container gates
-
-## Recurring work + task-template backend checkpoint
-
-Merged PR #141 introduces explicit `recurringwork` and `tasktemplates` backend domains plus a task-owned `tasks/creation` contract rather than expanding `ProjectTaskService`.
-
-### Recurring tasks
-
-V1 semantics:
-
-- recurring **tasks only**
-- `DAILY`, `WEEKLY`, `MONTHLY` cadence
-- interval 1–52
-- explicit IANA timezone per definition
-- calendar/timezone-aware advancement across DST/month boundaries
-- optional due offset, end instant and max occurrence count
-- edits affect future generated work only
-- pause/resume supported; resume skips occurrences missed while paused
-- previous task completion does not gate the next occurrence
-- definition discovery capped at 50/pass
-- catch-up capped at 5 occurrences/definition/pass
+- task recurrence only in v1
+- `DAILY`, `WEEKLY`, `MONTHLY`
+- interval 1–52 with explicit IANA timezone
+- optional due offset/end/max occurrences
+- timezone/calendar-aware advancement across DST/month boundaries
+- edits affect future work only
+- pause/resume supported; resume skips paused-period schedules
+- discovery capped at 50 definitions/pass and catch-up at 5 occurrences/definition/pass
 - pessimistic per-definition materialization lock
 - unique `(definition_id, scheduled_for)` occurrence key for retry/multi-instance idempotency
-- generation failures pause the definition with a bounded diagnostic
+- generation failures pause the definition with bounded diagnostics
 
 ### Project-scoped task templates
 
-V1 semantics:
-
-- project-scoped catalog
-- normalized template name unique per project
+- normalized unique name per project
 - maximum 100 templates/project
-- snapshots title, description, priority, optional assignee and optional due offset
-- instantiation creates a normal task through `TaskCreationPort`
-- template edits never mutate tasks already created from it
-- no subtasks/dependencies/labels/custom fields/workflows inside task templates in this version
+- task title/description/priority, optional assignee, optional due offset
+- instantiate through task-owned `TaskCreationPort`
+- existing tasks remain snapshots when a template changes or is deleted
+
+### Tenant-scoped project templates
+
+- normalized unique name per tenant
+- project name seed, optional description and non-archived initial status
+- zero to 50 ordered starter-task snapshots/template
+- starter snapshots contain title, optional description, priority and optional due offset
+- instantiate through project-owned `ProjectCreationPort` and task-owned `TaskCreationPort`
+- invoking actor becomes initial `PROJECT_LEAD` through ordinary project lifecycle rules
+- ordinary and template-driven project creation converge on the same project creation adapter
+- project quota, active actor/tenant validation, audit and lifecycle/webhook behavior remain project-owned
+- project + starter-task instantiation is transactional snapshot/copy semantics
+
+### Frontend
+
+Standalone `/work-automation` workspace owns:
+
+- authorization-safe project discovery for tenant-wide and project-scoped users
+- recurring rule create/edit/pause/resume/history
+- project-scoped task-template create/edit/delete/instantiate
+- tenant-scoped project-template create/edit/delete/instantiate
+- project-name override on template instantiation
+- bounded 50-row starter-task editor
+
+Frontend ownership remains explicit under `features/recurring-work`, `features/task-templates`, `features/project-templates`, and `features/work-automation`.
 
 Detailed contract: `guides/recurring_work_and_templates.md`.
 
 ## Database checkpoint
 
-Portable common Flyway migrations extend through **V48**.
-
-Recent milestone migrations:
+Portable PostgreSQL Flyway migrations extend through **V49**.
 
 ```text
 V40 tenant identity-provider configuration
@@ -101,50 +91,10 @@ V45 personal workspace favorites/recent items
 V46 saved views
 V47 task parent/dependency/project-label relationships
 V48 recurring task definitions/occurrences + project task templates
+V49 tenant project templates + bounded starter-task snapshots
 ```
 
-Dashboard #136 and Calendar #137 required no schema change. Never rewrite an applied migration.
-
-## Provider status
-
-### Stripe
-
-Working and validated in deployed Test Mode. Hosted checkout, signed lifecycle synchronization, provider-side cancellation, reconciliation and managed Product/Price provisioning are implemented.
-
-### Razorpay
-
-Application integration and managed Plan provisioning are implemented. Recurring Test Mode authorization remains provider-sandbox blocked. Keep the provider integration available; live readiness is a separate track.
-
-## Product-core gaps
-
-The largest remaining user-facing gaps are now:
-
-- tenant-scoped project templates
-- recurring-work/task-template/project-template frontend UX
-- bulk actions and CSV import/export
-- custom fields/forms
-- workflows/approvals
-- first-class knowledge/documents
-- user-facing analytics/reporting
-- smoother workspace switching, onboarding and personalization
-
-`guides/Wild_Thoughts.md` contains the broader audited idea vault and differentiated experiments.
-
-## Engineering-health checkpoint
-
-The codebase remains feasible for continued feature development without a rewrite, but future growth must actively control coupling.
-
-Current priority debt:
-
-1. inconsistent backend domain/package boundaries in older code
-2. large legacy application services accumulating orchestration dependencies
-3. tenant isolation relying partly on repository/query discipline in older areas
-4. manually duplicated backend/frontend API contracts
-5. growing frontend route/navigation aggregation points
-6. scale/load characteristics not yet measured comprehensively
-7. deferred operational maturity: backup/restore drills, broader recovery/load validation and production R2 verification
-
-Canonical assessment and rules: `guides/ENGINEERING_STANDARDS.md`.
+Never rewrite an applied migration. New persistence starts at **V50+**.
 
 ## Non-negotiable architecture rule
 
@@ -158,19 +108,50 @@ Recent reference implementations:
 - Saved Views — persistence/definition domain + validator SPI
 - Calendar — calendar coordinator + deadline-source SPI
 - Task Relationships — query/graph/label services + narrow task gateway/change sink
-- Recurring Work / Task Templates — explicit owning domains + task-owned `TaskCreationPort`
+- Recurring Work / Task Templates — explicit owning domains + `TaskCreationPort`
+- Project Templates — explicit `projecttemplates` domain + project-owned `ProjectCreationPort` + task-owned `TaskCreationPort`
 
-Do not move project-template instantiation into `ProjectService`, recurrence into Calendar, or scheduling/template behavior into task-relationship graph services.
+Do not move recurrence into Calendar, template logic into `ProjectTasksSection`, or project-template orchestration into the full legacy `ProjectService`.
+
+## Established application foundations
+
+Major capabilities include authentication/tenant isolation, invitations/password recovery, scoped authorization/delegation/Explain Access, organization hierarchy, projects/tasks/collaboration, task relationships, work automation/templates, search/command palette/personal workspace/My Work/Saved Views/Dashboard/Calendar, R2-compatible attachments, durable notifications/email, API keys/quotas/usage, Stripe/Razorpay billing abstractions, outbound webhooks, enterprise OIDC SSO, auditability, and PostgreSQL/Flyway CI/security/container validation.
+
+## Provider status
+
+### Stripe
+
+Working and validated in deployed Test Mode. Hosted checkout, signed lifecycle synchronization, provider-side cancellation, reconciliation and managed Product/Price provisioning are implemented.
+
+### Razorpay
+
+Application integration and managed Plan provisioning remain implemented. Recurring Test Mode authorization is provider-sandbox blocked; keep the integration available while treating live readiness separately.
+
+## Engineering-health checkpoint
+
+The codebase remains feasible for continued development without a rewrite, provided new work continues enforcing explicit domains and narrow cross-domain contracts.
+
+Priority debt remains:
+
+1. older inconsistent backend package/domain boundaries
+2. large legacy application services with accumulated orchestration dependencies
+3. older tenant-isolation paths relying partly on repository/query discipline
+4. duplicated backend/frontend API contracts
+5. growing route/navigation aggregation points
+6. comprehensive scale/load characterization still missing
+7. deferred operational maturity: backup/restore drills, recovery/load validation and production R2 verification
+
+Canonical assessment: `guides/ENGINEERING_STANDARDS.md`.
 
 ## Next product sequence
 
-1. **finish recurring work + templates: V49+ tenant-scoped project templates + frontend UX**
-2. bulk actions + CSV import/export
-3. custom fields/forms + workflows/approvals + knowledge/documents
-4. user-facing analytics + selected differentiated experiments
+1. **bulk actions + CSV import/export**
+2. custom fields/forms
+3. workflows/approvals + knowledge/documents
+4. user-facing analytics/reporting and selected differentiated experiments
 5. onboarding/workspace-switching/personalization polish
 
-The project-template backend should cross into project creation through a **project-owned narrow creation contract** that preserves quota, owner-membership, audit and lifecycle invariants. Do not inject the full legacy `ProjectService` into a template god-service.
+Every new capability must first choose an explicit domain owner and narrow integration boundaries before code is added.
 
 ## Deferred platform work
 
@@ -193,8 +174,7 @@ Optional SAML/SCIM, MFA/passkeys/device management and richer notification chann
 - `guides/current_architecture.md` — canonical architecture
 - `guides/ENGINEERING_STANDARDS.md` — technical-health assessment and quality rules
 - `guides/task_relationships.md` — task hierarchy/dependency/label contract
-- `guides/recurring_work_and_templates.md` — recurring-task/task-template contract
-- focused guides — domain-specific behavior
+- `guides/recurring_work_and_templates.md` — recurring work/task/project template contract
 - `wiki/*.md` — canonical reader-facing Wiki source
 - `wiki/Roadmap.md` — product direction
 

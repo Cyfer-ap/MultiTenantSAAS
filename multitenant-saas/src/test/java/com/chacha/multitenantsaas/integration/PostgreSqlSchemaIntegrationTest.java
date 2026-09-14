@@ -69,7 +69,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV48AndMatchesJpaMappings() {
+    void postgresSchemaReachesV49AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -81,7 +81,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("48");
+        assertThat(version).isEqualTo("49");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -131,6 +131,8 @@ class PostgreSqlSchemaIntegrationTest {
         assertTableExists("recurring_task_definitions");
         assertTableExists("recurring_task_occurrences");
         assertTableExists("project_task_templates");
+        assertTableExists("project_templates");
+        assertTableExists("project_template_tasks");
         assertColumnExists("project_tasks", "parent_task_id");
         assertColumnExists("recurring_task_definitions", "next_occurrence_at");
         assertColumnExists("recurring_task_definitions", "status");
@@ -139,6 +141,12 @@ class PostgreSqlSchemaIntegrationTest {
         assertColumnExists("recurring_task_occurrences", "task_id");
         assertColumnExists("project_task_templates", "normalized_name");
         assertColumnExists("project_task_templates", "due_offset_minutes");
+        assertColumnExists("project_templates", "normalized_name");
+        assertColumnExists("project_templates", "project_name_seed");
+        assertColumnExists("project_templates", "initial_status");
+        assertColumnExists("project_template_tasks", "template_id");
+        assertColumnExists("project_template_tasks", "position_index");
+        assertColumnExists("project_template_tasks", "due_offset_minutes");
         assertColumnExists("authorization_delegations", "tenant_id");
         assertColumnExists("authorization_delegations", "delegator_user_id");
         assertColumnExists("authorization_delegations", "delegate_user_id");

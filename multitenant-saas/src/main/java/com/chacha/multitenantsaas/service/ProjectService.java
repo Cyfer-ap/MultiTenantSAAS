@@ -4,10 +4,12 @@ import com.chacha.multitenantsaas.dto.*;
 import com.chacha.multitenantsaas.entity.*;
 import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
+import com.chacha.multitenantsaas.projects.creation.ProjectCreationCommand;
+import com.chacha.multitenantsaas.projects.creation.ProjectCreationPort;
+import com.chacha.multitenantsaas.projects.creation.ProjectCreationResult;
 import com.chacha.multitenantsaas.repository.ProjectRepository;
 import com.chacha.multitenantsaas.repository.TenantRepository;
 import java.util.UUID;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -20,75 +22,37 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final TenantRepository tenantRepository;
     private final CurrentActorService currentActorService;
-    private final ProjectMemberService projectMemberService;
     private final AuditLogService auditLogService;
-    private final SubscriptionQuotaGuardService subscriptionQuotaGuardService;
     private final OutboundWebhookEventService outboundWebhookEventService;
+    private final ProjectCreationPort projectCreationPort;
 
     public ProjectService(
             ProjectRepository projectRepository,
             TenantRepository tenantRepository,
             CurrentActorService currentActorService,
-            ProjectMemberService projectMemberService,
             AuditLogService auditLogService,
-            SubscriptionQuotaGuardService subscriptionQuotaGuardService) {
-        this(
-                projectRepository,
-                tenantRepository,
-                currentActorService,
-                projectMemberService,
-                auditLogService,
-                subscriptionQuotaGuardService,
-                null);
-    }
-
-    @Autowired
-    public ProjectService(
-            ProjectRepository projectRepository,
-            TenantRepository tenantRepository,
-            CurrentActorService currentActorService,
-            ProjectMemberService projectMemberService,
-            AuditLogService auditLogService,
-            SubscriptionQuotaGuardService subscriptionQuotaGuardService,
-            OutboundWebhookEventService outboundWebhookEventService) {
+            OutboundWebhookEventService outboundWebhookEventService,
+            ProjectCreationPort projectCreationPort) {
         this.projectRepository = projectRepository;
         this.tenantRepository = tenantRepository;
         this.currentActorService = currentActorService;
-        this.projectMemberService = projectMemberService;
         this.auditLogService = auditLogService;
-        this.subscriptionQuotaGuardService = subscriptionQuotaGuardService;
         this.outboundWebhookEventService = outboundWebhookEventService;
+        this.projectCreationPort = projectCreationPort;
     }
 
     @Transactional
     public ProjectResponse createProject(UUID tenantId, ProjectCreateRequest request, Jwt jwt) {
-        Tenant tenant = getRequiredActiveTenant(tenantId);
-
-        subscriptionQuotaGuardService.requireProjectSlot(tenantId);
-
         AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
-
-        Project project =
-                new Project(
-                        tenant,
-                        actor,
-                        request.name().trim(),
-                        normalizeDescription(request.description()));
-
-        Project savedProject = projectRepository.save(project);
-
-        projectMemberService.addCreatorAsProjectLead(savedProject, actor);
-
-        auditLogService.recordSuccess(
-                tenant,
-                actor,
-                actor,
-                AuditAction.PROJECT_CREATED,
-                "Project created: " + savedProject.getId() + " - " + savedProject.getName());
-
-        ProjectResponse response = mapToResponse(savedProject);
-        publish(tenantId, OutboundWebhookEventType.PROJECT_CREATED, response);
-        return response;
+        ProjectCreationResult created =
+                projectCreationPort.createProject(
+                        new ProjectCreationCommand(
+                                tenantId,
+                                actor.getId(),
+                                request.name(),
+                                request.description(),
+                                ProjectStatus.PLANNING));
+        return mapToResponse(created);
     }
 
     @Transactional(readOnly = true)
@@ -278,5 +242,19 @@ public class ProjectService {
                 createdBy.getEmail(),
                 project.getCreatedAt(),
                 project.getUpdatedAt());
+    }
+
+    private ProjectResponse mapToResponse(ProjectCreationResult project) {
+        return new ProjectResponse(
+                project.projectId(),
+                project.tenantId(),
+                project.name(),
+                project.description(),
+                project.status(),
+                project.createdByUserId(),
+                project.createdByUserName(),
+                project.createdByUserEmail(),
+                project.createdAt(),
+                project.updatedAt());
     }
 }
