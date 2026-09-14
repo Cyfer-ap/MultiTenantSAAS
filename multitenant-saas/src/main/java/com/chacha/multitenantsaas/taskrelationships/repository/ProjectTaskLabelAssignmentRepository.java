@@ -18,5 +18,7 @@ public interface ProjectTaskLabelAssignmentRepository
             findByTenant_IdAndProject_IdAndTask_IdAndLabel_Id(
                     UUID tenantId, UUID projectId, UUID taskId, UUID labelId);
 
+    long countByTenant_IdAndProject_IdAndTask_Id(UUID tenantId, UUID projectId, UUID taskId);
+
     void deleteByTenant_IdAndProject_IdAndLabel_Id(UUID tenantId, UUID projectId, UUID labelId);
 }
