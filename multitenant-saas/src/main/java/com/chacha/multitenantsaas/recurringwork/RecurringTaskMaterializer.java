@@ -32,7 +32,8 @@ public class RecurringTaskMaterializer {
     @Transactional(readOnly = true)
     public List<UUID> findDueDefinitionIds(Instant now) {
         return definitionRepository
-                .findDueDefinitionIds(now, PageRequest.of(0, DUE_BATCH_SIZE))
+                .findDueDefinitionIds(
+                        RecurrenceStatus.ACTIVE, now, PageRequest.of(0, DUE_BATCH_SIZE))
                 .getContent();
     }
 
@@ -117,7 +118,10 @@ public class RecurringTaskMaterializer {
     }
 
     private String truncate(String message) {
-        String safe = message == null || message.isBlank() ? "Recurring task generation failed" : message;
+        String safe =
+                message == null || message.isBlank()
+                        ? "Recurring task generation failed"
+                        : message;
         return safe.length() <= 500 ? safe : safe.substring(0, 500);
     }
 }
