@@ -19,6 +19,7 @@ Implemented foundations include:
 - permission-aware Global Search and capability-aware Command Palette
 - server-backed Favorites + Recently Viewed with contextual favorite controls
 - My Work personal attention queue and server-backed Saved Views
+- capability-aware Dashboard combining personal attention/context with tenant-wide health metrics
 - durable notifications/email delivery/preferences
 - subscription lifecycle, quotas, API keys and usage metering
 - provider-neutral billing with Stripe and Razorpay
@@ -38,7 +39,7 @@ See [[Architecture]] for the current architecture and known debt.
 
 Portable common migrations currently extend through **V46**. Applied Flyway migrations remain append-only.
 
-Recent product migrations are V45 for personal-workspace favorites/recent items and V46 for saved views.
+Recent product migrations are V45 for personal-workspace favorites/recent items and V46 for saved views. The Dashboard Refresh required no migration.
 
 ## Start here
 
@@ -58,6 +59,6 @@ Repository-side `guides/Wild_Thoughts.md` is the living idea vault; `guides/ENGI
 
 ## Current product direction
 
-The active product phase is **Product Experience & Work Management Enrichment**. Global Search, Command Palette, Favorites/Recently Viewed, My Work and Saved Views are established foundations. The next slice is a **capability-aware dashboard refresh**, followed by calendar/deadline views, richer work-management relationships, recurring work/templates, bulk productivity and tenant adaptability.
+The active product phase is **Product Experience & Work Management Enrichment**. Global Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views and the capability-aware Dashboard are established foundations. The next slice is the **Calendar / Deadline View**, followed by richer work-management relationships, recurring work/templates, bulk productivity and tenant adaptability.
 
 Production Operations & Disaster Recovery remains important but deliberately deferred behind the current user-facing enrichment phase. See [[Roadmap]].
