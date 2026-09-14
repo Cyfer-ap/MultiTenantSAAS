@@ -19,6 +19,7 @@ import com.chacha.multitenantsaas.taskrelationships.repository.ProjectTaskLabelR
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class TaskLabelService {
 
+    static final int MAX_LABELS_PER_PROJECT = 200;
     static final int MAX_LABELS_PER_TASK = 20;
 
     private final TaskRelationshipTaskGateway taskGateway;
@@ -50,7 +52,10 @@ public class TaskLabelService {
     @Transactional(readOnly = true)
     public List<TaskLabelResponse> listLabels(UUID tenantId, UUID projectId) {
         taskGateway.requireProject(tenantId, projectId);
-        return labelRepository.findByTenant_IdAndProject_IdOrderByNameAsc(tenantId, projectId).stream()
+        return labelRepository
+                .findByTenant_IdAndProject_IdOrderByNameAsc(
+                        tenantId, projectId, PageRequest.of(0, MAX_LABELS_PER_PROJECT))
+                .stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -59,6 +64,12 @@ public class TaskLabelService {
     public TaskLabelResponse createLabel(
             UUID tenantId, UUID projectId, ProjectTaskLabelRequest request, Jwt jwt) {
         Project project = requireModifiableProject(tenantId, projectId);
+        if (labelRepository.countByTenant_IdAndProject_Id(tenantId, projectId)
+                >= MAX_LABELS_PER_PROJECT) {
+            throw new IllegalArgumentException(
+                    "A project can have at most " + MAX_LABELS_PER_PROJECT + " task labels");
+        }
+
         String displayName = normalizeDisplayName(request.name());
         String normalizedName = normalizeLabelName(displayName);
         ensureNameAvailable(tenantId, projectId, normalizedName, null);
