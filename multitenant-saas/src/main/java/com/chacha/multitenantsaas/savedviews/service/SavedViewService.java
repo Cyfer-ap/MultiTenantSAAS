@@ -75,10 +75,7 @@ public class SavedViewService {
 
     @Transactional(readOnly = true)
     public List<SavedViewResponse> list(
-            UUID tenantId,
-            AppUser actor,
-            SavedViewTarget target,
-            UUID contextId) {
+            UUID tenantId, AppUser actor, SavedViewTarget target, UUID contextId) {
         validateContext(tenantId, actor, target, contextId);
         return repository
                 .findByTenant_IdAndUser_IdAndTargetAndContextIdOrderByNameAsc(
@@ -93,14 +90,14 @@ public class SavedViewService {
     }
 
     @Transactional
-    public SavedViewResponse create(
-            UUID tenantId, AppUser actor, CreateSavedViewRequest request) {
+    public SavedViewResponse create(UUID tenantId, AppUser actor, CreateSavedViewRequest request) {
         validateContext(tenantId, actor, request.target(), request.contextId());
         long existingCount =
                 repository.countByTenant_IdAndUser_IdAndTargetAndContextId(
                         tenantId, actor.getId(), request.target(), request.contextId());
         if (existingCount >= MAX_VIEWS_PER_SCOPE) {
-            throw new IllegalArgumentException("Saved view limit reached for this workspace surface");
+            throw new IllegalArgumentException(
+                    "Saved view limit reached for this workspace surface");
         }
 
         Map<String, String> definition =
@@ -149,11 +146,13 @@ public class SavedViewService {
         }
 
         if (contextId == null) {
-            throw new IllegalArgumentException("Project task saved views require a project context");
+            throw new IllegalArgumentException(
+                    "Project task saved views require a project context");
         }
         SavedViewContextValidator validator = contextValidators.get(target);
         if (validator == null || !validator.canUse(tenantId, actor.getId(), contextId)) {
-            throw new ResourceNotFoundException("Saved view context not found or is not accessible");
+            throw new ResourceNotFoundException(
+                    "Saved view context not found or is not accessible");
         }
     }
 
@@ -207,7 +206,8 @@ public class SavedViewService {
             case "sortDir" -> requireOneOf(key, value, Set.of("asc", "desc"));
             case "layout" -> requireOneOf(key, value, Set.of("board", "table"));
             case "showCancelled" -> requireOneOf(key, value, Set.of("true", "false"));
-            default -> throw new IllegalArgumentException("Unsupported project task filter: " + key);
+            default ->
+                    throw new IllegalArgumentException("Unsupported project task filter: " + key);
         }
     }
 
@@ -241,7 +241,8 @@ public class SavedViewService {
             }
             return serialized;
         } catch (JsonProcessingException exception) {
-            throw new IllegalArgumentException("Saved view definition could not be serialized", exception);
+            throw new IllegalArgumentException(
+                    "Saved view definition could not be serialized", exception);
         }
     }
 

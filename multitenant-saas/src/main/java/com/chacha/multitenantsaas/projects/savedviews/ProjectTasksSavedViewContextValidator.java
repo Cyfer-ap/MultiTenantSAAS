@@ -12,7 +12,8 @@ public class ProjectTasksSavedViewContextValidator implements SavedViewContextVa
 
     private final AuthorizationSecurityService authorizationSecurity;
 
-    public ProjectTasksSavedViewContextValidator(AuthorizationSecurityService authorizationSecurity) {
+    public ProjectTasksSavedViewContextValidator(
+            AuthorizationSecurityService authorizationSecurity) {
         this.authorizationSecurity = authorizationSecurity;
     }
 

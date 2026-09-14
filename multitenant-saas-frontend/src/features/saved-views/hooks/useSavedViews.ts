@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { savedViewsApi } from '../api/savedViewsApi'
-import type { CreateSavedViewInput, SavedViewTarget, UpdateSavedViewInput } from '../types/savedViews'
+import type {
+    CreateSavedViewInput,
+    SavedViewTarget,
+    UpdateSavedViewInput,
+} from '../types/savedViews'
 
 export const savedViewQueryKeys = {
     all: ['saved-views'] as const,
@@ -10,11 +14,7 @@ export const savedViewQueryKeys = {
         [...savedViewQueryKeys.tenant(tenantId), target, contextId ?? 'none'] as const,
 }
 
-export function useSavedViews(
-    tenantId: string,
-    target: SavedViewTarget,
-    contextId: string | null,
-) {
+export function useSavedViews(tenantId: string, target: SavedViewTarget, contextId: string | null) {
     return useQuery({
         queryKey: savedViewQueryKeys.scope(tenantId, target, contextId),
         queryFn: () => savedViewsApi.list(tenantId, target, contextId),
@@ -29,11 +29,7 @@ export function useCreateSavedView(tenantId: string) {
         mutationFn: (input: CreateSavedViewInput) => savedViewsApi.create(tenantId, input),
         onSuccess: async (savedView) => {
             await queryClient.invalidateQueries({
-                queryKey: savedViewQueryKeys.scope(
-                    tenantId,
-                    savedView.target,
-                    savedView.contextId,
-                ),
+                queryKey: savedViewQueryKeys.scope(tenantId, savedView.target, savedView.contextId),
             })
         },
     })

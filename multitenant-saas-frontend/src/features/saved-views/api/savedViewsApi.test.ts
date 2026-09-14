@@ -21,9 +21,7 @@ describe('savedViewsApi', () => {
             data: { success: true, message: 'ok', data: [savedView], timestamp: 'now' },
         })
 
-        await expect(savedViewsApi.list('tenant-1', 'MY_WORK', null)).resolves.toEqual([
-            savedView,
-        ])
+        await expect(savedViewsApi.list('tenant-1', 'MY_WORK', null)).resolves.toEqual([savedView])
         expect(get).toHaveBeenCalledWith('/api/tenants/tenant-1/saved-views', {
             params: { target: 'MY_WORK' },
         })
@@ -50,10 +48,7 @@ describe('savedViewsApi', () => {
         })
         await savedViewsApi.remove('tenant-1', 'view-1')
 
-        expect(post).toHaveBeenCalledWith(
-            '/api/tenants/tenant-1/saved-views',
-            expect.any(Object),
-        )
+        expect(post).toHaveBeenCalledWith('/api/tenants/tenant-1/saved-views', expect.any(Object))
         expect(put).toHaveBeenCalledWith(
             '/api/tenants/tenant-1/saved-views/view-1',
             expect.any(Object),

@@ -91,10 +91,7 @@ function getPriorityColor(
     return 'default'
 }
 
-function readFilter<T extends string>(
-    value: string | undefined,
-    allowed: readonly T[],
-): T | 'ALL' {
+function readFilter<T extends string>(value: string | undefined, allowed: readonly T[]): T | 'ALL' {
     return value && allowed.includes(value as T) ? (value as T) : 'ALL'
 }
 
@@ -212,10 +209,7 @@ export function MyWorkPage() {
             if (attention !== 'ALL' && item.attention !== attention) return false
             if (status !== 'ALL' && item.status !== status) return false
             if (priority !== 'ALL' && item.priority !== priority) return false
-            if (
-                query &&
-                !`${item.title} ${item.projectName}`.toLowerCase().includes(query)
-            ) {
+            if (query && !`${item.title} ${item.projectName}`.toLowerCase().includes(query)) {
                 return false
             }
             return true
@@ -396,8 +390,8 @@ export function MyWorkPage() {
                                 </Button>
                             </Stack>
                             <Typography color="text.secondary" variant="caption">
-                                Showing {filteredItems.length} of {workQuery.data.items.length} assigned
-                                open tasks.
+                                Showing {filteredItems.length} of {workQuery.data.items.length}{' '}
+                                assigned open tasks.
                             </Typography>
                         </Stack>
                     </Paper>
@@ -423,7 +417,8 @@ export function MyWorkPage() {
                         >
                             <Typography variant="h6">No tasks match this view</Typography>
                             <Typography color="text.secondary" variant="body2">
-                                Adjust the filters or clear them to see the rest of your assigned work.
+                                Adjust the filters or clear them to see the rest of your assigned
+                                work.
                             </Typography>
                             <Button onClick={clearFilters} sx={{ marginTop: 1 }} size="small">
                                 Clear filters

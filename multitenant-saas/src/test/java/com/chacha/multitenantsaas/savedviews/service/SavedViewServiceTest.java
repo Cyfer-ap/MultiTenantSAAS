@@ -42,7 +42,8 @@ class SavedViewServiceTest {
         when(repository.countByTenant_IdAndUser_IdAndTargetAndContextId(
                         tenantId, actor.getId(), SavedViewTarget.MY_WORK, null))
                 .thenReturn(0L);
-        when(repository.save(any(SavedView.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(repository.save(any(SavedView.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         var response =
                 service.create(

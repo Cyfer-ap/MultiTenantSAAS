@@ -11,11 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface SavedViewRepository extends JpaRepository<SavedView, UUID> {
 
     List<SavedView> findByTenant_IdAndUser_IdAndTargetAndContextIdOrderByNameAsc(
-            UUID tenantId,
-            UUID userId,
-            SavedViewTarget target,
-            UUID contextId,
-            Pageable pageable);
+            UUID tenantId, UUID userId, SavedViewTarget target, UUID contextId, Pageable pageable);
 
     long countByTenant_IdAndUser_IdAndTargetAndContextId(
             UUID tenantId, UUID userId, SavedViewTarget target, UUID contextId);
