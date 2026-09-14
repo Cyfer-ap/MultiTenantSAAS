@@ -17,7 +17,7 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import {
     useCreateTaskLabel,
@@ -56,21 +56,17 @@ export function TaskLabelManagerDialog({
     const [deleting, setDeleting] = useState<TaskLabel | null>(null)
     const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
-        if (!open) {
-            setEditing(null)
-            setName('')
-            setColor('')
-            setDeleting(null)
-            setError(null)
-        }
-    }, [open])
-
     const resetForm = () => {
         setEditing(null)
         setName('')
         setColor('')
         setError(null)
+    }
+
+    const closeDialog = () => {
+        resetForm()
+        setDeleting(null)
+        onClose()
     }
 
     const beginEdit = (label: TaskLabel) => {
@@ -116,7 +112,7 @@ export function TaskLabelManagerDialog({
 
     return (
         <>
-            <Dialog fullWidth maxWidth="sm" onClose={onClose} open={open}>
+            <Dialog fullWidth maxWidth="sm" onClose={closeDialog} open={open}>
                 <DialogTitle>Manage project task labels</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} sx={{ paddingTop: 1 }}>
@@ -213,7 +209,7 @@ export function TaskLabelManagerDialog({
                     </Stack>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={onClose}>Done</Button>
+                    <Button onClick={closeDialog}>Done</Button>
                 </DialogActions>
             </Dialog>
 
