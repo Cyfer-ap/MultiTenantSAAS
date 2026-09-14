@@ -15,12 +15,12 @@ import com.chacha.multitenantsaas.savedviews.entity.SavedView;
 import com.chacha.multitenantsaas.savedviews.model.SavedViewTarget;
 import com.chacha.multitenantsaas.savedviews.repository.SavedViewRepository;
 import com.chacha.multitenantsaas.savedviews.spi.SavedViewContextValidator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 class SavedViewServiceTest {
 
@@ -32,7 +32,7 @@ class SavedViewServiceTest {
     @BeforeEach
     void setUp() {
         repository = mock(SavedViewRepository.class);
-        service = new SavedViewService(repository, new ObjectMapper(), List.of());
+        service = new SavedViewService(repository, JsonMapper.builder().build(), List.of());
         actor = mock(AppUser.class);
         tenantId = UUID.randomUUID();
         when(actor.getId()).thenReturn(UUID.randomUUID());
@@ -102,7 +102,9 @@ class SavedViewServiceTest {
         SavedViewContextValidator validator = mock(SavedViewContextValidator.class);
         when(validator.target()).thenReturn(SavedViewTarget.PROJECT_TASKS);
         when(validator.canUse(tenantId, actor.getId(), projectId)).thenReturn(false);
-        service = new SavedViewService(repository, new ObjectMapper(), List.of(validator));
+        service =
+                new SavedViewService(
+                        repository, JsonMapper.builder().build(), List.of(validator));
 
         assertThatThrownBy(
                         () ->
