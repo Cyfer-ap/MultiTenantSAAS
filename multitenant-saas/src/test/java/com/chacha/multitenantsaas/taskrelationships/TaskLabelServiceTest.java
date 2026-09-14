@@ -77,10 +77,9 @@ class TaskLabelServiceTest {
     void rejectsMoreThanMaximumLabelsPerTask() {
         UUID taskId = UUID.randomUUID();
         UUID labelId = UUID.randomUUID();
-        ProjectTask task = task(taskId);
         ProjectTaskLabel label = mock(ProjectTaskLabel.class);
         when(taskGateway.requireProject(tenantId, projectId)).thenReturn(activeProject());
-        when(taskGateway.requireTask(tenantId, projectId, taskId)).thenReturn(task);
+        when(taskGateway.requireTask(tenantId, projectId, taskId)).thenReturn(task(taskId));
         when(labelRepository.findByTenant_IdAndProject_IdAndId(tenantId, projectId, labelId))
                 .thenReturn(Optional.of(label));
         when(assignmentRepository.findByTenant_IdAndProject_IdAndTask_IdAndLabel_Id(
@@ -98,15 +97,16 @@ class TaskLabelServiceTest {
     }
 
     private Project activeProject() {
-        Project project = mock(Project.class);
-        when(project.getStatus()).thenReturn(ProjectStatus.ACTIVE);
+        Project project = new Project();
+        project.setId(projectId);
+        project.setStatus(ProjectStatus.ACTIVE);
         return project;
     }
 
     private ProjectTask task(UUID id) {
-        ProjectTask task = mock(ProjectTask.class);
-        when(task.getId()).thenReturn(id);
-        when(task.getStatus()).thenReturn(ProjectTaskStatus.TODO);
+        ProjectTask task = new ProjectTask();
+        task.setId(id);
+        task.setStatus(ProjectTaskStatus.TODO);
         return task;
     }
 }
