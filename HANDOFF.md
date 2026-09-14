@@ -32,8 +32,9 @@ Major application foundations are complete through:
 - My Work attention queue: #133
 - server-backed Saved Views: #134
 - capability-aware Dashboard Refresh: #136
+- authorization-safe Calendar / Deadline View: #137
 
-Portable common Flyway migrations extend through **V46**.
+Portable common Flyway migrations extend through **V46**. Calendar #137 introduces no schema migration.
 
 Stripe is the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
@@ -41,17 +42,16 @@ Stripe is the validated deployed Test Mode billing path. Razorpay integration/ca
 
 Continue **Product Experience & Work Management Enrichment** before returning to the deferred operations/DR milestone.
 
-Search, Command Palette, Favorites/Recent, My Work, Saved Views and the capability-aware Dashboard are complete. The next implementation slice is the **Calendar / Deadline View**.
+Search, Command Palette, Favorites/Recent, My Work, Saved Views, Dashboard and Calendar/Deadline View are complete. The next implementation slice is **Subtasks + Task Dependencies + Labels/Tags**.
 
 Recommended sequence:
 
-1. calendar/deadline view
-2. subtasks, dependencies and labels
-3. recurring work + project/task templates
-4. bulk actions + import/export
-5. custom fields/forms + workflows/approvals + knowledge/documents
-6. user-facing analytics + selected differentiated experiments
-7. onboarding/workspace-switching/personalization polish as product flows deepen
+1. subtasks + task dependencies + labels/tags
+2. recurring work + project/task templates
+3. bulk actions + import/export
+4. custom fields/forms + workflows/approvals + knowledge/documents
+5. user-facing analytics + selected differentiated experiments
+6. onboarding/workspace-switching/personalization polish as product flows deepen
 
 ## Architecture rule from this point forward
 
@@ -89,49 +89,131 @@ view persistence/validation → contextual validator SPI
 Dashboard
     ↓
 frontend composition → existing authorized feature queries + workspace navigation contract
+
+Calendar
+    ↓
+calendar coordinator → CalendarDeadlineSource → task-owned authorized deadline adapter
 ```
 
-The frontend keeps Search, Command Palette, Personal Workspace, My Work, Saved Views and Dashboard composition separate. Preserve that ownership model.
+The frontend keeps Search, Command Palette, Personal Workspace, My Work, Saved Views, Dashboard and Calendar in separate feature domains. Preserve that ownership model.
 
 Create Task remains deliberately absent from the global palette. Effective task-management authority can arise from project-lead membership in addition to scoped authorization, so a future global Create Task action needs a project-aware capability/picker contract rather than shell-side permission guessing.
 
-## Next feature guidance — Calendar / Deadline View
+## Calendar checkpoint to preserve
 
-Treat the calendar as a **time-oriented projection of authorized work**, not a second task-management system.
+PR #137 implements Calendar as a **time-oriented projection of authorized tasks**, not a second task system.
 
-The first slice should be deliberately bounded:
+Current behavior:
 
-- show authorized task due dates in month/list-style time views
-- include existing project deadlines only where an owning domain can expose them safely
-- support navigation back to the owning project/task surface
-- preserve task/project authorization before events are returned
-- render timestamps consistently and design timezone handling explicitly
-- provide useful empty states for periods with no deadlines
-- keep queries bounded by date range rather than loading all tenant work
+- `/calendar` workspace route and shared navigation/command exposure
+- Monday-start six-week month grid rendered in the browser's local timezone
+- previous/next month and Today navigation
+- selected-day agenda with status, priority, project context and task deep links
+- task due dates only; projects currently have no deadline field and no synthetic project dates were introduced
+- API: `GET /api/tenants/{tenantId}/calendar/deadlines?from=<instant>&to=<instant>&limit=<n>`
+- half-open `[from,to)` range semantics
+- maximum range of 93 days
+- maximum returned items of 500, with explicit `truncated=true` when the bound is exceeded
+- no new table or migration; existing indexed `project_tasks.due_at` is reused
 
-Architecture constraints:
-
-- do not duplicate task-read authorization in a calendar controller/service
-- do not create a calendar service that directly imports many unrelated repositories
-- prefer a narrow calendar/deadline source contract implemented by the project/task domain if a backend aggregate endpoint is justified
-- reuse current task status/due-date semantics rather than inventing calendar-specific copies
-- calendar reads must be tenant-bound and date-bounded
-- no meeting scheduling, room booking, leave management or external calendar sync in the first slice
-- timezone behavior should be explicit from the start so later events/reminders do not inherit ambiguous date handling
-
-A sensible first backend shape, if the existing task APIs cannot support an efficient bounded projection, is:
+Backend shape:
 
 ```text
-CalendarQueryService
+CalendarDeadlineController
+        ↓
+CalendarDeadlineService
         ↓
 CalendarDeadlineSource
         ↓
 TaskCalendarDeadlineSource
         ↓
-tenant/date-bounded authorized task query
+tenant/date-bounded task query
+        ↓
+project-scope / membership narrowing
+        ↓
+authoritative task-read revalidation
 ```
 
-Keep the first implementation focused on deadlines. Subtasks/dependencies and richer scheduling semantics come later.
+The generic project-membership read helper now lives under `projects.query.ProjectMembershipQueryService` and is shared by Search and Calendar.
+
+Do not later move task mutations, recurrence, reminders, meeting scheduling, room booking or external calendar sync into `CalendarDeadlineService`. Calendar remains a projection/composition domain unless a future capability has a genuinely separate lifecycle.
+
+## Next feature guidance — Subtasks + Dependencies + Labels
+
+Treat these as **task relationships and task metadata**, owned by the project/task domain. Do not build a generic graph platform first.
+
+### Subtasks
+
+A sensible v1 is one optional parent task per task.
+
+Required invariants:
+
+- parent and child belong to the same tenant
+- v1 should keep parent and child in the same project unless a strong product requirement justifies cross-project hierarchy
+- a task cannot parent itself
+- assigning a parent must not create an ancestry cycle
+- traversal must be bounded; do not recursively materialize an unbounded tree
+- deleting/archiving/completing a parent must have an explicit documented effect on children
+- reads/mutations must reuse the same project/task authorization boundary as ordinary tasks
+
+Prefer an explicit task-relationship service/contract rather than adding hierarchy traversal and dependency orchestration directly into the existing large `ProjectTaskService`.
+
+### Task dependencies
+
+Model dependencies as directed edges with clear semantics, for example:
+
+```text
+blocking task  ──blocks──>  dependent task
+```
+
+Required invariants:
+
+- no self-dependency
+- duplicate edges are rejected/idempotently prevented by a database uniqueness constraint
+- dependency creation must reject directed cycles
+- v1 should strongly prefer same-project dependencies to keep authorization and UX coherent; broaden later only if there is a concrete cross-project need
+- both endpoints of an edge must be tenant-safe and readable/manageable under the owning task rules
+- graph traversal/cycle checks are bounded and tested
+- deleting or archiving either task has deterministic dependency cleanup/history behavior
+
+Do not derive task status automatically from dependencies in the first migration unless the product rule is explicitly designed. A dependency can initially be metadata/visibility used by UX and later automation.
+
+### Labels / tags
+
+Prefer project-scoped labels for v1 unless there is a clear tenant-global label requirement.
+
+A clean model is:
+
+```text
+project label
+    ↓ many-to-many
+project task
+```
+
+Important rules:
+
+- tenant + project ownership on every label
+- normalized label names unique per project
+- task-label assignments cannot cross tenant/project boundaries
+- reading task labels follows task-read access
+- creating/editing labels and assigning them should follow existing project/task management authority rather than inventing shell-side role checks
+- keep color/display metadata optional and bounded; labels are not custom fields
+
+### Schema and delivery strategy
+
+V46 is the current portable migration baseline. Any new task-relationship schema must be added through **new append-only migration(s)**; never rewrite V46 or earlier migrations.
+
+Before writing the migration, inspect the current `ProjectTask`, task repository/service/controller, authorization helpers, task board UI and project details flow. Decide and document the relationship semantics first, then design constraints/indexes around those semantics.
+
+A practical delivery sequence is:
+
+1. model + migration + repository constraints for parent/dependency/label relationships
+2. narrow backend services/contracts with cycle/tenant/project validation
+3. DTO/API integration without returning persistence entities
+4. focused integration tests for cross-tenant/cross-project/cycle/duplicate cases
+5. project task UI for subtasks/dependencies/labels
+6. board/list/filter integration where useful
+7. docs/checkpoint and full CI/security/static validation
 
 ## Dashboard checkpoint to preserve
 
@@ -152,14 +234,15 @@ Do not later move these concerns into one broad `DashboardService` merely for co
 - tenant isolation precedes resource access
 - search/discovery and saved/recent resolution constrain access before returning entity data
 - stored favorites, recents or saved-view definitions never grant authorization
-- calendar/deadline results must be authorized before exposure
+- calendar/deadline results are authorized before exposure
+- task hierarchy/dependency edges never bypass tenant/project/task authorization
 - Explain Access and enforcement share the evaluator
 - delegated authority remains a current permission/scope/validity subset of its direct source
 - `authorization.manage` and `authorization.delegate` remain non-delegable
 - provider/webhook lifecycle remains verified and auditable
 - applied Flyway migrations are append-only
 - provider secrets and sensitive identifiers remain server-side
-- unbounded collections are paginated/bounded
+- unbounded collections and graph traversals are paginated/bounded
 - concurrency/idempotency is considered for retryable or competing mutations
 
 ## Validation workflow
