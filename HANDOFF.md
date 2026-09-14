@@ -36,6 +36,8 @@ Major application/product milestones are complete through:
 - Task Planning UI — #140
 - recurring-task + project-scoped task-template backend foundation — #141
 
+PR #141 is **merged into `main`** at merge commit `3460785aa9a1644768f10c696ccaef27422535f8`.
+
 Portable common Flyway migrations extend through **V48**.
 
 Stripe is the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
@@ -44,23 +46,22 @@ Stripe is the validated deployed Test Mode billing path. Razorpay integration/ca
 
 Continue **Product Experience & Work Management Enrichment**.
 
-The current milestone is **Recurring Work + Project/Task Templates**. Its backend task-generation half is established in #141, but the milestone is **not closed**.
+The current milestone is **Recurring Work + Project/Task Templates**. Its backend task-generation half is established in merged PR #141, but the milestone is **not closed**.
+
+### Resume here
+
+Start from current `main` and create the next feature branch for the completion slice (recommended: `feat/project-templates-workspace`). New persistence must be **V49+**.
 
 Immediate next work:
 
 1. tenant-scoped project-template backend
-2. project-owned narrow project-creation port preserving quota/owner-membership/audit/lifecycle behavior
+2. project-owned narrow `ProjectCreationPort` preserving quota/owner-membership/audit/lifecycle behavior
 3. bounded project-template task snapshots and deterministic instantiation semantics
 4. feature-local recurring-work and task-template frontend UX
 5. project-template frontend UX
 6. milestone docs/CI closure
 
-Then continue:
-
-1. bulk actions + CSV import/export
-2. custom fields/forms + workflows/approvals + knowledge/documents
-3. user-facing analytics + selected differentiated experiments
-4. onboarding/workspace-switching/personalization polish
+Then continue with bulk actions/CSV import-export, tenant adaptability, analytics, and ongoing UX polish.
 
 ## Architecture rule
 
