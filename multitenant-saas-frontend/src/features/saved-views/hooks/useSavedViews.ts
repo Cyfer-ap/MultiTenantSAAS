@@ -1,11 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { savedViewsApi } from '../api/savedViewsApi'
-import type {
-    CreateSavedViewInput,
-    SavedViewTarget,
-    UpdateSavedViewInput,
-} from '../types/savedViews'
+import type { CreateSavedViewInput, SavedViewTarget, UpdateSavedViewInput } from '../types/savedViews'
 
 export const savedViewQueryKeys = {
     all: ['saved-views'] as const,
