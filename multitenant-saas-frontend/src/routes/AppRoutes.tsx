@@ -159,6 +159,12 @@ const ProjectSimulationPage = lazy(() =>
     })),
 )
 
+const WhiteboardWorkspacePage = lazy(() =>
+    import('../features/whiteboards/pages/WhiteboardWorkspacePage').then((module) => ({
+        default: module.WhiteboardWorkspacePage,
+    })),
+)
+
 const ProjectsPage = lazy(() =>
     import('../pages/ProjectsPage').then((module) => ({
         default: module.ProjectsPage,
@@ -413,6 +419,10 @@ export function AppRoutes() {
                             }
                         >
                             <Route path="projects/:projectId" element={<ProjectDetailsPage />} />
+                            <Route
+                                path="projects/:projectId/whiteboards"
+                                element={<WhiteboardWorkspacePage />}
+                            />
                         </Route>
 
                         <Route
