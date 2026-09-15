@@ -23,7 +23,9 @@ public class DefaultProjectAccessAdapter implements ProjectAccessPort {
                 projectRepository
                         .findByTenant_IdAndId(tenantId, projectId)
                         .orElseThrow(
-                                () -> new ResourceNotFoundException("Project not found: " + projectId));
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Project not found: " + projectId));
         return new ProjectAccessSnapshot(project.getId(), project.getStatus());
     }
 }
