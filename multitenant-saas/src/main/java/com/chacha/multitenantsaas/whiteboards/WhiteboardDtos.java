@@ -65,8 +65,7 @@ public final class WhiteboardDtos {
             int height,
             int zIndex) {}
 
-    public record EdgeResponse(
-            UUID id, String sourceKey, String targetKey, String label) {}
+    public record EdgeResponse(UUID id, String sourceKey, String targetKey, String label) {}
 
     public record Response(
             UUID id,
@@ -89,9 +88,5 @@ public final class WhiteboardDtos {
             Instant dueAt) {}
 
     public record ConvertToTaskResponse(
-            UUID boardId,
-            String nodeKey,
-            UUID taskId,
-            long boardVersion,
-            Instant createdAt) {}
+            UUID boardId, String nodeKey, UUID taskId, long boardVersion, Instant createdAt) {}
 }

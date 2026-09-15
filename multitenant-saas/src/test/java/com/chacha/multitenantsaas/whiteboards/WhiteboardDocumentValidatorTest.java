@@ -13,9 +13,7 @@ class WhiteboardDocumentValidatorTest {
     @Test
     void acceptsBoundedVisualGraphIncludingCycles() {
         var nodes =
-                List.of(
-                        node("a", WhiteboardNodeType.STICKY),
-                        node("b", WhiteboardNodeType.TEXT));
+                List.of(node("a", WhiteboardNodeType.STICKY), node("b", WhiteboardNodeType.TEXT));
         var edges = List.of(edge("a", "b"), edge("b", "a"));
 
         assertThatCode(() -> validator.validate(nodes, edges)).doesNotThrowAnyException();
@@ -45,18 +43,13 @@ class WhiteboardDocumentValidatorTest {
     @Test
     void rejectsSelfAndDuplicateConnectors() {
         var nodes =
-                List.of(
-                        node("a", WhiteboardNodeType.STICKY),
-                        node("b", WhiteboardNodeType.STICKY));
+                List.of(node("a", WhiteboardNodeType.STICKY), node("b", WhiteboardNodeType.STICKY));
 
         assertThatThrownBy(() -> validator.validate(nodes, List.of(edge("a", "a"))))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("cannot target itself");
 
-        assertThatThrownBy(
-                        () ->
-                                validator.validate(
-                                        nodes, List.of(edge("a", "b"), edge("a", "b"))))
+        assertThatThrownBy(() -> validator.validate(nodes, List.of(edge("a", "b"), edge("a", "b"))))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Duplicate whiteboard connector");
     }

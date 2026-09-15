@@ -74,10 +74,7 @@ public class WhiteboardService {
 
     @Transactional
     public WhiteboardDtos.Response create(
-            UUID tenantId,
-            UUID projectId,
-            WhiteboardDtos.CreateRequest request,
-            Jwt jwt) {
+            UUID tenantId, UUID projectId, WhiteboardDtos.CreateRequest request, Jwt jwt) {
         requireProject(tenantId, projectId);
         documentValidator.validate(request.nodes(), request.edges());
         String normalizedName = normalizeName(request.name());
@@ -101,10 +98,7 @@ public class WhiteboardService {
 
     @Transactional
     public WhiteboardDtos.Response update(
-            UUID tenantId,
-            UUID projectId,
-            UUID boardId,
-            WhiteboardDtos.UpdateRequest request) {
+            UUID tenantId, UUID projectId, UUID boardId, WhiteboardDtos.UpdateRequest request) {
         Whiteboard board = requireScoped(tenantId, projectId, boardId);
         assertVersion(board, request.expectedVersion());
         documentValidator.validate(request.nodes(), request.edges());
@@ -129,8 +123,7 @@ public class WhiteboardService {
     }
 
     @Transactional
-    public void delete(
-            UUID tenantId, UUID projectId, UUID boardId, long expectedVersion) {
+    public void delete(UUID tenantId, UUID projectId, UUID boardId, long expectedVersion) {
         Whiteboard board = requireScoped(tenantId, projectId, boardId);
         assertVersion(board, expectedVersion);
         whiteboardRepository.delete(board);

@@ -36,7 +36,8 @@ public class WhiteboardDocumentValidator {
                 throw new IllegalArgumentException("A whiteboard connector cannot target itself");
             }
             if (!nodeKeys.contains(edge.sourceKey()) || !nodeKeys.contains(edge.targetKey())) {
-                throw new IllegalArgumentException("Whiteboard connectors must reference existing nodes");
+                throw new IllegalArgumentException(
+                        "Whiteboard connectors must reference existing nodes");
             }
             String edgeKey = edge.sourceKey() + "\u0000" + edge.targetKey();
             if (!edgeKeys.add(edgeKey)) {

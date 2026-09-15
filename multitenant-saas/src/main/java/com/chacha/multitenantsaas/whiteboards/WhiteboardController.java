@@ -49,9 +49,7 @@ public class WhiteboardController {
                     + "#tenantId,#projectId,'project.task.read')")
     @GetMapping("/{boardId}")
     public ResponseEntity<ApiResponse<WhiteboardDtos.Response>> get(
-            @PathVariable UUID tenantId,
-            @PathVariable UUID projectId,
-            @PathVariable UUID boardId) {
+            @PathVariable UUID tenantId, @PathVariable UUID projectId, @PathVariable UUID boardId) {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Whiteboard fetched successfully",

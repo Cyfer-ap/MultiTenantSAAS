@@ -6,8 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WhiteboardEdgeRepository extends JpaRepository<WhiteboardEdge, UUID> {
 
-    List<WhiteboardEdge> findByTenantIdAndProjectIdAndBoardIdOrderBySourceNodeKeyAscTargetNodeKeyAsc(
-            UUID tenantId, UUID projectId, UUID boardId);
+    List<WhiteboardEdge>
+            findByTenantIdAndProjectIdAndBoardIdOrderBySourceNodeKeyAscTargetNodeKeyAsc(
+                    UUID tenantId, UUID projectId, UUID boardId);
 
     void deleteByTenantIdAndProjectIdAndBoardId(UUID tenantId, UUID projectId, UUID boardId);
 }
