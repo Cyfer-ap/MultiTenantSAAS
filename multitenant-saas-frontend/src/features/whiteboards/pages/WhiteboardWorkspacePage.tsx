@@ -24,7 +24,7 @@ import { hasProjectPermission } from '../../authorization/access/authorizationAc
 import { useCurrentAuthorization } from '../../authorization/hooks/useCurrentAuthorization'
 import { authorizationPermissionCodes } from '../../authorization/types/authorization'
 import { useProjectDetails } from '../../projects/hooks/useProjectDetails'
-import { useProjectMembers } from '../../projects/hooks/useProjectMembers'
+import { useProjectMember, useProjectMembers } from '../../projects/hooks/useProjectMembers'
 import { WhiteboardEditor } from '../components/WhiteboardEditor'
 import {
     useCreateWhiteboard,
@@ -41,6 +41,7 @@ export function WhiteboardWorkspacePage() {
     const { session } = useAuth()
     const { projectId = '' } = useParams()
     const tenantId = session?.tenantId ?? ''
+    const userId = session?.userId ?? ''
     const [selectedBoardId, setSelectedBoardId] = useState('')
     const [newBoardName, setNewBoardName] = useState('')
     const [editorEpoch, setEditorEpoch] = useState(0)
@@ -48,6 +49,17 @@ export function WhiteboardWorkspacePage() {
 
     const projectQuery = useProjectDetails(tenantId, projectId)
     const authorizationQuery = useCurrentAuthorization()
+    const canManageByPermission = hasProjectPermission(
+        authorizationQuery.data,
+        authorizationPermissionCodes.PROJECT_TASK_MANAGE,
+        projectId,
+    )
+    const currentMemberQuery = useProjectMember(
+        tenantId,
+        projectId,
+        userId,
+        Boolean(tenantId && projectId && userId && !canManageByPermission),
+    )
     const membersQuery = useProjectMembers(
         tenantId,
         projectId,
@@ -62,18 +74,7 @@ export function WhiteboardWorkspacePage() {
     const activeBoardId = selectedBoardId || boards[0]?.id || ''
     const boardQuery = useWhiteboard(tenantId, projectId, activeBoardId)
     const activeBoard = boardQuery.data
-
-    const canManageByPermission = hasProjectPermission(
-        authorizationQuery.data,
-        authorizationPermissionCodes.PROJECT_TASK_MANAGE,
-        projectId,
-    )
-    const isProjectLead = Boolean(
-        session?.userId &&
-        membersQuery.data?.content.some(
-            (member) => member.userId === session.userId && member.projectRole === 'PROJECT_LEAD',
-        ),
-    )
+    const isProjectLead = currentMemberQuery.data?.projectRole === 'PROJECT_LEAD'
     const archived = projectQuery.data?.status === 'ARCHIVED'
     const canManage = !archived && (canManageByPermission || isProjectLead)
 
@@ -315,7 +316,9 @@ export function WhiteboardWorkspacePage() {
                 </Box>
             </Box>
 
-            {(authorizationQuery.isPending || membersQuery.isPending) && (
+            {(authorizationQuery.isPending ||
+                membersQuery.isPending ||
+                currentMemberQuery.isPending) && (
                 <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                     <CircularProgress size={16} />
                     <Typography color="text.secondary" variant="caption">
