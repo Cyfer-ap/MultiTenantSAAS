@@ -1,6 +1,7 @@
 package com.chacha.multitenantsaas.whiteboards;
 
 import com.chacha.multitenantsaas.dto.PageResponse;
+import com.chacha.multitenantsaas.exception.DuplicateResourceException;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.projects.access.ProjectAccessPort;
 import com.chacha.multitenantsaas.service.CurrentActorService;
@@ -80,7 +81,7 @@ public class WhiteboardService {
         String normalizedName = normalizeName(request.name());
         if (whiteboardRepository.existsByTenantIdAndProjectIdAndNormalizedName(
                 tenantId, projectId, normalizedName)) {
-            throw new IllegalArgumentException("A whiteboard with this name already exists");
+            throw duplicateName();
         }
 
         UUID actorUserId = currentActorService.getRequiredActiveActor(tenantId, jwt).getId();
@@ -106,7 +107,7 @@ public class WhiteboardService {
         String normalizedName = normalizeName(request.name());
         if (whiteboardRepository.existsByTenantIdAndProjectIdAndNormalizedNameAndIdNot(
                 tenantId, projectId, normalizedName, boardId)) {
-            throw new IllegalArgumentException("A whiteboard with this name already exists");
+            throw duplicateName();
         }
 
         Map<String, UUID> linkedTasks = currentLinkedTasks(tenantId, projectId, boardId);
@@ -214,7 +215,7 @@ public class WhiteboardService {
                                                 board.getId(),
                                                 request.key(),
                                                 request.type(),
-                                                normalizeContent(request.content()),
+                                                request.content(),
                                                 linkedTasks.get(request.key()),
                                                 request.x(),
                                                 request.y(),
@@ -322,6 +323,10 @@ public class WhiteboardService {
         }
     }
 
+    private DuplicateResourceException duplicateName() {
+        return new DuplicateResourceException("A whiteboard with this name already exists");
+    }
+
     private Pageable bounded(Pageable pageable) {
         int size = Math.max(1, Math.min(pageable.getPageSize(), MAX_PAGE_SIZE));
         return PageRequest.of(pageable.getPageNumber(), size);
@@ -329,10 +334,6 @@ public class WhiteboardService {
 
     private String normalizeName(String value) {
         return value.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
-    }
-
-    private String normalizeContent(String value) {
-        return value == null ? null : value;
     }
 
     private String normalizeLabel(String value) {
