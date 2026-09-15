@@ -174,11 +174,7 @@ describe('WhiteboardWorkspacePage', () => {
         renderWorkspace([authorizationPermissionCodes.PROJECT_READ])
 
         expect(await screen.findByLabelText('New board name')).toBeInTheDocument()
-        expect(projectMembersApi.getMember).toHaveBeenCalledWith(
-            'tenant-1',
-            'project-1',
-            'user-1',
-        )
+        expect(projectMembersApi.getMember).toHaveBeenCalledWith('tenant-1', 'project-1', 'user-1')
     })
 
     it('keeps archived project boards read-only', async () => {

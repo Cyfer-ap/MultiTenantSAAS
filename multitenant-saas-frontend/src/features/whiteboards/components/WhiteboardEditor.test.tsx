@@ -72,8 +72,9 @@ describe('WhiteboardEditor', () => {
 
     it('autosaves a newly added sticky against the current board version', async () => {
         const user = userEvent.setup()
-        const update = vi.spyOn(whiteboardsApi, 'update').mockImplementation(
-            async (_tenantId, _projectId, _boardId, input) => ({
+        const update = vi
+            .spyOn(whiteboardsApi, 'update')
+            .mockImplementation(async (_tenantId, _projectId, _boardId, input) => ({
                 ...board,
                 version: 3,
                 name: input.name,
@@ -83,8 +84,7 @@ describe('WhiteboardEditor', () => {
                     linkedTaskId: null,
                 })),
                 edges: input.edges.map((edge, index) => ({ ...edge, id: `edge-${index}` })),
-            }),
-        )
+            }))
 
         renderEditor()
         await user.click(screen.getByRole('button', { name: 'Sticky' }))
