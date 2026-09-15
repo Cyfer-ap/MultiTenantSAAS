@@ -44,6 +44,22 @@ public final class ProjectSimulationDtos {
         UNCHANGED
     }
 
+    public record BaselineResponse(
+            UUID projectId,
+            Instant generatedAt,
+            List<BaselineTask> tasks,
+            List<BaselineDependency> dependencies) {}
+
+    public record BaselineTask(
+            UUID taskId,
+            String title,
+            String status,
+            UUID assigneeUserId,
+            String assigneeName,
+            Instant dueAt) {}
+
+    public record BaselineDependency(UUID blockingTaskId, UUID dependentTaskId) {}
+
     public record Response(
             UUID projectId,
             Instant generatedAt,
