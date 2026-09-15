@@ -148,8 +148,8 @@ const PlatformAuditLogsPage = lazy(() =>
 )
 
 const ProjectDetailsPage = lazy(() =>
-    import('../pages/ProjectDetailsPage').then((module) => ({
-        default: module.ProjectDetailsPage,
+    import('../features/whiteboards/pages/ProjectDetailsWithWhiteboardEntryPage').then((module) => ({
+        default: module.ProjectDetailsWithWhiteboardEntryPage,
     })),
 )
 
