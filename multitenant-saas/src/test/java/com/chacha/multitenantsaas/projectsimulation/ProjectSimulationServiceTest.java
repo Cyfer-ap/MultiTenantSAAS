@@ -37,6 +37,35 @@ class ProjectSimulationServiceTest {
     }
 
     @Test
+    void returnsBaselineSnapshotForScenarioEditor() {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        UUID owner = UUID.randomUUID();
+
+        when(taskSource.findProjectTasks(
+                        tenantId, projectId, ProjectSimulationService.MAX_TASKS + 1))
+                .thenReturn(
+                        List.of(
+                                task(second, "Build", owner, "Owner", "2026-09-22T10:00:00Z"),
+                                task(first, "Design", owner, "Owner", "2026-09-20T10:00:00Z")));
+        when(dependencySource.findProjectDependencies(
+                        tenantId, projectId, ProjectSimulationService.MAX_DEPENDENCIES + 1))
+                .thenReturn(List.of(new DependencySnapshot(first, second)));
+
+        var baseline = service.baseline(tenantId, projectId);
+
+        assertThat(baseline.projectId()).isEqualTo(projectId);
+        assertThat(baseline.tasks()).extracting(task -> task.title()).containsExactly("Build", "Design");
+        assertThat(baseline.dependencies())
+                .singleElement()
+                .satisfies(
+                        dependency -> {
+                            assertThat(dependency.blockingTaskId()).isEqualTo(first);
+                            assertThat(dependency.dependentTaskId()).isEqualTo(second);
+                        });
+    }
+
+    @Test
     void reportsDownstreamExposureAndNewDependencyDeadlineConflict() {
         UUID first = UUID.randomUUID();
         UUID second = UUID.randomUUID();
