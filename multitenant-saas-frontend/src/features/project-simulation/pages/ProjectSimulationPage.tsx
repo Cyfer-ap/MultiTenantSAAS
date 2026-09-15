@@ -24,7 +24,10 @@ import { Link, useParams } from 'react-router'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { useProjectDetails } from '../../projects/hooks/useProjectDetails'
 import { useProjectMembers } from '../../projects/hooks/useProjectMembers'
-import { useProjectSimulationBaseline, useRunProjectSimulation } from '../hooks/useProjectSimulation'
+import {
+    useProjectSimulationBaseline,
+    useRunProjectSimulation,
+} from '../hooks/useProjectSimulation'
 import type {
     ProjectSimulationDependencyChangeType,
     ProjectSimulationRequest,
@@ -193,7 +196,10 @@ export function ProjectSimulationPage() {
                 sx={{
                     display: 'grid',
                     gap: 2,
-                    gridTemplateColumns: { xs: '1fr', xl: 'minmax(340px, 0.85fr) minmax(0, 1.6fr)' },
+                    gridTemplateColumns: {
+                        xs: '1fr',
+                        xl: 'minmax(340px, 0.85fr) minmax(0, 1.6fr)',
+                    },
                 }}
             >
                 <Paper sx={{ alignSelf: 'start', padding: 2.5 }} variant="outlined">
@@ -250,7 +256,9 @@ export function ProjectSimulationPage() {
                         />
 
                         <FormControl disabled={!selectedTaskId} fullWidth size="small">
-                            <InputLabel id="simulation-assignee-label">Simulated assignee</InputLabel>
+                            <InputLabel id="simulation-assignee-label">
+                                Simulated assignee
+                            </InputLabel>
                             <Select
                                 label="Simulated assignee"
                                 labelId="simulation-assignee-label"
@@ -273,8 +281,8 @@ export function ProjectSimulationPage() {
 
                         {selectedTask && (
                             <Typography color="text.secondary" variant="caption">
-                                Current due: {formatDateTime(selectedTask.dueAt)} · Current assignee:{' '}
-                                {selectedTask.assigneeName ?? 'Unassigned'}
+                                Current due: {formatDateTime(selectedTask.dueAt)} · Current
+                                assignee: {selectedTask.assigneeName ?? 'Unassigned'}
                             </Typography>
                         )}
 
@@ -339,9 +347,11 @@ export function ProjectSimulationPage() {
                             </Select>
                         </FormControl>
 
-                        {blockingTaskId && dependentTaskId && blockingTaskId === dependentTaskId && (
-                            <Alert severity="warning">A task cannot depend on itself.</Alert>
-                        )}
+                        {blockingTaskId &&
+                            dependentTaskId &&
+                            blockingTaskId === dependentTaskId && (
+                                <Alert severity="warning">A task cannot depend on itself.</Alert>
+                            )}
 
                         <Stack direction="row" spacing={1}>
                             <Button
@@ -371,7 +381,10 @@ export function ProjectSimulationPage() {
 
                 <Stack spacing={2}>
                     {!result && !simulationMutation.isError && (
-                        <Paper sx={{ padding: { xs: 3, sm: 5 }, textAlign: 'center' }} variant="outlined">
+                        <Paper
+                            sx={{ padding: { xs: 3, sm: 5 }, textAlign: 'center' }}
+                            variant="outlined"
+                        >
                             <ScienceRoundedIcon color="disabled" sx={{ fontSize: 44 }} />
                             <Typography sx={{ marginTop: 1 }} variant="h6">
                                 Build a scenario
@@ -437,7 +450,11 @@ export function ProjectSimulationPage() {
                                     />
                                 </Stack>
                                 {result.taskImpacts.length === 0 ? (
-                                    <Typography color="text.secondary" sx={{ marginTop: 1 }} variant="body2">
+                                    <Typography
+                                        color="text.secondary"
+                                        sx={{ marginTop: 1 }}
+                                        variant="body2"
+                                    >
                                         This scenario does not change the evaluated project state.
                                     </Typography>
                                 ) : (
@@ -453,26 +470,48 @@ export function ProjectSimulationPage() {
                                                         <Typography variant="subtitle2">
                                                             {impact.title}
                                                         </Typography>
-                                                        <Typography color="text.secondary" variant="body2">
+                                                        <Typography
+                                                            color="text.secondary"
+                                                            variant="body2"
+                                                        >
                                                             {formatDateTime(impact.currentDueAt)} →{' '}
                                                             {formatDateTime(impact.simulatedDueAt)}
                                                         </Typography>
-                                                        <Typography color="text.secondary" variant="body2">
-                                                            {impact.currentAssigneeName ?? 'Unassigned'} →{' '}
-                                                            {impact.simulatedAssigneeName ?? 'Unassigned'}
+                                                        <Typography
+                                                            color="text.secondary"
+                                                            variant="body2"
+                                                        >
+                                                            {impact.currentAssigneeName ??
+                                                                'Unassigned'}{' '}
+                                                            →{' '}
+                                                            {impact.simulatedAssigneeName ??
+                                                                'Unassigned'}
                                                         </Typography>
                                                     </Box>
                                                     <Stack
                                                         direction="row"
                                                         spacing={0.75}
-                                                        sx={{ alignItems: 'flex-start', flexWrap: 'wrap' }}
+                                                        sx={{
+                                                            alignItems: 'flex-start',
+                                                            flexWrap: 'wrap',
+                                                        }}
                                                     >
-                                                        {impact.directChange && <Chip label="Direct" size="small" />}
+                                                        {impact.directChange && (
+                                                            <Chip label="Direct" size="small" />
+                                                        )}
                                                         {impact.downstreamAffected && (
-                                                            <Chip label="Downstream" size="small" variant="outlined" />
+                                                            <Chip
+                                                                label="Downstream"
+                                                                size="small"
+                                                                variant="outlined"
+                                                            />
                                                         )}
                                                         {impact.hasSimulatedDependencyConflict && (
-                                                            <Chip color="warning" label="Conflict" size="small" />
+                                                            <Chip
+                                                                color="warning"
+                                                                label="Conflict"
+                                                                size="small"
+                                                            />
                                                         )}
                                                     </Stack>
                                                 </Stack>
@@ -494,7 +533,10 @@ export function ProjectSimulationPage() {
                                                 <Stack
                                                     direction="row"
                                                     spacing={1}
-                                                    sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+                                                    sx={{
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between',
+                                                    }}
                                                 >
                                                     <Typography variant="body2">
                                                         {conflict.blockingTaskTitle} →{' '}
@@ -526,12 +568,18 @@ export function ProjectSimulationPage() {
                                             <Stack
                                                 direction="row"
                                                 key={impact.userId ?? 'unassigned'}
-                                                sx={{ justifyContent: 'space-between', paddingBlock: 1.25 }}
+                                                sx={{
+                                                    justifyContent: 'space-between',
+                                                    paddingBlock: 1.25,
+                                                }}
                                             >
-                                                <Typography variant="body2">{impact.displayName}</Typography>
                                                 <Typography variant="body2">
-                                                    {impact.baselineOpenTasks} → {impact.simulatedOpenTasks}{' '}
-                                                    ({impact.delta > 0 ? '+' : ''}
+                                                    {impact.displayName}
+                                                </Typography>
+                                                <Typography variant="body2">
+                                                    {impact.baselineOpenTasks} →{' '}
+                                                    {impact.simulatedOpenTasks} (
+                                                    {impact.delta > 0 ? '+' : ''}
                                                     {impact.delta})
                                                 </Typography>
                                             </Stack>

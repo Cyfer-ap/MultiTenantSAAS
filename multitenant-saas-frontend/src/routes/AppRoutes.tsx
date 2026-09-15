@@ -418,7 +418,9 @@ export function AppRoutes() {
                         <Route
                             element={
                                 <ProjectPermissionProtectedRoute
-                                    permissionCode={authorizationPermissionCodes.PROJECT_TASK_MANAGE}
+                                    permissionCode={
+                                        authorizationPermissionCodes.PROJECT_TASK_MANAGE
+                                    }
                                 />
                             }
                         >
