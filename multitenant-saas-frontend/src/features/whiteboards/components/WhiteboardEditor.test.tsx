@@ -120,6 +120,7 @@ describe('WhiteboardEditor', () => {
         renderEditor()
         fireEvent.pointerDown(screen.getByLabelText('Sticky node'), {
             pointerId: 1,
+            ctrlKey: true,
             clientX: 100,
             clientY: 120,
         })
