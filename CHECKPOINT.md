@@ -2,7 +2,7 @@
 
 Updated: 2026-09-16
 Repository: `Cyfer-ap/MultiTenantSAAS`
-Branch target: `main` after PR #146 merge
+Branch target: `main` after PR #147 merge
 
 This file is the **single repository-side source of truth for current project status**. Do not create additional progress/checkpoint mirrors.
 
@@ -24,14 +24,17 @@ Delivered product milestones include:
 - tenant-scoped project templates + Work Automation & Templates workspace — #143
 - Visual Workflow Builder — #144
 - Project Simulation / What-If Engine — #145
+- Collaborative Whiteboard backend/domain foundation — #146
 
-**Collaborative Whiteboard is active.** PR #146 establishes the persisted backend/domain foundation. It is not the completed user-facing whiteboard milestone; the visual project workspace and live collaboration remain separate follow-up slices.
+**Collaborative Whiteboard is the active feature.** PR #146 is merged and establishes V51 persistence/domain/API foundations. PR #147 is implementation-complete for the persisted project-facing visual workspace and remains pending final CI/security/container/static-analysis validation before merge.
 
-## Collaborative Whiteboard foundation checkpoint — #146
+Live presence/cursors are a later whiteboard collaboration enhancement; they are not required to begin the next committed differentiated product feature after #147 is merged green.
+
+## Collaborative Whiteboard checkpoint — #146/#147
 
 ### Ownership and boundaries
 
-The explicit `whiteboards` domain owns project-scoped board documents, visual nodes, connectors and node-to-task links.
+The explicit `whiteboards` domain owns project-scoped board documents, visual nodes, connectors and node-to-task links. Frontend ownership is localized under `features/whiteboards`.
 
 Cross-domain calls are deliberately narrow:
 
@@ -45,7 +48,7 @@ Whiteboards do not inject `ProjectService`, `ProjectTaskService`, `ProjectReposi
 
 ### V51 document model
 
-V51 creates:
+V51 is merged on `main` and creates:
 
 - `whiteboards`
 - `whiteboard_nodes`
@@ -66,7 +69,7 @@ Rules:
 
 ### API and concurrency
 
-Foundation API:
+API:
 
 ```text
 GET    /api/tenants/{tenantId}/projects/{projectId}/whiteboards
@@ -77,21 +80,59 @@ DELETE /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}?expect
 POST   /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}/nodes/{nodeKey}/convert-to-task
 ```
 
-Reads reuse project task-read authorization. Mutations reuse project task-manage authorization for the initial slice.
+Reads reuse project task-read authorization. Mutations reuse project task-manage authorization; exact project-lead membership remains a valid resource relationship through the existing authorization model.
 
 Update/delete/task-conversion requests carry the version the client edited. A stale version returns structured HTTP `409 Conflict`; duplicate board names also resolve to `409 RESOURCE_ALREADY_EXISTS`, including the database-race path.
 
 Archived projects remain readable but reject board mutation and task conversion.
 
+### Visual workspace — #147
+
+Private route:
+
+```text
+/projects/:projectId/whiteboards
+```
+
+Project details expose an **Open whiteboard** entry control through a whiteboard-owned wrapper rather than adding more responsibilities directly to the legacy project-details page.
+
+The workspace provides:
+
+- board selector/create/delete
+- draggable/resizable sticky, text and shape nodes
+- directed connectors
+- zoom/pan
+- Ctrl/Cmd multi-select
+- local undo/redo
+- board/node inspector
+- committed-edit autosave using the V51 expected version
+- explicit reload after stale/conflicting saves
+- read-only behavior for archived projects/users without edit authority
+- direct project-lead relationship lookup when no explicit task-manage permission exists
+
+The editor does not send a request for every pointer movement. Position/size changes are persisted when the interaction commits. It also avoids server-to-local `useEffect` synchronization; deliberate board switches/reloads remount from the authoritative snapshot.
+
 ### Node -> task conversion
 
 Sticky/text conversion uses the task-owned `TaskCreationPort` rather than writing task persistence directly. Normal task lifecycle behavior therefore remains authoritative for project status, creator/assignee membership, activity, audit, notifications, outbound webhooks and task-domain events.
 
-A converted node stores the returned `taskId`, rejects repeated conversion and retains the link across document replacement when its stable node key remains.
+The #147 conversion UX supports title, description, priority, active project-member assignee and due date. A converted node stores the returned task ID, rejects repeated conversion and retains the link across document replacement when its stable node key remains. Frontend task-cache invalidation uses the task domain's exported query-key contract.
+
+### Validation
+
+Focused frontend tests cover:
+
+- board creation for explicit project-task managers
+- project-lead management fallback without an explicit task-manage grant
+- archived-project read-only behavior
+- autosave with the current expected version
+- node -> task conversion and returned task/version state
+
+PR #147 remains draft until the final current head clears Frontend tests/lint/build plus the normal repository, backend, PostgreSQL/Flyway, security, container and Qodana gates.
 
 ### Transport guardrail
 
-V51 contains **no WebSocket/STOMP/presence/cursor persistence**. The stored board model is transport-independent. Real-time presence, cursors and resynchronization come only after the persisted visual workspace is stable.
+V51/#147 contain **no WebSocket/STOMP/presence/cursor persistence**. The stored board model is transport-independent. Presence, cursors and real-time resynchronization can be added later against this versioned document contract.
 
 Detailed contract: `guides/collaborative_whiteboard.md`.
 
@@ -137,7 +178,7 @@ Detailed contract: `guides/recurring_work_and_templates.md`.
 
 ## Database checkpoint
 
-After #146 merges, portable PostgreSQL Flyway migrations extend through **V51**.
+Portable PostgreSQL Flyway migrations extend through **V51**.
 
 ```text
 V45 personal workspace favorites/recent items
@@ -149,7 +190,7 @@ V50 visual workflow definitions/nodes/edges/executions
 V51 project whiteboards/nodes/connectors
 ```
 
-Project Simulation added no migration. Never rewrite an applied migration. After V51 is merged/applied, later persistence starts at **V52+**.
+Project Simulation and #147 add no migration. Never rewrite an applied migration. New persistence starts at **V52+**.
 
 ## Non-negotiable architecture rule
 
@@ -173,7 +214,7 @@ Do not move workflow execution into `ProjectTaskService`, recurrence into Calend
 
 ## Established application foundations
 
-Major capabilities include authentication/tenant isolation, invitations/password recovery, organization hierarchy, scoped authorization/delegation/Explain Access, projects/tasks/collaboration, Task Planning, recurring work/templates, visual workflows, project simulation, search/command palette/personal workspace/My Work/Saved Views/Dashboard/Calendar, R2-compatible attachments, durable notifications/email, API keys/quotas/usage, Stripe/Razorpay billing abstractions, outbound webhooks, enterprise OIDC SSO, auditability, PostgreSQL/Flyway and CI/security/container validation. Whiteboard persistence/domain APIs become part of this foundation with #146; the visual product surface is still in progress.
+Major capabilities include authentication/tenant isolation, invitations/password recovery, organization hierarchy, scoped authorization/delegation/Explain Access, projects/tasks/collaboration, Task Planning, recurring work/templates, visual workflows, project simulation, persisted project whiteboards, search/command palette/personal workspace/My Work/Saved Views/Dashboard/Calendar, R2-compatible attachments, durable notifications/email, API keys/quotas/usage, Stripe/Razorpay billing abstractions, outbound webhooks, enterprise OIDC SSO, auditability, PostgreSQL/Flyway and CI/security/container validation.
 
 ## Provider status
 
@@ -203,15 +244,11 @@ Canonical assessment: `guides/ENGINEERING_STANDARDS.md`.
 
 ## Next committed product sequence
 
-Collaborative Whiteboard is still the active feature and should finish in this order:
+Finish the active whiteboard milestone by merging **#147** only after its final head is green. Live presence/cursors remain an optional later whiteboard collaboration enhancement rather than a prerequisite for the next committed sequence item.
 
-1. **#146 backend/domain + V51 foundation** — current PR
-2. **visual whiteboard workspace** — board selector, draggable/resizable nodes, connectors, zoom/pan, autosave with version conflict handling, multi-select, local undo/redo, project entry point and node->task UX
-3. **live collaboration slice** — presence, cursors, transport/reconnect/resync after the persisted workspace is stable
+After #147 merges, continue:
 
-Then continue:
-
-1. Project Health / Risk Radar
+1. **Project Health / Risk Radar**
 2. Forms -> Workflow Engine
 3. Approval Workflows
 4. Client / Guest Portal
@@ -244,7 +281,7 @@ Optional SAML/SCIM, MFA/passkeys/device management and richer notification chann
 - `guides/recurring_work_and_templates.md` — recurrence/template contract
 - `guides/visual_workflow_builder.md` — workflow definition/runtime/canvas contract
 - `guides/project_simulation.md` — advisory What-If simulation contract
-- `guides/collaborative_whiteboard.md` — V51 whiteboard persistence/domain/task-conversion contract
+- `guides/collaborative_whiteboard.md` — V51 whiteboard persistence/domain/visual-workspace/task-conversion contract
 - `guides/Wild_Thoughts.md` — product idea vault and committed sequence section
 - `wiki/*.md` — canonical reader-facing Wiki source
 - `wiki/Roadmap.md` — product direction
