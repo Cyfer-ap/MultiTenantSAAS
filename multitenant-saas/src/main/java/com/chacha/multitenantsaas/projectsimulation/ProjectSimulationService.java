@@ -299,7 +299,7 @@ public class ProjectSimulationService {
 
     private Set<UUID> descendants(Set<UUID> seeds, Set<Edge> edges) {
         if (seeds.isEmpty()) {
-            return Set.of();
+            return new LinkedHashSet<>();
         }
         Map<UUID, List<UUID>> outgoing = new HashMap<>();
         for (Edge edge : edges) {
