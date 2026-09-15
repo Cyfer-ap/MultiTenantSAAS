@@ -54,11 +54,14 @@ export function WhiteboardWorkspacePage() {
         authorizationPermissionCodes.PROJECT_TASK_MANAGE,
         projectId,
     )
+    const needsMemberLookup = Boolean(
+        tenantId && projectId && userId && !canManageByPermission,
+    )
     const currentMemberQuery = useProjectMember(
         tenantId,
         projectId,
         userId,
-        Boolean(tenantId && projectId && userId && !canManageByPermission),
+        needsMemberLookup,
     )
     const membersQuery = useProjectMembers(
         tenantId,
@@ -318,7 +321,7 @@ export function WhiteboardWorkspacePage() {
 
             {(authorizationQuery.isPending ||
                 membersQuery.isPending ||
-                currentMemberQuery.isPending) && (
+                (needsMemberLookup && currentMemberQuery.isPending)) && (
                 <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                     <CircularProgress size={16} />
                     <Typography color="text.secondary" variant="caption">
