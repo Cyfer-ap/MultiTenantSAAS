@@ -24,6 +24,7 @@ Implemented foundations include:
 - Work Automation workspace with recurring work, task/project templates and visual workflows
 - Visual Workflow Builder with bounded validated graphs, task-domain event runtime, permission-aware task actions and execution history
 - Project Simulation / What-If Engine with advisory due-date/assignee/dependency scenarios, downstream conflict analysis and workload deltas
+- Collaborative Whiteboard persisted backend foundation with versioned project boards, bounded nodes/connectors and sticky/text-to-task conversion through task-owned creation
 - permission-aware Global Search and capability-aware Command Palette
 - server-backed Favorites + Recently Viewed with contextual favorite controls
 - My Work personal attention queue and server-backed Saved Views
@@ -48,13 +49,15 @@ Visual workflows consume task-domain events and cross back into task mutation on
 
 Project Simulation reads task and dependency snapshots through narrow domain-owned simulation source ports. It has no hidden mutation/apply path and does not inject the full task or graph service.
 
+Collaborative Whiteboard owns project-scoped visual documents while project lifecycle crosses through project-owned `ProjectAccessPort` and sticky/text conversion crosses through task-owned `TaskCreationPort`. The whiteboard domain does not own project/task persistence or WebSocket transport state.
+
 See [[Architecture]] for the current architecture and known debt.
 
 ## Database checkpoint
 
-PostgreSQL Flyway migrations remain through **V50**. Project Simulation adds no persistence migration. Applied migrations remain append-only; new persistence begins at **V51+**.
+After the Collaborative Whiteboard foundation merges, PostgreSQL Flyway migrations extend through **V51**. Applied migrations remain append-only; later persistence begins at **V52+**.
 
-Recent product migrations are V45 for personal-workspace favorites/recent items, V46 for saved views, V47 for task parent/dependency/label relationships, V48 for recurring task definitions/occurrences plus project task templates, V49 for tenant project templates plus bounded starter-task snapshots, and V50 for workflow definitions/nodes/edges/executions.
+Recent product migrations are V45 for personal-workspace favorites/recent items, V46 for saved views, V47 for task parent/dependency/label relationships, V48 for recurring task definitions/occurrences plus project task templates, V49 for tenant project templates plus bounded starter-task snapshots, V50 for workflow definitions/nodes/edges/executions, and V51 for project whiteboards/nodes/connectors.
 
 ## Start here
 
@@ -70,11 +73,11 @@ Recent product migrations are V45 for personal-workspace favorites/recent items,
 - [[Roadmap]]
 - [[Developer-Handoff]]
 
-Repository-side `guides/Wild_Thoughts.md` is the living idea vault; `guides/ENGINEERING_STANDARDS.md` owns technical-health rules; `guides/task_relationships.md` owns task hierarchy/dependency/label semantics; `guides/recurring_work_and_templates.md` owns work-generation semantics; `guides/visual_workflow_builder.md` owns workflow graph/runtime/canvas semantics; and `guides/project_simulation.md` owns advisory What-If simulation semantics.
+Repository-side `guides/Wild_Thoughts.md` is the living idea vault; `guides/ENGINEERING_STANDARDS.md` owns technical-health rules; `guides/task_relationships.md` owns task hierarchy/dependency/label semantics; `guides/recurring_work_and_templates.md` owns work-generation semantics; `guides/visual_workflow_builder.md` owns workflow graph/runtime/canvas semantics; `guides/project_simulation.md` owns advisory What-If simulation semantics; and `guides/collaborative_whiteboard.md` owns whiteboard persistence/domain/concurrency semantics.
 
 ## Current product direction
 
-Visual Workflow Builder and Project Simulation / What-If Engine are the first two completed items in the committed differentiated sequence. The next product feature is **Collaborative Whiteboard**, followed by Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+Visual Workflow Builder and Project Simulation / What-If Engine are complete. **Collaborative Whiteboard is active**: #146 establishes the V51 backend/domain foundation, followed by the visual project workspace and then live presence/cursors. After that come Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 Bulk/CSV, custom fields, knowledge/documents and broader analytics remain parked backlog unless explicitly reprioritized.
 

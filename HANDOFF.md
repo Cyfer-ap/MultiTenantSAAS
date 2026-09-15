@@ -1,6 +1,6 @@
 # MultiTenantSAAS — Development Handoff
 
-Updated: 2026-09-15
+Updated: 2026-09-16
 
 This is the **single repository-side resume document**. Current status lives in `CHECKPOINT.md`; architecture/quality rules live in `AGENTS.md` and `guides/ENGINEERING_STANDARDS.md`.
 
@@ -14,13 +14,14 @@ This is the **single repository-side resume document**. Current status lives in 
 6. `guides/recurring_work_and_templates.md`
 7. `guides/visual_workflow_builder.md`
 8. `guides/project_simulation.md`
-9. `guides/Wild_Thoughts.md`
-10. the focused guide for the domain being changed
-11. `wiki/Roadmap.md` when planning product direction
+9. `guides/collaborative_whiteboard.md`
+10. `guides/Wild_Thoughts.md`
+11. the focused guide for the domain being changed
+12. `wiki/Roadmap.md` when planning product direction
 
 ## Current state
 
-Major milestones are complete through the Project Simulation / What-If Engine program:
+Major milestones are complete through Project Simulation / What-If Engine, and Collaborative Whiteboard foundation is being established in #146:
 
 - billing/catalog — #106
 - tenant outbound webhooks — #112
@@ -40,8 +41,9 @@ Major milestones are complete through the Project Simulation / What-If Engine pr
 - tenant project templates + Work Automation & Templates — #143
 - Visual Workflow Builder — #144
 - Project Simulation / What-If Engine — #145
+- Collaborative Whiteboard backend/persistence foundation — #146 once merged green
 
-Portable PostgreSQL Flyway migrations remain through **V50** because #145 adds no persistence. New persistence must be **V51+**; never modify V50 or earlier after it is merged/applied.
+After #146 merges, portable PostgreSQL Flyway migrations extend through **V51**. Never modify V51 or earlier after it is merged/applied; later persistence starts at **V52+**.
 
 Stripe remains the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
@@ -51,11 +53,59 @@ Stripe remains the validated deployed Test Mode billing path. Razorpay integrati
 
 Backend features should use explicit domain packages. Frontend features should preserve locality under `features/<domain>/...`.
 
-Do not expand `ProjectTaskService` or `ProjectService` merely because a new feature eventually reads or changes projects/tasks.
+Do not expand `ProjectTaskService` or `ProjectService` merely because a new feature reads or changes projects/tasks.
+
+## Collaborative Whiteboard foundation checkpoint
+
+V51 owns:
+
+- `whiteboards`
+- `whiteboard_nodes`
+- `whiteboard_edges`
+
+Backend ownership:
+
+```text
+whiteboards
+    -> ProjectAccessPort -> project-owned adapter -> project existence/lifecycle
+    -> TaskCreationPort  -> task-owned adapter    -> real task creation
+```
+
+Preserve these rules:
+
+- project-scoped + tenant-scoped board access
+- board names unique within a project after normalization
+- initial nodes: `STICKY`, `TEXT`, `SHAPE`
+- max 300 nodes / 600 connectors per submitted document
+- stable node keys
+- bounded position/size/z-index
+- connectors reference existing nodes, reject self/duplicates and may form visual cycles
+- board-level optimistic versioning guards update/delete/task-conversion
+- stale versions return HTTP 409 with expected/current version details
+- duplicate board names return 409, including database-race conflicts
+- archived projects remain readable but reject whiteboard mutation
+- whiteboard domain does not inject project/task services or repositories
+- sticky/text -> task conversion crosses only through `TaskCreationPort`
+- converted nodes persist `linked_task_id` and cannot convert twice
+- linked task IDs survive document replacement when the stable node key remains
+- no WebSocket/STOMP/presence/cursor state is persisted in V51
+
+Foundation API:
+
+```text
+GET    /api/tenants/{tenantId}/projects/{projectId}/whiteboards
+POST   /api/tenants/{tenantId}/projects/{projectId}/whiteboards
+GET    /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}
+PUT    /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}
+DELETE /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}?expectedVersion={version}
+POST   /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}/nodes/{nodeKey}/convert-to-task
+```
+
+Detailed rules: `guides/collaborative_whiteboard.md`.
 
 ## Project Simulation checkpoint
 
-Backend ownership:
+Backend boundary:
 
 ```text
 projectsimulation
@@ -70,75 +120,17 @@ GET  /api/tenants/{tenantId}/projects/{projectId}/simulation/baseline
 POST /api/tenants/{tenantId}/projects/{projectId}/simulation
 ```
 
-Preserve these rules:
+Simulation remains advisory/read-only: due-date/assignee/dependency what-if changes, downstream exposure, dependency conflicts and workload deltas, with bounded inputs and no hidden apply path.
 
-- project-level `project.task.manage` authority is required
-- simulation is advisory/read-only
-- no hidden apply/mutation path
-- maximum 500 tasks and 1,000 dependency edges
-- maximum 100 task overrides and 100 dependency changes per request
-- unknown tasks, invalid assignees, self-dependencies, duplicates and cycles are rejected
-- due-date changes propagate only as dependency exposure/conflict analysis; no fake duration/finish prediction
-- assignment changes report open-task workload deltas
-- task and dependency state cross domain boundaries through narrow simulation source ports
-
-Frontend ownership:
-
-```text
-features/project-simulation/
-```
-
-Private route:
-
-```text
-/projects/:projectId/simulation
-```
-
-The first UI slice supports one task due-date/assignee override plus one dependency add/remove operation, then shows direct/downstream impact, conflicts and workload deltas. There is intentionally no apply action.
+Frontend route: `/projects/:projectId/simulation`.
 
 Detailed contract: `guides/project_simulation.md`.
 
 ## Visual Workflow Builder checkpoint
 
-V50 owns:
+V50 owns workflow definitions/nodes/edges/executions. Task lifecycle reaches workflows through task-domain events; automated mutations cross through task-owned `TaskAutomationMutationPort`. Execution remains idempotent and auditable, and workflow-generated task mutations remain non-recursive in v1.
 
-- `workflow_definitions`
-- `workflow_nodes`
-- `workflow_edges`
-- `workflow_executions`
-
-Definition/runtime boundaries:
-
-```text
-task lifecycle
-    -> tasks/events/TaskDomainEvent
-    -> after-commit workflow listener
-    -> workflows runtime/graph traversal
-    -> tasks/automation/TaskAutomationMutationPort
-    -> task-owned authorization + mutation rules
-```
-
-Rules to preserve:
-
-- tenant-scoped workflow catalog
-- `DRAFT` / `ACTIVE` / `PAUSED`
-- 2–50 nodes, 1–100 edges
-- exactly one trigger
-- all nodes reachable from the trigger
-- acyclic graph
-- trigger/action `DEFAULT`; condition `TRUE`/`FALSE`
-- strict typed configuration; no arbitrary code
-- active workflow must be paused before editing
-- workflow definition version increments on edit
-- task events are handled after the task transaction commits
-- runtime execution is idempotent per `(tenant, workflow, event)`
-- task action authorization is re-checked by the task-owned mutation adapter
-- workflow-driven mutations do not recursively emit workflow-triggering events in v1
-- execution outcomes are auditable/explainable: `RUNNING`, `SUCCEEDED`, `FAILED`, `SKIPPED`
-
-Initial operations are intentionally narrow: task created/status changed triggers, task priority/status equality conditions, and task priority/status mutations.
-
-Detailed contract: `guides/visual_workflow_builder.md`.
+Detailed rules: `guides/visual_workflow_builder.md`.
 
 ## Existing work-generation boundaries to preserve
 
@@ -152,20 +144,28 @@ projecttemplates -> ProjectCreationPort -> project-owned adapter -> normal proje
        └────────> TaskCreationPort -> task-owned adapter -> starter tasks
 ```
 
-V48/V49 recurrence/template semantics remain documented in `guides/recurring_work_and_templates.md`. Calendar remains a deadline projection. Task Relationships remains hierarchy/dependency/label ownership.
+V48/V49 recurrence/template semantics remain documented in `guides/recurring_work_and_templates.md`. Calendar remains deadline projection. Task Relationships remains hierarchy/dependency/label ownership.
 
 ## Resume here
 
-After #145 is merged green, start committed differentiated feature #3: **Collaborative Whiteboard**.
+After #146 merges green, continue **Collaborative Whiteboard** with the project-facing visual workspace as the next PR.
 
-First design constraints:
+Target #147 scope:
 
-1. create explicit whiteboard/canvas ownership instead of storing arbitrary canvas state on projects/tasks
-2. define a bounded board/document model with nodes, geometry and connections
-3. keep initial collaboration transport replaceable; do not couple the domain model directly to a WebSocket implementation
-4. convert a sticky/node to a real task only through the task-owned creation contract and current authorization/quota rules
-5. keep board access project-scoped and tenant-isolated
-6. add real-time presence/cursors only after the persisted single-user/multi-user board model is stable
+1. frontend domain under `features/whiteboards/`
+2. project route/entry point for a whiteboard workspace
+3. board list/create/select/delete
+4. draggable/resizable sticky, text and shape nodes
+5. visual connectors between nodes
+6. pan + zoom
+7. autosave full bounded document using `expectedVersion`
+8. explicit 409 stale-version recovery/refetch UX; never silently overwrite a newer board
+9. multi-select and local undo/redo
+10. node -> task conversion UI using the existing backend endpoint
+11. active task links visible on converted nodes
+12. no WebSocket/live cursor requirement yet
+
+After the persisted visual workspace is stable, add the live-collaboration slice with transport/reconnect/resync, presence and cursors while keeping the persisted document model transport-independent.
 
 Then continue the committed sequence:
 
@@ -198,11 +198,12 @@ Do not merge around failed gates. If Auto Format creates a bot-authored head, ma
 - tenant isolation precedes resource access
 - backend authorization is authoritative
 - automated workflows never grant authority
-- stored personal/workflow definitions do not bypass resource authorization
-- Calendar/Task Planning/Automation/Simulation data is authorized before exposure
+- stored personal/workflow/whiteboard definitions do not bypass resource authorization
+- Calendar/Task Planning/Automation/Simulation/Whiteboard data is authorized before exposure
 - simulation never mutates live state implicitly
-- generation/automation retries are idempotent where required
-- graph traversal and batch work remain bounded
+- whiteboard optimistic concurrency never silently overwrites newer state
+- generated tasks go through task-owned creation behavior
+- graph traversal and batch/document work remain bounded
 - Explain Access and enforcement share authorization semantics
 - delegated authority never exceeds current direct source authority
 - public APIs expose DTOs rather than persistence entities

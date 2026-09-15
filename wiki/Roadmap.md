@@ -70,7 +70,7 @@ Provides V50 workflow definitions/nodes/edges/executions, typed bounded DAGs, af
 
 ### Project Simulation / What-If Engine
 
-Completed through PR #145 once its final green head is merged.
+Completed through PR #145.
 
 Provides:
 
@@ -96,8 +96,8 @@ The first version intentionally does not invent task durations or predicted proj
 The older plan to move directly into bulk actions/CSV remains deliberately paused. The committed sequence continues in this order unless a production/security issue or explicit product decision reprioritizes it.
 
 1. ✅ **Visual Workflow Builder** — completed through #144.
-2. ✅ **Project Simulation / What-If Engine** — completed through #145 once merged green.
-3. 🚧 **Collaborative Whiteboard** — active next. Visual planning canvas whose nodes/stickies can become real tasks/projects; later add live presence/cursors.
+2. ✅ **Project Simulation / What-If Engine** — completed through #145.
+3. 🚧 **Collaborative Whiteboard** — active. #146 establishes the persisted backend/domain foundation; the visual workspace and then live collaboration follow as separate slices.
 4. **Project Health / Risk Radar** — explainable risk signals from overdue work, blockers, stale work, dependency criticality and workload pressure.
 5. **Forms -> Workflow Engine** — structured internal/public intake that creates authorized work and can launch workflows.
 6. **Approval Workflows** — reusable human review/approve/reject stages that compose with the workflow engine.
@@ -108,31 +108,53 @@ The older plan to move directly into bulk actions/CSV remains deliberately pause
 
 `guides/Wild_Thoughts.md` is the detailed idea vault and records overlap with earlier experiments such as Scenario/Sandbox Mode, Deadline Reality Check, Risk Inbox, Change Blast-Radius Preview and Human Checkpoints for Automation/AI.
 
-## Feature 3 — Collaborative Whiteboard — ACTIVE NEXT
+## Feature 3 — Collaborative Whiteboard — ACTIVE
 
-The whiteboard should connect visual planning to authoritative work without becoming another project/task god-service.
+The whiteboard connects visual planning to authoritative work without becoming another project/task god-service.
 
-First milestone:
+### Foundation — #146
 
-- explicit whiteboard/canvas owning domain
+The backend/persistence slice establishes:
+
+- explicit `whiteboards` domain
+- V51 `whiteboards`, `whiteboard_nodes`, `whiteboard_edges`
 - project-scoped, tenant-isolated boards
-- bounded persisted nodes, geometry and connections
-- basic sticky/text/shape/connector editing
-- stable node identifiers and deterministic board serialization
-- convert a board node/sticky to a real task through the task-owned creation contract
-- preserve normal task authorization, quotas, audit and lifecycle rules
-- frontend canvas with pan/zoom, selection, drag, resize and connectors
-- collaboration transport kept behind a replaceable boundary
+- bounded `STICKY`, `TEXT`, `SHAPE` nodes with stable keys and geometry
+- bounded connectors with valid visual cycles
+- board-level optimistic versioning and structured 409 stale-write conflicts
+- project lifecycle through project-owned `ProjectAccessPort`
+- sticky/text -> task conversion through task-owned `TaskCreationPort`
+- persisted `linked_task_id` so conversion is durable and non-repeatable
+- archived-project mutation protection
+- no WebSocket/STOMP persistence coupling
 
-Later layers may add presence/cursors, richer multiplayer editing, comments and additional board-to-work conversions after the persisted board model is stable.
+### Next slice — visual workspace
+
+After #146 merges green, build:
+
+- project whiteboard route/entry point
+- board list/create/select/delete
+- draggable/resizable sticky, text and shape nodes
+- connectors
+- pan/zoom
+- bounded autosave with `expectedVersion`
+- explicit stale-version refetch/recovery UX
+- multi-select
+- local undo/redo
+- node -> task conversion controls and linked-task indication
+
+### Later slice — live collaboration
+
+Only after the persisted workspace is stable, add replaceable real-time transport, presence/cursors and reconnect/resynchronization behavior.
 
 Guardrails:
 
 - canvas state is not stored as arbitrary fields on project/task rows
-- whiteboard objects do not become authoritative project work until an explicit conversion action succeeds
-- WebSocket/session infrastructure must not own whiteboard domain invariants
+- whiteboard objects do not become authoritative project work until explicit conversion succeeds
+- WebSocket/session infrastructure does not own whiteboard domain invariants
 - board access remains project-scoped and backend-authorized
 - conversion to task/project state uses narrow domain-owned creation contracts
+- optimistic conflicts never silently overwrite newer board state
 
 ## Product Experience & Work Management Enrichment — PARKED BEHIND THE COMMITTED SEQUENCE
 
@@ -163,7 +185,7 @@ Still valuable later:
 
 ## Immediate sequence
 
-1. **Collaborative Whiteboard**
+1. **Finish Collaborative Whiteboard** — #146 foundation -> visual workspace -> live collaboration
 2. Project Health / Risk Radar
 3. Forms -> Workflow Engine
 4. Approval Workflows
@@ -226,6 +248,6 @@ Target capabilities remain:
 
 Preserve tenant isolation, backend-authoritative authorization, delegation non-escalation, verified provider reconciliation, webhook-authoritative normal billing state, immutable history, Flyway invariants, database-backed concurrency, auditability, SSRF protections and server-only secrets/provider identifiers.
 
-New user-facing features must remain permission-aware and tenant-safe. Search, Favorites/Recent resolution, My Work, Saved Views, Calendar, Task Planning, recurrence/templates, workflows, simulation, analytics and future AI must filter through authoritative authorization boundaries rather than attempting to repair access after retrieval.
+New user-facing features must remain permission-aware and tenant-safe. Search, Favorites/Recent resolution, My Work, Saved Views, Calendar, Task Planning, recurrence/templates, workflows, simulation, whiteboards, analytics and future AI must filter through authoritative authorization boundaries rather than attempting to repair access after retrieval.
 
-New functionality must stay inside explicit domain modules and cross boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work, Saved Views, Calendar, Task Relationships, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, and Project Simulation source ports are current reference implementations.
+New functionality must stay inside explicit domain modules and cross boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work, Saved Views, Calendar, Task Relationships, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, Project Simulation source ports and Whiteboard `ProjectAccessPort`/`TaskCreationPort` usage are current reference implementations.

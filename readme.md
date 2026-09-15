@@ -20,6 +20,7 @@ For current project status and next work, use **`CHECKPOINT.md`** and **`HANDOFF
 - dedicated Work Automation workspace for recurring rules, task/project templates and visual workflows
 - tenant-scoped Visual Workflow Builder with validated trigger/condition/action graphs, permission-aware task actions and execution history
 - project-scoped Project Simulation / What-If workspace for advisory due-date, assignee and dependency scenarios with downstream conflict/workload impact
+- project-scoped Collaborative Whiteboard backend foundation with bounded versioned board documents and sticky/text-to-task conversion through task-owned creation
 - permission-aware Global Search and capability-aware Command Palette
 - server-backed Favorites + Recently Viewed with contextual favorite controls
 - My Work personal attention queue and server-backed Saved Views
@@ -112,12 +113,13 @@ This rule is part of the persistent repository contract in `AGENTS.md`.
 - Visual Workflow Builder through an explicit workflows domain, task-domain events and task-owned `TaskAutomationMutationPort`
 - execution history and a dependency-free visual workflow canvas inside the Work Automation workspace
 - Project Simulation / What-If Engine through an explicit `projectsimulation` domain and narrow task/dependency read ports, with no implicit live-state mutation
+- Collaborative Whiteboard persisted-domain foundation through explicit `whiteboards` ownership, project-owned access checks and task-owned conversion
 
 Stripe is the validated deployed Test Mode payment path. Razorpay application/catalog integration remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
 ## Database
 
-Production schema evolution is owned by Flyway. Shared PostgreSQL migrations currently extend through **V50**. Project Simulation adds no persistence. Never rewrite an applied migration; new persistence begins at **V51+**.
+Production schema evolution is owned by Flyway. After the Collaborative Whiteboard foundation merges, shared PostgreSQL migrations extend through **V51**. Never rewrite an applied migration; later persistence begins at **V52+**.
 
 ```text
 multitenant-saas/src/main/resources/db/migration    historical H2 migrations
@@ -125,7 +127,7 @@ multitenant-saas/src/main/resources/db/postgresql  PostgreSQL baseline/current m
 multitenant-saas/src/main/resources/db/common      portable shared migrations
 ```
 
-Recent product migrations include V45 for personal-workspace favorites/recent items, V46 for saved views, V47 for task parent/dependency/label relationships, V48 for recurring task definitions/occurrences plus project task templates, V49 for tenant project templates with bounded starter-task snapshots, and V50 for visual workflow definitions/nodes/edges/executions.
+Recent product migrations include V45 for personal-workspace favorites/recent items, V46 for saved views, V47 for task parent/dependency/label relationships, V48 for recurring task definitions/occurrences plus project task templates, V49 for tenant project templates with bounded starter-task snapshots, V50 for visual workflow definitions/nodes/edges/executions, and V51 for project whiteboards/nodes/connectors.
 
 ## Verification
 
@@ -162,6 +164,7 @@ Documentation ownership is deliberately narrow to prevent drift:
 - `guides/recurring_work_and_templates.md` — recurring work, task-template and project-template generation contract
 - `guides/visual_workflow_builder.md` — workflow graph/runtime/canvas contract
 - `guides/project_simulation.md` — advisory What-If simulation contract
+- `guides/collaborative_whiteboard.md` — whiteboard V51/domain/concurrency/task-conversion contract
 - focused guides — domain-specific behavior
 - `guides/Wild_Thoughts.md` — product idea vault; Section 1.3 records the committed differentiated sequence
 - `wiki/*.md` — canonical source for the published reader-facing Wiki
@@ -171,7 +174,7 @@ The Wiki is automatically validated and published from merged `main` by `.github
 
 ## Current product direction
 
-Visual Workflow Builder and Project Simulation / What-If Engine are the first two completed features in the committed differentiated sequence. The next feature is **Collaborative Whiteboard**, followed by Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+Visual Workflow Builder and Project Simulation / What-If Engine are complete. **Collaborative Whiteboard is active**: the V51 backend/persistence foundation is #146, followed by the project-facing visual canvas and then a separate live-collaboration slice. After that come Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 Bulk actions/CSV, custom fields, knowledge/documents and broader analytics remain valuable parked backlog unless priorities are explicitly changed.
 
