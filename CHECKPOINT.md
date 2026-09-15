@@ -2,7 +2,7 @@
 
 Updated: 2026-09-15
 Repository: `Cyfer-ap/MultiTenantSAAS`
-Branch target: `main` after PR #144 merge
+Branch target: `main` after PR #145 merge
 
 This file is the **single repository-side source of truth for current project status**. Do not create additional progress/checkpoint mirrors.
 
@@ -23,8 +23,74 @@ Delivered product milestones include:
 - recurring-task + project-scoped task-template foundation — #141
 - tenant-scoped project templates + Work Automation & Templates workspace — #143
 - Visual Workflow Builder — #144
+- Project Simulation / What-If Engine — #145
 
-The **Visual Workflow Builder milestone is complete with #144** once the final PR head is merged green.
+The **Project Simulation / What-If Engine milestone is implementation-complete in #145** and ready for merge once the final PR head remains green.
+
+## Project simulation checkpoint
+
+### Backend ownership and contract
+
+The explicit `projectsimulation` domain owns advisory scenario orchestration. It does not mutate live project/task/dependency state.
+
+API surface:
+
+```text
+GET  /api/tenants/{tenantId}/projects/{projectId}/simulation/baseline
+POST /api/tenants/{tenantId}/projects/{projectId}/simulation
+```
+
+Both endpoints require project-level `project.task.manage` authority.
+
+The simulation coordinator reads authoritative state only through narrow domain-owned ports:
+
+```text
+projectsimulation
+    -> ProjectSimulationTaskSource -> task-owned adapter
+    -> ProjectSimulationDependencySource -> Task Relationships-owned adapter
+```
+
+It deliberately does not inject `ProjectTaskService` or `TaskGraphService`.
+
+### Current simulation model
+
+A scenario can evaluate hypothetical:
+
+- task due-date changes
+- task assignee changes
+- dependency additions
+- dependency removals
+
+The engine reports:
+
+- direct task changes
+- downstream tasks exposed through dependencies
+- baseline vs simulated dependency deadline conflicts
+- new/resolved conflicts
+- assignee open-task workload deltas
+- reassignment counts
+
+Guardrails:
+
+- maximum 500 project tasks
+- maximum 1,000 dependency edges
+- maximum 100 task overrides and 100 dependency changes per request
+- unknown tasks and invalid project assignees are rejected
+- self-dependencies, duplicate changes and cyclic simulated graphs are rejected
+- no persistence/apply path exists
+- no project completion date is fabricated because the current task model has no duration/effort field
+
+### Frontend
+
+The private project route is:
+
+```text
+/projects/:projectId/simulation
+```
+
+The What-If Simulator loads the project baseline, allows one task override plus one dependency change in the first UI slice, and displays direct/downstream impact, dependency conflicts and workload deltas. The UI is explicitly advisory and exposes no apply action.
+
+Detailed contract: `guides/project_simulation.md`.
 
 ## Visual workflow checkpoint
 
@@ -69,7 +135,7 @@ Runtime behavior:
 
 ### Frontend
 
-`/work-automation` now owns four surfaces:
+`/work-automation` owns four surfaces:
 
 - recurring work
 - task templates
@@ -77,16 +143,6 @@ Runtime behavior:
 - Workflow builder
 
 The workflow tab provides a dependency-free draggable node canvas, connection rendering, node inspector, branch-target editing, save/activate/pause lifecycle and tenant-wide recent execution history. Active workflows are read-only until paused.
-
-Frontend ownership remains explicit under:
-
-```text
-features/recurring-work/
-features/task-templates/
-features/project-templates/
-features/workflow-builder/
-features/work-automation/
-```
 
 Detailed workflow contract: `guides/visual_workflow_builder.md`.
 
@@ -117,7 +173,7 @@ V49 tenant project templates + bounded starter-task snapshots
 V50 visual workflow definitions/nodes/edges/executions
 ```
 
-Never rewrite an applied migration. After #144, new persistence starts at **V51+**.
+Project Simulation adds no persistence migration. Never rewrite an applied migration. New persistence starts at **V51+**.
 
 ## Non-negotiable architecture rule
 
@@ -134,12 +190,13 @@ Current reference implementations include:
 - `TaskCreationPort`
 - `ProjectCreationPort`
 - workflow task-domain events + `TaskAutomationMutationPort`
+- Project Simulation task/dependency source ports
 
-Do not move workflow execution into `ProjectTaskService`, recurrence into Calendar, or template orchestration into legacy project/task god-services.
+Do not move workflow execution into `ProjectTaskService`, recurrence into Calendar, simulation into legacy project/task services, or template orchestration into legacy project/task god-services.
 
 ## Established application foundations
 
-Major capabilities now include authentication/tenant isolation, invitations/password recovery, organization hierarchy, scoped authorization/delegation/Explain Access, projects/tasks/collaboration, Task Planning, recurring work/templates, visual workflows, search/command palette/personal workspace/My Work/Saved Views/Dashboard/Calendar, R2-compatible attachments, durable notifications/email, API keys/quotas/usage, Stripe/Razorpay billing abstractions, outbound webhooks, enterprise OIDC SSO, auditability, PostgreSQL/Flyway, CI/security/container validation.
+Major capabilities now include authentication/tenant isolation, invitations/password recovery, organization hierarchy, scoped authorization/delegation/Explain Access, projects/tasks/collaboration, Task Planning, recurring work/templates, visual workflows, project simulation, search/command palette/personal workspace/My Work/Saved Views/Dashboard/Calendar, R2-compatible attachments, durable notifications/email, API keys/quotas/usage, Stripe/Razorpay billing abstractions, outbound webhooks, enterprise OIDC SSO, auditability, PostgreSQL/Flyway, CI/security/container validation.
 
 ## Provider status
 
@@ -169,20 +226,19 @@ Canonical assessment: `guides/ENGINEERING_STANDARDS.md`.
 
 ## Next committed product sequence
 
-With feature #1 complete, continue the committed differentiated sequence:
+With features #1 and #2 complete, continue the committed differentiated sequence:
 
-1. **Project Simulation / What-If Engine**
-2. Collaborative Whiteboard
-3. Project Health / Risk Radar
-4. Forms -> Workflow Engine
-5. Approval Workflows
-6. Client / Guest Portal
-7. Team Workload Engine
-8. Workspace Knowledge Graph
-9. AI / Agent Teammates
-10. resume parked backlog such as bulk actions/CSV, custom fields, knowledge/documents and broader analytics unless priorities are explicitly changed
+1. **Collaborative Whiteboard**
+2. Project Health / Risk Radar
+3. Forms -> Workflow Engine
+4. Approval Workflows
+5. Client / Guest Portal
+6. Team Workload Engine
+7. Workspace Knowledge Graph
+8. AI / Agent Teammates
+9. resume parked backlog such as bulk actions/CSV, custom fields, knowledge/documents and broader analytics unless priorities are explicitly changed
 
-For Project Simulation, simulation state must remain private/advisory until a human explicitly applies it. First choose the owning domain and narrow read/apply contracts; do not mutate live project/task state while calculating a scenario.
+For Collaborative Whiteboard, keep canvas/document ownership explicit and convert whiteboard objects into real project/task records only through narrow project/task creation contracts. Do not turn the whiteboard module into another project/task god-service.
 
 ## Deferred platform work
 
@@ -207,6 +263,7 @@ Optional SAML/SCIM, MFA/passkeys/device management and richer notification chann
 - `guides/task_relationships.md` — task relationship contract
 - `guides/recurring_work_and_templates.md` — recurrence/template contract
 - `guides/visual_workflow_builder.md` — workflow definition/runtime/canvas contract
+- `guides/project_simulation.md` — advisory What-If simulation contract
 - `guides/Wild_Thoughts.md` — product idea vault and committed sequence section
 - `wiki/*.md` — canonical reader-facing Wiki source
 - `wiki/Roadmap.md` — product direction
