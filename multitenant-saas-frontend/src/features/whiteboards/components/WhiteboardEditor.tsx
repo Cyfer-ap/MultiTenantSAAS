@@ -34,10 +34,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react'
 import { useRef, useState } from 'react'
 
 import type { ProjectMember } from '../../projects/types/projects'
-import {
-    useConvertWhiteboardNodeToTask,
-    useUpdateWhiteboard,
-} from '../hooks/useWhiteboards'
+import { useConvertWhiteboardNodeToTask, useUpdateWhiteboard } from '../hooks/useWhiteboards'
 import type {
     ProjectTaskPriority,
     Whiteboard,
@@ -136,7 +133,12 @@ function nodeLabel(type: WhiteboardNodeType): string {
     return 'Shape'
 }
 
-function makeNode(type: WhiteboardNodeType, index: number, pan: { x: number; y: number }, zoom: number) {
+function makeNode(
+    type: WhiteboardNodeType,
+    index: number,
+    pan: { x: number; y: number },
+    zoom: number,
+) {
     const key = `node_${Date.now().toString(36)}_${index}`
     const x = clamp((460 - pan.x) / zoom + index * 24, -100000, 100000)
     const y = clamp((260 - pan.y) / zoom + index * 24, -100000, 100000)
@@ -198,7 +200,9 @@ export function WhiteboardEditor({
     const convertMutation = useConvertWhiteboardNodeToTask(tenantId, projectId, board.id)
     const editable = canManage && !updateMutation.isPending && !convertMutation.isPending
     const selectedNode =
-        selectedKeys.length === 1 ? draft.nodes.find((node) => node.key === selectedKeys[0]) : undefined
+        selectedKeys.length === 1
+            ? draft.nodes.find((node) => node.key === selectedKeys[0])
+            : undefined
 
     const setDraftValue = (next: DraftBoard): void => {
         draftRef.current = next
@@ -316,7 +320,10 @@ export function WhiteboardEditor({
         setConnectorSource(null)
     }
 
-    const beginNodeDrag = (event: ReactPointerEvent<HTMLDivElement>, node: WhiteboardNode): void => {
+    const beginNodeDrag = (
+        event: ReactPointerEvent<HTMLDivElement>,
+        node: WhiteboardNode,
+    ): void => {
         event.stopPropagation()
         if (connectorSource) {
             addConnector(node.key)
@@ -680,7 +687,12 @@ export function WhiteboardEditor({
                     <svg
                         aria-hidden="true"
                         height="100%"
-                        style={{ inset: 0, pointerEvents: 'none', position: 'absolute', width: '100%' }}
+                        style={{
+                            inset: 0,
+                            pointerEvents: 'none',
+                            position: 'absolute',
+                            width: '100%',
+                        }}
                         width="100%"
                     >
                         <g transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}>
@@ -738,7 +750,11 @@ export function WhiteboardEditor({
                                                   : 'background.paper',
                                         borderColor: selected ? 'primary.main' : 'divider',
                                         borderWidth: selected ? 2 : 1,
-                                        cursor: connectorSource ? 'crosshair' : editable ? 'move' : 'default',
+                                        cursor: connectorSource
+                                            ? 'crosshair'
+                                            : editable
+                                              ? 'move'
+                                              : 'default',
                                         display: 'flex',
                                         flexDirection: 'column',
                                         height: node.height,
@@ -932,7 +948,11 @@ export function WhiteboardEditor({
                                                 sx={{ alignItems: 'center' }}
                                             >
                                                 <Typography
-                                                    sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                                    sx={{
+                                                        flex: 1,
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                    }}
                                                     variant="caption"
                                                 >
                                                     {edge.sourceKey} → {edge.targetKey}
@@ -960,7 +980,9 @@ export function WhiteboardEditor({
                             </Typography>
                         ) : null}
                         {!canManage && (
-                            <Alert severity="info">You have read-only access to this whiteboard.</Alert>
+                            <Alert severity="info">
+                                You have read-only access to this whiteboard.
+                            </Alert>
                         )}
                     </Stack>
                 </Paper>

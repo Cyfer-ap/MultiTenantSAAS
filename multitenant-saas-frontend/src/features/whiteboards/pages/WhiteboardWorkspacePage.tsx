@@ -70,10 +70,9 @@ export function WhiteboardWorkspacePage() {
     )
     const isProjectLead = Boolean(
         session?.userId &&
-            membersQuery.data?.content.some(
-                (member) =>
-                    member.userId === session.userId && member.projectRole === 'PROJECT_LEAD',
-            ),
+        membersQuery.data?.content.some(
+            (member) => member.userId === session.userId && member.projectRole === 'PROJECT_LEAD',
+        ),
     )
     const archived = projectQuery.data?.status === 'ARCHIVED'
     const canManage = !archived && (canManageByPermission || isProjectLead)
@@ -165,8 +164,8 @@ export function WhiteboardWorkspacePage() {
                     </Typography>
                 </Stack>
                 <Typography color="text.secondary" sx={{ marginTop: 0.75 }} variant="body2">
-                    Plan spatially with stickies, text, shapes and connectors, then turn useful nodes
-                    into ordinary project tasks without bypassing task rules.
+                    Plan spatially with stickies, text, shapes and connectors, then turn useful
+                    nodes into ordinary project tasks without bypassing task rules.
                 </Typography>
             </Box>
 
@@ -297,7 +296,10 @@ export function WhiteboardWorkspacePage() {
                             }
                             severity="error"
                         >
-                            {getErrorMessage(boardQuery.error, 'The selected whiteboard could not be loaded.')}
+                            {getErrorMessage(
+                                boardQuery.error,
+                                'The selected whiteboard could not be loaded.',
+                            )}
                         </Alert>
                     ) : (
                         <WhiteboardEditor

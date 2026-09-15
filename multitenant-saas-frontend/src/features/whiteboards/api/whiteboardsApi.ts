@@ -55,9 +55,12 @@ async function remove(
     boardId: string,
     expectedVersion: number,
 ): Promise<void> {
-    await httpClient.delete(`/api/tenants/${tenantId}/projects/${projectId}/whiteboards/${boardId}`, {
-        params: { expectedVersion },
-    })
+    await httpClient.delete(
+        `/api/tenants/${tenantId}/projects/${projectId}/whiteboards/${boardId}`,
+        {
+            params: { expectedVersion },
+        },
+    )
 }
 
 async function convertNodeToTask(

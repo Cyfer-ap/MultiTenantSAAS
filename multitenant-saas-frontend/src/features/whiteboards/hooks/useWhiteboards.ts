@@ -35,10 +35,16 @@ export function useWhiteboard(tenantId: string, projectId: string, boardId: stri
 export function useCreateWhiteboard(tenantId: string, projectId: string) {
     const queryClient = useQueryClient()
     return useMutation({
-        mutationFn: (input: WhiteboardCreateInput) => whiteboardsApi.create(tenantId, projectId, input),
+        mutationFn: (input: WhiteboardCreateInput) =>
+            whiteboardsApi.create(tenantId, projectId, input),
         onSuccess: async (board) => {
-            queryClient.setQueryData(whiteboardQueryKeys.detail(tenantId, projectId, board.id), board)
-            await queryClient.invalidateQueries({ queryKey: whiteboardQueryKeys.list(tenantId, projectId) })
+            queryClient.setQueryData(
+                whiteboardQueryKeys.detail(tenantId, projectId, board.id),
+                board,
+            )
+            await queryClient.invalidateQueries({
+                queryKey: whiteboardQueryKeys.list(tenantId, projectId),
+            })
         },
     })
 }
@@ -49,8 +55,13 @@ export function useUpdateWhiteboard(tenantId: string, projectId: string, boardId
         mutationFn: (input: WhiteboardUpdateInput) =>
             whiteboardsApi.update(tenantId, projectId, boardId, input),
         onSuccess: async (board: Whiteboard) => {
-            queryClient.setQueryData(whiteboardQueryKeys.detail(tenantId, projectId, board.id), board)
-            await queryClient.invalidateQueries({ queryKey: whiteboardQueryKeys.list(tenantId, projectId) })
+            queryClient.setQueryData(
+                whiteboardQueryKeys.detail(tenantId, projectId, board.id),
+                board,
+            )
+            await queryClient.invalidateQueries({
+                queryKey: whiteboardQueryKeys.list(tenantId, projectId),
+            })
         },
     })
 }
@@ -64,7 +75,9 @@ export function useDeleteWhiteboard(tenantId: string, projectId: string) {
             queryClient.removeQueries({
                 queryKey: whiteboardQueryKeys.detail(tenantId, projectId, variables.boardId),
             })
-            await queryClient.invalidateQueries({ queryKey: whiteboardQueryKeys.list(tenantId, projectId) })
+            await queryClient.invalidateQueries({
+                queryKey: whiteboardQueryKeys.list(tenantId, projectId),
+            })
         },
     })
 }
@@ -76,14 +89,21 @@ export function useConvertWhiteboardNodeToTask(
 ) {
     const queryClient = useQueryClient()
     return useMutation({
-        mutationFn: ({ nodeKey, input }: { nodeKey: string; input: ConvertWhiteboardNodeToTaskInput }) =>
-            whiteboardsApi.convertNodeToTask(tenantId, projectId, boardId, nodeKey, input),
+        mutationFn: ({
+            nodeKey,
+            input,
+        }: {
+            nodeKey: string
+            input: ConvertWhiteboardNodeToTaskInput
+        }) => whiteboardsApi.convertNodeToTask(tenantId, projectId, boardId, nodeKey, input),
         onSuccess: async () => {
             await Promise.all([
                 queryClient.invalidateQueries({
                     queryKey: whiteboardQueryKeys.detail(tenantId, projectId, boardId),
                 }),
-                queryClient.invalidateQueries({ queryKey: whiteboardQueryKeys.list(tenantId, projectId) }),
+                queryClient.invalidateQueries({
+                    queryKey: whiteboardQueryKeys.list(tenantId, projectId),
+                }),
                 queryClient.invalidateQueries({ queryKey: ['project-tasks', tenantId, projectId] }),
             ])
         },
