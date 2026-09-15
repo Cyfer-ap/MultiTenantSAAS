@@ -165,9 +165,7 @@ class WhiteboardServiceTest {
         when(projectAccessPort.requireProject(tenantId, projectId))
                 .thenReturn(new ProjectAccessSnapshot(projectId, ProjectStatus.ARCHIVED));
 
-        assertThatThrownBy(
-                        () ->
-                                service.delete(tenantId, projectId, boardId, 0L))
+        assertThatThrownBy(() -> service.delete(tenantId, projectId, boardId, 0L))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Archived projects cannot be modified");
 
