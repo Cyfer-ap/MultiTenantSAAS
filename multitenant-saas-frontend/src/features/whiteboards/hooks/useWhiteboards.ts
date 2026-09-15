@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { projectTasksQueryKeys } from '../../projects/hooks/useProjectTasks'
 import { whiteboardsApi } from '../api/whiteboardsApi'
 import type {
     ConvertWhiteboardNodeToTaskInput,
@@ -104,7 +105,9 @@ export function useConvertWhiteboardNodeToTask(
                 queryClient.invalidateQueries({
                     queryKey: whiteboardQueryKeys.list(tenantId, projectId),
                 }),
-                queryClient.invalidateQueries({ queryKey: ['project-tasks', tenantId, projectId] }),
+                queryClient.invalidateQueries({
+                    queryKey: projectTasksQueryKeys.project(tenantId, projectId),
+                }),
             ])
         },
     })
