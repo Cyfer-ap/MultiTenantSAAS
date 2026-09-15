@@ -54,15 +54,8 @@ export function WhiteboardWorkspacePage() {
         authorizationPermissionCodes.PROJECT_TASK_MANAGE,
         projectId,
     )
-    const needsMemberLookup = Boolean(
-        tenantId && projectId && userId && !canManageByPermission,
-    )
-    const currentMemberQuery = useProjectMember(
-        tenantId,
-        projectId,
-        userId,
-        needsMemberLookup,
-    )
+    const needsMemberLookup = Boolean(tenantId && projectId && userId && !canManageByPermission)
+    const currentMemberQuery = useProjectMember(tenantId, projectId, userId, needsMemberLookup)
     const membersQuery = useProjectMembers(
         tenantId,
         projectId,
