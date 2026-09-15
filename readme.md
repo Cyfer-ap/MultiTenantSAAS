@@ -19,6 +19,7 @@ For current project status and next work, use **`CHECKPOINT.md`** and **`HANDOFF
 - tenant-scoped reusable project templates with bounded starter-task snapshots
 - dedicated Work Automation workspace for recurring rules, task/project templates and visual workflows
 - tenant-scoped Visual Workflow Builder with validated trigger/condition/action graphs, permission-aware task actions and execution history
+- project-scoped Project Simulation / What-If workspace for advisory due-date, assignee and dependency scenarios with downstream conflict/workload impact
 - permission-aware Global Search and capability-aware Command Palette
 - server-backed Favorites + Recently Viewed with contextual favorite controls
 - My Work personal attention queue and server-backed Saved Views
@@ -110,12 +111,13 @@ This rule is part of the persistent repository contract in `AGENTS.md`.
 - tenant-scoped project templates through a project-owned `ProjectCreationPort` plus `TaskCreationPort` starter-task snapshots
 - Visual Workflow Builder through an explicit workflows domain, task-domain events and task-owned `TaskAutomationMutationPort`
 - execution history and a dependency-free visual workflow canvas inside the Work Automation workspace
+- Project Simulation / What-If Engine through an explicit `projectsimulation` domain and narrow task/dependency read ports, with no implicit live-state mutation
 
 Stripe is the validated deployed Test Mode payment path. Razorpay application/catalog integration remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
 ## Database
 
-Production schema evolution is owned by Flyway. Shared PostgreSQL migrations currently extend through **V50**. Never rewrite an applied migration; after V50 is merged/applied, new persistence begins at **V51+**.
+Production schema evolution is owned by Flyway. Shared PostgreSQL migrations currently extend through **V50**. Project Simulation adds no persistence. Never rewrite an applied migration; new persistence begins at **V51+**.
 
 ```text
 multitenant-saas/src/main/resources/db/migration    historical H2 migrations
@@ -159,6 +161,7 @@ Documentation ownership is deliberately narrow to prevent drift:
 - `guides/task_relationships.md` — task hierarchy/dependency/label semantics and ownership
 - `guides/recurring_work_and_templates.md` — recurring work, task-template and project-template generation contract
 - `guides/visual_workflow_builder.md` — workflow graph/runtime/canvas contract
+- `guides/project_simulation.md` — advisory What-If simulation contract
 - focused guides — domain-specific behavior
 - `guides/Wild_Thoughts.md` — product idea vault; Section 1.3 records the committed differentiated sequence
 - `wiki/*.md` — canonical source for the published reader-facing Wiki
@@ -168,7 +171,7 @@ The Wiki is automatically validated and published from merged `main` by `.github
 
 ## Current product direction
 
-Visual Workflow Builder is the first completed feature in the committed differentiated sequence. The next feature is **Project Simulation / What-If Engine**, followed by Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+Visual Workflow Builder and Project Simulation / What-If Engine are the first two completed features in the committed differentiated sequence. The next feature is **Collaborative Whiteboard**, followed by Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 Bulk actions/CSV, custom fields, knowledge/documents and broader analytics remain valuable parked backlog unless priorities are explicitly changed.
 
