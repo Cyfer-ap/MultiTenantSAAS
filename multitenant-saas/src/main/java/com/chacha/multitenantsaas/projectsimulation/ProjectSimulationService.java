@@ -1,5 +1,8 @@
 package com.chacha.multitenantsaas.projectsimulation;
 
+import com.chacha.multitenantsaas.projectsimulation.dto.ProjectSimulationDtos.BaselineDependency;
+import com.chacha.multitenantsaas.projectsimulation.dto.ProjectSimulationDtos.BaselineResponse;
+import com.chacha.multitenantsaas.projectsimulation.dto.ProjectSimulationDtos.BaselineTask;
 import com.chacha.multitenantsaas.projectsimulation.dto.ProjectSimulationDtos.ConflictChangeType;
 import com.chacha.multitenantsaas.projectsimulation.dto.ProjectSimulationDtos.DependencyChange;
 import com.chacha.multitenantsaas.projectsimulation.dto.ProjectSimulationDtos.DependencyChangeType;
@@ -45,6 +48,63 @@ public class ProjectSimulationService {
             ProjectSimulationDependencySource dependencySource) {
         this.taskSource = taskSource;
         this.dependencySource = dependencySource;
+    }
+
+    public BaselineResponse baseline(UUID tenantId, UUID projectId) {
+        List<TaskSnapshot> taskSnapshots =
+                taskSource.findProjectTasks(tenantId, projectId, MAX_TASKS + 1);
+        if (taskSnapshots.size() > MAX_TASKS) {
+            throw new IllegalArgumentException(
+                    "Project simulation is limited to " + MAX_TASKS + " tasks");
+        }
+
+        Map<UUID, TaskSnapshot> tasksById = new LinkedHashMap<>();
+        for (TaskSnapshot snapshot : taskSnapshots) {
+            if (tasksById.putIfAbsent(snapshot.taskId(), snapshot) != null) {
+                throw new IllegalStateException(
+                        "Project simulation source returned duplicate task: " + snapshot.taskId());
+            }
+        }
+
+        List<DependencySnapshot> dependencySnapshots =
+                dependencySource.findProjectDependencies(tenantId, projectId, MAX_DEPENDENCIES + 1);
+        if (dependencySnapshots.size() > MAX_DEPENDENCIES) {
+            throw new IllegalArgumentException(
+                    "Project simulation is limited to " + MAX_DEPENDENCIES + " dependencies");
+        }
+        for (DependencySnapshot dependency : dependencySnapshots) {
+            if (!tasksById.containsKey(dependency.blockingTaskId())
+                    || !tasksById.containsKey(dependency.dependentTaskId())) {
+                throw new IllegalStateException(
+                        "Project simulation dependency source returned a task outside this project");
+            }
+        }
+
+        List<BaselineTask> tasks =
+                taskSnapshots.stream()
+                        .map(
+                                task ->
+                                        new BaselineTask(
+                                                task.taskId(),
+                                                task.title(),
+                                                task.status(),
+                                                task.assigneeUserId(),
+                                                task.assigneeName(),
+                                                task.dueAt()))
+                        .sorted(
+                                Comparator.comparing(
+                                                BaselineTask::title, String.CASE_INSENSITIVE_ORDER)
+                                        .thenComparing(BaselineTask::taskId))
+                        .toList();
+        List<BaselineDependency> dependencies =
+                dependencySnapshots.stream()
+                        .map(
+                                dependency ->
+                                        new BaselineDependency(
+                                                dependency.blockingTaskId(),
+                                                dependency.dependentTaskId()))
+                        .toList();
+        return new BaselineResponse(projectId, Instant.now(), tasks, dependencies);
     }
 
     public Response simulate(UUID tenantId, UUID projectId, Request request) {
