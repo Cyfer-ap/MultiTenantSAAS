@@ -70,7 +70,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV50AndMatchesJpaMappings() {
+    void postgresSchemaReachesV51AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -82,7 +82,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("50");
+        assertThat(version).isEqualTo("51");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -137,7 +137,10 @@ class PostgreSqlSchemaIntegrationTest {
                         "workflow_definitions",
                         "workflow_nodes",
                         "workflow_edges",
-                        "workflow_executions")
+                        "workflow_executions",
+                        "whiteboards",
+                        "whiteboard_nodes",
+                        "whiteboard_edges")
                 .forEach(this::assertTableExists);
 
         List<String[]> requiredColumns =
@@ -172,6 +175,16 @@ class PostgreSqlSchemaIntegrationTest {
                         column("workflow_executions", "event_key"),
                         column("workflow_executions", "trigger_operation"),
                         column("workflow_executions", "status"),
+                        column("whiteboards", "normalized_name"),
+                        column("whiteboards", "version"),
+                        column("whiteboard_nodes", "node_key"),
+                        column("whiteboard_nodes", "node_type"),
+                        column("whiteboard_nodes", "linked_task_id"),
+                        column("whiteboard_nodes", "position_x"),
+                        column("whiteboard_nodes", "position_y"),
+                        column("whiteboard_nodes", "z_index"),
+                        column("whiteboard_edges", "source_node_key"),
+                        column("whiteboard_edges", "target_node_key"),
                         column("authorization_delegations", "tenant_id"),
                         column("authorization_delegations", "delegator_user_id"),
                         column("authorization_delegations", "delegate_user_id"),
