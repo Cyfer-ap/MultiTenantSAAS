@@ -55,7 +55,9 @@ class ProjectSimulationServiceTest {
         var baseline = service.baseline(tenantId, projectId);
 
         assertThat(baseline.projectId()).isEqualTo(projectId);
-        assertThat(baseline.tasks()).extracting(task -> task.title()).containsExactly("Build", "Design");
+        assertThat(baseline.tasks())
+                .extracting(task -> task.title())
+                .containsExactly("Build", "Design");
         assertThat(baseline.dependencies())
                 .singleElement()
                 .satisfies(
