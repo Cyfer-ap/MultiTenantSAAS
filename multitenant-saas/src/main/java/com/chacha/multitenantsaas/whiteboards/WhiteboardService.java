@@ -2,7 +2,7 @@ package com.chacha.multitenantsaas.whiteboards;
 
 import com.chacha.multitenantsaas.dto.PageResponse;
 import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
-import com.chacha.multitenantsaas.repository.ProjectRepository;
+import com.chacha.multitenantsaas.projects.access.ProjectAccessPort;
 import com.chacha.multitenantsaas.service.CurrentActorService;
 import com.chacha.multitenantsaas.tasks.creation.TaskCreationCommand;
 import com.chacha.multitenantsaas.tasks.creation.TaskCreationPort;
@@ -27,7 +27,7 @@ public class WhiteboardService {
     private final WhiteboardRepository whiteboardRepository;
     private final WhiteboardNodeRepository nodeRepository;
     private final WhiteboardEdgeRepository edgeRepository;
-    private final ProjectRepository projectRepository;
+    private final ProjectAccessPort projectAccessPort;
     private final CurrentActorService currentActorService;
     private final TaskCreationPort taskCreationPort;
     private final WhiteboardDocumentValidator documentValidator;
@@ -36,14 +36,14 @@ public class WhiteboardService {
             WhiteboardRepository whiteboardRepository,
             WhiteboardNodeRepository nodeRepository,
             WhiteboardEdgeRepository edgeRepository,
-            ProjectRepository projectRepository,
+            ProjectAccessPort projectAccessPort,
             CurrentActorService currentActorService,
             TaskCreationPort taskCreationPort,
             WhiteboardDocumentValidator documentValidator) {
         this.whiteboardRepository = whiteboardRepository;
         this.nodeRepository = nodeRepository;
         this.edgeRepository = edgeRepository;
-        this.projectRepository = projectRepository;
+        this.projectAccessPort = projectAccessPort;
         this.currentActorService = currentActorService;
         this.taskCreationPort = taskCreationPort;
         this.documentValidator = documentValidator;
@@ -75,7 +75,7 @@ public class WhiteboardService {
     @Transactional
     public WhiteboardDtos.Response create(
             UUID tenantId, UUID projectId, WhiteboardDtos.CreateRequest request, Jwt jwt) {
-        requireProject(tenantId, projectId);
+        projectAccessPort.requireProject(tenantId, projectId).requireMutable();
         documentValidator.validate(request.nodes(), request.edges());
         String normalizedName = normalizeName(request.name());
         if (whiteboardRepository.existsByTenantIdAndProjectIdAndNormalizedName(
@@ -99,6 +99,7 @@ public class WhiteboardService {
     @Transactional
     public WhiteboardDtos.Response update(
             UUID tenantId, UUID projectId, UUID boardId, WhiteboardDtos.UpdateRequest request) {
+        projectAccessPort.requireProject(tenantId, projectId).requireMutable();
         Whiteboard board = requireScoped(tenantId, projectId, boardId);
         assertVersion(board, request.expectedVersion());
         documentValidator.validate(request.nodes(), request.edges());
@@ -124,6 +125,7 @@ public class WhiteboardService {
 
     @Transactional
     public void delete(UUID tenantId, UUID projectId, UUID boardId, long expectedVersion) {
+        projectAccessPort.requireProject(tenantId, projectId).requireMutable();
         Whiteboard board = requireScoped(tenantId, projectId, boardId);
         assertVersion(board, expectedVersion);
         whiteboardRepository.delete(board);
@@ -138,6 +140,7 @@ public class WhiteboardService {
             String nodeKey,
             WhiteboardDtos.ConvertToTaskRequest request,
             Jwt jwt) {
+        projectAccessPort.requireProject(tenantId, projectId).requireMutable();
         Whiteboard board = requireScoped(tenantId, projectId, boardId);
         assertVersion(board, request.expectedVersion());
         WhiteboardNode node =
@@ -311,12 +314,6 @@ public class WhiteboardService {
                 .findByTenantIdAndProjectIdAndId(tenantId, projectId, boardId)
                 .orElseThrow(
                         () -> new ResourceNotFoundException("Whiteboard not found: " + boardId));
-    }
-
-    private void requireProject(UUID tenantId, UUID projectId) {
-        if (projectRepository.findByTenant_IdAndId(tenantId, projectId).isEmpty()) {
-            throw new ResourceNotFoundException("Project not found: " + projectId);
-        }
     }
 
     private void assertVersion(Whiteboard board, long expectedVersion) {
