@@ -64,27 +64,30 @@ Provides V48 recurrence/task-template persistence, V49 tenant project templates,
 
 ### Visual Workflow Builder
 
-Completed through PR #144 once its final green head is merged.
+Completed through PR #144.
+
+Provides V50 workflow definitions/nodes/edges/executions, typed bounded DAGs, after-commit task event ingestion, task-owned automation mutations and the visual workflow canvas inside `/work-automation`.
+
+### Project Simulation / What-If Engine
+
+Completed through PR #145 once its final green head is merged.
 
 Provides:
 
-- V50 `workflow_definitions`, `workflow_nodes`, `workflow_edges`, `workflow_executions`
-- explicit `workflows` domain
-- `DRAFT` / `ACTIVE` / `PAUSED` lifecycle
-- bounded 2–50-node / 1–100-edge validated graphs
-- exactly one trigger, DAG/reachability validation and typed configuration
-- task-created / task-status-changed triggers
-- task-priority / task-status equality conditions
-- task-priority / task-status actions
-- after-commit task-domain event ingestion
-- idempotent execution recording and success/failure/skipped explanation
-- task-owned `TaskAutomationMutationPort` with current-authority re-check
-- non-recursive workflow-driven mutations in v1 to avoid accidental feedback loops
-- dependency-free draggable visual canvas inside `/work-automation`
-- active-workflow read-only behavior until paused
-- tenant-wide recent workflow execution history
+- explicit `projectsimulation` domain
+- narrow task-owned and Task Relationships-owned snapshot/read ports
+- project-authorized baseline endpoint
+- advisory simulation endpoint
+- hypothetical due-date and assignee overrides
+- hypothetical dependency add/remove operations
+- downstream dependency exposure analysis
+- baseline/new/resolved deadline-conflict comparison
+- assignee workload-delta reporting
+- bounded/cycle-safe scenario validation
+- private `/projects/:projectId/simulation` What-If workspace
+- no persistence or implicit apply/mutation path
 
-The backend graph is authoritative; the visual canvas does not bypass graph validation or task authorization.
+The first version intentionally does not invent task durations or predicted project completion dates because the task model does not contain duration/effort estimates.
 
 ## Current major product milestone
 
@@ -93,8 +96,8 @@ The backend graph is authoritative; the visual canvas does not bypass graph vali
 The older plan to move directly into bulk actions/CSV remains deliberately paused. The committed sequence continues in this order unless a production/security issue or explicit product decision reprioritizes it.
 
 1. ✅ **Visual Workflow Builder** — completed through #144.
-2. 🚧 **Project Simulation / What-If Engine** — active next. Private scenario changes for dates, owners and dependencies with downstream schedule/workload impact before applying anything.
-3. **Collaborative Whiteboard** — visual planning canvas whose nodes/stickies can become real tasks/projects; later add live presence/cursors.
+2. ✅ **Project Simulation / What-If Engine** — completed through #145 once merged green.
+3. 🚧 **Collaborative Whiteboard** — active next. Visual planning canvas whose nodes/stickies can become real tasks/projects; later add live presence/cursors.
 4. **Project Health / Risk Radar** — explainable risk signals from overdue work, blockers, stale work, dependency criticality and workload pressure.
 5. **Forms -> Workflow Engine** — structured internal/public intake that creates authorized work and can launch workflows.
 6. **Approval Workflows** — reusable human review/approve/reject stages that compose with the workflow engine.
@@ -105,32 +108,31 @@ The older plan to move directly into bulk actions/CSV remains deliberately pause
 
 `guides/Wild_Thoughts.md` is the detailed idea vault and records overlap with earlier experiments such as Scenario/Sandbox Mode, Deadline Reality Check, Risk Inbox, Change Blast-Radius Preview and Human Checkpoints for Automation/AI.
 
-## Feature 2 — Project Simulation / What-If Engine — ACTIVE NEXT
+## Feature 3 — Collaborative Whiteboard — ACTIVE NEXT
 
-The simulation feature must be a private advisory layer over live work, not an alternate mutation path.
+The whiteboard should connect visual planning to authoritative work without becoming another project/task god-service.
 
 First milestone:
 
-- explicit simulation/scenario owning domain
-- authorization-safe snapshot/read contract for project, task and dependency state
-- private scenario sessions owned by a user/tenant/project
-- hypothetical overrides for dates and ownership without changing authoritative rows
-- deterministic downstream schedule/dependency impact calculation
-- workload impact summary using explicit work assignments/capacity inputs only
-- explainable change/blast-radius output
-- comparison between live baseline and scenario
-- discard/reset behavior
-- explicit human **Apply** action only after current authorization and domain invariants are re-checked
-- audit trail for applied scenario changes
+- explicit whiteboard/canvas owning domain
+- project-scoped, tenant-isolated boards
+- bounded persisted nodes, geometry and connections
+- basic sticky/text/shape/connector editing
+- stable node identifiers and deterministic board serialization
+- convert a board node/sticky to a real task through the task-owned creation contract
+- preserve normal task authorization, quotas, audit and lifecycle rules
+- frontend canvas with pan/zoom, selection, drag, resize and connectors
+- collaboration transport kept behind a replaceable boundary
+
+Later layers may add presence/cursors, richer multiplayer editing, comments and additional board-to-work conversions after the persisted board model is stable.
 
 Guardrails:
 
-- simulation never silently writes live state
-- no production/project task mutation merely to calculate a scenario
-- no opaque employee productivity score
-- no broad service injection into a simulation god-service
-- scenario reads and apply operations must use narrow domain-owned contracts
-- stale scenarios must detect live-state drift before apply
+- canvas state is not stored as arbitrary fields on project/task rows
+- whiteboard objects do not become authoritative project work until an explicit conversion action succeeds
+- WebSocket/session infrastructure must not own whiteboard domain invariants
+- board access remains project-scoped and backend-authorized
+- conversion to task/project state uses narrow domain-owned creation contracts
 
 ## Product Experience & Work Management Enrichment — PARKED BEHIND THE COMMITTED SEQUENCE
 
@@ -149,6 +151,7 @@ Already completed foundations include:
 - project/task templates
 - Work Automation workspace
 - Visual Workflow Builder
+- Project Simulation / What-If Engine
 
 Still valuable later:
 
@@ -160,16 +163,15 @@ Still valuable later:
 
 ## Immediate sequence
 
-1. **Project Simulation / What-If Engine**
-2. Collaborative Whiteboard
-3. Project Health / Risk Radar
-4. Forms -> Workflow Engine
-5. Approval Workflows
-6. Client / Guest Portal
-7. Team Workload Engine
-8. Workspace Knowledge Graph
-9. AI / Agent Teammates
-10. resume remaining parked backlog such as bulk actions/CSV, custom fields, knowledge/documents and broader analytics
+1. **Collaborative Whiteboard**
+2. Project Health / Risk Radar
+3. Forms -> Workflow Engine
+4. Approval Workflows
+5. Client / Guest Portal
+6. Team Workload Engine
+7. Workspace Knowledge Graph
+8. AI / Agent Teammates
+9. resume remaining parked backlog such as bulk actions/CSV, custom fields, knowledge/documents and broader analytics
 
 For each slice, choose the owning domain and narrow cross-domain contracts before implementation. Do not implement new behavior by expanding legacy project/task god-services.
 
@@ -226,4 +228,4 @@ Preserve tenant isolation, backend-authoritative authorization, delegation non-e
 
 New user-facing features must remain permission-aware and tenant-safe. Search, Favorites/Recent resolution, My Work, Saved Views, Calendar, Task Planning, recurrence/templates, workflows, simulation, analytics and future AI must filter through authoritative authorization boundaries rather than attempting to repair access after retrieval.
 
-New functionality must stay inside explicit domain modules and cross boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work, Saved Views, Calendar, Task Relationships, `TaskCreationPort`, `ProjectCreationPort`, task-domain workflow events and `TaskAutomationMutationPort` are current reference implementations.
+New functionality must stay inside explicit domain modules and cross boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work, Saved Views, Calendar, Task Relationships, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, and Project Simulation source ports are current reference implementations.
