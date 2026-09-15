@@ -123,9 +123,7 @@ class ProjectSimulationServiceTest {
                         tenantId,
                         projectId,
                         new Request(
-                                List.of(
-                                        new TaskOverride(
-                                                taskId, null, false, nextOwner, false)),
+                                List.of(new TaskOverride(taskId, null, false, nextOwner, false)),
                                 List.of()));
 
         assertThat(response.summary().reassignedTasks()).isEqualTo(1);
@@ -166,9 +164,7 @@ class ProjectSimulationServiceTest {
         var request =
                 new Request(
                         List.of(),
-                        List.of(
-                                new DependencyChange(
-                                        DependencyChangeType.ADD, third, first)));
+                        List.of(new DependencyChange(DependencyChangeType.ADD, third, first)));
 
         assertThatThrownBy(() -> service.simulate(tenantId, projectId, request))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -178,11 +174,6 @@ class ProjectSimulationServiceTest {
     private TaskSnapshot task(
             UUID taskId, String title, UUID assigneeId, String assigneeName, String dueAt) {
         return new TaskSnapshot(
-                taskId,
-                title,
-                "TODO",
-                assigneeId,
-                assigneeName,
-                Instant.parse(dueAt));
+                taskId, title, "TODO", assigneeId, assigneeName, Instant.parse(dueAt));
     }
 }

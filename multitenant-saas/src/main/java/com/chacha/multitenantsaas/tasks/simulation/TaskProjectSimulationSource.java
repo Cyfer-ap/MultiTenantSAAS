@@ -37,9 +37,7 @@ public class TaskProjectSimulationSource implements ProjectSimulationTaskSource 
         int limit = Math.max(1, requestedLimit);
         var pageable =
                 PageRequest.of(
-                        0,
-                        limit,
-                        Sort.by(Sort.Order.asc("createdAt"), Sort.Order.asc("id")));
+                        0, limit, Sort.by(Sort.Order.asc("createdAt"), Sort.Order.asc("id")));
         return taskRepository
                 .findProjectTasks(tenantId, projectId, null, null, null, null, pageable)
                 .stream()

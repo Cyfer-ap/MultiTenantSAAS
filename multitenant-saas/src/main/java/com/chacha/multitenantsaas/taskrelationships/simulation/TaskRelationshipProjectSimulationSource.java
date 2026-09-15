@@ -25,10 +25,9 @@ public class TaskRelationshipProjectSimulationSource implements ProjectSimulatio
         int limit = Math.max(1, requestedLimit);
         var pageable =
                 PageRequest.of(
-                        0,
-                        limit,
-                        Sort.by(Sort.Order.asc("createdAt"), Sort.Order.asc("id")));
-        return dependencyRepository.findByTenant_IdAndProject_Id(tenantId, projectId, pageable)
+                        0, limit, Sort.by(Sort.Order.asc("createdAt"), Sort.Order.asc("id")));
+        return dependencyRepository
+                .findByTenant_IdAndProject_Id(tenantId, projectId, pageable)
                 .stream()
                 .map(
                         dependency ->

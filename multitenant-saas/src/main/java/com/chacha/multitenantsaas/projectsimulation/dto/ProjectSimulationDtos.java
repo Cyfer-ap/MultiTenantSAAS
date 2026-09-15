@@ -16,7 +16,8 @@ public final class ProjectSimulationDtos {
             @Valid @Size(max = 100) List<DependencyChange> dependencyChanges) {
         public Request {
             taskOverrides = taskOverrides == null ? List.of() : List.copyOf(taskOverrides);
-            dependencyChanges = dependencyChanges == null ? List.of() : List.copyOf(dependencyChanges);
+            dependencyChanges =
+                    dependencyChanges == null ? List.of() : List.copyOf(dependencyChanges);
         }
     }
 

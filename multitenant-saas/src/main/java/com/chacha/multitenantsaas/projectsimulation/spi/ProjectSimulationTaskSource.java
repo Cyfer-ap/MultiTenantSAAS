@@ -9,8 +9,7 @@ public interface ProjectSimulationTaskSource {
 
     List<TaskSnapshot> findProjectTasks(UUID tenantId, UUID projectId, int limit);
 
-    Optional<AssigneeSnapshot> findAssignableAssignee(
-            UUID tenantId, UUID projectId, UUID userId);
+    Optional<AssigneeSnapshot> findAssignableAssignee(UUID tenantId, UUID projectId, UUID userId);
 
     record TaskSnapshot(
             UUID taskId,

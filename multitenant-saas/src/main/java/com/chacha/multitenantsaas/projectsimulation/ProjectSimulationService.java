@@ -27,7 +27,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -61,8 +60,7 @@ public class ProjectSimulationService {
         }
 
         List<DependencySnapshot> dependencySnapshots =
-                dependencySource.findProjectDependencies(
-                        tenantId, projectId, MAX_DEPENDENCIES + 1);
+                dependencySource.findProjectDependencies(tenantId, projectId, MAX_DEPENDENCIES + 1);
         if (dependencySnapshots.size() > MAX_DEPENDENCIES) {
             throw new IllegalArgumentException(
                     "Project simulation is limited to " + MAX_DEPENDENCIES + " dependencies");
@@ -138,11 +136,7 @@ public class ProjectSimulationService {
             }
 
             String changeKey =
-                    change.type()
-                            + ":"
-                            + change.blockingTaskId()
-                            + ":"
-                            + change.dependentTaskId();
+                    change.type() + ":" + change.blockingTaskId() + ":" + change.dependentTaskId();
             if (!seenDependencyChanges.add(changeKey)) {
                 throw new IllegalArgumentException("Duplicate dependency change: " + changeKey);
             }
@@ -188,16 +182,14 @@ public class ProjectSimulationService {
                                                 downstreamAffected.contains(taskId),
                                                 simulatedConflicts))
                         .sorted(
-                                Comparator.comparing(TaskImpact::title, String.CASE_INSENSITIVE_ORDER)
+                                Comparator.comparing(
+                                                TaskImpact::title, String.CASE_INSENSITIVE_ORDER)
                                         .thenComparing(TaskImpact::taskId))
                         .toList();
 
         List<DependencyConflict> conflicts =
                 buildConflictComparison(
-                        baselineTasks,
-                        simulatedTasks,
-                        baselineConflicts,
-                        simulatedConflicts);
+                        baselineTasks, simulatedTasks, baselineConflicts, simulatedConflicts);
         List<WorkloadImpact> workloadImpacts = workloadImpacts(baselineTasks, simulatedTasks);
 
         int reassignedTasks =
@@ -392,9 +384,12 @@ public class ProjectSimulationService {
                 .map(
                         edge -> {
                             ScenarioTask baselineBlocker = baselineTasks.get(edge.blockingTaskId());
-                            ScenarioTask baselineDependent = baselineTasks.get(edge.dependentTaskId());
-                            ScenarioTask simulatedBlocker = simulatedTasks.get(edge.blockingTaskId());
-                            ScenarioTask simulatedDependent = simulatedTasks.get(edge.dependentTaskId());
+                            ScenarioTask baselineDependent =
+                                    baselineTasks.get(edge.dependentTaskId());
+                            ScenarioTask simulatedBlocker =
+                                    simulatedTasks.get(edge.blockingTaskId());
+                            ScenarioTask simulatedDependent =
+                                    simulatedTasks.get(edge.dependentTaskId());
                             ConflictChangeType changeType =
                                     !baselineConflicts.contains(edge)
                                             ? ConflictChangeType.NEW
@@ -427,8 +422,12 @@ public class ProjectSimulationService {
         Map<UUID, Integer> baselineCounts = openTaskCounts(baselineTasks);
         Map<UUID, Integer> simulatedCounts = openTaskCounts(simulatedTasks);
         Map<UUID, String> names = new HashMap<>();
-        baselineTasks.values().forEach(task -> names.put(task.assigneeUserId(), task.assigneeName()));
-        simulatedTasks.values().forEach(task -> names.put(task.assigneeUserId(), task.assigneeName()));
+        baselineTasks
+                .values()
+                .forEach(task -> names.put(task.assigneeUserId(), task.assigneeName()));
+        simulatedTasks
+                .values()
+                .forEach(task -> names.put(task.assigneeUserId(), task.assigneeName()));
 
         Set<UUID> users = new LinkedHashSet<>(baselineCounts.keySet());
         users.addAll(simulatedCounts.keySet());
@@ -483,8 +482,7 @@ public class ProjectSimulationService {
         }
 
         private ScenarioTask withDueAt(Instant nextDueAt) {
-            return new ScenarioTask(
-                    taskId, title, status, assigneeUserId, assigneeName, nextDueAt);
+            return new ScenarioTask(taskId, title, status, assigneeUserId, assigneeName, nextDueAt);
         }
 
         private ScenarioTask withAssignee(UUID nextAssigneeUserId, String nextAssigneeName) {
