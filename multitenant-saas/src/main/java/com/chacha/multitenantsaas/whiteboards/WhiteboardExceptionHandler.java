@@ -65,7 +65,8 @@ public class WhiteboardExceptionHandler {
         String normalizedConstraint = constraintName.toLowerCase(Locale.ROOT);
         while (current != null) {
             String message = current.getMessage();
-            if (message != null && message.toLowerCase(Locale.ROOT).contains(normalizedConstraint)) {
+            if (message != null
+                    && message.toLowerCase(Locale.ROOT).contains(normalizedConstraint)) {
                 return true;
             }
             current = current.getCause();
