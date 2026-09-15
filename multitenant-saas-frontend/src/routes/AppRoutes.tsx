@@ -148,14 +148,22 @@ const PlatformAuditLogsPage = lazy(() =>
 )
 
 const ProjectDetailsPage = lazy(() =>
-    import('../pages/ProjectDetailsPage').then((module) => ({
-        default: module.ProjectDetailsPage,
-    })),
+    import('../features/whiteboards/pages/ProjectDetailsWithWhiteboardEntryPage').then(
+        (module) => ({
+            default: module.ProjectDetailsWithWhiteboardEntryPage,
+        }),
+    ),
 )
 
 const ProjectSimulationPage = lazy(() =>
     import('../features/project-simulation/pages/ProjectSimulationPage').then((module) => ({
         default: module.ProjectSimulationPage,
+    })),
+)
+
+const WhiteboardWorkspacePage = lazy(() =>
+    import('../features/whiteboards/pages/WhiteboardWorkspacePage').then((module) => ({
+        default: module.WhiteboardWorkspacePage,
     })),
 )
 
@@ -413,6 +421,10 @@ export function AppRoutes() {
                             }
                         >
                             <Route path="projects/:projectId" element={<ProjectDetailsPage />} />
+                            <Route
+                                path="projects/:projectId/whiteboards"
+                                element={<WhiteboardWorkspacePage />}
+                            />
                         </Route>
 
                         <Route
