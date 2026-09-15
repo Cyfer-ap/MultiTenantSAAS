@@ -1,8 +1,8 @@
 # MultiTenantSAAS — Current Checkpoint
 
-Updated: 2026-09-15
+Updated: 2026-09-16
 Repository: `Cyfer-ap/MultiTenantSAAS`
-Branch target: `main` after PR #145 merge
+Branch target: `main` after PR #146 merge
 
 This file is the **single repository-side source of truth for current project status**. Do not create additional progress/checkpoint mirrors.
 
@@ -25,144 +25,119 @@ Delivered product milestones include:
 - Visual Workflow Builder — #144
 - Project Simulation / What-If Engine — #145
 
-The **Project Simulation / What-If Engine milestone is implementation-complete in #145** and ready for merge once the final PR head remains green.
+**Collaborative Whiteboard is active.** PR #146 establishes the persisted backend/domain foundation. It is not the completed user-facing whiteboard milestone; the visual project workspace and live collaboration remain separate follow-up slices.
+
+## Collaborative Whiteboard foundation checkpoint — #146
+
+### Ownership and boundaries
+
+The explicit `whiteboards` domain owns project-scoped board documents, visual nodes, connectors and node-to-task links.
+
+Cross-domain calls are deliberately narrow:
+
+```text
+whiteboards
+    -> ProjectAccessPort -> project-owned adapter -> project existence/lifecycle
+    -> TaskCreationPort  -> task-owned adapter    -> real task creation
+```
+
+Whiteboards do not inject `ProjectService`, `ProjectTaskService`, `ProjectRepository` or `ProjectTaskRepository`.
+
+### V51 document model
+
+V51 creates:
+
+- `whiteboards`
+- `whiteboard_nodes`
+- `whiteboard_edges`
+
+Rules:
+
+- boards are tenant/project scoped
+- board names are normalized and unique within a project
+- board rows use optimistic `version` control
+- initial node types: `STICKY`, `TEXT`, `SHAPE`
+- node keys are stable identifiers
+- node geometry/z-index are bounded
+- at most 300 nodes and 600 connectors per submitted board document
+- connectors must reference existing nodes, cannot self-reference and cannot duplicate a directed edge
+- visual connector cycles are valid; whiteboards are not task dependency DAGs
+- sticky/text nodes may persist a `linked_task_id`
+
+### API and concurrency
+
+Foundation API:
+
+```text
+GET    /api/tenants/{tenantId}/projects/{projectId}/whiteboards
+POST   /api/tenants/{tenantId}/projects/{projectId}/whiteboards
+GET    /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}
+PUT    /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}
+DELETE /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}?expectedVersion={version}
+POST   /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}/nodes/{nodeKey}/convert-to-task
+```
+
+Reads reuse project task-read authorization. Mutations reuse project task-manage authorization for the initial slice.
+
+Update/delete/task-conversion requests carry the version the client edited. A stale version returns structured HTTP `409 Conflict`; duplicate board names also resolve to `409 RESOURCE_ALREADY_EXISTS`, including the database-race path.
+
+Archived projects remain readable but reject board mutation and task conversion.
+
+### Node -> task conversion
+
+Sticky/text conversion uses the task-owned `TaskCreationPort` rather than writing task persistence directly. Normal task lifecycle behavior therefore remains authoritative for project status, creator/assignee membership, activity, audit, notifications, outbound webhooks and task-domain events.
+
+A converted node stores the returned `taskId`, rejects repeated conversion and retains the link across document replacement when its stable node key remains.
+
+### Transport guardrail
+
+V51 contains **no WebSocket/STOMP/presence/cursor persistence**. The stored board model is transport-independent. Real-time presence, cursors and resynchronization come only after the persisted visual workspace is stable.
+
+Detailed contract: `guides/collaborative_whiteboard.md`.
 
 ## Project simulation checkpoint
 
-### Backend ownership and contract
+The explicit `projectsimulation` domain owns advisory scenario orchestration and never mutates live project/task/dependency state.
 
-The explicit `projectsimulation` domain owns advisory scenario orchestration. It does not mutate live project/task/dependency state.
-
-API surface:
+API:
 
 ```text
 GET  /api/tenants/{tenantId}/projects/{projectId}/simulation/baseline
 POST /api/tenants/{tenantId}/projects/{projectId}/simulation
 ```
 
-Both endpoints require project-level `project.task.manage` authority.
+Both require project-level `project.task.manage` authority. Authoritative task/dependency state crosses through `ProjectSimulationTaskSource` and `ProjectSimulationDependencySource`, not the legacy task/graph services.
 
-The simulation coordinator reads authoritative state only through narrow domain-owned ports:
+Current scenarios support due-date/assignee overrides and dependency add/remove operations, with direct/downstream exposure, baseline-vs-simulated deadline conflicts and open-task workload deltas. The engine is bounded to 500 tasks, 1,000 dependency edges, 100 task overrides and 100 dependency changes per request. It remains advisory with no hidden apply path and does not invent completion dates without duration/effort data.
 
-```text
-projectsimulation
-    -> ProjectSimulationTaskSource -> task-owned adapter
-    -> ProjectSimulationDependencySource -> Task Relationships-owned adapter
-```
-
-It deliberately does not inject `ProjectTaskService` or `TaskGraphService`.
-
-### Current simulation model
-
-A scenario can evaluate hypothetical:
-
-- task due-date changes
-- task assignee changes
-- dependency additions
-- dependency removals
-
-The engine reports:
-
-- direct task changes
-- downstream tasks exposed through dependencies
-- baseline vs simulated dependency deadline conflicts
-- new/resolved conflicts
-- assignee open-task workload deltas
-- reassignment counts
-
-Guardrails:
-
-- maximum 500 project tasks
-- maximum 1,000 dependency edges
-- maximum 100 task overrides and 100 dependency changes per request
-- unknown tasks and invalid project assignees are rejected
-- self-dependencies, duplicate changes and cyclic simulated graphs are rejected
-- no persistence/apply path exists
-- no project completion date is fabricated because the current task model has no duration/effort field
-
-### Frontend
-
-The private project route is:
-
-```text
-/projects/:projectId/simulation
-```
-
-The What-If Simulator loads the project baseline, allows one task override plus one dependency change in the first UI slice, and displays direct/downstream impact, dependency conflicts and workload deltas. The UI is explicitly advisory and exposes no apply action.
+Frontend route: `/projects/:projectId/simulation`.
 
 Detailed contract: `guides/project_simulation.md`.
 
 ## Visual workflow checkpoint
 
-### Definition model
+Visual Workflow Builder remains complete through #144 with V50 workflow definitions/nodes/edges/executions, bounded typed graphs, after-commit task-domain events, idempotent execution history and task mutations through `TaskAutomationMutationPort`.
 
-- explicit `workflows` backend domain
-- tenant-scoped workflow catalog with normalized unique names
-- `DRAFT`, `ACTIVE`, `PAUSED` lifecycle
-- stable node keys and persisted canvas coordinates
-- graph bounded to 2–50 nodes and 1–100 edges
-- exactly one trigger
-- DAG and reachability validation
-- trigger/action `DEFAULT` branches; condition `TRUE`/`FALSE` branches
-- typed configuration only; no arbitrary executable code
-- active definitions must be paused before editing
-- definition version increments when edited
+The `/work-automation` Workflow builder tab provides the draggable persisted canvas, branch editing, lifecycle controls and recent execution history. Active definitions remain read-only until paused.
 
-Initial operations:
-
-- task-created trigger
-- task-status-changed trigger
-- task-priority-equals condition
-- task-status-equals condition
-- set-task-priority action
-- set-task-status action
-
-### Runtime and cross-domain boundaries
-
-Task lifecycle changes reach workflows through `tasks/events` domain events. Workflow execution does not inject the full task service.
-
-Automated mutations cross into the task domain only through `tasks/automation/TaskAutomationMutationPort`, where the originating actor's current project/task authority is re-checked before mutation.
-
-Runtime behavior:
-
-- task events are consumed after the originating transaction commits
-- only ACTIVE workflows are considered
-- matching trigger -> deterministic condition/action traversal
-- one execution row per `(tenant, workflow, event)` for idempotency
-- outcomes: `RUNNING`, `SUCCEEDED`, `FAILED`, `SKIPPED`
-- execution history stores workflow version, trigger, source entity, explanation/error and timestamps
-- workflow-driven task mutations do not recursively publish new workflow events in v1, preventing accidental feedback loops
-
-### Frontend
-
-`/work-automation` owns four surfaces:
-
-- recurring work
-- task templates
-- project templates
-- Workflow builder
-
-The workflow tab provides a dependency-free draggable node canvas, connection rendering, node inspector, branch-target editing, save/activate/pause lifecycle and tenant-wide recent execution history. Active workflows are read-only until paused.
-
-Detailed workflow contract: `guides/visual_workflow_builder.md`.
+Detailed contract: `guides/visual_workflow_builder.md`.
 
 ## Existing work-generation checkpoint
 
-Recurring work and templates remain unchanged from #143:
+Recurring work/templates remain unchanged from #143:
 
 - V48 recurring definitions/occurrences + project task templates
 - V49 tenant project templates + bounded starter-task snapshots
-- recurring/task-template creation goes through task-owned `TaskCreationPort`
-- project-template creation goes through project-owned `ProjectCreationPort`
+- recurring/task-template generation goes through `TaskCreationPort`
+- project-template creation goes through `ProjectCreationPort`
 - project-template starter tasks go through `TaskCreationPort`
 - ordinary project/task quota, actor, authorization, audit and lifecycle rules remain authoritative
-- snapshot/copy semantics; later template edits never rewrite instantiated work
 
 Detailed contract: `guides/recurring_work_and_templates.md`.
 
 ## Database checkpoint
 
-Portable PostgreSQL Flyway migrations extend through **V50**.
+After #146 merges, portable PostgreSQL Flyway migrations extend through **V51**.
 
 ```text
 V45 personal workspace favorites/recent items
@@ -171,9 +146,10 @@ V47 task parent/dependency/project-label relationships
 V48 recurring task definitions/occurrences + project task templates
 V49 tenant project templates + bounded starter-task snapshots
 V50 visual workflow definitions/nodes/edges/executions
+V51 project whiteboards/nodes/connectors
 ```
 
-Project Simulation adds no persistence migration. Never rewrite an applied migration. New persistence starts at **V51+**.
+Project Simulation added no migration. Never rewrite an applied migration. After V51 is merged/applied, later persistence starts at **V52+**.
 
 ## Non-negotiable architecture rule
 
@@ -191,12 +167,13 @@ Current reference implementations include:
 - `ProjectCreationPort`
 - workflow task-domain events + `TaskAutomationMutationPort`
 - Project Simulation task/dependency source ports
+- Whiteboard `ProjectAccessPort` + `TaskCreationPort` boundaries
 
-Do not move workflow execution into `ProjectTaskService`, recurrence into Calendar, simulation into legacy project/task services, or template orchestration into legacy project/task god-services.
+Do not move workflow execution into `ProjectTaskService`, recurrence into Calendar, simulation or whiteboards into legacy project/task services, or template orchestration into legacy project/task god-services.
 
 ## Established application foundations
 
-Major capabilities now include authentication/tenant isolation, invitations/password recovery, organization hierarchy, scoped authorization/delegation/Explain Access, projects/tasks/collaboration, Task Planning, recurring work/templates, visual workflows, project simulation, search/command palette/personal workspace/My Work/Saved Views/Dashboard/Calendar, R2-compatible attachments, durable notifications/email, API keys/quotas/usage, Stripe/Razorpay billing abstractions, outbound webhooks, enterprise OIDC SSO, auditability, PostgreSQL/Flyway, CI/security/container validation.
+Major capabilities include authentication/tenant isolation, invitations/password recovery, organization hierarchy, scoped authorization/delegation/Explain Access, projects/tasks/collaboration, Task Planning, recurring work/templates, visual workflows, project simulation, search/command palette/personal workspace/My Work/Saved Views/Dashboard/Calendar, R2-compatible attachments, durable notifications/email, API keys/quotas/usage, Stripe/Razorpay billing abstractions, outbound webhooks, enterprise OIDC SSO, auditability, PostgreSQL/Flyway and CI/security/container validation. Whiteboard persistence/domain APIs become part of this foundation with #146; the visual product surface is still in progress.
 
 ## Provider status
 
@@ -226,19 +203,22 @@ Canonical assessment: `guides/ENGINEERING_STANDARDS.md`.
 
 ## Next committed product sequence
 
-With features #1 and #2 complete, continue the committed differentiated sequence:
+Collaborative Whiteboard is still the active feature and should finish in this order:
 
-1. **Collaborative Whiteboard**
-2. Project Health / Risk Radar
-3. Forms -> Workflow Engine
-4. Approval Workflows
-5. Client / Guest Portal
-6. Team Workload Engine
-7. Workspace Knowledge Graph
-8. AI / Agent Teammates
-9. resume parked backlog such as bulk actions/CSV, custom fields, knowledge/documents and broader analytics unless priorities are explicitly changed
+1. **#146 backend/domain + V51 foundation** — current PR
+2. **visual whiteboard workspace** — board selector, draggable/resizable nodes, connectors, zoom/pan, autosave with version conflict handling, multi-select, local undo/redo, project entry point and node->task UX
+3. **live collaboration slice** — presence, cursors, transport/reconnect/resync after the persisted workspace is stable
 
-For Collaborative Whiteboard, keep canvas/document ownership explicit and convert whiteboard objects into real project/task records only through narrow project/task creation contracts. Do not turn the whiteboard module into another project/task god-service.
+Then continue:
+
+1. Project Health / Risk Radar
+2. Forms -> Workflow Engine
+3. Approval Workflows
+4. Client / Guest Portal
+5. Team Workload Engine
+6. Workspace Knowledge Graph
+7. AI / Agent Teammates
+8. resume parked backlog such as bulk actions/CSV, custom fields, knowledge/documents and broader analytics unless priorities are explicitly changed
 
 ## Deferred platform work
 
@@ -264,6 +244,7 @@ Optional SAML/SCIM, MFA/passkeys/device management and richer notification chann
 - `guides/recurring_work_and_templates.md` — recurrence/template contract
 - `guides/visual_workflow_builder.md` — workflow definition/runtime/canvas contract
 - `guides/project_simulation.md` — advisory What-If simulation contract
+- `guides/collaborative_whiteboard.md` — V51 whiteboard persistence/domain/task-conversion contract
 - `guides/Wild_Thoughts.md` — product idea vault and committed sequence section
 - `wiki/*.md` — canonical reader-facing Wiki source
 - `wiki/Roadmap.md` — product direction
