@@ -13,13 +13,14 @@ This is the **single repository-side resume document**. Current status lives in 
 5. `guides/task_relationships.md`
 6. `guides/recurring_work_and_templates.md`
 7. `guides/visual_workflow_builder.md`
-8. `guides/Wild_Thoughts.md`
-9. the focused guide for the domain being changed
-10. `wiki/Roadmap.md` when planning product direction
+8. `guides/project_simulation.md`
+9. `guides/Wild_Thoughts.md`
+10. the focused guide for the domain being changed
+11. `wiki/Roadmap.md` when planning product direction
 
 ## Current state
 
-Major milestones are complete through the Visual Workflow Builder program:
+Major milestones are complete through the Project Simulation / What-If Engine program:
 
 - billing/catalog — #106
 - tenant outbound webhooks — #112
@@ -38,8 +39,9 @@ Major milestones are complete through the Visual Workflow Builder program:
 - documentation checkpoint — #142
 - tenant project templates + Work Automation & Templates — #143
 - Visual Workflow Builder — #144
+- Project Simulation / What-If Engine — #145
 
-Portable PostgreSQL Flyway migrations now extend through **V50**. New persistence must be **V51+** after #144; never modify V50 or earlier after it is merged/applied.
+Portable PostgreSQL Flyway migrations remain through **V50** because #145 adds no persistence. New persistence must be **V51+**; never modify V50 or earlier after it is merged/applied.
 
 Stripe remains the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
@@ -50,6 +52,51 @@ Stripe remains the validated deployed Test Mode billing path. Razorpay integrati
 Backend features should use explicit domain packages. Frontend features should preserve locality under `features/<domain>/...`.
 
 Do not expand `ProjectTaskService` or `ProjectService` merely because a new feature eventually reads or changes projects/tasks.
+
+## Project Simulation checkpoint
+
+Backend ownership:
+
+```text
+projectsimulation
+    -> ProjectSimulationTaskSource -> task-owned adapter
+    -> ProjectSimulationDependencySource -> Task Relationships-owned adapter
+```
+
+API:
+
+```text
+GET  /api/tenants/{tenantId}/projects/{projectId}/simulation/baseline
+POST /api/tenants/{tenantId}/projects/{projectId}/simulation
+```
+
+Preserve these rules:
+
+- project-level `project.task.manage` authority is required
+- simulation is advisory/read-only
+- no hidden apply/mutation path
+- maximum 500 tasks and 1,000 dependency edges
+- maximum 100 task overrides and 100 dependency changes per request
+- unknown tasks, invalid assignees, self-dependencies, duplicates and cycles are rejected
+- due-date changes propagate only as dependency exposure/conflict analysis; no fake duration/finish prediction
+- assignment changes report open-task workload deltas
+- task and dependency state cross domain boundaries through narrow simulation source ports
+
+Frontend ownership:
+
+```text
+features/project-simulation/
+```
+
+Private route:
+
+```text
+/projects/:projectId/simulation
+```
+
+The first UI slice supports one task due-date/assignee override plus one dependency add/remove operation, then shows direct/downstream impact, conflicts and workload deltas. There is intentionally no apply action.
+
+Detailed contract: `guides/project_simulation.md`.
 
 ## Visual Workflow Builder checkpoint
 
@@ -91,15 +138,6 @@ Rules to preserve:
 
 Initial operations are intentionally narrow: task created/status changed triggers, task priority/status equality conditions, and task priority/status mutations.
 
-Frontend ownership:
-
-```text
-features/workflow-builder/
-features/work-automation/
-```
-
-The `/work-automation` Workflow builder tab provides a draggable canvas, persisted positions, branch-target inspector, save/activate/pause lifecycle and recent tenant execution history. Active definitions are read-only until paused.
-
 Detailed contract: `guides/visual_workflow_builder.md`.
 
 ## Existing work-generation boundaries to preserve
@@ -118,27 +156,27 @@ V48/V49 recurrence/template semantics remain documented in `guides/recurring_wor
 
 ## Resume here
 
-After #144 is merged green, start committed differentiated feature #2: **Project Simulation / What-If Engine**.
+After #145 is merged green, start committed differentiated feature #3: **Collaborative Whiteboard**.
 
-First design decisions:
+First design constraints:
 
-1. create an explicit simulation/scenario owning domain rather than adding preview flags to live project/task services
-2. read authorized project/task/dependency state through narrow read contracts
-3. store or calculate private scenario overrides separately from live state
-4. compute downstream schedule/workload/blast-radius effects without mutating authoritative records
-5. require an explicit human apply step for any live change; application must re-check current authorization and invariants
+1. create explicit whiteboard/canvas ownership instead of storing arbitrary canvas state on projects/tasks
+2. define a bounded board/document model with nodes, geometry and connections
+3. keep initial collaboration transport replaceable; do not couple the domain model directly to a WebSocket implementation
+4. convert a sticky/node to a real task only through the task-owned creation contract and current authorization/quota rules
+5. keep board access project-scoped and tenant-isolated
+6. add real-time presence/cursors only after the persisted single-user/multi-user board model is stable
 
 Then continue the committed sequence:
 
-1. Collaborative Whiteboard
-2. Project Health / Risk Radar
-3. Forms -> Workflow Engine
-4. Approval Workflows
-5. Client / Guest Portal
-6. Team Workload Engine
-7. Workspace Knowledge Graph
-8. AI / Agent Teammates
-9. resume parked backlog such as bulk/CSV, custom fields, knowledge/documents and broader analytics unless reprioritized
+1. Project Health / Risk Radar
+2. Forms -> Workflow Engine
+3. Approval Workflows
+4. Client / Guest Portal
+5. Team Workload Engine
+6. Workspace Knowledge Graph
+7. AI / Agent Teammates
+8. resume parked backlog such as bulk/CSV, custom fields, knowledge/documents and broader analytics unless reprioritized
 
 ## Validation before merge
 
@@ -161,7 +199,8 @@ Do not merge around failed gates. If Auto Format creates a bot-authored head, ma
 - backend authorization is authoritative
 - automated workflows never grant authority
 - stored personal/workflow definitions do not bypass resource authorization
-- Calendar/Task Planning/Automation data is authorized before exposure
+- Calendar/Task Planning/Automation/Simulation data is authorized before exposure
+- simulation never mutates live state implicitly
 - generation/automation retries are idempotent where required
 - graph traversal and batch work remain bounded
 - Explain Access and enforcement share authorization semantics

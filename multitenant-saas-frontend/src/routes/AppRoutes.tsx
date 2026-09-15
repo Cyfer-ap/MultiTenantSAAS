@@ -153,6 +153,12 @@ const ProjectDetailsPage = lazy(() =>
     })),
 )
 
+const ProjectSimulationPage = lazy(() =>
+    import('../features/project-simulation/pages/ProjectSimulationPage').then((module) => ({
+        default: module.ProjectSimulationPage,
+    })),
+)
+
 const ProjectsPage = lazy(() =>
     import('../pages/ProjectsPage').then((module) => ({
         default: module.ProjectsPage,
@@ -407,6 +413,21 @@ export function AppRoutes() {
                             }
                         >
                             <Route path="projects/:projectId" element={<ProjectDetailsPage />} />
+                        </Route>
+
+                        <Route
+                            element={
+                                <ProjectPermissionProtectedRoute
+                                    permissionCode={
+                                        authorizationPermissionCodes.PROJECT_TASK_MANAGE
+                                    }
+                                />
+                            }
+                        >
+                            <Route
+                                path="projects/:projectId/simulation"
+                                element={<ProjectSimulationPage />}
+                            />
                         </Route>
 
                         <Route

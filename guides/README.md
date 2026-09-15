@@ -42,6 +42,7 @@ When a fact changes, update the document that owns that fact rather than copying
 - `task_relationships.md` — subtasks, directed dependencies, project-scoped labels and Task Planning ownership
 - `recurring_work_and_templates.md` — V48 recurring work/task-template contracts, V49 tenant project templates, narrow creation ports and the Work Automation & Templates workspace
 - `visual_workflow_builder.md` — V50 workflow graph, runtime/event boundaries, task mutation port, execution history and visual canvas contract
+- `project_simulation.md` — advisory What-If baseline/simulation APIs, narrow source ports, scenario validation and private frontend workspace
 - `data_model.md` — data-model notes
 - `postgresql_and_migrations.md` — PostgreSQL/Flyway behavior
 - `outbound-webhook-events.md` — outbound event contract
@@ -57,9 +58,9 @@ Historical planning/recovery files may remain for provenance, but they are not c
 
 ## Current direction
 
-The platform foundations and Product Experience milestones are established through **PR #144**, including Visual Workflow Builder runtime, canvas and execution history. Portable migrations extend through **V50**; after #144, new persistence starts at **V51+**.
+The platform foundations and Product Experience milestones are established through **PR #145** once its final green head is merged, including Visual Workflow Builder and Project Simulation / What-If Engine. Portable migrations remain through **V50** because #145 adds no persistence; new persistence starts at **V51+**.
 
-The next committed product feature is **Project Simulation / What-If Engine**, followed by Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+The next committed product feature is **Collaborative Whiteboard**, followed by Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 Bulk actions/CSV, custom fields, broader knowledge/documents and analytics remain valuable but are parked behind the committed differentiated sequence unless explicitly reprioritized.
 

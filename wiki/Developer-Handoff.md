@@ -6,7 +6,7 @@ Use this page as the reader-facing Wiki pointer for resuming development. Reposi
 
 **Differentiated Work Platform Sequence**
 
-Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation and **Visual Workflow Builder** are established through PR #144 once its final green head is merged.
+Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder and **Project Simulation / What-If Engine** are established through PR #145 once its final green head is merged.
 
 ## Read first
 
@@ -28,33 +28,41 @@ Inside the repository:
 6. `guides/task_relationships.md`
 7. `guides/recurring_work_and_templates.md`
 8. `guides/visual_workflow_builder.md`
-9. the focused guide for the domain being changed
+9. `guides/project_simulation.md`
+10. the focused guide for the domain being changed
 
 ## Engineering rule
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, the Saved Views validator SPI, Calendar's deadline-source contract, Task Relationships' task gateway/change sink, `TaskCreationPort`, `ProjectCreationPort`, task-domain workflow events and `TaskAutomationMutationPort`.
+Reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, the Saved Views validator SPI, Calendar's deadline-source contract, Task Relationships' task gateway/change sink, `TaskCreationPort`, `ProjectCreationPort`, task-domain workflow events/`TaskAutomationMutationPort`, and Project Simulation's task/dependency source ports.
+
+## Project Simulation checkpoint
+
+The simulation layer is private/advisory and does not mutate live work.
+
+Backend ownership:
+
+```text
+projectsimulation
+    -> ProjectSimulationTaskSource -> task-owned adapter
+    -> ProjectSimulationDependencySource -> Task Relationships-owned adapter
+```
+
+API:
+
+```text
+GET  /api/tenants/{tenantId}/projects/{projectId}/simulation/baseline
+POST /api/tenants/{tenantId}/projects/{projectId}/simulation
+```
+
+The private `/projects/:projectId/simulation` workspace supports hypothetical due-date, assignee and dependency changes and displays direct/downstream impact, conflict changes and workload deltas. There is no apply action in v1.
+
+Detailed rules live in `guides/project_simulation.md`.
 
 ## Workflow checkpoint
 
-V50 establishes:
-
-- `workflow_definitions`
-- `workflow_nodes`
-- `workflow_edges`
-- `workflow_executions`
-- tenant-scoped draft/active/paused definitions
-- bounded DAG/reachability validation
-- typed trigger/condition/action operations
-- after-commit task-event execution
-- idempotency per tenant/workflow/event
-- task-owned authorization re-check before automated mutation
-- non-recursive automated task mutation in v1
-- auditable success/failure/skipped execution explanations
-- a dependency-free draggable canvas and recent execution history in `/work-automation`
-
-The visual canvas edits a backend-authoritative graph; it never replaces backend validation. Active workflows must be paused before editing.
+V50 establishes workflow definitions/nodes/edges/executions, bounded validated graphs, after-commit task-event execution, task-owned mutation authorization and the `/work-automation` visual canvas. Active workflows must be paused before editing.
 
 Detailed rules live in `guides/visual_workflow_builder.md`.
 
@@ -66,26 +74,28 @@ Detailed rules live in `guides/recurring_work_and_templates.md`.
 
 ## Resume here
 
-Start from current `main`. Portable PostgreSQL migrations extend through **V50** after #144; new persistence begins at **V51+**.
+Start from current `main`. Portable PostgreSQL migrations remain through **V50** because #145 adds no persistence; new persistence begins at **V51+**.
 
-The next committed product feature is **Project Simulation / What-If Engine**.
+The next committed product feature is **Collaborative Whiteboard**.
 
 Before implementation:
 
-1. choose an explicit scenario/simulation owning domain
-2. read authorized live project/task/dependency state through narrow contracts
-3. keep scenario overrides private and separate from authoritative rows
-4. compute schedule/workload/blast-radius effects without live mutation
-5. require an explicit human apply action that re-checks current authorization/invariants
+1. choose an explicit whiteboard/canvas owning domain
+2. keep project-scoped board persistence separate from project/task rows
+3. use bounded nodes/geometry/connections with backend-authoritative validation
+4. keep real-time transport behind a replaceable boundary rather than embedding WebSocket concerns in the domain model
+5. convert a board node/sticky into a task only through the task-owned creation contract and current authorization/quota rules
+6. add presence/cursors only after the persisted board model is stable
 
-After that continue with Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+After that continue with Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 ## Preserve these system invariants
 
 - tenant isolation precedes resource access
 - backend authorization is authoritative
 - stored favorites/recents/saved-view/workflow definitions never grant resource access
-- Calendar, Task Planning and Work Automation data are authorized before exposure
+- Calendar, Task Planning, Work Automation and Simulation data are authorized before exposure
+- simulation never implicitly mutates live state
 - workflow administration permission does not imply permission to mutate a target task
 - workflow/task generation retries remain idempotent
 - graph traversal, reads and generation batches remain bounded
