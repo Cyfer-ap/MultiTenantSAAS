@@ -12,13 +12,14 @@ This is the **single repository-side resume document**. Current status lives in 
 4. `guides/ENGINEERING_STANDARDS.md`
 5. `guides/task_relationships.md`
 6. `guides/recurring_work_and_templates.md`
-7. `guides/Wild_Thoughts.md`
-8. the focused guide for the domain being changed
-9. `wiki/Roadmap.md` when planning product direction
+7. `guides/visual_workflow_builder.md`
+8. `guides/Wild_Thoughts.md`
+9. the focused guide for the domain being changed
+10. `wiki/Roadmap.md` when planning product direction
 
 ## Current state
 
-Major milestones are complete through the Recurring Work + Project/Task Templates program:
+Major milestones are complete through the Visual Workflow Builder program:
 
 - billing/catalog — #106
 - tenant outbound webhooks — #112
@@ -32,12 +33,13 @@ Major milestones are complete through the Recurring Work + Project/Task Template
 - Saved Views — #134
 - Dashboard Refresh — #136
 - Calendar / Deadline View — #137/#138
-- task relationships backend + Task Planning — #139/#140
-- recurring-task + project-scoped task-template backend foundation — #141
+- Task Relationships + Task Planning — #139/#140
+- recurring-task + project-scoped task-template foundation — #141
 - documentation checkpoint — #142
-- tenant-scoped project templates + Work Automation & Templates workspace — #143
+- tenant project templates + Work Automation & Templates — #143
+- Visual Workflow Builder — #144
 
-Portable PostgreSQL Flyway migrations now extend through **V49**. New persistence must be **V50+**; never modify V49 or earlier applied migrations.
+Portable PostgreSQL Flyway migrations now extend through **V50**. New persistence must be **V51+** after #144; never modify V50 or earlier after it is merged/applied.
 
 Stripe remains the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
@@ -47,149 +49,100 @@ Stripe remains the validated deployed Test Mode billing path. Razorpay integrati
 
 Backend features should use explicit domain packages. Frontend features should preserve locality under `features/<domain>/...`.
 
-Do not expand `ProjectTaskService` or `ProjectService` merely because a new feature eventually creates tasks/projects.
+Do not expand `ProjectTaskService` or `ProjectService` merely because a new feature eventually reads or changes projects/tasks.
 
-## Work automation architecture to preserve
+## Visual Workflow Builder checkpoint
+
+V50 owns:
+
+- `workflow_definitions`
+- `workflow_nodes`
+- `workflow_edges`
+- `workflow_executions`
+
+Definition/runtime boundaries:
 
 ```text
-recurringwork ───────────┐
-                         ├─> TaskCreationPort
-project task templates ──┘          ↓
-                            task-owned adapter
-                                   ↓
-                            normal task lifecycle
-
-projecttemplates ──> ProjectCreationPort ──> project-owned adapter ──> normal project lifecycle
-       │
-       └────────────> TaskCreationPort ─────> task-owned adapter ─────> starter tasks
+task lifecycle
+    -> tasks/events/TaskDomainEvent
+    -> after-commit workflow listener
+    -> workflows runtime/graph traversal
+    -> tasks/automation/TaskAutomationMutationPort
+    -> task-owned authorization + mutation rules
 ```
 
-Owning domains/contracts:
-
-- `recurringwork`
-- `tasktemplates`
-- `projecttemplates`
-- `tasks/creation/TaskCreationPort`
-- `projects/creation/ProjectCreationPort`
-
-Ordinary project creation and project-template creation converge on the same project-owned adapter. That adapter preserves tenant/actor validation, subscription project quota, initial `PROJECT_LEAD` membership, persistence, audit, and project lifecycle/webhook behavior.
-
-Project-template orchestration must not inject the full `ProjectService`. Recurring work and templates must not inject the full `ProjectTaskService`.
-
-## Recurring-work checkpoint
-
-V48 tables:
-
-- `recurring_task_definitions`
-- `recurring_task_occurrences`
-- `project_task_templates`
-
 Rules to preserve:
 
-- task recurrence only in v1
-- `DAILY`, `WEEKLY`, `MONTHLY`
-- explicit IANA timezone
-- interval 1–52
-- optional due offset/end/max occurrences
-- generated tasks are snapshots; editing a rule never rewrites prior tasks
-- pause stops generation; resume skips paused-period occurrences
-- due discovery capped at 50 definitions/pass
-- catch-up capped at 5 occurrences/definition/pass
-- pessimistic per-definition materialization lock
-- unique `(definition_id, scheduled_for)` database idempotency
-- generation failure pauses the definition with bounded diagnostics
-- schedule arithmetic preserves local wall time across DST and uses calendar-month semantics
+- tenant-scoped workflow catalog
+- `DRAFT` / `ACTIVE` / `PAUSED`
+- 2–50 nodes, 1–100 edges
+- exactly one trigger
+- all nodes reachable from the trigger
+- acyclic graph
+- trigger/action `DEFAULT`; condition `TRUE`/`FALSE`
+- strict typed configuration; no arbitrary code
+- active workflow must be paused before editing
+- workflow definition version increments on edit
+- task events are handled after the task transaction commits
+- runtime execution is idempotent per `(tenant, workflow, event)`
+- task action authorization is re-checked by the task-owned mutation adapter
+- workflow-driven mutations do not recursively emit workflow-triggering events in v1
+- execution outcomes are auditable/explainable: `RUNNING`, `SUCCEEDED`, `FAILED`, `SKIPPED`
 
-Calendar remains a deadline projection and must not become the recurrence scheduler.
+Initial operations are intentionally narrow: task created/status changed triggers, task priority/status equality conditions, and task priority/status mutations.
 
-## Task-template checkpoint
-
-- project-scoped catalog
-- maximum 100 templates/project
-- normalized unique name/project
-- snapshot: title, description, priority, optional assignee, optional due offset
-- instantiate through `TaskCreationPort`
-- current actor is task creator
-- optional assignee is revalidated through ordinary task creation
-- template edit/delete never mutates existing tasks
-- no child/dependency/label/custom-field/workflow snapshot in v1
-
-## Project-template checkpoint
-
-V49 tables:
-
-- `project_templates`
-- `project_template_tasks`
-
-Rules to preserve:
-
-- tenant-scoped catalog
-- normalized unique template name/tenant
-- project name seed, optional description, non-archived initial status
-- maximum 50 ordered starter-task snapshots/template
-- starter snapshot: title, optional description, priority, optional due offset
-- no dependency/subtask/label/custom-field/workflow graph in v1
-- snapshot/copy semantics; later template edits do not mutate instantiated work
-- project created through `ProjectCreationPort`
-- starter tasks created through `TaskCreationPort`
-- actor becomes initial project lead through ordinary lifecycle behavior
-- project quota enforced exactly as ordinary project creation
-- project + starter-task instantiation is transactional
-- task due offsets are relative to the created project's creation instant
-
-Detailed contract: `guides/recurring_work_and_templates.md`.
-
-## Frontend checkpoint
-
-The standalone `/work-automation` workspace owns the UX and is split across:
+Frontend ownership:
 
 ```text
-features/recurring-work/
-features/task-templates/
-features/project-templates/
+features/workflow-builder/
 features/work-automation/
 ```
 
-It supports:
+The `/work-automation` Workflow builder tab provides a draggable canvas, persisted positions, branch-target inspector, save/activate/pause lifecycle and recent tenant execution history. Active definitions are read-only until paused.
 
-- authorization-safe discovery of tenant-wide and project-scoped project access
-- recurring rule create/edit/pause/resume/history with timezone visible
-- task-template create/edit/delete/instantiate
-- project-template create/edit/delete/instantiate
-- optional project-name override
-- bounded 50-row starter-task editor
+Detailed contract: `guides/visual_workflow_builder.md`.
 
-Do not move recurrence/template business logic into Calendar, `ProjectTasksSection`, `AppShell`, or task-relationship graph code.
+## Existing work-generation boundaries to preserve
 
-## Existing boundaries to preserve
+```text
+recurringwork ───────────┐
+                         ├─> TaskCreationPort -> task-owned adapter -> normal task lifecycle
+project task templates ──┘
 
-### Task Relationships
+projecttemplates -> ProjectCreationPort -> project-owned adapter -> normal project lifecycle
+       │
+       └────────> TaskCreationPort -> task-owned adapter -> starter tasks
+```
 
-V47 owns parent hierarchy, directed dependencies and project-scoped labels. Recurrence/templates are not graph metadata.
-
-### Calendar
-
-Calendar owns authorization-safe projection of actual task due dates. It does not pre-generate recurrence instances and does not own schedule rules.
-
-### Dashboard / Command Palette
-
-These are composition/discovery surfaces. They may link into automation but do not own its lifecycle.
+V48/V49 recurrence/template semantics remain documented in `guides/recurring_work_and_templates.md`. Calendar remains a deadline projection. Task Relationships remains hierarchy/dependency/label ownership.
 
 ## Resume here
 
-After #143 is merged green, continue **Product Experience & Work Management Enrichment** in this order:
+After #144 is merged green, start committed differentiated feature #2: **Project Simulation / What-If Engine**.
 
-1. bulk actions + CSV import/export
-2. custom fields/forms
-3. workflows/approvals + knowledge/documents
-4. user-facing analytics/reporting and selected differentiated experiments
-5. onboarding/workspace-switching/personalization polish
+First design decisions:
 
-For the next slice, first identify the explicit owning domain and its narrow contracts before implementation. Do not bolt bulk/import behavior into existing god-services.
+1. create an explicit simulation/scenario owning domain rather than adding preview flags to live project/task services
+2. read authorized project/task/dependency state through narrow read contracts
+3. store or calculate private scenario overrides separately from live state
+4. compute downstream schedule/workload/blast-radius effects without mutating authoritative records
+5. require an explicit human apply step for any live change; application must re-check current authorization and invariants
+
+Then continue the committed sequence:
+
+1. Collaborative Whiteboard
+2. Project Health / Risk Radar
+3. Forms -> Workflow Engine
+4. Approval Workflows
+5. Client / Guest Portal
+6. Team Workload Engine
+7. Workspace Knowledge Graph
+8. AI / Agent Teammates
+9. resume parked backlog such as bulk/CSV, custom fields, knowledge/documents and broader analytics unless reprioritized
 
 ## Validation before merge
 
-For every slice require applicable green gates:
+For every slice require applicable green gates on the **final current head**:
 
 - Repository Hygiene
 - Backend build/test/verify
@@ -200,4 +153,22 @@ For every slice require applicable green gates:
 - Qodana
 - Wiki Sync when Wiki source changes
 
-Do not merge around failed gates.
+Do not merge around failed gates. If Auto Format creates a bot-authored head, make a subsequent human commit only after verifying the formatting so normal PR workflows are retriggered on the final feature state.
+
+## Preserve these system invariants
+
+- tenant isolation precedes resource access
+- backend authorization is authoritative
+- automated workflows never grant authority
+- stored personal/workflow definitions do not bypass resource authorization
+- Calendar/Task Planning/Automation data is authorized before exposure
+- generation/automation retries are idempotent where required
+- graph traversal and batch work remain bounded
+- Explain Access and enforcement share authorization semantics
+- delegated authority never exceeds current direct source authority
+- public APIs expose DTOs rather than persistence entities
+- provider secrets remain server-side
+
+## Deferred platform work
+
+Production Operations & Disaster Recovery remains deliberately deferred behind the committed product sequence. It still includes restore drills, alert/runbook work, broader load/failure-recovery validation and production R2 verification.

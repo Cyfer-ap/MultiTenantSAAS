@@ -25,13 +25,15 @@ import { ProjectTemplatesPanel } from '../../project-templates/components/Projec
 import { projectsApi } from '../../projects/api/projectsApi'
 import { RecurringWorkPanel } from '../../recurring-work/components/RecurringWorkPanel'
 import { TaskTemplatesPanel } from '../../task-templates/components/TaskTemplatesPanel'
+import { WorkflowBuilderPanel } from '../../workflow-builder/components/WorkflowBuilderPanel'
+import { WorkflowExecutionHistoryPanel } from '../../workflow-builder/components/WorkflowExecutionHistoryPanel'
 
 interface ProjectOption {
     id: string
     name: string
 }
 
-type WorkspaceTab = 'recurring' | 'task-templates' | 'project-templates'
+type WorkspaceTab = 'recurring' | 'task-templates' | 'project-templates' | 'workflows'
 
 export function WorkAutomationPage() {
     const { session } = useAuth()
@@ -132,6 +134,12 @@ export function WorkAutomationPage() {
         context,
         authorizationPermissionCodes.PROJECT_CREATE,
     )
+    const canReadWorkflows = hasTenantPermission(context, authorizationPermissionCodes.PROJECT_READ)
+    const canManageWorkflows = hasTenantPermission(
+        context,
+        authorizationPermissionCodes.PROJECT_UPDATE,
+    )
+    const requiresProject = tab === 'recurring' || tab === 'task-templates'
 
     return (
         <Stack spacing={3}>
@@ -142,8 +150,8 @@ export function WorkAutomationPage() {
                         Work Automation & Templates
                     </Typography>
                     <Typography color="text.secondary">
-                        Schedule recurring tasks and reuse bounded task or project snapshots without
-                        bypassing domain lifecycle rules.
+                        Schedule recurring tasks, reuse bounded snapshots and compose visual task
+                        workflows without bypassing domain lifecycle rules.
                     </Typography>
                 </Box>
             </Stack>
@@ -158,10 +166,11 @@ export function WorkAutomationPage() {
                     <Tab label="Recurring work" value="recurring" />
                     <Tab label="Task templates" value="task-templates" />
                     <Tab label="Project templates" value="project-templates" />
+                    <Tab label="Workflow builder" value="workflows" />
                 </Tabs>
             </Paper>
 
-            {tab !== 'project-templates' ? (
+            {requiresProject ? (
                 <TextField
                     select
                     label="Project"
@@ -178,12 +187,10 @@ export function WorkAutomationPage() {
                 </TextField>
             ) : null}
 
-            {projectsQuery.isError && tab !== 'project-templates' ? (
+            {projectsQuery.isError && requiresProject ? (
                 <Alert severity="error">Unable to discover projects available to you.</Alert>
             ) : null}
-            {!projectsQuery.isLoading &&
-            projectsQuery.data?.length === 0 &&
-            tab !== 'project-templates' ? (
+            {!projectsQuery.isLoading && projectsQuery.data?.length === 0 && requiresProject ? (
                 <Alert severity="info">
                     No project with readable task access is available for this workspace.
                 </Alert>
@@ -209,6 +216,16 @@ export function WorkAutomationPage() {
                     canRead={canReadProjectTemplates}
                     canManage={canManageProjectTemplates}
                 />
+            ) : null}
+            {tab === 'workflows' ? (
+                <Stack spacing={2}>
+                    <WorkflowBuilderPanel
+                        tenantId={tenantId}
+                        canRead={canReadWorkflows}
+                        canManage={canManageWorkflows}
+                    />
+                    <WorkflowExecutionHistoryPanel tenantId={tenantId} canRead={canReadWorkflows} />
+                </Stack>
             ) : null}
         </Stack>
     )

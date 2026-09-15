@@ -17,7 +17,8 @@ For current project status and next work, use **`CHECKPOINT.md`** and **`HANDOFF
 - recurring-task definitions/materialization with explicit timezone and idempotent occurrence tracking
 - project-scoped reusable task templates
 - tenant-scoped reusable project templates with bounded starter-task snapshots
-- dedicated Work Automation & Templates workspace for recurring rules and task/project template lifecycle
+- dedicated Work Automation workspace for recurring rules, task/project templates and visual workflows
+- tenant-scoped Visual Workflow Builder with validated trigger/condition/action graphs, permission-aware task actions and execution history
 - permission-aware Global Search and capability-aware Command Palette
 - server-backed Favorites + Recently Viewed with contextual favorite controls
 - My Work personal attention queue and server-backed Saved Views
@@ -107,13 +108,14 @@ This rule is part of the persistent repository contract in `AGENTS.md`.
 - Task Planning workspace implemented as a separate frontend feature domain
 - recurring work and project-scoped task templates through the task-owned `TaskCreationPort`
 - tenant-scoped project templates through a project-owned `ProjectCreationPort` plus `TaskCreationPort` starter-task snapshots
-- standalone Work Automation & Templates workspace under explicit frontend feature domains
+- Visual Workflow Builder through an explicit workflows domain, task-domain events and task-owned `TaskAutomationMutationPort`
+- execution history and a dependency-free visual workflow canvas inside the Work Automation workspace
 
 Stripe is the validated deployed Test Mode payment path. Razorpay application/catalog integration remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
 ## Database
 
-Production schema evolution is owned by Flyway. Shared PostgreSQL migrations currently extend through **V49**. Never rewrite an applied migration; new persistence begins at V50+.
+Production schema evolution is owned by Flyway. Shared PostgreSQL migrations currently extend through **V50**. Never rewrite an applied migration; after V50 is merged/applied, new persistence begins at **V51+**.
 
 ```text
 multitenant-saas/src/main/resources/db/migration    historical H2 migrations
@@ -121,7 +123,7 @@ multitenant-saas/src/main/resources/db/postgresql  PostgreSQL baseline/current m
 multitenant-saas/src/main/resources/db/common      portable shared migrations
 ```
 
-Recent product migrations include V45 for personal-workspace favorites/recent items, V46 for saved views, V47 for task parent/dependency/label relationships, V48 for recurring task definitions/occurrences plus project task templates, and V49 for tenant project templates with bounded starter-task snapshots.
+Recent product migrations include V45 for personal-workspace favorites/recent items, V46 for saved views, V47 for task parent/dependency/label relationships, V48 for recurring task definitions/occurrences plus project task templates, V49 for tenant project templates with bounded starter-task snapshots, and V50 for visual workflow definitions/nodes/edges/executions.
 
 ## Verification
 
@@ -156,8 +158,9 @@ Documentation ownership is deliberately narrow to prevent drift:
 - `guides/ENGINEERING_STANDARDS.md` — technical health, debt and engineering rules
 - `guides/task_relationships.md` — task hierarchy/dependency/label semantics and ownership
 - `guides/recurring_work_and_templates.md` — recurring work, task-template and project-template generation contract
+- `guides/visual_workflow_builder.md` — workflow graph/runtime/canvas contract
 - focused guides — domain-specific behavior
-- `guides/Wild_Thoughts.md` — exploratory idea vault, not a committed roadmap
+- `guides/Wild_Thoughts.md` — product idea vault; Section 1.3 records the committed differentiated sequence
 - `wiki/*.md` — canonical source for the published reader-facing Wiki
 - `wiki/Roadmap.md` — product direction and deferred milestones
 
@@ -165,6 +168,8 @@ The Wiki is automatically validated and published from merged `main` by `.github
 
 ## Current product direction
 
-The active phase is **Product Experience & Work Management Enrichment**. Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Planning, recurring work, task templates, tenant-scoped project templates, and the Work Automation & Templates workspace are established. The next product slice is bulk actions + CSV import/export, followed by tenant adaptability and analytics.
+Visual Workflow Builder is the first completed feature in the committed differentiated sequence. The next feature is **Project Simulation / What-If Engine**, followed by Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+
+Bulk actions/CSV, custom fields, knowledge/documents and broader analytics remain valuable parked backlog unless priorities are explicitly changed.
 
 Production Operations & Disaster Recovery remains an important deferred milestone rather than the immediate development focus.

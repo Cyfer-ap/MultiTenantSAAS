@@ -12,7 +12,7 @@ Use one source of truth per kind of information:
 - `../AGENTS.md` — persistent development/quality contract for autonomous work
 - `current_architecture.md` — canonical technical architecture
 - `ENGINEERING_STANDARDS.md` — technical-health assessment, debt register and engineering rules
-- `Wild_Thoughts.md` — audited idea vault and differentiated experiments; not a committed roadmap
+- `Wild_Thoughts.md` — audited idea vault; Section 1.3 owns the explicitly committed differentiated sequence
 - `DEFERRED_PLATFORM_WORK.md` — deliberately deferred operational/platform work
 - focused guides below — detailed domain contracts and operational notes
 - `../wiki/*.md` — canonical source for the published reader-facing Wiki
@@ -40,7 +40,8 @@ When a fact changes, update the document that owns that fact rather than copying
 - `subscription_billing.md` — subscription and provider lifecycle
 - `collaboration_and_notifications.md` — collaboration/notification behavior
 - `task_relationships.md` — subtasks, directed dependencies, project-scoped labels and Task Planning ownership
-- `recurring_work_and_templates.md` — V48 recurring work/task-template contracts, V49 tenant project templates, narrow creation ports and the Work Automation & Templates frontend workspace
+- `recurring_work_and_templates.md` — V48 recurring work/task-template contracts, V49 tenant project templates, narrow creation ports and the Work Automation & Templates workspace
+- `visual_workflow_builder.md` — V50 workflow graph, runtime/event boundaries, task mutation port, execution history and visual canvas contract
 - `data_model.md` — data-model notes
 - `postgresql_and_migrations.md` — PostgreSQL/Flyway behavior
 - `outbound-webhook-events.md` — outbound event contract
@@ -49,15 +50,17 @@ When a fact changes, update the document that owns that fact rather than copying
 
 ## Planning material
 
-- `Wild_Thoughts.md` — broad product/experiment vault
+- `Wild_Thoughts.md` — broad product/experiment vault plus committed differentiated sequence in Section 1.3
 - `DEFERRED_PLATFORM_WORK.md` — important work intentionally postponed
 
 Historical planning/recovery files may remain for provenance, but they are not current specifications. Code, tests, migrations and the canonical documents above take precedence.
 
 ## Current direction
 
-The active product phase is **Product Experience & Work Management Enrichment**. Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar / Deadline View, Task Planning, recurring work, project-scoped task templates, tenant-scoped project templates and the Work Automation & Templates workspace are established through PR #143.
+The platform foundations and Product Experience milestones are established through **PR #144**, including Visual Workflow Builder runtime, canvas and execution history. Portable migrations extend through **V50**; after #144, new persistence starts at **V51+**.
 
-The next product slice is **bulk actions + CSV import/export**, followed by custom fields/forms, workflows/approvals and knowledge/documents, user-facing analytics/reporting, and continued onboarding/personalization polish.
+The next committed product feature is **Project Simulation / What-If Engine**, followed by Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
-Production Operations & Disaster Recovery remains important but intentionally deferred until after the current user-facing enrichment phase.
+Bulk actions/CSV, custom fields, broader knowledge/documents and analytics remain valuable but are parked behind the committed differentiated sequence unless explicitly reprioritized.
+
+Production Operations & Disaster Recovery remains important but intentionally deferred until after the current user-facing product sequence.
