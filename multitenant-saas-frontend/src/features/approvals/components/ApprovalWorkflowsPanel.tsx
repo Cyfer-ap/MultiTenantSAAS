@@ -182,7 +182,13 @@ export function ApprovalWorkflowsPanel({
         },
     })
     const decisionMutation = useMutation({
-        mutationFn: ({ requestId, outcome }: { requestId: string; outcome: ApprovalDecisionOutcome }) =>
+        mutationFn: ({
+            requestId,
+            outcome,
+        }: {
+            requestId: string
+            outcome: ApprovalDecisionOutcome
+        }) =>
             approvalsApi.decide(tenantId, projectId, requestId, {
                 outcome,
                 comment: decisionComment.trim() || null,
@@ -290,11 +296,7 @@ export function ApprovalWorkflowsPanel({
                                     sx={{ justifyContent: 'space-between' }}
                                 >
                                     <span>{definition.name}</span>
-                                    <Chip
-                                        component="span"
-                                        size="small"
-                                        label={definition.status}
-                                    />
+                                    <Chip component="span" size="small" label={definition.status} />
                                 </Button>
                             ))}
                             {!definitionsQuery.isLoading &&
@@ -357,15 +359,24 @@ export function ApprovalWorkflowsPanel({
                                 />
                                 <Divider />
                                 {editor.stages.map((stage, index) => (
-                                    <Paper key={`${stage.key}-${index}`} variant="outlined" sx={{ p: 2 }}>
+                                    <Paper
+                                        key={`${stage.key}-${index}`}
+                                        variant="outlined"
+                                        sx={{ p: 2 }}
+                                    >
                                         <Stack spacing={1.5}>
-                                            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+                                            <Stack
+                                                direction={{ xs: 'column', md: 'row' }}
+                                                spacing={1.5}
+                                            >
                                                 <TextField
                                                     label="Stage key"
                                                     value={stage.key}
                                                     disabled={readOnly}
                                                     onChange={(event) =>
-                                                        patchStage(index, { key: event.target.value })
+                                                        patchStage(index, {
+                                                            key: event.target.value,
+                                                        })
                                                     }
                                                     slotProps={{ htmlInput: { maxLength: 64 } }}
                                                 />
@@ -375,13 +386,20 @@ export function ApprovalWorkflowsPanel({
                                                     value={stage.name}
                                                     disabled={readOnly}
                                                     onChange={(event) =>
-                                                        patchStage(index, { name: event.target.value })
+                                                        patchStage(index, {
+                                                            name: event.target.value,
+                                                        })
                                                     }
                                                     slotProps={{ htmlInput: { maxLength: 120 } }}
                                                 />
                                             </Stack>
-                                            <FormControl fullWidth disabled={readOnly || membersQuery.isLoading}>
-                                                <InputLabel id={`reviewers-${index}`}>Reviewers</InputLabel>
+                                            <FormControl
+                                                fullWidth
+                                                disabled={readOnly || membersQuery.isLoading}
+                                            >
+                                                <InputLabel id={`reviewers-${index}`}>
+                                                    Reviewers
+                                                </InputLabel>
                                                 <Select
                                                     labelId={`reviewers-${index}`}
                                                     multiple
@@ -389,7 +407,8 @@ export function ApprovalWorkflowsPanel({
                                                     value={stage.reviewerUserIds}
                                                     onChange={(event) =>
                                                         patchStage(index, {
-                                                            reviewerUserIds: event.target.value as string[],
+                                                            reviewerUserIds: event.target
+                                                                .value as string[],
                                                         })
                                                     }
                                                     renderValue={(selected) =>
@@ -397,7 +416,10 @@ export function ApprovalWorkflowsPanel({
                                                     }
                                                 >
                                                     {members.map((member) => (
-                                                        <MenuItem key={member.userId} value={member.userId}>
+                                                        <MenuItem
+                                                            key={member.userId}
+                                                            value={member.userId}
+                                                        >
                                                             <Checkbox
                                                                 checked={stage.reviewerUserIds.includes(
                                                                     member.userId,
@@ -443,7 +465,12 @@ export function ApprovalWorkflowsPanel({
                                         </Stack>
                                     </Paper>
                                 ))}
-                                <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+                                <Stack
+                                    direction="row"
+                                    spacing={1}
+                                    useFlexGap
+                                    sx={{ flexWrap: 'wrap' }}
+                                >
                                     <Button
                                         startIcon={<AddRoundedIcon />}
                                         onClick={addStage}
@@ -480,12 +507,17 @@ export function ApprovalWorkflowsPanel({
                                             variant="outlined"
                                             startIcon={<PauseRoundedIcon />}
                                             disabled={pauseMutation.isPending}
-                                            onClick={() => pauseMutation.mutate(editor.id as string)}
+                                            onClick={() =>
+                                                pauseMutation.mutate(editor.id as string)
+                                            }
                                         >
                                             Pause
                                         </Button>
                                     ) : null}
-                                    <Chip label={`${editor.stages.length}/10 stages`} variant="outlined" />
+                                    <Chip
+                                        label={`${editor.stages.length}/10 stages`}
+                                        variant="outlined"
+                                    />
                                 </Stack>
                                 {saveMutation.isError ||
                                 activateMutation.isError ||
@@ -516,7 +548,10 @@ export function ApprovalWorkflowsPanel({
                             <Stack
                                 direction={{ xs: 'column', md: 'row' }}
                                 spacing={1.5}
-                                sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}
+                                sx={{
+                                    justifyContent: 'space-between',
+                                    alignItems: { md: 'center' },
+                                }}
                             >
                                 <Box>
                                     <Typography sx={{ fontWeight: 600 }}>

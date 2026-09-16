@@ -68,11 +68,7 @@ export interface WorkflowInput {
 }
 
 export type WorkflowExecutionStatus =
-    | 'RUNNING'
-    | 'WAITING_APPROVAL'
-    | 'SUCCEEDED'
-    | 'FAILED'
-    | 'SKIPPED'
+    'RUNNING' | 'WAITING_APPROVAL' | 'SUCCEEDED' | 'FAILED' | 'SKIPPED'
 
 export interface WorkflowExecution {
     id: string

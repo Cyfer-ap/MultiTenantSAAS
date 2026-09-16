@@ -36,12 +36,7 @@ interface ProjectOption {
 }
 
 type WorkspaceTab =
-    | 'recurring'
-    | 'task-templates'
-    | 'project-templates'
-    | 'forms'
-    | 'approvals'
-    | 'workflows'
+    'recurring' | 'task-templates' | 'project-templates' | 'forms' | 'approvals' | 'workflows'
 
 export function WorkAutomationPage() {
     const { session } = useAuth()
@@ -148,10 +143,7 @@ export function WorkAutomationPage() {
         authorizationPermissionCodes.PROJECT_UPDATE,
     )
     const requiresProject =
-        tab === 'recurring' ||
-        tab === 'task-templates' ||
-        tab === 'forms' ||
-        tab === 'approvals'
+        tab === 'recurring' || tab === 'task-templates' || tab === 'forms' || tab === 'approvals'
 
     return (
         <Stack spacing={3}>
@@ -163,8 +155,8 @@ export function WorkAutomationPage() {
                     </Typography>
                     <Typography color="text.secondary">
                         Schedule recurring tasks, reuse bounded snapshots, collect internal forms,
-                        add human approval checkpoints and compose visual workflows without bypassing
-                        domain lifecycle rules.
+                        add human approval checkpoints and compose visual workflows without
+                        bypassing domain lifecycle rules.
                     </Typography>
                 </Box>
             </Stack>
