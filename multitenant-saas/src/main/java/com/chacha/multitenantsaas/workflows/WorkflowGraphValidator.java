@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -93,7 +94,7 @@ public class WorkflowGraphValidator {
             List<WorkflowDtos.EdgeRequest> nodeEdges = outgoing.getOrDefault(node.key(), List.of());
             switch (node.type()) {
                 case TRIGGER -> validateLinearNode(node, nodeEdges, true);
-                case ACTION -> validateLinearNode(node, nodeEdges, false);
+                case ACTION -> validateActionNode(node, nodeEdges);
                 case CONDITION -> validateConditionNode(node, nodeEdges);
             }
         }
@@ -110,7 +111,6 @@ public class WorkflowGraphValidator {
             }
             return Map.of();
         }
-
         if (supplied.size() != 1 || !supplied.containsKey("value")) {
             throw new IllegalArgumentException(
                     operation + " requires exactly one configuration key: value");
@@ -119,8 +119,19 @@ public class WorkflowGraphValidator {
         if (rawValue == null || rawValue.isBlank()) {
             throw new IllegalArgumentException(operation + " requires a non-blank value");
         }
-        String value = rawValue.trim().toUpperCase(Locale.ROOT);
 
+        if (operation.configurationKind()
+                == WorkflowOperation.ConfigurationKind.APPROVAL_DEFINITION) {
+            try {
+                return Map.of("value", UUID.fromString(rawValue.trim()).toString());
+            } catch (IllegalArgumentException exception) {
+                throw new IllegalArgumentException(
+                        "Approval workflow action requires a valid approval definition ID",
+                        exception);
+            }
+        }
+
+        String value = rawValue.trim().toUpperCase(Locale.ROOT);
         try {
             if (operation.configurationKind() == WorkflowOperation.ConfigurationKind.PRIORITY) {
                 ProjectTaskPriority.valueOf(value);
@@ -132,7 +143,6 @@ public class WorkflowGraphValidator {
             throw new IllegalArgumentException(
                     "Unsupported value for " + operation + ": " + rawValue, exception);
         }
-
         if (operation == WorkflowOperation.ACTION_SET_TASK_STATUS
                 && value.equals(ProjectTaskStatus.CANCELLED.name())) {
             throw new IllegalArgumentException(
@@ -155,6 +165,26 @@ public class WorkflowGraphValidator {
         if (edges.stream().anyMatch(edge -> edge.branch() != WorkflowEdgeBranch.DEFAULT)) {
             throw new IllegalArgumentException(
                     node.type() + " node " + node.key() + " may only use DEFAULT branches");
+        }
+    }
+
+    private void validateActionNode(
+            WorkflowDtos.NodeRequest node, List<WorkflowDtos.EdgeRequest> edges) {
+        if (node.operation() != WorkflowOperation.ACTION_REQUEST_APPROVAL) {
+            validateLinearNode(node, edges, false);
+            return;
+        }
+        Set<WorkflowEdgeBranch> branches =
+                edges.stream()
+                        .map(WorkflowDtos.EdgeRequest::branch)
+                        .collect(java.util.stream.Collectors.toSet());
+        if (edges.size() != 2
+                || !branches.equals(
+                        Set.of(WorkflowEdgeBranch.APPROVED, WorkflowEdgeBranch.REJECTED))) {
+            throw new IllegalArgumentException(
+                    "Approval action "
+                            + node.key()
+                            + " must define APPROVED and REJECTED branches");
         }
     }
 
@@ -207,7 +237,6 @@ public class WorkflowGraphValidator {
                         roots.addLast(key);
                     }
                 });
-
         int visited = 0;
         while (!roots.isEmpty()) {
             String current = roots.removeFirst();

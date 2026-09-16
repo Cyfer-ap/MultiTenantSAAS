@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class WorkflowGraphValidatorTest {
@@ -48,6 +49,95 @@ class WorkflowGraphValidatorTest {
                                 WorkflowOperation.CONDITION_TASK_PRIORITY_EQUALS,
                                 Map.of("value", " urgent ")))
                 .containsEntry("value", "URGENT");
+    }
+
+    @Test
+    void acceptsApprovalActionWithExplicitApprovedAndRejectedBranches() {
+        String definitionId = UUID.randomUUID().toString();
+        List<WorkflowDtos.NodeRequest> nodes =
+                List.of(
+                        node(
+                                "trigger",
+                                WorkflowNodeType.TRIGGER,
+                                WorkflowOperation.TRIGGER_TASK_CREATED,
+                                Map.of()),
+                        node(
+                                "approval",
+                                WorkflowNodeType.ACTION,
+                                WorkflowOperation.ACTION_REQUEST_APPROVAL,
+                                Map.of("value", definitionId)),
+                        node(
+                                "approved",
+                                WorkflowNodeType.ACTION,
+                                WorkflowOperation.ACTION_SET_TASK_STATUS,
+                                Map.of("value", "IN_PROGRESS")),
+                        node(
+                                "rejected",
+                                WorkflowNodeType.ACTION,
+                                WorkflowOperation.ACTION_SET_TASK_STATUS,
+                                Map.of("value", "BLOCKED")));
+        List<WorkflowDtos.EdgeRequest> edges =
+                List.of(
+                        edge("trigger", "approval", WorkflowEdgeBranch.DEFAULT),
+                        edge("approval", "approved", WorkflowEdgeBranch.APPROVED),
+                        edge("approval", "rejected", WorkflowEdgeBranch.REJECTED));
+
+        validator.validate(nodes, edges);
+
+        assertThat(
+                        validator.normalizeConfiguration(
+                                WorkflowOperation.ACTION_REQUEST_APPROVAL,
+                                Map.of("value", definitionId)))
+                .containsEntry("value", definitionId);
+    }
+
+    @Test
+    void rejectsApprovalActionWithoutBothOutcomeBranches() {
+        String definitionId = UUID.randomUUID().toString();
+        List<WorkflowDtos.NodeRequest> nodes =
+                List.of(
+                        node(
+                                "trigger",
+                                WorkflowNodeType.TRIGGER,
+                                WorkflowOperation.TRIGGER_TASK_CREATED,
+                                Map.of()),
+                        node(
+                                "approval",
+                                WorkflowNodeType.ACTION,
+                                WorkflowOperation.ACTION_REQUEST_APPROVAL,
+                                Map.of("value", definitionId)),
+                        node(
+                                "approved",
+                                WorkflowNodeType.ACTION,
+                                WorkflowOperation.ACTION_SET_TASK_STATUS,
+                                Map.of("value", "IN_PROGRESS")));
+
+        assertThatThrownBy(
+                        () ->
+                                validator.validate(
+                                        nodes,
+                                        List.of(
+                                                edge(
+                                                        "trigger",
+                                                        "approval",
+                                                        WorkflowEdgeBranch.DEFAULT),
+                                                edge(
+                                                        "approval",
+                                                        "approved",
+                                                        WorkflowEdgeBranch.APPROVED))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("APPROVED and REJECTED");
+    }
+
+    @Test
+    void rejectsMalformedApprovalDefinitionId() {
+        assertThatThrownBy(
+                        () ->
+                                validator.normalizeConfiguration(
+                                        WorkflowOperation.ACTION_REQUEST_APPROVAL,
+                                        Map.of("value", "not-a-uuid")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("valid approval definition ID");
     }
 
     @Test

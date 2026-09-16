@@ -18,6 +18,7 @@ import {
 } from '@mui/material'
 import { useState, type DragEvent } from 'react'
 
+import { approvalsApi } from '../../approvals/api/approvalsApi'
 import { workflowsApi } from '../api/workflowsApi'
 import type {
     WorkflowDefinition,
@@ -32,6 +33,7 @@ import type {
 
 interface WorkflowBuilderPanelProps {
     tenantId: string
+    projectId: string
     canRead: boolean
     canManage: boolean
 }
@@ -60,12 +62,13 @@ const operationLabels: Record<WorkflowOperation, string> = {
     CONDITION_TASK_STATUS_EQUALS: 'Task status equals',
     ACTION_SET_TASK_PRIORITY: 'Set task priority',
     ACTION_SET_TASK_STATUS: 'Set task status',
+    ACTION_REQUEST_APPROVAL: 'Request human approval',
 }
 
 const operationsByType: Record<WorkflowNodeType, WorkflowOperation[]> = {
     TRIGGER: ['TRIGGER_TASK_CREATED', 'TRIGGER_TASK_STATUS_CHANGED', 'TRIGGER_FORM_SUBMITTED'],
     CONDITION: ['CONDITION_TASK_PRIORITY_EQUALS', 'CONDITION_TASK_STATUS_EQUALS'],
-    ACTION: ['ACTION_SET_TASK_PRIORITY', 'ACTION_SET_TASK_STATUS'],
+    ACTION: ['ACTION_SET_TASK_PRIORITY', 'ACTION_SET_TASK_STATUS', 'ACTION_REQUEST_APPROVAL'],
 }
 
 function defaultConfiguration(operation: WorkflowOperation): Record<string, string> {
@@ -77,6 +80,9 @@ function defaultConfiguration(operation: WorkflowOperation): Record<string, stri
     }
     if (operation === 'CONDITION_TASK_STATUS_EQUALS' || operation === 'ACTION_SET_TASK_STATUS') {
         return { value: 'TODO' }
+    }
+    if (operation === 'ACTION_REQUEST_APPROVAL') {
+        return { value: '' }
     }
     return {}
 }
@@ -168,7 +174,12 @@ function branchLabel(branch: WorkflowEdgeBranch) {
     return branch === 'DEFAULT' ? 'next' : branch.toLowerCase()
 }
 
-export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowBuilderPanelProps) {
+export function WorkflowBuilderPanel({
+    tenantId,
+    projectId,
+    canRead,
+    canManage,
+}: WorkflowBuilderPanelProps) {
     const queryClient = useQueryClient()
     const [editor, setEditor] = useState<WorkflowEditorState>(createStarterEditor)
     const [selectedNodeKey, setSelectedNodeKey] = useState('trigger')
@@ -178,6 +189,11 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
         queryKey: workflowsKey,
         queryFn: () => workflowsApi.list(tenantId),
         enabled: canRead,
+    })
+    const approvalDefinitionsQuery = useQuery({
+        queryKey: ['workflow-approval-definitions', tenantId, projectId],
+        queryFn: () => approvalsApi.listDefinitions(tenantId, projectId),
+        enabled: canRead && Boolean(projectId),
     })
 
     const refresh = async () => queryClient.invalidateQueries({ queryKey: workflowsKey })
@@ -222,6 +238,10 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
     const readOnly = !canManage || editor.status === 'ACTIVE'
     const mutationPending =
         saveMutation.isPending || activateMutation.isPending || pauseMutation.isPending
+    const activeApprovalDefinitions =
+        approvalDefinitionsQuery.data?.content.filter(
+            (definition) => definition.status === 'ACTIVE',
+        ) ?? []
 
     const loadWorkflow = (workflow: WorkflowDefinition) => {
         setEditor(editorFromWorkflow(workflow))
@@ -237,6 +257,18 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
         setEditor((current) => ({
             ...current,
             nodes: current.nodes.map((node) => (node.key === key ? { ...node, ...patch } : node)),
+        }))
+    }
+
+    const changeNodeOperation = (key: string, operation: WorkflowOperation) => {
+        setEditor((current) => ({
+            ...current,
+            nodes: current.nodes.map((node) =>
+                node.key === key
+                    ? { ...node, operation, configuration: defaultConfiguration(operation) }
+                    : node,
+            ),
+            edges: current.edges.filter((edge) => edge.sourceKey !== key),
         }))
     }
 
@@ -288,6 +320,15 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
         editor.edges.find((edge) => edge.sourceKey === selectedNode?.key && edge.branch === branch)
             ?.targetKey ?? ''
 
+    const branchTargetOptions = () =>
+        editor.nodes
+            .filter((node) => node.key !== selectedNode?.key)
+            .map((node) => (
+                <MenuItem key={node.key} value={node.key}>
+                    {node.key}
+                </MenuItem>
+            ))
+
     const handleDragStart = (event: DragEvent<HTMLElement>, key: string) => {
         event.dataTransfer.setData('application/x-workflow-node', key)
         event.dataTransfer.effectAllowed = 'move'
@@ -320,7 +361,8 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
                 <Box>
                     <Typography variant="h6">Visual workflow builder</Typography>
                     <Typography color="text.secondary" variant="body2">
-                        Compose task automations as a bounded trigger → condition → action graph.
+                        Compose bounded task automations and human approval checkpoints. Approval
+                        definitions are selected from the current project context.
                     </Typography>
                 </Box>
                 {canManage ? (
@@ -332,6 +374,11 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
 
             {workflowsQuery.isError ? (
                 <Alert severity="error">Unable to load workflows.</Alert>
+            ) : null}
+            {approvalDefinitionsQuery.isError ? (
+                <Alert severity="warning">
+                    Approval definitions for the selected project could not be loaded.
+                </Alert>
             ) : null}
             {editor.status === 'ACTIVE' ? (
                 <Alert severity="info">
@@ -459,8 +506,8 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
                             </Stack>
                             {saveMutation.isError ? (
                                 <Alert severity="error">
-                                    Unable to save this graph. Check node reachability, branches and
-                                    cycles.
+                                    Unable to save this graph. Check node reachability, branch
+                                    contracts, approval definitions and cycles.
                                 </Alert>
                             ) : null}
                             {activateMutation.isError || pauseMutation.isError ? (
@@ -576,7 +623,9 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
                                     </Typography>
                                     {node.configuration.value ? (
                                         <Typography color="text.secondary" variant="caption">
-                                            Value: {node.configuration.value}
+                                            {node.operation === 'ACTION_REQUEST_APPROVAL'
+                                                ? `Approval: ${node.configuration.value.slice(0, 8)}`
+                                                : `Value: ${node.configuration.value}`}
                                         </Typography>
                                     ) : null}
                                 </Stack>
@@ -596,13 +645,12 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
                                 label="Operation"
                                 value={selectedNode.operation}
                                 disabled={readOnly}
-                                onChange={(event) => {
-                                    const operation = event.target.value as WorkflowOperation
-                                    patchNode(selectedNode.key, {
-                                        operation,
-                                        configuration: defaultConfiguration(operation),
-                                    })
-                                }}
+                                onChange={(event) =>
+                                    changeNodeOperation(
+                                        selectedNode.key,
+                                        event.target.value as WorkflowOperation,
+                                    )
+                                }
                             >
                                 {operationsByType[selectedNode.type].map((operation) => (
                                     <MenuItem key={operation} value={operation}>
@@ -653,8 +701,53 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
                                     ))}
                                 </TextField>
                             ) : null}
-
-                            {selectedNode.type === 'CONDITION' ? (
+                            {selectedNode.operation === 'ACTION_REQUEST_APPROVAL' ? (
+                                <>
+                                    <TextField
+                                        select
+                                        label="Approval definition"
+                                        value={selectedNode.configuration.value ?? ''}
+                                        disabled={readOnly || approvalDefinitionsQuery.isLoading}
+                                        onChange={(event) =>
+                                            patchNode(selectedNode.key, {
+                                                configuration: { value: event.target.value },
+                                            })
+                                        }
+                                        helperText="Only active definitions from the selected project are available."
+                                    >
+                                        <MenuItem value="">Select an active definition</MenuItem>
+                                        {activeApprovalDefinitions.map((definition) => (
+                                            <MenuItem key={definition.id} value={definition.id}>
+                                                {definition.name} · v{definition.definitionVersion}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                    <TextField
+                                        select
+                                        label="Approved branch"
+                                        value={getBranchTarget('APPROVED')}
+                                        disabled={readOnly}
+                                        onChange={(event) =>
+                                            setBranchTarget('APPROVED', event.target.value)
+                                        }
+                                    >
+                                        <MenuItem value="">No target</MenuItem>
+                                        {branchTargetOptions()}
+                                    </TextField>
+                                    <TextField
+                                        select
+                                        label="Rejected branch"
+                                        value={getBranchTarget('REJECTED')}
+                                        disabled={readOnly}
+                                        onChange={(event) =>
+                                            setBranchTarget('REJECTED', event.target.value)
+                                        }
+                                    >
+                                        <MenuItem value="">No target</MenuItem>
+                                        {branchTargetOptions()}
+                                    </TextField>
+                                </>
+                            ) : selectedNode.type === 'CONDITION' ? (
                                 <>
                                     <TextField
                                         select
@@ -666,13 +759,7 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
                                         }
                                     >
                                         <MenuItem value="">No target</MenuItem>
-                                        {editor.nodes
-                                            .filter((node) => node.key !== selectedNode.key)
-                                            .map((node) => (
-                                                <MenuItem key={node.key} value={node.key}>
-                                                    {node.key}
-                                                </MenuItem>
-                                            ))}
+                                        {branchTargetOptions()}
                                     </TextField>
                                     <TextField
                                         select
@@ -684,13 +771,7 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
                                         }
                                     >
                                         <MenuItem value="">No target</MenuItem>
-                                        {editor.nodes
-                                            .filter((node) => node.key !== selectedNode.key)
-                                            .map((node) => (
-                                                <MenuItem key={node.key} value={node.key}>
-                                                    {node.key}
-                                                </MenuItem>
-                                            ))}
+                                        {branchTargetOptions()}
                                     </TextField>
                                 </>
                             ) : (
@@ -704,13 +785,7 @@ export function WorkflowBuilderPanel({ tenantId, canRead, canManage }: WorkflowB
                                     }
                                 >
                                     <MenuItem value="">No target</MenuItem>
-                                    {editor.nodes
-                                        .filter((node) => node.key !== selectedNode.key)
-                                        .map((node) => (
-                                            <MenuItem key={node.key} value={node.key}>
-                                                {node.key}
-                                            </MenuItem>
-                                        ))}
+                                    {branchTargetOptions()}
                                 </TextField>
                             )}
 
