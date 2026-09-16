@@ -52,13 +52,7 @@ public class ApprovalRequestQueryService {
         Pageable bounded = bounded(pageable);
         if (!reviewerEligibilityPort.isEligible(tenantId, projectId, actor)) {
             return new PageResponse<>(
-                    List.of(),
-                    bounded.getPageNumber(),
-                    bounded.getPageSize(),
-                    0,
-                    0,
-                    true,
-                    true);
+                    List.of(), bounded.getPageNumber(), bounded.getPageSize(), 0, 0, true, true);
         }
         Page<ApprovalRequestStageReviewer> reviewerPage =
                 reviewerRepository.findPendingInbox(tenantId, projectId, actor, bounded);
