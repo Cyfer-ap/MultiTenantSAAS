@@ -231,13 +231,12 @@ class WorkflowRuntimeServiceTest {
                         org.mockito.ArgumentMatchers.argThat(
                                 command ->
                                         approvalDefinitionId.equals(command.approvalDefinitionId())
-                                                && executionId.equals(
-                                                        command.workflowExecutionId())
+                                                && executionId.equals(command.workflowExecutionId())
                                                 && "approval".equals(command.workflowNodeKey())
-                                                && "approved_action".equals(
-                                                        command.approvedNextNodeKey())
-                                                && "rejected_action".equals(
-                                                        command.rejectedNextNodeKey())));
+                                                && "approved_action"
+                                                        .equals(command.approvedNextNodeKey())
+                                                && "rejected_action"
+                                                        .equals(command.rejectedNextNodeKey())));
         verify(executionRecorder)
                 .awaitApproval(
                         eq(executionId),
