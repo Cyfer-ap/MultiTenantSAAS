@@ -295,8 +295,7 @@ public class ProjectRiskService {
             UUID startTaskId, Map<UUID, Set<UUID>> outgoing, Map<UUID, TaskSnapshot> taskById) {
         Set<UUID> traversed = new HashSet<>();
         Set<UUID> affected = new HashSet<>();
-        ArrayDeque<UUID> queue =
-                new ArrayDeque<>(outgoing.getOrDefault(startTaskId, Set.of()));
+        ArrayDeque<UUID> queue = new ArrayDeque<>(outgoing.getOrDefault(startTaskId, Set.of()));
 
         while (!queue.isEmpty()) {
             UUID next = queue.removeFirst();
