@@ -125,7 +125,10 @@ async function decide(
 ): Promise<ApprovalRequest> {
     const response = await httpClient.post<ApiResponse<ApprovalRequest>>(
         `${basePath(tenantId, projectId)}/requests/${requestId}/decision`,
-        input,
+        {
+            outcome: input.outcome === 'APPROVED' ? 'APPROVE' : 'REJECT',
+            comment: input.comment,
+        },
     )
     return response.data.data
 }
