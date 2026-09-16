@@ -61,12 +61,12 @@ Historical planning/recovery files may remain for provenance, but they are not c
 
 ## Current direction
 
-The committed differentiated sequence is complete through **Project Health / Risk Radar (#148)**. Risk Radar is an explainable, advisory project-health read model over authorized task/dependency state and adds no persistence migration.
+The committed differentiated sequence is complete through **Forms -> Workflow Engine (#152)**. Forms provides bounded authenticated project intake, task creation through the task-owned port, submission provenance and optional entry into the existing workflow runtime.
 
-Portable migrations extend through **V51** on `main`. V51 is immutable; the active Forms -> Workflow Engine feature introduces append-only **V52** on its feature branch.
+Portable migrations extend through **V52** on `main`. V52 is immutable; later persistence starts at **V53+**.
 
-**Forms -> Workflow Engine is the active next feature.** After that continue with Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+**Approval Workflows is the active next feature.** After that continue with Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
-Live whiteboard presence/cursors remain a later optional collaboration enhancement. Bulk actions/CSV, custom fields, broader knowledge/documents and analytics remain valuable but parked behind the committed differentiated sequence unless explicitly reprioritized.
+Live whiteboard presence/cursors remain a later optional collaboration enhancement. Bulk actions/CSV, broader custom fields, knowledge/documents and analytics remain valuable but parked behind the committed differentiated sequence unless explicitly reprioritized.
 
 Production Operations & Disaster Recovery remains important but intentionally deferred until after the current user-facing product sequence.
