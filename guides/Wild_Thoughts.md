@@ -4,7 +4,9 @@
 >
 > This is **not a roadmap or commitment by default**. It records completed ideas, partial foundations, useful product gaps, differentiated experiments, and ideas worth resisting. The explicit exception is **Section 1.3**, which records the currently committed build sequence.
 >
-> Snapshot: **2026-09-15, post-PR #143**.
+> Snapshot: **2026-09-16, through Collaborative Whiteboard #147**.
+>
+> **Current-sequence status in §1.3 and §9 is authoritative.** Lower idea-audit sections may intentionally preserve historical/partial labels unless they are explicitly refreshed.
 
 ## Status legend
 
@@ -81,10 +83,10 @@ This sequence is an explicit product commitment and **takes precedence over the 
 
 | Order | Feature | Status | Product intent / overlap |
 |---:|---|---|---|
-| 1 | **Visual Workflow Builder** | 🚧 | Drag/connect `Trigger -> Condition -> Action` workflows with safe execution history, explainability and guardrails. Expands the existing workflow/approval concept and #80/#81/#135/#136. |
-| 2 | **Project Simulation / What-If Engine** | 🚧 queued | Private scenario changes for dates, owners and dependencies with downstream schedule/workload impact before applying anything. Consolidates #41 Scenario/Sandbox Mode, #53 Deadline Reality Check, #108 Change Blast-Radius Preview and #109 Alternate-Reality Planning. |
-| 3 | **Collaborative Whiteboard** | 🚧 queued | Visual planning canvas whose nodes/stickies can become real tasks/projects; later add live presence/cursors. New explicit idea. |
-| 4 | **Project Health / Risk Radar** | 🚧 queued | Explainable project-level risk signals from overdue work, blockers, stale work, dependency criticality and workload pressure. Related to #40 Risk Inbox, #57 Tenant Health Check, #98 Stale Work Detection and #121 Dependency Debt. |
+| 1 | **Visual Workflow Builder** | ✅ Built | Completed through #144: drag/connect `Trigger -> Condition -> Action` workflows with execution history, explainability and guardrails. Expands the existing workflow/approval concept and #80/#81/#135/#136. |
+| 2 | **Project Simulation / What-If Engine** | ✅ Built | Completed through #145: private scenario changes for dates, owners and dependencies with downstream schedule/workload impact before applying anything. Consolidates #41 Scenario/Sandbox Mode, #53 Deadline Reality Check, #108 Change Blast-Radius Preview and #109 Alternate-Reality Planning. |
+| 3 | **Collaborative Whiteboard** | ✅ Built | Persisted backend + project-facing visual workspace completed through #146/#147; live presence/cursors remain an optional later enhancement. |
+| 4 | **Project Health / Risk Radar** | 🚧 **ACTIVE NOW** | Explainable project-level risk signals from overdue work, blockers, stale work, dependency criticality and bounded workload pressure. Related to #40 Risk Inbox, #57 Tenant Health Check, #98 Stale Work Detection and #121 Dependency Debt. |
 | 5 | **Forms -> Workflow Engine** | 🚧 queued | Structured internal/public intake that creates authorized work and can launch workflows. Expands §2.9 and the workflow engine. |
 | 6 | **Approval Workflows** | 🚧 queued | Reusable human review/approve/reject stages that compose with workflows rather than creating a separate approval silo. Expands §2.10 and #135 Human Checkpoints. |
 | 7 | **Client / Guest Portal** | 🚧 queued | Bounded external visibility, comments, review requests and approvals without broad tenant membership. New explicit idea; permission boundaries are central. |
@@ -94,7 +96,7 @@ This sequence is an explicit product commitment and **takes precedence over the 
 
 ### Guardrails for the sequence
 
-- Build **#1 first**, then proceed in the exact order above unless a production/security incident requires interruption.
+- Features **#1–#3 are complete; #4 Project Health / Risk Radar is active now**. Continue in the exact order above unless a production/security incident or explicit product decision requires interruption.
 - Each feature gets an explicit owning domain and narrow cross-domain contracts/events.
 - Automation must not become a god-service that directly injects every domain service.
 - Visual configuration must compile to a validated backend contract; the canvas is not the source of truth by itself.
@@ -254,7 +256,7 @@ Forms can then create structured tasks/requests.
 
 ## 2.10 Workflow/approval automation — 🚧
 
-This is now being built deliberately across committed sequence features #1, #5 and #6.
+Visual Workflow Builder (#1) is built; Forms -> Workflow Engine (#5) and Approval Workflows (#6) remain committed follow-on features.
 
 A reusable engine for:
 
@@ -338,7 +340,7 @@ The original vault predated many major implementation milestones. This is the up
 | 11. Email / External Communication | 🟡 | Provider-backed email delivery exists; many future message types/digests remain open. |
 | 12. Projects and Tasks | 🟡 | Strong basics + collaboration built; richer work-management depth remains open. |
 | 13. Files, Documents and Knowledge | 🟡 | R2 attachments built; file workspace/knowledge base/versioning remain open. |
-| 14. Workflow and Approval Engine | 🚧 | Active now through committed sequence features #1, #5 and #6. |
+| 14. Workflow and Approval Engine | 🚧 | Visual workflow configuration/runtime is built; Forms -> Workflow Engine and Approval Workflows remain committed #5/#6. |
 | 15. Assets / Facilities / Booking | ⬜ | Open. |
 | 16. Workforce / HR-like Features | 🟡 | Users/org hierarchy exist; workforce product modules remain open. |
 | 17. CRM / External Relationships | ⬜ | Open. |
@@ -1029,10 +1031,10 @@ A weird idea is good only if we can define:
 The current development direction is the explicit sequence in §1.3. It overrides the previous generic progression until completed or deliberately reprioritized.
 
 ```text
-1. Visual Workflow Builder                 <- ACTIVE NOW
-2. Project Simulation / What-If Engine
-3. Collaborative Whiteboard
-4. Project Health / Risk Radar
+1. Visual Workflow Builder                 <- COMPLETE (#144)
+2. Project Simulation / What-If Engine    <- COMPLETE (#145)
+3. Collaborative Whiteboard               <- COMPLETE persisted workspace (#146/#147)
+4. Project Health / Risk Radar             <- ACTIVE NOW
 5. Forms -> Workflow Engine
 6. Approval Workflows
 7. Client / Guest Portal
@@ -1046,6 +1048,8 @@ then resume remaining backlog
   -> knowledge/documents and broader analytics
   -> other selected experiments
 ```
+
+Live whiteboard presence/cursors remain an optional later collaboration enhancement and do not block the active sequence.
 
 Operations/disaster recovery, load/failure testing and production R2 verification remain important, but are deliberately **deferred from the immediate product sequence** while the application is enriched with user-facing capability.
 
@@ -1065,6 +1069,6 @@ Use this for ideas discovered during implementation that are not ready for a num
 
 **Status:** Living Idea Vault + explicit committed sequence in §1.3
 
-**Last audited:** 2026-09-15
+**Last audited:** 2026-09-16
 
 **Rule:** Nothing here becomes a roadmap item merely because it exists here, **except items explicitly promoted into §1.3**.

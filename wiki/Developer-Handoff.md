@@ -6,9 +6,9 @@ Use this page as the reader-facing Wiki pointer for resuming development. Reposi
 
 **Differentiated Work Platform Sequence**
 
-Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder and **Project Simulation / What-If Engine** are established through PR #145.
+Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder, Project Simulation / What-If Engine and the persisted Collaborative Whiteboard workspace are established through PR #147.
 
-**Collaborative Whiteboard is active.** PR #146 establishes its backend/V51 persistence foundation; the project-facing visual workspace is the next slice, followed later by live presence/cursors.
+**Project Health / Risk Radar is active next.** Live whiteboard presence/cursors remain a later optional enhancement rather than a prerequisite for the next committed feature.
 
 ## Read first
 
@@ -40,9 +40,9 @@ Inside the repository:
 
 Reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, the Saved Views validator SPI, Calendar's deadline-source contract, Task Relationships' task gateway/change sink, `TaskCreationPort`, `ProjectCreationPort`, task-domain workflow events/`TaskAutomationMutationPort`, Project Simulation's task/dependency source ports, and Whiteboard's project/task narrow ports.
 
-## Collaborative Whiteboard foundation
+## Collaborative Whiteboard checkpoint
 
-After #146 merges, V51 owns:
+V51 owns:
 
 - `whiteboards`
 - `whiteboard_nodes`
@@ -71,11 +71,11 @@ Preserve:
 - durable `linked_task_id`
 - no WebSocket/STOMP/presence/cursor state in the persistence model
 
+The project-facing `/projects/:projectId/whiteboards` workspace adds board selection/create/delete, drag/resize, connectors, pan/zoom, multi-select, local undo/redo, committed-edit autosave, explicit stale reload recovery and node -> task conversion UX. Edit authority mirrors backend project-task-manage/project-lead semantics.
+
 Detailed rules live in `guides/collaborative_whiteboard.md`.
 
 ## Project Simulation checkpoint
-
-The simulation layer is private/advisory and does not mutate live work.
 
 ```text
 projectsimulation
@@ -93,35 +93,31 @@ V50 establishes workflow definitions/nodes/edges/executions, bounded validated g
 
 Detailed rules live in `guides/visual_workflow_builder.md`.
 
-## Resume here
+## Resume here — Project Health / Risk Radar
 
-After #146 merges green, continue the **Collaborative Whiteboard visual workspace**.
+Build the next feature as an explicit risk/health domain with narrow authorized projections rather than expanding project/task legacy services.
 
-Build next:
+Initial goals:
 
-1. frontend ownership under `features/whiteboards/`
-2. project-scoped whiteboard route and discoverable project entry point
-3. board list/create/select/delete
-4. draggable/resizable sticky/text/shape nodes
-5. connectors
-6. pan/zoom
-7. bounded autosave using the backend `expectedVersion`
-8. explicit stale-version recovery/refetch UX; never silent overwrite
-9. multi-select and local undo/redo
-10. node -> task conversion UX and linked-task indicators
-11. no live cursor/presence requirement yet
+1. explainable project-level signals for overdue work, blockers, stale work and dependency criticality
+2. bounded workload-pressure context only where explicit assignment/capacity data supports it
+3. advisory/read-only analysis first; no hidden project/task mutations
+4. concrete contributing entities/reasons instead of an opaque score
+5. project-facing Risk Radar UX with drill-down to contributing work
+6. deterministic tests for signal calculation, authorization and bounded traversal
 
-After the persisted workspace is stable, add a separate live collaboration slice with replaceable transport, reconnect/resync, presence and cursors.
+Do not rank employees, infer productivity, or score people. Risk signals must describe project/work conditions and remain permission-aware.
 
-After Collaborative Whiteboard is complete, continue with Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+After Risk Radar continue with Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 ## Preserve these system invariants
 
 - tenant isolation precedes resource access
 - backend authorization is authoritative
-- stored favorites/recents/saved-view/workflow/whiteboard definitions never grant resource access
-- Calendar, Task Planning, Work Automation, Simulation and Whiteboard data are authorized before exposure
+- stored favorites/recents/saved-view/workflow/whiteboard/risk definitions never grant resource access
+- Calendar, Task Planning, Work Automation, Simulation, Whiteboard and Risk data are authorized before exposure
 - simulation never implicitly mutates live state
+- risk analysis remains advisory until a separately authorized action exists
 - whiteboard stale writes never silently overwrite newer documents
 - whiteboard-to-task conversion uses task-owned creation behavior
 - workflow administration permission does not imply permission to mutate a target task

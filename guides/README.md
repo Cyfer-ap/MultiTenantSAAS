@@ -43,7 +43,7 @@ When a fact changes, update the document that owns that fact rather than copying
 - `recurring_work_and_templates.md` — V48 recurring work/task-template contracts, V49 tenant project templates, narrow creation ports and the Work Automation & Templates workspace
 - `visual_workflow_builder.md` — V50 workflow graph, runtime/event boundaries, task mutation port, execution history and visual canvas contract
 - `project_simulation.md` — advisory What-If baseline/simulation APIs, narrow source ports, scenario validation and private frontend workspace
-- `collaborative_whiteboard.md` — V51 project-scoped board/document persistence, optimistic concurrency, project/task ports and node-to-task conversion contract
+- `collaborative_whiteboard.md` — V51 project-scoped board/document persistence, optimistic concurrency, project/task ports, persisted visual workspace and node-to-task conversion contract
 - `data_model.md` — data-model notes
 - `postgresql_and_migrations.md` — PostgreSQL/Flyway behavior
 - `outbound-webhook-events.md` — outbound event contract
@@ -59,11 +59,13 @@ Historical planning/recovery files may remain for provenance, but they are not c
 
 ## Current direction
 
-The platform foundations and committed differentiated sequence are established through Project Simulation / What-If Engine (#145). Collaborative Whiteboard is now active: **#146 establishes its V51 backend/persistence foundation**, followed by the project-facing visual workspace and then a separate live-collaboration slice.
+The committed differentiated sequence is established through **Collaborative Whiteboard (#146/#147)**: V51 owns the persisted board model, while #147 supplies the project-facing visual workspace, optimistic autosave/recovery, canvas interactions and node-to-task conversion UX.
 
-Once #146 merges, portable migrations extend through **V51**; V51 becomes immutable and any later persistence starts at **V52+**.
+Portable migrations extend through **V51**. V51 is immutable; later persistence starts at **V52+**.
 
-After Collaborative Whiteboard, continue with Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+**Project Health / Risk Radar is the active next feature.** After that continue with Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+
+Live whiteboard presence/cursors remain a later optional collaboration enhancement and do not block Risk Radar.
 
 Bulk actions/CSV, custom fields, broader knowledge/documents and analytics remain valuable but are parked behind the committed differentiated sequence unless explicitly reprioritized.
 
