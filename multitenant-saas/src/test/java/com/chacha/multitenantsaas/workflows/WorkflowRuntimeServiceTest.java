@@ -7,12 +7,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.chacha.multitenantsaas.approvals.ApprovalCheckpointPort;
 import com.chacha.multitenantsaas.entity.ProjectTaskPriority;
 import com.chacha.multitenantsaas.entity.ProjectTaskStatus;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationMutationCommand;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationMutationPort;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationMutationType;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationSnapshot;
+import com.chacha.multitenantsaas.tasks.automation.TaskAutomationSnapshotPort;
 import com.chacha.multitenantsaas.tasks.events.TaskDomainEvent;
 import java.util.List;
 import java.util.Optional;
@@ -27,11 +29,11 @@ import tools.jackson.databind.ObjectMapper;
 @ExtendWith(MockitoExtension.class)
 class WorkflowRuntimeServiceTest {
 
-    @Mock private WorkflowDefinitionRepository definitionRepository;
-    @Mock private WorkflowNodeRepository nodeRepository;
-    @Mock private WorkflowEdgeRepository edgeRepository;
+    @Mock private WorkflowGraphLoader graphLoader;
     @Mock private WorkflowExecutionRecorder executionRecorder;
     @Mock private TaskAutomationMutationPort taskMutationPort;
+    @Mock private TaskAutomationSnapshotPort taskSnapshotPort;
+    @Mock private ApprovalCheckpointPort approvalCheckpointPort;
     @Mock private WorkflowDefinition definition;
 
     private WorkflowRuntimeService runtimeService;
@@ -40,11 +42,11 @@ class WorkflowRuntimeServiceTest {
     void setUp() {
         runtimeService =
                 new WorkflowRuntimeService(
-                        definitionRepository,
-                        nodeRepository,
-                        edgeRepository,
+                        graphLoader,
                         executionRecorder,
                         taskMutationPort,
+                        taskSnapshotPort,
+                        approvalCheckpointPort,
                         new ObjectMapper());
     }
 
@@ -56,58 +58,58 @@ class WorkflowRuntimeServiceTest {
         UUID taskId = UUID.randomUUID();
         UUID actorId = UUID.randomUUID();
         UUID executionId = UUID.randomUUID();
+        WorkflowNode trigger =
+                new WorkflowNode(
+                        tenantId,
+                        workflowId,
+                        "trigger",
+                        WorkflowNodeType.TRIGGER,
+                        WorkflowOperation.TRIGGER_TASK_CREATED,
+                        "{}",
+                        0,
+                        0);
+        List<WorkflowNode> nodes =
+                List.of(
+                        trigger,
+                        new WorkflowNode(
+                                tenantId,
+                                workflowId,
+                                "condition",
+                                WorkflowNodeType.CONDITION,
+                                WorkflowOperation.CONDITION_TASK_PRIORITY_EQUALS,
+                                "{\"value\":\"URGENT\"}",
+                                200,
+                                0),
+                        new WorkflowNode(
+                                tenantId,
+                                workflowId,
+                                "action",
+                                WorkflowNodeType.ACTION,
+                                WorkflowOperation.ACTION_SET_TASK_STATUS,
+                                "{\"value\":\"BLOCKED\"}",
+                                400,
+                                0));
+        List<WorkflowEdge> edges =
+                List.of(
+                        new WorkflowEdge(
+                                tenantId,
+                                workflowId,
+                                "trigger",
+                                "condition",
+                                WorkflowEdgeBranch.DEFAULT),
+                        new WorkflowEdge(
+                                tenantId,
+                                workflowId,
+                                "condition",
+                                "action",
+                                WorkflowEdgeBranch.TRUE));
 
         when(definition.getTenantId()).thenReturn(tenantId);
         when(definition.getId()).thenReturn(workflowId);
-        when(definitionRepository.findByTenantIdAndStatusOrderByNameAsc(
-                        tenantId, WorkflowStatus.ACTIVE))
-                .thenReturn(List.of(definition));
-        when(nodeRepository.findByTenantIdAndWorkflowIdOrderByNodeKeyAsc(tenantId, workflowId))
-                .thenReturn(
-                        List.of(
-                                new WorkflowNode(
-                                        tenantId,
-                                        workflowId,
-                                        "trigger",
-                                        WorkflowNodeType.TRIGGER,
-                                        WorkflowOperation.TRIGGER_TASK_CREATED,
-                                        "{}",
-                                        0,
-                                        0),
-                                new WorkflowNode(
-                                        tenantId,
-                                        workflowId,
-                                        "condition",
-                                        WorkflowNodeType.CONDITION,
-                                        WorkflowOperation.CONDITION_TASK_PRIORITY_EQUALS,
-                                        "{\"value\":\"URGENT\"}",
-                                        200,
-                                        0),
-                                new WorkflowNode(
-                                        tenantId,
-                                        workflowId,
-                                        "action",
-                                        WorkflowNodeType.ACTION,
-                                        WorkflowOperation.ACTION_SET_TASK_STATUS,
-                                        "{\"value\":\"BLOCKED\"}",
-                                        400,
-                                        0)));
-        when(edgeRepository.findByTenantIdAndWorkflowIdOrderBySourceNodeKeyAscBranchTypeAsc(
-                        tenantId, workflowId))
-                .thenReturn(
-                        List.of(
-                                new WorkflowEdge(
-                                        tenantId,
-                                        workflowId,
-                                        "trigger",
-                                        "condition",
-                                        WorkflowEdgeBranch.DEFAULT),
-                                new WorkflowEdge(
-                                        tenantId,
-                                        workflowId,
-                                        "condition",
-                                        "action",
-                                        WorkflowEdgeBranch.TRUE)));
+        when(graphLoader.activeDefinitions(tenantId)).thenReturn(List.of(definition));
+        when(graphLoader.trigger(definition)).thenReturn(trigger);
+        when(graphLoader.nodes(definition)).thenReturn(nodes);
+        when(graphLoader.edges(definition)).thenReturn(edges);
         when(executionRecorder.start(
                         eq(definition),
                         eq(WorkflowOperation.TRIGGER_TASK_CREATED),
@@ -149,24 +151,21 @@ class WorkflowRuntimeServiceTest {
         UUID tenantId = UUID.randomUUID();
         UUID workflowId = UUID.randomUUID();
         UUID taskId = UUID.randomUUID();
+        WorkflowNode trigger =
+                new WorkflowNode(
+                        tenantId,
+                        workflowId,
+                        "trigger",
+                        WorkflowNodeType.TRIGGER,
+                        WorkflowOperation.TRIGGER_TASK_STATUS_CHANGED,
+                        "{}",
+                        0,
+                        0);
 
         when(definition.getTenantId()).thenReturn(tenantId);
         when(definition.getId()).thenReturn(workflowId);
-        when(definitionRepository.findByTenantIdAndStatusOrderByNameAsc(
-                        tenantId, WorkflowStatus.ACTIVE))
-                .thenReturn(List.of(definition));
-        when(nodeRepository.findByTenantIdAndWorkflowIdOrderByNodeKeyAsc(tenantId, workflowId))
-                .thenReturn(
-                        List.of(
-                                new WorkflowNode(
-                                        tenantId,
-                                        workflowId,
-                                        "trigger",
-                                        WorkflowNodeType.TRIGGER,
-                                        WorkflowOperation.TRIGGER_TASK_STATUS_CHANGED,
-                                        "{}",
-                                        0,
-                                        0)));
+        when(graphLoader.activeDefinitions(tenantId)).thenReturn(List.of(definition));
+        when(graphLoader.trigger(definition)).thenReturn(trigger);
 
         runtimeService.handle(
                 TaskDomainEvent.created(
