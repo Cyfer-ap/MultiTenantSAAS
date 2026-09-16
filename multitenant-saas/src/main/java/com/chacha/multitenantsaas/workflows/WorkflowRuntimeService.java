@@ -104,7 +104,8 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
                 taskContext,
                 "FORM_SUBMISSION:" + command.submissionId(),
                 "FORM_SUBMISSION",
-                command.submissionId());
+                command.submissionId(),
+                false);
     }
 
     private void executeTaskIfTriggered(WorkflowDefinition definition, TaskDomainEvent event) {
@@ -118,7 +119,8 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
                 event,
                 event.eventId().toString(),
                 "PROJECT_TASK",
-                event.taskId());
+                event.taskId(),
+                true);
     }
 
     private void execute(
@@ -127,7 +129,8 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
             TaskDomainEvent event,
             String eventKey,
             String sourceEntityType,
-            UUID sourceEntityId) {
+            UUID sourceEntityId,
+            boolean taskEvent) {
         List<WorkflowNode> nodes =
                 nodeRepository.findByTenantIdAndWorkflowIdOrderByNodeKeyAsc(
                         definition.getTenantId(), definition.getId());
@@ -135,12 +138,15 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
                 edgeRepository.findByTenantIdAndWorkflowIdOrderBySourceNodeKeyAscBranchTypeAsc(
                         definition.getTenantId(), definition.getId());
         Optional<UUID> executionId =
-                executionRecorder.start(
-                        definition,
-                        trigger.getOperation(),
-                        eventKey,
-                        sourceEntityType,
-                        sourceEntityId);
+                taskEvent
+                        ? executionRecorder.start(
+                                definition, trigger.getOperation(), eventKey, sourceEntityId)
+                        : executionRecorder.start(
+                                definition,
+                                trigger.getOperation(),
+                                eventKey,
+                                sourceEntityType,
+                                sourceEntityId);
         if (executionId.isEmpty()) {
             return;
         }
