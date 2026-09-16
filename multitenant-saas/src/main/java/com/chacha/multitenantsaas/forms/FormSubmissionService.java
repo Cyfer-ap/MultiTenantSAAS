@@ -55,7 +55,7 @@ public class FormSubmissionService {
             Jwt jwt) {
         FormDefinition definition = requireForm(tenantId, projectId, formId);
         if (definition.getStatus() != FormStatus.ACTIVE) {
-            throw new IllegalStateException("Only active forms accept submissions");
+            throw new IllegalArgumentException("Only active forms accept submissions");
         }
         schemaEngine.validateStored(definition);
         AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
