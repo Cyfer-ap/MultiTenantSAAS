@@ -5,6 +5,7 @@ import type { PropsWithChildren } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { appTheme } from '../../../theme/appTheme'
+import { approvalsApi } from '../../approvals/api/approvalsApi'
 import { workflowsApi } from '../api/workflowsApi'
 import type { WorkflowDefinition } from '../types/workflows'
 import { WorkflowBuilderPanel } from './WorkflowBuilderPanel'
@@ -49,7 +50,7 @@ const activeWorkflow: WorkflowDefinition = {
     updatedAt: '2026-09-14T10:05:00Z',
 }
 
-function page(content: WorkflowDefinition[]) {
+function page<T>(content: T[]) {
     return {
         content,
         page: 0,
@@ -77,14 +78,21 @@ function renderPanel() {
         )
     }
 
-    return render(<WorkflowBuilderPanel tenantId="tenant-1" canRead canManage />, {
-        wrapper: Wrapper,
-    })
+    return render(
+        <WorkflowBuilderPanel
+            tenantId="tenant-1"
+            projectId="project-1"
+            canRead
+            canManage
+        />,
+        { wrapper: Wrapper },
+    )
 }
 
 describe('WorkflowBuilderPanel', () => {
     beforeEach(() => {
         vi.restoreAllMocks()
+        vi.spyOn(approvalsApi, 'listDefinitions').mockResolvedValue(page([]))
     })
 
     it('creates a workflow from the valid starter graph', async () => {
@@ -129,6 +137,7 @@ describe('WorkflowBuilderPanel', () => {
                 ],
             }),
         )
+        expect(approvalsApi.listDefinitions).toHaveBeenCalledWith('tenant-1', 'project-1')
     })
 
     it('keeps active workflows read-only until they are paused', async () => {
