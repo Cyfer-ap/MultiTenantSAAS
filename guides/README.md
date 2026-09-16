@@ -9,10 +9,10 @@ Use one source of truth per kind of information:
 - `../readme.md` — stable public platform overview
 - `../CHECKPOINT.md` — current repository/application status
 - `../HANDOFF.md` — current resume instructions and next action
-- `../AGENTS.md` — persistent development/quality contract for autonomous work
+- `../AGENTS.md` — persistent development/quality contract
 - `current_architecture.md` — canonical technical architecture
 - `ENGINEERING_STANDARDS.md` — technical-health assessment, debt register and engineering rules
-- `Wild_Thoughts.md` — audited idea vault; Section 1.3 owns the explicitly committed differentiated sequence
+- `Wild_Thoughts.md` — audited idea vault; Section 1.3 records the committed differentiated sequence
 - `DEFERRED_PLATFORM_WORK.md` — deliberately deferred operational/platform work
 - focused guides below — detailed domain contracts and operational notes
 - `../wiki/*.md` — canonical source for the published reader-facing Wiki
@@ -44,6 +44,7 @@ When a fact changes, update the document that owns that fact rather than copying
 - `visual_workflow_builder.md` — V50 workflow graph, runtime/event boundaries, task mutation port, execution history and visual canvas contract
 - `project_simulation.md` — advisory What-If baseline/simulation APIs, narrow source ports, scenario validation and private frontend workspace
 - `collaborative_whiteboard.md` — V51 project-scoped board/document persistence, optimistic concurrency, project/task ports, persisted visual workspace and node-to-task conversion contract
+- `project_risk_radar.md` — explainable Risk Radar signal model, bounds, narrow task/dependency sources, guardrails and project-facing read-only surface
 - `data_model.md` — data-model notes
 - `postgresql_and_migrations.md` — PostgreSQL/Flyway behavior
 - `outbound-webhook-events.md` — outbound event contract
@@ -59,14 +60,12 @@ Historical planning/recovery files may remain for provenance, but they are not c
 
 ## Current direction
 
-The committed differentiated sequence is established through **Collaborative Whiteboard (#146/#147)**: V51 owns the persisted board model, while #147 supplies the project-facing visual workspace, optimistic autosave/recovery, canvas interactions and node-to-task conversion UX.
+The committed differentiated sequence is complete through **Project Health / Risk Radar (#148)**. Risk Radar is an explainable, advisory project-health read model over authorized task/dependency state and adds no persistence migration.
 
 Portable migrations extend through **V51**. V51 is immutable; later persistence starts at **V52+**.
 
-**Project Health / Risk Radar is the active next feature.** After that continue with Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+**Forms -> Workflow Engine is the active next feature.** After that continue with Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
-Live whiteboard presence/cursors remain a later optional collaboration enhancement and do not block Risk Radar.
-
-Bulk actions/CSV, custom fields, broader knowledge/documents and analytics remain valuable but are parked behind the committed differentiated sequence unless explicitly reprioritized.
+Live whiteboard presence/cursors remain a later optional collaboration enhancement. Bulk actions/CSV, custom fields, broader knowledge/documents and analytics remain valuable but parked behind the committed differentiated sequence unless explicitly reprioritized.
 
 Production Operations & Disaster Recovery remains important but intentionally deferred until after the current user-facing product sequence.

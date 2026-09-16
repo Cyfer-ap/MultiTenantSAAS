@@ -2,7 +2,7 @@
 
 A production-oriented full-stack multi-tenant SaaS platform focused on tenant isolation, permission-oriented authorization, collaboration, subscription enforcement, external billing, durable integrations, enterprise OIDC SSO, PostgreSQL correctness, and an expanding work-management/product layer.
 
-For current project status and next work, use **`CHECKPOINT.md`** and **`HANDOFF.md`** rather than this README. This file intentionally avoids volatile milestone snapshots.
+For current project status and next work, use **`CHECKPOINT.md`** and **`HANDOFF.md`** rather than this README. This file intentionally avoids volatile milestone detail.
 
 ## Platform capabilities
 
@@ -21,6 +21,7 @@ For current project status and next work, use **`CHECKPOINT.md`** and **`HANDOFF
 - tenant-scoped Visual Workflow Builder with validated trigger/condition/action graphs, permission-aware task actions and execution history
 - project-scoped Project Simulation / What-If workspace for advisory due-date, assignee and dependency scenarios with downstream conflict/workload impact
 - project-scoped Collaborative Whiteboard with versioned persisted boards, draggable/resizable visual nodes/connectors, optimistic autosave/recovery and sticky/text-to-task conversion through task-owned creation
+- project-scoped **Project Health / Risk Radar** with explainable overdue, blocked, stale, unassigned-critical and dependency-bottleneck signals, explicit bounds and no employee scoring
 - permission-aware Global Search and capability-aware Command Palette
 - server-backed Favorites + Recently Viewed with contextual favorite controls
 - My Work personal attention queue and server-backed Saved Views
@@ -65,29 +66,11 @@ PostgreSQL + Flyway
 Stripe / Razorpay / Brevo / S3-compatible storage / tenant webhooks
 ```
 
-The enforcement boundary is:
-
-```text
-authentication / federation
-    ↓
-tenant isolation
-    ↓
-scoped authorization
-    ↓
-subscription lifecycle / entitlement access
-    ↓
-resource and API quotas
-    ↓
-domain invariants
-    ↓
-transaction + database constraints
-```
-
-The backend is authoritative at every security and entitlement boundary.
+The backend remains authoritative at every security, entitlement and domain-invariant boundary.
 
 Full architecture: `guides/current_architecture.md`.
 
-Engineering rules and the current technical-debt register: `guides/ENGINEERING_STANDARDS.md`.
+Engineering rules and the technical-debt register: `guides/ENGINEERING_STANDARDS.md`.
 
 ## Architecture rule for future development
 
@@ -95,25 +78,21 @@ Engineering rules and the current technical-debt register: `guides/ENGINEERING_S
 
 This rule is part of the persistent repository contract in `AGENTS.md`.
 
-## Major completed platform foundations
+## Major completed product foundations
 
 - billing/catalog lifecycle with Stripe and Razorpay provider abstractions
 - tenant-configurable outbound webhooks
 - enterprise OIDC SSO / identity federation
 - scoped authorization, bounded delegation and Explain Access
 - collaboration, notifications, attachments, API keys, usage limits and auditability
-- permission-aware Global Search and capability-aware Command Palette
-- personal-workspace Favorites/Recently Viewed, My Work and Saved Views
-- capability-aware dashboard composition over existing authorized feature contracts
-- bounded Calendar / Deadline View using task-owned authorization-aware projection contracts
-- task-relationship foundation with bounded parent hierarchy, cycle-safe directed dependencies and project-scoped labels
-- Task Planning workspace implemented as a separate frontend feature domain
-- recurring work and project-scoped task templates through the task-owned `TaskCreationPort`
-- tenant-scoped project templates through a project-owned `ProjectCreationPort` plus `TaskCreationPort` starter-task snapshots
-- Visual Workflow Builder through an explicit workflows domain, task-domain events and task-owned `TaskAutomationMutationPort`
-- execution history and a dependency-free visual workflow canvas inside the Work Automation workspace
-- Project Simulation / What-If Engine through an explicit `projectsimulation` domain and narrow task/dependency read ports, with no implicit live-state mutation
-- Collaborative Whiteboard through explicit `whiteboards` ownership, project-owned access checks, task-owned conversion and a persisted project-facing visual workspace
+- Global Search, Command Palette, Favorites/Recently Viewed, My Work and Saved Views
+- capability-aware dashboard and Calendar / Deadline View
+- Task Relationships + Task Planning
+- recurring work and project/task templates through narrow creation ports
+- Visual Workflow Builder through explicit workflow ownership, task-domain events and task-owned mutation contract
+- Project Simulation / What-If Engine through explicit `projectsimulation` ownership and narrow task/dependency sources
+- Collaborative Whiteboard through explicit `whiteboards` ownership, optimistic concurrency and task-owned conversion
+- Project Health / Risk Radar through explicit `projectrisk` ownership and narrow task/dependency sources
 
 Stripe is the validated deployed Test Mode payment path. Razorpay application/catalog integration remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
@@ -121,13 +100,9 @@ Stripe is the validated deployed Test Mode payment path. Razorpay application/ca
 
 Production schema evolution is owned by Flyway. Shared PostgreSQL migrations extend through **V51**. Never rewrite an applied migration; later persistence begins at **V52+**.
 
-```text
-multitenant-saas/src/main/resources/db/migration    historical H2 migrations
-multitenant-saas/src/main/resources/db/postgresql  PostgreSQL baseline/current migrations
-multitenant-saas/src/main/resources/db/common      portable shared migrations
-```
+Recent product migrations include V45 personal-workspace favorites/recent items, V46 saved views, V47 task parent/dependency/label relationships, V48 recurring task definitions/occurrences plus project task templates, V49 tenant project templates with bounded starter-task snapshots, V50 visual workflow definitions/nodes/edges/executions, and V51 project whiteboards/nodes/connectors.
 
-Recent product migrations include V45 for personal-workspace favorites/recent items, V46 for saved views, V47 for task parent/dependency/label relationships, V48 for recurring task definitions/occurrences plus project task templates, V49 for tenant project templates with bounded starter-task snapshots, V50 for visual workflow definitions/nodes/edges/executions, and V51 for project whiteboards/nodes/connectors.
+Project Simulation and Risk Radar are read-model/orchestration features and add no migration.
 
 ## Verification
 
@@ -152,21 +127,19 @@ Use `.env.production.example` as the deployment-variable inventory. Never commit
 
 ## Documentation
 
-Documentation ownership is deliberately narrow to prevent drift:
-
 - `CHECKPOINT.md` — current repository/application status
 - `HANDOFF.md` — current resume instructions and next action
 - `AGENTS.md` — persistent development/quality contract
 - `guides/README.md` — documentation index and ownership policy
 - `guides/current_architecture.md` — canonical technical architecture
 - `guides/ENGINEERING_STANDARDS.md` — technical health, debt and engineering rules
-- `guides/task_relationships.md` — task hierarchy/dependency/label semantics and ownership
-- `guides/recurring_work_and_templates.md` — recurring work, task-template and project-template generation contract
+- `guides/recurring_work_and_templates.md` — work-generation contracts
 - `guides/visual_workflow_builder.md` — workflow graph/runtime/canvas contract
 - `guides/project_simulation.md` — advisory What-If simulation contract
-- `guides/collaborative_whiteboard.md` — whiteboard V51/domain/concurrency/visual-workspace/task-conversion contract
+- `guides/collaborative_whiteboard.md` — whiteboard persistence/workspace contract
+- `guides/project_risk_radar.md` — Risk Radar signal/bounds/UI contract
 - focused guides — domain-specific behavior
-- `guides/Wild_Thoughts.md` — product idea vault; Section 1.3 records the committed differentiated sequence
+- `guides/Wild_Thoughts.md` — product idea vault and committed differentiated sequence
 - `wiki/*.md` — canonical source for the published reader-facing Wiki
 - `wiki/Roadmap.md` — product direction and deferred milestones
 
@@ -174,10 +147,8 @@ The Wiki is automatically validated and published from merged `main` by `.github
 
 ## Current product direction
 
-Visual Workflow Builder, Project Simulation / What-If Engine and the persisted Collaborative Whiteboard workspace are complete. **Project Health / Risk Radar is active next.** After that come Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard and **Project Health / Risk Radar are complete**. **Forms -> Workflow Engine is active next**, followed by Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
-Live whiteboard presence/cursors remain a later optional collaboration enhancement rather than a prerequisite for Risk Radar.
-
-Bulk actions/CSV, custom fields, knowledge/documents and broader analytics remain valuable parked backlog unless priorities are explicitly changed.
+Live whiteboard presence/cursors remain a later optional collaboration enhancement. Bulk actions/CSV, custom fields, knowledge/documents and broader analytics remain parked backlog unless priorities are explicitly changed.
 
 Production Operations & Disaster Recovery remains an important deferred milestone rather than the immediate development focus.
