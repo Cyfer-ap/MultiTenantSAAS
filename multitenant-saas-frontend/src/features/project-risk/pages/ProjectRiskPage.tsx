@@ -66,7 +66,7 @@ function SignalCard({ projectId, signal }: { projectId: string; signal: ProjectR
                 <Stack
                     direction={{ xs: 'column', sm: 'row' }}
                     spacing={1}
-                    alignItems={{ sm: 'center' }}
+                    sx={{ alignItems: { sm: 'center' } }}
                 >
                     <Chip
                         color={severityColor(signal.severity)}
@@ -79,7 +79,7 @@ function SignalCard({ projectId, signal }: { projectId: string; signal: ProjectR
 
                 <Typography>{signal.explanation}</Typography>
 
-                <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: 'wrap' }}>
                     {dueAt ? (
                         <Typography color="text.secondary" variant="body2">
                             Due: {dueAt}
@@ -168,8 +168,10 @@ export function ProjectRiskPage() {
             <Stack
                 direction={{ xs: 'column', md: 'row' }}
                 spacing={2}
-                justifyContent="space-between"
-                alignItems={{ md: 'center' }}
+                sx={{
+                    alignItems: { md: 'center' },
+                    justifyContent: 'space-between',
+                }}
             >
                 <Stack spacing={0.5}>
                     <Button
@@ -180,7 +182,7 @@ export function ProjectRiskPage() {
                     >
                         Back to project
                     </Button>
-                    <Stack direction="row" spacing={1} alignItems="center">
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         <WarningAmberRoundedIcon />
                         <Typography variant="h4">Project Health / Risk Radar</Typography>
                     </Stack>
@@ -189,7 +191,7 @@ export function ProjectRiskPage() {
                         dependency state.
                     </Typography>
                 </Stack>
-                <Stack direction="row" spacing={1} alignItems="center">
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                     <Chip
                         color={severityColor(riskQuery.data.riskLevel)}
                         label={`Overall: ${riskQuery.data.riskLevel}`}

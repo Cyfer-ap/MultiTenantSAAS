@@ -19,8 +19,7 @@ export function ProjectDetailsToolsPage() {
             <Stack
                 direction={{ xs: 'column', sm: 'row' }}
                 spacing={1}
-                justifyContent="flex-end"
-                sx={{ marginBottom: 1 }}
+                sx={{ justifyContent: 'flex-end', marginBottom: 1 }}
             >
                 <Button
                     component={Link}
