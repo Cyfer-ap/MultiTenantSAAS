@@ -89,32 +89,11 @@ Provides:
 
 The first version intentionally does not invent task durations or predicted project completion dates because the task model does not contain duration/effort estimates.
 
-## Current major product milestone
+### Collaborative Whiteboard
 
-### Differentiated Work Platform Sequence
+Completed at the persisted application-workspace level through PRs #146 and #147.
 
-The older plan to move directly into bulk actions/CSV remains deliberately paused. The committed sequence continues in this order unless a production/security issue or explicit product decision reprioritizes it.
-
-1. ✅ **Visual Workflow Builder** — completed through #144.
-2. ✅ **Project Simulation / What-If Engine** — completed through #145.
-3. 🚧 **Collaborative Whiteboard** — active. #146 establishes the persisted backend/domain foundation; the visual workspace and then live collaboration follow as separate slices.
-4. **Project Health / Risk Radar** — explainable risk signals from overdue work, blockers, stale work, dependency criticality and workload pressure.
-5. **Forms -> Workflow Engine** — structured internal/public intake that creates authorized work and can launch workflows.
-6. **Approval Workflows** — reusable human review/approve/reject stages that compose with the workflow engine.
-7. **Client / Guest Portal** — bounded external visibility, comments, review requests and approvals without broad tenant membership.
-8. **Team Workload Engine** — capacity planning, overload detection and reassignment support without employee-surveillance scoring.
-9. **Workspace Knowledge Graph** — permission-aware graph connecting projects, tasks, people, decisions, documents and dependencies.
-10. **AI / Agent Teammates** — bounded agent work only after workflow, knowledge and authorization context are mature; human checkpoints remain mandatory for consequential actions.
-
-`guides/Wild_Thoughts.md` is the detailed idea vault and records overlap with earlier experiments such as Scenario/Sandbox Mode, Deadline Reality Check, Risk Inbox, Change Blast-Radius Preview and Human Checkpoints for Automation/AI.
-
-## Feature 3 — Collaborative Whiteboard — ACTIVE
-
-The whiteboard connects visual planning to authoritative work without becoming another project/task god-service.
-
-### Foundation — #146
-
-The backend/persistence slice establishes:
+Provides:
 
 - explicit `whiteboards` domain
 - V51 `whiteboards`, `whiteboard_nodes`, `whiteboard_edges`
@@ -126,28 +105,81 @@ The backend/persistence slice establishes:
 - sticky/text -> task conversion through task-owned `TaskCreationPort`
 - persisted `linked_task_id` so conversion is durable and non-repeatable
 - archived-project mutation protection
+- private `/projects/:projectId/whiteboards` workspace
+- board create/select/delete
+- drag/resize, connectors, pan/zoom, multi-select and local undo/redo
+- committed-edit autosave with explicit stale/conflict reload recovery
+- backend-aligned project-lead/task-manage edit authority
 - no WebSocket/STOMP persistence coupling
 
-### Next slice — visual workspace
+Live presence/cursors remain a later optional enhancement. The persisted document model is deliberately transport-independent and that enhancement does not block the next committed product feature.
 
-After #146 merges green, build:
+## Current major product milestone
 
-- project whiteboard route/entry point
-- board list/create/select/delete
-- draggable/resizable sticky, text and shape nodes
-- connectors
-- pan/zoom
-- bounded autosave with `expectedVersion`
-- explicit stale-version refetch/recovery UX
-- multi-select
-- local undo/redo
-- node -> task conversion controls and linked-task indication
+### Differentiated Work Platform Sequence
 
-### Later slice — live collaboration
+The older plan to move directly into bulk actions/CSV remains deliberately paused. The committed sequence continues in this order unless a production/security issue or explicit product decision reprioritizes it.
 
-Only after the persisted workspace is stable, add replaceable real-time transport, presence/cursors and reconnect/resynchronization behavior.
+1. ✅ **Visual Workflow Builder** — completed through #144.
+2. ✅ **Project Simulation / What-If Engine** — completed through #145.
+3. ✅ **Collaborative Whiteboard** — persisted backend + project-facing visual workspace completed through #146/#147; live cursors/presence are optional later enhancement work.
+4. 🚧 **Project Health / Risk Radar** — **ACTIVE NOW**. Explainable project-level risk signals from overdue work, blockers, stale work, dependency criticality and bounded workload pressure.
+5. **Forms -> Workflow Engine** — structured internal/public intake that creates authorized work and can launch workflows.
+6. **Approval Workflows** — reusable human review/approve/reject stages that compose with the workflow engine.
+7. **Client / Guest Portal** — bounded external visibility, comments, review requests and approvals without broad tenant membership.
+8. **Team Workload Engine** — capacity planning, overload detection and reassignment support without employee-surveillance scoring.
+9. **Workspace Knowledge Graph** — permission-aware graph connecting projects, tasks, people, decisions, documents and dependencies.
+10. **AI / Agent Teammates** — bounded agent work only after workflow, knowledge and authorization context are mature; human checkpoints remain mandatory for consequential actions.
 
-Guardrails:
+`guides/Wild_Thoughts.md` is the detailed idea vault and records overlap with earlier experiments such as Scenario/Sandbox Mode, Deadline Reality Check, Risk Inbox, Change Blast-Radius Preview and Human Checkpoints for Automation/AI.
+
+## Feature 4 — Project Health / Risk Radar — ACTIVE
+
+Risk Radar should answer a concrete question:
+
+> **Why does this project need attention right now?**
+
+The first slice should remain advisory and explainable rather than producing an opaque project or employee score.
+
+### Initial signal families
+
+- overdue open work
+- currently blocked work
+- stale open work with no recent meaningful progress signal
+- dependency criticality / downstream exposure
+- unowned or ambiguous critical work where the domain already exposes explicit responsibility
+- bounded workload pressure only from explicit assignment/capacity data
+
+### Architecture direction
+
+Use an explicit risk/health owning domain and narrow authorization-safe source/projection contracts for project, task, dependency and later workload state.
+
+Do **not** inject legacy `ProjectService`, `ProjectTaskService` and relationship services into one risk god-service.
+
+Risk output should contain:
+
+- signal type
+- severity/weight only where deterministic and documented
+- concrete contributing task/dependency/entity references
+- human-readable explanation
+- enough structured data for UI drill-down
+
+### Guardrails
+
+- advisory/read-only first
+- no automatic task/project mutations
+- no employee productivity ranking
+- no secret activity scoring
+- no broad tenant retrieval followed by post-hoc access filtering
+- bounded/cycle-safe graph analysis
+- explanations must expose the facts that produced each signal
+- authorization remains authoritative before data reaches risk calculation
+
+## Collaborative Whiteboard — optional later live-collaboration slice
+
+A later whiteboard enhancement may add replaceable real-time transport, reconnect/resynchronization, presence and cursors.
+
+Guardrails remain:
 
 - canvas state is not stored as arbitrary fields on project/task rows
 - whiteboard objects do not become authoritative project work until explicit conversion succeeds
@@ -174,6 +206,7 @@ Already completed foundations include:
 - Work Automation workspace
 - Visual Workflow Builder
 - Project Simulation / What-If Engine
+- Collaborative Whiteboard
 
 Still valuable later:
 
@@ -185,15 +218,14 @@ Still valuable later:
 
 ## Immediate sequence
 
-1. **Finish Collaborative Whiteboard** — #146 foundation -> visual workspace -> live collaboration
-2. Project Health / Risk Radar
-3. Forms -> Workflow Engine
-4. Approval Workflows
-5. Client / Guest Portal
-6. Team Workload Engine
-7. Workspace Knowledge Graph
-8. AI / Agent Teammates
-9. resume remaining parked backlog such as bulk actions/CSV, custom fields, knowledge/documents and broader analytics
+1. **Project Health / Risk Radar**
+2. Forms -> Workflow Engine
+3. Approval Workflows
+4. Client / Guest Portal
+5. Team Workload Engine
+6. Workspace Knowledge Graph
+7. AI / Agent Teammates
+8. resume remaining parked backlog such as bulk actions/CSV, custom fields, knowledge/documents and broader analytics
 
 For each slice, choose the owning domain and narrow cross-domain contracts before implementation. Do not implement new behavior by expanding legacy project/task god-services.
 
@@ -248,6 +280,6 @@ Target capabilities remain:
 
 Preserve tenant isolation, backend-authoritative authorization, delegation non-escalation, verified provider reconciliation, webhook-authoritative normal billing state, immutable history, Flyway invariants, database-backed concurrency, auditability, SSRF protections and server-only secrets/provider identifiers.
 
-New user-facing features must remain permission-aware and tenant-safe. Search, Favorites/Recent resolution, My Work, Saved Views, Calendar, Task Planning, recurrence/templates, workflows, simulation, whiteboards, analytics and future AI must filter through authoritative authorization boundaries rather than attempting to repair access after retrieval.
+New user-facing features must remain permission-aware and tenant-safe. Search, Favorites/Recent resolution, My Work, Saved Views, Calendar, Task Planning, recurrence/templates, workflows, simulation, whiteboards, Risk Radar, analytics and future AI must filter through authoritative authorization boundaries rather than attempting to repair access after retrieval.
 
 New functionality must stay inside explicit domain modules and cross boundaries only through narrow services/contracts/events. Search, Personal Workspace, My Work, Saved Views, Calendar, Task Relationships, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, Project Simulation source ports and Whiteboard `ProjectAccessPort`/`TaskCreationPort` usage are current reference implementations.

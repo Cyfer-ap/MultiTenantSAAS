@@ -24,7 +24,7 @@ Implemented foundations include:
 - Work Automation workspace with recurring work, task/project templates and visual workflows
 - Visual Workflow Builder with bounded validated graphs, task-domain event runtime, permission-aware task actions and execution history
 - Project Simulation / What-If Engine with advisory due-date/assignee/dependency scenarios, downstream conflict analysis and workload deltas
-- Collaborative Whiteboard persisted backend foundation with versioned project boards, bounded nodes/connectors and sticky/text-to-task conversion through task-owned creation
+- Collaborative Whiteboard with versioned project boards, bounded visual nodes/connectors, project-facing canvas interactions, optimistic autosave/recovery and sticky/text-to-task conversion through task-owned creation
 - permission-aware Global Search and capability-aware Command Palette
 - server-backed Favorites + Recently Viewed with contextual favorite controls
 - My Work personal attention queue and server-backed Saved Views
@@ -43,7 +43,7 @@ MultiTenantSAAS remains an intentional modular monolith. Future features must fo
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Recurring work and task templates cross into task creation through the task-owned `TaskCreationPort`. Tenant project templates cross into project creation through `ProjectCreationPort` and create starter tasks through `TaskCreationPort`.
+Recurring work and task templates cross into task creation through task-owned `TaskCreationPort`. Tenant project templates cross into project creation through `ProjectCreationPort` and create starter tasks through `TaskCreationPort`.
 
 Visual workflows consume task-domain events and cross back into task mutation only through `TaskAutomationMutationPort`, which re-checks current authority. The workflow domain does not own task repositories or the full task service.
 
@@ -55,7 +55,7 @@ See [[Architecture]] for the current architecture and known debt.
 
 ## Database checkpoint
 
-After the Collaborative Whiteboard foundation merges, PostgreSQL Flyway migrations extend through **V51**. Applied migrations remain append-only; later persistence begins at **V52+**.
+PostgreSQL Flyway migrations extend through **V51**. Applied migrations remain append-only; later persistence begins at **V52+**.
 
 Recent product migrations are V45 for personal-workspace favorites/recent items, V46 for saved views, V47 for task parent/dependency/label relationships, V48 for recurring task definitions/occurrences plus project task templates, V49 for tenant project templates plus bounded starter-task snapshots, V50 for workflow definitions/nodes/edges/executions, and V51 for project whiteboards/nodes/connectors.
 
@@ -73,11 +73,13 @@ Recent product migrations are V45 for personal-workspace favorites/recent items,
 - [[Roadmap]]
 - [[Developer-Handoff]]
 
-Repository-side `guides/Wild_Thoughts.md` is the living idea vault; `guides/ENGINEERING_STANDARDS.md` owns technical-health rules; `guides/task_relationships.md` owns task hierarchy/dependency/label semantics; `guides/recurring_work_and_templates.md` owns work-generation semantics; `guides/visual_workflow_builder.md` owns workflow graph/runtime/canvas semantics; `guides/project_simulation.md` owns advisory What-If simulation semantics; and `guides/collaborative_whiteboard.md` owns whiteboard persistence/domain/concurrency semantics.
+Repository-side `guides/Wild_Thoughts.md` is the living idea vault; `guides/ENGINEERING_STANDARDS.md` owns technical-health rules; `guides/task_relationships.md` owns task hierarchy/dependency/label semantics; `guides/recurring_work_and_templates.md` owns work-generation semantics; `guides/visual_workflow_builder.md` owns workflow graph/runtime/canvas semantics; `guides/project_simulation.md` owns advisory What-If simulation semantics; and `guides/collaborative_whiteboard.md` owns whiteboard persistence/domain/concurrency/visual-workspace semantics.
 
 ## Current product direction
 
-Visual Workflow Builder and Project Simulation / What-If Engine are complete. **Collaborative Whiteboard is active**: #146 establishes the V51 backend/domain foundation, followed by the visual project workspace and then live presence/cursors. After that come Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+Visual Workflow Builder, Project Simulation / What-If Engine and the persisted Collaborative Whiteboard workspace are complete. **Project Health / Risk Radar is active next**, followed by Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+
+Live whiteboard presence/cursors remain a later optional collaboration enhancement and do not block Risk Radar.
 
 Bulk/CSV, custom fields, knowledge/documents and broader analytics remain parked backlog unless explicitly reprioritized.
 

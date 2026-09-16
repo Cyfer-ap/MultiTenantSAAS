@@ -21,7 +21,7 @@ This is the **single repository-side resume document**. Current status lives in 
 
 ## Current state
 
-Major milestones are complete through Project Simulation / What-If Engine, and Collaborative Whiteboard foundation is being established in #146:
+Major milestones are complete through the persisted Collaborative Whiteboard workspace:
 
 - billing/catalog — #106
 - tenant outbound webhooks — #112
@@ -41,9 +41,10 @@ Major milestones are complete through Project Simulation / What-If Engine, and C
 - tenant project templates + Work Automation & Templates — #143
 - Visual Workflow Builder — #144
 - Project Simulation / What-If Engine — #145
-- Collaborative Whiteboard backend/persistence foundation — #146 once merged green
+- Collaborative Whiteboard backend/persistence foundation — #146
+- Collaborative Whiteboard project-facing visual workspace — #147
 
-After #146 merges, portable PostgreSQL Flyway migrations extend through **V51**. Never modify V51 or earlier after it is merged/applied; later persistence starts at **V52+**.
+Portable PostgreSQL Flyway migrations extend through **V51**. Never modify V51 or earlier after merge/application; later persistence starts at **V52+**.
 
 Stripe remains the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
@@ -55,7 +56,7 @@ Backend features should use explicit domain packages. Frontend features should p
 
 Do not expand `ProjectTaskService` or `ProjectService` merely because a new feature reads or changes projects/tasks.
 
-## Collaborative Whiteboard foundation checkpoint
+## Collaborative Whiteboard checkpoint
 
 V51 owns:
 
@@ -63,7 +64,7 @@ V51 owns:
 - `whiteboard_nodes`
 - `whiteboard_edges`
 
-Backend ownership:
+Boundary:
 
 ```text
 whiteboards
@@ -75,10 +76,9 @@ Preserve these rules:
 
 - project-scoped + tenant-scoped board access
 - board names unique within a project after normalization
-- initial nodes: `STICKY`, `TEXT`, `SHAPE`
+- node types `STICKY`, `TEXT`, `SHAPE`
 - max 300 nodes / 600 connectors per submitted document
-- stable node keys
-- bounded position/size/z-index
+- stable node keys and bounded position/size/z-index
 - connectors reference existing nodes, reject self/duplicates and may form visual cycles
 - board-level optimistic versioning guards update/delete/task-conversion
 - stale versions return HTTP 409 with expected/current version details
@@ -90,22 +90,19 @@ Preserve these rules:
 - linked task IDs survive document replacement when the stable node key remains
 - no WebSocket/STOMP/presence/cursor state is persisted in V51
 
-Foundation API:
+Project-facing workspace:
 
 ```text
-GET    /api/tenants/{tenantId}/projects/{projectId}/whiteboards
-POST   /api/tenants/{tenantId}/projects/{projectId}/whiteboards
-GET    /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}
-PUT    /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}
-DELETE /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}?expectedVersion={version}
-POST   /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}/nodes/{nodeKey}/convert-to-task
+/projects/:projectId/whiteboards
 ```
+
+The #147 UI provides board list/create/delete, drag/resize, connectors, pan/zoom, multi-select, local undo/redo, optimistic autosave/reload recovery, project-lead management fallback and sticky/text -> task conversion. It keeps pointer movement local and persists only committed edits.
+
+Live cursors/presence remain a later optional collaboration slice; the persisted document contract is transport-independent.
 
 Detailed rules: `guides/collaborative_whiteboard.md`.
 
 ## Project Simulation checkpoint
-
-Backend boundary:
 
 ```text
 projectsimulation
@@ -146,37 +143,41 @@ projecttemplates -> ProjectCreationPort -> project-owned adapter -> normal proje
 
 V48/V49 recurrence/template semantics remain documented in `guides/recurring_work_and_templates.md`. Calendar remains deadline projection. Task Relationships remains hierarchy/dependency/label ownership.
 
-## Resume here
+## Resume here — Project Health / Risk Radar
 
-After #146 merges green, continue **Collaborative Whiteboard** with the project-facing visual workspace as the next PR.
+The next committed feature is **Project Health / Risk Radar**.
 
-Target #147 scope:
+Initial scope should be an explicit risk/health domain, not another set of methods added to project/task god-services.
 
-1. frontend domain under `features/whiteboards/`
-2. project route/entry point for a whiteboard workspace
-3. board list/create/select/delete
-4. draggable/resizable sticky, text and shape nodes
-5. visual connectors between nodes
-6. pan + zoom
-7. autosave full bounded document using `expectedVersion`
-8. explicit 409 stale-version recovery/refetch UX; never silently overwrite a newer board
-9. multi-select and local undo/redo
-10. node -> task conversion UI using the existing backend endpoint
-11. active task links visible on converted nodes
-12. no WebSocket/live cursor requirement yet
+Recommended first slice:
 
-After the persisted visual workspace is stable, add the live-collaboration slice with transport/reconnect/resync, presence and cursors while keeping the persisted document model transport-independent.
+1. define a project-risk domain and stable risk signal/result DTOs
+2. read authorized project/task/dependency state through narrow projection/source ports
+3. calculate explainable signals for overdue work, blockers, stale open work and dependency criticality
+4. add bounded workload-pressure context only from explicit assignments/capacity data; no employee scoring
+5. return signal contributions/reasons rather than an opaque magic score
+6. keep the feature advisory/read-only initially
+7. expose a project-facing Risk Radar workspace/card with drill-down to contributing work
+8. add focused deterministic tests for signal calculation, authorization and bounded traversal
 
-Then continue the committed sequence:
+Guardrails:
 
-1. Project Health / Risk Radar
-2. Forms -> Workflow Engine
-3. Approval Workflows
-4. Client / Guest Portal
-5. Team Workload Engine
-6. Workspace Knowledge Graph
-7. AI / Agent Teammates
-8. resume parked backlog such as bulk/CSV, custom fields, knowledge/documents and broader analytics unless reprioritized
+- do not infer employee productivity or rank people
+- do not mutate project/task state from risk calculation
+- do not fetch broad tenant data and filter after scoring
+- risk explanations must identify concrete contributing signals/entities
+- graph traversal remains bounded/cycle-safe
+- use current authoritative authorization before exposure
+
+After Risk Radar, continue:
+
+1. Forms -> Workflow Engine
+2. Approval Workflows
+3. Client / Guest Portal
+4. Team Workload Engine
+5. Workspace Knowledge Graph
+6. AI / Agent Teammates
+7. resume parked backlog such as bulk/CSV, custom fields, knowledge/documents and broader analytics unless reprioritized
 
 ## Validation before merge
 
@@ -191,16 +192,17 @@ For every slice require applicable green gates on the **final current head**:
 - Qodana
 - Wiki Sync when Wiki source changes
 
-Do not merge around failed gates. If Auto Format creates a bot-authored head, make a subsequent human commit only after verifying the formatting so normal PR workflows are retriggered on the final feature state.
+Do not merge around failed gates. If Auto Format creates a bot-authored head, verify the formatting and follow it with a human commit so normal PR workflows run on the final feature state.
 
 ## Preserve these system invariants
 
 - tenant isolation precedes resource access
 - backend authorization is authoritative
 - automated workflows never grant authority
-- stored personal/workflow/whiteboard definitions do not bypass resource authorization
-- Calendar/Task Planning/Automation/Simulation/Whiteboard data is authorized before exposure
+- stored personal/workflow/whiteboard/risk definitions do not bypass resource authorization
+- Calendar/Task Planning/Automation/Simulation/Whiteboard/Risk data is authorized before exposure
 - simulation never mutates live state implicitly
+- risk analysis remains advisory until a separately authorized human action exists
 - whiteboard optimistic concurrency never silently overwrites newer state
 - generated tasks go through task-owned creation behavior
 - graph traversal and batch/document work remain bounded
