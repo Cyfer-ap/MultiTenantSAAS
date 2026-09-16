@@ -99,10 +99,9 @@ function renderPanel() {
         )
     }
 
-    return render(
-        <FormsPanel tenantId="tenant-1" projectId="project-1" canManage />,
-        { wrapper: Wrapper },
-    )
+    return render(<FormsPanel tenantId="tenant-1" projectId="project-1" canManage />, {
+        wrapper: Wrapper,
+    })
 }
 
 describe('FormsPanel', () => {
@@ -139,7 +138,9 @@ describe('FormsPanel', () => {
         vi.spyOn(formsApi, 'get').mockResolvedValue({ ...form, status: 'PAUSED' })
         renderPanel()
 
-        expect(await screen.findByText('Activate the form before accepting submissions.')).toBeVisible()
+        expect(
+            await screen.findByText('Activate the form before accepting submissions.'),
+        ).toBeVisible()
         expect(
             screen.queryByRole('button', { name: /submit and create task/i }),
         ).not.toBeInTheDocument()

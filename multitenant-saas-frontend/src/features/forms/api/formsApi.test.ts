@@ -123,7 +123,9 @@ describe('formsApi', () => {
     })
 
     it('uses bounded project-scoped submission endpoints', async () => {
-        const get = vi.spyOn(httpClient, 'get').mockResolvedValue(successfulResponse(page([submission])))
+        const get = vi
+            .spyOn(httpClient, 'get')
+            .mockResolvedValue(successfulResponse(page([submission])))
         const post = vi.spyOn(httpClient, 'post').mockResolvedValue(successfulResponse(submission))
         const values = { title: 'Request', amount: '12345678901234567890.123456789' }
 
