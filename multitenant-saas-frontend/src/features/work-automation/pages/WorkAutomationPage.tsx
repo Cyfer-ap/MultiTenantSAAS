@@ -36,12 +36,7 @@ interface ProjectOption {
 }
 
 type WorkspaceTab =
-    | 'recurring'
-    | 'task-templates'
-    | 'project-templates'
-    | 'forms'
-    | 'approvals'
-    | 'workflows'
+    'recurring' | 'task-templates' | 'project-templates' | 'forms' | 'approvals' | 'workflows'
 
 export function WorkAutomationPage() {
     const { session } = useAuth()
