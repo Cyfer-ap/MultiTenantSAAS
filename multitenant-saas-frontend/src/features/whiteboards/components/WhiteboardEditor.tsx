@@ -675,7 +675,7 @@ export function WhiteboardEditor({
                         backgroundImage:
                             'radial-gradient(circle, rgba(120,120,120,0.28) 1px, transparent 1px)',
                         backgroundSize: '22px 22px',
-                        cursor: panRef.current ? 'grabbing' : 'grab',
+                        cursor: 'grab',
                         height: { xs: 560, lg: 680 },
                         overflow: 'hidden',
                         position: 'relative',
