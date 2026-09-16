@@ -11,8 +11,9 @@ import org.springframework.data.repository.query.Param;
 public interface ApprovalRequestStageReviewerRepository
         extends JpaRepository<ApprovalRequestStageReviewer, UUID> {
 
-    List<ApprovalRequestStageReviewer> findByTenantIdAndProjectIdAndRequestIdAndRequestStageIdOrderByReviewerUserIdAsc(
-            UUID tenantId, UUID projectId, UUID requestId, UUID requestStageId);
+    List<ApprovalRequestStageReviewer>
+            findByTenantIdAndProjectIdAndRequestIdAndRequestStageIdOrderByReviewerUserIdAsc(
+                    UUID tenantId, UUID projectId, UUID requestId, UUID requestStageId);
 
     boolean existsByTenantIdAndProjectIdAndRequestIdAndRequestStageIdAndReviewerUserId(
             UUID tenantId,
@@ -21,7 +22,8 @@ public interface ApprovalRequestStageReviewerRepository
             UUID requestStageId,
             UUID reviewerUserId);
 
-    @Query("""
+    @Query(
+            """
             SELECT reviewer
             FROM ApprovalRequestStageReviewer reviewer, ApprovalRequestStage stage, ApprovalRequest request
             WHERE reviewer.tenantId = :tenantId

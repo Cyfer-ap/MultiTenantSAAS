@@ -55,8 +55,7 @@ public final class ApprovalDtos {
             Instant updatedAt) {}
 
     public record DecisionRequest(
-            @NotNull ApprovalDecisionOutcome outcome,
-            @Size(max = 1000) String comment) {}
+            @NotNull ApprovalDecisionOutcome outcome, @Size(max = 1000) String comment) {}
 
     public record RequestStageResponse(
             UUID id,

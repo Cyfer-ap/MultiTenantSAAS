@@ -25,12 +25,14 @@ public class ApprovalRequestController {
     private final ApprovalRequestCommandService commandService;
 
     public ApprovalRequestController(
-            ApprovalRequestQueryService queryService, ApprovalRequestCommandService commandService) {
+            ApprovalRequestQueryService queryService,
+            ApprovalRequestCommandService commandService) {
         this.queryService = queryService;
         this.commandService = commandService;
     }
 
-    @PreAuthorize("@authorizationSecurity.canReadProjectTasks(#tenantId,#projectId,'project.task.read')")
+    @PreAuthorize(
+            "@authorizationSecurity.canReadProjectTasks(#tenantId,#projectId,'project.task.read')")
     @GetMapping("/inbox")
     public ResponseEntity<ApiResponse<PageResponse<ApprovalDtos.RequestSummary>>> inbox(
             @PathVariable UUID tenantId,
@@ -43,7 +45,8 @@ public class ApprovalRequestController {
                         queryService.inbox(tenantId, projectId, pageable, jwt)));
     }
 
-    @PreAuthorize("@authorizationSecurity.canReadProjectTasks(#tenantId,#projectId,'project.task.read')")
+    @PreAuthorize(
+            "@authorizationSecurity.canReadProjectTasks(#tenantId,#projectId,'project.task.read')")
     @GetMapping("/requests")
     public ResponseEntity<ApiResponse<PageResponse<ApprovalDtos.RequestSummary>>> history(
             @PathVariable UUID tenantId,
@@ -55,7 +58,8 @@ public class ApprovalRequestController {
                         queryService.history(tenantId, projectId, pageable)));
     }
 
-    @PreAuthorize("@authorizationSecurity.canReadProjectTasks(#tenantId,#projectId,'project.task.read')")
+    @PreAuthorize(
+            "@authorizationSecurity.canReadProjectTasks(#tenantId,#projectId,'project.task.read')")
     @GetMapping("/requests/{requestId}")
     public ResponseEntity<ApiResponse<ApprovalDtos.RequestResponse>> get(
             @PathVariable UUID tenantId,
@@ -67,7 +71,8 @@ public class ApprovalRequestController {
                         queryService.get(tenantId, projectId, requestId)));
     }
 
-    @PreAuthorize("@authorizationSecurity.canReadProjectTasks(#tenantId,#projectId,'project.task.read')")
+    @PreAuthorize(
+            "@authorizationSecurity.canReadProjectTasks(#tenantId,#projectId,'project.task.read')")
     @PostMapping("/requests/{requestId}/decision")
     public ResponseEntity<ApiResponse<ApprovalDtos.RequestResponse>> decide(
             @PathVariable UUID tenantId,

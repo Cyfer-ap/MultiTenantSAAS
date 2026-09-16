@@ -133,17 +133,55 @@ public class WorkflowExecution {
         return value.substring(0, 2000);
     }
 
-    public UUID getId() { return id; }
-    public UUID getTenantId() { return tenantId; }
-    public UUID getWorkflowId() { return workflowId; }
-    public int getWorkflowVersion() { return workflowVersion; }
-    public String getEventKey() { return eventKey; }
-    public WorkflowOperation getTriggerOperation() { return triggerOperation; }
-    public String getSourceEntityType() { return sourceEntityType; }
-    public UUID getSourceEntityId() { return sourceEntityId; }
-    public WorkflowExecutionStatus getStatus() { return status; }
-    public String getExplanation() { return explanation; }
-    public String getErrorMessage() { return errorMessage; }
-    public Instant getStartedAt() { return startedAt; }
-    public Instant getCompletedAt() { return completedAt; }
+    public UUID getId() {
+        return id;
+    }
+
+    public UUID getTenantId() {
+        return tenantId;
+    }
+
+    public UUID getWorkflowId() {
+        return workflowId;
+    }
+
+    public int getWorkflowVersion() {
+        return workflowVersion;
+    }
+
+    public String getEventKey() {
+        return eventKey;
+    }
+
+    public WorkflowOperation getTriggerOperation() {
+        return triggerOperation;
+    }
+
+    public String getSourceEntityType() {
+        return sourceEntityType;
+    }
+
+    public UUID getSourceEntityId() {
+        return sourceEntityId;
+    }
+
+    public WorkflowExecutionStatus getStatus() {
+        return status;
+    }
+
+    public String getExplanation() {
+        return explanation;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public Instant getStartedAt() {
+        return startedAt;
+    }
+
+    public Instant getCompletedAt() {
+        return completedAt;
+    }
 }

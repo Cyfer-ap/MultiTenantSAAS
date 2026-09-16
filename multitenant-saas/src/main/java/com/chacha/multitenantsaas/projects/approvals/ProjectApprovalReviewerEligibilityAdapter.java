@@ -12,7 +12,8 @@ public class ProjectApprovalReviewerEligibilityAdapter implements ApprovalReview
 
     private final ProjectMemberRepository projectMemberRepository;
 
-    public ProjectApprovalReviewerEligibilityAdapter(ProjectMemberRepository projectMemberRepository) {
+    public ProjectApprovalReviewerEligibilityAdapter(
+            ProjectMemberRepository projectMemberRepository) {
         this.projectMemberRepository = projectMemberRepository;
     }
 

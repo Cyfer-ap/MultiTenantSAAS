@@ -47,8 +47,7 @@ public class ApprovalRequestQueryService {
             UUID tenantId, UUID projectId, Pageable pageable, Jwt jwt) {
         UUID actor = currentActorService.getRequiredActiveActor(tenantId, jwt).getId();
         Page<ApprovalRequestStageReviewer> reviewerPage =
-                reviewerRepository.findPendingInbox(
-                        tenantId, projectId, actor, bounded(pageable));
+                reviewerRepository.findPendingInbox(tenantId, projectId, actor, bounded(pageable));
         List<ApprovalDtos.RequestSummary> content =
                 reviewerPage.getContent().stream()
                         .map(
@@ -160,6 +159,7 @@ public class ApprovalRequestQueryService {
 
     private Pageable bounded(Pageable pageable) {
         return PageRequest.of(
-                pageable.getPageNumber(), Math.max(1, Math.min(pageable.getPageSize(), MAX_PAGE_SIZE)));
+                pageable.getPageNumber(),
+                Math.max(1, Math.min(pageable.getPageSize(), MAX_PAGE_SIZE)));
     }
 }

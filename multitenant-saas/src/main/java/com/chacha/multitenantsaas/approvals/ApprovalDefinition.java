@@ -83,7 +83,8 @@ public class ApprovalDefinition {
 
     public void update(String name, String normalizedName, String description) {
         if (status == ApprovalStatus.ACTIVE) {
-            throw new IllegalArgumentException("Active approval definitions must be paused before editing");
+            throw new IllegalArgumentException(
+                    "Active approval definitions must be paused before editing");
         }
         this.name = name;
         this.normalizedName = normalizedName;
@@ -105,15 +106,47 @@ public class ApprovalDefinition {
         updatedAt = Instant.now();
     }
 
-    public UUID getId() { return id; }
-    public UUID getTenantId() { return tenantId; }
-    public UUID getProjectId() { return projectId; }
-    public UUID getCreatedByUserId() { return createdByUserId; }
-    public String getName() { return name; }
-    public String getNormalizedName() { return normalizedName; }
-    public String getDescription() { return description; }
-    public ApprovalStatus getStatus() { return status; }
-    public int getDefinitionVersion() { return definitionVersion; }
-    public Instant getCreatedAt() { return createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
+    public UUID getId() {
+        return id;
+    }
+
+    public UUID getTenantId() {
+        return tenantId;
+    }
+
+    public UUID getProjectId() {
+        return projectId;
+    }
+
+    public UUID getCreatedByUserId() {
+        return createdByUserId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getNormalizedName() {
+        return normalizedName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public ApprovalStatus getStatus() {
+        return status;
+    }
+
+    public int getDefinitionVersion() {
+        return definitionVersion;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
 }

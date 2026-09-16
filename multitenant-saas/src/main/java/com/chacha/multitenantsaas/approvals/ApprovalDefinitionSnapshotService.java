@@ -16,7 +16,8 @@ public class ApprovalDefinitionSnapshotService {
             boolean allowRequesterApproval,
             List<UUID> reviewerUserIds) {}
 
-    record DefinitionSnapshot(UUID id, int version, ApprovalStatus status, List<StageSnapshot> stages) {}
+    record DefinitionSnapshot(
+            UUID id, int version, ApprovalStatus status, List<StageSnapshot> stages) {}
 
     private final ApprovalDefinitionRepository definitionRepository;
     private final ApprovalStageRepository stageRepository;

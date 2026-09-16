@@ -44,12 +44,17 @@ public class WorkflowGraphValidator {
             }
             if (node.operation().nodeType() != node.type()) {
                 throw new IllegalArgumentException(
-                        "Operation " + node.operation() + " cannot be used as a " + node.type() + " node");
+                        "Operation "
+                                + node.operation()
+                                + " cannot be used as a "
+                                + node.type()
+                                + " node");
             }
             normalizeConfiguration(node.operation(), node.configuration());
             if (node.type() == WorkflowNodeType.TRIGGER) {
                 if (trigger != null) {
-                    throw new IllegalArgumentException("A workflow must contain exactly one trigger");
+                    throw new IllegalArgumentException(
+                            "A workflow must contain exactly one trigger");
                 }
                 trigger = node;
             }
@@ -65,7 +70,8 @@ public class WorkflowGraphValidator {
             if (edge == null
                     || !nodesByKey.containsKey(edge.sourceKey())
                     || !nodesByKey.containsKey(edge.targetKey())) {
-                throw new IllegalArgumentException("Every workflow edge must reference existing nodes");
+                throw new IllegalArgumentException(
+                        "Every workflow edge must reference existing nodes");
             }
             if (edge.sourceKey().equals(edge.targetKey())) {
                 throw new IllegalArgumentException("Workflow edges cannot point to the same node");
@@ -73,7 +79,8 @@ public class WorkflowGraphValidator {
             String branchKey = edge.sourceKey() + "\u0000" + edge.branch();
             if (!uniqueBranches.add(branchKey)) {
                 throw new IllegalArgumentException(
-                        "A node cannot define the same outgoing branch more than once: " + edge.sourceKey());
+                        "A node cannot define the same outgoing branch more than once: "
+                                + edge.sourceKey());
             }
             outgoing.computeIfAbsent(edge.sourceKey(), ignored -> new ArrayList<>()).add(edge);
             incoming.merge(edge.targetKey(), 1, Integer::sum);
@@ -113,12 +120,14 @@ public class WorkflowGraphValidator {
             throw new IllegalArgumentException(operation + " requires a non-blank value");
         }
 
-        if (operation.configurationKind() == WorkflowOperation.ConfigurationKind.APPROVAL_DEFINITION) {
+        if (operation.configurationKind()
+                == WorkflowOperation.ConfigurationKind.APPROVAL_DEFINITION) {
             try {
                 return Map.of("value", UUID.fromString(rawValue.trim()).toString());
             } catch (IllegalArgumentException exception) {
                 throw new IllegalArgumentException(
-                        "Approval workflow action requires a valid approval definition ID", exception);
+                        "Approval workflow action requires a valid approval definition ID",
+                        exception);
             }
         }
 
@@ -126,7 +135,8 @@ public class WorkflowGraphValidator {
         try {
             if (operation.configurationKind() == WorkflowOperation.ConfigurationKind.PRIORITY) {
                 ProjectTaskPriority.valueOf(value);
-            } else if (operation.configurationKind() == WorkflowOperation.ConfigurationKind.STATUS) {
+            } else if (operation.configurationKind()
+                    == WorkflowOperation.ConfigurationKind.STATUS) {
                 ProjectTaskStatus.valueOf(value);
             }
         } catch (IllegalArgumentException exception) {
@@ -147,7 +157,10 @@ public class WorkflowGraphValidator {
             boolean requireOutgoing) {
         if ((requireOutgoing && edges.size() != 1) || (!requireOutgoing && edges.size() > 1)) {
             throw new IllegalArgumentException(
-                    node.type() + " node " + node.key() + " has an invalid number of outgoing edges");
+                    node.type()
+                            + " node "
+                            + node.key()
+                            + " has an invalid number of outgoing edges");
         }
         if (edges.stream().anyMatch(edge -> edge.branch() != WorkflowEdgeBranch.DEFAULT)) {
             throw new IllegalArgumentException(
@@ -162,11 +175,16 @@ public class WorkflowGraphValidator {
             return;
         }
         Set<WorkflowEdgeBranch> branches =
-                edges.stream().map(WorkflowDtos.EdgeRequest::branch).collect(java.util.stream.Collectors.toSet());
+                edges.stream()
+                        .map(WorkflowDtos.EdgeRequest::branch)
+                        .collect(java.util.stream.Collectors.toSet());
         if (edges.size() != 2
-                || !branches.equals(Set.of(WorkflowEdgeBranch.APPROVED, WorkflowEdgeBranch.REJECTED))) {
+                || !branches.equals(
+                        Set.of(WorkflowEdgeBranch.APPROVED, WorkflowEdgeBranch.REJECTED))) {
             throw new IllegalArgumentException(
-                    "Approval action " + node.key() + " must define APPROVED and REJECTED branches");
+                    "Approval action "
+                            + node.key()
+                            + " must define APPROVED and REJECTED branches");
         }
     }
 
@@ -178,8 +196,9 @@ public class WorkflowGraphValidator {
         }
         if (edges.stream()
                 .anyMatch(
-                        edge -> edge.branch() != WorkflowEdgeBranch.TRUE
-                                && edge.branch() != WorkflowEdgeBranch.FALSE)) {
+                        edge ->
+                                edge.branch() != WorkflowEdgeBranch.TRUE
+                                        && edge.branch() != WorkflowEdgeBranch.FALSE)) {
             throw new IllegalArgumentException(
                     "Condition node " + node.key() + " may only use TRUE/FALSE branches");
         }
@@ -203,7 +222,8 @@ public class WorkflowGraphValidator {
             }
         }
         if (reachable.size() != nodeKeys.size()) {
-            throw new IllegalArgumentException("Every workflow node must be reachable from the trigger");
+            throw new IllegalArgumentException(
+                    "Every workflow node must be reachable from the trigger");
         }
 
         Map<String, Integer> remainingIncoming = new HashMap<>();

@@ -43,7 +43,9 @@ public class ApprovalRequestCommandService implements ApprovalCheckpointPort {
     public UUID openCheckpoint(ApprovalCheckpointCommand command) {
         return requestRepository
                 .findByTenantIdAndWorkflowExecutionIdAndWorkflowNodeKey(
-                        command.tenantId(), command.workflowExecutionId(), command.workflowNodeKey())
+                        command.tenantId(),
+                        command.workflowExecutionId(),
+                        command.workflowNodeKey())
                 .map(ApprovalRequest::getId)
                 .orElseGet(() -> createCheckpoint(command));
     }
@@ -71,17 +73,21 @@ public class ApprovalRequestCommandService implements ApprovalCheckpointPort {
                         .findByTenantIdAndProjectIdAndRequestIdAndPositionIndex(
                                 tenantId, projectId, requestId, request.getCurrentStageIndex())
                         .orElseThrow(
-                                () -> new IllegalStateException("Current approval stage is missing"));
+                                () ->
+                                        new IllegalStateException(
+                                                "Current approval stage is missing"));
         if (!requestReviewerRepository
                 .existsByTenantIdAndProjectIdAndRequestIdAndRequestStageIdAndReviewerUserId(
                         tenantId, projectId, requestId, stage.getId(), actorUserId)) {
-            throw new IllegalArgumentException("Current user is not a reviewer for this approval stage");
+            throw new IllegalArgumentException(
+                    "Current user is not a reviewer for this approval stage");
         }
         if (!reviewerEligibilityPort.isEligible(tenantId, projectId, actorUserId)) {
             throw new IllegalArgumentException("Reviewer is no longer an active project member");
         }
         if (!stage.isAllowRequesterApproval() && actorUserId.equals(request.getActorUserId())) {
-            throw new IllegalArgumentException("Requester self-approval is disabled for this stage");
+            throw new IllegalArgumentException(
+                    "Requester self-approval is disabled for this stage");
         }
 
         stage.decide(actorUserId, decision.outcome(), decision.comment());
@@ -185,7 +191,8 @@ public class ApprovalRequestCommandService implements ApprovalCheckpointPort {
                                                                 stage.getId())
                                                         .stream()
                                                         .map(
-                                                                ApprovalRequestStageReviewer::getReviewerUserId)
+                                                                ApprovalRequestStageReviewer
+                                                                        ::getReviewerUserId)
                                                         .toList(),
                                                 stage.getDecidedByUserId(),
                                                 stage.getDecisionComment(),

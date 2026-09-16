@@ -70,7 +70,8 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
         WorkflowDefinition definition = graphLoader.requireDefinition(tenantId, workflowId);
         WorkflowNode trigger = graphLoader.trigger(definition);
         if (trigger == null || trigger.getOperation() != WorkflowOperation.TRIGGER_FORM_SUBMITTED) {
-            throw new IllegalArgumentException("Selected workflow must use the Form submitted trigger");
+            throw new IllegalArgumentException(
+                    "Selected workflow must use the Form submitted trigger");
         }
     }
 
@@ -244,11 +245,13 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
 
         while (currentKey != null) {
             if (++visited > MAX_VISITED_NODES) {
-                throw new IllegalStateException("Workflow traversal exceeded the node safety limit");
+                throw new IllegalStateException(
+                        "Workflow traversal exceeded the node safety limit");
             }
             WorkflowNode node = nodesByKey.get(currentKey);
             if (node == null) {
-                throw new IllegalStateException("Workflow edge references missing node: " + currentKey);
+                throw new IllegalStateException(
+                        "Workflow edge references missing node: " + currentKey);
             }
             if (node.getNodeType() == WorkflowNodeType.CONDITION) {
                 boolean result = evaluateCondition(node, snapshot);

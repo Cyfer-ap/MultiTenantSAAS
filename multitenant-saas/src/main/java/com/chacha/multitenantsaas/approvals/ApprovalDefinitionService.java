@@ -109,10 +109,7 @@ public class ApprovalDefinitionService {
 
     @Transactional
     public ApprovalDtos.DefinitionResponse update(
-            UUID tenantId,
-            UUID projectId,
-            UUID definitionId,
-            ApprovalDtos.UpsertRequest request) {
+            UUID tenantId, UUID projectId, UUID definitionId, ApprovalDtos.UpsertRequest request) {
         projectAccessPort.requireProject(tenantId, projectId).requireMutable();
         ApprovalDefinition definition = require(tenantId, projectId, definitionId);
         if (definition.getStatus() == ApprovalStatus.ACTIVE) {
@@ -126,9 +123,7 @@ public class ApprovalDefinitionService {
             throw duplicateName();
         }
         definition.update(
-                request.name().trim(),
-                normalizedName,
-                normalizeDescription(request.description()));
+                request.name().trim(), normalizedName, normalizeDescription(request.description()));
         definitionRepository.saveAndFlush(definition);
         replaceStages(definition, request.stages());
         return map(definition);
@@ -141,7 +136,8 @@ public class ApprovalDefinitionService {
         ApprovalDefinition definition = require(tenantId, projectId, definitionId);
         List<ApprovalStage> stages = stages(definition);
         if (stages.isEmpty()) {
-            throw new IllegalArgumentException("Approval definition must contain at least one stage");
+            throw new IllegalArgumentException(
+                    "Approval definition must contain at least one stage");
         }
         for (ApprovalStage stage : stages) {
             List<UUID> reviewerIds = reviewerIds(definition, stage);
@@ -275,7 +271,8 @@ public class ApprovalDefinitionService {
 
     private Pageable bounded(Pageable pageable) {
         return PageRequest.of(
-                pageable.getPageNumber(), Math.max(1, Math.min(pageable.getPageSize(), MAX_PAGE_SIZE)));
+                pageable.getPageNumber(),
+                Math.max(1, Math.min(pageable.getPageSize(), MAX_PAGE_SIZE)));
     }
 
     private String normalizeName(String value) {

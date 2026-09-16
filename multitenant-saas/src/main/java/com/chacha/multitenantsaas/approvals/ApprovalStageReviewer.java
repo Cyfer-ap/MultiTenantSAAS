@@ -42,6 +42,11 @@ public class ApprovalStageReviewer {
         this.reviewerUserId = reviewerUserId;
     }
 
-    public UUID getId() { return id; }
-    public UUID getReviewerUserId() { return reviewerUserId; }
+    public UUID getId() {
+        return id;
+    }
+
+    public UUID getReviewerUserId() {
+        return reviewerUserId;
+    }
 }

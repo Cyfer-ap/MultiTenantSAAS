@@ -56,12 +56,35 @@ public class ApprovalStage {
         this.allowRequesterApproval = allowRequesterApproval;
     }
 
-    public UUID getId() { return id; }
-    public UUID getTenantId() { return tenantId; }
-    public UUID getProjectId() { return projectId; }
-    public UUID getDefinitionId() { return definitionId; }
-    public String getStageKey() { return stageKey; }
-    public String getName() { return name; }
-    public int getPositionIndex() { return positionIndex; }
-    public boolean isAllowRequesterApproval() { return allowRequesterApproval; }
+    public UUID getId() {
+        return id;
+    }
+
+    public UUID getTenantId() {
+        return tenantId;
+    }
+
+    public UUID getProjectId() {
+        return projectId;
+    }
+
+    public UUID getDefinitionId() {
+        return definitionId;
+    }
+
+    public String getStageKey() {
+        return stageKey;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getPositionIndex() {
+        return positionIndex;
+    }
+
+    public boolean isAllowRequesterApproval() {
+        return allowRequesterApproval;
+    }
 }

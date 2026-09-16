@@ -11,7 +11,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ApprovalRequestRepository extends JpaRepository<ApprovalRequest, UUID> {
-    Optional<ApprovalRequest> findByTenantIdAndProjectIdAndId(UUID tenantId, UUID projectId, UUID id);
+    Optional<ApprovalRequest> findByTenantIdAndProjectIdAndId(
+            UUID tenantId, UUID projectId, UUID id);
 
     Optional<ApprovalRequest> findByTenantIdAndWorkflowExecutionIdAndWorkflowNodeKey(
             UUID tenantId, UUID workflowExecutionId, String workflowNodeKey);
@@ -20,7 +21,8 @@ public interface ApprovalRequestRepository extends JpaRepository<ApprovalRequest
             UUID tenantId, UUID projectId, Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT request FROM ApprovalRequest request WHERE request.tenantId = :tenantId AND request.projectId = :projectId AND request.id = :requestId")
+    @Query(
+            "SELECT request FROM ApprovalRequest request WHERE request.tenantId = :tenantId AND request.projectId = :projectId AND request.id = :requestId")
     Optional<ApprovalRequest> findForDecision(
             @Param("tenantId") UUID tenantId,
             @Param("projectId") UUID projectId,

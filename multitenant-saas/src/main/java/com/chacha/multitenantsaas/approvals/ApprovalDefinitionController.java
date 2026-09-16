@@ -28,7 +28,8 @@ public class ApprovalDefinitionController {
         this.service = service;
     }
 
-    @PreAuthorize("@authorizationSecurity.canReadProjectTasks(#tenantId,#projectId,'project.task.read')")
+    @PreAuthorize(
+            "@authorizationSecurity.canReadProjectTasks(#tenantId,#projectId,'project.task.read')")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ApprovalDtos.DefinitionSummary>>> list(
             @PathVariable UUID tenantId,
@@ -40,7 +41,8 @@ public class ApprovalDefinitionController {
                         service.list(tenantId, projectId, pageable)));
     }
 
-    @PreAuthorize("@authorizationSecurity.canReadProjectTasks(#tenantId,#projectId,'project.task.read')")
+    @PreAuthorize(
+            "@authorizationSecurity.canReadProjectTasks(#tenantId,#projectId,'project.task.read')")
     @GetMapping("/{definitionId}")
     public ResponseEntity<ApiResponse<ApprovalDtos.DefinitionResponse>> get(
             @PathVariable UUID tenantId,
@@ -52,7 +54,8 @@ public class ApprovalDefinitionController {
                         service.get(tenantId, projectId, definitionId)));
     }
 
-    @PreAuthorize("@authorizationSecurity.canManageProjectTasks(#tenantId,#projectId,'project.task.manage')")
+    @PreAuthorize(
+            "@authorizationSecurity.canManageProjectTasks(#tenantId,#projectId,'project.task.manage')")
     @PostMapping
     public ResponseEntity<ApiResponse<ApprovalDtos.DefinitionResponse>> create(
             @PathVariable UUID tenantId,
@@ -65,7 +68,8 @@ public class ApprovalDefinitionController {
                         service.create(tenantId, projectId, request, jwt)));
     }
 
-    @PreAuthorize("@authorizationSecurity.canManageProjectTasks(#tenantId,#projectId,'project.task.manage')")
+    @PreAuthorize(
+            "@authorizationSecurity.canManageProjectTasks(#tenantId,#projectId,'project.task.manage')")
     @PutMapping("/{definitionId}")
     public ResponseEntity<ApiResponse<ApprovalDtos.DefinitionResponse>> update(
             @PathVariable UUID tenantId,
@@ -78,7 +82,8 @@ public class ApprovalDefinitionController {
                         service.update(tenantId, projectId, definitionId, request)));
     }
 
-    @PreAuthorize("@authorizationSecurity.canManageProjectTasks(#tenantId,#projectId,'project.task.manage')")
+    @PreAuthorize(
+            "@authorizationSecurity.canManageProjectTasks(#tenantId,#projectId,'project.task.manage')")
     @PostMapping("/{definitionId}/activate")
     public ResponseEntity<ApiResponse<ApprovalDtos.DefinitionResponse>> activate(
             @PathVariable UUID tenantId,
@@ -90,7 +95,8 @@ public class ApprovalDefinitionController {
                         service.activate(tenantId, projectId, definitionId)));
     }
 
-    @PreAuthorize("@authorizationSecurity.canManageProjectTasks(#tenantId,#projectId,'project.task.manage')")
+    @PreAuthorize(
+            "@authorizationSecurity.canManageProjectTasks(#tenantId,#projectId,'project.task.manage')")
     @PostMapping("/{definitionId}/pause")
     public ResponseEntity<ApiResponse<ApprovalDtos.DefinitionResponse>> pause(
             @PathVariable UUID tenantId,
