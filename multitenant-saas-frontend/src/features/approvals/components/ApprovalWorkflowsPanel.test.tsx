@@ -68,10 +68,9 @@ function renderPanel() {
         )
     }
 
-    return render(
-        <ApprovalWorkflowsPanel tenantId="tenant-1" projectId="project-1" canManage />,
-        { wrapper: Wrapper },
-    )
+    return render(<ApprovalWorkflowsPanel tenantId="tenant-1" projectId="project-1" canManage />, {
+        wrapper: Wrapper,
+    })
 }
 
 describe('ApprovalWorkflowsPanel', () => {

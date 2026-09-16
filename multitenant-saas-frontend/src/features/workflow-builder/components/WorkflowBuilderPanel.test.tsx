@@ -79,12 +79,7 @@ function renderPanel() {
     }
 
     return render(
-        <WorkflowBuilderPanel
-            tenantId="tenant-1"
-            projectId="project-1"
-            canRead
-            canManage
-        />,
+        <WorkflowBuilderPanel tenantId="tenant-1" projectId="project-1" canRead canManage />,
         { wrapper: Wrapper },
     )
 }
