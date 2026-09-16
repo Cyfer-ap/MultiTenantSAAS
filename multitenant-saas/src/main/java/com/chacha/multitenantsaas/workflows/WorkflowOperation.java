@@ -3,6 +3,7 @@ package com.chacha.multitenantsaas.workflows;
 public enum WorkflowOperation {
     TRIGGER_TASK_CREATED(WorkflowNodeType.TRIGGER, ConfigurationKind.NONE),
     TRIGGER_TASK_STATUS_CHANGED(WorkflowNodeType.TRIGGER, ConfigurationKind.NONE),
+    TRIGGER_FORM_SUBMITTED(WorkflowNodeType.TRIGGER, ConfigurationKind.NONE),
     CONDITION_TASK_PRIORITY_EQUALS(WorkflowNodeType.CONDITION, ConfigurationKind.PRIORITY),
     CONDITION_TASK_STATUS_EQUALS(WorkflowNodeType.CONDITION, ConfigurationKind.STATUS),
     ACTION_SET_TASK_PRIORITY(WorkflowNodeType.ACTION, ConfigurationKind.PRIORITY),

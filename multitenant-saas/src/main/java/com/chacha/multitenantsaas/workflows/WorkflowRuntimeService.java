@@ -1,11 +1,14 @@
 package com.chacha.multitenantsaas.workflows;
 
+import com.chacha.multitenantsaas.entity.ProjectTaskStatus;
+import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationMutationCommand;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationMutationPort;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationMutationType;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationSnapshot;
 import com.chacha.multitenantsaas.tasks.events.TaskDomainEvent;
 import com.chacha.multitenantsaas.tasks.events.TaskDomainEventType;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +24,7 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 @Service
-public class WorkflowRuntimeService {
+public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
 
     private static final Logger log = LoggerFactory.getLogger(WorkflowRuntimeService.class);
     private static final int MAX_VISITED_NODES = 50;
@@ -56,23 +59,78 @@ public class WorkflowRuntimeService {
                 definitionRepository.findByTenantIdAndStatusOrderByNameAsc(
                         event.tenantId(), WorkflowStatus.ACTIVE);
         for (WorkflowDefinition definition : activeWorkflows) {
-            executeIfTriggered(definition, event);
+            executeTaskIfTriggered(definition, event);
         }
     }
 
-    private void executeIfTriggered(WorkflowDefinition definition, TaskDomainEvent event) {
-        List<WorkflowNode> nodes =
-                nodeRepository.findByTenantIdAndWorkflowIdOrderByNodeKeyAsc(
-                        definition.getTenantId(), definition.getId());
-        WorkflowNode trigger =
-                nodes.stream()
-                        .filter(node -> node.getNodeType() == WorkflowNodeType.TRIGGER)
-                        .findFirst()
-                        .orElse(null);
-        if (trigger == null || !matchesTrigger(trigger.getOperation(), event.type())) {
+    @Override
+    @Transactional(readOnly = true)
+    public void requireFormSubmissionTarget(UUID tenantId, UUID workflowId) {
+        WorkflowDefinition definition = requireDefinition(tenantId, workflowId);
+        WorkflowNode trigger = triggerNode(definition);
+        if (trigger == null || trigger.getOperation() != WorkflowOperation.TRIGGER_FORM_SUBMITTED) {
+            throw new IllegalArgumentException(
+                    "Selected workflow must use the Form submitted trigger");
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void handleFormSubmission(WorkflowFormSubmissionCommand command) {
+        WorkflowDefinition definition = requireDefinition(command.tenantId(), command.workflowId());
+        if (definition.getStatus() != WorkflowStatus.ACTIVE) {
+            return;
+        }
+        WorkflowNode trigger = triggerNode(definition);
+        if (trigger == null || trigger.getOperation() != WorkflowOperation.TRIGGER_FORM_SUBMITTED) {
             return;
         }
 
+        TaskDomainEvent taskContext =
+                new TaskDomainEvent(
+                        command.submissionId(),
+                        TaskDomainEventType.CREATED,
+                        command.tenantId(),
+                        command.projectId(),
+                        command.taskId(),
+                        command.actorUserId(),
+                        null,
+                        ProjectTaskStatus.TODO,
+                        command.taskPriority(),
+                        Instant.now());
+        execute(
+                definition,
+                trigger,
+                taskContext,
+                "FORM_SUBMISSION:" + command.submissionId(),
+                "FORM_SUBMISSION",
+                command.submissionId());
+    }
+
+    private void executeTaskIfTriggered(WorkflowDefinition definition, TaskDomainEvent event) {
+        WorkflowNode trigger = triggerNode(definition);
+        if (trigger == null || !matchesTaskTrigger(trigger.getOperation(), event.type())) {
+            return;
+        }
+        execute(
+                definition,
+                trigger,
+                event,
+                event.eventId().toString(),
+                "PROJECT_TASK",
+                event.taskId());
+    }
+
+    private void execute(
+            WorkflowDefinition definition,
+            WorkflowNode trigger,
+            TaskDomainEvent event,
+            String eventKey,
+            String sourceEntityType,
+            UUID sourceEntityId) {
+        List<WorkflowNode> nodes =
+                nodeRepository.findByTenantIdAndWorkflowIdOrderByNodeKeyAsc(
+                        definition.getTenantId(), definition.getId());
         List<WorkflowEdge> edges =
                 edgeRepository.findByTenantIdAndWorkflowIdOrderBySourceNodeKeyAscBranchTypeAsc(
                         definition.getTenantId(), definition.getId());
@@ -80,8 +138,9 @@ public class WorkflowRuntimeService {
                 executionRecorder.start(
                         definition,
                         trigger.getOperation(),
-                        event.eventId().toString(),
-                        event.taskId());
+                        eventKey,
+                        sourceEntityType,
+                        sourceEntityId);
         if (executionId.isEmpty()) {
             return;
         }
@@ -90,10 +149,10 @@ public class WorkflowRuntimeService {
             runGraph(definition, executionId.get(), trigger, nodes, edges, event);
         } catch (RuntimeException exception) {
             log.warn(
-                    "Workflow {} execution {} failed for task {}",
+                    "Workflow {} execution {} failed for source {}",
                     definition.getId(),
                     executionId.get(),
-                    event.taskId(),
+                    sourceEntityId,
                     exception);
             executionRecorder.fail(executionId.get(), safeMessage(exception));
         }
@@ -197,6 +256,23 @@ public class WorkflowRuntimeService {
         return updated == null ? snapshot : updated;
     }
 
+    private WorkflowDefinition requireDefinition(UUID tenantId, UUID workflowId) {
+        return definitionRepository
+                .findByTenantIdAndId(tenantId, workflowId)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Workflow not found: " + workflowId));
+    }
+
+    private WorkflowNode triggerNode(WorkflowDefinition definition) {
+        return nodeRepository
+                .findByTenantIdAndWorkflowIdOrderByNodeKeyAsc(
+                        definition.getTenantId(), definition.getId())
+                .stream()
+                .filter(node -> node.getNodeType() == WorkflowNodeType.TRIGGER)
+                .findFirst()
+                .orElse(null);
+    }
+
     private String configurationValue(WorkflowNode node) {
         Map<String, String> configuration = parseConfiguration(node.getConfigurationJson());
         String value = configuration.get("value");
@@ -225,7 +301,8 @@ public class WorkflowRuntimeService {
         return outgoing.getOrDefault(sourceKey, Map.of()).get(branch);
     }
 
-    private boolean matchesTrigger(WorkflowOperation operation, TaskDomainEventType eventType) {
+    private boolean matchesTaskTrigger(
+            WorkflowOperation operation, TaskDomainEventType eventType) {
         return (operation == WorkflowOperation.TRIGGER_TASK_CREATED
                         && eventType == TaskDomainEventType.CREATED)
                 || (operation == WorkflowOperation.TRIGGER_TASK_STATUS_CHANGED

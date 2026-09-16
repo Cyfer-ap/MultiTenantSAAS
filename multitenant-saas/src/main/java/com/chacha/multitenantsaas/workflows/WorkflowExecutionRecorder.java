@@ -21,6 +21,16 @@ public class WorkflowExecutionRecorder {
             WorkflowOperation triggerOperation,
             String eventKey,
             UUID sourceEntityId) {
+        return start(definition, triggerOperation, eventKey, "PROJECT_TASK", sourceEntityId);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Optional<UUID> start(
+            WorkflowDefinition definition,
+            WorkflowOperation triggerOperation,
+            String eventKey,
+            String sourceEntityType,
+            UUID sourceEntityId) {
         if (executionRepository.existsByTenantIdAndWorkflowIdAndEventKey(
                 definition.getTenantId(), definition.getId(), eventKey)) {
             return Optional.empty();
@@ -33,7 +43,7 @@ public class WorkflowExecutionRecorder {
                                 definition.getDefinitionVersion(),
                                 eventKey,
                                 triggerOperation,
-                                "PROJECT_TASK",
+                                sourceEntityType,
                                 sourceEntityId));
         return Optional.of(execution.getId());
     }
