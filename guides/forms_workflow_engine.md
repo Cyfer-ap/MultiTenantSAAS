@@ -187,4 +187,4 @@ The final feature head must pass all applicable repository gates:
 - Qodana
 - Wiki Sync if canonical Wiki sources change
 
-Focused regression coverage must include schema bounds/type validation, unknown-field rejection, task creation through the task-owned port, workflow target validation/execution and V52 PostgreSQL schema assertions.
+Focused regression coverage must include schema bounds/type validation, unknown-field rejection, task creation through the task-owned port, workflow target validation/execution, V52 PostgreSQL schema assertions, project-scoped frontend API routes, active/paused submission behavior and exact decimal submission without JavaScript number coercion.
