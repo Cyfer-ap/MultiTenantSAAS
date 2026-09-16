@@ -50,9 +50,7 @@ public class FormController {
                     + "#tenantId,#projectId,'project.task.read')")
     @GetMapping("/{formId}")
     public ResponseEntity<ApiResponse<FormDtos.Response>> get(
-            @PathVariable UUID tenantId,
-            @PathVariable UUID projectId,
-            @PathVariable UUID formId) {
+            @PathVariable UUID tenantId, @PathVariable UUID projectId, @PathVariable UUID formId) {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Form fetched successfully",
@@ -94,9 +92,7 @@ public class FormController {
                     + "#tenantId,#projectId,'project.task.manage')")
     @PostMapping("/{formId}/activate")
     public ResponseEntity<ApiResponse<FormDtos.Response>> activate(
-            @PathVariable UUID tenantId,
-            @PathVariable UUID projectId,
-            @PathVariable UUID formId) {
+            @PathVariable UUID tenantId, @PathVariable UUID projectId, @PathVariable UUID formId) {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Form activated successfully",
@@ -108,9 +104,7 @@ public class FormController {
                     + "#tenantId,#projectId,'project.task.manage')")
     @PostMapping("/{formId}/pause")
     public ResponseEntity<ApiResponse<FormDtos.Response>> pause(
-            @PathVariable UUID tenantId,
-            @PathVariable UUID projectId,
-            @PathVariable UUID formId) {
+            @PathVariable UUID tenantId, @PathVariable UUID projectId, @PathVariable UUID formId) {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Form paused successfully",

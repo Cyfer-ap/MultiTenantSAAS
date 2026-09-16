@@ -151,8 +151,8 @@ export function WorkAutomationPage() {
                         Work Automation & Templates
                     </Typography>
                     <Typography color="text.secondary">
-                        Schedule recurring tasks, reuse bounded snapshots, collect internal forms and
-                        compose visual workflows without bypassing domain lifecycle rules.
+                        Schedule recurring tasks, reuse bounded snapshots, collect internal forms
+                        and compose visual workflows without bypassing domain lifecycle rules.
                     </Typography>
                 </Box>
             </Stack>

@@ -19,7 +19,8 @@ class FormSchemaEngineTest {
         FormDefinition definition = definition();
         definition.replaceFields(
                 List.of(
-                        new FormField(definition, "title", "Title", FormFieldType.TEXT, true, null, 0),
+                        new FormField(
+                                definition, "title", "Title", FormFieldType.TEXT, true, null, 0),
                         new FormField(
                                 definition,
                                 "kind",
@@ -28,7 +29,8 @@ class FormSchemaEngineTest {
                                 true,
                                 engine.writeOptions(List.of("Bug", "Feature")),
                                 1),
-                        new FormField(definition, "due", "Due", FormFieldType.DATE, false, null, 2)));
+                        new FormField(
+                                definition, "due", "Due", FormFieldType.DATE, false, null, 2)));
 
         engine.validateStored(definition);
         Map<String, Object> normalized =
@@ -47,7 +49,8 @@ class FormSchemaEngineTest {
         FormDefinition definition = definition();
         definition.replaceFields(
                 List.of(
-                        new FormField(definition, "title", "Title", FormFieldType.TEXT, true, null, 0),
+                        new FormField(
+                                definition, "title", "Title", FormFieldType.TEXT, true, null, 0),
                         new FormField(
                                 definition,
                                 "kind",

@@ -343,8 +343,13 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
 
                         <Divider />
                         <Stack spacing={1.5}>
-                            <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                                <Typography variant="subtitle1">Fields ({editor.fields.length}/30)</Typography>
+                            <Stack
+                                direction="row"
+                                sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+                            >
+                                <Typography variant="subtitle1">
+                                    Fields ({editor.fields.length}/30)
+                                </Typography>
                                 <Button
                                     size="small"
                                     startIcon={<AddRoundedIcon />}
@@ -355,9 +360,16 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                                 </Button>
                             </Stack>
                             {editor.fields.map((field, index) => (
-                                <Paper key={`${index}-${field.key}`} variant="outlined" sx={{ p: 1.5 }}>
+                                <Paper
+                                    key={`${index}-${field.key}`}
+                                    variant="outlined"
+                                    sx={{ p: 1.5 }}
+                                >
                                     <Stack spacing={1.5}>
-                                        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+                                        <Stack
+                                            direction={{ xs: 'column', md: 'row' }}
+                                            spacing={1.5}
+                                        >
                                             <TextField
                                                 label="Key"
                                                 value={field.key}
@@ -370,7 +382,9 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                                                 label="Label"
                                                 value={field.label}
                                                 onChange={(event) =>
-                                                    updateField(index, { label: event.target.value })
+                                                    updateField(index, {
+                                                        label: event.target.value,
+                                                    })
                                                 }
                                                 sx={{ flex: 1 }}
                                             />
@@ -396,7 +410,11 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                                                 ))}
                                             </TextField>
                                         </Stack>
-                                        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+                                        <Stack
+                                            direction="row"
+                                            spacing={2}
+                                            sx={{ alignItems: 'center' }}
+                                        >
                                             <FormControlLabel
                                                 control={
                                                     <Checkbox
@@ -455,7 +473,9 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                                 sx={{ flex: 1 }}
                             >
                                 {editor.fields
-                                    .filter((field) => field.type === 'TEXT' || field.type === 'SELECT')
+                                    .filter(
+                                        (field) => field.type === 'TEXT' || field.type === 'SELECT',
+                                    )
                                     .map((field) => (
                                         <MenuItem key={field.key} value={field.key}>
                                             {field.label || field.key}
@@ -556,7 +576,9 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                                 variant="contained"
                                 startIcon={<SaveRoundedIcon />}
                                 onClick={() => saveMutation.mutate()}
-                                disabled={!canManage || saveMutation.isPending || !editor.name.trim()}
+                                disabled={
+                                    !canManage || saveMutation.isPending || !editor.name.trim()
+                                }
                             >
                                 Save definition
                             </Button>
@@ -632,7 +654,9 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                         <Divider />
                         <Typography variant="subtitle1">Internal submission</Typography>
                         {detailQuery.data.status !== 'ACTIVE' ? (
-                            <Alert severity="info">Activate the form before accepting submissions.</Alert>
+                            <Alert severity="info">
+                                Activate the form before accepting submissions.
+                            </Alert>
                         ) : (
                             <Stack spacing={1.5}>
                                 {detailQuery.data.fields.map((field) =>
@@ -664,7 +688,10 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                                                       : 'text'
                                             }
                                             label={`${field.label}${field.required ? ' *' : ''}`}
-                                            value={(submissionValues[field.key] as string | number | undefined) ?? ''}
+                                            value={
+                                                (submissionValues[field.key] as
+                                                    string | number | undefined) ?? ''
+                                            }
                                             onChange={(event) =>
                                                 setSubmissionValues((current) => ({
                                                     ...current,
@@ -673,7 +700,9 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                                             }
                                             multiline={field.type === 'TEXTAREA'}
                                             minRows={field.type === 'TEXTAREA' ? 3 : undefined}
-                                            InputLabelProps={field.type === 'DATE' ? { shrink: true } : undefined}
+                                            InputLabelProps={
+                                                field.type === 'DATE' ? { shrink: true } : undefined
+                                            }
                                         >
                                             {field.type === 'SELECT'
                                                 ? field.options.map((option) => (
@@ -692,7 +721,8 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                                 ) : null}
                                 {submitMutation.isSuccess ? (
                                     <Alert severity="success">
-                                        Submission accepted and created task {submitMutation.data.createdTaskId.slice(0, 8)}.
+                                        Submission accepted and created task{' '}
+                                        {submitMutation.data.createdTaskId.slice(0, 8)}.
                                     </Alert>
                                 ) : null}
                                 <Button
@@ -714,8 +744,8 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                                 {historyQuery.data.content.map((submission) => (
                                     <Paper key={submission.id} variant="outlined" sx={{ p: 1.5 }}>
                                         <Typography variant="body2">
-                                            {new Date(submission.submittedAt).toLocaleString()} · form v
-                                            {submission.definitionVersion} · task{' '}
+                                            {new Date(submission.submittedAt).toLocaleString()} ·
+                                            form v{submission.definitionVersion} · task{' '}
                                             {submission.createdTaskId.slice(0, 8)}
                                         </Typography>
                                         <Typography variant="caption" color="text.secondary">
@@ -725,7 +755,9 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                                 ))}
                             </Stack>
                         ) : (
-                            <Typography color="text.secondary">No submissions recorded yet.</Typography>
+                            <Typography color="text.secondary">
+                                No submissions recorded yet.
+                            </Typography>
                         )}
                     </Stack>
                 </Paper>

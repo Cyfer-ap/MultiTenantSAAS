@@ -13,11 +13,7 @@ async function list(tenantId: string, projectId: string): Promise<PageResponse<F
     return response.data.data
 }
 
-async function get(
-    tenantId: string,
-    projectId: string,
-    formId: string,
-): Promise<FormDefinition> {
+async function get(tenantId: string, projectId: string, formId: string): Promise<FormDefinition> {
     const response = await httpClient.get<ApiResponse<FormDefinition>>(
         `${basePath(tenantId, projectId)}/${formId}`,
     )
@@ -60,11 +56,7 @@ async function activate(
     return response.data.data
 }
 
-async function pause(
-    tenantId: string,
-    projectId: string,
-    formId: string,
-): Promise<FormDefinition> {
+async function pause(tenantId: string, projectId: string, formId: string): Promise<FormDefinition> {
     const response = await httpClient.post<ApiResponse<FormDefinition>>(
         `${basePath(tenantId, projectId)}/${formId}/pause`,
     )

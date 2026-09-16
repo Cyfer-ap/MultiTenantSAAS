@@ -2,7 +2,6 @@ package com.chacha.multitenantsaas.forms;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -29,7 +28,9 @@ public class FormSchemaEngine {
     }
 
     public void validateDefinition(FormDtos.UpsertRequest request) {
-        if (request.fields() == null || request.fields().isEmpty() || request.fields().size() > MAX_FIELDS) {
+        if (request.fields() == null
+                || request.fields().isEmpty()
+                || request.fields().size() > MAX_FIELDS) {
             throw new IllegalArgumentException("A form must contain between 1 and 30 fields");
         }
         Set<String> keys = new LinkedHashSet<>();
@@ -44,12 +45,15 @@ public class FormSchemaEngine {
                 request.taskDescriptionFieldKey(),
                 request.taskDueDateFieldKey(),
                 request.fields().stream()
-                        .collect(java.util.stream.Collectors.toMap(FormDtos.FieldRequest::key, field -> field)));
+                        .collect(
+                                java.util.stream.Collectors.toMap(
+                                        FormDtos.FieldRequest::key, field -> field)));
     }
 
     public void validateStored(FormDefinition definition) {
         if (definition.getFields().isEmpty() || definition.getFields().size() > MAX_FIELDS) {
-            throw new IllegalStateException("Stored form field count is outside the supported bounds");
+            throw new IllegalStateException(
+                    "Stored form field count is outside the supported bounds");
         }
         Map<String, FormField> byKey = new LinkedHashMap<>();
         for (FormField field : definition.getFields()) {
@@ -59,18 +63,22 @@ public class FormSchemaEngine {
             normalizeOptions(field.getFieldType(), readOptions(field.getOptionsJson()));
         }
         FormField title = requireField(byKey, definition.getTaskTitleFieldKey(), "title");
-        if (title.getFieldType() != FormFieldType.TEXT && title.getFieldType() != FormFieldType.SELECT) {
+        if (title.getFieldType() != FormFieldType.TEXT
+                && title.getFieldType() != FormFieldType.SELECT) {
             throw new IllegalStateException("Task title must map to a text or select field");
         }
         if (definition.getTaskDescriptionFieldKey() != null) {
-            FormField description = requireField(byKey, definition.getTaskDescriptionFieldKey(), "description");
+            FormField description =
+                    requireField(byKey, definition.getTaskDescriptionFieldKey(), "description");
             if (description.getFieldType() != FormFieldType.TEXT
                     && description.getFieldType() != FormFieldType.TEXTAREA) {
-                throw new IllegalStateException("Task description must map to a text or textarea field");
+                throw new IllegalStateException(
+                        "Task description must map to a text or textarea field");
             }
         }
         if (definition.getTaskDueDateFieldKey() != null
-                && requireField(byKey, definition.getTaskDueDateFieldKey(), "due date").getFieldType()
+                && requireField(byKey, definition.getTaskDueDateFieldKey(), "due date")
+                                .getFieldType()
                         != FormFieldType.DATE) {
             throw new IllegalStateException("Task due date must map to a date field");
         }
@@ -85,12 +93,14 @@ public class FormSchemaEngine {
             return List.of();
         }
         if (options.isEmpty() || options.size() > MAX_OPTIONS) {
-            throw new IllegalArgumentException("Select fields must define between 1 and 50 options");
+            throw new IllegalArgumentException(
+                    "Select fields must define between 1 and 50 options");
         }
         LinkedHashSet<String> normalized = new LinkedHashSet<>();
         for (String option : options) {
             if (option == null || option.isBlank() || option.trim().length() > 100) {
-                throw new IllegalArgumentException("Select options must be non-blank and at most 100 characters");
+                throw new IllegalArgumentException(
+                        "Select options must be non-blank and at most 100 characters");
             }
             if (!normalized.add(option.trim())) {
                 throw new IllegalArgumentException("Select options must be unique");
@@ -99,7 +109,8 @@ public class FormSchemaEngine {
         return List.copyOf(normalized);
     }
 
-    public Map<String, Object> validateSubmission(FormDefinition definition, Map<String, Object> supplied) {
+    public Map<String, Object> validateSubmission(
+            FormDefinition definition, Map<String, Object> supplied) {
         Map<String, Object> values = supplied == null ? Map.of() : supplied;
         Map<String, FormField> fields = new LinkedHashMap<>();
         for (FormField field : definition.getFields()) {
@@ -116,7 +127,8 @@ public class FormSchemaEngine {
             Object value = values.get(field.getFieldKey());
             if (isMissing(value)) {
                 if (field.isRequired()) {
-                    throw new IllegalArgumentException("Required form field is missing: " + field.getFieldKey());
+                    throw new IllegalArgumentException(
+                            "Required form field is missing: " + field.getFieldKey());
                 }
                 continue;
             }
@@ -207,7 +219,8 @@ public class FormSchemaEngine {
     private String normalizeSelect(FormField field, Object value) {
         String selected = normalizeText(value, field.getFieldKey(), 100);
         if (!readOptions(field.getOptionsJson()).contains(selected)) {
-            throw new IllegalArgumentException("Field " + field.getFieldKey() + " contains an unsupported option");
+            throw new IllegalArgumentException(
+                    "Field " + field.getFieldKey() + " contains an unsupported option");
         }
         return selected;
     }
@@ -219,7 +232,8 @@ public class FormSchemaEngine {
     private FormField requireField(Map<String, FormField> fields, String key, String role) {
         FormField field = fields.get(key);
         if (field == null) {
-            throw new IllegalStateException("Task " + role + " mapping references a missing form field");
+            throw new IllegalStateException(
+                    "Task " + role + " mapping references a missing form field");
         }
         return field;
     }
@@ -230,7 +244,8 @@ public class FormSchemaEngine {
             String dueDateKey,
             Map<String, FormDtos.FieldRequest> fields) {
         FormDtos.FieldRequest title = fields.get(titleKey);
-        if (title == null || (title.type() != FormFieldType.TEXT && title.type() != FormFieldType.SELECT)) {
+        if (title == null
+                || (title.type() != FormFieldType.TEXT && title.type() != FormFieldType.SELECT)) {
             throw new IllegalArgumentException("Task title must map to a text or select field");
         }
         if (descriptionKey != null && !descriptionKey.isBlank()) {
@@ -238,7 +253,8 @@ public class FormSchemaEngine {
             if (description == null
                     || (description.type() != FormFieldType.TEXT
                             && description.type() != FormFieldType.TEXTAREA)) {
-                throw new IllegalArgumentException("Task description must map to a text or textarea field");
+                throw new IllegalArgumentException(
+                        "Task description must map to a text or textarea field");
             }
         }
         if (dueDateKey != null && !dueDateKey.isBlank()) {

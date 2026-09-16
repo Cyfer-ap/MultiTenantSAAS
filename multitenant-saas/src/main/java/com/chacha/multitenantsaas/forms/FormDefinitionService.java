@@ -93,10 +93,7 @@ public class FormDefinitionService {
 
     @Transactional
     public FormDtos.Response update(
-            UUID tenantId,
-            UUID projectId,
-            UUID formId,
-            FormDtos.UpsertRequest request) {
+            UUID tenantId, UUID projectId, UUID formId, FormDtos.UpsertRequest request) {
         projectAccessPort.requireProject(tenantId, projectId).requireMutable();
         FormDefinition definition = requireDetailed(tenantId, projectId, formId);
         if (definition.getStatus() == FormStatus.ACTIVE) {
@@ -241,6 +238,7 @@ public class FormDefinitionService {
     }
 
     private DuplicateResourceException duplicateName() {
-        return new DuplicateResourceException("A form with this name already exists in the project");
+        return new DuplicateResourceException(
+                "A form with this name already exists in the project");
     }
 }

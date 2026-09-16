@@ -307,8 +307,7 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
         return outgoing.getOrDefault(sourceKey, Map.of()).get(branch);
     }
 
-    private boolean matchesTaskTrigger(
-            WorkflowOperation operation, TaskDomainEventType eventType) {
+    private boolean matchesTaskTrigger(WorkflowOperation operation, TaskDomainEventType eventType) {
         return (operation == WorkflowOperation.TRIGGER_TASK_CREATED
                         && eventType == TaskDomainEventType.CREATED)
                 || (operation == WorkflowOperation.TRIGGER_TASK_STATUS_CHANGED

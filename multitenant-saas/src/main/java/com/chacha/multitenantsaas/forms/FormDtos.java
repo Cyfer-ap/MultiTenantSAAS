@@ -26,8 +26,7 @@ public final class FormDtos {
             @NotBlank @Size(min = 2, max = 100) String name,
             @Size(max = 1000) String description,
             @NotNull @Size(min = 1, max = 30) List<@Valid FieldRequest> fields,
-            @NotBlank @Pattern(regexp = "^[A-Za-z][A-Za-z0-9_-]{0,63}$")
-                    String taskTitleFieldKey,
+            @NotBlank @Pattern(regexp = "^[A-Za-z][A-Za-z0-9_-]{0,63}$") String taskTitleFieldKey,
             @Pattern(regexp = "^[A-Za-z][A-Za-z0-9_-]{0,63}$") String taskDescriptionFieldKey,
             @Pattern(regexp = "^[A-Za-z][A-Za-z0-9_-]{0,63}$") String taskDueDateFieldKey,
             @NotNull ProjectTaskPriority taskPriority,

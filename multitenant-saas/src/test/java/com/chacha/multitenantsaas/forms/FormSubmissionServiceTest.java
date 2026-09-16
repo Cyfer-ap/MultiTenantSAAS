@@ -75,7 +75,8 @@ class FormSubmissionServiceTest {
                         null);
         definition.replaceFields(
                 List.of(
-                        new FormField(definition, "title", "Title", FormFieldType.TEXT, true, null, 0),
+                        new FormField(
+                                definition, "title", "Title", FormFieldType.TEXT, true, null, 0),
                         new FormField(
                                 definition,
                                 "details",
@@ -101,7 +102,11 @@ class FormSubmissionServiceTest {
                         projectId,
                         formId,
                         new FormDtos.SubmissionRequest(
-                                Map.of("title", "  Investigate outage ", "details", "Logs attached")),
+                                Map.of(
+                                        "title",
+                                        "  Investigate outage ",
+                                        "details",
+                                        "Logs attached")),
                         jwt);
 
         ArgumentCaptor<TaskCreationCommand> command =
