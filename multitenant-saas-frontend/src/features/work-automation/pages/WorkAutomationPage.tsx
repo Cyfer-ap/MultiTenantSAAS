@@ -36,7 +36,12 @@ interface ProjectOption {
 }
 
 type WorkspaceTab =
-    'recurring' | 'task-templates' | 'project-templates' | 'forms' | 'approvals' | 'workflows'
+    | 'recurring'
+    | 'task-templates'
+    | 'project-templates'
+    | 'forms'
+    | 'approvals'
+    | 'workflows'
 
 export function WorkAutomationPage() {
     const { session } = useAuth()
@@ -143,7 +148,11 @@ export function WorkAutomationPage() {
         authorizationPermissionCodes.PROJECT_UPDATE,
     )
     const requiresProject =
-        tab === 'recurring' || tab === 'task-templates' || tab === 'forms' || tab === 'approvals'
+        tab === 'recurring' ||
+        tab === 'task-templates' ||
+        tab === 'forms' ||
+        tab === 'approvals' ||
+        tab === 'workflows'
 
     return (
         <Stack spacing={3}>
@@ -242,6 +251,7 @@ export function WorkAutomationPage() {
                 <Stack spacing={2}>
                     <WorkflowBuilderPanel
                         tenantId={tenantId}
+                        projectId={projectId}
                         canRead={canReadWorkflows}
                         canManage={canManageWorkflows}
                     />
