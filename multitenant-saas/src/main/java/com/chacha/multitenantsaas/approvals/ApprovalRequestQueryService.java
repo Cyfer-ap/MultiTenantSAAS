@@ -20,16 +20,19 @@ public class ApprovalRequestQueryService {
     private final ApprovalRequestRepository requestRepository;
     private final ApprovalRequestStageRepository stageRepository;
     private final ApprovalRequestStageReviewerRepository reviewerRepository;
+    private final ApprovalReviewerEligibilityPort reviewerEligibilityPort;
     private final CurrentActorService currentActorService;
 
     public ApprovalRequestQueryService(
             ApprovalRequestRepository requestRepository,
             ApprovalRequestStageRepository stageRepository,
             ApprovalRequestStageReviewerRepository reviewerRepository,
+            ApprovalReviewerEligibilityPort reviewerEligibilityPort,
             CurrentActorService currentActorService) {
         this.requestRepository = requestRepository;
         this.stageRepository = stageRepository;
         this.reviewerRepository = reviewerRepository;
+        this.reviewerEligibilityPort = reviewerEligibilityPort;
         this.currentActorService = currentActorService;
     }
 
@@ -46,8 +49,19 @@ public class ApprovalRequestQueryService {
     public PageResponse<ApprovalDtos.RequestSummary> inbox(
             UUID tenantId, UUID projectId, Pageable pageable, Jwt jwt) {
         UUID actor = currentActorService.getRequiredActiveActor(tenantId, jwt).getId();
+        Pageable bounded = bounded(pageable);
+        if (!reviewerEligibilityPort.isEligible(tenantId, projectId, actor)) {
+            return new PageResponse<>(
+                    List.of(),
+                    bounded.getPageNumber(),
+                    bounded.getPageSize(),
+                    0,
+                    0,
+                    true,
+                    true);
+        }
         Page<ApprovalRequestStageReviewer> reviewerPage =
-                reviewerRepository.findPendingInbox(tenantId, projectId, actor, bounded(pageable));
+                reviewerRepository.findPendingInbox(tenantId, projectId, actor, bounded);
         List<ApprovalDtos.RequestSummary> content =
                 reviewerPage.getContent().stream()
                         .map(
