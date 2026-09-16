@@ -10,8 +10,9 @@ export type WorkflowOperation =
     | 'CONDITION_TASK_STATUS_EQUALS'
     | 'ACTION_SET_TASK_PRIORITY'
     | 'ACTION_SET_TASK_STATUS'
+    | 'ACTION_REQUEST_APPROVAL'
 
-export type WorkflowEdgeBranch = 'DEFAULT' | 'TRUE' | 'FALSE'
+export type WorkflowEdgeBranch = 'DEFAULT' | 'TRUE' | 'FALSE' | 'APPROVED' | 'REJECTED'
 
 export interface WorkflowNode {
     id: string
@@ -66,7 +67,12 @@ export interface WorkflowInput {
     edges: WorkflowEdgeInput[]
 }
 
-export type WorkflowExecutionStatus = 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'SKIPPED'
+export type WorkflowExecutionStatus =
+    | 'RUNNING'
+    | 'WAITING_APPROVAL'
+    | 'SUCCEEDED'
+    | 'FAILED'
+    | 'SKIPPED'
 
 export interface WorkflowExecution {
     id: string
