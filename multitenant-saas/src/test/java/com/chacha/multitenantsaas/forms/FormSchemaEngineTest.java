@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.chacha.multitenantsaas.entity.ProjectTaskPriority;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -42,6 +43,30 @@ class FormSchemaEngineTest {
                 .containsEntry("title", "Fix login")
                 .containsEntry("kind", "Bug")
                 .containsEntry("due", "2026-09-30");
+    }
+
+    @Test
+    void preservesExactDecimalSubmissionText() {
+        FormDefinition definition = definition();
+        definition.replaceFields(
+                List.of(
+                        new FormField(
+                                definition, "title", "Title", FormFieldType.TEXT, true, null, 0),
+                        new FormField(
+                                definition,
+                                "amount",
+                                "Amount",
+                                FormFieldType.NUMBER,
+                                false,
+                                null,
+                                1)));
+
+        String exactDecimal = "12345678901234567890.123456789";
+        Map<String, Object> normalized =
+                engine.validateSubmission(
+                        definition, Map.of("title", "Exact decimal", "amount", exactDecimal));
+
+        assertThat(normalized.get("amount")).isEqualTo(new BigDecimal(exactDecimal));
     }
 
     @Test
