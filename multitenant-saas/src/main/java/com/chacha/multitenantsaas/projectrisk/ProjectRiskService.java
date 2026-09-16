@@ -64,8 +64,7 @@ public class ProjectRiskService {
         Instant now = clock.instant();
         List<String> limitations = new ArrayList<>();
 
-        List<TaskSnapshot> tasks =
-                taskSource.findProjectTasks(tenantId, projectId, MAX_TASKS + 1);
+        List<TaskSnapshot> tasks = taskSource.findProjectTasks(tenantId, projectId, MAX_TASKS + 1);
         if (tasks.size() > MAX_TASKS) {
             tasks = List.copyOf(tasks.subList(0, MAX_TASKS));
             limitations.add(
@@ -75,8 +74,7 @@ public class ProjectRiskService {
         }
 
         List<DependencySnapshot> dependencies =
-                dependencySource.findProjectDependencies(
-                        tenantId, projectId, MAX_DEPENDENCIES + 1);
+                dependencySource.findProjectDependencies(tenantId, projectId, MAX_DEPENDENCIES + 1);
         if (dependencies.size() > MAX_DEPENDENCIES) {
             dependencies = List.copyOf(dependencies.subList(0, MAX_DEPENDENCIES));
             limitations.add(
@@ -98,8 +96,7 @@ public class ProjectRiskService {
             if (blocker == null || dependent == null) {
                 continue;
             }
-            outgoing
-                    .computeIfAbsent(dependency.blockingTaskId(), ignored -> new LinkedHashSet<>())
+            outgoing.computeIfAbsent(dependency.blockingTaskId(), ignored -> new LinkedHashSet<>())
                     .add(dependency.dependentTaskId());
             if (isOpen(blocker) && isOpen(dependent)) {
                 unresolvedIncomingBlockers
@@ -135,8 +132,7 @@ public class ProjectRiskService {
                                 List.of()));
             }
 
-            Set<UUID> blockers =
-                    unresolvedIncomingBlockers.getOrDefault(task.taskId(), Set.of());
+            Set<UUID> blockers = unresolvedIncomingBlockers.getOrDefault(task.taskId(), Set.of());
             if (STATUS_BLOCKED.equals(task.status()) || !blockers.isEmpty()) {
                 blockedTaskIds.add(task.taskId());
                 String explanation =
@@ -212,7 +208,8 @@ public class ProjectRiskService {
                 Comparator.comparingInt((Signal signal) -> signal.severity().ordinal())
                         .reversed()
                         .thenComparing(signal -> signal.type().name())
-                        .thenComparing(signal -> signal.taskTitle() == null ? "" : signal.taskTitle())
+                        .thenComparing(
+                                signal -> signal.taskTitle() == null ? "" : signal.taskTitle())
                         .thenComparing(signal -> signal.taskId().toString()));
 
         if (signals.size() > MAX_SIGNALS) {
@@ -244,13 +241,7 @@ public class ProjectRiskService {
                         .orElse(ProjectRiskSeverity.NONE);
 
         return new Response(
-                projectId,
-                now,
-                riskLevel,
-                DEFAULT_STALE_AFTER_DAYS,
-                summary,
-                signals,
-                limitations);
+                projectId, now, riskLevel, DEFAULT_STALE_AFTER_DAYS, summary, signals, limitations);
     }
 
     private Signal signal(
@@ -301,9 +292,7 @@ public class ProjectRiskService {
     }
 
     private static List<UUID> downstreamOpenTasks(
-            UUID startTaskId,
-            Map<UUID, Set<UUID>> outgoing,
-            Map<UUID, TaskSnapshot> taskById) {
+            UUID startTaskId, Map<UUID, Set<UUID>> outgoing, Map<UUID, TaskSnapshot> taskById) {
         Set<UUID> traversed = new HashSet<>();
         Set<UUID> affected = new HashSet<>();
         ArrayDeque<UUID> queue = new ArrayDeque<>();
