@@ -12,15 +12,16 @@ This is the **single repository-side resume document**. Current status lives in 
 4. `guides/ENGINEERING_STANDARDS.md`
 5. `guides/recurring_work_and_templates.md`
 6. `guides/visual_workflow_builder.md`
-7. `guides/project_simulation.md`
-8. `guides/collaborative_whiteboard.md`
-9. `guides/project_risk_radar.md`
-10. the focused guide for the domain being changed
-11. `wiki/Roadmap.md` when planning product direction
+7. `guides/forms_workflow_engine.md`
+8. `guides/project_simulation.md`
+9. `guides/collaborative_whiteboard.md`
+10. `guides/project_risk_radar.md`
+11. the focused guide for the domain being changed
+12. `wiki/Roadmap.md` when planning product direction
 
 ## Current state
 
-Major product milestones are complete through **Project Health / Risk Radar #148**:
+Major product milestones are complete through **Forms -> Workflow Engine #152**:
 
 - billing/catalog — #106
 - tenant outbound webhooks — #112
@@ -40,8 +41,9 @@ Major product milestones are complete through **Project Health / Risk Radar #148
 - Project Simulation / What-If Engine — #145
 - Collaborative Whiteboard foundation + visual workspace — #146/#147
 - Project Health / Risk Radar — #148
+- Forms -> Workflow Engine — #152
 
-Portable PostgreSQL Flyway migrations extend through **V51**. Never modify V51 or earlier after merge/application; later persistence starts at **V52+**.
+Portable PostgreSQL Flyway migrations extend through **V52**. Never modify V52 or earlier after merge/application; later persistence starts at **V53+**.
 
 Stripe remains the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
@@ -51,37 +53,46 @@ Stripe remains the validated deployed Test Mode billing path. Razorpay integrati
 
 Backend features should use explicit domain packages. Frontend features should preserve locality under `features/<domain>/...`.
 
-Do not expand `ProjectTaskService` or `ProjectService` merely because a new feature reads or changes projects/tasks.
+Do not expand `ProjectTaskService`, `ProjectService` or `WorkflowService` merely because a new feature reads or changes projects/tasks/workflows.
 
-## Project Health / Risk Radar checkpoint
+## Forms -> Workflow Engine checkpoint — #152
 
 Backend boundary:
 
 ```text
-projectrisk
-    -> ProjectRiskTaskSource        -> task-owned adapter
-    -> ProjectRiskDependencySource  -> Task Relationships-owned adapter
+forms
+    -> ProjectAccessPort
+    -> TaskCreationPort
+    -> WorkflowFormSubmissionPort
 ```
 
-API:
+V52 owns:
 
-```text
-GET /api/tenants/{tenantId}/projects/{projectId}/risk
-```
+- `form_definitions`
+- `form_fields`
+- `form_submissions`
 
-Project surface:
+The v1 form schema is bounded and non-executable (`TEXT`, `TEXTAREA`, `NUMBER`, `DATE`, `BOOLEAN`, `SELECT`). Definitions are tenant/project scoped and versioned, and lifecycle is `DRAFT -> ACTIVE -> PAUSED -> ACTIVE`.
 
-```text
-/projects/{projectId}?view=risk
-```
+Accepted submissions create tasks through task-owned `TaskCreationPort`. An optional form-specific workflow entry uses `TRIGGER_FORM_SUBMITTED` through workflow-owned `WorkflowFormSubmissionPort`, dispatched after commit. Generic `TRIGGER_TASK_CREATED` behavior remains unchanged.
 
-V1 is advisory/read-only and reports explainable overdue, blocked, stale, unassigned HIGH/URGENT and dependency-bottleneck signals. Calculations are bounded to 500 tasks, 1,000 dependency edges and 200 returned signals. Completed/cancelled work is excluded from open-risk calculations.
+The Work Automation workspace provides form definition editing, task mapping, optional compatible workflow selection, activation/pause, authenticated submission and history. Public/anonymous intake is deliberately excluded until a separate security/rate-limit/abuse boundary is designed.
 
-Do not add employee ranking, hidden productivity scores or assignment-count-as-capacity heuristics. Workload pressure requires an explicit future capacity/availability contract.
+Exact numeric text is preserved through the browser contract and normalized to backend `BigDecimal`; focused frontend/backend tests lock that behavior.
 
-Detailed rules: `guides/project_risk_radar.md`.
+Detailed rules: `guides/forms_workflow_engine.md`.
 
 ## Existing differentiated boundaries to preserve
+
+### Project Health / Risk Radar
+
+```text
+projectrisk
+    -> ProjectRiskTaskSource
+    -> ProjectRiskDependencySource
+```
+
+Risk Radar remains read-only/advisory and must not become an opaque employee/productivity score.
 
 ### Collaborative Whiteboard
 
@@ -105,39 +116,44 @@ The `/projects/:projectId/simulation` workspace remains advisory with no hidden 
 
 ### Visual Workflow Builder
 
-V50 owns workflow definitions/nodes/edges/executions. Task lifecycle reaches workflows through task-domain events; automated mutations cross through task-owned `TaskAutomationMutationPort`.
+V50 owns workflow definitions/nodes/edges/executions. Task lifecycle reaches workflows through task-domain events; automated mutations cross through task-owned `TaskAutomationMutationPort`. Forms extends the runtime with a typed form-submitted entry rather than duplicating it.
 
 ### Existing work generation
 
 Recurring work and templates continue through task-owned `TaskCreationPort`; project-template creation crosses through project-owned `ProjectCreationPort`.
 
-## Resume here — Forms -> Workflow Engine
+## Resume here — Approval Workflows
 
-The next committed feature is **Forms -> Workflow Engine**.
+The next committed feature is **Approval Workflows**.
 
-Build it as an explicit form/intake domain that composes with existing task/project/workflow contracts instead of adding form logic to legacy project/task services.
+Build it as an explicit human-decision domain that composes with the existing workflow runtime. Do not bolt approval state into `ProjectTaskService` or turn `WorkflowService` into a cross-domain god-service.
 
 Recommended first slice:
 
-1. define a versioned form definition with a bounded field schema
-2. support safe field types first: text, textarea, number, date, boolean, select and optionally user/project references where authorization is explicit
-3. keep form submission tenant/project scoped and backend-authorized
-4. turn accepted submissions into authorized work through narrow creation/orchestration ports rather than direct repository writes
-5. allow an optional workflow trigger/entry contract without duplicating the workflow runtime
-6. persist submission provenance and validation/audit context
-7. expose a simple internal form builder + submission surface before considering public/external intake
-8. add deterministic validation, tenant isolation, authorization and abuse/bounds tests
+1. define bounded, reusable approval definitions/stages with explicit versioning and lifecycle
+2. define durable approval request/decision records with immutable reviewer/outcome/timestamp provenance
+3. keep approval targets tenant-scoped and tie each request to an explicit authorized work/workflow context
+4. resolve eligible reviewers through a narrow authorization/membership contract; approval configuration itself must never grant authority
+5. add a narrow workflow-owned waiting/resume contract so a workflow can create an approval checkpoint and continue on approved/rejected outcome without creating a second workflow runtime
+6. ensure any mutation after approval still crosses the target domain's narrow mutation port and re-checks current authority
+7. make decision handling concurrency-safe and idempotent so one logical stage cannot be approved/rejected twice by racing requests
+8. expose an internal reviewer inbox/history surface before considering guest/client approvals
+9. add deterministic tests for tenant isolation, reviewer eligibility, stale/replayed decisions, workflow resume semantics, bounds and auditability
+10. if persistence is required, start at **V53+**; never edit V52 or earlier
 
-Guardrails:
+Guardrails and design decisions that must remain explicit:
 
-- no arbitrary executable code or expressions in fields
-- no direct repository writes into task/project/workflow domains
-- public intake, if added later, must have a separately designed authentication/rate-limit/abuse boundary
-- form definitions never grant permission to the submitted target
-- all created work re-enters normal quota, authorization, audit and lifecycle behavior
-- keep field count/options/payload size bounded
+- no approval definition may grant project/task/workflow access
+- workflow administration permission does not imply authority to approve or mutate the target resource
+- reviewer eligibility is checked at decision time, not assumed forever from definition creation
+- self-approval/separation-of-duties behavior must be an explicit policy choice, not an accidental side effect
+- approval stages/reviewer sets/payloads remain bounded
+- no arbitrary expressions or user-supplied executable code
+- cancellation/expiry/reassignment/escalation semantics must be explicit before they are exposed
+- external/client approvals belong behind the later Client / Guest Portal security boundary
+- immutable decision history must remain auditable even if the underlying workflow definition changes later
 
-After Forms -> Workflow Engine continue with Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+After Approval Workflows continue with Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 ## Validation before merge
 
@@ -159,11 +175,12 @@ Do not merge around failed gates. If Auto Format creates a bot-authored head, ve
 - tenant isolation precedes resource access
 - backend authorization is authoritative
 - automated workflows never grant authority
-- stored workflow/whiteboard/risk/form definitions do not bypass resource authorization
-- Simulation/Risk/Form data is authorized before exposure or action
+- stored workflow/whiteboard/risk/form/approval definitions do not bypass resource authorization
+- Simulation/Risk/Form/Approval data is authorized before exposure or action
 - simulation and risk remain advisory unless a separately authorized human action exists
 - generated tasks/projects go through domain-owned creation behavior
-- graph, form and batch work remain bounded
+- approval decisions do not bypass target-domain mutation contracts
+- graph, form, approval and batch work remain bounded
 - Explain Access and enforcement share authorization semantics
 - delegated authority never exceeds current direct source authority
 - public APIs expose DTOs rather than persistence entities
