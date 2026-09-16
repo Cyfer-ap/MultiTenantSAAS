@@ -19,7 +19,46 @@
 - Visual Workflow Builder — #144
 - Project Simulation / What-If Engine — #145
 - Collaborative Whiteboard — #146/#147
-- **Project Health / Risk Radar — #148**
+- Project Health / Risk Radar — #148
+- **Forms -> Workflow Engine — #152**
+
+## Forms -> Workflow Engine — completed through #152
+
+Forms now provides a bounded authenticated intake layer for project work without bypassing existing task/workflow ownership.
+
+Delivered v1:
+
+- tenant/project-scoped versioned form definitions
+- bounded `TEXT`, `TEXTAREA`, `NUMBER`, `DATE`, `BOOLEAN` and `SELECT` field schemas
+- backend-authoritative definition/submission validation
+- authenticated internal submissions and recent submission history
+- task title/description/due-date/priority mapping
+- normal task creation through task-owned `TaskCreationPort`
+- optional typed `TRIGGER_FORM_SUBMITTED` workflow entry through `WorkflowFormSubmissionPort`
+- after-commit form-specific workflow dispatch
+- preserved ordinary `TRIGGER_TASK_CREATED` behavior for generated tasks
+- exact decimal preservation from browser lexical input to backend `BigDecimal`
+- V52 persistence for form definitions, fields and submission provenance
+
+Architecture:
+
+```text
+forms
+    -> ProjectAccessPort
+    -> TaskCreationPort
+    -> WorkflowFormSubmissionPort
+```
+
+Guardrails remain part of the v1 contract:
+
+- no arbitrary executable code or expressions
+- no direct writes into task/project/workflow persistence
+- form configuration never grants target-resource permission
+- created work re-enters normal authorization/quota/audit/lifecycle behavior
+- field/options/payload sizes are bounded
+- public/anonymous intake is excluded until a separate security/rate-limit/abuse boundary is designed
+
+Detailed contract: `guides/forms_workflow_engine.md`.
 
 ## Project Health / Risk Radar — completed through #148
 
@@ -45,21 +84,7 @@ projectrisk
 
 The calculation is bounded to 500 tasks, 1,000 dependency edges and 200 returned signals. Overall project risk is the maximum documented signal severity; there is no opaque weighted score.
 
-Project surface:
-
-```text
-/projects/{projectId}?view=risk
-```
-
-Guardrails remain part of the product contract:
-
-- no employee productivity ranking
-- no secret activity scoring
-- no assignment-count-as-capacity heuristic
-- no automatic task/project mutation
-- backend authorization before exposure
-- completed/cancelled work excluded from open-work risk
-- no persistence migration in v1
+Guardrails include no employee productivity ranking, secret activity scoring, assignment-count-as-capacity heuristic or automatic task/project mutation.
 
 Detailed contract: `guides/project_risk_radar.md`.
 
@@ -73,50 +98,61 @@ The older plan to move directly into bulk actions/CSV remains deliberately pause
 2. ✅ **Project Simulation / What-If Engine** — completed through #145.
 3. ✅ **Collaborative Whiteboard** — completed through #146/#147; live cursors/presence remain optional later enhancement work.
 4. ✅ **Project Health / Risk Radar** — completed through #148.
-5. 🚧 **Forms -> Workflow Engine — ACTIVE NOW** — structured internal intake that creates authorized work and can launch workflows.
-6. **Approval Workflows** — reusable human review/approve/reject stages that compose with the workflow engine.
+5. ✅ **Forms -> Workflow Engine** — completed through #152.
+6. 🚧 **Approval Workflows — ACTIVE NOW** — reusable human review/approve/reject checkpoints that compose with the workflow engine rather than creating a separate approval silo.
 7. **Client / Guest Portal** — bounded external visibility, comments, review requests and approvals without broad tenant membership.
 8. **Team Workload Engine** — capacity planning, overload detection and reassignment support without employee-surveillance scoring.
 9. **Workspace Knowledge Graph** — permission-aware graph connecting projects, tasks, people, decisions, documents and dependencies.
 10. **AI / Agent Teammates** — bounded agent work only after workflow, knowledge and authorization context are mature; human checkpoints remain mandatory for consequential actions.
 
-## Feature 5 — Forms -> Workflow Engine — ACTIVE
+## Feature 6 — Approval Workflows — ACTIVE
 
-The initial goal is not a general-purpose form/BPM platform. It is a bounded intake layer that safely turns structured submissions into existing work/workflow behavior.
+Approval Workflows should add durable human checkpoints to the existing automation architecture without turning task or workflow services into approval-state owners.
 
 ### First-slice product scope
 
-- versioned tenant/project-scoped form definitions
-- bounded field schema and option counts
-- safe field types first: text, textarea, number, date, boolean, select; authorized user/project references only where needed
-- internal form builder and submission experience first
-- server-side validation and normalized submission payloads
-- submission provenance/audit context
-- optional handoff into existing workflow runtime
-- authorized task/project creation through narrow domain-owned creation contracts
+- bounded, reusable versioned approval definitions/stages
+- durable approval requests and immutable decision history
+- explicit tenant/target/workflow provenance
+- reviewer eligibility resolved and revalidated through narrow authorization/membership contracts
+- approve/reject actions with deterministic concurrency/idempotency semantics
+- narrow workflow waiting/resume integration
+- internal reviewer inbox and decision history
+- explicit behavior for stale/replayed decisions
 
 ### Architecture direction
 
-Create an explicit form/intake owning domain. Do not put field-definition or submission orchestration into `ProjectTaskService`, `ProjectService` or the workflow coordinator.
+Create an explicit approval/human-decision domain. Do not put approval request/decision persistence inside `ProjectTaskService` or expand `WorkflowService` into a human-work god-service.
 
-Cross-domain behavior should look like:
+Target composition:
 
 ```text
-forms/intake
-    -> work creation port(s) -> owning project/task domain
-    -> workflow entry port   -> existing workflow runtime
+workflow runtime
+      ↓ approval entry/wait contract
+approval domain
+      ↓ reviewer authorization contract
+human decision
+      ↓ outcome/resume contract or event
+workflow runtime
+      ↓ existing domain-owned mutation ports
 ```
 
-The form domain owns form definitions/submissions. It does not own task/project/workflow repositories.
+The approval domain owns approval definitions, request state and decision provenance. It does not own target project/task/workflow repositories.
 
-### Guardrails
+### Guardrails and explicit policy decisions
 
-- no arbitrary executable code in fields, validation or actions
-- form definitions never grant access to submitted targets
-- created work re-enters ordinary tenant isolation, authorization, quota, audit and lifecycle rules
-- field count, option count and payload sizes remain bounded
-- public/external forms are a later security boundary, not an accidental extension of internal forms
-- do not duplicate the workflow engine inside the form domain
+- approval configuration never grants reviewer or target-resource access
+- reviewer eligibility is rechecked at decision time
+- workflow administration permission does not imply approval permission
+- post-decision target mutations still pass through the owning domain's authorization/lifecycle contract
+- one logical stage cannot be decided twice through racing/replayed requests
+- stage count, reviewer sets and payloads remain bounded
+- no arbitrary executable code or expression engine
+- self-approval/separation-of-duties must be explicitly configured/designed rather than accidental
+- expiry, cancellation, reassignment and escalation semantics must be explicit before they are exposed
+- external/client approvals belong behind the later Client / Guest Portal security boundary
+- decision provenance remains auditable after definition changes
+- new persistence starts at V53+; V52 and earlier remain immutable
 
 ## Collaborative Whiteboard — optional later live-collaboration slice
 
@@ -127,7 +163,7 @@ A later enhancement may add replaceable real-time transport, reconnect/resynchro
 Still valuable later:
 
 - bulk actions and CSV import/export
-- custom fields beyond what Forms specifically requires
+- broader custom fields beyond the bounded Forms schema
 - knowledge/documents beyond attachments
 - user-facing analytics/reporting
 - richer onboarding/workspace-switching/personalization
