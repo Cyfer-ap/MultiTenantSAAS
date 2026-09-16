@@ -69,8 +69,14 @@ describe('ProjectRiskPage', () => {
 
         expect(screen.getByRole('heading', { name: 'Project Health / Risk Radar' })).toBeVisible()
         expect(screen.getByText('Overall: HIGH')).toBeVisible()
-        expect(screen.getByText('Task is blocked by 2 unresolved dependency task(s).')).toBeVisible()
-        expect(screen.getByText('Workload pressure is not calculated without an explicit capacity or availability contract.')).toBeVisible()
+        expect(
+            screen.getByText('Task is blocked by 2 unresolved dependency task(s).'),
+        ).toBeVisible()
+        expect(
+            screen.getByText(
+                'Workload pressure is not calculated without an explicit capacity or availability contract.',
+            ),
+        ).toBeVisible()
         expect(screen.getByRole('link', { name: 'Open task' })).toHaveAttribute(
             'href',
             '/projects/project-1?task=task-1',

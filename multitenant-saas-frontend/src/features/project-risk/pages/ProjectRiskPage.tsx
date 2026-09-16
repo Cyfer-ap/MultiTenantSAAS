@@ -63,7 +63,11 @@ function SignalCard({ projectId, signal }: { projectId: string; signal: ProjectR
     return (
         <Paper variant="outlined" sx={{ padding: 2 }}>
             <Stack spacing={1.5}>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>
+                <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    spacing={1}
+                    alignItems={{ sm: 'center' }}
+                >
                     <Chip
                         color={severityColor(signal.severity)}
                         label={signal.severity}
@@ -125,12 +129,20 @@ export function ProjectRiskPage() {
     if (riskQuery.isError || !riskQuery.data) {
         return (
             <Stack spacing={2}>
-                <Button component={Link} startIcon={<ArrowBackRoundedIcon />} to={`/projects/${projectId}`}>
+                <Button
+                    component={Link}
+                    startIcon={<ArrowBackRoundedIcon />}
+                    to={`/projects/${projectId}`}
+                >
                     Back to project
                 </Button>
                 <Alert
                     action={
-                        <Button color="inherit" onClick={() => void riskQuery.refetch()} size="small">
+                        <Button
+                            color="inherit"
+                            onClick={() => void riskQuery.refetch()}
+                            size="small"
+                        >
                             Retry
                         </Button>
                     }
@@ -173,7 +185,8 @@ export function ProjectRiskPage() {
                         <Typography variant="h4">Project Health / Risk Radar</Typography>
                     </Stack>
                     <Typography color="text.secondary">
-                        Explainable, advisory signals from the project&apos;s current task and dependency state.
+                        Explainable, advisory signals from the project&apos;s current task and
+                        dependency state.
                     </Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
@@ -192,8 +205,8 @@ export function ProjectRiskPage() {
             </Stack>
 
             <Alert severity="info">
-                Risk Radar does not rank people or infer workload capacity. It only reports the documented
-                project signals below, and it never changes project state.
+                Risk Radar does not rank people or infer workload capacity. It only reports the
+                documented project signals below, and it never changes project state.
             </Alert>
 
             <Box
@@ -240,7 +253,12 @@ export function ProjectRiskPage() {
                     <Typography sx={{ fontWeight: 700 }}>Interpretation limits</Typography>
                     <Stack component="ul" spacing={0.5} sx={{ marginBottom: 0, paddingLeft: 3 }}>
                         {riskQuery.data.limitations.map((limitation) => (
-                            <Typography component="li" key={limitation} color="text.secondary" variant="body2">
+                            <Typography
+                                component="li"
+                                key={limitation}
+                                color="text.secondary"
+                                variant="body2"
+                            >
                                 {limitation}
                             </Typography>
                         ))}
