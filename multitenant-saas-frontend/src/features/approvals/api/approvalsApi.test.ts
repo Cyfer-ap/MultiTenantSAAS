@@ -52,7 +52,7 @@ describe('approvalsApi', () => {
         )
     })
 
-    it('posts a bounded decision to the request route', async () => {
+    it('maps approved UI state to the backend APPROVE command', async () => {
         vi.mocked(httpClient.post).mockImplementation(() => response({ id: 'request-1' }))
 
         await approvalsApi.decide('tenant-1', 'project-1', 'request-1', {
@@ -62,7 +62,21 @@ describe('approvalsApi', () => {
 
         expect(httpClient.post).toHaveBeenCalledWith(
             '/api/tenants/tenant-1/projects/project-1/approvals/requests/request-1/decision',
-            { outcome: 'APPROVED', comment: 'Ready to continue' },
+            { outcome: 'APPROVE', comment: 'Ready to continue' },
+        )
+    })
+
+    it('maps rejected UI state to the backend REJECT command', async () => {
+        vi.mocked(httpClient.post).mockImplementation(() => response({ id: 'request-1' }))
+
+        await approvalsApi.decide('tenant-1', 'project-1', 'request-1', {
+            outcome: 'REJECTED',
+            comment: null,
+        })
+
+        expect(httpClient.post).toHaveBeenCalledWith(
+            '/api/tenants/tenant-1/projects/project-1/approvals/requests/request-1/decision',
+            { outcome: 'REJECT', comment: null },
         )
     })
 })
