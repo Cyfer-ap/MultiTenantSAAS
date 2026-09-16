@@ -6,9 +6,9 @@ Use this page as the reader-facing Wiki pointer for resuming development. Reposi
 
 **Differentiated Work Platform Sequence**
 
-Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard and **Project Health / Risk Radar** are established through PR #148.
+Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard, Project Health / Risk Radar and **Forms -> Workflow Engine** are established through PR #152.
 
-**Forms -> Workflow Engine is active next.** Live whiteboard presence/cursors remain a later optional enhancement rather than a prerequisite for the next committed feature.
+**Approval Workflows is active next.** Live whiteboard presence/cursors remain a later optional enhancement rather than a prerequisite for the next committed feature.
 
 ## Read first
 
@@ -29,44 +29,42 @@ Inside the repository:
 5. `guides/ENGINEERING_STANDARDS.md`
 6. `guides/recurring_work_and_templates.md`
 7. `guides/visual_workflow_builder.md`
-8. `guides/project_simulation.md`
-9. `guides/collaborative_whiteboard.md`
-10. `guides/project_risk_radar.md`
-11. the focused guide for the domain being changed
+8. `guides/forms_workflow_engine.md`
+9. `guides/project_simulation.md`
+10. `guides/collaborative_whiteboard.md`
+11. `guides/project_risk_radar.md`
+12. the focused guide for the domain being changed
 
 ## Engineering rule
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, Saved Views validation SPI, Calendar deadline-source contracts, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow task events/`TaskAutomationMutationPort`, Project Simulation source ports, Whiteboard project/task ports and Risk Radar task/dependency source ports.
+Reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, Saved Views validation SPI, Calendar deadline-source contracts, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow task events/`TaskAutomationMutationPort`, Forms project/task/workflow ports, Project Simulation source ports, Whiteboard project/task ports and Risk Radar task/dependency source ports.
 
-## Risk Radar checkpoint
+## Forms -> Workflow Engine checkpoint
 
 Boundary:
 
 ```text
-projectrisk
-    -> ProjectRiskTaskSource
-    -> ProjectRiskDependencySource
+forms
+    -> ProjectAccessPort
+    -> TaskCreationPort
+    -> WorkflowFormSubmissionPort
 ```
 
-API:
+V52 owns project-scoped form definitions, fields and submissions. V1 supports bounded `TEXT`, `TEXTAREA`, `NUMBER`, `DATE`, `BOOLEAN` and `SELECT` fields; arbitrary executable logic and public/anonymous intake are excluded.
 
-```text
-GET /api/tenants/{tenantId}/projects/{projectId}/risk
-```
+Accepted submissions create normal tasks through task-owned `TaskCreationPort`. An optional `TRIGGER_FORM_SUBMITTED` entry reuses the existing workflow runtime through `WorkflowFormSubmissionPort` and is dispatched after commit. Forms never writes task/project/workflow persistence directly.
 
-Project surface:
+The Work Automation workspace provides definition editing, lifecycle, internal submission and recent submission history.
 
-```text
-/projects/{projectId}?view=risk
-```
-
-Risk Radar is read-only and explainable. V1 reports overdue, blocked, stale, unassigned HIGH/URGENT and dependency-bottleneck signals, with explicit response bounds and no opaque people/productivity score.
-
-Detailed rules live in `guides/project_risk_radar.md`.
+Detailed rules live in `guides/forms_workflow_engine.md`.
 
 ## Existing differentiated checkpoints
+
+### Project Health / Risk Radar
+
+Risk Radar is read-only and explainable. V1 reports overdue, blocked, stale, unassigned HIGH/URGENT and dependency-bottleneck signals, with explicit response bounds and no opaque people/productivity score.
 
 ### Collaborative Whiteboard
 
@@ -78,44 +76,49 @@ The private `/projects/:projectId/simulation` workspace supports hypothetical du
 
 ### Visual Workflow Builder
 
-V50 owns workflow definitions/nodes/edges/executions. Task lifecycle reaches workflows through task-domain events; task mutations cross through `TaskAutomationMutationPort`.
+V50 owns workflow definitions/nodes/edges/executions. Task lifecycle reaches workflows through task-domain events; task mutations cross through `TaskAutomationMutationPort`. Human approvals remain deliberately outside this domain until the next explicit approval slice.
 
-## Resume here — Forms -> Workflow Engine
+## Resume here — Approval Workflows
 
-Build the next feature as an explicit form/intake domain that composes with existing work and workflow boundaries.
+Build the next feature as an explicit approval/human-decision domain that composes with the existing workflow runtime.
 
 Initial goals:
 
-1. versioned bounded form definitions
-2. safe internal field schema and server-side validation
-3. tenant/project-scoped authorized submissions
-4. submission provenance/audit context
-5. authorized work creation through narrow domain-owned ports
-6. optional workflow entry through a narrow contract into the existing workflow runtime
-7. internal builder + submission UI before public/external intake
-8. deterministic tests for tenant isolation, validation, authorization and bounds
+1. bounded, reusable versioned approval definitions/stages
+2. durable request and immutable decision provenance
+3. tenant-scoped authorized target/workflow context
+4. reviewer eligibility through a narrow authorization/membership contract, rechecked at decision time
+5. narrow workflow wait/resume integration for approved/rejected outcomes
+6. target mutations through existing domain-owned mutation ports after a decision
+7. idempotent/concurrency-safe decisions and explicit stale/replay handling
+8. internal reviewer inbox/history before external/client approvals
+9. deterministic tests for authorization, tenant isolation, concurrency, bounds and workflow continuation
+10. new persistence, if needed, starts at V53+
 
 Guardrails:
 
+- approval definitions never grant access to reviewers or target resources
+- workflow administration permission does not imply approval or target-mutation permission
+- do not duplicate the workflow runtime in the approval domain
 - no arbitrary code/expression execution
-- no direct task/project/workflow repository writes from the form domain
-- form definitions never grant target access
-- created work follows ordinary quota, authorization, audit and lifecycle rules
-- public intake requires a separately designed rate-limit/authentication/abuse boundary
-- do not duplicate the workflow engine inside Forms
+- self-approval/separation-of-duties must be an explicit policy decision
+- cancellation/expiry/reassignment/escalation semantics must be explicit before exposure
+- client/guest approval belongs behind the later Client / Guest Portal boundary
+- decision history remains auditable even after definition changes
 
-After Forms -> Workflow Engine continue with Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+After Approval Workflows continue with Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 ## Preserve these system invariants
 
 - tenant isolation precedes resource access
 - backend authorization is authoritative
-- stored workflow/whiteboard/risk/form definitions never grant resource access
-- Simulation, Whiteboard, Risk and Form data are authorized before exposure or action
+- stored workflow/whiteboard/risk/form/approval definitions never grant resource access
+- Simulation, Whiteboard, Risk, Form and Approval data are authorized before exposure or action
 - simulation and risk remain advisory until a separately authorized action exists
 - generated work goes through domain-owned creation behavior
 - workflow administration permission does not imply target-resource mutation permission
-- graph/document/form/batch work remains bounded
+- approval decisions do not bypass target-domain mutation contracts
+- graph/document/form/approval/batch work remains bounded
 - Explain Access and enforcement use the same evaluator
 - delegated authority never exceeds its current direct parent authority
 - public APIs expose DTOs rather than persistence entities

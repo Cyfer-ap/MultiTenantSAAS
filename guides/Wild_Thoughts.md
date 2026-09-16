@@ -4,7 +4,7 @@
 >
 > This is **not a roadmap or commitment by default**. It records completed ideas, partial foundations, useful product gaps, differentiated experiments, and ideas worth resisting. The explicit exception is **Section 1.3**, which records the currently committed build sequence.
 >
-> Snapshot: **2026-09-16, through Project Health / Risk Radar #148**.
+> Snapshot: **2026-09-16, through Forms -> Workflow Engine #152**.
 >
 > **Current-sequence status in §1.3 and §9 is authoritative.** Lower idea-audit sections may intentionally preserve historical/partial labels unless they are explicitly refreshed.
 
@@ -87,8 +87,8 @@ This sequence is an explicit product commitment and **takes precedence over the 
 | 2 | **Project Simulation / What-If Engine** | ✅ Built | Completed through #145: private scenario changes for dates, owners and dependencies with downstream schedule/workload impact before applying anything. Consolidates #41 Scenario/Sandbox Mode, #53 Deadline Reality Check, #108 Change Blast-Radius Preview and #109 Alternate-Reality Planning. |
 | 3 | **Collaborative Whiteboard** | ✅ Built | Persisted backend + project-facing visual workspace completed through #146/#147; live presence/cursors remain an optional later enhancement. |
 | 4 | **Project Health / Risk Radar** | ✅ Built | Completed through #148: explainable advisory signals for overdue, blocked, stale, unassigned HIGH/URGENT work and dependency bottlenecks, with explicit bounds and no employee scoring. Related to #40 Risk Inbox, #57 Tenant Health Check, #98 Stale Work Detection and #121 Dependency Debt. |
-| 5 | **Forms -> Workflow Engine** | 🚧 **ACTIVE NOW** | Structured internal intake that creates authorized work and can launch workflows. Start with bounded internal forms; public/external intake requires a separate security boundary. Expands §2.9 and the workflow engine. |
-| 6 | **Approval Workflows** | 🚧 queued | Reusable human review/approve/reject stages that compose with workflows rather than creating a separate approval silo. Expands §2.10 and #135 Human Checkpoints. |
+| 5 | **Forms -> Workflow Engine** | ✅ Built | Completed through #152: bounded authenticated internal forms create authorized tasks through task-owned creation and may enter the existing workflow runtime through a typed form-submitted contract. Public/external intake remains a separate security boundary. Expands §2.9 and the workflow engine. |
+| 6 | **Approval Workflows** | 🚧 **ACTIVE NOW** | Reusable human review/approve/reject stages that compose with workflows rather than creating a separate approval silo. Expands §2.10 and #135 Human Checkpoints. |
 | 7 | **Client / Guest Portal** | 🚧 queued | Bounded external visibility, comments, review requests and approvals without broad tenant membership. New explicit idea; permission boundaries are central. |
 | 8 | **Team Workload Engine** | 🚧 queued | Capacity planning, overload detection and reassignment support using work objects and explicit availability—not surveillance/productivity scoring. Related to #48/#55. |
 | 9 | **Workspace Knowledge Graph** | 🚧 queued | Permission-aware graph connecting projects, tasks, people, decisions, documents and dependencies. Related to #33 Organization Graph and #66 Entity Linking Everywhere. |
@@ -96,12 +96,12 @@ This sequence is an explicit product commitment and **takes precedence over the 
 
 ### Guardrails for the sequence
 
-- Features **#1–#4 are complete; #5 Forms -> Workflow Engine is active now**. Continue in the exact order above unless a production/security incident or explicit product decision requires interruption.
+- Features **#1–#5 are complete; #6 Approval Workflows is active now**. Continue in the exact order above unless a production/security incident or explicit product decision requires interruption.
 - Each feature gets an explicit owning domain and narrow cross-domain contracts/events.
 - Automation must not become a god-service that directly injects every domain service.
 - Visual configuration must compile to a validated backend contract; the canvas is not the source of truth by itself.
 - Every consequential automated/agent action must be permission-aware, auditable and explainable.
-- No arbitrary user-supplied code execution in workflow nodes or form definitions.
+- No arbitrary user-supplied code execution in workflow nodes, form definitions or approval definitions.
 - Simulation and risk features must remain advisory until a human explicitly applies changes.
 - Workload/risk signals must not become opaque employee scoring.
 
@@ -237,11 +237,11 @@ Create reusable structures for onboarding, releases, research, audits, client wo
 
 Templates become much more powerful after subtasks/dependencies/custom fields exist.
 
-## 2.9 Custom fields + forms — ⬜
+## 2.9 Custom fields + forms — 🟡
 
-Moderate tenant customization without replacing real domain models.
+Bounded internal Forms -> Workflow Engine is built through #152. Broader tenant-level custom fields, multi-select/user/project/asset references and public/external forms remain future product work.
 
-Potential field types:
+Potential broader field types include:
 
 - text,
 - number,
@@ -252,11 +252,9 @@ Potential field types:
 - project,
 - asset later.
 
-Forms can then create structured tasks/requests.
-
 ## 2.10 Workflow/approval automation — 🚧
 
-Visual Workflow Builder (#1) is built; Forms -> Workflow Engine (#5) is active now and Approval Workflows (#6) remains the committed follow-on.
+Visual Workflow Builder (#1) and Forms -> Workflow Engine (#5) are built; Approval Workflows (#6) is active now.
 
 A reusable engine for:
 
@@ -340,7 +338,7 @@ The original vault predated many major implementation milestones. This is the up
 | 11. Email / External Communication | 🟡 | Provider-backed email delivery exists; many future message types/digests remain open. |
 | 12. Projects and Tasks | 🟡 | Strong basics + collaboration built; richer work-management depth remains open. |
 | 13. Files, Documents and Knowledge | 🟡 | R2 attachments built; file workspace/knowledge base/versioning remain open. |
-| 14. Workflow and Approval Engine | 🚧 | Visual workflow configuration/runtime is built; Forms -> Workflow Engine is active and Approval Workflows remains committed #6. |
+| 14. Workflow and Approval Engine | 🚧 | Visual workflow configuration/runtime and Forms -> Workflow Engine are built; Approval Workflows is active committed feature #6. |
 | 15. Assets / Facilities / Booking | ⬜ | Open. |
 | 16. Workforce / HR-like Features | 🟡 | Users/org hierarchy exist; workforce product modules remain open. |
 | 17. CRM / External Relationships | ⬜ | Open. |
@@ -1010,8 +1008,8 @@ The current development direction is the explicit sequence in §1.3. It override
 2. Project Simulation / What-If Engine    <- COMPLETE (#145)
 3. Collaborative Whiteboard               <- COMPLETE persisted workspace (#146/#147)
 4. Project Health / Risk Radar             <- COMPLETE (#148)
-5. Forms -> Workflow Engine                <- ACTIVE NOW
-6. Approval Workflows
+5. Forms -> Workflow Engine                <- COMPLETE (#152)
+6. Approval Workflows                      <- ACTIVE NOW
 7. Client / Guest Portal
 8. Team Workload Engine
 9. Workspace Knowledge Graph

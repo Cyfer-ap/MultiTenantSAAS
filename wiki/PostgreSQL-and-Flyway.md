@@ -21,7 +21,7 @@ multitenant-saas/src/main/resources/db/postgresql
 V17__current_schema_baseline.sql
 ```
 
-Future portable migrations:
+Portable shared migrations:
 
 ```text
 multitenant-saas/src/main/resources/db/common
@@ -41,9 +41,20 @@ PostgreSQL
 
 ## Migration invariant
 
-All new portable schema changes begin at **V18+** under `db/common`.
+The shared portable chain begins at V18 and currently extends through **V52**.
 
-Never rewrite an already-applied migration.
+Recent work-management/product migrations:
+
+- V45 personal workspace favorites/recent items
+- V46 saved views
+- V47 task parent/dependency/project-label relationships
+- V48 recurring task definitions/occurrences + project task templates
+- V49 tenant project templates + bounded starter-task snapshots
+- V50 workflow definitions/nodes/edges/executions
+- V51 project whiteboards/nodes/connectors
+- V52 project form definitions/fields/submissions
+
+Never rewrite an already-applied migration. **V52 is immutable; new persistence starts at V53+.**
 
 ## Production schema ownership
 
@@ -61,7 +72,7 @@ Flyway owns schema evolution; Hibernate verifies the result.
 The Testcontainers path should verify:
 
 - PostgreSQL starts successfully
-- Flyway builds the expected schema
+- Flyway builds the expected schema/version
 - Hibernate validation succeeds
 - PostgreSQL-specific query semantics behave correctly
 - lock/concurrency behavior is exercised where relevant
