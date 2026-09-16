@@ -4,7 +4,7 @@
 >
 > This is **not a roadmap or commitment by default**. It records completed ideas, partial foundations, useful product gaps, differentiated experiments, and ideas worth resisting. The explicit exception is **Section 1.3**, which records the currently committed build sequence.
 >
-> Snapshot: **2026-09-16, through Collaborative Whiteboard #147**.
+> Snapshot: **2026-09-16, through Project Health / Risk Radar #148**.
 >
 > **Current-sequence status in §1.3 and §9 is authoritative.** Lower idea-audit sections may intentionally preserve historical/partial labels unless they are explicitly refreshed.
 
@@ -86,8 +86,8 @@ This sequence is an explicit product commitment and **takes precedence over the 
 | 1 | **Visual Workflow Builder** | ✅ Built | Completed through #144: drag/connect `Trigger -> Condition -> Action` workflows with execution history, explainability and guardrails. Expands the existing workflow/approval concept and #80/#81/#135/#136. |
 | 2 | **Project Simulation / What-If Engine** | ✅ Built | Completed through #145: private scenario changes for dates, owners and dependencies with downstream schedule/workload impact before applying anything. Consolidates #41 Scenario/Sandbox Mode, #53 Deadline Reality Check, #108 Change Blast-Radius Preview and #109 Alternate-Reality Planning. |
 | 3 | **Collaborative Whiteboard** | ✅ Built | Persisted backend + project-facing visual workspace completed through #146/#147; live presence/cursors remain an optional later enhancement. |
-| 4 | **Project Health / Risk Radar** | 🚧 **ACTIVE NOW** | Explainable project-level risk signals from overdue work, blockers, stale work, dependency criticality and bounded workload pressure. Related to #40 Risk Inbox, #57 Tenant Health Check, #98 Stale Work Detection and #121 Dependency Debt. |
-| 5 | **Forms -> Workflow Engine** | 🚧 queued | Structured internal/public intake that creates authorized work and can launch workflows. Expands §2.9 and the workflow engine. |
+| 4 | **Project Health / Risk Radar** | ✅ Built | Completed through #148: explainable advisory signals for overdue, blocked, stale, unassigned HIGH/URGENT work and dependency bottlenecks, with explicit bounds and no employee scoring. Related to #40 Risk Inbox, #57 Tenant Health Check, #98 Stale Work Detection and #121 Dependency Debt. |
+| 5 | **Forms -> Workflow Engine** | 🚧 **ACTIVE NOW** | Structured internal intake that creates authorized work and can launch workflows. Start with bounded internal forms; public/external intake requires a separate security boundary. Expands §2.9 and the workflow engine. |
 | 6 | **Approval Workflows** | 🚧 queued | Reusable human review/approve/reject stages that compose with workflows rather than creating a separate approval silo. Expands §2.10 and #135 Human Checkpoints. |
 | 7 | **Client / Guest Portal** | 🚧 queued | Bounded external visibility, comments, review requests and approvals without broad tenant membership. New explicit idea; permission boundaries are central. |
 | 8 | **Team Workload Engine** | 🚧 queued | Capacity planning, overload detection and reassignment support using work objects and explicit availability—not surveillance/productivity scoring. Related to #48/#55. |
@@ -96,12 +96,12 @@ This sequence is an explicit product commitment and **takes precedence over the 
 
 ### Guardrails for the sequence
 
-- Features **#1–#3 are complete; #4 Project Health / Risk Radar is active now**. Continue in the exact order above unless a production/security incident or explicit product decision requires interruption.
+- Features **#1–#4 are complete; #5 Forms -> Workflow Engine is active now**. Continue in the exact order above unless a production/security incident or explicit product decision requires interruption.
 - Each feature gets an explicit owning domain and narrow cross-domain contracts/events.
 - Automation must not become a god-service that directly injects every domain service.
 - Visual configuration must compile to a validated backend contract; the canvas is not the source of truth by itself.
 - Every consequential automated/agent action must be permission-aware, auditable and explainable.
-- No arbitrary user-supplied code execution in workflow nodes.
+- No arbitrary user-supplied code execution in workflow nodes or form definitions.
 - Simulation and risk features must remain advisory until a human explicitly applies changes.
 - Workload/risk signals must not become opaque employee scoring.
 
@@ -256,7 +256,7 @@ Forms can then create structured tasks/requests.
 
 ## 2.10 Workflow/approval automation — 🚧
 
-Visual Workflow Builder (#1) is built; Forms -> Workflow Engine (#5) and Approval Workflows (#6) remain committed follow-on features.
+Visual Workflow Builder (#1) is built; Forms -> Workflow Engine (#5) is active now and Approval Workflows (#6) remains the committed follow-on.
 
 A reusable engine for:
 
@@ -340,7 +340,7 @@ The original vault predated many major implementation milestones. This is the up
 | 11. Email / External Communication | 🟡 | Provider-backed email delivery exists; many future message types/digests remain open. |
 | 12. Projects and Tasks | 🟡 | Strong basics + collaboration built; richer work-management depth remains open. |
 | 13. Files, Documents and Knowledge | 🟡 | R2 attachments built; file workspace/knowledge base/versioning remain open. |
-| 14. Workflow and Approval Engine | 🚧 | Visual workflow configuration/runtime is built; Forms -> Workflow Engine and Approval Workflows remain committed #5/#6. |
+| 14. Workflow and Approval Engine | 🚧 | Visual workflow configuration/runtime is built; Forms -> Workflow Engine is active and Approval Workflows remains committed #6. |
 | 15. Assets / Facilities / Booking | ⬜ | Open. |
 | 16. Workforce / HR-like Features | 🟡 | Users/org hierarchy exist; workforce product modules remain open. |
 | 17. CRM / External Relationships | ⬜ | Open. |
@@ -369,7 +369,7 @@ The original #29–#100 ideas remain useful. Their implementation state is now:
 - 🟡 **#45 Contextual Workspaces** — project/task detail surfaces combine work and collaboration; broader object-centric workspaces remain open.
 - 🟡 **#46 Universal Activity Timeline** — task activity history exists; a cross-entity timeline does not.
 - 🟡 **#47 Human-Friendly Audit Logs** — audit surfaces exist; more narrative/entity-rich rendering can improve them.
-- 🟡 **#57 Tenant Health Check** — some admin/billing/integration visibility exists; unified entropy/health checks do not.
+- 🟡 **#57 Tenant Health Check** — Risk Radar now covers project health signals; unified tenant-level entropy/health checks do not.
 - 🟡 **#59 Access Expiry by Default** — assignment validity and delegation expiry exist; default-expiry policy and review UX remain open.
 - 🟡 **#60 Break-Glass Access** — SSO has a guarded password-capable tenant-admin recovery path; emergency temporary privilege elevation is not built.
 - 🟡 **#61 Privacy Zones** — scopes can isolate project/org areas; specialized sensitive-data compartments remain open.
@@ -394,8 +394,8 @@ These remain especially worth preserving. Entries absorbed into the committed se
 - ⬜ **#37 Smart Handoffs**
 - ⬜ **#38 What Am I Blocking?**
 - ⬜ **#39 Reverse Dependency View**
-- 🚧 **#40 Risk Inbox** — feeds committed #4 Project Health / Risk Radar.
-- 🚧 **#41 Scenario / Sandbox Mode** — absorbed into committed #2 Project Simulation / What-If Engine.
+- 🟡 **#40 Risk Inbox** — project-level risk explainability is now partly realized by #148; a personal cross-project risk inbox remains open.
+- ✅ **#41 Scenario / Sandbox Mode** — absorbed into Project Simulation / What-If Engine #145.
 - ⬜ **#42 Synthetic Tenant Generator**
 - ⬜ **#43 Feature Laboratory**
 - 🚧 **#48 Consent-Based Workload Heatmap** — related to committed #8 Team Workload Engine.
@@ -403,7 +403,7 @@ These remain especially worth preserving. Entries absorbed into the committed se
 - ⬜ **#50 Smart Daily Brief**
 - ⬜ **#51 End-of-Day Handoff**
 - ⬜ **#52 Follow-the-Sun Operations**
-- 🚧 **#53 Deadline Reality Check** — absorbed into committed #2.
+- ✅ **#53 Deadline Reality Check** — absorbed into Project Simulation / What-If Engine #145.
 - ⬜ **#54 Do-Not-Schedule Context**
 - 🚧 **#55 Conflict-Aware Resource Scheduling** — related to committed #8.
 - ⬜ **#56 Escalation Without Spam**
@@ -424,8 +424,8 @@ These remain especially worth preserving. Entries absorbed into the committed se
 - ⬜ **#77 What Changed Since I Was Away?**
 - ⬜ **#78 Attention Heatmap**
 - ⬜ **#79 Organizational Drift Detection**
-- 🚧 **#80 Explainable Automation** — required by committed #1.
-- 🚧 **#81 Automation Guardrails** — required by committed #1.
+- ✅ **#80 Explainable Automation** — required by and delivered in the current workflow builder/runtime contract.
+- ✅ **#81 Automation Guardrails** — required by and delivered in the current workflow builder/runtime contract.
 - ⬜ **#82 Operational Digital Twin**
 - ⬜ **#84 Organizational Memory With Expiration**
 - ⬜ **#85 Cross-Tenant Collaboration Spaces**
@@ -439,7 +439,7 @@ These remain especially worth preserving. Entries absorbed into the committed se
 - ⬜ **#95 Offboarding Wizard**
 - ⬜ **#96 Role-Aware Onboarding Journey**
 - ⬜ **#97 Knowledge Ownership**
-- 🚧 **#98 Stale Work Detection** — one signal for committed #4.
+- ✅ **#98 Stale Work Detection** — implemented as a Risk Radar signal in #148.
 - ⬜ **#99 Noise-vs-Signal Analytics**
 
 ---
@@ -447,8 +447,6 @@ These remain especially worth preserving. Entries absorbed into the committed se
 # 5. Near-Term Product-Enrichment Backlog
 
 **Priority override:** the committed sequence in §1.3 now runs before the backlog below. These tiers remain useful reference material and may supply prerequisites, but they are not the active order of execution.
-
-This section is deliberately closer to buildable product work than the wild experiments below.
 
 ## Tier A — small/medium scope, high visible value
 
@@ -550,27 +548,13 @@ Urgent events pass through; everything else is released as a compact context-awa
 
 Goal: protect attention without losing responsibility.
 
-## 108. Change Blast-Radius Preview — 🚧
+## 108. Change Blast-Radius Preview — ✅
 
-Before changing a deadline, owner, project status or workflow state, preview downstream effects:
+Delivered through Project Simulation / What-If Engine #145: private date/owner/dependency scenarios expose downstream effects before live-state mutation.
 
-> Moving Phoenix by 7 days affects 12 tasks, 3 people and 2 dependent milestones.
+## 109. Alternate-Reality Planning — ✅
 
-This is the work-management equivalent of a database migration preview and is now part of committed #2 Project Simulation / What-If Engine.
-
-## 109. Alternate-Reality Planning — 🚧
-
-A user can temporarily change dates/owners/dependencies in a private scenario without saving them.
-
-Then compare:
-
-- current plan,
-- proposed plan,
-- affected deadlines,
-- workload changes,
-- newly blocked work.
-
-Only explicitly applying the scenario changes real data. This is now part of committed #2.
+Delivered through Project Simulation / What-If Engine #145. Scenarios remain private/advisory and do not change live data implicitly.
 
 ## 110. Role Ghost / "View As" Without Impersonation — 🧪
 
@@ -703,18 +687,9 @@ Find important objects with ambiguous accountability:
 
 Focus on missing responsibility, not employee scoring.
 
-## 121. Dependency Debt — 🧪
+## 121. Dependency Debt — 🟡
 
-Not just "task A depends on task B."
-
-Highlight brittle structures:
-
-- chains that are too long,
-- one task blocking many unrelated outcomes,
-- dependencies owned by inactive users,
-- cross-team handoffs with no fallback.
-
-Think technical debt, but for coordination.
+Risk Radar #148 now identifies dependency bottlenecks and downstream open dependents. Broader structural debt analysis—long chains, ownership fragility and cross-team fallback gaps—remains open.
 
 ## 122. One-Click "I'm Blocked" Packet — 🧪
 
@@ -886,7 +861,7 @@ Example:
 
 > This rule normally affects 4–8 tasks/day. It is about to affect 1,842 tasks.
 
-This goes beyond pre-deployment simulation and protects against runtime accidents. Circuit-breaker foundations should be considered while building committed #1.
+This goes beyond pre-deployment simulation and protects against runtime accidents.
 
 ## 137. "Can the Product Say No?" — 🧪
 
@@ -1034,8 +1009,8 @@ The current development direction is the explicit sequence in §1.3. It override
 1. Visual Workflow Builder                 <- COMPLETE (#144)
 2. Project Simulation / What-If Engine    <- COMPLETE (#145)
 3. Collaborative Whiteboard               <- COMPLETE persisted workspace (#146/#147)
-4. Project Health / Risk Radar             <- ACTIVE NOW
-5. Forms -> Workflow Engine
+4. Project Health / Risk Radar             <- COMPLETE (#148)
+5. Forms -> Workflow Engine                <- ACTIVE NOW
 6. Approval Workflows
 7. Client / Guest Portal
 8. Team Workload Engine

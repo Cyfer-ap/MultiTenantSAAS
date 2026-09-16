@@ -6,9 +6,9 @@ Use this page as the reader-facing Wiki pointer for resuming development. Reposi
 
 **Differentiated Work Platform Sequence**
 
-Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder, Project Simulation / What-If Engine and the persisted Collaborative Whiteboard workspace are established through PR #147.
+Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard and **Project Health / Risk Radar** are established through PR #148.
 
-**Project Health / Risk Radar is active next.** Live whiteboard presence/cursors remain a later optional enhancement rather than a prerequisite for the next committed feature.
+**Forms -> Workflow Engine is active next.** Live whiteboard presence/cursors remain a later optional enhancement rather than a prerequisite for the next committed feature.
 
 ## Read first
 
@@ -27,103 +27,95 @@ Inside the repository:
 3. `HANDOFF.md`
 4. `guides/current_architecture.md`
 5. `guides/ENGINEERING_STANDARDS.md`
-6. `guides/task_relationships.md`
-7. `guides/recurring_work_and_templates.md`
-8. `guides/visual_workflow_builder.md`
-9. `guides/project_simulation.md`
-10. `guides/collaborative_whiteboard.md`
+6. `guides/recurring_work_and_templates.md`
+7. `guides/visual_workflow_builder.md`
+8. `guides/project_simulation.md`
+9. `guides/collaborative_whiteboard.md`
+10. `guides/project_risk_radar.md`
 11. the focused guide for the domain being changed
 
 ## Engineering rule
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, the Saved Views validator SPI, Calendar's deadline-source contract, Task Relationships' task gateway/change sink, `TaskCreationPort`, `ProjectCreationPort`, task-domain workflow events/`TaskAutomationMutationPort`, Project Simulation's task/dependency source ports, and Whiteboard's project/task narrow ports.
+Reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, Saved Views validation SPI, Calendar deadline-source contracts, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow task events/`TaskAutomationMutationPort`, Project Simulation source ports, Whiteboard project/task ports and Risk Radar task/dependency source ports.
 
-## Collaborative Whiteboard checkpoint
-
-V51 owns:
-
-- `whiteboards`
-- `whiteboard_nodes`
-- `whiteboard_edges`
+## Risk Radar checkpoint
 
 Boundary:
 
 ```text
-whiteboards
-    -> ProjectAccessPort -> project-owned adapter
-    -> TaskCreationPort  -> task-owned adapter
+projectrisk
+    -> ProjectRiskTaskSource
+    -> ProjectRiskDependencySource
 ```
 
-Preserve:
-
-- tenant/project-scoped boards
-- normalized project-local board names
-- `STICKY`, `TEXT`, `SHAPE` nodes
-- stable bounded node geometry and max 300 nodes / 600 connectors
-- visual cycles allowed; no task-DAG rule on connectors
-- optimistic board versions for update/delete/conversion
-- structured 409 conflict on stale versions
-- 409 duplicate-name behavior, including database race
-- archived projects readable but not mutable
-- sticky/text conversion only through `TaskCreationPort`
-- durable `linked_task_id`
-- no WebSocket/STOMP/presence/cursor state in the persistence model
-
-The project-facing `/projects/:projectId/whiteboards` workspace adds board selection/create/delete, drag/resize, connectors, pan/zoom, multi-select, local undo/redo, committed-edit autosave, explicit stale reload recovery and node -> task conversion UX. Edit authority mirrors backend project-task-manage/project-lead semantics.
-
-Detailed rules live in `guides/collaborative_whiteboard.md`.
-
-## Project Simulation checkpoint
+API:
 
 ```text
-projectsimulation
-    -> ProjectSimulationTaskSource -> task-owned adapter
-    -> ProjectSimulationDependencySource -> Task Relationships-owned adapter
+GET /api/tenants/{tenantId}/projects/{projectId}/risk
 ```
 
-The private `/projects/:projectId/simulation` workspace supports hypothetical due-date, assignee and dependency changes and displays direct/downstream impact, conflict changes and workload deltas. There is no apply action in v1.
+Project surface:
 
-Detailed rules live in `guides/project_simulation.md`.
+```text
+/projects/{projectId}?view=risk
+```
 
-## Workflow checkpoint
+Risk Radar is read-only and explainable. V1 reports overdue, blocked, stale, unassigned HIGH/URGENT and dependency-bottleneck signals, with explicit response bounds and no opaque people/productivity score.
 
-V50 establishes workflow definitions/nodes/edges/executions, bounded validated graphs, after-commit task-event execution, task-owned mutation authorization and the `/work-automation` visual canvas. Active workflows must be paused before editing.
+Detailed rules live in `guides/project_risk_radar.md`.
 
-Detailed rules live in `guides/visual_workflow_builder.md`.
+## Existing differentiated checkpoints
 
-## Resume here — Project Health / Risk Radar
+### Collaborative Whiteboard
 
-Build the next feature as an explicit risk/health domain with narrow authorized projections rather than expanding project/task legacy services.
+V51 owns whiteboards/nodes/connectors. The `/projects/:projectId/whiteboards` workspace uses optimistic document versions and node -> task conversion through task-owned creation behavior. Live presence/cursors remain optional later work.
+
+### Project Simulation
+
+The private `/projects/:projectId/simulation` workspace supports hypothetical due-date, assignee and dependency changes. It remains advisory and has no apply action in v1.
+
+### Visual Workflow Builder
+
+V50 owns workflow definitions/nodes/edges/executions. Task lifecycle reaches workflows through task-domain events; task mutations cross through `TaskAutomationMutationPort`.
+
+## Resume here — Forms -> Workflow Engine
+
+Build the next feature as an explicit form/intake domain that composes with existing work and workflow boundaries.
 
 Initial goals:
 
-1. explainable project-level signals for overdue work, blockers, stale work and dependency criticality
-2. bounded workload-pressure context only where explicit assignment/capacity data supports it
-3. advisory/read-only analysis first; no hidden project/task mutations
-4. concrete contributing entities/reasons instead of an opaque score
-5. project-facing Risk Radar UX with drill-down to contributing work
-6. deterministic tests for signal calculation, authorization and bounded traversal
+1. versioned bounded form definitions
+2. safe internal field schema and server-side validation
+3. tenant/project-scoped authorized submissions
+4. submission provenance/audit context
+5. authorized work creation through narrow domain-owned ports
+6. optional workflow entry through a narrow contract into the existing workflow runtime
+7. internal builder + submission UI before public/external intake
+8. deterministic tests for tenant isolation, validation, authorization and bounds
 
-Do not rank employees, infer productivity, or score people. Risk signals must describe project/work conditions and remain permission-aware.
+Guardrails:
 
-After Risk Radar continue with Forms -> Workflow Engine, Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+- no arbitrary code/expression execution
+- no direct task/project/workflow repository writes from the form domain
+- form definitions never grant target access
+- created work follows ordinary quota, authorization, audit and lifecycle rules
+- public intake requires a separately designed rate-limit/authentication/abuse boundary
+- do not duplicate the workflow engine inside Forms
+
+After Forms -> Workflow Engine continue with Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 ## Preserve these system invariants
 
 - tenant isolation precedes resource access
 - backend authorization is authoritative
-- stored favorites/recents/saved-view/workflow/whiteboard/risk definitions never grant resource access
-- Calendar, Task Planning, Work Automation, Simulation, Whiteboard and Risk data are authorized before exposure
-- simulation never implicitly mutates live state
-- risk analysis remains advisory until a separately authorized action exists
-- whiteboard stale writes never silently overwrite newer documents
-- whiteboard-to-task conversion uses task-owned creation behavior
-- workflow administration permission does not imply permission to mutate a target task
-- graph/document reads and generation batches remain bounded
-- automated workflow mutations do not recursively trigger workflows in v1
-- project-template creation enforces ordinary quota/actor/lead/lifecycle rules
+- stored workflow/whiteboard/risk/form definitions never grant resource access
+- Simulation, Whiteboard, Risk and Form data are authorized before exposure or action
+- simulation and risk remain advisory until a separately authorized action exists
+- generated work goes through domain-owned creation behavior
+- workflow administration permission does not imply target-resource mutation permission
+- graph/document/form/batch work remains bounded
 - Explain Access and enforcement use the same evaluator
 - delegated authority never exceeds its current direct parent authority
 - public APIs expose DTOs rather than persistence entities

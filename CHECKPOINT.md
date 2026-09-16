@@ -2,15 +2,15 @@
 
 Updated: 2026-09-16
 Repository: `Cyfer-ap/MultiTenantSAAS`
-Branch target: `main` after PR #147 merge
+Branch target: `main` after PR #148 merge
 
-This file is the **single repository-side source of truth for current project status**. Do not create additional progress/checkpoint mirrors.
+This file is the **single repository-side source of truth for current project status**. Do not create duplicate progress/checkpoint mirrors.
 
 ## Current phase
 
 **Differentiated Work Platform Sequence**
 
-Delivered product milestones include:
+Delivered milestones now include:
 
 - Global Search — #129
 - Command Palette — #130
@@ -20,160 +20,103 @@ Delivered product milestones include:
 - capability-aware Dashboard Refresh — #136
 - Calendar / Deadline View — #137/#138
 - Task Relationships + Task Planning — #139/#140
-- recurring-task + project-scoped task-template foundation — #141
-- tenant-scoped project templates + Work Automation & Templates workspace — #143
+- recurring work + task/project templates — #141/#143
 - Visual Workflow Builder — #144
 - Project Simulation / What-If Engine — #145
-- Collaborative Whiteboard backend/domain foundation — #146
-- Collaborative Whiteboard persisted visual workspace — #147
+- Collaborative Whiteboard foundation + persisted visual workspace — #146/#147
+- **Project Health / Risk Radar — #148**
 
-**Project Health / Risk Radar is the active next feature.** Collaborative Whiteboard is complete at the persisted application-workspace level through #146/#147. Live presence/cursors remain a later optional collaboration enhancement and do not block the committed sequence.
+**Forms -> Workflow Engine is the active next feature.**
 
-## Collaborative Whiteboard checkpoint — #146/#147
+Live whiteboard presence/cursors remain an optional later enhancement and do not block the committed sequence. Bulk/CSV, custom fields, broader knowledge/documents and analytics remain parked unless explicitly reprioritized.
+
+## Project Health / Risk Radar checkpoint — #148
+
+Risk Radar is complete as an explainable, advisory project-health surface.
 
 ### Ownership and boundaries
 
-The explicit `whiteboards` domain owns project-scoped board documents, visual nodes, connectors and node-to-task links. Frontend ownership is localized under `features/whiteboards`.
-
-Cross-domain calls remain narrow:
+The explicit `projectrisk` backend domain owns risk calculation and depends only on narrow source contracts:
 
 ```text
-whiteboards
-    -> ProjectAccessPort -> project-owned adapter -> project existence/lifecycle
-    -> TaskCreationPort  -> task-owned adapter    -> real task creation
+projectrisk
+    -> ProjectRiskTaskSource        -> task-owned adapter
+    -> ProjectRiskDependencySource  -> Task Relationships-owned adapter
 ```
 
-Whiteboards do not inject `ProjectService`, `ProjectTaskService`, `ProjectRepository` or `ProjectTaskRepository`.
+Frontend ownership lives under `features/project-risk`; project-level tool navigation is separated through `features/project-tools` rather than expanding the legacy project-details page further.
 
-### V51 document model
-
-V51 is merged and creates:
-
-- `whiteboards`
-- `whiteboard_nodes`
-- `whiteboard_edges`
-
-Rules:
-
-- boards are tenant/project scoped
-- board names are normalized and unique within a project
-- board rows use optimistic `version` control
-- initial node types: `STICKY`, `TEXT`, `SHAPE`
-- node keys are stable identifiers
-- node geometry/z-index are bounded
-- at most 300 nodes and 600 connectors per submitted board document
-- connectors must reference existing nodes, cannot self-reference and cannot duplicate a directed edge
-- visual connector cycles are valid; whiteboards are not task dependency DAGs
-- sticky/text nodes may persist a `linked_task_id`
-
-### API and concurrency
+### API and UI
 
 ```text
-GET    /api/tenants/{tenantId}/projects/{projectId}/whiteboards
-POST   /api/tenants/{tenantId}/projects/{projectId}/whiteboards
-GET    /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}
-PUT    /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}
-DELETE /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}?expectedVersion={version}
-POST   /api/tenants/{tenantId}/projects/{projectId}/whiteboards/{boardId}/nodes/{nodeKey}/convert-to-task
+GET /api/tenants/{tenantId}/projects/{projectId}/risk
 ```
 
-Reads reuse project task-read authorization. Mutations reuse project task-manage authorization; exact project-lead membership remains a valid resource relationship through the existing authorization model.
+The endpoint is read-only and reuses authoritative project task-read authorization.
 
-Update/delete/task-conversion requests carry the version the client edited. A stale version returns structured HTTP `409 Conflict`; duplicate board names also resolve to `409 RESOURCE_ALREADY_EXISTS`, including database-race conflicts.
-
-Archived projects remain readable but reject board mutation and task conversion.
-
-### Visual workspace — #147
-
-Private route:
+Project-facing surface:
 
 ```text
-/projects/:projectId/whiteboards
+/projects/{projectId}?view=risk
 ```
 
-Project details expose an **Open whiteboard** entry control through a whiteboard-owned wrapper rather than adding more responsibilities directly to the legacy project-details page.
+The UI shows overall documented severity, signal-family counts, plain-language reasons, task deep-links, explicit interpretation limits and manual refresh. It never mutates project/task state.
 
-The workspace provides:
+### Explainable v1 signals
 
-- board selector/create/delete
-- draggable/resizable sticky, text and shape nodes
-- directed connectors
-- zoom/pan
-- Ctrl/Cmd multi-select
-- local undo/redo
-- board/node inspector
-- committed-edit autosave using the V51 expected version
-- explicit reload after stale/conflicting saves
-- read-only behavior for archived projects/users without edit authority
-- direct project-lead relationship lookup when no explicit task-manage permission exists
+- overdue open tasks
+- blocked tasks, including unresolved open dependency blockers
+- stale open tasks using task `updatedAt`
+- unassigned HIGH/URGENT work
+- dependency bottlenecks based on downstream open dependents
 
-The editor does not send a request for every pointer movement. Position/size changes are persisted when the interaction commits. It also avoids server-to-local `useEffect` synchronization; deliberate board switches/reloads remount from the authoritative snapshot.
+Overall risk is the maximum documented signal severity; there is no hidden weighted score.
 
-### Node -> task conversion
+### Guardrails and bounds
 
-Sticky/text conversion uses task-owned `TaskCreationPort` rather than writing task persistence directly. Normal task lifecycle behavior therefore remains authoritative for project status, creator/assignee membership, activity, audit, notifications, outbound webhooks and task-domain events.
+- advisory/read-only only
+- no employee ranking or productivity scoring
+- assignment counts are not treated as capacity
+- workload pressure remains omitted until an explicit availability/capacity contract exists
+- completed/cancelled work is excluded from open-risk calculations
+- max 500 tasks, 1,000 dependency edges and 200 returned signals per calculation
+- no migration; V51 remains the latest migration
 
-The conversion UX supports title, description, priority, active project-member assignee and due date. A converted node stores the returned task ID, rejects repeated conversion and retains the link across document replacement when its stable node key remains. Frontend task-cache invalidation uses the task domain's exported query-key contract.
+Detailed contract: `guides/project_risk_radar.md`.
 
-### Validation
+## Existing differentiated foundations
 
-Focused frontend coverage includes:
+### Collaborative Whiteboard — #146/#147
 
-- board creation for explicit project-task managers
-- project-lead management fallback without an explicit task-manage grant
-- archived-project read-only behavior
-- autosave with the current expected version
-- node -> task conversion and returned task/version state
+V51 owns project-scoped whiteboards, nodes and connectors with optimistic versioning, bounded documents, archived-project mutation protection and sticky/text -> task conversion through task-owned `TaskCreationPort`.
 
-The #147 implementation head cleared all 273 frontend tests, formatting, lint and production build together with Backend, PostgreSQL/Flyway, Security, Container CI and Qodana before the final documentation-only head was created.
-
-### Transport guardrail
-
-V51/#147 contain **no WebSocket/STOMP/presence/cursor persistence**. The stored board model is transport-independent. Presence, cursors and real-time resynchronization can be added later without changing the persisted document contract.
+Private workspace: `/projects/:projectId/whiteboards`.
 
 Detailed contract: `guides/collaborative_whiteboard.md`.
 
-## Project Simulation checkpoint
+### Project Simulation — #145
 
-The explicit `projectsimulation` domain owns advisory scenario orchestration and never mutates live project/task/dependency state.
+The explicit `projectsimulation` domain provides bounded, read-only due-date/assignee/dependency scenarios with downstream exposure, dependency-conflict comparison and workload deltas. It has no hidden apply path.
 
-```text
-GET  /api/tenants/{tenantId}/projects/{projectId}/simulation/baseline
-POST /api/tenants/{tenantId}/projects/{projectId}/simulation
-```
-
-Both require project-level `project.task.manage` authority. Authoritative task/dependency state crosses through `ProjectSimulationTaskSource` and `ProjectSimulationDependencySource`, not legacy task/graph services.
-
-Current scenarios support due-date/assignee overrides and dependency add/remove operations, with direct/downstream exposure, baseline-vs-simulated deadline conflicts and open-task workload deltas. The engine is bounded to 500 tasks, 1,000 dependency edges, 100 task overrides and 100 dependency changes per request. It remains advisory with no hidden apply path and does not invent completion dates without duration/effort data.
-
-Frontend route: `/projects/:projectId/simulation`.
+Private workspace: `/projects/:projectId/simulation`.
 
 Detailed contract: `guides/project_simulation.md`.
 
-## Visual workflow checkpoint
+### Visual Workflow Builder — #144
 
-Visual Workflow Builder remains complete through #144 with V50 workflow definitions/nodes/edges/executions, bounded typed graphs, after-commit task-domain events, idempotent execution history and task mutations through `TaskAutomationMutationPort`.
-
-The `/work-automation` Workflow builder tab provides the draggable persisted canvas, branch editing, lifecycle controls and recent execution history. Active definitions remain read-only until paused.
+V50 owns workflow definitions/nodes/edges/executions, typed bounded graphs, after-commit task-domain events, idempotent execution history and task mutations through `TaskAutomationMutationPort`.
 
 Detailed contract: `guides/visual_workflow_builder.md`.
 
-## Existing work-generation checkpoint
+### Recurring work + templates — #141/#143
 
-Recurring work/templates remain unchanged from #143:
-
-- V48 recurring definitions/occurrences + project task templates
-- V49 tenant project templates + bounded starter-task snapshots
-- recurring/task-template generation goes through `TaskCreationPort`
-- project-template creation goes through `ProjectCreationPort`
-- project-template starter tasks go through `TaskCreationPort`
-- ordinary project/task quota, actor, authorization, audit and lifecycle rules remain authoritative
+V48/V49 recurrence and template generation continues through task-owned `TaskCreationPort` and project-owned `ProjectCreationPort`, preserving normal quota, authorization, audit and lifecycle rules.
 
 Detailed contract: `guides/recurring_work_and_templates.md`.
 
 ## Database checkpoint
 
-Portable PostgreSQL Flyway migrations extend through **V51**.
+Portable PostgreSQL Flyway migrations extend through **V51**:
 
 ```text
 V45 personal workspace favorites/recent items
@@ -185,31 +128,13 @@ V50 visual workflow definitions/nodes/edges/executions
 V51 project whiteboards/nodes/connectors
 ```
 
-Project Simulation and #147 add no migration. Never rewrite an applied migration. New persistence starts at **V52+**.
+Project Simulation and Risk Radar add no migration. Never rewrite an applied migration. New persistence starts at **V52+**.
 
 ## Non-negotiable architecture rule
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Current reference implementations include:
-
-- Search coordinator + contributor contracts
-- Personal Workspace resolver adapters
-- My Work task source
-- Saved Views validator SPI
-- Calendar deadline-source SPI
-- Task Relationships gateway/change sink
-- `TaskCreationPort`
-- `ProjectCreationPort`
-- workflow task-domain events + `TaskAutomationMutationPort`
-- Project Simulation task/dependency source ports
-- Whiteboard `ProjectAccessPort` + `TaskCreationPort` boundaries
-
-Do not move workflow execution into `ProjectTaskService`, recurrence into Calendar, simulation/whiteboards into legacy project/task services, or template orchestration into legacy project/task god-services.
-
-## Established application foundations
-
-Major capabilities include authentication/tenant isolation, invitations/password recovery, organization hierarchy, scoped authorization/delegation/Explain Access, projects/tasks/collaboration, Task Planning, recurring work/templates, visual workflows, project simulation, project whiteboard workspace, search/command palette/personal workspace/My Work/Saved Views/Dashboard/Calendar, R2-compatible attachments, durable notifications/email, API keys/quotas/usage, Stripe/Razorpay billing abstractions, outbound webhooks, enterprise OIDC SSO, auditability, PostgreSQL/Flyway and CI/security/container validation.
+Current reference implementations include Search contributor contracts, Personal Workspace resolvers, My Work source ports, Saved Views validation SPI, Calendar deadline sources, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, Project Simulation source ports, Whiteboard project/task ports and Risk Radar task/dependency sources.
 
 ## Provider status
 
@@ -219,7 +144,7 @@ Working and validated in deployed Test Mode. Hosted checkout, signed lifecycle s
 
 ### Razorpay
 
-Application integration and managed Plan provisioning remain implemented. Recurring Test Mode authorization is provider-sandbox blocked; keep the integration available while treating live readiness separately.
+Application integration and managed Plan provisioning remain implemented. Recurring Test Mode authorization remains provider-sandbox blocked; keep the integration available while treating live readiness separately.
 
 ## Engineering-health checkpoint
 
@@ -239,20 +164,17 @@ Canonical assessment: `guides/ENGINEERING_STANDARDS.md`.
 
 ## Next committed product sequence
 
-**Project Health / Risk Radar is active next.** It must remain explainable/advisory, use explicit project/task/dependency/workload projections through narrow ports, and must not become opaque employee scoring.
-
 Continue in this order:
 
-1. **Project Health / Risk Radar**
-2. Forms -> Workflow Engine
-3. Approval Workflows
-4. Client / Guest Portal
-5. Team Workload Engine
-6. Workspace Knowledge Graph
-7. AI / Agent Teammates
-8. resume parked backlog such as bulk actions/CSV, custom fields, knowledge/documents and broader analytics unless priorities are explicitly changed
+1. **Forms -> Workflow Engine — ACTIVE NEXT**
+2. Approval Workflows
+3. Client / Guest Portal
+4. Team Workload Engine
+5. Workspace Knowledge Graph
+6. AI / Agent Teammates
+7. resume parked backlog such as bulk actions/CSV, custom fields, knowledge/documents and broader analytics unless priorities are explicitly changed
 
-Live whiteboard presence/cursors remain a later optional enhancement, not an item that blocks the sequence above.
+Forms must create authorized work through narrow domain-owned contracts and compose with the existing workflow engine rather than bypassing it.
 
 ## Deferred platform work
 
@@ -274,11 +196,11 @@ Optional SAML/SCIM, MFA/passkeys/device management and richer notification chann
 - `guides/README.md` — documentation ownership/index
 - `guides/current_architecture.md` — canonical architecture
 - `guides/ENGINEERING_STANDARDS.md` — technical-health assessment and quality rules
-- `guides/task_relationships.md` — task relationship contract
-- `guides/recurring_work_and_templates.md` — recurrence/template contract
-- `guides/visual_workflow_builder.md` — workflow definition/runtime/canvas contract
-- `guides/project_simulation.md` — advisory What-If simulation contract
-- `guides/collaborative_whiteboard.md` — V51 whiteboard persistence/domain/visual-workspace/task-conversion contract
+- `guides/recurring_work_and_templates.md` — work-generation contracts
+- `guides/visual_workflow_builder.md` — workflow graph/runtime/canvas contract
+- `guides/project_simulation.md` — advisory What-If contract
+- `guides/collaborative_whiteboard.md` — whiteboard persistence/workspace contract
+- `guides/project_risk_radar.md` — Risk Radar source/bounds/signal/UI contract
 - `guides/Wild_Thoughts.md` — product idea vault and committed sequence section
 - `wiki/*.md` — canonical reader-facing Wiki source
 - `wiki/Roadmap.md` — product direction
