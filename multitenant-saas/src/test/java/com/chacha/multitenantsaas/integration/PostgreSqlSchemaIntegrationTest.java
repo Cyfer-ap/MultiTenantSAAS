@@ -70,7 +70,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV51AndMatchesJpaMappings() {
+    void postgresSchemaReachesV52AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -82,7 +82,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("51");
+        assertThat(version).isEqualTo("52");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -140,7 +140,10 @@ class PostgreSqlSchemaIntegrationTest {
                         "workflow_executions",
                         "whiteboards",
                         "whiteboard_nodes",
-                        "whiteboard_edges")
+                        "whiteboard_edges",
+                        "form_definitions",
+                        "form_fields",
+                        "form_submissions")
                 .forEach(this::assertTableExists);
 
         List<String[]> requiredColumns =
@@ -185,6 +188,22 @@ class PostgreSqlSchemaIntegrationTest {
                         column("whiteboard_nodes", "z_index"),
                         column("whiteboard_edges", "source_node_key"),
                         column("whiteboard_edges", "target_node_key"),
+                        column("form_definitions", "project_id"),
+                        column("form_definitions", "workflow_id"),
+                        column("form_definitions", "status"),
+                        column("form_definitions", "definition_version"),
+                        column("form_definitions", "task_title_field_key"),
+                        column("form_definitions", "task_priority"),
+                        column("form_fields", "form_id"),
+                        column("form_fields", "field_key"),
+                        column("form_fields", "field_type"),
+                        column("form_fields", "options_json"),
+                        column("form_fields", "position_index"),
+                        column("form_submissions", "form_id"),
+                        column("form_submissions", "definition_version"),
+                        column("form_submissions", "payload_json"),
+                        column("form_submissions", "created_task_id"),
+                        column("form_submissions", "validation_context"),
                         column("authorization_delegations", "tenant_id"),
                         column("authorization_delegations", "delegator_user_id"),
                         column("authorization_delegations", "delegate_user_id"),
