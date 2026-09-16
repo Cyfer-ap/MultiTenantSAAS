@@ -167,7 +167,7 @@ public class FormDefinition {
 
     public void pause() {
         if (status != FormStatus.ACTIVE) {
-            throw new IllegalStateException("Only active forms can be paused");
+            throw new IllegalArgumentException("Only active forms can be paused");
         }
         status = FormStatus.PAUSED;
         updatedAt = Instant.now();
