@@ -42,6 +42,7 @@ When a fact changes, update the document that owns that fact rather than copying
 - `task_relationships.md` — subtasks, directed dependencies, project-scoped labels and Task Planning ownership
 - `recurring_work_and_templates.md` — V48 recurring work/task-template contracts, V49 tenant project templates, narrow creation ports and the Work Automation & Templates workspace
 - `visual_workflow_builder.md` — V50 workflow graph, runtime/event boundaries, task mutation port, execution history and visual canvas contract
+- `forms_workflow_engine.md` — V52 bounded project intake forms, task-creation boundary, submission provenance and optional form-submitted workflow entry
 - `project_simulation.md` — advisory What-If baseline/simulation APIs, narrow source ports, scenario validation and private frontend workspace
 - `collaborative_whiteboard.md` — V51 project-scoped board/document persistence, optimistic concurrency, project/task ports, persisted visual workspace and node-to-task conversion contract
 - `project_risk_radar.md` — explainable Risk Radar signal model, bounds, narrow task/dependency sources, guardrails and project-facing read-only surface
@@ -62,7 +63,7 @@ Historical planning/recovery files may remain for provenance, but they are not c
 
 The committed differentiated sequence is complete through **Project Health / Risk Radar (#148)**. Risk Radar is an explainable, advisory project-health read model over authorized task/dependency state and adds no persistence migration.
 
-Portable migrations extend through **V51**. V51 is immutable; later persistence starts at **V52+**.
+Portable migrations extend through **V51** on `main`. V51 is immutable; the active Forms -> Workflow Engine feature introduces append-only **V52** on its feature branch.
 
 **Forms -> Workflow Engine is the active next feature.** After that continue with Approval Workflows, Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 

@@ -21,6 +21,7 @@ import {
 import { useCurrentAuthorization } from '../../authorization/hooks/useCurrentAuthorization'
 import { authorizationPermissionCodes } from '../../authorization/types/authorization'
 import { useAuth } from '../../auth/hooks/useAuth'
+import { FormsPanel } from '../../forms/components/FormsPanel'
 import { ProjectTemplatesPanel } from '../../project-templates/components/ProjectTemplatesPanel'
 import { projectsApi } from '../../projects/api/projectsApi'
 import { RecurringWorkPanel } from '../../recurring-work/components/RecurringWorkPanel'
@@ -33,7 +34,7 @@ interface ProjectOption {
     name: string
 }
 
-type WorkspaceTab = 'recurring' | 'task-templates' | 'project-templates' | 'workflows'
+type WorkspaceTab = 'recurring' | 'task-templates' | 'project-templates' | 'forms' | 'workflows'
 
 export function WorkAutomationPage() {
     const { session } = useAuth()
@@ -139,7 +140,7 @@ export function WorkAutomationPage() {
         context,
         authorizationPermissionCodes.PROJECT_UPDATE,
     )
-    const requiresProject = tab === 'recurring' || tab === 'task-templates'
+    const requiresProject = tab === 'recurring' || tab === 'task-templates' || tab === 'forms'
 
     return (
         <Stack spacing={3}>
@@ -150,8 +151,8 @@ export function WorkAutomationPage() {
                         Work Automation & Templates
                     </Typography>
                     <Typography color="text.secondary">
-                        Schedule recurring tasks, reuse bounded snapshots and compose visual task
-                        workflows without bypassing domain lifecycle rules.
+                        Schedule recurring tasks, reuse bounded snapshots, collect internal forms
+                        and compose visual workflows without bypassing domain lifecycle rules.
                     </Typography>
                 </Box>
             </Stack>
@@ -166,6 +167,7 @@ export function WorkAutomationPage() {
                     <Tab label="Recurring work" value="recurring" />
                     <Tab label="Task templates" value="task-templates" />
                     <Tab label="Project templates" value="project-templates" />
+                    <Tab label="Forms" value="forms" />
                     <Tab label="Workflow builder" value="workflows" />
                 </Tabs>
             </Paper>
@@ -215,6 +217,13 @@ export function WorkAutomationPage() {
                     tenantId={tenantId}
                     canRead={canReadProjectTemplates}
                     canManage={canManageProjectTemplates}
+                />
+            ) : null}
+            {tab === 'forms' && canReadSelectedProject ? (
+                <FormsPanel
+                    tenantId={tenantId}
+                    projectId={projectId}
+                    canManage={canManageSelectedProject}
                 />
             ) : null}
             {tab === 'workflows' ? (
