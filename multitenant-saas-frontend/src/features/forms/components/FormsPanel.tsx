@@ -20,7 +20,7 @@ import {
     TextField,
     Typography,
 } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { workflowsApi } from '../../workflow-builder/api/workflowsApi'
 import { formsApi } from '../api/formsApi'
@@ -43,6 +43,11 @@ interface EditorState extends FormInput {
     id: string | null
     status: FormStatus
     definitionVersion: number
+}
+
+interface SubmissionDraft {
+    formId: string
+    values: Record<string, unknown>
 }
 
 const fieldTypes: FormFieldType[] = ['TEXT', 'TEXTAREA', 'NUMBER', 'DATE', 'BOOLEAN', 'SELECT']
@@ -124,10 +129,7 @@ function statusColor(status: FormStatus): 'default' | 'success' | 'warning' {
 
 function submissionValue(field: FormFieldInput, raw: unknown): unknown {
     if (field.type === 'BOOLEAN') return Boolean(raw)
-    if (field.type === 'NUMBER') {
-        if (raw === '' || raw === null || raw === undefined) return ''
-        return Number(raw)
-    }
+    if (field.type === 'NUMBER') return raw === null || raw === undefined ? '' : String(raw)
     return raw ?? ''
 }
 
@@ -136,7 +138,10 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
     const [selectedId, setSelectedId] = useState('')
     const [editing, setEditing] = useState(false)
     const [editor, setEditor] = useState<EditorState>(starterEditor)
-    const [submissionValues, setSubmissionValues] = useState<Record<string, unknown>>({})
+    const [submissionDraft, setSubmissionDraft] = useState<SubmissionDraft>({
+        formId: '',
+        values: {},
+    })
 
     const listQuery = useQuery({
         queryKey: ['forms', tenantId, projectId],
@@ -163,17 +168,26 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
         enabled: Boolean(tenantId),
     })
 
-    const formWorkflows = useMemo(
-        () =>
-            workflowsQuery.data?.content.filter((workflow) =>
-                workflow.nodes.some((node) => node.operation === 'TRIGGER_FORM_SUBMITTED'),
-            ) ?? [],
-        [workflowsQuery.data],
-    )
+    const formWorkflows =
+        workflowsQuery.data?.content.filter((workflow) =>
+            workflow.nodes.some((node) => node.operation === 'TRIGGER_FORM_SUBMITTED'),
+        ) ?? []
+    const submissionValues =
+        submissionDraft.formId === effectiveSelectedId ? submissionDraft.values : {}
 
-    useEffect(() => {
-        setSubmissionValues({})
-    }, [effectiveSelectedId, detailQuery.data?.definitionVersion])
+    const updateSubmissionValue = (key: string, value: unknown) => {
+        setSubmissionDraft((current) => ({
+            formId: effectiveSelectedId,
+            values: {
+                ...(current.formId === effectiveSelectedId ? current.values : {}),
+                [key]: value,
+            },
+        }))
+    }
+
+    const clearSubmissionDraft = (formId = effectiveSelectedId) => {
+        setSubmissionDraft({ formId, values: {} })
+    }
 
     const refresh = async (formId?: string) => {
         await queryClient.invalidateQueries({ queryKey: ['forms', tenantId, projectId] })
@@ -193,6 +207,7 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
             setSelectedId(saved.id)
             setEditing(false)
             setEditor(editorFromDefinition(saved))
+            clearSubmissionDraft(saved.id)
             await refresh(saved.id)
         },
     })
@@ -203,6 +218,7 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                 : formsApi.pause(tenantId, projectId, id),
         onSuccess: async (updated) => {
             setSelectedId(updated.id)
+            clearSubmissionDraft(updated.id)
             await refresh(updated.id)
         },
     })
@@ -221,7 +237,7 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
             return formsApi.submit(tenantId, projectId, detailQuery.data.id, values)
         },
         onSuccess: async () => {
-            setSubmissionValues({})
+            clearSubmissionDraft()
             await queryClient.invalidateQueries({
                 queryKey: ['form-submissions', tenantId, projectId, effectiveSelectedId],
             })
@@ -281,7 +297,10 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                     select
                     label="Form"
                     value={effectiveSelectedId}
-                    onChange={(event) => setSelectedId(event.target.value)}
+                    onChange={(event) => {
+                        setSelectedId(event.target.value)
+                        clearSubmissionDraft(event.target.value)
+                    }}
                     disabled={!listQuery.data?.content.length}
                     sx={{ minWidth: 280 }}
                 >
@@ -325,7 +344,7 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                             onChange={(event) =>
                                 setEditor((current) => ({ ...current, name: event.target.value }))
                             }
-                            inputProps={{ maxLength: 100 }}
+                            slotProps={{ htmlInput: { maxLength: 100 } }}
                         />
                         <TextField
                             label="Description"
@@ -338,7 +357,7 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                                     description: event.target.value,
                                 }))
                             }
-                            inputProps={{ maxLength: 1000 }}
+                            slotProps={{ htmlInput: { maxLength: 1000 } }}
                         />
 
                         <Divider />
@@ -667,10 +686,10 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                                                 <Checkbox
                                                     checked={Boolean(submissionValues[field.key])}
                                                     onChange={(event) =>
-                                                        setSubmissionValues((current) => ({
-                                                            ...current,
-                                                            [field.key]: event.target.checked,
-                                                        }))
+                                                        updateSubmissionValue(
+                                                            field.key,
+                                                            event.target.checked,
+                                                        )
                                                     }
                                                 />
                                             }
@@ -693,15 +712,14 @@ export function FormsPanel({ tenantId, projectId, canManage }: FormsPanelProps) 
                                                     string | number | undefined) ?? ''
                                             }
                                             onChange={(event) =>
-                                                setSubmissionValues((current) => ({
-                                                    ...current,
-                                                    [field.key]: event.target.value,
-                                                }))
+                                                updateSubmissionValue(field.key, event.target.value)
                                             }
                                             multiline={field.type === 'TEXTAREA'}
                                             minRows={field.type === 'TEXTAREA' ? 3 : undefined}
-                                            InputLabelProps={
-                                                field.type === 'DATE' ? { shrink: true } : undefined
+                                            slotProps={
+                                                field.type === 'DATE'
+                                                    ? { inputLabel: { shrink: true } }
+                                                    : undefined
                                             }
                                         >
                                             {field.type === 'SELECT'
