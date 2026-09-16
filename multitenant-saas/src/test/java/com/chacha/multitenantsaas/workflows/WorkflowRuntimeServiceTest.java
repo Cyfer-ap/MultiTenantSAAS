@@ -107,7 +107,6 @@ class WorkflowRuntimeServiceTest {
                                 "action",
                                 WorkflowEdgeBranch.TRUE));
 
-        when(definition.getTenantId()).thenReturn(tenantId);
         when(definition.getId()).thenReturn(workflowId);
         when(graphLoader.activeDefinitions(tenantId)).thenReturn(List.of(definition));
         when(graphLoader.trigger(definition)).thenReturn(trigger);
@@ -201,7 +200,6 @@ class WorkflowRuntimeServiceTest {
                                 "rejected_action",
                                 WorkflowEdgeBranch.REJECTED));
 
-        when(definition.getTenantId()).thenReturn(tenantId);
         when(definition.getId()).thenReturn(workflowId);
         when(definition.getDefinitionVersion()).thenReturn(4);
         when(graphLoader.activeDefinitions(tenantId)).thenReturn(List.of(definition));
@@ -332,8 +330,6 @@ class WorkflowRuntimeServiceTest {
                         0,
                         0);
 
-        when(definition.getTenantId()).thenReturn(tenantId);
-        when(definition.getId()).thenReturn(workflowId);
         when(graphLoader.activeDefinitions(tenantId)).thenReturn(List.of(definition));
         when(graphLoader.trigger(definition)).thenReturn(trigger);
 
