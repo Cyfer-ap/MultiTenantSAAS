@@ -53,4 +53,48 @@ public final class ApprovalDtos {
             int definitionVersion,
             int stageCount,
             Instant updatedAt) {}
+
+    public record DecisionRequest(
+            @NotNull ApprovalDecisionOutcome outcome,
+            @Size(max = 1000) String comment) {}
+
+    public record RequestStageResponse(
+            UUID id,
+            String key,
+            String name,
+            int position,
+            boolean allowRequesterApproval,
+            ApprovalStageStatus status,
+            List<UUID> reviewerUserIds,
+            UUID decidedByUserId,
+            String decisionComment,
+            Instant decidedAt) {}
+
+    public record RequestResponse(
+            UUID id,
+            UUID projectId,
+            UUID definitionId,
+            int definitionVersion,
+            UUID workflowId,
+            int workflowVersion,
+            UUID workflowExecutionId,
+            String workflowNodeKey,
+            UUID taskId,
+            UUID actorUserId,
+            ApprovalRequestStatus status,
+            int currentStageIndex,
+            List<RequestStageResponse> stages,
+            Instant createdAt,
+            Instant completedAt) {}
+
+    public record RequestSummary(
+            UUID id,
+            UUID definitionId,
+            UUID workflowId,
+            UUID taskId,
+            ApprovalRequestStatus status,
+            int currentStageIndex,
+            String currentStageName,
+            Instant createdAt,
+            Instant completedAt) {}
 }
