@@ -3,5 +3,7 @@ package com.chacha.multitenantsaas.workflows;
 public enum WorkflowEdgeBranch {
     DEFAULT,
     TRUE,
-    FALSE
+    FALSE,
+    APPROVED,
+    REJECTED
 }

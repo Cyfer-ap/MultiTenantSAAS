@@ -49,6 +49,20 @@ public class WorkflowExecutionRecorder {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void awaitApproval(UUID executionId, String explanation) {
+        WorkflowExecution execution = executionRepository.findById(executionId).orElseThrow();
+        execution.awaitApproval(explanation);
+        executionRepository.save(execution);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void resume(UUID executionId) {
+        WorkflowExecution execution = executionRepository.findById(executionId).orElseThrow();
+        execution.resume();
+        executionRepository.save(execution);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void succeed(UUID executionId, String explanation) {
         WorkflowExecution execution = executionRepository.findById(executionId).orElseThrow();
         execution.succeed(explanation);

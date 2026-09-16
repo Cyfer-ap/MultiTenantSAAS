@@ -93,24 +93,37 @@ public class WorkflowExecution {
         this.startedAt = Instant.now();
     }
 
-    public void succeed(String explanation) {
-        this.status = WorkflowExecutionStatus.SUCCEEDED;
+    public void awaitApproval(String explanation) {
+        status = WorkflowExecutionStatus.WAITING_APPROVAL;
         this.explanation = truncate(explanation);
-        this.errorMessage = null;
-        this.completedAt = Instant.now();
+        errorMessage = null;
+        completedAt = null;
+    }
+
+    public void resume() {
+        status = WorkflowExecutionStatus.RUNNING;
+        errorMessage = null;
+        completedAt = null;
+    }
+
+    public void succeed(String explanation) {
+        status = WorkflowExecutionStatus.SUCCEEDED;
+        this.explanation = truncate(explanation);
+        errorMessage = null;
+        completedAt = Instant.now();
     }
 
     public void fail(String errorMessage) {
-        this.status = WorkflowExecutionStatus.FAILED;
+        status = WorkflowExecutionStatus.FAILED;
         this.errorMessage = truncate(errorMessage);
-        this.completedAt = Instant.now();
+        completedAt = Instant.now();
     }
 
     public void skip(String explanation) {
-        this.status = WorkflowExecutionStatus.SKIPPED;
+        status = WorkflowExecutionStatus.SKIPPED;
         this.explanation = truncate(explanation);
-        this.errorMessage = null;
-        this.completedAt = Instant.now();
+        errorMessage = null;
+        completedAt = Instant.now();
     }
 
     private String truncate(String value) {
@@ -120,55 +133,17 @@ public class WorkflowExecution {
         return value.substring(0, 2000);
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public UUID getTenantId() {
-        return tenantId;
-    }
-
-    public UUID getWorkflowId() {
-        return workflowId;
-    }
-
-    public int getWorkflowVersion() {
-        return workflowVersion;
-    }
-
-    public String getEventKey() {
-        return eventKey;
-    }
-
-    public WorkflowOperation getTriggerOperation() {
-        return triggerOperation;
-    }
-
-    public String getSourceEntityType() {
-        return sourceEntityType;
-    }
-
-    public UUID getSourceEntityId() {
-        return sourceEntityId;
-    }
-
-    public WorkflowExecutionStatus getStatus() {
-        return status;
-    }
-
-    public String getExplanation() {
-        return explanation;
-    }
-
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    public Instant getStartedAt() {
-        return startedAt;
-    }
-
-    public Instant getCompletedAt() {
-        return completedAt;
-    }
+    public UUID getId() { return id; }
+    public UUID getTenantId() { return tenantId; }
+    public UUID getWorkflowId() { return workflowId; }
+    public int getWorkflowVersion() { return workflowVersion; }
+    public String getEventKey() { return eventKey; }
+    public WorkflowOperation getTriggerOperation() { return triggerOperation; }
+    public String getSourceEntityType() { return sourceEntityType; }
+    public UUID getSourceEntityId() { return sourceEntityId; }
+    public WorkflowExecutionStatus getStatus() { return status; }
+    public String getExplanation() { return explanation; }
+    public String getErrorMessage() { return errorMessage; }
+    public Instant getStartedAt() { return startedAt; }
+    public Instant getCompletedAt() { return completedAt; }
 }
