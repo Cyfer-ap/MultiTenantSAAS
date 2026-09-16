@@ -175,8 +175,7 @@ class ApprovalRequestCommandServiceTest {
                         allowRequesterApproval,
                         ApprovalStageStatus.PENDING);
         ReflectionTestUtils.setField(stage, "id", stageId);
-        return new Fixture(
-                tenantId, projectId, requestId, stageId, reviewerId, request, stage);
+        return new Fixture(tenantId, projectId, requestId, stageId, reviewerId, request, stage);
     }
 
     private UUID tenantId() {
