@@ -55,6 +55,7 @@ const actionStatuses = statuses.filter((status) => status !== 'CANCELLED')
 const operationLabels: Record<WorkflowOperation, string> = {
     TRIGGER_TASK_CREATED: 'Task created',
     TRIGGER_TASK_STATUS_CHANGED: 'Task status changed',
+    TRIGGER_FORM_SUBMITTED: 'Form submitted',
     CONDITION_TASK_PRIORITY_EQUALS: 'Task priority equals',
     CONDITION_TASK_STATUS_EQUALS: 'Task status equals',
     ACTION_SET_TASK_PRIORITY: 'Set task priority',
@@ -62,7 +63,7 @@ const operationLabels: Record<WorkflowOperation, string> = {
 }
 
 const operationsByType: Record<WorkflowNodeType, WorkflowOperation[]> = {
-    TRIGGER: ['TRIGGER_TASK_CREATED', 'TRIGGER_TASK_STATUS_CHANGED'],
+    TRIGGER: ['TRIGGER_TASK_CREATED', 'TRIGGER_TASK_STATUS_CHANGED', 'TRIGGER_FORM_SUBMITTED'],
     CONDITION: ['CONDITION_TASK_PRIORITY_EQUALS', 'CONDITION_TASK_STATUS_EQUALS'],
     ACTION: ['ACTION_SET_TASK_PRIORITY', 'ACTION_SET_TASK_STATUS'],
 }
