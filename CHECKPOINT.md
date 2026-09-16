@@ -2,7 +2,7 @@
 
 Updated: 2026-09-16
 Repository: `Cyfer-ap/MultiTenantSAAS`
-Branch target: `main` after PR #148 merge
+Branch target: `main` after PR #152 merge
 
 This file is the **single repository-side source of truth for current project status**. Do not create duplicate progress/checkpoint mirrors.
 
@@ -24,67 +24,71 @@ Delivered milestones now include:
 - Visual Workflow Builder — #144
 - Project Simulation / What-If Engine — #145
 - Collaborative Whiteboard foundation + persisted visual workspace — #146/#147
-- **Project Health / Risk Radar — #148**
+- Project Health / Risk Radar — #148
+- **Forms -> Workflow Engine — #152**
 
-**Forms -> Workflow Engine is the active next feature.**
+**Approval Workflows is the active next feature.**
 
-Live whiteboard presence/cursors remain an optional later enhancement and do not block the committed sequence. Bulk/CSV, custom fields, broader knowledge/documents and analytics remain parked unless explicitly reprioritized.
+Live whiteboard presence/cursors remain an optional later enhancement and do not block the committed sequence. Bulk/CSV, broader custom fields, knowledge/documents and analytics remain parked unless explicitly reprioritized.
 
-## Project Health / Risk Radar checkpoint — #148
+## Forms -> Workflow Engine checkpoint — #152
 
-Risk Radar is complete as an explainable, advisory project-health surface.
+Forms is complete as a bounded, authenticated internal intake layer that composes with the existing task and workflow domains.
 
 ### Ownership and boundaries
 
-The explicit `projectrisk` backend domain owns risk calculation and depends only on narrow source contracts:
+The explicit `forms` backend domain owns definitions, fields, submissions and submission provenance. Cross-domain behavior stays narrow:
 
 ```text
-projectrisk
-    -> ProjectRiskTaskSource        -> task-owned adapter
-    -> ProjectRiskDependencySource  -> Task Relationships-owned adapter
+forms
+    -> ProjectAccessPort             -> project-owned access adapter
+    -> TaskCreationPort              -> task-owned creation adapter
+    -> WorkflowFormSubmissionPort    -> workflow-owned entry/runtime adapter
 ```
 
-Frontend ownership lives under `features/project-risk`; project-level tool navigation is separated through `features/project-tools` rather than expanding the legacy project-details page further.
+Forms does not inject `ProjectService`, `ProjectTaskService` or workflow repositories/services, and it never writes task/project/workflow persistence directly.
 
-### API and UI
+Frontend ownership lives under `features/forms` and is surfaced inside the existing Work Automation & Templates workspace rather than adding another top-level navigation aggregation point.
 
-```text
-GET /api/tenants/{tenantId}/projects/{projectId}/risk
-```
+### V52 persistence and lifecycle
 
-The endpoint is read-only and reuses authoritative project task-read authorization.
+V52 creates:
 
-Project-facing surface:
+- `form_definitions`
+- `form_fields`
+- `form_submissions`
 
-```text
-/projects/{projectId}?view=risk
-```
+Definitions are tenant/project scoped, versioned and bounded. Lifecycle is `DRAFT -> ACTIVE -> PAUSED -> ACTIVE`; active definitions must be paused before editing, and only active definitions accept submissions.
 
-The UI shows overall documented severity, signal-family counts, plain-language reasons, task deep-links, explicit interpretation limits and manual refresh. It never mutates project/task state.
+Supported v1 fields are `TEXT`, `TEXTAREA`, `NUMBER`, `DATE`, `BOOLEAN` and `SELECT`. Field count, options and payload sizes are explicitly bounded; no arbitrary expressions or executable user code are accepted.
 
-### Explainable v1 signals
+### Task and workflow composition
 
-- overdue open tasks
-- blocked tasks, including unresolved open dependency blockers
-- stale open tasks using task `updatedAt`
-- unassigned HIGH/URGENT work
-- dependency bottlenecks based on downstream open dependents
+Accepted submissions create tasks only through `TaskCreationPort`, preserving normal project/task authorization, actor, quota, audit and lifecycle behavior.
 
-Overall risk is the maximum documented signal severity; there is no hidden weighted score.
+A form may optionally target an active workflow whose trigger is `TRIGGER_FORM_SUBMITTED`. Forms crosses into that runtime only through `WorkflowFormSubmissionPort`; dispatch occurs after the form/task transaction commits. The existing `TRIGGER_TASK_CREATED` behavior remains intact, so form-created tasks continue to participate in ordinary task workflows as well.
 
-### Guardrails and bounds
+Workflow task mutations continue through task-owned `TaskAutomationMutationPort`; workflow administration never grants target-resource mutation authority.
 
-- advisory/read-only only
-- no employee ranking or productivity scoring
-- assignment counts are not treated as capacity
-- workload pressure remains omitted until an explicit availability/capacity contract exists
-- completed/cancelled work is excluded from open-risk calculations
-- max 500 tasks, 1,000 dependency edges and 200 returned signals per calculation
-- no migration; V51 remains the latest migration
+### Internal UI and validation
 
-Detailed contract: `guides/project_risk_radar.md`.
+The Forms workspace provides definition creation/editing, safe field configuration, task-field mapping, compatible workflow selection, activate/pause lifecycle, authenticated submission and recent submission history.
+
+Regression coverage includes schema/type/bounds validation, unknown fields, project-scoped frontend API routes, active/paused behavior, task creation through the task-owned port, form-trigger workflow entry, V52 PostgreSQL assertions and exact decimal preservation from browser lexical input to backend `BigDecimal` normalization.
+
+Public/anonymous intake, file fields, assignee/user-reference fields and arbitrary executable logic remain deliberately excluded from v1 and require separate security/abuse/authorization design before introduction.
+
+Detailed contract: `guides/forms_workflow_engine.md`.
 
 ## Existing differentiated foundations
+
+### Project Health / Risk Radar — #148
+
+The explicit `projectrisk` domain provides bounded, explainable advisory signals for overdue, blocked, stale, unassigned HIGH/URGENT work and dependency bottlenecks through narrow task/dependency sources. It is read-only and does not perform employee scoring.
+
+Project surface: `/projects/{projectId}?view=risk`.
+
+Detailed contract: `guides/project_risk_radar.md`.
 
 ### Collaborative Whiteboard — #146/#147
 
@@ -104,7 +108,7 @@ Detailed contract: `guides/project_simulation.md`.
 
 ### Visual Workflow Builder — #144
 
-V50 owns workflow definitions/nodes/edges/executions, typed bounded graphs, after-commit task-domain events, idempotent execution history and task mutations through `TaskAutomationMutationPort`.
+V50 owns workflow definitions/nodes/edges/executions, typed bounded graphs, after-commit task-domain events, idempotent execution history and task mutations through `TaskAutomationMutationPort`. Forms extends this runtime with the typed `TRIGGER_FORM_SUBMITTED` entry rather than duplicating workflow execution.
 
 Detailed contract: `guides/visual_workflow_builder.md`.
 
@@ -116,7 +120,7 @@ Detailed contract: `guides/recurring_work_and_templates.md`.
 
 ## Database checkpoint
 
-Portable PostgreSQL Flyway migrations extend through **V51**:
+Portable PostgreSQL Flyway migrations extend through **V52**:
 
 ```text
 V45 personal workspace favorites/recent items
@@ -126,15 +130,16 @@ V48 recurring task definitions/occurrences + project task templates
 V49 tenant project templates + bounded starter-task snapshots
 V50 visual workflow definitions/nodes/edges/executions
 V51 project whiteboards/nodes/connectors
+V52 project forms/fields/submissions
 ```
 
-Project Simulation and Risk Radar add no migration. Never rewrite an applied migration. New persistence starts at **V52+**.
+Project Simulation and Risk Radar add no migration. **V52 is immutable after merge/application.** New persistence starts at **V53+**.
 
 ## Non-negotiable architecture rule
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Current reference implementations include Search contributor contracts, Personal Workspace resolvers, My Work source ports, Saved Views validation SPI, Calendar deadline sources, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, Project Simulation source ports, Whiteboard project/task ports and Risk Radar task/dependency sources.
+Current reference implementations include Search contributor contracts, Personal Workspace resolvers, My Work source ports, Saved Views validation SPI, Calendar deadline sources, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, Project Simulation source ports, Whiteboard project/task ports, Risk Radar task/dependency sources and Forms project/task/workflow ports.
 
 ## Provider status
 
@@ -166,15 +171,14 @@ Canonical assessment: `guides/ENGINEERING_STANDARDS.md`.
 
 Continue in this order:
 
-1. **Forms -> Workflow Engine — ACTIVE NEXT**
-2. Approval Workflows
-3. Client / Guest Portal
-4. Team Workload Engine
-5. Workspace Knowledge Graph
-6. AI / Agent Teammates
-7. resume parked backlog such as bulk actions/CSV, custom fields, knowledge/documents and broader analytics unless priorities are explicitly changed
+1. **Approval Workflows — ACTIVE NEXT**
+2. Client / Guest Portal
+3. Team Workload Engine
+4. Workspace Knowledge Graph
+5. AI / Agent Teammates
+6. resume parked backlog such as bulk actions/CSV, broader custom fields, knowledge/documents and broader analytics unless priorities are explicitly changed
 
-Forms must create authorized work through narrow domain-owned contracts and compose with the existing workflow engine rather than bypassing it.
+Approval Workflows must be an explicit human-decision domain that composes with the existing workflow runtime through narrow contracts/events. Approval configuration must never grant reviewer or target-resource authority, and any post-approval mutation must re-enter the owning domain's authorization/lifecycle rules.
 
 ## Deferred platform work
 
@@ -198,6 +202,7 @@ Optional SAML/SCIM, MFA/passkeys/device management and richer notification chann
 - `guides/ENGINEERING_STANDARDS.md` — technical-health assessment and quality rules
 - `guides/recurring_work_and_templates.md` — work-generation contracts
 - `guides/visual_workflow_builder.md` — workflow graph/runtime/canvas contract
+- `guides/forms_workflow_engine.md` — Forms intake/task/workflow contract
 - `guides/project_simulation.md` — advisory What-If contract
 - `guides/collaborative_whiteboard.md` — whiteboard persistence/workspace contract
 - `guides/project_risk_radar.md` — Risk Radar source/bounds/signal/UI contract
