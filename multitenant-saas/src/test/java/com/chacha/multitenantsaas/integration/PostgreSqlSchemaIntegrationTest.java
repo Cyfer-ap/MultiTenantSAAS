@@ -70,7 +70,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV52AndMatchesJpaMappings() {
+    void postgresSchemaReachesV53AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -82,7 +82,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("52");
+        assertThat(version).isEqualTo("53");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -143,7 +143,13 @@ class PostgreSqlSchemaIntegrationTest {
                         "whiteboard_edges",
                         "form_definitions",
                         "form_fields",
-                        "form_submissions")
+                        "form_submissions",
+                        "approval_definitions",
+                        "approval_stages",
+                        "approval_stage_reviewers",
+                        "approval_requests",
+                        "approval_request_stages",
+                        "approval_request_stage_reviewers")
                 .forEach(this::assertTableExists);
 
         List<String[]> requiredColumns =
@@ -204,6 +210,29 @@ class PostgreSqlSchemaIntegrationTest {
                         column("form_submissions", "payload_json"),
                         column("form_submissions", "created_task_id"),
                         column("form_submissions", "validation_context"),
+                        column("approval_definitions", "project_id"),
+                        column("approval_definitions", "status"),
+                        column("approval_definitions", "definition_version"),
+                        column("approval_stages", "definition_id"),
+                        column("approval_stages", "stage_key"),
+                        column("approval_stages", "position_index"),
+                        column("approval_stages", "allow_requester_approval"),
+                        column("approval_stage_reviewers", "stage_id"),
+                        column("approval_stage_reviewers", "reviewer_user_id"),
+                        column("approval_requests", "definition_version"),
+                        column("approval_requests", "workflow_execution_id"),
+                        column("approval_requests", "workflow_node_key"),
+                        column("approval_requests", "task_id"),
+                        column("approval_requests", "status"),
+                        column("approval_requests", "current_stage_index"),
+                        column("approval_requests", "row_version"),
+                        column("approval_request_stages", "request_id"),
+                        column("approval_request_stages", "stage_key"),
+                        column("approval_request_stages", "status"),
+                        column("approval_request_stages", "decided_by_user_id"),
+                        column("approval_request_stages", "decision_comment"),
+                        column("approval_request_stage_reviewers", "request_stage_id"),
+                        column("approval_request_stage_reviewers", "reviewer_user_id"),
                         column("authorization_delegations", "tenant_id"),
                         column("authorization_delegations", "delegator_user_id"),
                         column("authorization_delegations", "delegate_user_id"),
