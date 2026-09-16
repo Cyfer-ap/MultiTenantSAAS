@@ -239,7 +239,9 @@ export function WorkflowBuilderPanel({
     const mutationPending =
         saveMutation.isPending || activateMutation.isPending || pauseMutation.isPending
     const activeApprovalDefinitions =
-        approvalDefinitionsQuery.data?.content.filter((definition) => definition.status === 'ACTIVE') ?? []
+        approvalDefinitionsQuery.data?.content.filter(
+            (definition) => definition.status === 'ACTIVE',
+        ) ?? []
 
     const loadWorkflow = (workflow: WorkflowDefinition) => {
         setEditor(editorFromWorkflow(workflow))
