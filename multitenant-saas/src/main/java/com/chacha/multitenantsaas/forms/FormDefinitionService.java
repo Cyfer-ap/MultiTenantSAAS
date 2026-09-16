@@ -97,7 +97,7 @@ public class FormDefinitionService {
         projectAccessPort.requireProject(tenantId, projectId).requireMutable();
         FormDefinition definition = requireDetailed(tenantId, projectId, formId);
         if (definition.getStatus() == FormStatus.ACTIVE) {
-            throw new IllegalStateException("Active forms must be paused before editing");
+            throw new IllegalArgumentException("Active forms must be paused before editing");
         }
         schemaEngine.validateDefinition(request);
         validateWorkflowTarget(tenantId, request.workflowId());
@@ -136,6 +136,9 @@ public class FormDefinitionService {
     public FormDtos.Response pause(UUID tenantId, UUID projectId, UUID formId) {
         projectAccessPort.requireProject(tenantId, projectId).requireMutable();
         FormDefinition definition = requireDetailed(tenantId, projectId, formId);
+        if (definition.getStatus() != FormStatus.ACTIVE) {
+            throw new IllegalArgumentException("Only active forms can be paused");
+        }
         definition.pause();
         return map(definitionRepository.saveAndFlush(definition));
     }
