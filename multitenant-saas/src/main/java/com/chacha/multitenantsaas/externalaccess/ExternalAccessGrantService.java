@@ -144,7 +144,7 @@ public class ExternalAccessGrantService {
                 && !capabilities.contains(ExternalAccessCapability.TASK_READ)) {
             throw new IllegalArgumentException("TASK_COMMENT_CREATE requires TASK_READ");
         }
-        if (capabilities.size() > 3) {
+        if (capabilities.size() > 4) {
             throw new IllegalArgumentException("External grant capability set is too large");
         }
     }
