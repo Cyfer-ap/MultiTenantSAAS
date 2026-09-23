@@ -24,6 +24,10 @@ public interface ApprovalRequestStageExternalReviewerRepository
                     UUID requestStageId,
                     UUID externalAccessGrantId);
 
+    java.util.List<ApprovalRequestStageExternalReviewer>
+            findByTenantIdAndProjectIdAndRequestIdAndRequestStageId(
+                    UUID tenantId, UUID projectId, UUID requestId, UUID requestStageId);
+
     Page<ApprovalRequestStageExternalReviewer>
             findByTenantIdAndProjectIdAndExternalAccessGrantIdOrderByCreatedAtAsc(
                     UUID tenantId, UUID projectId, UUID externalAccessGrantId, Pageable pageable);
