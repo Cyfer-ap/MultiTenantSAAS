@@ -121,7 +121,7 @@ public class ApprovalRequestCommandService
 
     @Override
     @Transactional
-    public ApprovalDtos.RequestResponse decide(ExternalApprovalDecisionCommand command) {
+    public ExternalApprovalDecisionResult decide(ExternalApprovalDecisionCommand command) {
         ApprovalRequest request =
                 requestRepository
                         .findForDecision(
@@ -155,7 +155,13 @@ public class ApprovalRequestCommandService
                 assignment.getGuestEmailSnapshot(),
                 command.outcome(),
                 command.comment());
-        return completeDecision(request, stage, command.outcome());
+        ApprovalDtos.RequestResponse response =
+                completeDecision(request, stage, command.outcome());
+        return new ExternalApprovalDecisionResult(
+                response.id(),
+                response.status(),
+                response.currentStageIndex(),
+                response.completedAt());
     }
 
     private java.util.Optional<ExternalApprovalReviewSummary> externalSummaryIfPending(
