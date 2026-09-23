@@ -147,7 +147,8 @@ export function GuestPortalPage() {
                             }
                             severity="error"
                         >
-                            {visibleAccessError} Ask the project team for a new access link if needed.
+                            {visibleAccessError} Ask the project team for a new access link if
+                            needed.
                         </Alert>
                     ) : null}
 
