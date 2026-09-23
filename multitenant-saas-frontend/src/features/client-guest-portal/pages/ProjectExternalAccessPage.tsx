@@ -66,6 +66,7 @@ export function ProjectExternalAccessPage() {
     const [expiresAt, setExpiresAt] = useState(defaultExpiryValue)
     const [shareTasks, setShareTasks] = useState(true)
     const [allowComments, setAllowComments] = useState(false)
+    const [allowApprovals, setAllowApprovals] = useState(false)
     const [inviteLink, setInviteLink] = useState<string | null>(null)
     const [feedback, setFeedback] = useState<string | null>(null)
 
@@ -85,6 +86,7 @@ export function ProjectExternalAccessPage() {
             const capabilities: ExternalAccessCapability[] = ['PROJECT_READ']
             if (shareTasks) capabilities.push('TASK_READ')
             if (allowComments) capabilities.push('TASK_COMMENT_CREATE')
+            if (allowApprovals) capabilities.push('APPROVAL_REVIEW')
 
             return externalAccessApi.createGrant(tenantId, projectId, {
                 guestName: guestName.trim(),
@@ -104,6 +106,7 @@ export function ProjectExternalAccessPage() {
             setExpiresAt(defaultExpiryValue())
             setShareTasks(true)
             setAllowComments(false)
+            setAllowApprovals(false)
             await queryClient.invalidateQueries({ queryKey })
         },
     })
@@ -156,7 +159,7 @@ export function ProjectExternalAccessPage() {
 
             <Alert severity="info">
                 Guest access is separate from tenant membership and RBAC. Share project summary,
-                optionally task visibility, and explicitly opt into create-only guest comments.
+                optionally task visibility, and explicitly opt into comments or approval review.
             </Alert>
 
             <Paper component="form" onSubmit={submit} variant="outlined" sx={{ padding: 3 }}>
@@ -195,7 +198,10 @@ export function ProjectExternalAccessPage() {
                                 onChange={(event) => {
                                     const checked = event.target.checked
                                     setShareTasks(checked)
-                                    if (!checked) setAllowComments(false)
+                                    if (!checked) {
+                                        setAllowComments(false)
+                                        setAllowApprovals(false)
+                                    }
                                 }}
                             />
                         }
@@ -211,6 +217,17 @@ export function ProjectExternalAccessPage() {
                             />
                         }
                         label="Allow create-only guest comments on shared tasks"
+                    />
+
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={allowApprovals}
+                                disabled={!shareTasks}
+                                onChange={(event) => setAllowApprovals(event.target.checked)}
+                            />
+                        }
+                        label="Allow request-scoped external approval review"
                     />
 
                     <Box>
@@ -345,7 +362,9 @@ export function ProjectExternalAccessPage() {
                                                     ? 'Project summary'
                                                     : capability === 'TASK_READ'
                                                       ? 'Tasks'
-                                                      : 'Guest comments'
+                                                      : capability === 'TASK_COMMENT_CREATE'
+                                                        ? 'Guest comments'
+                                                        : 'Approval review'
                                             }
                                             size="small"
                                             variant="outlined"
