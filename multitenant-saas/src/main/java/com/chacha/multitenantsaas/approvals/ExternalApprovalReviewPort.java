@@ -8,5 +8,5 @@ public interface ExternalApprovalReviewPort {
     List<ExternalApprovalReviewSummary> listPending(
             UUID tenantId, UUID projectId, UUID grantId, int limit);
 
-    ApprovalDtos.RequestResponse decide(ExternalApprovalDecisionCommand command);
+    ExternalApprovalDecisionResult decide(ExternalApprovalDecisionCommand command);
 }
