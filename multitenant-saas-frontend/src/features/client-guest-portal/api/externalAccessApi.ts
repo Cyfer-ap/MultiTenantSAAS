@@ -66,10 +66,9 @@ async function getGuestSession(sessionToken: string): Promise<GuestSession> {
 }
 
 async function getGuestTasks(sessionToken: string): Promise<GuestTasks> {
-    const response = await publicHttpClient.get<ApiResponse<GuestTasks>>(
-        `${guestBasePath}/tasks`,
-        { headers: { [guestSessionHeader]: sessionToken } },
-    )
+    const response = await publicHttpClient.get<ApiResponse<GuestTasks>>(`${guestBasePath}/tasks`, {
+        headers: { [guestSessionHeader]: sessionToken },
+    })
     return response.data.data
 }
 
