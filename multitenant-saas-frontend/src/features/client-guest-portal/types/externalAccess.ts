@@ -1,8 +1,5 @@
 export type ExternalAccessCapability =
-    | 'PROJECT_READ'
-    | 'TASK_READ'
-    | 'TASK_COMMENT_CREATE'
-    | 'APPROVAL_REVIEW'
+    'PROJECT_READ' | 'TASK_READ' | 'TASK_COMMENT_CREATE' | 'APPROVAL_REVIEW'
 
 export type ExternalAccessGrantState = 'INVITED' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED'
 
