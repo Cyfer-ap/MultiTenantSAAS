@@ -51,5 +51,4 @@ CREATE INDEX idx_task_comment_external_grant_created
         project_id,
         external_access_grant_id,
         created_at
-    )
-    WHERE external_access_grant_id IS NOT NULL;
+    );
