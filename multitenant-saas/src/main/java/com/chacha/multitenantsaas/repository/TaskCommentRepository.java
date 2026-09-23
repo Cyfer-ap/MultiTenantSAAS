@@ -18,6 +18,14 @@ public interface TaskCommentRepository extends JpaRepository<TaskComment, UUID> 
     Page<TaskComment> findByTenant_IdAndProject_IdAndTask_IdAndParentComment_Id(
             UUID tenantId, UUID projectId, UUID taskId, UUID parentCommentId, Pageable pageable);
 
+    Page<TaskComment>
+            findByTenant_IdAndProject_IdAndTask_IdAndExternalAccessGrantIdAndParentCommentIsNullAndDeletedFalse(
+                    UUID tenantId,
+                    UUID projectId,
+                    UUID taskId,
+                    UUID externalAccessGrantId,
+                    Pageable pageable);
+
     Optional<TaskComment> findByTenant_IdAndProject_IdAndTask_IdAndId(
             UUID tenantId, UUID projectId, UUID taskId, UUID commentId);
 
