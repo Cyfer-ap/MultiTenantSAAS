@@ -34,9 +34,22 @@ public class TaskComment {
     @JoinColumn(name = "task_id", nullable = false)
     private ProjectTask task;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "author_user_id", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "author_type", nullable = false, length = 30)
+    private TaskCommentAuthorType authorType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_user_id")
     private AppUser authorUser;
+
+    @Column(name = "external_access_grant_id")
+    private UUID externalAccessGrantId;
+
+    @Column(name = "external_guest_name", length = 150)
+    private String externalGuestName;
+
+    @Column(name = "external_guest_email", length = 150)
+    private String externalGuestEmail;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_comment_id")
@@ -85,9 +98,28 @@ public class TaskComment {
         this.tenant = tenant;
         this.project = project;
         this.task = task;
+        this.authorType = TaskCommentAuthorType.TENANT_USER;
         this.authorUser = authorUser;
         this.body = body;
         this.parentComment = parentComment;
+    }
+
+    public TaskComment(
+            Tenant tenant,
+            Project project,
+            ProjectTask task,
+            UUID externalAccessGrantId,
+            String externalGuestName,
+            String externalGuestEmail,
+            String body) {
+        this.tenant = tenant;
+        this.project = project;
+        this.task = task;
+        this.authorType = TaskCommentAuthorType.EXTERNAL_GUEST;
+        this.externalAccessGrantId = externalAccessGrantId;
+        this.externalGuestName = externalGuestName;
+        this.externalGuestEmail = externalGuestEmail;
+        this.body = body;
     }
 
     @PrePersist
@@ -134,6 +166,9 @@ public class TaskComment {
     }
 
     public void pin(AppUser actor) {
+        if (isExternalGuestAuthor()) {
+            throw new IllegalArgumentException("External guest comments cannot be pinned");
+        }
         if (parentComment != null) {
             throw new IllegalArgumentException("Replies cannot be pinned");
         }
@@ -170,8 +205,28 @@ public class TaskComment {
         return task;
     }
 
+    public TaskCommentAuthorType getAuthorType() {
+        return authorType;
+    }
+
     public AppUser getAuthorUser() {
         return authorUser;
+    }
+
+    public UUID getExternalAccessGrantId() {
+        return externalAccessGrantId;
+    }
+
+    public String getExternalGuestName() {
+        return externalGuestName;
+    }
+
+    public String getExternalGuestEmail() {
+        return externalGuestEmail;
+    }
+
+    public boolean isExternalGuestAuthor() {
+        return authorType == TaskCommentAuthorType.EXTERNAL_GUEST;
     }
 
     public TaskComment getParentComment() {
