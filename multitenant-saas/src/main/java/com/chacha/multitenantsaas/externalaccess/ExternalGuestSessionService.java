@@ -3,7 +3,6 @@ package com.chacha.multitenantsaas.externalaccess;
 import com.chacha.multitenantsaas.exception.AuthenticationFailedException;
 import com.chacha.multitenantsaas.service.SecureTokenService;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,19 +17,16 @@ public class ExternalGuestSessionService {
     private final ExternalAccessGrantCapabilityRepository capabilityRepository;
     private final ExternalGuestSessionRepository sessionRepository;
     private final SecureTokenService secureTokenService;
-    private final ExternalAccessProperties properties;
 
     public ExternalGuestSessionService(
             ExternalAccessGrantRepository grantRepository,
             ExternalAccessGrantCapabilityRepository capabilityRepository,
             ExternalGuestSessionRepository sessionRepository,
-            SecureTokenService secureTokenService,
-            ExternalAccessProperties properties) {
+            SecureTokenService secureTokenService) {
         this.grantRepository = grantRepository;
         this.capabilityRepository = capabilityRepository;
         this.sessionRepository = sessionRepository;
         this.secureTokenService = secureTokenService;
-        this.properties = properties;
     }
 
     @Transactional
@@ -45,17 +41,11 @@ public class ExternalGuestSessionService {
             throw new AuthenticationFailedException(INVALID_INVITATION);
         }
 
-        int sessionHours = properties.getSessionHours();
-        if (sessionHours <= 0) {
-            throw new IllegalStateException("External guest session duration must be positive");
-        }
-
         grant.accept(now);
         grantRepository.saveAndFlush(grant);
 
         String rawSessionToken = secureTokenService.generateToken();
-        Instant sessionExpiresAt =
-                earlier(now.plus(sessionHours, ChronoUnit.HOURS), grant.getExpiresAt());
+        Instant sessionExpiresAt = grant.getExpiresAt();
         sessionRepository.saveAndFlush(
                 new ExternalGuestSession(
                         grant.getTenantId(),
@@ -114,9 +104,5 @@ public class ExternalGuestSessionService {
                 .stream()
                 .map(ExternalAccessGrantCapability::getCapability)
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
-    }
-
-    private Instant earlier(Instant first, Instant second) {
-        return first.isBefore(second) ? first : second;
     }
 }
