@@ -70,7 +70,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV55AndMatchesJpaMappings() {
+    void postgresSchemaReachesV56AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -82,7 +82,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("55");
+        assertThat(version).isEqualTo("56");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -152,7 +152,8 @@ class PostgreSqlSchemaIntegrationTest {
                         "approval_request_stage_reviewers",
                         "external_access_grants",
                         "external_access_grant_capabilities",
-                        "external_guest_sessions")
+                        "external_guest_sessions",
+                        "approval_request_stage_external_reviewers")
                 .forEach(this::assertTableExists);
 
         List<String[]> requiredColumns =
@@ -239,6 +240,14 @@ class PostgreSqlSchemaIntegrationTest {
                         column("approval_request_stages", "status"),
                         column("approval_request_stages", "decided_by_user_id"),
                         column("approval_request_stages", "decision_comment"),
+                        column("approval_request_stages", "decision_actor_type"),
+                        column("approval_request_stages", "external_decided_by_grant_id"),
+                        column("approval_request_stages", "external_decided_by_name"),
+                        column("approval_request_stages", "external_decided_by_email"),
+                        column("approval_request_stage_external_reviewers", "request_id"),
+                        column("approval_request_stage_external_reviewers", "request_stage_id"),
+                        column("approval_request_stage_external_reviewers", "external_access_grant_id"),
+                        column("approval_request_stage_external_reviewers", "assigned_by_user_id"),
                         column("approval_request_stage_reviewers", "request_stage_id"),
                         column("approval_request_stage_reviewers", "reviewer_user_id"),
                         column("external_access_grants", "tenant_id"),
