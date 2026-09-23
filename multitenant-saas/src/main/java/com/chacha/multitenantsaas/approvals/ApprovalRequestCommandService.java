@@ -11,11 +11,13 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class ApprovalRequestCommandService implements ApprovalCheckpointPort {
+public class ApprovalRequestCommandService
+        implements ApprovalCheckpointPort, ExternalApprovalReviewPort {
 
     private final ApprovalRequestRepository requestRepository;
     private final ApprovalRequestStageRepository requestStageRepository;
     private final ApprovalRequestStageReviewerRepository requestReviewerRepository;
+    private final ApprovalRequestStageExternalReviewerRepository externalReviewerRepository;
     private final ApprovalDefinitionSnapshotService snapshotService;
     private final ApprovalReviewerEligibilityPort reviewerEligibilityPort;
     private final CurrentActorService currentActorService;
@@ -25,6 +27,7 @@ public class ApprovalRequestCommandService implements ApprovalCheckpointPort {
             ApprovalRequestRepository requestRepository,
             ApprovalRequestStageRepository requestStageRepository,
             ApprovalRequestStageReviewerRepository requestReviewerRepository,
+            ApprovalRequestStageExternalReviewerRepository externalReviewerRepository,
             ApprovalDefinitionSnapshotService snapshotService,
             ApprovalReviewerEligibilityPort reviewerEligibilityPort,
             CurrentActorService currentActorService,
@@ -32,6 +35,7 @@ public class ApprovalRequestCommandService implements ApprovalCheckpointPort {
         this.requestRepository = requestRepository;
         this.requestStageRepository = requestStageRepository;
         this.requestReviewerRepository = requestReviewerRepository;
+        this.externalReviewerRepository = externalReviewerRepository;
         this.snapshotService = snapshotService;
         this.reviewerEligibilityPort = reviewerEligibilityPort;
         this.currentActorService = currentActorService;
@@ -91,9 +95,124 @@ public class ApprovalRequestCommandService implements ApprovalCheckpointPort {
         }
 
         stage.decide(actorUserId, decision.outcome(), decision.comment());
+        return completeDecision(request, stage, decision.outcome());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExternalApprovalReviewSummary> listPending(
+            UUID tenantId, UUID projectId, UUID grantId, int limit) {
+        int boundedLimit = Math.max(1, Math.min(limit, 100));
+        return externalReviewerRepository
+                .findByTenantIdAndProjectIdAndExternalAccessGrantIdOrderByCreatedAtAsc(
+                        tenantId,
+                        projectId,
+                        grantId,
+                        org.springframework.data.domain.PageRequest.of(0, boundedLimit))
+                .getContent()
+                .stream()
+                .map(
+                        assignment ->
+                                externalSummaryIfPending(
+                                        tenantId, projectId, grantId, assignment))
+                .flatMap(java.util.Optional::stream)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public ApprovalDtos.RequestResponse decide(ExternalApprovalDecisionCommand command) {
+        ApprovalRequest request =
+                requestRepository
+                        .findForDecision(
+                                command.tenantId(), command.projectId(), command.requestId())
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Approval request not found: "
+                                                        + command.requestId()));
+        if (request.getStatus() != ApprovalRequestStatus.PENDING) {
+            throw new IllegalArgumentException("Approval request is already resolved");
+        }
+
+        ApprovalRequestStage stage = requireCurrentStage(request);
+        ApprovalRequestStageExternalReviewer assignment =
+                externalReviewerRepository
+                        .findByTenantIdAndProjectIdAndRequestIdAndRequestStageIdAndExternalAccessGrantId(
+                                command.tenantId(),
+                                command.projectId(),
+                                command.requestId(),
+                                stage.getId(),
+                                command.grantId())
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "External grant is not assigned to the current approval stage"));
+
+        stage.decideExternal(
+                assignment.getExternalAccessGrantId(),
+                assignment.getGuestNameSnapshot(),
+                assignment.getGuestEmailSnapshot(),
+                command.outcome(),
+                command.comment());
+        return completeDecision(request, stage, command.outcome());
+    }
+
+    private java.util.Optional<ExternalApprovalReviewSummary> externalSummaryIfPending(
+            UUID tenantId,
+            UUID projectId,
+            UUID grantId,
+            ApprovalRequestStageExternalReviewer assignment) {
+        if (!assignment.getExternalAccessGrantId().equals(grantId)) {
+            return java.util.Optional.empty();
+        }
+        return requestRepository
+                .findByTenantIdAndProjectIdAndId(tenantId, projectId, assignment.getRequestId())
+                .filter(request -> request.getStatus() == ApprovalRequestStatus.PENDING)
+                .flatMap(
+                        request ->
+                                requestStageRepository
+                                        .findByTenantIdAndProjectIdAndRequestIdAndPositionIndex(
+                                                tenantId,
+                                                projectId,
+                                                request.getId(),
+                                                request.getCurrentStageIndex())
+                                        .filter(
+                                                stage ->
+                                                        stage.getId()
+                                                                        .equals(
+                                                                                assignment
+                                                                                        .getRequestStageId())
+                                                                && stage.getStatus()
+                                                                        == ApprovalStageStatus.PENDING)
+                                        .map(
+                                                stage ->
+                                                        new ExternalApprovalReviewSummary(
+                                                                request.getId(),
+                                                                stage.getId(),
+                                                                request.getTaskId(),
+                                                                stage.getStageName(),
+                                                                request.getCreatedAt())));
+    }
+
+    private ApprovalRequestStage requireCurrentStage(ApprovalRequest request) {
+        return requestStageRepository
+                .findByTenantIdAndProjectIdAndRequestIdAndPositionIndex(
+                        request.getTenantId(),
+                        request.getProjectId(),
+                        request.getId(),
+                        request.getCurrentStageIndex())
+                .orElseThrow(
+                        () -> new IllegalStateException("Current approval stage is missing"));
+    }
+
+    private ApprovalDtos.RequestResponse completeDecision(
+            ApprovalRequest request,
+            ApprovalRequestStage stage,
+            ApprovalDecisionOutcome outcome) {
         requestStageRepository.save(stage);
 
-        if (decision.outcome() == ApprovalDecisionOutcome.REJECT) {
+        if (outcome == ApprovalDecisionOutcome.REJECT) {
             request.reject();
             requestRepository.saveAndFlush(request);
             publishResolved(request);
@@ -101,7 +220,10 @@ public class ApprovalRequestCommandService implements ApprovalCheckpointPort {
             int nextIndex = request.getCurrentStageIndex() + 1;
             var nextStage =
                     requestStageRepository.findByTenantIdAndProjectIdAndRequestIdAndPositionIndex(
-                            tenantId, projectId, requestId, nextIndex);
+                            request.getTenantId(),
+                            request.getProjectId(),
+                            request.getId(),
+                            nextIndex);
             if (nextStage.isPresent()) {
                 nextStage.get().activate();
                 requestStageRepository.save(nextStage.get());
