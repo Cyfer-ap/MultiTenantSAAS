@@ -1,5 +1,7 @@
 package com.chacha.multitenantsaas.externalaccess;
 
+import com.chacha.multitenantsaas.approvals.ApprovalDecisionOutcome;
+import com.chacha.multitenantsaas.approvals.ApprovalRequestStatus;
 import com.chacha.multitenantsaas.entity.ProjectStatus;
 import com.chacha.multitenantsaas.entity.ProjectTaskPriority;
 import com.chacha.multitenantsaas.entity.ProjectTaskStatus;
@@ -21,7 +23,7 @@ public final class ExternalAccessDtos {
             @NotBlank @Size(max = 150) String guestName,
             @NotBlank @Email @Size(max = 150) String guestEmail,
             @NotNull Instant expiresAt,
-            @NotEmpty @Size(max = 3) Set<ExternalAccessCapability> capabilities) {}
+            @NotEmpty @Size(max = 4) Set<ExternalAccessCapability> capabilities) {}
 
     public record GrantResponse(
             UUID id,
@@ -85,4 +87,23 @@ public final class ExternalAccessDtos {
             Instant createdAt) {}
 
     public record GuestCommentsResponse(List<GuestCommentResponse> comments) {}
+
+    public record GuestApprovalReviewResponse(
+            UUID requestId,
+            UUID requestStageId,
+            UUID taskId,
+            String stageName,
+            Instant createdAt) {}
+
+    public record GuestApprovalReviewsResponse(List<GuestApprovalReviewResponse> reviews) {}
+
+    public record GuestApprovalDecisionRequest(
+            @NotNull ApprovalDecisionOutcome outcome,
+            @Size(max = 1000) String comment) {}
+
+    public record GuestApprovalDecisionResponse(
+            UUID requestId,
+            ApprovalRequestStatus status,
+            int currentStageIndex,
+            Instant completedAt) {}
 }
