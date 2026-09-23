@@ -38,13 +38,18 @@ public class PublicAuthRateLimitInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(
             HttpServletRequest request, HttpServletResponse response, Object handler) {
-        if (!properties.isEnabled() || !"POST".equalsIgnoreCase(request.getMethod())) {
+        if (!properties.isEnabled()) {
             return true;
         }
 
         RateLimitScope scope = resolveScope(requestPath(request));
 
         if (scope == null) {
+            return true;
+        }
+
+        if (scope != RateLimitScope.GUEST
+                && !"POST".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
 
@@ -128,6 +133,10 @@ public class PublicAuthRateLimitInterceptor implements HandlerInterceptor {
             return RateLimitScope.ONBOARDING;
         }
 
+        if (path.startsWith("/api/public/guest-portal/")) {
+            return RateLimitScope.GUEST;
+        }
+
         return null;
     }
 
@@ -137,6 +146,7 @@ public class PublicAuthRateLimitInterceptor implements HandlerInterceptor {
             case RECOVERY -> properties.getRecoveryMaxRequests();
             case TOKEN -> properties.getTokenMaxRequests();
             case ONBOARDING -> properties.getOnboardingMaxRequests();
+            case GUEST -> properties.getGuestMaxRequests();
         };
     }
 
@@ -167,7 +177,8 @@ public class PublicAuthRateLimitInterceptor implements HandlerInterceptor {
         LOGIN,
         RECOVERY,
         TOKEN,
-        ONBOARDING
+        ONBOARDING,
+        GUEST
     }
 
     private record RateLimitKey(RateLimitScope scope, String remoteAddress) {}
