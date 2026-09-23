@@ -66,13 +66,9 @@ Project managers with `project.member.manage` can create/list/revoke guest grant
 
 The standalone `/guest` route uses the public HTTP client only. The invitation secret is read from the URL fragment and scrubbed after exchange; the issued opaque guest session is kept in browser `sessionStorage`, separate from tenant auth storage. The guest UI exposes only the granted project summary and optional task list.
 
-### Remaining Client / Guest Portal slices
+### Remaining Client / Guest Portal slice
 
-The portal milestone is not fully complete yet. Next:
-
-1. bounded guest comments/review responses through a task-collaboration-owned narrow port, with immutable guest/grant provenance
-2. external approval decisions through an approval-owned narrow contract that intersects the active grant with the specific approval request scope
-3. focused isolation/revocation/authorization tests for those mutation paths
+The foundation remains the credential/read boundary. Guest comments are completed in #159 below. The only remaining portal slice is external approval through an approval-owned narrow contract that intersects an active grant with the exact approval request/stage scope.
 
 Do not fake guests as `AppUser` authors/reviewers and do not add guest exceptions to ordinary tenant APIs.
 
@@ -110,7 +106,7 @@ The guest UI loads comments on demand per task and uses the public guest HTTP cl
 
 Detailed contract: `guides/client_guest_portal.md`.
 
-
+## Approval Workflows checkpoint — #154
 
 Approval Workflows is complete as an explicit project-scoped human-decision domain that composes with the existing workflow runtime rather than storing approval state in task/workflow services.
 
