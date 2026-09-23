@@ -415,14 +415,16 @@ export function GuestPortalPage() {
                                         </Alert>
                                     ) : null}
 
-                                    {tasksQuery.data?.tasks.map((task) => (
-                                        <GuestTaskCard
-                                            canComment={canComment}
-                                            key={task.id}
-                                            sessionToken={sessionToken}
-                                            task={task}
-                                        />
-                                    ))}
+                                    {sessionToken
+                                        ? tasksQuery.data?.tasks.map((task) => (
+                                              <GuestTaskCard
+                                                  canComment={canComment}
+                                                  key={task.id}
+                                                  sessionToken={sessionToken}
+                                                  task={task}
+                                              />
+                                          ))
+                                        : null}
                                 </Stack>
                             ) : (
                                 <Alert severity="info">
