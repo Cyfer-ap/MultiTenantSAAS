@@ -259,7 +259,11 @@ export function ProjectExternalAccessPage() {
             {grantsQuery.isError ? (
                 <Alert
                     action={
-                        <Button color="inherit" onClick={() => void grantsQuery.refetch()} size="small">
+                        <Button
+                            color="inherit"
+                            onClick={() => void grantsQuery.refetch()}
+                            size="small"
+                        >
                             Retry
                         </Button>
                     }
@@ -288,7 +292,9 @@ export function ProjectExternalAccessPage() {
                                     useFlexGap
                                     sx={{ alignItems: 'center', flexWrap: 'wrap' }}
                                 >
-                                    <Typography sx={{ fontWeight: 700 }}>{grant.guestName}</Typography>
+                                    <Typography sx={{ fontWeight: 700 }}>
+                                        {grant.guestName}
+                                    </Typography>
                                     <Chip
                                         color={grantStateColor(grant.state)}
                                         label={grant.state}
@@ -298,7 +304,12 @@ export function ProjectExternalAccessPage() {
                                 <Typography color="text.secondary" variant="body2">
                                     {grant.guestEmail}
                                 </Typography>
-                                <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+                                <Stack
+                                    direction="row"
+                                    spacing={1}
+                                    useFlexGap
+                                    sx={{ flexWrap: 'wrap' }}
+                                >
                                     {grant.capabilities.map((capability) => (
                                         <Chip
                                             key={capability}
@@ -322,10 +333,7 @@ export function ProjectExternalAccessPage() {
 
                             <Button
                                 color="error"
-                                disabled={
-                                    grant.state === 'REVOKED' ||
-                                    revokeMutation.isPending
-                                }
+                                disabled={grant.state === 'REVOKED' || revokeMutation.isPending}
                                 onClick={() => revokeMutation.mutate(grant.id)}
                                 startIcon={<DeleteOutlineRoundedIcon />}
                                 sx={{ alignSelf: { md: 'flex-start' } }}
