@@ -21,7 +21,7 @@ public final class ExternalAccessDtos {
             @NotBlank @Size(max = 150) String guestName,
             @NotBlank @Email @Size(max = 150) String guestEmail,
             @NotNull Instant expiresAt,
-            @NotEmpty @Size(max = 2) Set<ExternalAccessCapability> capabilities) {}
+            @NotEmpty @Size(max = 3) Set<ExternalAccessCapability> capabilities) {}
 
     public record GrantResponse(
             UUID id,
@@ -72,4 +72,18 @@ public final class ExternalAccessDtos {
             Instant updatedAt) {}
 
     public record TasksResponse(List<TaskResponse> tasks) {}
+
+    public record GuestCommentRequest(
+            @NotBlank @Size(max = 4000) String body) {}
+
+    public record GuestCommentResponse(
+            UUID id,
+            UUID taskId,
+            UUID grantId,
+            String guestName,
+            String guestEmail,
+            String body,
+            Instant createdAt) {}
+
+    public record GuestCommentsResponse(List<GuestCommentResponse> comments) {}
 }
