@@ -1,5 +1,8 @@
 package com.chacha.multitenantsaas.externalaccess;
 
+import com.chacha.multitenantsaas.approvals.ExternalApprovalDecisionCommand;
+import com.chacha.multitenantsaas.approvals.ExternalApprovalDecisionResult;
+import com.chacha.multitenantsaas.approvals.ExternalApprovalReviewPort;
 import com.chacha.multitenantsaas.taskcollaboration.external.ExternalTaskCommentCommand;
 import com.chacha.multitenantsaas.taskcollaboration.external.ExternalTaskCommentPort;
 import com.chacha.multitenantsaas.taskcollaboration.external.ExternalTaskCommentSnapshot;
@@ -15,6 +18,7 @@ public class ExternalPortalService {
     private final ExternalProjectProjectionPort projectProjectionPort;
     private final ExternalTaskProjectionPort taskProjectionPort;
     private final ExternalTaskCommentPort taskCommentPort;
+    private final ExternalApprovalReviewPort approvalReviewPort;
     private final ExternalAccessProperties properties;
 
     public ExternalPortalService(
@@ -22,11 +26,13 @@ public class ExternalPortalService {
             ExternalProjectProjectionPort projectProjectionPort,
             ExternalTaskProjectionPort taskProjectionPort,
             ExternalTaskCommentPort taskCommentPort,
+            ExternalApprovalReviewPort approvalReviewPort,
             ExternalAccessProperties properties) {
         this.sessionService = sessionService;
         this.projectProjectionPort = projectProjectionPort;
         this.taskProjectionPort = taskProjectionPort;
         this.taskCommentPort = taskCommentPort;
+        this.approvalReviewPort = approvalReviewPort;
         this.properties = properties;
     }
 
@@ -120,6 +126,57 @@ public class ExternalPortalService {
                                 context.guestEmail(),
                                 request.body()));
         return mapComment(comment);
+    }
+
+    @Transactional(readOnly = true)
+    public ExternalAccessDtos.GuestApprovalReviewsResponse approvals(String sessionToken) {
+        ExternalGuestSessionContext context = sessionService.requireSession(sessionToken);
+        context.require(ExternalAccessCapability.APPROVAL_REVIEW);
+        int limit = properties.getApprovalReadLimit();
+        if (limit <= 0 || limit > 100) {
+            throw new IllegalStateException("External approval read limit must be between 1 and 100");
+        }
+
+        return new ExternalAccessDtos.GuestApprovalReviewsResponse(
+                approvalReviewPort
+                        .listPending(
+                                context.tenantId(),
+                                context.projectId(),
+                                context.grantId(),
+                                limit)
+                        .stream()
+                        .map(
+                                review ->
+                                        new ExternalAccessDtos.GuestApprovalReviewResponse(
+                                                review.requestId(),
+                                                review.requestStageId(),
+                                                review.taskId(),
+                                                review.stageName(),
+                                                review.createdAt()))
+                        .toList());
+    }
+
+    @Transactional
+    public ExternalAccessDtos.GuestApprovalDecisionResponse decideApproval(
+            String sessionToken,
+            UUID requestId,
+            ExternalAccessDtos.GuestApprovalDecisionRequest request) {
+        ExternalGuestSessionContext context = sessionService.requireSession(sessionToken);
+        context.require(ExternalAccessCapability.APPROVAL_REVIEW);
+        ExternalApprovalDecisionResult result =
+                approvalReviewPort.decide(
+                        new ExternalApprovalDecisionCommand(
+                                context.tenantId(),
+                                context.projectId(),
+                                requestId,
+                                context.grantId(),
+                                request.outcome(),
+                                request.comment()));
+        return new ExternalAccessDtos.GuestApprovalDecisionResponse(
+                result.requestId(),
+                result.status(),
+                result.currentStageIndex(),
+                result.completedAt());
     }
 
     private void requireCommentCapability(ExternalGuestSessionContext context) {
