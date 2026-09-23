@@ -2,7 +2,7 @@
 
 Updated: 2026-09-23
 Repository: `Cyfer-ap/MultiTenantSAAS`
-Branch target: `main` after PR #156 merge
+Branch target: `main` after PR #159 merge
 
 This file is the **single repository-side source of truth for current project status**. Do not create duplicate progress/checkpoint mirrors.
 
@@ -28,8 +28,9 @@ Delivered milestones now include:
 - **Forms -> Workflow Engine — #152**
 - **Approval Workflows — #154**
 - **Client / Guest Portal foundation — #156**
+- **Client / Guest Portal guest comments — #159**
 
-**Client / Guest Portal remains the active feature.** The grant/session boundary and project/task read UI are complete; guest comments/review responses and external approval remain the next slices.
+**Client / Guest Portal remains the active feature.** The grant/session boundary, project/task read UI and bounded guest task comments are complete; external approval is the remaining portal slice.
 
 Live whiteboard presence/cursors remain an optional later enhancement and do not block the committed sequence. Bulk/CSV, broader custom fields, knowledge/documents and analytics remain parked unless explicitly reprioritized.
 
@@ -65,15 +66,43 @@ Project managers with `project.member.manage` can create/list/revoke guest grant
 
 The standalone `/guest` route uses the public HTTP client only. The invitation secret is read from the URL fragment and scrubbed after exchange; the issued opaque guest session is kept in browser `sessionStorage`, separate from tenant auth storage. The guest UI exposes only the granted project summary and optional task list.
 
-### Remaining Client / Guest Portal slices
+### Remaining Client / Guest Portal slice
 
-The portal milestone is not fully complete yet. Next:
-
-1. bounded guest comments/review responses through a task-collaboration-owned narrow port, with immutable guest/grant provenance
-2. external approval decisions through an approval-owned narrow contract that intersects the active grant with the specific approval request scope
-3. focused isolation/revocation/authorization tests for those mutation paths
+The foundation remains the credential/read boundary. Guest comments are completed in #159 below. The only remaining portal slice is external approval through an approval-owned narrow contract that intersects an active grant with the exact approval request/stage scope.
 
 Do not fake guests as `AppUser` authors/reviewers and do not add guest exceptions to ordinary tenant APIs.
+
+Detailed contract: `guides/client_guest_portal.md`.
+
+## Client / Guest Portal guest comments checkpoint — #159
+
+Guest task comments extend the existing portal without weakening the foundation boundary.
+
+### Ownership and capability
+
+```text
+externalaccess
+    -> ExternalTaskCommentPort
+    -> task-collaboration-owned adapter
+    -> task_comments
+```
+
+The typed capability `TASK_COMMENT_CREATE` is explicit and requires `TASK_READ`. Guest comments remain top-level and create-only in this slice.
+
+V55 extends `task_comments` with tagged author provenance:
+
+- `TENANT_USER`
+- `EXTERNAL_GUEST`
+
+External comments retain the exact grant id plus guest name/email snapshots. A scoped foreign key binds that grant provenance to the same tenant/project.
+
+### Mutation guardrails
+
+The task-collaboration-owned adapter revalidates tenant/project/task scope and project/task mutability before persistence. `externalaccess` never writes the task-comment repository directly.
+
+Guest-authored comments are visible in the normal internal task thread with an explicit Guest label, but tenant comment APIs reject edit/delete/pin/unpin/threaded-reply behavior for those records. Attachments and mentions are also excluded.
+
+The guest UI loads comments on demand per task and uses the public guest HTTP client/session boundary only.
 
 Detailed contract: `guides/client_guest_portal.md`.
 
@@ -199,7 +228,7 @@ Detailed contract: `guides/recurring_work_and_templates.md`.
 
 ## Database checkpoint
 
-Portable PostgreSQL Flyway migrations extend through **V54**:
+Portable PostgreSQL Flyway migrations extend through **V55**:
 
 ```text
 V45 personal workspace favorites/recent items
@@ -212,15 +241,16 @@ V51 project whiteboards/nodes/connectors
 V52 project forms/fields/submissions
 V53 approval definitions/stages/reviewers + durable requests/snapshots; workflow approval branches/state
 V54 external access grants/capabilities + hashed guest sessions
+V55 typed external guest task-comment provenance + TASK_COMMENT_CREATE capability
 ```
 
-Project Simulation and Risk Radar add no migration. **V54 is immutable after merge/application.** New persistence starts at **V55+**.
+Project Simulation and Risk Radar add no migration. **V55 is immutable after merge/application.** New persistence starts at **V56+**.
 
 ## Non-negotiable architecture rule
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Current reference implementations include Search contributor contracts, Personal Workspace resolvers, My Work source ports, Saved Views validation SPI, Calendar deadline sources, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, Project Simulation source ports, Whiteboard project/task ports, Risk Radar task/dependency sources, Forms project/task/workflow ports, Approval checkpoint/reviewer/resolution contracts and Client/Guest Portal external project/task projection ports.
+Current reference implementations include Search contributor contracts, Personal Workspace resolvers, My Work source ports, Saved Views validation SPI, Calendar deadline sources, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, Project Simulation source ports, Whiteboard project/task ports, Risk Radar task/dependency sources, Forms project/task/workflow ports, Approval checkpoint/reviewer/resolution contracts and Client/Guest Portal project/task projection plus task-collaboration external-comment ports.
 
 ## Provider status
 
@@ -252,13 +282,13 @@ Canonical assessment: `guides/ENGINEERING_STANDARDS.md`.
 
 Continue in this order:
 
-1. **Client / Guest Portal continuation — ACTIVE NEXT** (guest comments/review responses, then external approval)
+1. **Client / Guest Portal external approval — ACTIVE NEXT**
 2. Team Workload Engine
 3. Workspace Knowledge Graph
 4. AI / Agent Teammates
 5. resume parked backlog such as bulk actions/CSV, broader custom fields, knowledge/documents and broader analytics unless priorities are explicitly changed
 
-Client / Guest Portal foundation now provides the separate external-access domain and credential/capability boundary. The remaining mutation slices must preserve it: guests stay outside tenant membership/RBAC, and every comment/review/approval capability must be explicitly granted, bounded, revocable and revalidated against the owning tenant/project/request before mutation.
+Client / Guest Portal now provides the external-access foundation plus bounded guest task comments. The remaining external-approval slice must preserve the same boundary: guests stay outside tenant membership/RBAC, approval authority must be explicitly granted and request-scoped, and every decision must revalidate the active grant against the owning approval request.
 
 ## Deferred platform work
 

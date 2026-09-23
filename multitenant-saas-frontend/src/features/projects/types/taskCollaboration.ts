@@ -23,7 +23,9 @@ export interface TaskComment {
     id: string
     taskId: string
     parentCommentId: string | null
-    authorUserId: string
+    authorType: 'TENANT_USER' | 'EXTERNAL_GUEST'
+    authorUserId: string | null
+    externalAccessGrantId: string | null
     authorName: string
     authorEmail: string
     body: string | null

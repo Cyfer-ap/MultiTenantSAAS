@@ -4,7 +4,7 @@
 
 Client / Guest Portal introduces bounded external collaboration without converting clients or guests into tenant members.
 
-The first slice establishes the external-access security boundary before adding comments or external approval decisions.
+The portal now has two completed slices: the external-access security/read boundary and bounded create-only guest task comments. External approval remains the next slice.
 
 ## Ownership and boundaries
 
@@ -33,6 +33,11 @@ guest
     -> externalaccess capability validation
     -> ExternalProjectProjectionPort / ExternalTaskProjectionPort
     -> project/task-owned adapters
+
+guest comment mutation
+    -> externalaccess capability/session validation
+    -> ExternalTaskCommentPort
+    -> task-collaboration-owned adapter
 ```
 
 Guests are not `AppUser` records, project members, tenant RBAC subjects or API-key identities. Guest session credentials are only accepted by the isolated `/api/public/guest-portal/**` surface.
@@ -51,12 +56,13 @@ A session is bounded by the grant expiry. Every guest request re-resolves both t
 
 ## Capabilities
 
-The first slice supports exactly:
+The current capability set is:
 
 - `PROJECT_READ`
 - `TASK_READ`
+- `TASK_COMMENT_CREATE`
 
-Every grant must include `PROJECT_READ`. `TASK_READ` is optional.
+Every grant must include `PROJECT_READ`. `TASK_READ` is optional. `TASK_COMMENT_CREATE` is explicit and requires `TASK_READ`.
 
 The capability set is intentionally tiny and typed; it is not a general permission DSL and does not map to tenant RBAC assignments.
 
@@ -80,6 +86,8 @@ Public routes are restricted to:
 POST /api/public/guest-portal/exchange
 GET  /api/public/guest-portal/session
 GET  /api/public/guest-portal/tasks
+GET  /api/public/guest-portal/tasks/{taskId}/comments
+POST /api/public/guest-portal/tasks/{taskId}/comments
 ```
 
 Authenticated guest reads use the dedicated `X-Guest-Session` header rather than JWT or the normal `Authorization` bearer channel.
@@ -106,12 +114,30 @@ Guest-supplied tenant/project IDs do not exist in the public API. Tenant/project
 
 Task reads are bounded to at most 100 tasks in this slice.
 
-## Deliberately excluded from this foundation
+## V55 guest task comments
+
+V55 extends the existing `task_comments` table rather than creating a shadow external-comment store.
+
+Each comment has an explicit author type:
+
+- `TENANT_USER`
+- `EXTERNAL_GUEST`
+
+External guest comments store the exact external-access grant id plus guest name/email snapshots. A scoped foreign key binds the provenance grant to the same tenant/project.
+
+The `externalaccess` domain never writes task-comment persistence directly. It crosses `ExternalTaskCommentPort`; the task-collaboration-owned adapter independently rebinds tenant/project/task and lifecycle state before reading or writing.
+
+Guest comments are deliberately limited to top-level, create-only comments. Guest-side history is grant-scoped and loaded on demand per task. Project members see the same records in the ordinary task thread with an explicit Guest label.
+
+Tenant mutation paths reject editing, deletion, pinning/unpinning and threaded replies for external guest comments. Attachments and mentions are also rejected/excluded in this slice.
+
+## Deliberately excluded from the current portal
 
 Not yet exposed:
 
-- guest comments or replies,
-- guest approval decisions,
+- external approval decisions,
+- guest comment editing/deleting/threaded replies,
+- guest comment mentions or attachments,
 - attachments/downloads,
 - arbitrary search,
 - user/member directory,
@@ -121,18 +147,20 @@ Not yet exposed:
 - guest-created tasks,
 - broad tenant/project membership.
 
-Comments and external approval decisions should be added only through narrow owning-domain ports after this grant/session boundary is green.
+External approval must be added only through an approval-owned narrow contract that intersects an active grant with the exact request/stage scope.
 
 ## Validation contract
 
 Regression coverage should lock:
 
-- V54 migration/table/column expectations,
+- V54/V55 migration/table/column expectations,
 - raw token non-persistence,
 - one-time invitation exchange,
 - grant expiry/revocation invalidating retained sessions,
 - mandatory `PROJECT_READ`,
-- capability denial before project/task adapters are called,
+- capability denial before project/task/comment adapters are called,
+- `TASK_COMMENT_CREATE` requiring `TASK_READ`,
+- guest comment grant/project/task rebinding and immutable guest/grant provenance,
 - grant-bound tenant/project scope,
 - public guest rate limiting,
 - normal tenant API authentication remaining unchanged.

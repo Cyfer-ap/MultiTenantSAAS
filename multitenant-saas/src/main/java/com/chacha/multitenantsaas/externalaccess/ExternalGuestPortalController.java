@@ -4,6 +4,7 @@ import com.chacha.multitenantsaas.common.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -47,5 +48,26 @@ public class ExternalGuestPortalController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Shared project tasks fetched", portalService.tasks(sessionToken)));
+    }
+
+    @GetMapping("/tasks/{taskId}/comments")
+    public ResponseEntity<ApiResponse<ExternalAccessDtos.GuestCommentsResponse>> comments(
+            @RequestHeader(SESSION_HEADER) String sessionToken,
+            @PathVariable java.util.UUID taskId) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Guest task comments fetched",
+                        portalService.comments(sessionToken, taskId)));
+    }
+
+    @PostMapping("/tasks/{taskId}/comments")
+    public ResponseEntity<ApiResponse<ExternalAccessDtos.GuestCommentResponse>> createComment(
+            @RequestHeader(SESSION_HEADER) String sessionToken,
+            @PathVariable java.util.UUID taskId,
+            @Valid @RequestBody ExternalAccessDtos.GuestCommentRequest request) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Guest task comment created",
+                        portalService.createComment(sessionToken, taskId, request)));
     }
 }

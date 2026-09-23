@@ -4,6 +4,8 @@ import type {
     CreateExternalAccessGrantInput,
     ExternalAccessGrant,
     ExternalAccessGrantCreated,
+    GuestComments,
+    GuestComment,
     GuestExchangeResponse,
     GuestSession,
     GuestTasks,
@@ -72,6 +74,27 @@ async function getGuestTasks(sessionToken: string): Promise<GuestTasks> {
     return response.data.data
 }
 
+async function getGuestTaskComments(sessionToken: string, taskId: string): Promise<GuestComments> {
+    const response = await publicHttpClient.get<ApiResponse<GuestComments>>(
+        `${guestBasePath}/tasks/${taskId}/comments`,
+        { headers: { [guestSessionHeader]: sessionToken } },
+    )
+    return response.data.data
+}
+
+async function createGuestTaskComment(
+    sessionToken: string,
+    taskId: string,
+    body: string,
+): Promise<GuestComment> {
+    const response = await publicHttpClient.post<ApiResponse<GuestComment>>(
+        `${guestBasePath}/tasks/${taskId}/comments`,
+        { body },
+        { headers: { [guestSessionHeader]: sessionToken } },
+    )
+    return response.data.data
+}
+
 export const externalAccessApi = {
     listGrants,
     createGrant,
@@ -79,4 +102,6 @@ export const externalAccessApi = {
     exchangeInvitation,
     getGuestSession,
     getGuestTasks,
+    getGuestTaskComments,
+    createGuestTaskComment,
 }

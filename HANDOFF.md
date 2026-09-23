@@ -23,7 +23,7 @@ This is the **single repository-side resume document**. Current status lives in 
 
 ## Current state
 
-Major product milestones are complete through **Client / Guest Portal foundation #156**:
+Major product milestones are complete through **Client / Guest Portal guest comments #159**:
 
 - billing/catalog — #106
 - tenant outbound webhooks — #112
@@ -46,8 +46,9 @@ Major product milestones are complete through **Client / Guest Portal foundation
 - Forms -> Workflow Engine — #152
 - Approval Workflows — #154
 - Client / Guest Portal foundation — #156
+- Client / Guest Portal guest comments — #159
 
-Portable PostgreSQL Flyway migrations extend through **V54**. Never modify V54 or earlier after merge/application; later persistence starts at **V55+**.
+Portable PostgreSQL Flyway migrations extend through **V55**. Never modify V55 or earlier after merge/application; later persistence starts at **V56+**.
 
 Stripe remains the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
@@ -179,36 +180,47 @@ The frontend includes project-manager grant management and a standalone `/guest`
 
 Detailed rules: `guides/client_guest_portal.md`.
 
-## Resume here — Client / Guest Portal mutation slices
+## Client / Guest Portal guest comments — #159
 
-Continue the **Client / Guest Portal** milestone from the merged #156 boundary. Do not redesign or bypass the foundation.
+The bounded guest-comment slice is complete.
+
+Boundary:
+
+```text
+externalaccess
+    -> ExternalTaskCommentPort
+    -> task-collaboration-owned adapter
+```
+
+V55 extends the shared task-comment model with explicit `TENANT_USER` / `EXTERNAL_GUEST` authorship and immutable external grant/name/email provenance. `TASK_COMMENT_CREATE` requires `TASK_READ`.
+
+External guest comments are top-level and create-only. They can be read by the guest through the grant-scoped portal and by project members through the normal task collaboration thread. Tenant-side edit/delete/pin/unpin/reply paths reject guest-authored records. Guest mentions and attachments remain excluded.
+
+Detailed rules: `guides/client_guest_portal.md`.
+
+## Resume here — Client / Guest Portal external approval
+
+Continue the **Client / Guest Portal** milestone with external approval only.
 
 Next slice:
 
-1. add a bounded external collaboration capability for guest comments/review responses; keep it typed rather than introducing a general permission DSL
-2. enter task collaboration only through a new task-collaboration-owned narrow port/adapter
-3. preserve immutable guest/grant provenance; do **not** fake a guest as an `AppUser`
-4. do not reuse the ordinary JWT-based `TaskCollaborationService.createComment(..., Jwt)` path by manufacturing a JWT or system user
-5. keep mentions, pinning, editing/deleting and attachments out of the first external-comment slice unless separately designed
-6. validate grant -> tenant -> project -> task scope before the task-collaboration port is invoked
-7. expose only comments/review data deliberately selected for the guest surface
-8. after guest comments are green, add external approval through an approval-owned narrow contract
-9. external approval authority must be the intersection of an active guest grant and the specific approval request's allowed external-review scope; portal access alone is never reviewer authority
-10. retain immutable external decision provenance and concurrency/replay safety
-11. add deterministic tests for cross-tenant/resource substitution, revoked/expired grants, stale sessions, duplicate/replayed mutations and owning-domain port enforcement
-12. if new persistence is required, start at **V55+**; never edit V54 or earlier
+1. add a typed external approval capability; do not reuse a broad portal mutation permission
+2. define an approval-owned narrow external-decision port/contract
+3. allow an approval request/stage to explicitly opt into external review; ordinary approval definitions remain internal-only by default
+4. external authority must be the intersection of:
+   - an active, unexpired, unrevoked guest grant
+   - the same tenant/project
+   - the exact approval request/stage
+   - explicit external-review permission on that request/stage
+5. portal access or `PROJECT_READ` / `TASK_READ` / `TASK_COMMENT_CREATE` alone must never imply reviewer authority
+6. preserve immutable guest/grant decision provenance without manufacturing an `AppUser`
+7. preserve approval concurrency/replay protections and typed `APPROVED` / `REJECTED` workflow resume behavior
+8. keep approval mutation inside the approvals domain; `externalaccess` must not write approval repositories
+9. expose only request information necessary for the external reviewer; no reviewer directory, definition administration or workflow configuration
+10. add deterministic tests for revoked/expired grants, wrong project/request/stage substitution, duplicate decisions, completed requests and workflow resume
+11. if persistence changes are required, start at **V56+**; never edit V55 or earlier
 
-Guardrails:
-
-- no guest branches inside ordinary tenant-authenticated APIs
-- no direct task-comment or approval repository writes from `externalaccess`
-- no guest `AppUser`/membership/RBAC records
-- no broad project mutation from a read grant
-- no arbitrary guest search, directory, billing/admin or workflow-management access
-- comments/approvals must remain revocable through grant invalidation
-- feature-local frontend/backend ownership and narrow cross-domain contracts remain mandatory
-
-After the full Client / Guest Portal milestone, continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+After external approval completes the Client / Guest Portal milestone, continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 ## Validation before merge
 

@@ -21,7 +21,7 @@ import { Link, useParams } from 'react-router'
 
 import { useAuth } from '../../auth/hooks/useAuth'
 import { externalAccessApi } from '../api/externalAccessApi'
-import type { ExternalAccessGrant } from '../types/externalAccess'
+import type { ExternalAccessCapability, ExternalAccessGrant } from '../types/externalAccess'
 
 function formatDate(value: string | null): string {
     if (!value) return '—'
@@ -65,6 +65,7 @@ export function ProjectExternalAccessPage() {
     const [guestEmail, setGuestEmail] = useState('')
     const [expiresAt, setExpiresAt] = useState(defaultExpiryValue)
     const [shareTasks, setShareTasks] = useState(true)
+    const [allowComments, setAllowComments] = useState(false)
     const [inviteLink, setInviteLink] = useState<string | null>(null)
     const [feedback, setFeedback] = useState<string | null>(null)
 
@@ -80,13 +81,18 @@ export function ProjectExternalAccessPage() {
     })
 
     const createMutation = useMutation({
-        mutationFn: () =>
-            externalAccessApi.createGrant(tenantId, projectId, {
+        mutationFn: () => {
+            const capabilities: ExternalAccessCapability[] = ['PROJECT_READ']
+            if (shareTasks) capabilities.push('TASK_READ')
+            if (allowComments) capabilities.push('TASK_COMMENT_CREATE')
+
+            return externalAccessApi.createGrant(tenantId, projectId, {
                 guestName: guestName.trim(),
                 guestEmail: guestEmail.trim(),
                 expiresAt: new Date(expiresAt).toISOString(),
-                capabilities: shareTasks ? ['PROJECT_READ', 'TASK_READ'] : ['PROJECT_READ'],
-            }),
+                capabilities,
+            })
+        },
         onSuccess: async (result) => {
             const link = `${window.location.origin}/guest#token=${encodeURIComponent(
                 result.invitationToken,
@@ -97,6 +103,7 @@ export function ProjectExternalAccessPage() {
             setGuestEmail('')
             setExpiresAt(defaultExpiryValue())
             setShareTasks(true)
+            setAllowComments(false)
             await queryClient.invalidateQueries({ queryKey })
         },
     })
@@ -148,8 +155,8 @@ export function ProjectExternalAccessPage() {
             </Stack>
 
             <Alert severity="info">
-                Guest access is separate from tenant membership and RBAC. This first slice can share
-                project summary information and, optionally, the project task list.
+                Guest access is separate from tenant membership and RBAC. Share project summary,
+                optionally task visibility, and explicitly opt into create-only guest comments.
             </Alert>
 
             <Paper component="form" onSubmit={submit} variant="outlined" sx={{ padding: 3 }}>
@@ -185,10 +192,25 @@ export function ProjectExternalAccessPage() {
                         control={
                             <Checkbox
                                 checked={shareTasks}
-                                onChange={(event) => setShareTasks(event.target.checked)}
+                                onChange={(event) => {
+                                    const checked = event.target.checked
+                                    setShareTasks(checked)
+                                    if (!checked) setAllowComments(false)
+                                }}
                             />
                         }
                         label="Share project tasks"
+                    />
+
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={allowComments}
+                                disabled={!shareTasks}
+                                onChange={(event) => setAllowComments(event.target.checked)}
+                            />
+                        }
+                        label="Allow create-only guest comments on shared tasks"
                     />
 
                     <Box>
@@ -321,7 +343,9 @@ export function ProjectExternalAccessPage() {
                                             label={
                                                 capability === 'PROJECT_READ'
                                                     ? 'Project summary'
-                                                    : 'Tasks'
+                                                    : capability === 'TASK_READ'
+                                                      ? 'Tasks'
+                                                      : 'Guest comments'
                                             }
                                             size="small"
                                             variant="outlined"

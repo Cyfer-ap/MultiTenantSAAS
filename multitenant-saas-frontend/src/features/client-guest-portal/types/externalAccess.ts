@@ -1,4 +1,4 @@
-export type ExternalAccessCapability = 'PROJECT_READ' | 'TASK_READ'
+export type ExternalAccessCapability = 'PROJECT_READ' | 'TASK_READ' | 'TASK_COMMENT_CREATE'
 
 export type ExternalAccessGrantState = 'INVITED' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED'
 
@@ -69,4 +69,18 @@ export interface GuestTask {
 
 export interface GuestTasks {
     tasks: GuestTask[]
+}
+
+export interface GuestComment {
+    id: string
+    taskId: string
+    grantId: string
+    guestName: string
+    guestEmail: string
+    body: string
+    createdAt: string
+}
+
+export interface GuestComments {
+    comments: GuestComment[]
 }

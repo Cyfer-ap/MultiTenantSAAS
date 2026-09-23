@@ -102,6 +102,10 @@ public class TaskAttachmentService {
                         ? null
                         : getCommentOrThrow(tenantId, projectId, taskId, request.commentId());
         if (comment != null) {
+            if (comment.isExternalGuestAuthor()) {
+                throw new IllegalArgumentException(
+                        "External guest comments do not support attachments");
+            }
             if (comment.isDeleted()) {
                 throw new IllegalArgumentException("Files cannot be attached to a deleted comment");
             }

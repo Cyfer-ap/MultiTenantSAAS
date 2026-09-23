@@ -70,7 +70,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV54AndMatchesJpaMappings() {
+    void postgresSchemaReachesV55AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -82,7 +82,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("54");
+        assertThat(version).isEqualTo("55");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -158,6 +158,11 @@ class PostgreSqlSchemaIntegrationTest {
         List<String[]> requiredColumns =
                 List.of(
                         column("project_tasks", "parent_task_id"),
+                        column("task_comments", "author_type"),
+                        column("task_comments", "author_user_id"),
+                        column("task_comments", "external_access_grant_id"),
+                        column("task_comments", "external_guest_name"),
+                        column("task_comments", "external_guest_email"),
                         column("recurring_task_definitions", "next_occurrence_at"),
                         column("recurring_task_definitions", "status"),
                         column("recurring_task_definitions", "version"),
