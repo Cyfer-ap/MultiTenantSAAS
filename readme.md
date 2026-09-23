@@ -92,6 +92,7 @@ This rule is part of the persistent repository contract in `AGENTS.md`.
 - recurring work and project/task templates through narrow creation ports
 - Visual Workflow Builder through explicit workflow ownership, task-domain events and task-owned mutation contract
 - Forms -> Workflow Engine through explicit `forms` ownership, task-owned creation and workflow-owned form-submission entry
+- Approval Workflows through explicit `approvals` ownership, reviewer re-authorization and workflow checkpoint/resume contracts
 - Project Simulation / What-If Engine through explicit `projectsimulation` ownership and narrow task/dependency sources
 - Collaborative Whiteboard through explicit `whiteboards` ownership, optimistic concurrency and task-owned conversion
 - Project Health / Risk Radar through explicit `projectrisk` ownership and narrow task/dependency sources
@@ -100,9 +101,9 @@ Stripe is the validated deployed Test Mode payment path. Razorpay application/ca
 
 ## Database
 
-Production schema evolution is owned by Flyway. Shared PostgreSQL migrations extend through **V52**. Never rewrite an applied migration; later persistence begins at **V53+**.
+Production schema evolution is owned by Flyway. Shared PostgreSQL migrations extend through **V53**. Never rewrite an applied migration; later persistence begins at **V54+**.
 
-Recent product migrations include V45 personal-workspace favorites/recent items, V46 saved views, V47 task parent/dependency/label relationships, V48 recurring task definitions/occurrences plus project task templates, V49 tenant project templates with bounded starter-task snapshots, V50 visual workflow definitions/nodes/edges/executions, V51 project whiteboards/nodes/connectors, and V52 project form definitions/fields/submissions.
+Recent product migrations include V45 personal-workspace favorites/recent items, V46 saved views, V47 task parent/dependency/label relationships, V48 recurring task definitions/occurrences plus project task templates, V49 tenant project templates with bounded starter-task snapshots, V50 visual workflow definitions/nodes/edges/executions, V51 project whiteboards/nodes/connectors, V52 project form definitions/fields/submissions, and V53 approval definitions/stages/reviewer snapshots plus workflow approval branches/state.
 
 Project Simulation and Risk Radar are read-model/orchestration features and add no migration.
 
@@ -150,7 +151,7 @@ The Wiki is automatically validated and published from merged `main` by `.github
 
 ## Current product direction
 
-Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard, Project Health / Risk Radar and **Forms -> Workflow Engine are complete**. **Approval Workflows is active next**, followed by Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine and **Approval Workflows are complete**. **Client / Guest Portal is active next**, followed by Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 Live whiteboard presence/cursors remain a later optional collaboration enhancement. Bulk actions/CSV, broader custom fields, knowledge/documents and broader analytics remain parked backlog unless priorities are explicitly changed.
 
