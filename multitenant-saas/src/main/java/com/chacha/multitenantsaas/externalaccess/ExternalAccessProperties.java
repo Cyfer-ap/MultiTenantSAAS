@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 public class ExternalAccessProperties {
 
     private int maxGrantDays = 90;
-    private int sessionHours = 8;
     private int taskReadLimit = 100;
 
     public int getMaxGrantDays() {
@@ -17,14 +16,6 @@ public class ExternalAccessProperties {
 
     public void setMaxGrantDays(int maxGrantDays) {
         this.maxGrantDays = maxGrantDays;
-    }
-
-    public int getSessionHours() {
-        return sessionHours;
-    }
-
-    public void setSessionHours(int sessionHours) {
-        this.sessionHours = sessionHours;
     }
 
     public int getTaskReadLimit() {
