@@ -21,6 +21,11 @@ ALTER TABLE task_comments
     ADD COLUMN external_guest_email VARCHAR(150);
 
 ALTER TABLE task_comments
+    ADD CONSTRAINT fk_task_comment_external_grant
+        FOREIGN KEY (tenant_id, project_id, external_access_grant_id)
+            REFERENCES external_access_grants (tenant_id, project_id, id);
+
+ALTER TABLE task_comments
     ADD CONSTRAINT ck_task_comment_author_source
         CHECK (
             (
