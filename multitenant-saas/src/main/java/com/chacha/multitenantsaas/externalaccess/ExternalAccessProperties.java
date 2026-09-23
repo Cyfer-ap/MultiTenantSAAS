@@ -10,6 +10,7 @@ public class ExternalAccessProperties {
     private int maxGrantDays = 90;
     private int taskReadLimit = 100;
     private int commentReadLimit = 100;
+    private int approvalReadLimit = 50;
 
     public int getMaxGrantDays() {
         return maxGrantDays;
@@ -33,5 +34,13 @@ public class ExternalAccessProperties {
 
     public void setCommentReadLimit(int commentReadLimit) {
         this.commentReadLimit = commentReadLimit;
+    }
+
+    public int getApprovalReadLimit() {
+        return approvalReadLimit;
+    }
+
+    public void setApprovalReadLimit(int approvalReadLimit) {
+        this.approvalReadLimit = approvalReadLimit;
     }
 }

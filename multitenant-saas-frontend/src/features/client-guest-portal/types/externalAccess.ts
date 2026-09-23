@@ -1,4 +1,5 @@
-export type ExternalAccessCapability = 'PROJECT_READ' | 'TASK_READ' | 'TASK_COMMENT_CREATE'
+export type ExternalAccessCapability =
+    'PROJECT_READ' | 'TASK_READ' | 'TASK_COMMENT_CREATE' | 'APPROVAL_REVIEW'
 
 export type ExternalAccessGrantState = 'INVITED' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED'
 
@@ -83,4 +84,25 @@ export interface GuestComment {
 
 export interface GuestComments {
     comments: GuestComment[]
+}
+
+export interface GuestApprovalReview {
+    requestId: string
+    requestStageId: string
+    taskId: string
+    stageName: string
+    createdAt: string
+}
+
+export interface GuestApprovalReviews {
+    reviews: GuestApprovalReview[]
+}
+
+export type GuestApprovalDecisionOutcome = 'APPROVE' | 'REJECT'
+
+export interface GuestApprovalDecision {
+    requestId: string
+    status: 'PENDING' | 'APPROVED' | 'REJECTED'
+    currentStageIndex: number
+    completedAt: string | null
 }

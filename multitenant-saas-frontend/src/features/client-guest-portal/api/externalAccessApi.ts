@@ -4,6 +4,9 @@ import type {
     CreateExternalAccessGrantInput,
     ExternalAccessGrant,
     ExternalAccessGrantCreated,
+    GuestApprovalDecision,
+    GuestApprovalDecisionOutcome,
+    GuestApprovalReviews,
     GuestComments,
     GuestComment,
     GuestExchangeResponse,
@@ -95,6 +98,28 @@ async function createGuestTaskComment(
     return response.data.data
 }
 
+async function getGuestApprovals(sessionToken: string): Promise<GuestApprovalReviews> {
+    const response = await publicHttpClient.get<ApiResponse<GuestApprovalReviews>>(
+        `${guestBasePath}/approvals`,
+        { headers: { [guestSessionHeader]: sessionToken } },
+    )
+    return response.data.data
+}
+
+async function decideGuestApproval(
+    sessionToken: string,
+    requestId: string,
+    outcome: GuestApprovalDecisionOutcome,
+    comment: string | null,
+): Promise<GuestApprovalDecision> {
+    const response = await publicHttpClient.post<ApiResponse<GuestApprovalDecision>>(
+        `${guestBasePath}/approvals/${requestId}/decision`,
+        { outcome, comment },
+        { headers: { [guestSessionHeader]: sessionToken } },
+    )
+    return response.data.data
+}
+
 export const externalAccessApi = {
     listGrants,
     createGrant,
@@ -104,4 +129,6 @@ export const externalAccessApi = {
     getGuestTasks,
     getGuestTaskComments,
     createGuestTaskComment,
+    getGuestApprovals,
+    decideGuestApproval,
 }
