@@ -88,7 +88,6 @@ class WorkflowFormSubmissionRuntimeTest {
                                 "action",
                                 WorkflowEdgeBranch.DEFAULT));
 
-        when(definition.getTenantId()).thenReturn(tenantId);
         when(definition.getId()).thenReturn(workflowId);
         when(definition.getStatus()).thenReturn(WorkflowStatus.ACTIVE);
         when(graphLoader.requireDefinition(tenantId, workflowId)).thenReturn(definition);
