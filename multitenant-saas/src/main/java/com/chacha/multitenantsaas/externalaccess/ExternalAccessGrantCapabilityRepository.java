@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 interface ExternalAccessGrantCapabilityRepository
         extends JpaRepository<ExternalAccessGrantCapability, UUID> {
 
-    List<ExternalAccessGrantCapability>
-            findByTenantIdAndProjectIdAndGrantIdOrderByCapabilityAsc(
-                    UUID tenantId, UUID projectId, UUID grantId);
+    List<ExternalAccessGrantCapability> findByTenantIdAndProjectIdAndGrantIdOrderByCapabilityAsc(
+            UUID tenantId, UUID projectId, UUID grantId);
 }

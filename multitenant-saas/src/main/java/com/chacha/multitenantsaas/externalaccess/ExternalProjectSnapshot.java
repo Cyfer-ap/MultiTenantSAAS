@@ -5,8 +5,4 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record ExternalProjectSnapshot(
-        UUID projectId,
-        String name,
-        String description,
-        ProjectStatus status,
-        Instant updatedAt) {}
+        UUID projectId, String name, String description, ProjectStatus status, Instant updatedAt) {}

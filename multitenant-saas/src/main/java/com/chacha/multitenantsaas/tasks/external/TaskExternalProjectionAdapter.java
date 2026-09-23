@@ -32,8 +32,7 @@ public class TaskExternalProjectionAdapter implements ExternalTaskProjectionPort
                         null,
                         null,
                         null,
-                        PageRequest.of(
-                                0, boundedLimit, Sort.by(Sort.Direction.ASC, "createdAt")))
+                        PageRequest.of(0, boundedLimit, Sort.by(Sort.Direction.ASC, "createdAt")))
                 .getContent()
                 .stream()
                 .map(this::map)

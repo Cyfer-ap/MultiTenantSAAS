@@ -40,8 +40,7 @@ public final class ExternalAccessDtos {
 
     public record GrantCreatedResponse(GrantResponse grant, String invitationToken) {}
 
-    public record ExchangeRequest(
-            @NotBlank @Size(max = 256) String invitationToken) {}
+    public record ExchangeRequest(@NotBlank @Size(max = 256) String invitationToken) {}
 
     public record ExchangeResponse(
             UUID grantId,
@@ -51,11 +50,7 @@ public final class ExternalAccessDtos {
             Instant sessionExpiresAt) {}
 
     public record ProjectResponse(
-            UUID id,
-            String name,
-            String description,
-            ProjectStatus status,
-            Instant updatedAt) {}
+            UUID id, String name, String description, ProjectStatus status, Instant updatedAt) {}
 
     public record SessionResponse(
             UUID grantId,

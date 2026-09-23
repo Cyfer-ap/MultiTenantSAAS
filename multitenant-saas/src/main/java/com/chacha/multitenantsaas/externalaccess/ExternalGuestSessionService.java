@@ -80,9 +80,7 @@ public class ExternalGuestSessionService {
                         .orElseThrow(() -> new AuthenticationFailedException(INVALID_SESSION));
 
         Instant now = Instant.now();
-        if (!session.isAvailable(now)
-                || !grant.isAvailable(now)
-                || grant.getAcceptedAt() == null) {
+        if (!session.isAvailable(now) || !grant.isAvailable(now) || grant.getAcceptedAt() == null) {
             throw new AuthenticationFailedException(INVALID_SESSION);
         }
 

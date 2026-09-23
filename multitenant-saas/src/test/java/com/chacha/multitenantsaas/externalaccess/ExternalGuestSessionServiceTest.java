@@ -2,7 +2,6 @@ package com.chacha.multitenantsaas.externalaccess;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -94,16 +93,11 @@ class ExternalGuestSessionServiceTest {
 
         ExternalGuestSession session =
                 new ExternalGuestSession(
-                        tenantId,
-                        projectId,
-                        grant.getId(),
-                        "session-hash",
-                        grant.getExpiresAt());
+                        tenantId, projectId, grant.getId(), "session-hash", grant.getExpiresAt());
 
         when(secureTokenService.hashToken("session-raw")).thenReturn("session-hash");
         when(sessionRepository.findByTokenHash("session-hash")).thenReturn(Optional.of(session));
-        when(grantRepository.findByTenantIdAndProjectIdAndId(
-                        tenantId, projectId, grant.getId()))
+        when(grantRepository.findByTenantIdAndProjectIdAndId(tenantId, projectId, grant.getId()))
                 .thenReturn(Optional.of(grant));
 
         assertThatThrownBy(() -> service.requireSession("session-raw"))
@@ -127,16 +121,11 @@ class ExternalGuestSessionServiceTest {
         grant.accept(Instant.now());
         ExternalGuestSession session =
                 new ExternalGuestSession(
-                        tenantId,
-                        projectId,
-                        grant.getId(),
-                        "session-hash",
-                        grant.getExpiresAt());
+                        tenantId, projectId, grant.getId(), "session-hash", grant.getExpiresAt());
 
         when(secureTokenService.hashToken("session-raw")).thenReturn("session-hash");
         when(sessionRepository.findByTokenHash("session-hash")).thenReturn(Optional.of(session));
-        when(grantRepository.findByTenantIdAndProjectIdAndId(
-                        tenantId, projectId, grant.getId()))
+        when(grantRepository.findByTenantIdAndProjectIdAndId(tenantId, projectId, grant.getId()))
                 .thenReturn(Optional.of(grant));
         when(capabilityRepository.findByTenantIdAndProjectIdAndGrantIdOrderByCapabilityAsc(
                         tenantId, projectId, grant.getId()))
@@ -152,7 +141,6 @@ class ExternalGuestSessionServiceTest {
 
         assertThat(context.tenantId()).isEqualTo(tenantId);
         assertThat(context.projectId()).isEqualTo(projectId);
-        assertThat(context.capabilities())
-                .containsExactly(ExternalAccessCapability.PROJECT_READ);
+        assertThat(context.capabilities()).containsExactly(ExternalAccessCapability.PROJECT_READ);
     }
 }

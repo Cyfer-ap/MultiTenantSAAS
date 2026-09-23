@@ -51,12 +51,13 @@ public class ExternalPortalService {
         context.require(ExternalAccessCapability.TASK_READ);
         int limit = properties.getTaskReadLimit();
         if (limit <= 0 || limit > 100) {
-            throw new IllegalStateException(
-                    "External task read limit must be between 1 and 100");
+            throw new IllegalStateException("External task read limit must be between 1 and 100");
         }
 
         List<ExternalAccessDtos.TaskResponse> tasks =
-                taskProjectionPort.listTasks(context.tenantId(), context.projectId(), limit).stream()
+                taskProjectionPort
+                        .listTasks(context.tenantId(), context.projectId(), limit)
+                        .stream()
                         .map(
                                 task ->
                                         new ExternalAccessDtos.TaskResponse(

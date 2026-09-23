@@ -44,10 +44,7 @@ public class ExternalAccessGrantService {
 
     @Transactional
     public ExternalAccessDtos.GrantCreatedResponse create(
-            UUID tenantId,
-            UUID projectId,
-            ExternalAccessDtos.CreateGrantRequest request,
-            Jwt jwt) {
+            UUID tenantId, UUID projectId, ExternalAccessDtos.CreateGrantRequest request, Jwt jwt) {
         var project = projectAccessPort.requireProject(tenantId, projectId);
         if (project.status() == ProjectStatus.ARCHIVED) {
             throw new IllegalArgumentException("Archived projects cannot create external grants");
@@ -97,8 +94,7 @@ public class ExternalAccessGrantService {
                                 grant ->
                                         map(
                                                 grant,
-                                                capabilities(
-                                                        tenantId, projectId, grant.getId()),
+                                                capabilities(tenantId, projectId, grant.getId()),
                                                 now))
                         .toList();
         return new PageResponse<>(
@@ -160,9 +156,7 @@ public class ExternalAccessGrantService {
     }
 
     private ExternalAccessDtos.GrantResponse map(
-            ExternalAccessGrant grant,
-            Set<ExternalAccessCapability> capabilities,
-            Instant now) {
+            ExternalAccessGrant grant, Set<ExternalAccessCapability> capabilities, Instant now) {
         return new ExternalAccessDtos.GrantResponse(
                 grant.getId(),
                 grant.getProjectId(),

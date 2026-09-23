@@ -48,8 +48,7 @@ public class PublicAuthRateLimitInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        if (scope != RateLimitScope.GUEST
-                && !"POST".equalsIgnoreCase(request.getMethod())) {
+        if (scope != RateLimitScope.GUEST && !"POST".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
 

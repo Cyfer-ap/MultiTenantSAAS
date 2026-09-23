@@ -45,6 +45,7 @@ public class ExternalGuestPortalController {
     public ResponseEntity<ApiResponse<ExternalAccessDtos.TasksResponse>> tasks(
             @RequestHeader(SESSION_HEADER) String sessionToken) {
         return ResponseEntity.ok(
-                ApiResponse.success("Shared project tasks fetched", portalService.tasks(sessionToken)));
+                ApiResponse.success(
+                        "Shared project tasks fetched", portalService.tasks(sessionToken)));
     }
 }
