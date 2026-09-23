@@ -73,8 +73,7 @@ public final class ExternalAccessDtos {
 
     public record TasksResponse(List<TaskResponse> tasks) {}
 
-    public record GuestCommentRequest(
-            @NotBlank @Size(max = 4000) String body) {}
+    public record GuestCommentRequest(@NotBlank @Size(max = 4000) String body) {}
 
     public record GuestCommentResponse(
             UUID id,

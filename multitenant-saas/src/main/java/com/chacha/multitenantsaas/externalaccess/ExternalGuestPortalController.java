@@ -52,7 +52,8 @@ public class ExternalGuestPortalController {
 
     @GetMapping("/tasks/{taskId}/comments")
     public ResponseEntity<ApiResponse<ExternalAccessDtos.GuestCommentsResponse>> comments(
-            @RequestHeader(SESSION_HEADER) String sessionToken, @PathVariable java.util.UUID taskId) {
+            @RequestHeader(SESSION_HEADER) String sessionToken,
+            @PathVariable java.util.UUID taskId) {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "Guest task comments fetched",

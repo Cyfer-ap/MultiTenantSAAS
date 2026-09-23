@@ -38,10 +38,8 @@ public class TaskCommentQueryService {
 
     private TaskCommentResponse mapToResponse(TaskComment comment) {
         AppUser author = comment.getAuthorUser();
-        String authorName =
-                author == null ? comment.getExternalGuestName() : author.getFullName();
-        String authorEmail =
-                author == null ? comment.getExternalGuestEmail() : author.getEmail();
+        String authorName = author == null ? comment.getExternalGuestName() : author.getFullName();
+        String authorEmail = author == null ? comment.getExternalGuestEmail() : author.getEmail();
         List<TaskCommentMentionResponse> mentions =
                 comment.getMentions().stream()
                         .map(TaskCommentMention::getMentionedUser)

@@ -32,7 +32,6 @@ function taskStatusLabel(status: string): string {
     return status.replaceAll('_', ' ').toLowerCase()
 }
 
-
 function GuestTaskCard({
     task,
     sessionToken,
@@ -55,7 +54,8 @@ function GuestTaskCard({
     })
 
     const createCommentMutation = useMutation({
-        mutationFn: () => externalAccessApi.createGuestTaskComment(sessionToken, task.id, body.trim()),
+        mutationFn: () =>
+            externalAccessApi.createGuestTaskComment(sessionToken, task.id, body.trim()),
         onSuccess: async () => {
             setBody('')
             await queryClient.invalidateQueries({ queryKey: commentQueryKey })
@@ -72,11 +72,7 @@ function GuestTaskCard({
                     sx={{ alignItems: 'center', flexWrap: 'wrap' }}
                 >
                     <Typography sx={{ fontWeight: 700 }}>{task.title}</Typography>
-                    <Chip
-                        label={taskStatusLabel(task.status)}
-                        size="small"
-                        variant="outlined"
-                    />
+                    <Chip label={taskStatusLabel(task.status)} size="small" variant="outlined" />
                     <Chip label={task.priority.toLowerCase()} size="small" />
                 </Stack>
 
@@ -134,7 +130,10 @@ function GuestTaskCard({
                                             <Typography sx={{ fontWeight: 700 }} variant="body2">
                                                 {comment.guestName}
                                             </Typography>
-                                            <Typography sx={{ whiteSpace: 'pre-wrap' }} variant="body2">
+                                            <Typography
+                                                sx={{ whiteSpace: 'pre-wrap' }}
+                                                variant="body2"
+                                            >
                                                 {comment.body}
                                             </Typography>
                                             <Typography color="text.secondary" variant="caption">
@@ -154,9 +153,7 @@ function GuestTaskCard({
                                 />
                                 <Box>
                                     <Button
-                                        disabled={
-                                            !body.trim() || createCommentMutation.isPending
-                                        }
+                                        disabled={!body.trim() || createCommentMutation.isPending}
                                         onClick={() => createCommentMutation.mutate()}
                                         variant="contained"
                                     >
@@ -240,9 +237,7 @@ export function GuestPortalPage() {
     })
 
     const canReadTasks = Boolean(sessionQuery.data?.capabilities.includes('TASK_READ'))
-    const canComment = Boolean(
-        sessionQuery.data?.capabilities.includes('TASK_COMMENT_CREATE'),
-    )
+    const canComment = Boolean(sessionQuery.data?.capabilities.includes('TASK_COMMENT_CREATE'))
 
     const tasksQuery = useQuery({
         queryKey: ['guest-portal-tasks', sessionToken],

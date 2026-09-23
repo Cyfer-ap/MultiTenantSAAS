@@ -504,17 +504,21 @@ function CommentCard({
                         tenantAuthored &&
                         !comment.deleted &&
                         !comment.parentCommentId && (
-                        <Tooltip title={comment.pinned ? 'Unpin comment' : 'Pin comment'}>
-                            <IconButton
-                                aria-label={`${comment.pinned ? 'Unpin' : 'Pin'} comment by ${comment.authorName}`}
-                                disabled={pinMutation.isPending || unpinMutation.isPending}
-                                onClick={() => void togglePin()}
-                                size="small"
-                            >
-                                {comment.pinned ? <PushPinRoundedIcon /> : <PushPinOutlinedIcon />}
-                            </IconButton>
-                        </Tooltip>
-                    )}
+                            <Tooltip title={comment.pinned ? 'Unpin comment' : 'Pin comment'}>
+                                <IconButton
+                                    aria-label={`${comment.pinned ? 'Unpin' : 'Pin'} comment by ${comment.authorName}`}
+                                    disabled={pinMutation.isPending || unpinMutation.isPending}
+                                    onClick={() => void togglePin()}
+                                    size="small"
+                                >
+                                    {comment.pinned ? (
+                                        <PushPinRoundedIcon />
+                                    ) : (
+                                        <PushPinOutlinedIcon />
+                                    )}
+                                </IconButton>
+                            </Tooltip>
+                        )}
 
                     {canMutateBody && (
                         <>

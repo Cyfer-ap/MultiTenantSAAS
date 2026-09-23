@@ -79,13 +79,15 @@ public class ExternalPortalService {
                         .toList();
         return new ExternalAccessDtos.TasksResponse(tasks);
     }
+
     @Transactional(readOnly = true)
     public ExternalAccessDtos.GuestCommentsResponse comments(String sessionToken, UUID taskId) {
         ExternalGuestSessionContext context = sessionService.requireSession(sessionToken);
         requireCommentCapability(context);
         int limit = properties.getCommentReadLimit();
         if (limit <= 0 || limit > 100) {
-            throw new IllegalStateException("External comment read limit must be between 1 and 100");
+            throw new IllegalStateException(
+                    "External comment read limit must be between 1 and 100");
         }
 
         List<ExternalAccessDtos.GuestCommentResponse> comments =
@@ -136,5 +138,4 @@ public class ExternalPortalService {
                 comment.body(),
                 comment.createdAt());
     }
-
 }

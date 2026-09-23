@@ -44,7 +44,8 @@ public class DefaultExternalTaskCommentAdapter implements ExternalTaskCommentPor
         requireMutable(project, task);
 
         String body = normalizeBody(command.body());
-        String guestName = normalizeRequired(command.guestName(), MAX_GUEST_NAME_LENGTH, "Guest name");
+        String guestName =
+                normalizeRequired(command.guestName(), MAX_GUEST_NAME_LENGTH, "Guest name");
         String guestEmail =
                 normalizeRequired(command.guestEmail(), MAX_GUEST_EMAIL_LENGTH, "Guest email");
 
@@ -68,7 +69,8 @@ public class DefaultExternalTaskCommentAdapter implements ExternalTaskCommentPor
         requireProject(tenantId, projectId);
         requireTask(tenantId, projectId, taskId);
         if (limit <= 0 || limit > 100) {
-            throw new IllegalArgumentException("External comment read limit must be between 1 and 100");
+            throw new IllegalArgumentException(
+                    "External comment read limit must be between 1 and 100");
         }
 
         return commentRepository

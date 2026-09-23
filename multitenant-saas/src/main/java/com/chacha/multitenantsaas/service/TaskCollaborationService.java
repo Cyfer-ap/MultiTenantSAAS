@@ -435,7 +435,9 @@ public class TaskCollaborationService {
 
     private void ensureCommentAuthor(TaskComment comment, AppUser actor) {
         AppUser author = comment.getAuthorUser();
-        if (comment.isExternalGuestAuthor() || author == null || !author.getId().equals(actor.getId())) {
+        if (comment.isExternalGuestAuthor()
+                || author == null
+                || !author.getId().equals(actor.getId())) {
             throw new AccessDeniedException("Only the comment author can modify this comment");
         }
     }
@@ -476,10 +478,8 @@ public class TaskCollaborationService {
 
     private TaskCommentResponse mapToResponse(TaskComment comment) {
         AppUser author = comment.getAuthorUser();
-        String authorName =
-                author == null ? comment.getExternalGuestName() : author.getFullName();
-        String authorEmail =
-                author == null ? comment.getExternalGuestEmail() : author.getEmail();
+        String authorName = author == null ? comment.getExternalGuestName() : author.getFullName();
+        String authorEmail = author == null ? comment.getExternalGuestEmail() : author.getEmail();
         List<TaskCommentMentionResponse> mentions =
                 comment.getMentions().stream()
                         .map(TaskCommentMention::getMentionedUser)
