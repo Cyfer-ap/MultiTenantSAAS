@@ -31,9 +31,15 @@ function taskStatusLabel(status: string): string {
 }
 
 export function GuestPortalPage() {
-    const [sessionToken, setSessionToken] = useState<string | null>(() =>
-        guestSessionStorage.read(),
-    )
+    const [sessionToken, setSessionToken] = useState<string | null>(() => {
+        if (
+            typeof window !== 'undefined' &&
+            new URLSearchParams(window.location.hash.slice(1)).has('token')
+        ) {
+            return null
+        }
+        return guestSessionStorage.read()
+    })
     const [exchangePending, setExchangePending] = useState(false)
     const [accessError, setAccessError] = useState<string | null>(null)
 
