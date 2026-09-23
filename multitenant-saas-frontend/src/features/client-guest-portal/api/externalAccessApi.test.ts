@@ -72,6 +72,12 @@ describe('externalAccessApi', () => {
         await externalAccessApi.exchangeInvitation('invite-token')
         await externalAccessApi.getGuestSession('session-token')
         await externalAccessApi.getGuestTasks('session-token')
+        await externalAccessApi.getGuestTaskComments('session-token', 'task-1')
+        await externalAccessApi.createGuestTaskComment(
+            'session-token',
+            'task-1',
+            'Please review this item.',
+        )
 
         expect(publicHttpClient.post).toHaveBeenCalledWith('/api/public/guest-portal/exchange', {
             invitationToken: 'invite-token',
