@@ -194,7 +194,11 @@ public class ApprovalRequestCommandService implements ApprovalCheckpointPort {
                                                                 ApprovalRequestStageReviewer
                                                                         ::getReviewerUserId)
                                                         .toList(),
+                                                stage.getDecisionActorType(),
                                                 stage.getDecidedByUserId(),
+                                                stage.getExternalDecidedByGrantId(),
+                                                stage.getExternalDecidedByName(),
+                                                stage.getExternalDecidedByEmail(),
                                                 stage.getDecisionComment(),
                                                 stage.getDecidedAt()))
                         .toList();
