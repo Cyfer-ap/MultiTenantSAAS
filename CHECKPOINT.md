@@ -154,7 +154,7 @@ Detailed contract: `guides/recurring_work_and_templates.md`.
 
 ## Database checkpoint
 
-Portable PostgreSQL Flyway migrations extend through **V52**:
+Portable PostgreSQL Flyway migrations extend through **V53**:
 
 ```text
 V45 personal workspace favorites/recent items
