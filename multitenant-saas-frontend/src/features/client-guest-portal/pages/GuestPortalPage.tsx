@@ -8,12 +8,14 @@ import {
     Container,
     Paper,
     Stack,
+    TextField,
     Typography,
 } from '@mui/material'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
 import { externalAccessApi } from '../api/externalAccessApi'
+import type { GuestTask } from '../types/externalAccess'
 import { guestSessionStorage } from '../storage/guestSessionStorage'
 
 function formatDate(value: string | null): string {
@@ -28,6 +30,154 @@ function formatDate(value: string | null): string {
 
 function taskStatusLabel(status: string): string {
     return status.replaceAll('_', ' ').toLowerCase()
+}
+
+
+function GuestTaskCard({
+    task,
+    sessionToken,
+    canComment,
+}: {
+    task: GuestTask
+    sessionToken: string
+    canComment: boolean
+}) {
+    const queryClient = useQueryClient()
+    const [commentsOpen, setCommentsOpen] = useState(false)
+    const [body, setBody] = useState('')
+    const commentQueryKey = ['guest-portal-comments', sessionToken, task.id] as const
+
+    const commentsQuery = useQuery({
+        queryKey: commentQueryKey,
+        queryFn: () => externalAccessApi.getGuestTaskComments(sessionToken, task.id),
+        enabled: canComment && commentsOpen,
+        retry: false,
+    })
+
+    const createCommentMutation = useMutation({
+        mutationFn: () => externalAccessApi.createGuestTaskComment(sessionToken, task.id, body.trim()),
+        onSuccess: async () => {
+            setBody('')
+            await queryClient.invalidateQueries({ queryKey: commentQueryKey })
+        },
+    })
+
+    return (
+        <Paper variant="outlined" sx={{ padding: 2 }}>
+            <Stack spacing={1.5}>
+                <Stack
+                    direction="row"
+                    spacing={1}
+                    useFlexGap
+                    sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+                >
+                    <Typography sx={{ fontWeight: 700 }}>{task.title}</Typography>
+                    <Chip
+                        label={taskStatusLabel(task.status)}
+                        size="small"
+                        variant="outlined"
+                    />
+                    <Chip label={task.priority.toLowerCase()} size="small" />
+                </Stack>
+
+                {task.description ? <Typography>{task.description}</Typography> : null}
+
+                <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: 'wrap' }}>
+                    <Typography color="text.secondary" variant="caption">
+                        Due {formatDate(task.dueAt)}
+                    </Typography>
+                    <Typography color="text.secondary" variant="caption">
+                        Updated {formatDate(task.updatedAt)}
+                    </Typography>
+                </Stack>
+
+                {canComment ? (
+                    <>
+                        <Box>
+                            <Button
+                                onClick={() => setCommentsOpen((current) => !current)}
+                                size="small"
+                                variant="outlined"
+                            >
+                                {commentsOpen ? 'Hide guest comments' : 'Guest comments'}
+                            </Button>
+                        </Box>
+
+                        {commentsOpen ? (
+                            <Stack spacing={1.5}>
+                                {commentsQuery.isPending ? (
+                                    <Typography color="text.secondary" variant="body2">
+                                        Loading guest comments…
+                                    </Typography>
+                                ) : null}
+
+                                {commentsQuery.isError ? (
+                                    <Alert severity="error">
+                                        Guest comments could not be loaded. The access grant may
+                                        have changed or expired.
+                                    </Alert>
+                                ) : null}
+
+                                {commentsQuery.data?.comments.length === 0 ? (
+                                    <Alert severity="info">
+                                        No guest comments have been added to this task yet.
+                                    </Alert>
+                                ) : null}
+
+                                {commentsQuery.data?.comments.map((comment) => (
+                                    <Paper
+                                        key={comment.id}
+                                        variant="outlined"
+                                        sx={{ padding: 1.5 }}
+                                    >
+                                        <Stack spacing={0.5}>
+                                            <Typography sx={{ fontWeight: 700 }} variant="body2">
+                                                {comment.guestName}
+                                            </Typography>
+                                            <Typography sx={{ whiteSpace: 'pre-wrap' }} variant="body2">
+                                                {comment.body}
+                                            </Typography>
+                                            <Typography color="text.secondary" variant="caption">
+                                                {formatDate(comment.createdAt)}
+                                            </Typography>
+                                        </Stack>
+                                    </Paper>
+                                ))}
+
+                                <TextField
+                                    label="Add a guest comment"
+                                    maxRows={6}
+                                    minRows={2}
+                                    multiline
+                                    onChange={(event) => setBody(event.target.value)}
+                                    value={body}
+                                />
+                                <Box>
+                                    <Button
+                                        disabled={
+                                            !body.trim() || createCommentMutation.isPending
+                                        }
+                                        onClick={() => createCommentMutation.mutate()}
+                                        variant="contained"
+                                    >
+                                        Post comment
+                                    </Button>
+                                </Box>
+
+                                {createCommentMutation.isError ? (
+                                    <Alert severity="error">
+                                        {createCommentMutation.error instanceof Error
+                                            ? createCommentMutation.error.message
+                                            : 'The guest comment could not be created.'}
+                                    </Alert>
+                                ) : null}
+                            </Stack>
+                        ) : null}
+                    </>
+                ) : null}
+            </Stack>
+        </Paper>
+    )
 }
 
 export function GuestPortalPage() {
@@ -90,6 +240,9 @@ export function GuestPortalPage() {
     })
 
     const canReadTasks = Boolean(sessionQuery.data?.capabilities.includes('TASK_READ'))
+    const canComment = Boolean(
+        sessionQuery.data?.capabilities.includes('TASK_COMMENT_CREATE'),
+    )
 
     const tasksQuery = useQuery({
         queryKey: ['guest-portal-tasks', sessionToken],
@@ -206,6 +359,9 @@ export function GuestPortalPage() {
                                     >
                                         <Chip label="Project summary" size="small" />
                                         {canReadTasks ? <Chip label="Tasks" size="small" /> : null}
+                                        {canComment ? (
+                                            <Chip label="Guest comments" size="small" />
+                                        ) : null}
                                     </Stack>
 
                                     <Typography color="text.secondary" variant="caption">
@@ -265,51 +421,12 @@ export function GuestPortalPage() {
                                     ) : null}
 
                                     {tasksQuery.data?.tasks.map((task) => (
-                                        <Paper key={task.id} variant="outlined" sx={{ padding: 2 }}>
-                                            <Stack spacing={1}>
-                                                <Stack
-                                                    direction="row"
-                                                    spacing={1}
-                                                    useFlexGap
-                                                    sx={{ alignItems: 'center', flexWrap: 'wrap' }}
-                                                >
-                                                    <Typography sx={{ fontWeight: 700 }}>
-                                                        {task.title}
-                                                    </Typography>
-                                                    <Chip
-                                                        label={taskStatusLabel(task.status)}
-                                                        size="small"
-                                                        variant="outlined"
-                                                    />
-                                                    <Chip
-                                                        label={task.priority.toLowerCase()}
-                                                        size="small"
-                                                    />
-                                                </Stack>
-                                                {task.description ? (
-                                                    <Typography>{task.description}</Typography>
-                                                ) : null}
-                                                <Stack
-                                                    direction="row"
-                                                    spacing={2}
-                                                    useFlexGap
-                                                    sx={{ flexWrap: 'wrap' }}
-                                                >
-                                                    <Typography
-                                                        color="text.secondary"
-                                                        variant="caption"
-                                                    >
-                                                        Due {formatDate(task.dueAt)}
-                                                    </Typography>
-                                                    <Typography
-                                                        color="text.secondary"
-                                                        variant="caption"
-                                                    >
-                                                        Updated {formatDate(task.updatedAt)}
-                                                    </Typography>
-                                                </Stack>
-                                            </Stack>
-                                        </Paper>
+                                        <GuestTaskCard
+                                            canComment={canComment}
+                                            key={task.id}
+                                            sessionToken={sessionToken}
+                                            task={task}
+                                        />
                                     ))}
                                 </Stack>
                             ) : (
