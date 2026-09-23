@@ -98,8 +98,7 @@ public final class ExternalAccessDtos {
     public record GuestApprovalReviewsResponse(List<GuestApprovalReviewResponse> reviews) {}
 
     public record GuestApprovalDecisionRequest(
-            @NotNull ApprovalDecisionOutcome outcome,
-            @Size(max = 1000) String comment) {}
+            @NotNull ApprovalDecisionOutcome outcome, @Size(max = 1000) String comment) {}
 
     public record GuestApprovalDecisionResponse(
             UUID requestId,

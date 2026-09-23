@@ -107,7 +107,10 @@ public class ApprovalRequestStage {
             ApprovalDecisionOutcome outcome,
             String comment) {
         requirePending();
-        if (guestName == null || guestName.isBlank() || guestEmail == null || guestEmail.isBlank()) {
+        if (guestName == null
+                || guestName.isBlank()
+                || guestEmail == null
+                || guestEmail.isBlank()) {
             throw new IllegalArgumentException("External approval identity is required");
         }
         applyOutcome(outcome, comment);

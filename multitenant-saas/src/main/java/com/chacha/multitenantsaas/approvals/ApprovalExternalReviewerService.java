@@ -32,11 +32,7 @@ public class ApprovalExternalReviewerService {
 
     @Transactional
     public ApprovalDtos.ExternalReviewerResponse assign(
-            UUID tenantId,
-            UUID projectId,
-            UUID requestId,
-            UUID grantId,
-            Jwt jwt) {
+            UUID tenantId, UUID projectId, UUID requestId, UUID grantId, Jwt jwt) {
         UUID actorUserId = currentActorService.getRequiredActiveActor(tenantId, jwt).getId();
         ApprovalRequest request = requirePendingRequestForUpdate(tenantId, projectId, requestId);
         ApprovalRequestStage stage = requireCurrentPendingStage(request);
@@ -62,11 +58,7 @@ public class ApprovalExternalReviewerService {
     }
 
     @Transactional
-    public void revoke(
-            UUID tenantId,
-            UUID projectId,
-            UUID requestId,
-            UUID grantId) {
+    public void revoke(UUID tenantId, UUID projectId, UUID requestId, UUID grantId) {
         ApprovalRequest request = requirePendingRequestForUpdate(tenantId, projectId, requestId);
         ApprovalRequestStage stage = requireCurrentPendingStage(request);
         ApprovalRequestStageExternalReviewer assignment =
@@ -129,8 +121,7 @@ public class ApprovalExternalReviewerService {
                         request.getProjectId(),
                         request.getId(),
                         request.getCurrentStageIndex())
-                .orElseThrow(
-                        () -> new IllegalStateException("Current approval stage is missing"));
+                .orElseThrow(() -> new IllegalStateException("Current approval stage is missing"));
     }
 
     private ApprovalDtos.ExternalReviewerResponse map(

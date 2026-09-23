@@ -113,8 +113,7 @@ public class ApprovalRequestCommandService
                 .stream()
                 .map(
                         assignment ->
-                                externalSummaryIfPending(
-                                        tenantId, projectId, grantId, assignment))
+                                externalSummaryIfPending(tenantId, projectId, grantId, assignment))
                 .flatMap(java.util.Optional::stream)
                 .toList();
     }
@@ -155,8 +154,7 @@ public class ApprovalRequestCommandService
                 assignment.getGuestEmailSnapshot(),
                 command.outcome(),
                 command.comment());
-        ApprovalDtos.RequestResponse response =
-                completeDecision(request, stage, command.outcome());
+        ApprovalDtos.RequestResponse response = completeDecision(request, stage, command.outcome());
         return new ExternalApprovalDecisionResult(
                 response.id(),
                 response.status(),
@@ -190,7 +188,8 @@ public class ApprovalRequestCommandService
                                                                                 assignment
                                                                                         .getRequestStageId())
                                                                 && stage.getStatus()
-                                                                        == ApprovalStageStatus.PENDING)
+                                                                        == ApprovalStageStatus
+                                                                                .PENDING)
                                         .map(
                                                 stage ->
                                                         new ExternalApprovalReviewSummary(
@@ -208,14 +207,11 @@ public class ApprovalRequestCommandService
                         request.getProjectId(),
                         request.getId(),
                         request.getCurrentStageIndex())
-                .orElseThrow(
-                        () -> new IllegalStateException("Current approval stage is missing"));
+                .orElseThrow(() -> new IllegalStateException("Current approval stage is missing"));
     }
 
     private ApprovalDtos.RequestResponse completeDecision(
-            ApprovalRequest request,
-            ApprovalRequestStage stage,
-            ApprovalDecisionOutcome outcome) {
+            ApprovalRequest request, ApprovalRequestStage stage, ApprovalDecisionOutcome outcome) {
         requestStageRepository.save(stage);
 
         if (outcome == ApprovalDecisionOutcome.REJECT) {

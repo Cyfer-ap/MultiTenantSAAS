@@ -246,7 +246,9 @@ class PostgreSqlSchemaIntegrationTest {
                         column("approval_request_stages", "external_decided_by_email"),
                         column("approval_request_stage_external_reviewers", "request_id"),
                         column("approval_request_stage_external_reviewers", "request_stage_id"),
-                        column("approval_request_stage_external_reviewers", "external_access_grant_id"),
+                        column(
+                                "approval_request_stage_external_reviewers",
+                                "external_access_grant_id"),
                         column("approval_request_stage_external_reviewers", "assigned_by_user_id"),
                         column("approval_request_stage_reviewers", "request_stage_id"),
                         column("approval_request_stage_reviewers", "reviewer_user_id"),

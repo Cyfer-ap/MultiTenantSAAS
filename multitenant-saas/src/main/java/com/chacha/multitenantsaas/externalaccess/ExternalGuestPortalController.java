@@ -76,8 +76,7 @@ public class ExternalGuestPortalController {
             @RequestHeader(SESSION_HEADER) String sessionToken) {
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        "Guest approval reviews fetched",
-                        portalService.approvals(sessionToken)));
+                        "Guest approval reviews fetched", portalService.approvals(sessionToken)));
     }
 
     @PostMapping("/approvals/{requestId}/decision")

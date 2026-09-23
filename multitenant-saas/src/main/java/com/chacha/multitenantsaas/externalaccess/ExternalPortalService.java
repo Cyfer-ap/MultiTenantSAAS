@@ -134,16 +134,14 @@ public class ExternalPortalService {
         context.require(ExternalAccessCapability.APPROVAL_REVIEW);
         int limit = properties.getApprovalReadLimit();
         if (limit <= 0 || limit > 100) {
-            throw new IllegalStateException("External approval read limit must be between 1 and 100");
+            throw new IllegalStateException(
+                    "External approval read limit must be between 1 and 100");
         }
 
         return new ExternalAccessDtos.GuestApprovalReviewsResponse(
                 approvalReviewPort
                         .listPending(
-                                context.tenantId(),
-                                context.projectId(),
-                                context.grantId(),
-                                limit)
+                                context.tenantId(), context.projectId(), context.grantId(), limit)
                         .stream()
                         .map(
                                 review ->
