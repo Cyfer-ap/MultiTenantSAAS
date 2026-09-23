@@ -7,7 +7,5 @@ public record ExternalApprovalDecisionCommand(
         UUID projectId,
         UUID requestId,
         UUID grantId,
-        String guestName,
-        String guestEmail,
         ApprovalDecisionOutcome outcome,
         String comment) {}
