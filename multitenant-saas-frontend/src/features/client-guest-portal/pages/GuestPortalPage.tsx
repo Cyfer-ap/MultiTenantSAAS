@@ -196,7 +196,8 @@ export function GuestPortalPage() {
                                     </Stack>
 
                                     <Typography color="text.secondary" variant="caption">
-                                        Access expires {formatDate(sessionQuery.data.grantExpiresAt)}
+                                        Access expires{' '}
+                                        {formatDate(sessionQuery.data.grantExpiresAt)}
                                     </Typography>
 
                                     <Box>
