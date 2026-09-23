@@ -14,6 +14,7 @@ import {
 } from '@mui/material'
 import { useMemo, useState } from 'react'
 
+import { ApprovalWorkflowsPanel } from '../../approvals/components/ApprovalWorkflowsPanel'
 import {
     hasProjectPermission,
     hasTenantPermission,
@@ -34,7 +35,8 @@ interface ProjectOption {
     name: string
 }
 
-type WorkspaceTab = 'recurring' | 'task-templates' | 'project-templates' | 'forms' | 'workflows'
+type WorkspaceTab =
+    'recurring' | 'task-templates' | 'project-templates' | 'forms' | 'approvals' | 'workflows'
 
 export function WorkAutomationPage() {
     const { session } = useAuth()
@@ -140,7 +142,12 @@ export function WorkAutomationPage() {
         context,
         authorizationPermissionCodes.PROJECT_UPDATE,
     )
-    const requiresProject = tab === 'recurring' || tab === 'task-templates' || tab === 'forms'
+    const requiresProject =
+        tab === 'recurring' ||
+        tab === 'task-templates' ||
+        tab === 'forms' ||
+        tab === 'approvals' ||
+        tab === 'workflows'
 
     return (
         <Stack spacing={3}>
@@ -151,8 +158,9 @@ export function WorkAutomationPage() {
                         Work Automation & Templates
                     </Typography>
                     <Typography color="text.secondary">
-                        Schedule recurring tasks, reuse bounded snapshots, collect internal forms
-                        and compose visual workflows without bypassing domain lifecycle rules.
+                        Schedule recurring tasks, reuse bounded snapshots, collect internal forms,
+                        add human approval checkpoints and compose visual workflows without
+                        bypassing domain lifecycle rules.
                     </Typography>
                 </Box>
             </Stack>
@@ -168,6 +176,7 @@ export function WorkAutomationPage() {
                     <Tab label="Task templates" value="task-templates" />
                     <Tab label="Project templates" value="project-templates" />
                     <Tab label="Forms" value="forms" />
+                    <Tab label="Approvals" value="approvals" />
                     <Tab label="Workflow builder" value="workflows" />
                 </Tabs>
             </Paper>
@@ -226,10 +235,18 @@ export function WorkAutomationPage() {
                     canManage={canManageSelectedProject}
                 />
             ) : null}
+            {tab === 'approvals' && canReadSelectedProject ? (
+                <ApprovalWorkflowsPanel
+                    tenantId={tenantId}
+                    projectId={projectId}
+                    canManage={canManageSelectedProject}
+                />
+            ) : null}
             {tab === 'workflows' ? (
                 <Stack spacing={2}>
                     <WorkflowBuilderPanel
                         tenantId={tenantId}
+                        projectId={projectId}
                         canRead={canReadWorkflows}
                         canManage={canManageWorkflows}
                     />

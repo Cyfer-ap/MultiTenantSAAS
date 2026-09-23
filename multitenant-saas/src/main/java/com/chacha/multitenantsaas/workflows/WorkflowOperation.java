@@ -7,7 +7,8 @@ public enum WorkflowOperation {
     CONDITION_TASK_PRIORITY_EQUALS(WorkflowNodeType.CONDITION, ConfigurationKind.PRIORITY),
     CONDITION_TASK_STATUS_EQUALS(WorkflowNodeType.CONDITION, ConfigurationKind.STATUS),
     ACTION_SET_TASK_PRIORITY(WorkflowNodeType.ACTION, ConfigurationKind.PRIORITY),
-    ACTION_SET_TASK_STATUS(WorkflowNodeType.ACTION, ConfigurationKind.STATUS);
+    ACTION_SET_TASK_STATUS(WorkflowNodeType.ACTION, ConfigurationKind.STATUS),
+    ACTION_REQUEST_APPROVAL(WorkflowNodeType.ACTION, ConfigurationKind.APPROVAL_DEFINITION);
 
     private final WorkflowNodeType nodeType;
     private final ConfigurationKind configurationKind;
@@ -28,6 +29,7 @@ public enum WorkflowOperation {
     enum ConfigurationKind {
         NONE,
         PRIORITY,
-        STATUS
+        STATUS,
+        APPROVAL_DEFINITION
     }
 }

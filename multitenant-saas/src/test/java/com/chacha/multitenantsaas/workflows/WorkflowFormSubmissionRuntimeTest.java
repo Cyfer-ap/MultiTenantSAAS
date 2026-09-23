@@ -6,12 +6,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.chacha.multitenantsaas.approvals.ApprovalCheckpointPort;
 import com.chacha.multitenantsaas.entity.ProjectTaskPriority;
 import com.chacha.multitenantsaas.entity.ProjectTaskStatus;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationMutationCommand;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationMutationPort;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationMutationType;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationSnapshot;
+import com.chacha.multitenantsaas.tasks.automation.TaskAutomationSnapshotPort;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,11 +27,11 @@ import tools.jackson.databind.ObjectMapper;
 @ExtendWith(MockitoExtension.class)
 class WorkflowFormSubmissionRuntimeTest {
 
-    @Mock private WorkflowDefinitionRepository definitionRepository;
-    @Mock private WorkflowNodeRepository nodeRepository;
-    @Mock private WorkflowEdgeRepository edgeRepository;
+    @Mock private WorkflowGraphLoader graphLoader;
     @Mock private WorkflowExecutionRecorder executionRecorder;
     @Mock private TaskAutomationMutationPort taskMutationPort;
+    @Mock private TaskAutomationSnapshotPort taskSnapshotPort;
+    @Mock private ApprovalCheckpointPort approvalCheckpointPort;
     @Mock private WorkflowDefinition definition;
 
     private WorkflowRuntimeService runtime;
@@ -38,11 +40,11 @@ class WorkflowFormSubmissionRuntimeTest {
     void setUp() {
         runtime =
                 new WorkflowRuntimeService(
-                        definitionRepository,
-                        nodeRepository,
-                        edgeRepository,
+                        graphLoader,
                         executionRecorder,
                         taskMutationPort,
+                        taskSnapshotPort,
+                        approvalCheckpointPort,
                         new ObjectMapper());
     }
 
@@ -55,43 +57,43 @@ class WorkflowFormSubmissionRuntimeTest {
         UUID taskId = UUID.randomUUID();
         UUID actorId = UUID.randomUUID();
         UUID executionId = UUID.randomUUID();
+        WorkflowNode trigger =
+                new WorkflowNode(
+                        tenantId,
+                        workflowId,
+                        "trigger",
+                        WorkflowNodeType.TRIGGER,
+                        WorkflowOperation.TRIGGER_FORM_SUBMITTED,
+                        "{}",
+                        0,
+                        0);
+        List<WorkflowNode> nodes =
+                List.of(
+                        trigger,
+                        new WorkflowNode(
+                                tenantId,
+                                workflowId,
+                                "action",
+                                WorkflowNodeType.ACTION,
+                                WorkflowOperation.ACTION_SET_TASK_STATUS,
+                                "{\"value\":\"IN_PROGRESS\"}",
+                                250,
+                                0));
+        List<WorkflowEdge> edges =
+                List.of(
+                        new WorkflowEdge(
+                                tenantId,
+                                workflowId,
+                                "trigger",
+                                "action",
+                                WorkflowEdgeBranch.DEFAULT));
 
-        when(definition.getTenantId()).thenReturn(tenantId);
         when(definition.getId()).thenReturn(workflowId);
         when(definition.getStatus()).thenReturn(WorkflowStatus.ACTIVE);
-        when(definitionRepository.findByTenantIdAndId(tenantId, workflowId))
-                .thenReturn(Optional.of(definition));
-        when(nodeRepository.findByTenantIdAndWorkflowIdOrderByNodeKeyAsc(tenantId, workflowId))
-                .thenReturn(
-                        List.of(
-                                new WorkflowNode(
-                                        tenantId,
-                                        workflowId,
-                                        "trigger",
-                                        WorkflowNodeType.TRIGGER,
-                                        WorkflowOperation.TRIGGER_FORM_SUBMITTED,
-                                        "{}",
-                                        0,
-                                        0),
-                                new WorkflowNode(
-                                        tenantId,
-                                        workflowId,
-                                        "action",
-                                        WorkflowNodeType.ACTION,
-                                        WorkflowOperation.ACTION_SET_TASK_STATUS,
-                                        "{\"value\":\"IN_PROGRESS\"}",
-                                        250,
-                                        0)));
-        when(edgeRepository.findByTenantIdAndWorkflowIdOrderBySourceNodeKeyAscBranchTypeAsc(
-                        tenantId, workflowId))
-                .thenReturn(
-                        List.of(
-                                new WorkflowEdge(
-                                        tenantId,
-                                        workflowId,
-                                        "trigger",
-                                        "action",
-                                        WorkflowEdgeBranch.DEFAULT)));
+        when(graphLoader.requireDefinition(tenantId, workflowId)).thenReturn(definition);
+        when(graphLoader.trigger(definition)).thenReturn(trigger);
+        when(graphLoader.nodes(definition)).thenReturn(nodes);
+        when(graphLoader.edges(definition)).thenReturn(edges);
         when(executionRecorder.start(
                         definition,
                         WorkflowOperation.TRIGGER_FORM_SUBMITTED,
@@ -134,22 +136,18 @@ class WorkflowFormSubmissionRuntimeTest {
     void formTargetValidationRejectsTaskTriggeredWorkflow() {
         UUID tenantId = UUID.randomUUID();
         UUID workflowId = UUID.randomUUID();
-        when(definition.getTenantId()).thenReturn(tenantId);
-        when(definition.getId()).thenReturn(workflowId);
-        when(definitionRepository.findByTenantIdAndId(tenantId, workflowId))
-                .thenReturn(Optional.of(definition));
-        when(nodeRepository.findByTenantIdAndWorkflowIdOrderByNodeKeyAsc(tenantId, workflowId))
-                .thenReturn(
-                        List.of(
-                                new WorkflowNode(
-                                        tenantId,
-                                        workflowId,
-                                        "trigger",
-                                        WorkflowNodeType.TRIGGER,
-                                        WorkflowOperation.TRIGGER_TASK_CREATED,
-                                        "{}",
-                                        0,
-                                        0)));
+        WorkflowNode trigger =
+                new WorkflowNode(
+                        tenantId,
+                        workflowId,
+                        "trigger",
+                        WorkflowNodeType.TRIGGER,
+                        WorkflowOperation.TRIGGER_TASK_CREATED,
+                        "{}",
+                        0,
+                        0);
+        when(graphLoader.requireDefinition(tenantId, workflowId)).thenReturn(definition);
+        when(graphLoader.trigger(definition)).thenReturn(trigger);
 
         assertThatThrownBy(() -> runtime.requireFormSubmissionTarget(tenantId, workflowId))
                 .isInstanceOf(IllegalArgumentException.class)

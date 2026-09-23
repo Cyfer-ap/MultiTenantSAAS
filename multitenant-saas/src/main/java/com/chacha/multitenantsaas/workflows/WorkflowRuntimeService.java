@@ -1,11 +1,15 @@
 package com.chacha.multitenantsaas.workflows;
 
+import com.chacha.multitenantsaas.approvals.ApprovalCheckpointCommand;
+import com.chacha.multitenantsaas.approvals.ApprovalCheckpointPort;
+import com.chacha.multitenantsaas.approvals.ApprovalRequestStatus;
+import com.chacha.multitenantsaas.approvals.ApprovalResolvedEvent;
 import com.chacha.multitenantsaas.entity.ProjectTaskStatus;
-import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationMutationCommand;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationMutationPort;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationMutationType;
 import com.chacha.multitenantsaas.tasks.automation.TaskAutomationSnapshot;
+import com.chacha.multitenantsaas.tasks.automation.TaskAutomationSnapshotPort;
 import com.chacha.multitenantsaas.tasks.events.TaskDomainEvent;
 import com.chacha.multitenantsaas.tasks.events.TaskDomainEventType;
 import java.time.Instant;
@@ -31,34 +35,31 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
     private static final TypeReference<Map<String, String>> CONFIGURATION_TYPE =
             new TypeReference<>() {};
 
-    private final WorkflowDefinitionRepository definitionRepository;
-    private final WorkflowNodeRepository nodeRepository;
-    private final WorkflowEdgeRepository edgeRepository;
+    private final WorkflowGraphLoader graphLoader;
     private final WorkflowExecutionRecorder executionRecorder;
     private final TaskAutomationMutationPort taskMutationPort;
+    private final TaskAutomationSnapshotPort taskSnapshotPort;
+    private final ApprovalCheckpointPort approvalCheckpointPort;
     private final ObjectMapper objectMapper;
 
     public WorkflowRuntimeService(
-            WorkflowDefinitionRepository definitionRepository,
-            WorkflowNodeRepository nodeRepository,
-            WorkflowEdgeRepository edgeRepository,
+            WorkflowGraphLoader graphLoader,
             WorkflowExecutionRecorder executionRecorder,
             TaskAutomationMutationPort taskMutationPort,
+            TaskAutomationSnapshotPort taskSnapshotPort,
+            ApprovalCheckpointPort approvalCheckpointPort,
             ObjectMapper objectMapper) {
-        this.definitionRepository = definitionRepository;
-        this.nodeRepository = nodeRepository;
-        this.edgeRepository = edgeRepository;
+        this.graphLoader = graphLoader;
         this.executionRecorder = executionRecorder;
         this.taskMutationPort = taskMutationPort;
+        this.taskSnapshotPort = taskSnapshotPort;
+        this.approvalCheckpointPort = approvalCheckpointPort;
         this.objectMapper = objectMapper;
     }
 
     @Transactional(readOnly = true)
     public void handle(TaskDomainEvent event) {
-        List<WorkflowDefinition> activeWorkflows =
-                definitionRepository.findByTenantIdAndStatusOrderByNameAsc(
-                        event.tenantId(), WorkflowStatus.ACTIVE);
-        for (WorkflowDefinition definition : activeWorkflows) {
+        for (WorkflowDefinition definition : graphLoader.activeDefinitions(event.tenantId())) {
             executeTaskIfTriggered(definition, event);
         }
     }
@@ -66,8 +67,8 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
     @Override
     @Transactional(readOnly = true)
     public void requireFormSubmissionTarget(UUID tenantId, UUID workflowId) {
-        WorkflowDefinition definition = requireDefinition(tenantId, workflowId);
-        WorkflowNode trigger = triggerNode(definition);
+        WorkflowDefinition definition = graphLoader.requireDefinition(tenantId, workflowId);
+        WorkflowNode trigger = graphLoader.trigger(definition);
         if (trigger == null || trigger.getOperation() != WorkflowOperation.TRIGGER_FORM_SUBMITTED) {
             throw new IllegalArgumentException(
                     "Selected workflow must use the Form submitted trigger");
@@ -77,15 +78,15 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
     @Override
     @Transactional(readOnly = true)
     public void handleFormSubmission(WorkflowFormSubmissionCommand command) {
-        WorkflowDefinition definition = requireDefinition(command.tenantId(), command.workflowId());
+        WorkflowDefinition definition =
+                graphLoader.requireDefinition(command.tenantId(), command.workflowId());
         if (definition.getStatus() != WorkflowStatus.ACTIVE) {
             return;
         }
-        WorkflowNode trigger = triggerNode(definition);
+        WorkflowNode trigger = graphLoader.trigger(definition);
         if (trigger == null || trigger.getOperation() != WorkflowOperation.TRIGGER_FORM_SUBMITTED) {
             return;
         }
-
         TaskDomainEvent taskContext =
                 new TaskDomainEvent(
                         command.submissionId(),
@@ -108,8 +109,60 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
                 false);
     }
 
+    @Transactional(readOnly = true)
+    public void resumeApproval(ApprovalResolvedEvent event) {
+        try {
+            WorkflowDefinition definition =
+                    graphLoader.requireDefinition(event.tenantId(), event.workflowId());
+            if (definition.getDefinitionVersion() != event.workflowVersion()) {
+                executionRecorder.fail(
+                        event.workflowExecutionId(),
+                        "Workflow definition changed while approval was pending");
+                return;
+            }
+            TaskAutomationSnapshot snapshot =
+                    taskSnapshotPort.snapshot(event.tenantId(), event.projectId(), event.taskId());
+            TaskDomainEvent taskContext =
+                    new TaskDomainEvent(
+                            event.requestId(),
+                            TaskDomainEventType.CREATED,
+                            event.tenantId(),
+                            event.projectId(),
+                            event.taskId(),
+                            event.actorUserId(),
+                            snapshot.status(),
+                            snapshot.status(),
+                            snapshot.priority(),
+                            Instant.now());
+            String nextKey =
+                    event.outcome() == ApprovalRequestStatus.APPROVED
+                            ? event.approvedNextNodeKey()
+                            : event.rejectedNextNodeKey();
+            executionRecorder.resume(event.workflowExecutionId());
+            List<String> explanation = new ArrayList<>();
+            explanation.add(
+                    "Approval request " + event.requestId() + " resolved " + event.outcome());
+            traverse(
+                    definition,
+                    event.workflowExecutionId(),
+                    graphLoader.nodes(definition),
+                    graphLoader.edges(definition),
+                    taskContext,
+                    nextKey,
+                    snapshot,
+                    explanation);
+        } catch (RuntimeException exception) {
+            log.warn(
+                    "Workflow execution {} failed while resuming approval request {}",
+                    event.workflowExecutionId(),
+                    event.requestId(),
+                    exception);
+            executionRecorder.fail(event.workflowExecutionId(), safeMessage(exception));
+        }
+    }
+
     private void executeTaskIfTriggered(WorkflowDefinition definition, TaskDomainEvent event) {
-        WorkflowNode trigger = triggerNode(definition);
+        WorkflowNode trigger = graphLoader.trigger(definition);
         if (trigger == null || !matchesTaskTrigger(trigger.getOperation(), event.type())) {
             return;
         }
@@ -131,12 +184,6 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
             String sourceEntityType,
             UUID sourceEntityId,
             boolean taskEvent) {
-        List<WorkflowNode> nodes =
-                nodeRepository.findByTenantIdAndWorkflowIdOrderByNodeKeyAsc(
-                        definition.getTenantId(), definition.getId());
-        List<WorkflowEdge> edges =
-                edgeRepository.findByTenantIdAndWorkflowIdOrderBySourceNodeKeyAscBranchTypeAsc(
-                        definition.getTenantId(), definition.getId());
         Optional<UUID> executionId =
                 taskEvent
                         ? executionRecorder.start(
@@ -150,9 +197,24 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
         if (executionId.isEmpty()) {
             return;
         }
-
+        List<WorkflowNode> nodes = graphLoader.nodes(definition);
+        List<WorkflowEdge> edges = graphLoader.edges(definition);
+        Map<String, Map<WorkflowEdgeBranch, String>> outgoing = outgoing(edges);
+        String currentKey = next(outgoing, trigger.getNodeKey(), WorkflowEdgeBranch.DEFAULT);
+        TaskAutomationSnapshot snapshot =
+                new TaskAutomationSnapshot(event.status(), event.priority());
+        List<String> explanation = new ArrayList<>();
+        explanation.add("Matched " + trigger.getOperation());
         try {
-            runGraph(definition, executionId.get(), trigger, nodes, edges, event);
+            traverse(
+                    definition,
+                    executionId.get(),
+                    nodes,
+                    edges,
+                    event,
+                    currentKey,
+                    snapshot,
+                    explanation);
         } catch (RuntimeException exception) {
             log.warn(
                     "Workflow {} execution {} failed for source {}",
@@ -164,28 +226,21 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
         }
     }
 
-    private void runGraph(
+    private void traverse(
             WorkflowDefinition definition,
             UUID executionId,
-            WorkflowNode trigger,
             List<WorkflowNode> nodes,
             List<WorkflowEdge> edges,
-            TaskDomainEvent event) {
+            TaskDomainEvent event,
+            String currentKey,
+            TaskAutomationSnapshot initialSnapshot,
+            List<String> explanation) {
         Map<String, WorkflowNode> nodesByKey = new HashMap<>();
         for (WorkflowNode node : nodes) {
             nodesByKey.put(node.getNodeKey(), node);
         }
-        Map<String, Map<WorkflowEdgeBranch, String>> outgoing = new HashMap<>();
-        for (WorkflowEdge edge : edges) {
-            outgoing.computeIfAbsent(edge.getSourceNodeKey(), ignored -> new HashMap<>())
-                    .put(edge.getBranchType(), edge.getTargetNodeKey());
-        }
-
-        String currentKey = next(outgoing, trigger.getNodeKey(), WorkflowEdgeBranch.DEFAULT);
-        TaskAutomationSnapshot snapshot =
-                new TaskAutomationSnapshot(event.status(), event.priority());
-        List<String> explanation = new ArrayList<>();
-        explanation.add("Matched " + trigger.getOperation());
+        Map<String, Map<WorkflowEdgeBranch, String>> outgoing = outgoing(edges);
+        TaskAutomationSnapshot snapshot = initialSnapshot;
         int visited = 0;
 
         while (currentKey != null) {
@@ -198,7 +253,6 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
                 throw new IllegalStateException(
                         "Workflow edge references missing node: " + currentKey);
             }
-
             if (node.getNodeType() == WorkflowNodeType.CONDITION) {
                 boolean result = evaluateCondition(node, snapshot);
                 explanation.add(node.getOperation() + "=" + result);
@@ -210,14 +264,37 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
                 continue;
             }
             if (node.getNodeType() == WorkflowNodeType.ACTION) {
-                snapshot = applyAction(definition, executionId, node, event, snapshot);
+                if (node.getOperation() == WorkflowOperation.ACTION_REQUEST_APPROVAL) {
+                    UUID approvalDefinitionId = UUID.fromString(configurationValue(node));
+                    String approvedNext =
+                            next(outgoing, node.getNodeKey(), WorkflowEdgeBranch.APPROVED);
+                    String rejectedNext =
+                            next(outgoing, node.getNodeKey(), WorkflowEdgeBranch.REJECTED);
+                    UUID requestId =
+                            approvalCheckpointPort.openCheckpoint(
+                                    new ApprovalCheckpointCommand(
+                                            event.tenantId(),
+                                            event.projectId(),
+                                            approvalDefinitionId,
+                                            definition.getId(),
+                                            definition.getDefinitionVersion(),
+                                            executionId,
+                                            node.getNodeKey(),
+                                            event.taskId(),
+                                            event.actorUserId(),
+                                            approvedNext,
+                                            rejectedNext));
+                    explanation.add("Waiting for approval request " + requestId);
+                    executionRecorder.awaitApproval(executionId, String.join("; ", explanation));
+                    return;
+                }
+                snapshot = applyTaskAction(definition, executionId, node, event, snapshot);
                 explanation.add("Applied " + node.getOperation());
                 currentKey = next(outgoing, node.getNodeKey(), WorkflowEdgeBranch.DEFAULT);
                 continue;
             }
             throw new IllegalStateException("Only the first node may be a trigger");
         }
-
         executionRecorder.succeed(executionId, String.join("; ", explanation));
     }
 
@@ -234,7 +311,7 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
         };
     }
 
-    private TaskAutomationSnapshot applyAction(
+    private TaskAutomationSnapshot applyTaskAction(
             WorkflowDefinition definition,
             UUID executionId,
             WorkflowNode node,
@@ -246,7 +323,7 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
                     case ACTION_SET_TASK_STATUS -> TaskAutomationMutationType.SET_STATUS;
                     default ->
                             throw new IllegalStateException(
-                                    "Unsupported workflow action: " + node.getOperation());
+                                    "Unsupported task workflow action: " + node.getOperation());
                 };
         TaskAutomationSnapshot updated =
                 taskMutationPort.mutate(
@@ -262,21 +339,13 @@ public class WorkflowRuntimeService implements WorkflowFormSubmissionPort {
         return updated == null ? snapshot : updated;
     }
 
-    private WorkflowDefinition requireDefinition(UUID tenantId, UUID workflowId) {
-        return definitionRepository
-                .findByTenantIdAndId(tenantId, workflowId)
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Workflow not found: " + workflowId));
-    }
-
-    private WorkflowNode triggerNode(WorkflowDefinition definition) {
-        return nodeRepository
-                .findByTenantIdAndWorkflowIdOrderByNodeKeyAsc(
-                        definition.getTenantId(), definition.getId())
-                .stream()
-                .filter(node -> node.getNodeType() == WorkflowNodeType.TRIGGER)
-                .findFirst()
-                .orElse(null);
+    private Map<String, Map<WorkflowEdgeBranch, String>> outgoing(List<WorkflowEdge> edges) {
+        Map<String, Map<WorkflowEdgeBranch, String>> outgoing = new HashMap<>();
+        for (WorkflowEdge edge : edges) {
+            outgoing.computeIfAbsent(edge.getSourceNodeKey(), ignored -> new HashMap<>())
+                    .put(edge.getBranchType(), edge.getTargetNodeKey());
+        }
+        return outgoing;
     }
 
     private String configurationValue(WorkflowNode node) {
