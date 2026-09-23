@@ -328,8 +328,10 @@ function CommentCard({
     const [error, setError] = useState<string | null>(null)
 
     const focused = comment.id === focusCommentId
+    const tenantAuthored = comment.authorType === 'TENANT_USER'
+    const threadingEnabled = allowThreading && tenantAuthored
     const linkedReply =
-        allowThreading && targetReply?.parentCommentId === comment.id ? targetReply : undefined
+        threadingEnabled && targetReply?.parentCommentId === comment.id ? targetReply : undefined
     const repliesExpanded = expanded || Boolean(linkedReply)
 
     const replyParams = { page: 0, size: 50, sortDir: 'asc' as const }
@@ -339,7 +341,7 @@ function CommentCard({
         taskId,
         comment.id,
         replyParams,
-        allowThreading && repliesExpanded && comment.replyCount > 0,
+        threadingEnabled && repliesExpanded && comment.replyCount > 0,
     )
     const createReplyMutation = useCreateTaskCommentReply(tenantId, projectId, taskId)
     const updateMutation = useUpdateTaskComment(tenantId, projectId, taskId)
@@ -351,7 +353,7 @@ function CommentCard({
         () => new Map(members.map((member) => [member.userId, member])),
         [members],
     )
-    const ownComment = comment.authorUserId === currentUserId
+    const ownComment = tenantAuthored && comment.authorUserId === currentUserId
     const canMutateBody = ownComment && !readOnly && !comment.deleted
     const replyAlreadyLoaded = Boolean(
         linkedReply && repliesQuery.data?.content.some((reply) => reply.id === linkedReply.id),
@@ -475,6 +477,9 @@ function CommentCard({
                             sx={{ alignItems: 'center', flexWrap: 'wrap' }}
                         >
                             <Typography variant="subtitle2">{comment.authorName}</Typography>
+                            {!tenantAuthored && (
+                                <Chip label="Guest" size="small" variant="outlined" />
+                            )}
                             {comment.pinned && (
                                 <Chip
                                     icon={<PushPinRoundedIcon />}
@@ -494,7 +499,11 @@ function CommentCard({
                         </Typography>
                     </Box>
 
-                    {!readOnly && allowPinning && !comment.deleted && !comment.parentCommentId && (
+                    {!readOnly &&
+                        allowPinning &&
+                        tenantAuthored &&
+                        !comment.deleted &&
+                        !comment.parentCommentId && (
                         <Tooltip title={comment.pinned ? 'Unpin comment' : 'Pin comment'}>
                             <IconButton
                                 aria-label={`${comment.pinned ? 'Unpin' : 'Pin'} comment by ${comment.authorName}`}
@@ -581,7 +590,7 @@ function CommentCard({
                     </Stack>
                 )}
 
-                {allowThreading && !comment.deleted && (
+                {threadingEnabled && !comment.deleted && (
                     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         {comment.replyCount > 0 && (
                             <Button
@@ -605,7 +614,7 @@ function CommentCard({
                     </Stack>
                 )}
 
-                {allowThreading && replying && !readOnly && (
+                {threadingEnabled && replying && !readOnly && (
                     <Box sx={{ marginLeft: { xs: 0, sm: 3 } }}>
                         <CommentComposer
                             compact
@@ -617,7 +626,7 @@ function CommentCard({
                     </Box>
                 )}
 
-                {allowThreading && repliesExpanded && comment.replyCount > 0 && (
+                {threadingEnabled && repliesExpanded && comment.replyCount > 0 && (
                     <Box
                         sx={{
                             borderLeft: 2,
