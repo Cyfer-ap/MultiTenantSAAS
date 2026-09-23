@@ -150,6 +150,10 @@ public class TaskCollaborationService {
         TaskComment parent =
                 getCommentForUpdateOrThrow(tenantId, projectId, taskId, parentCommentId);
         ensureTopLevelComment(parent);
+        if (parent.isExternalGuestAuthor()) {
+            throw new IllegalArgumentException(
+                    "External guest comments do not support threaded replies");
+        }
         if (parent.isDeleted()) {
             throw new IllegalArgumentException("Deleted comments cannot receive new replies");
         }
@@ -262,6 +266,9 @@ public class TaskCollaborationService {
         AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
         TaskComment comment = getCommentForUpdateOrThrow(tenantId, projectId, taskId, commentId);
         ensureTopLevelComment(comment);
+        if (comment.isExternalGuestAuthor()) {
+            throw new IllegalArgumentException("External guest comments cannot be pinned");
+        }
         if (comment.isDeleted()) {
             throw new IllegalArgumentException("Deleted comments cannot be pinned");
         }
@@ -302,6 +309,9 @@ public class TaskCollaborationService {
         AppUser actor = currentActorService.getRequiredActiveActor(tenantId, jwt);
         TaskComment comment = getCommentForUpdateOrThrow(tenantId, projectId, taskId, commentId);
         ensureTopLevelComment(comment);
+        if (comment.isExternalGuestAuthor()) {
+            throw new IllegalArgumentException("External guest comments cannot be unpinned");
+        }
         if (!comment.isPinned()) {
             return mapToResponse(comment);
         }
@@ -424,7 +434,8 @@ public class TaskCollaborationService {
     }
 
     private void ensureCommentAuthor(TaskComment comment, AppUser actor) {
-        if (!comment.getAuthorUser().getId().equals(actor.getId())) {
+        AppUser author = comment.getAuthorUser();
+        if (comment.isExternalGuestAuthor() || author == null || !author.getId().equals(actor.getId())) {
             throw new AccessDeniedException("Only the comment author can modify this comment");
         }
     }
@@ -465,6 +476,10 @@ public class TaskCollaborationService {
 
     private TaskCommentResponse mapToResponse(TaskComment comment) {
         AppUser author = comment.getAuthorUser();
+        String authorName =
+                author == null ? comment.getExternalGuestName() : author.getFullName();
+        String authorEmail =
+                author == null ? comment.getExternalGuestEmail() : author.getEmail();
         List<TaskCommentMentionResponse> mentions =
                 comment.getMentions().stream()
                         .map(TaskCommentMention::getMentionedUser)
@@ -482,9 +497,11 @@ public class TaskCollaborationService {
                 comment.getId(),
                 comment.getTask().getId(),
                 parent == null ? null : parent.getId(),
-                author.getId(),
-                author.getFullName(),
-                author.getEmail(),
+                comment.getAuthorType(),
+                author == null ? null : author.getId(),
+                comment.getExternalAccessGrantId(),
+                authorName,
+                authorEmail,
                 comment.isDeleted() ? null : comment.getBody(),
                 comment.isDeleted(),
                 comment.getReplyCount(),
