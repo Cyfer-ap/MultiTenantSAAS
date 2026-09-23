@@ -114,6 +114,8 @@ public class SecurityConfig {
                                                 "/api/billing/webhooks/stripe",
                                                 "/api/billing/webhooks/razorpay")
                                         .permitAll()
+                                        .requestMatchers("/api/public/guest-portal/**")
+                                        .permitAll()
                                         .requestMatchers("/api/**")
                                         .authenticated()
                                         .anyRequest()
