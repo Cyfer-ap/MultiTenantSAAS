@@ -62,11 +62,11 @@ Historical planning/recovery files may remain for provenance, but they are not c
 
 ## Current direction
 
-The committed differentiated sequence is complete through **Forms -> Workflow Engine (#152)**. Forms provides bounded authenticated project intake, task creation through the task-owned port, submission provenance and optional entry into the existing workflow runtime.
+The committed differentiated sequence is complete through **Approval Workflows (#154)**. Approval Workflows provides bounded project-scoped human checkpoints, reviewer re-authorization, durable decision provenance and pause/resume of the existing workflow execution through narrow contracts.
 
-Portable migrations extend through **V52** on `main`. V52 is immutable; later persistence starts at **V53+**.
+Portable migrations extend through **V53** on `main`. V53 is immutable; later persistence starts at **V54+**.
 
-**Approval Workflows is the active next feature.** After that continue with Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+**Client / Guest Portal is the active next feature.** After that continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 Live whiteboard presence/cursors remain a later optional collaboration enhancement. Bulk actions/CSV, broader custom fields, knowledge/documents and analytics remain valuable but parked behind the committed differentiated sequence unless explicitly reprioritized.
 
