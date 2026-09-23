@@ -31,21 +31,17 @@ function taskStatusLabel(status: string): string {
 }
 
 export function GuestPortalPage() {
-    const [sessionToken, setSessionToken] = useState<string | null>(() => {
-        if (
-            typeof window !== 'undefined' &&
-            new URLSearchParams(window.location.hash.slice(1)).has('token')
-        ) {
-            return null
-        }
-        return guestSessionStorage.read()
+    const [invitationToken] = useState<string | null>(() => {
+        if (typeof window === 'undefined') return null
+        return new URLSearchParams(window.location.hash.slice(1)).get('token')
     })
-    const [exchangePending, setExchangePending] = useState(false)
+    const [sessionToken, setSessionToken] = useState<string | null>(() =>
+        invitationToken ? null : guestSessionStorage.read(),
+    )
+    const [exchangePending, setExchangePending] = useState(Boolean(invitationToken))
     const [accessError, setAccessError] = useState<string | null>(null)
 
     useEffect(() => {
-        const invitationToken = new URLSearchParams(window.location.hash.slice(1)).get('token')
-
         if (!invitationToken) {
             return
         }
@@ -55,8 +51,6 @@ export function GuestPortalPage() {
             '',
             `${window.location.pathname}${window.location.search}`,
         )
-        setExchangePending(true)
-        setAccessError(null)
 
         let active = true
 
@@ -86,7 +80,7 @@ export function GuestPortalPage() {
         return () => {
             active = false
         }
-    }, [])
+    }, [invitationToken])
 
     const sessionQuery = useQuery({
         queryKey: ['guest-portal-session', sessionToken],
@@ -105,11 +99,14 @@ export function GuestPortalPage() {
     })
 
     useEffect(() => {
-        if (!sessionQuery.isError) return
-        guestSessionStorage.clear()
-        setSessionToken(null)
-        setAccessError('This guest session has expired or was revoked.')
+        if (sessionQuery.isError) {
+            guestSessionStorage.clear()
+        }
     }, [sessionQuery.isError])
+
+    const visibleAccessError = sessionQuery.isError
+        ? 'This guest session has expired or was revoked.'
+        : accessError
 
     const clearSession = (): void => {
         guestSessionStorage.clear()
@@ -139,13 +136,22 @@ export function GuestPortalPage() {
                         </Paper>
                     ) : null}
 
-                    {accessError ? (
-                        <Alert severity="error">
-                            {accessError} Ask the project team for a new access link if needed.
+                    {visibleAccessError ? (
+                        <Alert
+                            action={
+                                sessionQuery.isError ? (
+                                    <Button color="inherit" onClick={clearSession} size="small">
+                                        Clear session
+                                    </Button>
+                                ) : undefined
+                            }
+                            severity="error"
+                        >
+                            {visibleAccessError} Ask the project team for a new access link if needed.
                         </Alert>
                     ) : null}
 
-                    {!exchangePending && !sessionToken && !accessError ? (
+                    {!exchangePending && !sessionToken && !visibleAccessError ? (
                         <Alert severity="info">
                             Open the one-time guest link supplied by the project team to access this
                             portal.
