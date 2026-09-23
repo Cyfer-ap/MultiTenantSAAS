@@ -44,6 +44,7 @@ When a fact changes, update the document that owns that fact rather than copying
 - `visual_workflow_builder.md` — V50 workflow graph, runtime/event boundaries, task mutation port, execution history and visual canvas contract
 - `forms_workflow_engine.md` — V52 bounded project intake forms, task-creation boundary, submission provenance and optional form-submitted workflow entry
 - `approval_workflows.md` — V53 project-scoped human approval definitions, immutable decision provenance, reviewer re-authorization and workflow pause/resume contract
+- `client_guest_portal.md` — V54 external grant/session boundary, guest capability model and project/task projection contracts
 - `project_simulation.md` — advisory What-If baseline/simulation APIs, narrow source ports, scenario validation and private frontend workspace
 - `collaborative_whiteboard.md` — V51 project-scoped board/document persistence, optimistic concurrency, project/task ports, persisted visual workspace and node-to-task conversion contract
 - `project_risk_radar.md` — explainable Risk Radar signal model, bounds, narrow task/dependency sources, guardrails and project-facing read-only surface
