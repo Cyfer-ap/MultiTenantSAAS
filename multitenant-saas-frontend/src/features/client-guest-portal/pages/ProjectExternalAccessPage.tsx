@@ -119,8 +119,13 @@ export function ProjectExternalAccessPage() {
 
     const copyInviteLink = async (): Promise<void> => {
         if (!inviteLink) return
-        await navigator.clipboard.writeText(inviteLink)
-        setFeedback('Guest link copied.')
+
+        try {
+            await navigator.clipboard.writeText(inviteLink)
+            setFeedback('Guest link copied.')
+        } catch {
+            setFeedback('Copy failed. Select and copy the guest link manually.')
+        }
     }
 
     return (
