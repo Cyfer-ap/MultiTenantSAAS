@@ -77,6 +77,7 @@ Do not fake guests as `AppUser` authors/reviewers and do not add guest exception
 
 Detailed contract: `guides/client_guest_portal.md`.
 
+## Approval Workflows checkpoint — #154
 
 Approval Workflows is complete as an explicit project-scoped human-decision domain that composes with the existing workflow runtime rather than storing approval state in task/workflow services.
 
