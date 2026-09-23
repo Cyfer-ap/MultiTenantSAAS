@@ -76,6 +76,7 @@ Established domains/surfaces include:
 - recurring work and task/project templates
 - Visual Workflow Builder and execution history
 - bounded internal Forms -> Workflow intake
+- Approval Workflows human checkpoints
 - Project Simulation / What-If Engine
 - Collaborative Whiteboard
 - Project Health / Risk Radar
@@ -94,7 +95,7 @@ Established domains/surfaces include:
 - tenant API keys/external APIs
 - tenant/platform audit trails
 
-The active next product slice is **Approval Workflows**. It must extend the existing workflow architecture through an explicit human-decision domain rather than turning workflow/task services into approval state owners.
+The active next product slice is **Client / Guest Portal**. It must introduce a separate external-access boundary rather than modeling guests as weak tenant members or scattering guest exceptions through existing authorization code.
 
 ## Reference composition patterns
 
@@ -215,6 +216,31 @@ Definitions/submissions are bounded and non-executable. Supported v1 field types
 
 Detailed semantics: `forms_workflow_engine.md`.
 
+### Approval Workflows
+
+V53 introduces the explicit `approvals` human-decision domain:
+
+```text
+workflow runtime
+    -> ApprovalCheckpointPort
+    -> approvals
+
+approvals
+    -> ApprovalReviewerEligibilityPort
+    -> project-owned eligibility adapter
+
+approvals
+    -> ApprovalResolvedEvent
+    -> workflow-owned resume listener/runtime
+    -> TaskAutomationMutationPort
+```
+
+Approval definitions/stages/reviewer configuration and request-time snapshots are bounded and project scoped. Stored reviewer configuration preserves provenance but never grants authority; current reviewer eligibility is revalidated at decision time. Racing/replayed decisions are guarded by locking/versioning, and self-approval is an explicit stage policy.
+
+Workflow approval nodes use typed `APPROVED` / `REJECTED` branches, pause the same execution as `WAITING_APPROVAL`, and resume it after terminal human decision. Any downstream task mutation still re-enters the task-owned mutation contract.
+
+Detailed semantics: `approval_workflows.md`.
+
 ### Project Simulation
 
 ```text
@@ -255,7 +281,7 @@ Detailed semantics: `project_risk_radar.md`.
 
 Production uses shared-schema multi-tenancy with explicit tenant ownership. Repository/query methods for tenant-owned resources should include tenant scope; cross-tenant resource IDs are never trusted without ownership validation.
 
-Flyway exclusively owns production schema evolution. Portable common migrations extend through **V52**:
+Flyway exclusively owns production schema evolution. Portable common migrations extend through **V53**:
 
 - V45 — personal workspace favorites/recent items
 - V46 — saved views
@@ -265,8 +291,9 @@ Flyway exclusively owns production schema evolution. Portable common migrations 
 - V50 — workflow definitions/nodes/edges/executions
 - V51 — project whiteboards/nodes/connectors
 - V52 — project form definitions/fields/submissions
+- V53 — approval definitions/stages/reviewers + durable request snapshots; workflow approval branches/state
 
-Project Simulation and Risk Radar require no migration. Applied migrations are append-only. **V52 is immutable; future persistence starts at V53+.**
+Project Simulation and Risk Radar require no migration. Applied migrations are append-only. **V53 is immutable; future persistence starts at V54+.**
 
 ## Billing and integrations
 
@@ -302,6 +329,7 @@ Current differentiated/product-enrichment ownership includes:
 - recurring/template feature modules under Work Automation
 - `features/workflow-builder`
 - `features/forms`
+- `features/approvals`
 - `features/project-simulation`
 - `features/whiteboards`
 - `features/project-risk`
@@ -336,34 +364,34 @@ Current bounded patterns include:
 - bounded task/project template catalog/snapshot sizes
 - bounded workflow graph nodes/edges and execution history
 - bounded form fields/options/payloads
+- bounded approval stages/reviewer sets/history
 - bounded simulation tasks/dependencies/overrides
 - bounded whiteboard nodes/connectors
 - bounded Risk Radar tasks/dependencies/signals
 
 Large-tenant latency, sustained mutation throughput, database contention, scheduler contention, delivery throughput and heavy integration workloads remain unproven until measured. Optimize from evidence rather than pre-emptively introducing distributed infrastructure.
 
-## Next architecture direction — Approval Workflows
+## Next architecture direction — Client / Guest Portal
 
-Approval Workflows should add an explicit human-decision boundary rather than embed approval state in task or workflow services.
+Client / Guest Portal should create an explicit external-access domain and capability boundary. A guest is not a tenant member, does not receive ordinary RBAC assignments, and must never be accepted by normal tenant-authenticated APIs.
 
 Target composition:
 
 ```text
-workflow runtime
-      ↓ narrow approval entry/wait contract
-approval domain
-      ↓ reviewer eligibility/authorization contract
-human decision
-      ↓ narrow workflow resume/outcome event
-workflow runtime
-      ↓ existing domain-owned mutation ports
+external invitation/access grant
+        ↓ hashed, bounded, revocable credential
+external-access domain
+        ↓ grant-scoped project/resource projection ports
+owning domains
+        ↓ explicit comment/review/approval ports for allowed mutations
+audit/provenance
 ```
 
-The approval domain should own bounded definition/stage configuration plus durable request/decision provenance. It must not grant reviewer authority merely because a user appears in configuration; reviewer eligibility must be revalidated at decision time.
+A grant must bind one tenant to explicit project/resource capabilities, expiry and revocation state. Every read or mutation must resolve grant -> tenant -> permitted resource before exposure/action. Resource IDs supplied by the guest are never sufficient authorization.
 
-Concurrency/idempotency must make one logical stage decision deterministic under racing/replayed requests. Self-approval/separation-of-duties, expiry, cancellation, reassignment and escalation need explicit product semantics rather than accidental defaults.
+The first slice should prefer a small read model plus bounded comments/review/approval responses. External approval must intersect an active grant with an approval request that explicitly allows that external review path; portal access alone is not reviewer authority.
 
-If the slice needs persistence, start at **V53+**. External/client approvals belong behind the later Client / Guest Portal security boundary.
+Public-facing authentication/mutation endpoints require anti-enumeration, rate limiting, abuse controls, hashed/rotatable credentials, deterministic revocation/session invalidation and immutable guest/grant provenance. If persistence is required, start at **V54+**.
 
 ## Production boundary
 

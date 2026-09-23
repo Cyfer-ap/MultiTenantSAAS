@@ -1,6 +1,6 @@
 # MultiTenantSAAS — Development Handoff
 
-Updated: 2026-09-16
+Updated: 2026-09-23
 
 This is the **single repository-side resume document**. Current status lives in `CHECKPOINT.md`; architecture/quality rules live in `AGENTS.md` and `guides/ENGINEERING_STANDARDS.md`.
 
@@ -13,15 +13,16 @@ This is the **single repository-side resume document**. Current status lives in 
 5. `guides/recurring_work_and_templates.md`
 6. `guides/visual_workflow_builder.md`
 7. `guides/forms_workflow_engine.md`
-8. `guides/project_simulation.md`
-9. `guides/collaborative_whiteboard.md`
-10. `guides/project_risk_radar.md`
-11. the focused guide for the domain being changed
-12. `wiki/Roadmap.md` when planning product direction
+8. `guides/approval_workflows.md`
+9. `guides/project_simulation.md`
+10. `guides/collaborative_whiteboard.md`
+11. `guides/project_risk_radar.md`
+12. the focused guide for the domain being changed
+13. `wiki/Roadmap.md` when planning product direction
 
 ## Current state
 
-Major product milestones are complete through **Forms -> Workflow Engine #152**:
+Major product milestones are complete through **Approval Workflows #154**:
 
 - billing/catalog — #106
 - tenant outbound webhooks — #112
@@ -42,8 +43,9 @@ Major product milestones are complete through **Forms -> Workflow Engine #152**:
 - Collaborative Whiteboard foundation + visual workspace — #146/#147
 - Project Health / Risk Radar — #148
 - Forms -> Workflow Engine — #152
+- Approval Workflows — #154
 
-Portable PostgreSQL Flyway migrations extend through **V52**. Never modify V52 or earlier after merge/application; later persistence starts at **V53+**.
+Portable PostgreSQL Flyway migrations extend through **V53**. Never modify V53 or earlier after merge/application; later persistence starts at **V54+**.
 
 Stripe remains the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
@@ -122,38 +124,67 @@ V50 owns workflow definitions/nodes/edges/executions. Task lifecycle reaches wor
 
 Recurring work and templates continue through task-owned `TaskCreationPort`; project-template creation crosses through project-owned `ProjectCreationPort`.
 
-## Resume here — Approval Workflows
+## Approval Workflows checkpoint — #154
 
-The next committed feature is **Approval Workflows**.
+Backend boundary:
 
-Build it as an explicit human-decision domain that composes with the existing workflow runtime. Do not bolt approval state into `ProjectTaskService` or turn `WorkflowService` into a cross-domain god-service.
+```text
+workflow runtime
+    -> ApprovalCheckpointPort
+    -> approvals domain
+
+approvals
+    -> ApprovalReviewerEligibilityPort
+    -> project-owned reviewer eligibility adapter
+
+approvals
+    -> ApprovalResolvedEvent
+    -> workflow-owned resume listener/runtime
+    -> TaskAutomationMutationPort
+```
+
+V53 owns reusable project-scoped approval definitions/stages/reviewer configuration plus durable request, stage-snapshot and reviewer-snapshot provenance. Approval nodes use explicit `APPROVED` / `REJECTED` branches and pause the same workflow execution as `WAITING_APPROVAL`.
+
+Reviewer authority is never derived from stored configuration alone: current project eligibility is revalidated at decision time. Self-approval is an explicit stage policy. Racing/replayed decisions are guarded by request locking/versioning. Any downstream task mutation re-enters `TaskAutomationMutationPort`.
+
+The internal approval workspace provides definition/stage editing, reviewer selection, inbox decisions and immutable history. Guest/client approvals, expiry, escalation, reassignment, quorum and parallel stages remain deliberately outside v1.
+
+Detailed rules: `guides/approval_workflows.md`.
+
+## Resume here — Client / Guest Portal
+
+The next committed feature is **Client / Guest Portal**.
+
+Build it as a separate external-access domain. Do **not** model guests as low-privilege tenant users or add broad guest branches throughout existing authorization code.
 
 Recommended first slice:
 
-1. define bounded, reusable approval definitions/stages with explicit versioning and lifecycle
-2. define durable approval request/decision records with immutable reviewer/outcome/timestamp provenance
-3. keep approval targets tenant-scoped and tie each request to an explicit authorized work/workflow context
-4. resolve eligible reviewers through a narrow authorization/membership contract; approval configuration itself must never grant authority
-5. add a narrow workflow-owned waiting/resume contract so a workflow can create an approval checkpoint and continue on approved/rejected outcome without creating a second workflow runtime
-6. ensure any mutation after approval still crosses the target domain's narrow mutation port and re-checks current authority
-7. make decision handling concurrency-safe and idempotent so one logical stage cannot be approved/rejected twice by racing requests
-8. expose an internal reviewer inbox/history surface before considering guest/client approvals
-9. add deterministic tests for tenant isolation, reviewer eligibility, stale/replayed decisions, workflow resume semantics, bounds and auditability
-10. if persistence is required, start at **V53+**; never edit V52 or earlier
+1. define a bounded, revocable external-access grant tied to one tenant and explicit project/resource scope
+2. define a guest identity/session mechanism separate from normal tenant membership; store only hashed/rotatable invitation or access credentials
+3. expose a deliberately small read model first: project summary, selected tasks/status/due dates and approval/review items explicitly shared with the grant
+4. add bounded guest comments/review responses only through narrow owning-domain ports; do not let the portal write task/comment/approval repositories directly
+5. integrate external approval only through an approval-owned narrow external-decision contract that revalidates the grant and request scope; do not treat portal access as reviewer authority by itself
+6. make grant expiry/revocation/session invalidation deterministic and auditable
+7. prevent enumeration and cross-tenant/resource substitution; every request must bind grant -> tenant -> allowed project/resource before data access
+8. apply explicit rate limits and abuse controls to public/guest authentication and mutation endpoints
+9. keep attachments/downloads out of the first slice unless a separate signed-download authorization path is designed
+10. add deterministic tests for tenant isolation, grant scope, revocation/expiry, token hashing/rotation, stale sessions, comment/review authorization and external approval boundaries
+11. if persistence is required, start at **V54+**; never edit V53 or earlier
 
-Guardrails and design decisions that must remain explicit:
+Guardrails:
 
-- no approval definition may grant project/task/workflow access
-- workflow administration permission does not imply authority to approve or mutate the target resource
-- reviewer eligibility is checked at decision time, not assumed forever from definition creation
-- self-approval/separation-of-duties behavior must be an explicit policy choice, not an accidental side effect
-- approval stages/reviewer sets/payloads remain bounded
-- no arbitrary expressions or user-supplied executable code
-- cancellation/expiry/reassignment/escalation semantics must be explicit before they are exposed
-- external/client approvals belong behind the later Client / Guest Portal security boundary
-- immutable decision history must remain auditable even if the underlying workflow definition changes later
+- external grants are capabilities, not tenant membership or general RBAC assignments
+- a grant never implies visibility of the whole project or tenant
+- guest identity must not be accepted by ordinary tenant-authenticated APIs
+- resource IDs supplied by the guest are never trusted without grant-scoped ownership validation
+- revoke/expire must cut off future reads and mutations even if a browser retains an old session
+- external comments/reviews/approvals must retain immutable guest/grant provenance
+- approval configuration still does not grant authority; external approval must explicitly intersect an active external grant with the approval request's allowed external-review scope
+- no public arbitrary search, user directory, tenant navigation, billing/admin surfaces or workflow administration
+- public endpoints require anti-enumeration, rate-limit and abuse protections
+- new functionality stays feature-local and crosses existing domains only through narrow contracts/events
 
-After Approval Workflows continue with Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+After Client / Guest Portal continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 ## Validation before merge
 

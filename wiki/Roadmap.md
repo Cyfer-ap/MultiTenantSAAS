@@ -21,6 +21,7 @@
 - Collaborative Whiteboard — #146/#147
 - Project Health / Risk Radar — #148
 - **Forms -> Workflow Engine — #152**
+- **Approval Workflows — #154**
 
 ## Forms -> Workflow Engine — completed through #152
 
@@ -99,60 +100,64 @@ The older plan to move directly into bulk actions/CSV remains deliberately pause
 3. ✅ **Collaborative Whiteboard** — completed through #146/#147; live cursors/presence remain optional later enhancement work.
 4. ✅ **Project Health / Risk Radar** — completed through #148.
 5. ✅ **Forms -> Workflow Engine** — completed through #152.
-6. 🚧 **Approval Workflows — ACTIVE NOW** — reusable human review/approve/reject checkpoints that compose with the workflow engine rather than creating a separate approval silo.
-7. **Client / Guest Portal** — bounded external visibility, comments, review requests and approvals without broad tenant membership.
+6. ✅ **Approval Workflows** — completed through #154 with bounded human checkpoints, reviewer re-authorization and same-execution workflow resume.
+7. 🚧 **Client / Guest Portal — ACTIVE NOW** — bounded external visibility, comments, review requests and approvals without broad tenant membership.
 8. **Team Workload Engine** — capacity planning, overload detection and reassignment support without employee-surveillance scoring.
 9. **Workspace Knowledge Graph** — permission-aware graph connecting projects, tasks, people, decisions, documents and dependencies.
 10. **AI / Agent Teammates** — bounded agent work only after workflow, knowledge and authorization context are mature; human checkpoints remain mandatory for consequential actions.
 
-## Feature 6 — Approval Workflows — ACTIVE
+## Feature 6 — Approval Workflows — completed through #154
 
-Approval Workflows should add durable human checkpoints to the existing automation architecture without turning task or workflow services into approval-state owners.
+Delivered v1 includes bounded project-scoped approval definitions/stages, reviewer configuration and request-time snapshots; durable decision provenance; current reviewer re-authorization; explicit self-approval policy; concurrency/replay-safe decisions; reviewer inbox/history; and workflow pause/resume through typed `APPROVED` / `REJECTED` branches.
+
+Architecture:
+
+```text
+workflow runtime -> ApprovalCheckpointPort -> approvals
+approvals -> ApprovalReviewerEligibilityPort -> project eligibility
+approvals -> ApprovalResolvedEvent -> workflow runtime -> TaskAutomationMutationPort
+```
+
+V53 is now the immutable migration boundary. Public/guest approvals, escalation, expiry, reassignment, quorum and parallel stages remain outside this slice.
+
+Detailed contract: `guides/approval_workflows.md`.
+
+## Feature 7 — Client / Guest Portal — ACTIVE
+
+The portal should provide bounded external collaboration without making clients/guests broad tenant members.
 
 ### First-slice product scope
 
-- bounded, reusable versioned approval definitions/stages
-- durable approval requests and immutable decision history
-- explicit tenant/target/workflow provenance
-- reviewer eligibility resolved and revalidated through narrow authorization/membership contracts
-- approve/reject actions with deterministic concurrency/idempotency semantics
-- narrow workflow waiting/resume integration
-- internal reviewer inbox and decision history
-- explicit behavior for stale/replayed decisions
+- revocable, expiring tenant/project/resource-scoped external access grants
+- separate guest invitation/session identity with hashed/rotatable credentials
+- a small explicitly shared project/task/review projection
+- bounded guest comments and review responses through owning-domain ports
+- external approval through an approval-owned contract only when both grant scope and request scope allow it
+- immutable guest/grant provenance
+- deterministic revocation/session invalidation
+- anti-enumeration, rate limiting and abuse controls on public endpoints
 
 ### Architecture direction
 
-Create an explicit approval/human-decision domain. Do not put approval request/decision persistence inside `ProjectTaskService` or expand `WorkflowService` into a human-work god-service.
-
-Target composition:
-
 ```text
-workflow runtime
-      ↓ approval entry/wait contract
-approval domain
-      ↓ reviewer authorization contract
-human decision
-      ↓ outcome/resume contract or event
-workflow runtime
-      ↓ existing domain-owned mutation ports
+external grant/credential
+      ↓
+external-access domain
+      ↓ grant-scoped projection/mutation contracts
+owning project/task/comment/approval domains
 ```
 
-The approval domain owns approval definitions, request state and decision provenance. It does not own target project/task/workflow repositories.
+A guest is not a tenant member. Stored grants are explicit capabilities, not RBAC assignments, and every resource reference must be revalidated against the active grant before exposure or mutation.
 
-### Guardrails and explicit policy decisions
+### Guardrails
 
-- approval configuration never grants reviewer or target-resource access
-- reviewer eligibility is rechecked at decision time
-- workflow administration permission does not imply approval permission
-- post-decision target mutations still pass through the owning domain's authorization/lifecycle contract
-- one logical stage cannot be decided twice through racing/replayed requests
-- stage count, reviewer sets and payloads remain bounded
-- no arbitrary executable code or expression engine
-- self-approval/separation-of-duties must be explicitly configured/designed rather than accidental
-- expiry, cancellation, reassignment and escalation semantics must be explicit before they are exposed
-- external/client approvals belong behind the later Client / Guest Portal security boundary
-- decision provenance remains auditable after definition changes
-- new persistence starts at V53+; V52 and earlier remain immutable
+- no whole-tenant or whole-project visibility by default
+- no guest identity on normal tenant-authenticated APIs
+- no public arbitrary search, user directory, billing/admin or workflow-management surface
+- revocation/expiry must invalidate future access even with stale browser state
+- portal access alone is not approval authority
+- public endpoints require anti-enumeration, rate-limit and abuse protections
+- new persistence starts at V54+; V53 and earlier remain immutable
 
 ## Collaborative Whiteboard — optional later live-collaboration slice
 

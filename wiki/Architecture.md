@@ -68,6 +68,7 @@ Established capabilities include:
 - recurring work and task/project templates
 - Visual Workflow Builder and execution history
 - Forms -> Workflow Engine internal intake
+- Approval Workflows human checkpoints
 - Project Simulation / What-If Engine
 - Collaborative Whiteboard
 - Project Health / Risk Radar
@@ -82,7 +83,7 @@ Established capabilities include:
 - tenant API keys/external APIs
 - auditability and observability
 
-**Approval Workflows is the active next product slice.**
+**Client / Guest Portal is the active next product slice.**
 
 ## Cross-domain composition patterns
 
@@ -110,6 +111,10 @@ Visual Workflows
 Forms
     forms -> ProjectAccessPort + TaskCreationPort + WorkflowFormSubmissionPort
 
+Approval Workflows
+    workflow -> ApprovalCheckpointPort -> approvals -> ApprovalResolvedEvent -> workflow runtime
+    approvals -> ApprovalReviewerEligibilityPort -> project-owned eligibility adapter
+
 Project Simulation
     projectsimulation -> task/dependency source ports
 
@@ -130,7 +135,9 @@ V50 workflow definitions are bounded typed acyclic graphs. Task lifecycle enters
 
 V52 Forms owns project-scoped form definitions, fields and submissions. Forms never writes task/project/workflow persistence directly. Accepted submissions create tasks through `TaskCreationPort`; optional form-specific workflow dispatch occurs after commit through `WorkflowFormSubmissionPort`.
 
-Detailed repository contracts: `guides/recurring_work_and_templates.md`, `guides/visual_workflow_builder.md` and `guides/forms_workflow_engine.md`.
+V53 Approval Workflows owns bounded approval definitions/stages, durable request snapshots and decision provenance. Reviewer eligibility is revalidated at decision time. Workflow approval nodes pause the same execution and resume through explicit `APPROVED` / `REJECTED` branches; downstream task mutations still cross `TaskAutomationMutationPort`.
+
+Detailed repository contracts: `guides/recurring_work_and_templates.md`, `guides/visual_workflow_builder.md`, `guides/forms_workflow_engine.md` and `guides/approval_workflows.md`.
 
 ## Advisory/project-tool domains
 
@@ -142,7 +149,7 @@ Collaborative Whiteboard owns bounded persisted visual documents. Sticky/text no
 
 Authorization is permission- and scope-oriented rather than role-name-only. Explain Access and enforcement use the same evaluator. Delegated authority is bounded by a direct parent assignment and revalidated at access time.
 
-Workflow, Forms and future Approval configuration never grants authority to target resources. Authorization is rechecked where exposure, human decision or mutation occurs.
+Workflow, Forms and Approval configuration never grants authority to target resources. Authorization is rechecked where exposure, human decision or mutation occurs.
 
 See [[Authorization]].
 
@@ -150,7 +157,7 @@ See [[Authorization]].
 
 Production uses shared-schema tenancy. Tenant-owned data is accessed through tenant-scoped repository/query behavior and cross-tenant IDs must never be trusted without ownership validation.
 
-Flyway owns schema evolution. Applied migrations are append-only. Portable common migrations currently extend through **V52**:
+Flyway owns schema evolution. Applied migrations are append-only. Portable common migrations currently extend through **V53**:
 
 - V45 personal workspace favorites/recent items
 - V46 saved views
@@ -160,8 +167,9 @@ Flyway owns schema evolution. Applied migrations are append-only. Portable commo
 - V50 workflow definitions/nodes/edges/executions
 - V51 project whiteboards/nodes/connectors
 - V52 project form definitions/fields/submissions
+- V53 approval definitions/stages/reviewers + durable request snapshots; workflow approval branches/state
 
-**V52 is immutable. New persistence starts at V53+.**
+**V53 is immutable. New persistence starts at V54+.**
 
 See [[Tenancy-and-Data-Model]] and [[PostgreSQL-and-Flyway]].
 
@@ -173,26 +181,23 @@ Tenant-configurable outbound webhooks use durable delivery/history/retry semanti
 
 See [[Subscriptions-and-Quotas]].
 
-## Next architecture direction — Approval Workflows
+## Next architecture direction — Client / Guest Portal
 
-Approval Workflows should introduce an explicit human-decision domain rather than storing approval state inside task or workflow services.
-
-Target composition:
+Client / Guest Portal should introduce an explicit external-access domain rather than representing guests as tenant members.
 
 ```text
-workflow runtime
-      ↓ narrow approval entry/wait contract
-approval domain
-      ↓ reviewer eligibility/authorization contract
-human decision
-      ↓ outcome/resume contract or event
-workflow runtime
-      ↓ existing domain-owned mutation ports
+external invitation/access grant
+        ↓ hashed/revocable credential
+external-access domain
+        ↓ explicit resource projection/mutation ports
+project/task/comment/approval owning domains
 ```
 
-The approval domain should own bounded definitions/stages, durable requests and immutable decision provenance. Reviewer eligibility must be revalidated at decision time. Configuration cannot grant authority. Racing/replayed decisions must be concurrency-safe/idempotent, and external/client approvals belong behind the later Client / Guest Portal boundary.
+Each grant must be tenant-bound, project/resource-scoped, capability-bounded, expiring/revocable and auditable. Every public request must resolve the grant before trusting any resource identifier.
 
-If persistence is needed, it begins at V53+.
+Guest identity is not accepted by normal tenant APIs. Public endpoints require anti-enumeration, rate limits and abuse controls. Guest comments/review responses cross narrow owning-domain ports, while external approval requires an explicit active grant intersecting the approval request's allowed external-review scope.
+
+If persistence is needed, it begins at V54+; V53 and earlier remain immutable.
 
 ## Known architecture debt
 

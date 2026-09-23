@@ -1,8 +1,8 @@
 # MultiTenantSAAS — Current Checkpoint
 
-Updated: 2026-09-16
+Updated: 2026-09-23
 Repository: `Cyfer-ap/MultiTenantSAAS`
-Branch target: `main` after PR #152 merge
+Branch target: `main` after PR #154 merge
 
 This file is the **single repository-side source of truth for current project status**. Do not create duplicate progress/checkpoint mirrors.
 
@@ -26,10 +26,44 @@ Delivered milestones now include:
 - Collaborative Whiteboard foundation + persisted visual workspace — #146/#147
 - Project Health / Risk Radar — #148
 - **Forms -> Workflow Engine — #152**
+- **Approval Workflows — #154**
 
-**Approval Workflows is the active next feature.**
+**Client / Guest Portal is the active next feature.**
 
 Live whiteboard presence/cursors remain an optional later enhancement and do not block the committed sequence. Bulk/CSV, broader custom fields, knowledge/documents and analytics remain parked unless explicitly reprioritized.
+
+## Approval Workflows checkpoint — #154
+
+Approval Workflows is complete as an explicit project-scoped human-decision domain that composes with the existing workflow runtime rather than storing approval state in task/workflow services.
+
+### Ownership and boundaries
+
+```text
+workflow runtime
+    -> ApprovalCheckpointPort
+    -> approvals domain
+
+approvals
+    -> ApprovalReviewerEligibilityPort
+    -> project-owned eligibility adapter
+
+approvals
+    -> ApprovalResolvedEvent
+    -> workflow-owned resume listener/runtime
+    -> TaskAutomationMutationPort for downstream task mutation
+```
+
+Approval configuration and reviewer snapshots preserve provenance but never grant resource authority. Reviewer eligibility is revalidated at decision time, and downstream mutations re-enter the owning domain's authorization/lifecycle contract.
+
+### V53 persistence and workflow semantics
+
+V53 creates bounded/versioned approval definitions, stages, reviewer configuration, durable requests, request-stage snapshots and request-reviewer snapshots. It also adds typed `APPROVED` / `REJECTED` workflow branches and `WAITING_APPROVAL` execution state.
+
+Sequential decisions are concurrency/replay safe. Self-approval is an explicit per-stage policy. Approval nodes pause the same workflow execution; terminal approval/rejection resumes that execution through the appropriate typed branch after a fresh task snapshot.
+
+The internal Work Automation surface includes definition/stage configuration, reviewer selection, reviewer inbox, approve/reject decisions and request history. Public/guest approvals, expiry, reassignment, escalation, quorum and parallel-stage semantics remain outside v1.
+
+Detailed contract: `guides/approval_workflows.md`.
 
 ## Forms -> Workflow Engine checkpoint — #152
 
@@ -120,7 +154,7 @@ Detailed contract: `guides/recurring_work_and_templates.md`.
 
 ## Database checkpoint
 
-Portable PostgreSQL Flyway migrations extend through **V52**:
+Portable PostgreSQL Flyway migrations extend through **V53**:
 
 ```text
 V45 personal workspace favorites/recent items
@@ -131,15 +165,16 @@ V49 tenant project templates + bounded starter-task snapshots
 V50 visual workflow definitions/nodes/edges/executions
 V51 project whiteboards/nodes/connectors
 V52 project forms/fields/submissions
+V53 approval definitions/stages/reviewers + durable requests/snapshots; workflow approval branches/state
 ```
 
-Project Simulation and Risk Radar add no migration. **V52 is immutable after merge/application.** New persistence starts at **V53+**.
+Project Simulation and Risk Radar add no migration. **V53 is immutable after merge/application.** New persistence starts at **V54+**.
 
 ## Non-negotiable architecture rule
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Current reference implementations include Search contributor contracts, Personal Workspace resolvers, My Work source ports, Saved Views validation SPI, Calendar deadline sources, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, Project Simulation source ports, Whiteboard project/task ports, Risk Radar task/dependency sources and Forms project/task/workflow ports.
+Current reference implementations include Search contributor contracts, Personal Workspace resolvers, My Work source ports, Saved Views validation SPI, Calendar deadline sources, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, Project Simulation source ports, Whiteboard project/task ports, Risk Radar task/dependency sources, Forms project/task/workflow ports and Approval checkpoint/reviewer/resolution contracts.
 
 ## Provider status
 
@@ -171,14 +206,13 @@ Canonical assessment: `guides/ENGINEERING_STANDARDS.md`.
 
 Continue in this order:
 
-1. **Approval Workflows — ACTIVE NEXT**
-2. Client / Guest Portal
-3. Team Workload Engine
-4. Workspace Knowledge Graph
-5. AI / Agent Teammates
-6. resume parked backlog such as bulk actions/CSV, broader custom fields, knowledge/documents and broader analytics unless priorities are explicitly changed
+1. **Client / Guest Portal — ACTIVE NEXT**
+2. Team Workload Engine
+3. Workspace Knowledge Graph
+4. AI / Agent Teammates
+5. resume parked backlog such as bulk actions/CSV, broader custom fields, knowledge/documents and broader analytics unless priorities are explicitly changed
 
-Approval Workflows must be an explicit human-decision domain that composes with the existing workflow runtime through narrow contracts/events. Approval configuration must never grant reviewer or target-resource authority, and any post-approval mutation must re-enter the owning domain's authorization/lifecycle rules.
+Client / Guest Portal must introduce a separate external-access domain and credential/capability boundary. Guests must not be modeled as weak tenant members. Every externally visible project/task/comment/review capability must be explicitly granted, bounded, revocable and revalidated against the owning tenant/project resource before exposure or mutation.
 
 ## Deferred platform work
 
@@ -203,6 +237,7 @@ Optional SAML/SCIM, MFA/passkeys/device management and richer notification chann
 - `guides/recurring_work_and_templates.md` — work-generation contracts
 - `guides/visual_workflow_builder.md` — workflow graph/runtime/canvas contract
 - `guides/forms_workflow_engine.md` — Forms intake/task/workflow contract
+- `guides/approval_workflows.md` — approval definitions, reviewer authority and workflow checkpoint/resume contract
 - `guides/project_simulation.md` — advisory What-If contract
 - `guides/collaborative_whiteboard.md` — whiteboard persistence/workspace contract
 - `guides/project_risk_radar.md` — Risk Radar source/bounds/signal/UI contract

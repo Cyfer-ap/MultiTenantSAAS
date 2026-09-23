@@ -6,9 +6,9 @@ Use this page as the reader-facing Wiki pointer for resuming development. Reposi
 
 **Differentiated Work Platform Sequence**
 
-Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard, Project Health / Risk Radar and **Forms -> Workflow Engine** are established through PR #152.
+Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine and **Approval Workflows** are established through PR #154.
 
-**Approval Workflows is active next.** Live whiteboard presence/cursors remain a later optional enhancement rather than a prerequisite for the next committed feature.
+**Client / Guest Portal is active next.** Live whiteboard presence/cursors remain a later optional enhancement rather than a prerequisite for the next committed feature.
 
 ## Read first
 
@@ -30,16 +30,17 @@ Inside the repository:
 6. `guides/recurring_work_and_templates.md`
 7. `guides/visual_workflow_builder.md`
 8. `guides/forms_workflow_engine.md`
-9. `guides/project_simulation.md`
-10. `guides/collaborative_whiteboard.md`
-11. `guides/project_risk_radar.md`
-12. the focused guide for the domain being changed
+9. `guides/approval_workflows.md`
+10. `guides/project_simulation.md`
+11. `guides/collaborative_whiteboard.md`
+12. `guides/project_risk_radar.md`
+13. the focused guide for the domain being changed
 
 ## Engineering rule
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, Saved Views validation SPI, Calendar deadline-source contracts, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow task events/`TaskAutomationMutationPort`, Forms project/task/workflow ports, Project Simulation source ports, Whiteboard project/task ports and Risk Radar task/dependency source ports.
+Reference implementations include Search contributor contracts, Personal Workspace resolver adapters, `MyWorkTaskSource`, Saved Views validation SPI, Calendar deadline-source contracts, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow task events/`TaskAutomationMutationPort`, Forms project/task/workflow ports, Approval checkpoint/reviewer/resolution contracts, Project Simulation source ports, Whiteboard project/task ports and Risk Radar task/dependency source ports.
 
 ## Forms -> Workflow Engine checkpoint
 
@@ -76,37 +77,46 @@ The private `/projects/:projectId/simulation` workspace supports hypothetical du
 
 ### Visual Workflow Builder
 
-V50 owns workflow definitions/nodes/edges/executions. Task lifecycle reaches workflows through task-domain events; task mutations cross through `TaskAutomationMutationPort`. Human approvals remain deliberately outside this domain until the next explicit approval slice.
+V50 owns workflow definitions/nodes/edges/executions. Task lifecycle reaches workflows through task-domain events; task mutations cross through `TaskAutomationMutationPort`. V53 Approval Workflows now composes with this runtime through checkpoint/resolution contracts rather than moving human-decision state into the workflow domain.
 
-## Resume here — Approval Workflows
+## Approval Workflows checkpoint
 
-Build the next feature as an explicit approval/human-decision domain that composes with the existing workflow runtime.
+V53 owns project-scoped approval definitions/stages/reviewer configuration plus durable request and reviewer snapshots. Reviewer eligibility is revalidated at decision time; stored configuration never grants authority.
+
+Workflow `ACTION_REQUEST_APPROVAL` nodes pause the same execution in `WAITING_APPROVAL` and continue through explicit `APPROVED` / `REJECTED` branches after terminal decisions. Downstream mutations still re-enter owning-domain ports.
+
+The internal approval workspace includes definition/stage configuration, reviewer inbox, approve/reject decisions and request history. External/guest approval remains outside this internal slice.
+
+Detailed rules live in `guides/approval_workflows.md`.
+
+## Resume here — Client / Guest Portal
+
+Create a separate external-access domain; do not represent guests as tenant members.
 
 Initial goals:
 
-1. bounded, reusable versioned approval definitions/stages
-2. durable request and immutable decision provenance
-3. tenant-scoped authorized target/workflow context
-4. reviewer eligibility through a narrow authorization/membership contract, rechecked at decision time
-5. narrow workflow wait/resume integration for approved/rejected outcomes
-6. target mutations through existing domain-owned mutation ports after a decision
-7. idempotent/concurrency-safe decisions and explicit stale/replay handling
-8. internal reviewer inbox/history before external/client approvals
-9. deterministic tests for authorization, tenant isolation, concurrency, bounds and workflow continuation
-10. new persistence, if needed, starts at V53+
+1. bounded, revocable tenant/project/resource-scoped external grants
+2. hashed/rotatable invitation or access credentials and separate guest sessions
+3. a deliberately small grant-scoped project/task/review read model
+4. explicit comment/review mutation ports rather than direct repository writes
+5. external approval only through an approval-owned contract that intersects grant scope with the approval request
+6. deterministic expiry/revocation/session invalidation and immutable provenance
+7. anti-enumeration, cross-tenant/resource-substitution protection, rate limits and abuse controls
+8. deterministic tests for grant scope, revocation, stale sessions, public endpoint isolation and external decision boundaries
+9. new persistence, if needed, starts at V54+
 
 Guardrails:
 
-- approval definitions never grant access to reviewers or target resources
-- workflow administration permission does not imply approval or target-mutation permission
-- do not duplicate the workflow runtime in the approval domain
-- no arbitrary code/expression execution
-- self-approval/separation-of-duties must be an explicit policy decision
-- cancellation/expiry/reassignment/escalation semantics must be explicit before exposure
-- client/guest approval belongs behind the later Client / Guest Portal boundary
-- decision history remains auditable even after definition changes
+- external grants are capabilities, not tenant RBAC or project membership
+- a grant never exposes an entire tenant/project by default
+- guest identity is never accepted by normal tenant-authenticated APIs
+- every resource ID is re-bound to the active grant before read/mutation
+- revoke/expire cuts off subsequent access even with a retained browser session
+- external comments/reviews/approvals retain guest and grant provenance
+- portal access alone never implies approval reviewer authority
+- no public arbitrary search, tenant/user directory, admin, billing or workflow-management surface
 
-After Approval Workflows continue with Client / Guest Portal, Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+After Client / Guest Portal continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 ## Preserve these system invariants
 
