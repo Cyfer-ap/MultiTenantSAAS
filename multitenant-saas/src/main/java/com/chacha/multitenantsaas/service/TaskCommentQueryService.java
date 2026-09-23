@@ -38,6 +38,10 @@ public class TaskCommentQueryService {
 
     private TaskCommentResponse mapToResponse(TaskComment comment) {
         AppUser author = comment.getAuthorUser();
+        String authorName =
+                author == null ? comment.getExternalGuestName() : author.getFullName();
+        String authorEmail =
+                author == null ? comment.getExternalGuestEmail() : author.getEmail();
         List<TaskCommentMentionResponse> mentions =
                 comment.getMentions().stream()
                         .map(TaskCommentMention::getMentionedUser)
@@ -55,9 +59,11 @@ public class TaskCommentQueryService {
                 comment.getId(),
                 comment.getTask().getId(),
                 parent == null ? null : parent.getId(),
-                author.getId(),
-                author.getFullName(),
-                author.getEmail(),
+                comment.getAuthorType(),
+                author == null ? null : author.getId(),
+                comment.getExternalAccessGrantId(),
+                authorName,
+                authorEmail,
                 comment.isDeleted() ? null : comment.getBody(),
                 comment.isDeleted(),
                 comment.getReplyCount(),
