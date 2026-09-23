@@ -2,7 +2,7 @@
 
 Updated: 2026-09-23
 Repository: `Cyfer-ap/MultiTenantSAAS`
-Branch target: `main` after PR #154 merge
+Branch target: `main` after PR #156 merge
 
 This file is the **single repository-side source of truth for current project status**. Do not create duplicate progress/checkpoint mirrors.
 
@@ -27,10 +27,55 @@ Delivered milestones now include:
 - Project Health / Risk Radar — #148
 - **Forms -> Workflow Engine — #152**
 - **Approval Workflows — #154**
+- **Client / Guest Portal foundation — #156**
 
-**Client / Guest Portal is the active next feature.**
+**Client / Guest Portal remains the active feature.** The grant/session boundary and project/task read UI are complete; guest comments/review responses and external approval remain the next slices.
 
 Live whiteboard presence/cursors remain an optional later enhancement and do not block the committed sequence. Bulk/CSV, broader custom fields, knowledge/documents and analytics remain parked unless explicitly reprioritized.
+
+## Client / Guest Portal foundation checkpoint — #156
+
+The Client / Guest Portal foundation is complete as a separate external-access domain and credential/capability boundary. Guests are not tenant members, tenant RBAC subjects or normal JWT/API-key identities.
+
+### Ownership and boundaries
+
+```text
+externalaccess
+    -> ExternalProjectProjectionPort -> project-owned adapter
+    -> ExternalTaskProjectionPort    -> task-owned adapter
+```
+
+The `externalaccess` domain owns grants, capabilities, invitation exchange, guest sessions and guest-facing orchestration. It does not write project/task repositories directly, and public requests derive tenant/project scope only from the authenticated grant/session.
+
+### V54 persistence and security boundary
+
+V54 creates:
+
+- `external_access_grants`
+- `external_access_grant_capabilities`
+- `external_guest_sessions`
+
+The v1 capability set is deliberately small: `PROJECT_READ` is mandatory and `TASK_READ` is optional. Raw invitation/session secrets are never persisted; only SHA-256 hashes are stored. Invitation exchange is one-time. Every guest request revalidates both the session and grant, so expiry/revocation cuts off retained browser sessions deterministically.
+
+Public guest endpoints are isolated under `/api/public/guest-portal/**`, use the dedicated `X-Guest-Session` header rather than tenant `Authorization`, and are rate limited. Guest-supplied tenant/project scope does not exist in the public API.
+
+### Frontend foundation
+
+Project managers with `project.member.manage` can create/list/revoke guest grants from the project workspace. The raw invitation link is shown only at creation time.
+
+The standalone `/guest` route uses the public HTTP client only. The invitation secret is read from the URL fragment and scrubbed after exchange; the issued opaque guest session is kept in browser `sessionStorage`, separate from tenant auth storage. The guest UI exposes only the granted project summary and optional task list.
+
+### Remaining Client / Guest Portal slices
+
+The portal milestone is not fully complete yet. Next:
+
+1. bounded guest comments/review responses through a task-collaboration-owned narrow port, with immutable guest/grant provenance
+2. external approval decisions through an approval-owned narrow contract that intersects the active grant with the specific approval request scope
+3. focused isolation/revocation/authorization tests for those mutation paths
+
+Do not fake guests as `AppUser` authors/reviewers and do not add guest exceptions to ordinary tenant APIs.
+
+Detailed contract: `guides/client_guest_portal.md`.
 
 ## Approval Workflows checkpoint — #154
 
@@ -154,7 +199,7 @@ Detailed contract: `guides/recurring_work_and_templates.md`.
 
 ## Database checkpoint
 
-Portable PostgreSQL Flyway migrations extend through **V53**:
+Portable PostgreSQL Flyway migrations extend through **V54**:
 
 ```text
 V45 personal workspace favorites/recent items
@@ -166,15 +211,16 @@ V50 visual workflow definitions/nodes/edges/executions
 V51 project whiteboards/nodes/connectors
 V52 project forms/fields/submissions
 V53 approval definitions/stages/reviewers + durable requests/snapshots; workflow approval branches/state
+V54 external access grants/capabilities + hashed guest sessions
 ```
 
-Project Simulation and Risk Radar add no migration. **V53 is immutable after merge/application.** New persistence starts at **V54+**.
+Project Simulation and Risk Radar add no migration. **V54 is immutable after merge/application.** New persistence starts at **V55+**.
 
 ## Non-negotiable architecture rule
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Current reference implementations include Search contributor contracts, Personal Workspace resolvers, My Work source ports, Saved Views validation SPI, Calendar deadline sources, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, Project Simulation source ports, Whiteboard project/task ports, Risk Radar task/dependency sources, Forms project/task/workflow ports and Approval checkpoint/reviewer/resolution contracts.
+Current reference implementations include Search contributor contracts, Personal Workspace resolvers, My Work source ports, Saved Views validation SPI, Calendar deadline sources, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, Project Simulation source ports, Whiteboard project/task ports, Risk Radar task/dependency sources, Forms project/task/workflow ports, Approval checkpoint/reviewer/resolution contracts and Client/Guest Portal external project/task projection ports.
 
 ## Provider status
 
@@ -206,13 +252,13 @@ Canonical assessment: `guides/ENGINEERING_STANDARDS.md`.
 
 Continue in this order:
 
-1. **Client / Guest Portal — ACTIVE NEXT**
+1. **Client / Guest Portal continuation — ACTIVE NEXT** (guest comments/review responses, then external approval)
 2. Team Workload Engine
 3. Workspace Knowledge Graph
 4. AI / Agent Teammates
 5. resume parked backlog such as bulk actions/CSV, broader custom fields, knowledge/documents and broader analytics unless priorities are explicitly changed
 
-Client / Guest Portal must introduce a separate external-access domain and credential/capability boundary. Guests must not be modeled as weak tenant members. Every externally visible project/task/comment/review capability must be explicitly granted, bounded, revocable and revalidated against the owning tenant/project resource before exposure or mutation.
+Client / Guest Portal foundation now provides the separate external-access domain and credential/capability boundary. The remaining mutation slices must preserve it: guests stay outside tenant membership/RBAC, and every comment/review/approval capability must be explicitly granted, bounded, revocable and revalidated against the owning tenant/project/request before mutation.
 
 ## Deferred platform work
 
@@ -238,6 +284,7 @@ Optional SAML/SCIM, MFA/passkeys/device management and richer notification chann
 - `guides/visual_workflow_builder.md` — workflow graph/runtime/canvas contract
 - `guides/forms_workflow_engine.md` — Forms intake/task/workflow contract
 - `guides/approval_workflows.md` — approval definitions, reviewer authority and workflow checkpoint/resume contract
+- `guides/client_guest_portal.md` — external grant/session boundary, guest capabilities and project/task projection contracts
 - `guides/project_simulation.md` — advisory What-If contract
 - `guides/collaborative_whiteboard.md` — whiteboard persistence/workspace contract
 - `guides/project_risk_radar.md` — Risk Radar source/bounds/signal/UI contract

@@ -1,14 +1,24 @@
 import DrawRoundedIcon from '@mui/icons-material/DrawRounded'
+import GroupAddRoundedIcon from '@mui/icons-material/GroupAddRounded'
 import HealthAndSafetyRoundedIcon from '@mui/icons-material/HealthAndSafetyRounded'
 import { Button, Stack } from '@mui/material'
 import { Link, useParams, useSearchParams } from 'react-router'
 
 import { ProjectDetailsPage } from '../../../pages/ProjectDetailsPage'
+import { hasProjectPermission } from '../../authorization/access/authorizationAccess'
+import { useCurrentAuthorization } from '../../authorization/hooks/useCurrentAuthorization'
+import { authorizationPermissionCodes } from '../../authorization/types/authorization'
 import { ProjectRiskPage } from '../../project-risk/pages/ProjectRiskPage'
 
 export function ProjectDetailsToolsPage() {
     const { projectId = '' } = useParams()
     const [searchParams] = useSearchParams()
+    const authorizationQuery = useCurrentAuthorization()
+    const canManageExternalAccess = hasProjectPermission(
+        authorizationQuery.data,
+        authorizationPermissionCodes.PROJECT_MEMBER_MANAGE,
+        projectId,
+    )
 
     if (searchParams.get('view') === 'risk') {
         return <ProjectRiskPage />
@@ -37,6 +47,16 @@ export function ProjectDetailsToolsPage() {
                 >
                     Open whiteboard
                 </Button>
+                {canManageExternalAccess ? (
+                    <Button
+                        component={Link}
+                        startIcon={<GroupAddRoundedIcon />}
+                        to={`/projects/${projectId}/external-access`}
+                        variant="outlined"
+                    >
+                        Manage client access
+                    </Button>
+                ) : null}
             </Stack>
             <ProjectDetailsPage />
         </>

@@ -13,6 +13,7 @@ public class PublicAuthRateLimitProperties {
     private int recoveryMaxRequests = 10;
     private int tokenMaxRequests = 120;
     private int onboardingMaxRequests = 10;
+    private int guestMaxRequests = 120;
 
     public boolean isEnabled() {
         return enabled;
@@ -60,5 +61,13 @@ public class PublicAuthRateLimitProperties {
 
     public void setOnboardingMaxRequests(int onboardingMaxRequests) {
         this.onboardingMaxRequests = onboardingMaxRequests;
+    }
+
+    public int getGuestMaxRequests() {
+        return guestMaxRequests;
+    }
+
+    public void setGuestMaxRequests(int guestMaxRequests) {
+        this.guestMaxRequests = guestMaxRequests;
     }
 }

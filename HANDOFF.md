@@ -14,15 +14,16 @@ This is the **single repository-side resume document**. Current status lives in 
 6. `guides/visual_workflow_builder.md`
 7. `guides/forms_workflow_engine.md`
 8. `guides/approval_workflows.md`
-9. `guides/project_simulation.md`
-10. `guides/collaborative_whiteboard.md`
-11. `guides/project_risk_radar.md`
-12. the focused guide for the domain being changed
-13. `wiki/Roadmap.md` when planning product direction
+9. `guides/client_guest_portal.md`
+10. `guides/project_simulation.md`
+11. `guides/collaborative_whiteboard.md`
+12. `guides/project_risk_radar.md`
+13. the focused guide for the domain being changed
+14. `wiki/Roadmap.md` when planning product direction
 
 ## Current state
 
-Major product milestones are complete through **Approval Workflows #154**:
+Major product milestones are complete through **Client / Guest Portal foundation #156**:
 
 - billing/catalog — #106
 - tenant outbound webhooks — #112
@@ -44,8 +45,9 @@ Major product milestones are complete through **Approval Workflows #154**:
 - Project Health / Risk Radar — #148
 - Forms -> Workflow Engine — #152
 - Approval Workflows — #154
+- Client / Guest Portal foundation — #156
 
-Portable PostgreSQL Flyway migrations extend through **V53**. Never modify V53 or earlier after merge/application; later persistence starts at **V54+**.
+Portable PostgreSQL Flyway migrations extend through **V54**. Never modify V54 or earlier after merge/application; later persistence starts at **V55+**.
 
 Stripe remains the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
@@ -151,40 +153,62 @@ The internal approval workspace provides definition/stage editing, reviewer sele
 
 Detailed rules: `guides/approval_workflows.md`.
 
-## Resume here — Client / Guest Portal
+## Client / Guest Portal foundation — #156
 
-The next committed feature is **Client / Guest Portal**.
+The grant/session and read-only portal foundation is complete.
 
-Build it as a separate external-access domain. Do **not** model guests as low-privilege tenant users or add broad guest branches throughout existing authorization code.
+Backend boundary:
 
-Recommended first slice:
+```text
+externalaccess
+    -> ExternalProjectProjectionPort -> project-owned adapter
+    -> ExternalTaskProjectionPort    -> task-owned adapter
+```
 
-1. define a bounded, revocable external-access grant tied to one tenant and explicit project/resource scope
-2. define a guest identity/session mechanism separate from normal tenant membership; store only hashed/rotatable invitation or access credentials
-3. expose a deliberately small read model first: project summary, selected tasks/status/due dates and approval/review items explicitly shared with the grant
-4. add bounded guest comments/review responses only through narrow owning-domain ports; do not let the portal write task/comment/approval repositories directly
-5. integrate external approval only through an approval-owned narrow external-decision contract that revalidates the grant and request scope; do not treat portal access as reviewer authority by itself
-6. make grant expiry/revocation/session invalidation deterministic and auditable
-7. prevent enumeration and cross-tenant/resource substitution; every request must bind grant -> tenant -> allowed project/resource before data access
-8. apply explicit rate limits and abuse controls to public/guest authentication and mutation endpoints
-9. keep attachments/downloads out of the first slice unless a separate signed-download authorization path is designed
-10. add deterministic tests for tenant isolation, grant scope, revocation/expiry, token hashing/rotation, stale sessions, comment/review authorization and external approval boundaries
-11. if persistence is required, start at **V54+**; never edit V53 or earlier
+V54 owns:
+
+- `external_access_grants`
+- `external_access_grant_capabilities`
+- `external_guest_sessions`
+
+Guests are not `AppUser` records, tenant members or RBAC subjects. The first capability set is `PROJECT_READ` plus optional `TASK_READ`. Raw invitation/session tokens are never stored; one-time invitation exchange and every subsequent guest request revalidate grant/session state. Revocation/expiry therefore invalidates retained sessions.
+
+Public access is isolated under `/api/public/guest-portal/**`, uses `X-Guest-Session`, has its own rate-limit bucket and never accepts guest-provided tenant/project scope.
+
+The frontend includes project-manager grant management and a standalone `/guest` experience using the public HTTP client only. Invitation secrets are scrubbed from the URL after exchange; guest session storage is separate from tenant authentication state.
+
+Detailed rules: `guides/client_guest_portal.md`.
+
+## Resume here — Client / Guest Portal mutation slices
+
+Continue the **Client / Guest Portal** milestone from the merged #156 boundary. Do not redesign or bypass the foundation.
+
+Next slice:
+
+1. add a bounded external collaboration capability for guest comments/review responses; keep it typed rather than introducing a general permission DSL
+2. enter task collaboration only through a new task-collaboration-owned narrow port/adapter
+3. preserve immutable guest/grant provenance; do **not** fake a guest as an `AppUser`
+4. do not reuse the ordinary JWT-based `TaskCollaborationService.createComment(..., Jwt)` path by manufacturing a JWT or system user
+5. keep mentions, pinning, editing/deleting and attachments out of the first external-comment slice unless separately designed
+6. validate grant -> tenant -> project -> task scope before the task-collaboration port is invoked
+7. expose only comments/review data deliberately selected for the guest surface
+8. after guest comments are green, add external approval through an approval-owned narrow contract
+9. external approval authority must be the intersection of an active guest grant and the specific approval request's allowed external-review scope; portal access alone is never reviewer authority
+10. retain immutable external decision provenance and concurrency/replay safety
+11. add deterministic tests for cross-tenant/resource substitution, revoked/expired grants, stale sessions, duplicate/replayed mutations and owning-domain port enforcement
+12. if new persistence is required, start at **V55+**; never edit V54 or earlier
 
 Guardrails:
 
-- external grants are capabilities, not tenant membership or general RBAC assignments
-- a grant never implies visibility of the whole project or tenant
-- guest identity must not be accepted by ordinary tenant-authenticated APIs
-- resource IDs supplied by the guest are never trusted without grant-scoped ownership validation
-- revoke/expire must cut off future reads and mutations even if a browser retains an old session
-- external comments/reviews/approvals must retain immutable guest/grant provenance
-- approval configuration still does not grant authority; external approval must explicitly intersect an active external grant with the approval request's allowed external-review scope
-- no public arbitrary search, user directory, tenant navigation, billing/admin surfaces or workflow administration
-- public endpoints require anti-enumeration, rate-limit and abuse protections
-- new functionality stays feature-local and crosses existing domains only through narrow contracts/events
+- no guest branches inside ordinary tenant-authenticated APIs
+- no direct task-comment or approval repository writes from `externalaccess`
+- no guest `AppUser`/membership/RBAC records
+- no broad project mutation from a read grant
+- no arbitrary guest search, directory, billing/admin or workflow-management access
+- comments/approvals must remain revocable through grant invalidation
+- feature-local frontend/backend ownership and narrow cross-domain contracts remain mandatory
 
-After Client / Guest Portal continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+After the full Client / Guest Portal milestone, continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 ## Validation before merge
 

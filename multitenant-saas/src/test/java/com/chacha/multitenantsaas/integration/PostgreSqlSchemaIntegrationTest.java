@@ -70,7 +70,7 @@ class PostgreSqlSchemaIntegrationTest {
     @Autowired private UserOrganizationAssignmentRepository userOrganizationAssignmentRepository;
 
     @Test
-    void postgresSchemaReachesV53AndMatchesJpaMappings() {
+    void postgresSchemaReachesV54AndMatchesJpaMappings() {
         String version =
                 jdbcTemplate.queryForObject(
                         """
@@ -82,7 +82,7 @@ class PostgreSqlSchemaIntegrationTest {
                 """,
                         String.class);
 
-        assertThat(version).isEqualTo("53");
+        assertThat(version).isEqualTo("54");
 
         Integer permissionCount =
                 jdbcTemplate.queryForObject(
@@ -149,7 +149,10 @@ class PostgreSqlSchemaIntegrationTest {
                         "approval_stage_reviewers",
                         "approval_requests",
                         "approval_request_stages",
-                        "approval_request_stage_reviewers")
+                        "approval_request_stage_reviewers",
+                        "external_access_grants",
+                        "external_access_grant_capabilities",
+                        "external_guest_sessions")
                 .forEach(this::assertTableExists);
 
         List<String[]> requiredColumns =
@@ -233,6 +236,20 @@ class PostgreSqlSchemaIntegrationTest {
                         column("approval_request_stages", "decision_comment"),
                         column("approval_request_stage_reviewers", "request_stage_id"),
                         column("approval_request_stage_reviewers", "reviewer_user_id"),
+                        column("external_access_grants", "tenant_id"),
+                        column("external_access_grants", "project_id"),
+                        column("external_access_grants", "invitation_token_hash"),
+                        column("external_access_grants", "expires_at"),
+                        column("external_access_grants", "accepted_at"),
+                        column("external_access_grants", "revoked_at"),
+                        column("external_access_grants", "row_version"),
+                        column("external_access_grant_capabilities", "grant_id"),
+                        column("external_access_grant_capabilities", "capability"),
+                        column("external_guest_sessions", "grant_id"),
+                        column("external_guest_sessions", "token_hash"),
+                        column("external_guest_sessions", "expires_at"),
+                        column("external_guest_sessions", "revoked_at"),
+                        column("external_guest_sessions", "row_version"),
                         column("authorization_delegations", "tenant_id"),
                         column("authorization_delegations", "delegator_user_id"),
                         column("authorization_delegations", "delegate_user_id"),

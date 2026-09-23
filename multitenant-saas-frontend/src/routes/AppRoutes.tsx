@@ -105,6 +105,12 @@ const ForgotPasswordPage = lazy(() =>
     })),
 )
 
+const GuestPortalPage = lazy(() =>
+    import('../features/client-guest-portal/pages/GuestPortalPage').then((module) => ({
+        default: module.GuestPortalPage,
+    })),
+)
+
 const InvitationsPage = lazy(() =>
     import('../pages/InvitationsPage').then((module) => ({
         default: module.InvitationsPage,
@@ -153,6 +159,12 @@ const ProjectDetailsPage = lazy(() =>
             default: module.ProjectDetailsWithWhiteboardEntryPage,
         }),
     ),
+)
+
+const ProjectExternalAccessPage = lazy(() =>
+    import('../features/client-guest-portal/pages/ProjectExternalAccessPage').then((module) => ({
+        default: module.ProjectExternalAccessPage,
+    })),
 )
 
 const ProjectSimulationPage = lazy(() =>
@@ -279,6 +291,7 @@ export function AppRoutes() {
                 </Route>
 
                 <Route path="auth/oidc/complete" element={<OidcCompletePage />} />
+                <Route path="guest" element={<GuestPortalPage />} />
 
                 <Route element={<PublicOnlyRoute />}>
                     <Route path="login" element={<LoginPage />} />
@@ -424,6 +437,21 @@ export function AppRoutes() {
                             <Route
                                 path="projects/:projectId/whiteboards"
                                 element={<WhiteboardWorkspacePage />}
+                            />
+                        </Route>
+
+                        <Route
+                            element={
+                                <ProjectPermissionProtectedRoute
+                                    permissionCode={
+                                        authorizationPermissionCodes.PROJECT_MEMBER_MANAGE
+                                    }
+                                />
+                            }
+                        >
+                            <Route
+                                path="projects/:projectId/external-access"
+                                element={<ProjectExternalAccessPage />}
                             />
                         </Route>
 

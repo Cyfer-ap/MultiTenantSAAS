@@ -30,6 +30,7 @@ class PublicAuthRateLimitInterceptorTest {
         properties.setRecoveryMaxRequests(1);
         properties.setTokenMaxRequests(1);
         properties.setOnboardingMaxRequests(1);
+        properties.setGuestMaxRequests(1);
 
         rateLimitMetrics = mock(PublicAuthRateLimitMetrics.class);
         interceptor = new PublicAuthRateLimitInterceptor(properties, rateLimitMetrics);
@@ -103,6 +104,24 @@ class PublicAuthRateLimitInterceptorTest {
     }
 
     @Test
+    void guestPortalReadsAndMutationsShareGuestBucket() {
+        HttpServletRequest guestRead =
+                request("/api/public/guest-portal/session", "203.0.113.45", "GET");
+        HttpServletRequest guestExchange =
+                request("/api/public/guest-portal/exchange", "203.0.113.45", "POST");
+
+        assertTrue(interceptor.preHandle(guestRead, response, new Object()));
+
+        RateLimitExceededException exception =
+                assertThrows(
+                        RateLimitExceededException.class,
+                        () -> interceptor.preHandle(guestExchange, response, new Object()));
+
+        assertEquals("guest", exception.getScope());
+        verify(rateLimitMetrics).recordRejection("guest");
+    }
+
+    @Test
     void logoutIsNotRateLimited() {
         HttpServletRequest logout = request("/api/auth/logout", "203.0.113.50");
 
@@ -112,8 +131,12 @@ class PublicAuthRateLimitInterceptorTest {
     }
 
     private HttpServletRequest request(String path, String remoteAddress) {
+        return request(path, remoteAddress, "POST");
+    }
+
+    private HttpServletRequest request(String path, String remoteAddress, String method) {
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getMethod()).thenReturn("POST");
+        when(request.getMethod()).thenReturn(method);
         when(request.getRequestURI()).thenReturn(path);
         when(request.getContextPath()).thenReturn("");
         when(request.getRemoteAddr()).thenReturn(remoteAddress);
