@@ -60,7 +60,7 @@ export interface GuestTask {
     id: string
     title: string
     description: string | null
-    status: 'TODO' | 'IN_PROGRESS' | 'BLOCKED' | 'DONE' | 'CANCELLED'
+    status: 'TODO' | 'IN_PROGRESS' | 'BLOCKED' | 'COMPLETED' | 'CANCELLED'
     priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
     dueAt: string | null
     completedAt: string | null
