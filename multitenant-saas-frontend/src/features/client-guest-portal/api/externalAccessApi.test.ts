@@ -81,11 +81,9 @@ describe('externalAccessApi', () => {
             '/api/public/guest-portal/session',
             { headers: { 'X-Guest-Session': 'session-token' } },
         )
-        expect(publicHttpClient.get).toHaveBeenNthCalledWith(
-            2,
-            '/api/public/guest-portal/tasks',
-            { headers: { 'X-Guest-Session': 'session-token' } },
-        )
+        expect(publicHttpClient.get).toHaveBeenNthCalledWith(2, '/api/public/guest-portal/tasks', {
+            headers: { 'X-Guest-Session': 'session-token' },
+        })
         expect(httpClient.get).not.toHaveBeenCalled()
         expect(httpClient.post).not.toHaveBeenCalled()
     })
