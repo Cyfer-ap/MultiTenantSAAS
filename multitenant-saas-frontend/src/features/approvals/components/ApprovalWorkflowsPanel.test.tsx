@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { appTheme } from '../../../theme/appTheme'
 import { externalAccessApi } from '../../client-guest-portal/api/externalAccessApi'
+import type { ExternalAccessGrant } from '../../client-guest-portal/types/externalAccess'
 import { projectMembersApi } from '../../projects/api/projectMembersApi'
 import { approvalsApi } from '../api/approvalsApi'
 import type { ApprovalRequest, ApprovalRequestSummary } from '../types/approvals'
@@ -35,13 +36,13 @@ const pendingRequest: ApprovalRequestSummary = {
     completedAt: null,
 }
 
-const approvalGrant = {
+const approvalGrant: ExternalAccessGrant = {
     id: 'grant-1',
     projectId: 'project-1',
     guestName: 'Client Reviewer',
     guestEmail: 'client@example.com',
-    capabilities: ['PROJECT_READ', 'APPROVAL_REVIEW'] as const,
-    state: 'ACCEPTED' as const,
+    capabilities: ['PROJECT_READ', 'APPROVAL_REVIEW'],
+    state: 'ACCEPTED',
     expiresAt: '2026-10-20T10:00:00Z',
     acceptedAt: '2026-10-08T09:00:00Z',
     revokedAt: null,
