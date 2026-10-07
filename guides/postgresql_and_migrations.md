@@ -20,7 +20,7 @@ multitenant-saas/src/main/resources/db/postgresql/V17__current_schema_baseline.s
 multitenant-saas/src/main/resources/db/common
 ```
 
-Shared portable migrations begin at V18. The merged application currently extends through **V52**.
+Shared portable migrations begin at V18. The merged application currently extends through **V56**.
 
 Recent work-management/product migrations include:
 
@@ -32,8 +32,12 @@ Recent work-management/product migrations include:
 - V50 — workflow definitions/nodes/edges/executions
 - V51 — project whiteboards/nodes/connectors
 - V52 — project form definitions/fields/submissions
+- V53 — approval definitions/stages/reviewers, durable request snapshots and workflow approval state
+- V54 — external-access grants/capabilities and hashed guest sessions
+- V55 — explicit external-guest task-comment provenance and scoped constraints
+- V56 — request-scoped external approval reviewers, APPROVAL_REVIEW capability and external decision provenance
 
-**V52 and every earlier applied migration are immutable. New persistence starts at V53+.**
+**V56 and every earlier applied migration are immutable. New persistence starts at V57+.**
 
 ## Required locations
 
@@ -49,7 +53,7 @@ classpath:db/postgresql,classpath:db/common
 
 1. Never edit an applied migration, including the historical V1-V17 chain and merged `db/common` migrations.
 2. Do not copy historical migrations to `db/common`.
-3. Put future portable migrations in `db/common`; after Forms #152, use V53 or later.
+3. Put future portable migrations in `db/common`; after external approvals #160, use V57 or later. Never renumber or rewrite merged migration history casually; reconcile with the current `main` ceiling before merge.
 4. Keep PostgreSQL/Testcontainers/Flyway/Hibernate-validation verification green.
 5. Document and test unavoidable database-specific behavior.
 6. When a product checkpoint advances the migration ceiling, update this guide and the canonical checkpoint rather than creating another migration-status document.
