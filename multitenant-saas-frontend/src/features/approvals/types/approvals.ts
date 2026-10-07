@@ -95,3 +95,14 @@ export interface ApprovalDecisionInput {
     outcome: ApprovalDecisionOutcome
     comment: string | null
 }
+
+export interface ExternalApprovalReviewer {
+    id: string
+    requestId: string
+    requestStageId: string
+    grantId: string
+    guestName: string
+    guestEmail: string
+    assignedByUserId: string
+    createdAt: string
+}

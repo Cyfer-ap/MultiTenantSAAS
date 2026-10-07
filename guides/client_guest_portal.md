@@ -4,7 +4,7 @@
 
 Client / Guest Portal introduces bounded external collaboration without converting clients or guests into tenant members.
 
-The portal has two merged slices on `main`: the external-access security/read boundary and bounded create-only guest task comments. Request-scoped external approval is the remaining slice; draft PR #160 contains partial implementation work but is not merged or release-validated.
+The portal has three completed slices: the external-access security/read boundary, bounded create-only guest task comments, and request-scoped external approval review.
 
 ## Ownership and boundaries
 
@@ -38,6 +38,15 @@ guest comment mutation
     -> externalaccess capability/session validation
     -> ExternalTaskCommentPort
     -> task-collaboration-owned adapter
+
+guest approval review
+    -> externalaccess session/capability validation
+    -> ExternalApprovalReviewPort
+    -> approvals-owned request/stage decision behavior
+
+approval reviewer assignment
+    -> approvals-owned ApprovalExternalGrantPort
+    -> externalaccess-owned active grant/capability validation
 ```
 
 Guests are not `AppUser` records, project members, tenant RBAC subjects or API-key identities. Guest session credentials are only accepted by the isolated `/api/public/guest-portal/**` surface.
@@ -61,8 +70,9 @@ The current capability set is:
 - `PROJECT_READ`
 - `TASK_READ`
 - `TASK_COMMENT_CREATE`
+- `APPROVAL_REVIEW`
 
-Every grant must include `PROJECT_READ`. `TASK_READ` is optional. `TASK_COMMENT_CREATE` is explicit and requires `TASK_READ`.
+Every grant must include `PROJECT_READ`. `TASK_READ` is optional. `TASK_COMMENT_CREATE` is explicit and requires `TASK_READ`. `APPROVAL_REVIEW` is independent of task visibility: an external approver does not need `TASK_READ` and therefore need not receive the shared task list.
 
 The capability set is intentionally tiny and typed; it is not a general permission DSL and does not map to tenant RBAC assignments.
 
@@ -73,6 +83,8 @@ Project members with `project.member.manage` can:
 - create a bounded grant,
 - list grants for the project,
 - revoke a grant.
+
+Project members with the existing task-management authority used by Approval Workflows can also assign or remove an active `APPROVAL_REVIEW` grant on the **current pending approval stage**. Assignment snapshots the guest identity for provenance; it does not make the guest a project member or general approval reviewer.
 
 Grant creation returns the raw invitation token once. The stored grant retains guest identity metadata and creator/revoker provenance.
 
@@ -88,6 +100,8 @@ GET  /api/public/guest-portal/session
 GET  /api/public/guest-portal/tasks
 GET  /api/public/guest-portal/tasks/{taskId}/comments
 POST /api/public/guest-portal/tasks/{taskId}/comments
+GET  /api/public/guest-portal/approvals
+POST /api/public/guest-portal/approvals/{requestId}/decision
 ```
 
 Authenticated guest reads use the dedicated `X-Guest-Session` header rather than JWT or the normal `Authorization` bearer channel.
@@ -131,17 +145,25 @@ Guest comments are deliberately limited to top-level, create-only comments. Gues
 
 Tenant mutation paths reject editing, deletion, pinning/unpinning and threaded replies for external guest comments. Attachments and mentions are also rejected/excluded in this slice.
 
-## Draft external approval status — not on `main`
+## V56 request-scoped external approvals
 
-As of 2026-10-07, PR #160 (`feature/client-guest-external-approval`) is still an open draft last updated on 2026-09-23. The branch proposes a typed external approval capability, an approval-owned external-review contract, explicit request/stage-to-grant assignment, immutable external decision provenance and V56 persistence.
+V56 extends the external-access capability constraint with `APPROVAL_REVIEW`, creates `approval_request_stage_external_reviewers`, and extends `approval_request_stages` with explicit decision-actor provenance.
 
-Do not document those items as delivered yet. The PR still requires its remaining backend contract/security coverage, bounded guest approval frontend, final documentation reconciliation and green CI/PostgreSQL/frontend/Security/Container/Qodana gates. Until merge, the production/merged migration ceiling remains V55.
+An external reviewer must satisfy **both** boundaries:
+
+1. the guest session resolves to an active, unexpired, unrevoked grant with `APPROVAL_REVIEW`;
+2. that exact grant is explicitly assigned to the request's current pending stage in the same tenant/project.
+
+The guest cannot select tenant/project scope. The public decision route receives only the request id; the approvals domain rebinds it to the grant-bound tenant/project and current stage, then requires the exact assignment before mutation.
+
+External decisions use the same approval request lock/current-stage/replay behavior as internal decisions and continue the same workflow execution through the existing typed `APPROVED` / `REJECTED` resolution event. The stage records `EXTERNAL_GUEST`, the exact grant id, and immutable guest name/email snapshots; no synthetic `AppUser` is created.
+
+The internal Approval Workflows history UI can assign/remove eligible approval-capable grants. The standalone guest UI lists only assigned pending reviews and provides bounded approve/reject actions with an optional 1000-character comment.
 
 ## Deliberately excluded from the current portal
 
 Not yet exposed:
 
-- external approval decisions on merged `main` (draft #160 is not yet delivered),
 - guest comment editing/deleting/threaded replies,
 - guest comment mentions or attachments,
 - attachments/downloads,
@@ -153,20 +175,23 @@ Not yet exposed:
 - guest-created tasks,
 - broad tenant/project membership.
 
-External approval must be added only through an approval-owned narrow contract that intersects an active grant with the exact request/stage scope.
-
 ## Validation contract
 
 Regression coverage should lock:
 
-- V54/V55 migration/table/column expectations,
+- V54/V55/V56 migration/table/column expectations,
 - raw token non-persistence,
 - one-time invitation exchange,
 - grant expiry/revocation invalidating retained sessions,
 - mandatory `PROJECT_READ`,
 - capability denial before project/task/comment adapters are called,
 - `TASK_COMMENT_CREATE` requiring `TASK_READ`,
+- `APPROVAL_REVIEW` remaining independent of `TASK_READ`,
 - guest comment grant/project/task rebinding and immutable guest/grant provenance,
+- external approval exact tenant/project/request/stage/grant assignment,
+- revoked/expired or unassigned approval grants failing before decision,
+- replay/completed approval decisions failing deterministically,
+- immutable `EXTERNAL_GUEST` decision provenance,
 - grant-bound tenant/project scope,
 - public guest rate limiting,
 - normal tenant API authentication remaining unchanged.

@@ -1,6 +1,6 @@
 # Architecture
 
-Updated: 2026-10-07
+Updated: 2026-10-08
 
 MultiTenantSAAS is an intentional **modular monolith** with a separate React/TypeScript client and PostgreSQL/Flyway persistence.
 
@@ -83,7 +83,7 @@ Established capabilities include:
 - tenant API keys/external APIs
 - auditability and observability
 
-**Client / Guest Portal foundation and bounded guest comments are established through #156/#159.** Request-scoped external approval is the active remaining slice in draft #160 and is not yet on `main`.
+**Client / Guest Portal is complete through #156/#159/#160.** Request-scoped external approval now preserves the same external-access and owning-domain boundaries. Team Workload Engine is the next committed product slice.
 
 ## Cross-domain composition patterns
 
@@ -118,6 +118,8 @@ Approval Workflows
 Client / Guest Portal
     externalaccess -> ExternalProjectProjectionPort / ExternalTaskProjectionPort -> owning-domain adapters
     externalaccess -> ExternalTaskCommentPort -> task-collaboration-owned adapter
+    externalaccess -> ExternalApprovalReviewPort -> approvals-owned decision behavior
+    approvals -> ApprovalExternalGrantPort -> externalaccess-owned grant validation
 
 Project Simulation
     projectsimulation -> task/dependency source ports
@@ -141,7 +143,7 @@ V52 Forms owns project-scoped form definitions, fields and submissions. Forms ne
 
 V53 Approval Workflows owns bounded approval definitions/stages, durable request snapshots and decision provenance. Reviewer eligibility is revalidated at decision time. Workflow approval nodes pause the same execution and resume through explicit `APPROVED` / `REJECTED` branches; downstream task mutations still cross `TaskAutomationMutationPort`.
 
-V54/V55 Client / Guest Portal owns external grants/capabilities/hashed sessions and guest-facing orchestration. Project/task reads cross owning-domain projection ports; create-only guest comments cross `ExternalTaskCommentPort` and retain immutable guest/grant provenance. Guests remain outside tenant membership/RBAC.
+V54-V56 Client / Guest Portal owns external grants/capabilities/hashed sessions and guest-facing orchestration. Project/task reads cross owning-domain projection ports; create-only guest comments cross `ExternalTaskCommentPort`; request-scoped external approvals cross `ExternalApprovalReviewPort` and retain explicit external guest/grant provenance. Guests remain outside tenant membership/RBAC.
 
 Detailed repository contracts: `guides/recurring_work_and_templates.md`, `guides/visual_workflow_builder.md`, `guides/forms_workflow_engine.md`, `guides/approval_workflows.md` and `guides/client_guest_portal.md`.
 
@@ -163,7 +165,7 @@ See [[Authorization]].
 
 Production uses shared-schema tenancy. Tenant-owned data is accessed through tenant-scoped repository/query behavior and cross-tenant IDs must never be trusted without ownership validation.
 
-Flyway owns schema evolution. Applied migrations are append-only. Portable common migrations currently extend through **V55**:
+Flyway owns schema evolution. Applied migrations are append-only. Portable common migrations currently extend through **V56**:
 
 - V45 personal workspace favorites/recent items
 - V46 saved views
@@ -176,8 +178,9 @@ Flyway owns schema evolution. Applied migrations are append-only. Portable commo
 - V53 approval definitions/stages/reviewers + durable request snapshots; workflow approval branches/state
 - V54 external-access grants/capabilities and hashed guest sessions
 - V55 explicit external-guest task-comment provenance and scoped constraints
+- V56 request-scoped external approval reviewers, APPROVAL_REVIEW capability and external decision provenance
 
-**V55 is immutable. New merged persistence starts at V56+.**
+**V56 is immutable. New persistence starts at V57+.**
 
 See [[Tenancy-and-Data-Model]] and [[PostgreSQL-and-Flyway]].
 
@@ -207,7 +210,7 @@ task-collaboration owning domain
 
 Each grant is tenant/project scoped, capability-bounded, expiring/revocable and auditable. Every public request resolves the active session/grant before trusting a resource identifier. Guest identity is never accepted by normal tenant APIs; public endpoints retain anti-enumeration and rate-limit protections.
 
-The next extension is request-scoped external approval through an approval-owned contract. Authority must be the intersection of the active grant and the exact approval request/stage; portal read/comment capabilities do not imply reviewer authority. Draft PR #160 proposes V56 support, but V56 is not part of the merged schema until that work is completed and merged.
+Request-scoped external approval now crosses an approval-owned contract. Authority is the intersection of an active `APPROVAL_REVIEW` grant and the exact current request/stage; portal read/comment capabilities do not imply reviewer authority, and approval review does not require task-list visibility.
 
 ## Known architecture debt
 

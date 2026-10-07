@@ -1,13 +1,17 @@
 package com.chacha.multitenantsaas.approvals;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.chacha.multitenantsaas.entity.AppUser;
+import com.chacha.multitenantsaas.exception.ResourceNotFoundException;
 import com.chacha.multitenantsaas.service.CurrentActorService;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +29,7 @@ class ApprovalRequestCommandServiceTest {
     @Mock private ApprovalRequestRepository requestRepository;
     @Mock private ApprovalRequestStageRepository requestStageRepository;
     @Mock private ApprovalRequestStageReviewerRepository requestReviewerRepository;
+    @Mock private ApprovalRequestStageExternalReviewerRepository externalReviewerRepository;
     @Mock private ApprovalDefinitionSnapshotService snapshotService;
     @Mock private ApprovalReviewerEligibilityPort reviewerEligibilityPort;
     @Mock private CurrentActorService currentActorService;
@@ -41,6 +46,7 @@ class ApprovalRequestCommandServiceTest {
                         requestRepository,
                         requestStageRepository,
                         requestReviewerRepository,
+                        externalReviewerRepository,
                         snapshotService,
                         reviewerEligibilityPort,
                         currentActorService,
@@ -117,6 +123,153 @@ class ApprovalRequestCommandServiceTest {
                 .hasMessage("Approval request is already resolved");
 
         verifyNoInteractions(reviewerEligibilityPort, eventPublisher);
+    }
+
+    @Test
+    void rejectsCrossProjectExternalDecisionBeforeAssignmentLookup() {
+        UUID tenantId = tenantId();
+        UUID wrongProjectId = UUID.randomUUID();
+        UUID requestId = UUID.randomUUID();
+        UUID grantId = UUID.randomUUID();
+        when(requestRepository.findForDecision(tenantId, wrongProjectId, requestId))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(
+                        () ->
+                                service.decide(
+                                        new ExternalApprovalDecisionCommand(
+                                                tenantId,
+                                                wrongProjectId,
+                                                requestId,
+                                                grantId,
+                                                ApprovalDecisionOutcome.APPROVE,
+                                                null)))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Approval request not found");
+
+        verifyNoInteractions(externalReviewerRepository, eventPublisher);
+    }
+
+    @Test
+    void rejectsExternalGrantNotAssignedToCurrentStage() {
+        Fixture fixture = fixture(false, false);
+        UUID grantId = UUID.randomUUID();
+        when(requestRepository.findForDecision(
+                        fixture.tenantId(), fixture.projectId(), fixture.requestId()))
+                .thenReturn(Optional.of(fixture.request()));
+        when(requestStageRepository.findByTenantIdAndProjectIdAndRequestIdAndPositionIndex(
+                        fixture.tenantId(), fixture.projectId(), fixture.requestId(), 0))
+                .thenReturn(Optional.of(fixture.stage()));
+        when(externalReviewerRepository
+                        .findByTenantIdAndProjectIdAndRequestIdAndRequestStageIdAndExternalAccessGrantId(
+                                fixture.tenantId(),
+                                fixture.projectId(),
+                                fixture.requestId(),
+                                fixture.stageId(),
+                                grantId))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(
+                        () ->
+                                service.decide(
+                                        new ExternalApprovalDecisionCommand(
+                                                fixture.tenantId(),
+                                                fixture.projectId(),
+                                                fixture.requestId(),
+                                                grantId,
+                                                ApprovalDecisionOutcome.REJECT,
+                                                "Not approved")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("External grant is not assigned to the current approval stage");
+
+        verifyNoInteractions(eventPublisher);
+    }
+
+    @Test
+    void rejectsExternalReplayAfterRequestIsResolved() {
+        Fixture fixture = fixture(false, false);
+        fixture.request().approve();
+        when(requestRepository.findForDecision(
+                        fixture.tenantId(), fixture.projectId(), fixture.requestId()))
+                .thenReturn(Optional.of(fixture.request()));
+
+        assertThatThrownBy(
+                        () ->
+                                service.decide(
+                                        new ExternalApprovalDecisionCommand(
+                                                fixture.tenantId(),
+                                                fixture.projectId(),
+                                                fixture.requestId(),
+                                                UUID.randomUUID(),
+                                                ApprovalDecisionOutcome.REJECT,
+                                                null)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Approval request is already resolved");
+
+        verifyNoInteractions(externalReviewerRepository, eventPublisher);
+    }
+
+    @Test
+    void externalDecisionRecordsGrantProvenanceAndResolvesRequest() {
+        Fixture fixture = fixture(false, false);
+        UUID grantId = UUID.randomUUID();
+        ApprovalRequestStageExternalReviewer assignment =
+                new ApprovalRequestStageExternalReviewer(
+                        fixture.tenantId(),
+                        fixture.projectId(),
+                        fixture.requestId(),
+                        fixture.stageId(),
+                        new ApprovalExternalGrantSnapshot(
+                                grantId, "Client Reviewer", "client@example.com"),
+                        UUID.randomUUID());
+
+        when(requestRepository.findForDecision(
+                        fixture.tenantId(), fixture.projectId(), fixture.requestId()))
+                .thenReturn(Optional.of(fixture.request()));
+        when(requestStageRepository.findByTenantIdAndProjectIdAndRequestIdAndPositionIndex(
+                        fixture.tenantId(), fixture.projectId(), fixture.requestId(), 0))
+                .thenReturn(Optional.of(fixture.stage()));
+        when(requestStageRepository.findByTenantIdAndProjectIdAndRequestIdAndPositionIndex(
+                        fixture.tenantId(), fixture.projectId(), fixture.requestId(), 1))
+                .thenReturn(Optional.empty());
+        when(externalReviewerRepository
+                        .findByTenantIdAndProjectIdAndRequestIdAndRequestStageIdAndExternalAccessGrantId(
+                                fixture.tenantId(),
+                                fixture.projectId(),
+                                fixture.requestId(),
+                                fixture.stageId(),
+                                grantId))
+                .thenReturn(Optional.of(assignment));
+        when(requestStageRepository.findByTenantIdAndProjectIdAndRequestIdOrderByPositionIndexAsc(
+                        fixture.tenantId(), fixture.projectId(), fixture.requestId()))
+                .thenReturn(List.of(fixture.stage()));
+        when(requestReviewerRepository
+                        .findByTenantIdAndProjectIdAndRequestIdAndRequestStageIdOrderByReviewerUserIdAsc(
+                                fixture.tenantId(),
+                                fixture.projectId(),
+                                fixture.requestId(),
+                                fixture.stageId()))
+                .thenReturn(List.of());
+
+        ExternalApprovalDecisionResult result =
+                service.decide(
+                        new ExternalApprovalDecisionCommand(
+                                fixture.tenantId(),
+                                fixture.projectId(),
+                                fixture.requestId(),
+                                grantId,
+                                ApprovalDecisionOutcome.APPROVE,
+                                "Approved externally"));
+
+        assertThat(result.status()).isEqualTo(ApprovalRequestStatus.APPROVED);
+        assertThat(fixture.stage().getDecisionActorType())
+                .isEqualTo(ApprovalDecisionActorType.EXTERNAL_GUEST);
+        assertThat(fixture.stage().getDecidedByUserId()).isNull();
+        assertThat(fixture.stage().getExternalDecidedByGrantId()).isEqualTo(grantId);
+        assertThat(fixture.stage().getExternalDecidedByName()).isEqualTo("Client Reviewer");
+        assertThat(fixture.stage().getExternalDecidedByEmail()).isEqualTo("client@example.com");
+        assertThat(fixture.stage().getDecisionComment()).isEqualTo("Approved externally");
+        verify(eventPublisher).publishEvent(any(ApprovalResolvedEvent.class));
     }
 
     private void stubCurrentActor(UUID reviewerId) {

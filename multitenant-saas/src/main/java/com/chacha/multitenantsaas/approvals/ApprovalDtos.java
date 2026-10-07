@@ -57,6 +57,18 @@ public final class ApprovalDtos {
     public record DecisionRequest(
             @NotNull ApprovalDecisionOutcome outcome, @Size(max = 1000) String comment) {}
 
+    public record AssignExternalReviewerRequest(@NotNull UUID grantId) {}
+
+    public record ExternalReviewerResponse(
+            UUID id,
+            UUID requestId,
+            UUID requestStageId,
+            UUID grantId,
+            String guestName,
+            String guestEmail,
+            UUID assignedByUserId,
+            Instant createdAt) {}
+
     public record RequestStageResponse(
             UUID id,
             String key,
@@ -65,7 +77,11 @@ public final class ApprovalDtos {
             boolean allowRequesterApproval,
             ApprovalStageStatus status,
             List<UUID> reviewerUserIds,
+            ApprovalDecisionActorType decisionActorType,
             UUID decidedByUserId,
+            UUID externalDecidedByGrantId,
+            String externalDecidedByName,
+            String externalDecidedByEmail,
             String decisionComment,
             Instant decidedAt) {}
 

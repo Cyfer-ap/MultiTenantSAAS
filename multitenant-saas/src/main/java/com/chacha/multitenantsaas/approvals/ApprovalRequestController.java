@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,12 +24,15 @@ public class ApprovalRequestController {
 
     private final ApprovalRequestQueryService queryService;
     private final ApprovalRequestCommandService commandService;
+    private final ApprovalExternalReviewerService externalReviewerService;
 
     public ApprovalRequestController(
             ApprovalRequestQueryService queryService,
-            ApprovalRequestCommandService commandService) {
+            ApprovalRequestCommandService commandService,
+            ApprovalExternalReviewerService externalReviewerService) {
         this.queryService = queryService;
         this.commandService = commandService;
+        this.externalReviewerService = externalReviewerService;
     }
 
     @PreAuthorize(
@@ -69,6 +73,50 @@ public class ApprovalRequestController {
                 ApiResponse.success(
                         "Approval request fetched successfully",
                         queryService.get(tenantId, projectId, requestId)));
+    }
+
+    @PreAuthorize(
+            "@authorizationSecurity.canManageProjectTasks(#tenantId,#projectId,'project.task.manage')")
+    @GetMapping("/requests/{requestId}/external-reviewers")
+    public ResponseEntity<ApiResponse<java.util.List<ApprovalDtos.ExternalReviewerResponse>>>
+            externalReviewers(
+                    @PathVariable UUID tenantId,
+                    @PathVariable UUID projectId,
+                    @PathVariable UUID requestId) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "External approval reviewers fetched successfully",
+                        externalReviewerService.list(tenantId, projectId, requestId)));
+    }
+
+    @PreAuthorize(
+            "@authorizationSecurity.canManageProjectTasks(#tenantId,#projectId,'project.task.manage')")
+    @PostMapping("/requests/{requestId}/external-reviewers")
+    public ResponseEntity<ApiResponse<ApprovalDtos.ExternalReviewerResponse>>
+            assignExternalReviewer(
+                    @PathVariable UUID tenantId,
+                    @PathVariable UUID projectId,
+                    @PathVariable UUID requestId,
+                    @Valid @RequestBody ApprovalDtos.AssignExternalReviewerRequest request,
+                    @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "External approval reviewer assigned successfully",
+                        externalReviewerService.assign(
+                                tenantId, projectId, requestId, request.grantId(), jwt)));
+    }
+
+    @PreAuthorize(
+            "@authorizationSecurity.canManageProjectTasks(#tenantId,#projectId,'project.task.manage')")
+    @DeleteMapping("/requests/{requestId}/external-reviewers/{grantId}")
+    public ResponseEntity<ApiResponse<Void>> revokeExternalReviewer(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID projectId,
+            @PathVariable UUID requestId,
+            @PathVariable UUID grantId) {
+        externalReviewerService.revoke(tenantId, projectId, requestId, grantId);
+        return ResponseEntity.ok(
+                ApiResponse.success("External approval reviewer revoked successfully", null));
     }
 
     @PreAuthorize(

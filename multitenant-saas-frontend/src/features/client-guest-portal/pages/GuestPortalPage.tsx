@@ -15,7 +15,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
 import { externalAccessApi } from '../api/externalAccessApi'
-import type { GuestTask } from '../types/externalAccess'
+import type { GuestApprovalReview, GuestTask } from '../types/externalAccess'
 import { guestSessionStorage } from '../storage/guestSessionStorage'
 
 function formatDate(value: string | null): string {
@@ -30,6 +30,89 @@ function formatDate(value: string | null): string {
 
 function taskStatusLabel(status: string): string {
     return status.replaceAll('_', ' ').toLowerCase()
+}
+
+function GuestApprovalReviewCard({
+    review,
+    sessionToken,
+}: {
+    review: GuestApprovalReview
+    sessionToken: string
+}) {
+    const queryClient = useQueryClient()
+    const [comment, setComment] = useState('')
+
+    const decisionMutation = useMutation({
+        mutationFn: (outcome: 'APPROVE' | 'REJECT') =>
+            externalAccessApi.decideGuestApproval(
+                sessionToken,
+                review.requestId,
+                outcome,
+                comment.trim() || null,
+            ),
+        onSuccess: async () => {
+            setComment('')
+            await queryClient.invalidateQueries({
+                queryKey: ['guest-portal-approvals', sessionToken],
+            })
+        },
+    })
+
+    return (
+        <Paper variant="outlined" sx={{ padding: 2 }}>
+            <Stack spacing={1.5}>
+                <Stack
+                    direction="row"
+                    spacing={1}
+                    useFlexGap
+                    sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+                >
+                    <Typography sx={{ fontWeight: 700 }}>{review.stageName}</Typography>
+                    <Chip label="Assigned review" size="small" variant="outlined" />
+                </Stack>
+
+                <Typography color="text.secondary" variant="body2">
+                    Task {review.taskId.slice(0, 8)} · Requested {formatDate(review.createdAt)}
+                </Typography>
+
+                <TextField
+                    label="Decision comment (optional)"
+                    maxRows={6}
+                    minRows={2}
+                    multiline
+                    onChange={(event) => setComment(event.target.value)}
+                    slotProps={{ htmlInput: { maxLength: 1000 } }}
+                    value={comment}
+                />
+
+                <Stack direction="row" spacing={1}>
+                    <Button
+                        color="success"
+                        disabled={decisionMutation.isPending}
+                        onClick={() => decisionMutation.mutate('APPROVE')}
+                        variant="contained"
+                    >
+                        Approve
+                    </Button>
+                    <Button
+                        color="error"
+                        disabled={decisionMutation.isPending}
+                        onClick={() => decisionMutation.mutate('REJECT')}
+                        variant="outlined"
+                    >
+                        Reject
+                    </Button>
+                </Stack>
+
+                {decisionMutation.isError ? (
+                    <Alert severity="error">
+                        This approval decision was not accepted. The assignment may have changed,
+                        expired or already been resolved.
+                    </Alert>
+                ) : null}
+            </Stack>
+        </Paper>
+    )
 }
 
 function GuestTaskCard({
@@ -238,11 +321,19 @@ export function GuestPortalPage() {
 
     const canReadTasks = Boolean(sessionQuery.data?.capabilities.includes('TASK_READ'))
     const canComment = Boolean(sessionQuery.data?.capabilities.includes('TASK_COMMENT_CREATE'))
+    const canReviewApprovals = Boolean(sessionQuery.data?.capabilities.includes('APPROVAL_REVIEW'))
 
     const tasksQuery = useQuery({
         queryKey: ['guest-portal-tasks', sessionToken],
         queryFn: () => externalAccessApi.getGuestTasks(sessionToken ?? ''),
         enabled: Boolean(sessionToken && canReadTasks),
+        retry: false,
+    })
+
+    const approvalsQuery = useQuery({
+        queryKey: ['guest-portal-approvals', sessionToken],
+        queryFn: () => externalAccessApi.getGuestApprovals(sessionToken ?? ''),
+        enabled: Boolean(sessionToken && canReviewApprovals),
         retry: false,
     })
 
@@ -357,6 +448,9 @@ export function GuestPortalPage() {
                                         {canComment ? (
                                             <Chip label="Guest comments" size="small" />
                                         ) : null}
+                                        {canReviewApprovals ? (
+                                            <Chip label="Approval review" size="small" />
+                                        ) : null}
                                     </Stack>
 
                                     <Typography color="text.secondary" variant="caption">
@@ -371,6 +465,62 @@ export function GuestPortalPage() {
                                     </Box>
                                 </Stack>
                             </Paper>
+
+                            {canReviewApprovals ? (
+                                <Stack spacing={2}>
+                                    <Stack
+                                        direction="row"
+                                        spacing={1}
+                                        sx={{
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                        }}
+                                    >
+                                        <Typography component="h2" variant="h5">
+                                            Approval reviews
+                                        </Typography>
+                                        <Button
+                                            disabled={approvalsQuery.isFetching}
+                                            onClick={() => void approvalsQuery.refetch()}
+                                            startIcon={<RefreshRoundedIcon />}
+                                            size="small"
+                                            variant="outlined"
+                                        >
+                                            Refresh
+                                        </Button>
+                                    </Stack>
+
+                                    {approvalsQuery.isPending ? (
+                                        <Box sx={{ py: 3, textAlign: 'center' }}>
+                                            <CircularProgress aria-label="Loading approval reviews" />
+                                        </Box>
+                                    ) : null}
+
+                                    {approvalsQuery.isError ? (
+                                        <Alert severity="error">
+                                            Approval reviews could not be loaded. The grant or
+                                            request assignment may have changed or expired.
+                                        </Alert>
+                                    ) : null}
+
+                                    {approvalsQuery.data?.reviews.length === 0 ? (
+                                        <Alert severity="info">
+                                            No approval decisions are currently assigned to this
+                                            guest access.
+                                        </Alert>
+                                    ) : null}
+
+                                    {sessionToken
+                                        ? approvalsQuery.data?.reviews.map((review) => (
+                                              <GuestApprovalReviewCard
+                                                  key={review.requestStageId}
+                                                  review={review}
+                                                  sessionToken={sessionToken}
+                                              />
+                                          ))
+                                        : null}
+                                </Stack>
+                            ) : null}
 
                             {canReadTasks ? (
                                 <Stack spacing={2}>

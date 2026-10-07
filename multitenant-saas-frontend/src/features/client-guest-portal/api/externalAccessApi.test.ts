@@ -78,10 +78,19 @@ describe('externalAccessApi', () => {
             'task-1',
             'Please review this item.',
         )
+        await externalAccessApi.getGuestApprovals('session-token')
+        await externalAccessApi.decideGuestApproval(
+            'session-token',
+            'request-1',
+            'APPROVE',
+            'Approved externally',
+        )
 
-        expect(publicHttpClient.post).toHaveBeenCalledWith('/api/public/guest-portal/exchange', {
-            invitationToken: 'invite-token',
-        })
+        expect(publicHttpClient.post).toHaveBeenNthCalledWith(
+            1,
+            '/api/public/guest-portal/exchange',
+            { invitationToken: 'invite-token' },
+        )
         expect(publicHttpClient.get).toHaveBeenNthCalledWith(
             1,
             '/api/public/guest-portal/session',
@@ -90,6 +99,28 @@ describe('externalAccessApi', () => {
         expect(publicHttpClient.get).toHaveBeenNthCalledWith(2, '/api/public/guest-portal/tasks', {
             headers: { 'X-Guest-Session': 'session-token' },
         })
+        expect(publicHttpClient.get).toHaveBeenNthCalledWith(
+            3,
+            '/api/public/guest-portal/tasks/task-1/comments',
+            { headers: { 'X-Guest-Session': 'session-token' } },
+        )
+        expect(publicHttpClient.get).toHaveBeenNthCalledWith(
+            4,
+            '/api/public/guest-portal/approvals',
+            { headers: { 'X-Guest-Session': 'session-token' } },
+        )
+        expect(publicHttpClient.post).toHaveBeenNthCalledWith(
+            2,
+            '/api/public/guest-portal/tasks/task-1/comments',
+            { body: 'Please review this item.' },
+            { headers: { 'X-Guest-Session': 'session-token' } },
+        )
+        expect(publicHttpClient.post).toHaveBeenNthCalledWith(
+            3,
+            '/api/public/guest-portal/approvals/request-1/decision',
+            { outcome: 'APPROVE', comment: 'Approved externally' },
+            { headers: { 'X-Guest-Session': 'session-token' } },
+        )
         expect(httpClient.get).not.toHaveBeenCalled()
         expect(httpClient.post).not.toHaveBeenCalled()
     })

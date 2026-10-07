@@ -43,8 +43,21 @@ public class ApprovalRequestStage {
     @Column(nullable = false, length = 20)
     private ApprovalStageStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "decision_actor_type", length = 30)
+    private ApprovalDecisionActorType decisionActorType;
+
     @Column(name = "decided_by_user_id")
     private UUID decidedByUserId;
+
+    @Column(name = "external_decided_by_grant_id")
+    private UUID externalDecidedByGrantId;
+
+    @Column(name = "external_decided_by_name", length = 150)
+    private String externalDecidedByName;
+
+    @Column(name = "external_decided_by_email", length = 150)
+    private String externalDecidedByEmail;
 
     @Column(name = "decision_comment", length = 1000)
     private String decisionComment;
@@ -78,14 +91,47 @@ public class ApprovalRequestStage {
     }
 
     public void decide(UUID actorUserId, ApprovalDecisionOutcome outcome, String comment) {
+        requirePending();
+        applyOutcome(outcome, comment);
+        decisionActorType = ApprovalDecisionActorType.TENANT_USER;
+        decidedByUserId = actorUserId;
+        externalDecidedByGrantId = null;
+        externalDecidedByName = null;
+        externalDecidedByEmail = null;
+    }
+
+    public void decideExternal(
+            UUID grantId,
+            String guestName,
+            String guestEmail,
+            ApprovalDecisionOutcome outcome,
+            String comment) {
+        requirePending();
+        if (guestName == null
+                || guestName.isBlank()
+                || guestEmail == null
+                || guestEmail.isBlank()) {
+            throw new IllegalArgumentException("External approval identity is required");
+        }
+        applyOutcome(outcome, comment);
+        decisionActorType = ApprovalDecisionActorType.EXTERNAL_GUEST;
+        decidedByUserId = null;
+        externalDecidedByGrantId = grantId;
+        externalDecidedByName = guestName.trim();
+        externalDecidedByEmail = guestEmail.trim();
+    }
+
+    private void requirePending() {
         if (status != ApprovalStageStatus.PENDING) {
             throw new IllegalArgumentException("Approval stage is no longer pending");
         }
+    }
+
+    private void applyOutcome(ApprovalDecisionOutcome outcome, String comment) {
         status =
                 outcome == ApprovalDecisionOutcome.APPROVE
                         ? ApprovalStageStatus.APPROVED
                         : ApprovalStageStatus.REJECTED;
-        decidedByUserId = actorUserId;
         decisionComment = comment == null || comment.isBlank() ? null : comment.trim();
         decidedAt = Instant.now();
     }
@@ -118,8 +164,24 @@ public class ApprovalRequestStage {
         return status;
     }
 
+    public ApprovalDecisionActorType getDecisionActorType() {
+        return decisionActorType;
+    }
+
     public UUID getDecidedByUserId() {
         return decidedByUserId;
+    }
+
+    public UUID getExternalDecidedByGrantId() {
+        return externalDecidedByGrantId;
+    }
+
+    public String getExternalDecidedByName() {
+        return externalDecidedByName;
+    }
+
+    public String getExternalDecidedByEmail() {
+        return externalDecidedByEmail;
     }
 
     public String getDecisionComment() {

@@ -89,14 +89,14 @@ This sequence is an explicit product commitment and **takes precedence over the 
 | 4 | **Project Health / Risk Radar** | ✅ Built | Completed through #148: explainable advisory signals for overdue, blocked, stale, unassigned HIGH/URGENT work and dependency bottlenecks, with explicit bounds and no employee scoring. Related to #40 Risk Inbox, #57 Tenant Health Check, #98 Stale Work Detection and #121 Dependency Debt. |
 | 5 | **Forms -> Workflow Engine** | ✅ Built | Completed through #152: bounded authenticated internal forms create authorized tasks through task-owned creation and may enter the existing workflow runtime through a typed form-submitted contract. Public/external intake remains a separate security boundary. Expands §2.9 and the workflow engine. |
 | 6 | **Approval Workflows** | ✅ Built | Completed through #154: bounded project-scoped human checkpoints, reviewer re-authorization, durable decision provenance and typed workflow pause/resume. Expands §2.10 and #135 Human Checkpoints. |
-| 7 | **Client / Guest Portal** | 🚧 **ACTIVE NOW** | Bounded external visibility, comments, review requests and approvals without broad tenant membership. New explicit idea; permission boundaries are central. |
-| 8 | **Team Workload Engine** | 🚧 queued | Capacity planning, overload detection and reassignment support using work objects and explicit availability—not surveillance/productivity scoring. Related to #48/#55. |
+| 7 | **Client / Guest Portal** | ✅ Built | Completed through #156/#159/#160: bounded external visibility, create-only guest comments and request-scoped approvals without broad tenant membership. |
+| 8 | **Team Workload Engine** | 🚧 **ACTIVE NOW** | Capacity planning, overload detection and reassignment support using work objects and explicit availability—not surveillance/productivity scoring. Related to #48/#55. |
 | 9 | **Workspace Knowledge Graph** | 🚧 queued | Permission-aware graph connecting projects, tasks, people, decisions, documents and dependencies. Related to #33 Organization Graph and #66 Entity Linking Everywhere. |
 | 10 | **AI / Agent Teammates** | 🚧 queued | Assign bounded work to agents only after workflow + knowledge + authorization context is mature; consequential actions require human checkpoints. Expands §2.28 and #135/#138/#139. |
 
 ### Guardrails for the sequence
 
-- Features **#1–#6 are complete; #7 Client / Guest Portal is active now**. Continue in the exact order above unless a production/security incident or explicit product decision requires interruption.
+- Features **#1–#7 are complete; #8 Team Workload Engine is active now**. Continue in the exact order above unless a production/security incident or explicit product decision requires interruption.
 - Each feature gets an explicit owning domain and narrow cross-domain contracts/events.
 - Automation must not become a god-service that directly injects every domain service.
 - Visual configuration must compile to a validated backend contract; the canvas is not the source of truth by itself.
@@ -1010,8 +1010,8 @@ The current development direction is the explicit sequence in §1.3. It override
 4. Project Health / Risk Radar             <- COMPLETE (#148)
 5. Forms -> Workflow Engine                <- COMPLETE (#152)
 6. Approval Workflows                      <- COMPLETE (#154)
-7. Client / Guest Portal                    <- ACTIVE NOW
-8. Team Workload Engine
+7. Client / Guest Portal                    <- COMPLETE (#156/#159/#160)
+8. Team Workload Engine                     <- ACTIVE NOW
 9. Workspace Knowledge Graph
 10. AI / Agent Teammates
 

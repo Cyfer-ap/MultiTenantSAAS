@@ -5,6 +5,8 @@ import type { PropsWithChildren } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { appTheme } from '../../../theme/appTheme'
+import { externalAccessApi } from '../../client-guest-portal/api/externalAccessApi'
+import type { ExternalAccessGrant } from '../../client-guest-portal/types/externalAccess'
 import { projectMembersApi } from '../../projects/api/projectMembersApi'
 import { approvalsApi } from '../api/approvalsApi'
 import type { ApprovalRequest, ApprovalRequestSummary } from '../types/approvals'
@@ -32,6 +34,22 @@ const pendingRequest: ApprovalRequestSummary = {
     currentStageName: 'Manager review',
     createdAt: '2026-09-16T10:00:00Z',
     completedAt: null,
+}
+
+const approvalGrant: ExternalAccessGrant = {
+    id: 'grant-1',
+    projectId: 'project-1',
+    guestName: 'Client Reviewer',
+    guestEmail: 'client@example.com',
+    capabilities: ['PROJECT_READ', 'APPROVAL_REVIEW'],
+    state: 'ACCEPTED',
+    expiresAt: '2026-10-20T10:00:00Z',
+    acceptedAt: '2026-10-08T09:00:00Z',
+    revokedAt: null,
+    createdByUserId: 'manager-1',
+    revokedByUserId: null,
+    createdAt: '2026-10-08T08:00:00Z',
+    updatedAt: '2026-10-08T09:00:00Z',
 }
 
 const approvedRequest: ApprovalRequest = {
@@ -79,6 +97,8 @@ describe('ApprovalWorkflowsPanel', () => {
         vi.spyOn(approvalsApi, 'listDefinitions').mockResolvedValue(page([]))
         vi.spyOn(approvalsApi, 'inbox').mockResolvedValue(page([pendingRequest]))
         vi.spyOn(approvalsApi, 'history').mockResolvedValue(page([]))
+        vi.spyOn(approvalsApi, 'listExternalReviewers').mockResolvedValue([])
+        vi.spyOn(externalAccessApi, 'listGrants').mockResolvedValue(page([approvalGrant]))
         vi.spyOn(projectMembersApi, 'getMembers').mockResolvedValue(page([]))
     })
 
@@ -99,5 +119,33 @@ describe('ApprovalWorkflowsPanel', () => {
             outcome: 'APPROVED',
             comment: 'Reviewed against release criteria',
         })
+    })
+
+    it('assigns an approval-capable guest grant to the current pending stage', async () => {
+        vi.spyOn(approvalsApi, 'history').mockResolvedValue(page([pendingRequest]))
+        const assign = vi.spyOn(approvalsApi, 'assignExternalReviewer').mockResolvedValue({
+            id: 'assignment-1',
+            requestId: 'request-1',
+            requestStageId: 'stage-1',
+            grantId: 'grant-1',
+            guestName: 'Client Reviewer',
+            guestEmail: 'client@example.com',
+            assignedByUserId: 'manager-1',
+            createdAt: '2026-10-08T10:00:00Z',
+        })
+
+        renderPanel()
+
+        fireEvent.click(await screen.findByRole('tab', { name: /history/i }))
+        expect(
+            await screen.findByText(/no external reviewer is assigned to the current stage/i),
+        ).toBeVisible()
+
+        fireEvent.mouseDown(screen.getByLabelText(/guest approval grant/i))
+        fireEvent.click(await screen.findByRole('option', { name: /client reviewer/i }))
+        fireEvent.click(screen.getByRole('button', { name: /^assign$/i }))
+
+        await waitFor(() => expect(assign).toHaveBeenCalledTimes(1))
+        expect(assign).toHaveBeenCalledWith('tenant-1', 'project-1', 'request-1', 'grant-1')
     })
 })

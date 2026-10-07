@@ -6,9 +6,9 @@ Use this page as the reader-facing Wiki pointer for resuming development. Reposi
 
 **Differentiated Work Platform Sequence**
 
-Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows and the **Client / Guest Portal foundation + guest comments** are established through PR #159.
+Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows and the **Client / Guest Portal** are established through PR #160.
 
-**Resume draft PR #160 for request-scoped external approval.** It is not merged and currently has no green CI state. Live whiteboard presence/cursors remain a later optional enhancement rather than a prerequisite.
+**Team Workload Engine is active next.** Live whiteboard presence/cursors remain a later optional enhancement rather than a prerequisite.
 
 ## Read first
 
@@ -90,20 +90,17 @@ The internal approval workspace includes definition/stage configuration, reviewe
 
 Detailed rules live in `guides/approval_workflows.md`.
 
-## Resume here — external approval draft #160
+## Client / Guest Portal closeout — #160
 
-Do not recreate the already-merged portal foundation or guest-comment slice. Continue `feature/client-guest-external-approval` and finish the request-scoped external-approval slice.
+Merged portal persistence now extends through V56: V54 grants/capabilities/hashed guest sessions, V55 explicit guest-comment provenance and V56 request-scoped external approval reviewers/decision provenance.
 
-Current state:
+External approval authority is explicit and stage-scoped. `APPROVAL_REVIEW` is independent of `TASK_READ`; every public list/decision request revalidates the active grant/session, and decisions remain inside the approvals domain with immutable guest/grant provenance.
 
-- merged `main`: V54 grants/capabilities/hashed guest sessions and V55 explicit guest-comment provenance
-- draft #160: typed external approval authority, approval-owned external-review contract and V56 work
-- still required before merge: wrong/revoked grant and request/stage substitution tests, replay/completed-request coverage, bounded guest approval UI, final documentation reconciliation and green CI/PostgreSQL/frontend/Security/Container/Qodana/Wiki gates
-- V56 must not be treated as merged until the final PR head is green and lands
+## Resume here — Team Workload Engine
 
-Guardrails remain unchanged: guests are not tenant members/RBAC subjects; every public mutation revalidates the active grant/session; read/comment capability never implies approval authority; external decisions stay inside the approvals domain with immutable guest/grant provenance.
+Create an explicit workload domain and keep the first slice advisory/explainable. Consume authorized project/task/member state through narrow read contracts; do not infer hidden productivity, monitor employee behavior or turn task counts into an opaque people score.
 
-After Client / Guest Portal completes, continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates. Parked backlog remains bulk/CSV, broader custom fields, knowledge/documents, broader analytics and optional live whiteboard presence/cursors; deferred platform work remains operations/DR and provider live-readiness.
+After Team Workload Engine, continue with Workspace Knowledge Graph and AI / Agent Teammates. Parked backlog remains bulk/CSV, broader custom fields, knowledge/documents, broader analytics and optional live whiteboard presence/cursors; deferred platform work remains operations/DR and provider live-readiness.
 
 ## Preserve these system invariants
 

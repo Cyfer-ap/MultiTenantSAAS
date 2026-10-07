@@ -127,7 +127,11 @@ public class ApprovalRequestQueryService {
                         .stream()
                         .map(ApprovalRequestStageReviewer::getReviewerUserId)
                         .toList(),
+                stage.getDecisionActorType(),
                 stage.getDecidedByUserId(),
+                stage.getExternalDecidedByGrantId(),
+                stage.getExternalDecidedByName(),
+                stage.getExternalDecidedByEmail(),
                 stage.getDecisionComment(),
                 stage.getDecidedAt());
     }

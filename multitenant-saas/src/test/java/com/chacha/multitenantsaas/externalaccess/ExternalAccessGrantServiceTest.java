@@ -112,6 +112,40 @@ class ExternalAccessGrantServiceTest {
     }
 
     @Test
+    void approvalReviewDoesNotRequireTaskVisibility() {
+        UUID tenantId = UUID.randomUUID();
+        UUID projectId = UUID.randomUUID();
+        UUID actorId = UUID.randomUUID();
+        when(projectAccessPort.requireProject(tenantId, projectId))
+                .thenReturn(new ProjectAccessSnapshot(projectId, ProjectStatus.ACTIVE));
+        when(currentActorService.getRequiredActiveActor(tenantId, jwt)).thenReturn(actor);
+        when(actor.getId()).thenReturn(actorId);
+        when(secureTokenService.generateToken()).thenReturn("invite-raw");
+        when(secureTokenService.hashToken("invite-raw")).thenReturn("invite-hash");
+        when(grantRepository.saveAndFlush(any(ExternalAccessGrant.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ExternalAccessDtos.GrantCreatedResponse response =
+                service.create(
+                        tenantId,
+                        projectId,
+                        new ExternalAccessDtos.CreateGrantRequest(
+                                "Client Reviewer",
+                                "client@example.com",
+                                Instant.now().plusSeconds(3600),
+                                Set.of(
+                                        ExternalAccessCapability.PROJECT_READ,
+                                        ExternalAccessCapability.APPROVAL_REVIEW)),
+                        jwt);
+
+        assertThat(response.grant().capabilities())
+                .containsExactlyInAnyOrder(
+                        ExternalAccessCapability.PROJECT_READ,
+                        ExternalAccessCapability.APPROVAL_REVIEW);
+        verify(capabilityRepository).saveAll(any());
+    }
+
+    @Test
     void projectReadCapabilityIsMandatory() {
         UUID tenantId = UUID.randomUUID();
         UUID projectId = UUID.randomUUID();

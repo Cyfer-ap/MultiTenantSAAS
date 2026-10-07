@@ -95,7 +95,7 @@ Established domains/surfaces include:
 - tenant API keys/external APIs
 - tenant/platform audit trails
 
-The **Client / Guest Portal external-access foundation and bounded guest comments are now established on `main`** through #156/#159. Request-scoped external approval remains the next extension and is currently draft-only in #160; it must preserve the same external-access and owning-domain boundaries.
+The **Client / Guest Portal is complete through request-scoped external approvals #160**. The external-access boundary now covers grant-scoped project/task reads, task-owned guest comments and approval-owned external decisions. Team Workload Engine is the next committed product slice.
 
 ## Reference composition patterns
 
@@ -243,18 +243,20 @@ Detailed semantics: `approval_workflows.md`.
 
 ### Client / Guest Portal
 
-V54/V55 establish an explicit `externalaccess` boundary rather than representing guests as tenant users:
+V54-V56 establish an explicit `externalaccess` boundary rather than representing guests as tenant users:
 
 ```text
 externalaccess
     -> ExternalProjectProjectionPort -> project-owned adapter
     -> ExternalTaskProjectionPort    -> task-owned adapter
     -> ExternalTaskCommentPort       -> task-collaboration-owned adapter
+    -> ExternalApprovalReviewPort    -> approvals-owned decision behavior
+
+approvals
+    -> ApprovalExternalGrantPort     -> externalaccess-owned grant validation
 ```
 
-External grants are tenant/project scoped, capability-bounded, expiring/revocable and authenticated through isolated guest sessions. Public guest requests derive scope from the active grant/session; normal tenant JWT/API-key identity and RBAC remain separate. `TASK_COMMENT_CREATE` requires `TASK_READ`, and guest comments retain immutable grant/name/email provenance while task-comment persistence remains task-domain owned.
-
-Request-scoped external approval is not yet on `main`. Draft #160 proposes an approval-owned external-review contract plus V56 persistence; it must not make portal access or read/comment capabilities imply reviewer authority.
+External grants are tenant/project scoped, capability-bounded, expiring/revocable and authenticated through isolated guest sessions. Public guest requests derive scope from the active grant/session; normal tenant JWT/API-key identity and RBAC remain separate. `TASK_COMMENT_CREATE` requires `TASK_READ`, while `APPROVAL_REVIEW` is independent of task-list visibility. Guest comments retain immutable grant/name/email provenance in task-owned persistence; external approval decisions retain explicit `EXTERNAL_GUEST` grant/name/email provenance in approvals-owned persistence and require exact current-stage assignment.
 
 Detailed semantics: `client_guest_portal.md`.
 
@@ -298,7 +300,7 @@ Detailed semantics: `project_risk_radar.md`.
 
 Production uses shared-schema multi-tenancy with explicit tenant ownership. Repository/query methods for tenant-owned resources should include tenant scope; cross-tenant resource IDs are never trusted without ownership validation.
 
-Flyway exclusively owns production schema evolution. Portable common migrations extend through **V55**:
+Flyway exclusively owns production schema evolution. Portable common migrations extend through **V56**:
 
 - V45 — personal workspace favorites/recent items
 - V46 — saved views
@@ -311,8 +313,9 @@ Flyway exclusively owns production schema evolution. Portable common migrations 
 - V53 — approval definitions/stages/reviewers + durable request snapshots; workflow approval branches/state
 - V54 — external-access grants/capabilities and hashed guest sessions
 - V55 — explicit external-guest task-comment author/provenance fields and scoped constraints
+- V56 — request-scoped external approval reviewers, APPROVAL_REVIEW capability and external decision provenance
 
-Project Simulation and Risk Radar require no migration. Applied migrations are append-only. **V55 is immutable; future merged persistence starts at V56+.**
+Project Simulation and Risk Radar require no migration. Applied migrations are append-only. **V56 is immutable; future persistence starts at V57+.**
 
 ## Billing and integrations
 
@@ -390,7 +393,7 @@ Current bounded patterns include:
 
 Large-tenant latency, sustained mutation throughput, database contention, scheduler contention, delivery throughput and heavy integration workloads remain unproven until measured. Optimize from evidence rather than pre-emptively introducing distributed infrastructure.
 
-## Current external-access boundary and next extension
+## Current external-access boundary
 
 Client / Guest Portal now uses an explicit external-access domain and capability boundary. Guests are not tenant members, do not receive ordinary RBAC assignments, and are never accepted by normal tenant-authenticated APIs.
 
@@ -406,11 +409,15 @@ project/task-owned read adapters
 externalaccess
         ↓ ExternalTaskCommentPort
 task-collaboration-owned comment adapter
+
+externalaccess
+        ↓ ExternalApprovalReviewPort
+approvals-owned request/stage decision behavior
 ```
 
-Every read or mutation resolves the active guest session and grant before resource exposure/action. V54 owns grants/capabilities/hashed sessions; V55 owns explicit guest-comment provenance. Public endpoints keep anti-enumeration, rate limiting, deterministic revocation/session invalidation and immutable guest/grant provenance.
+Every read or mutation resolves the active guest session and grant before resource exposure/action. V54 owns grants/capabilities/hashed sessions; V55 owns explicit guest-comment provenance; V56 owns request-scoped external reviewer assignments and external decision provenance. Public endpoints keep anti-enumeration, rate limiting, deterministic revocation/session invalidation and immutable guest/grant provenance.
 
-The next extension is **request-scoped external approval**. It must intersect an active grant with the exact approval request/stage and cross an approval-owned external-review contract; portal access, `PROJECT_READ`, `TASK_READ` or `TASK_COMMENT_CREATE` alone must never imply reviewer authority. Draft PR #160 explores this with V56, but V56 is not part of the merged schema until that work is completed and merged.
+External approval authority intersects an active `APPROVAL_REVIEW` grant with the exact current approval request/stage through an approvals-owned contract. Portal access, `PROJECT_READ`, `TASK_READ` or `TASK_COMMENT_CREATE` alone never implies reviewer authority, and approval review does not require task-list visibility.
 
 ## Production boundary
 

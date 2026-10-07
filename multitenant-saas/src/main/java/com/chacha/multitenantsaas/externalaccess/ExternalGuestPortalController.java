@@ -70,4 +70,24 @@ public class ExternalGuestPortalController {
                         "Guest task comment created",
                         portalService.createComment(sessionToken, taskId, request)));
     }
+
+    @GetMapping("/approvals")
+    public ResponseEntity<ApiResponse<ExternalAccessDtos.GuestApprovalReviewsResponse>> approvals(
+            @RequestHeader(SESSION_HEADER) String sessionToken) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Guest approval reviews fetched", portalService.approvals(sessionToken)));
+    }
+
+    @PostMapping("/approvals/{requestId}/decision")
+    public ResponseEntity<ApiResponse<ExternalAccessDtos.GuestApprovalDecisionResponse>>
+            decideApproval(
+                    @RequestHeader(SESSION_HEADER) String sessionToken,
+                    @PathVariable java.util.UUID requestId,
+                    @Valid @RequestBody ExternalAccessDtos.GuestApprovalDecisionRequest request) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Guest approval decision recorded",
+                        portalService.decideApproval(sessionToken, requestId, request)));
+    }
 }

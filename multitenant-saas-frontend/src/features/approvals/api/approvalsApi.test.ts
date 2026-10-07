@@ -8,6 +8,7 @@ vi.mock('../../../api/httpClient', () => ({
         get: vi.fn(),
         post: vi.fn(),
         put: vi.fn(),
+        delete: vi.fn(),
     },
 }))
 
@@ -78,5 +79,23 @@ describe('approvalsApi', () => {
             '/api/tenants/tenant-1/projects/project-1/approvals/requests/request-1/decision',
             { outcome: 'REJECT', comment: null },
         )
+    })
+
+    it('uses project-scoped routes for external reviewer assignment lifecycle', async () => {
+        vi.mocked(httpClient.get).mockImplementation(() => response([]))
+        vi.mocked(httpClient.post).mockImplementation(() =>
+            response({ id: 'assignment-1', grantId: 'grant-1' }),
+        )
+        vi.mocked(httpClient.delete).mockImplementation(() => response(null))
+
+        await approvalsApi.listExternalReviewers('tenant-1', 'project-1', 'request-1')
+        await approvalsApi.assignExternalReviewer('tenant-1', 'project-1', 'request-1', 'grant-1')
+        await approvalsApi.revokeExternalReviewer('tenant-1', 'project-1', 'request-1', 'grant-1')
+
+        const base =
+            '/api/tenants/tenant-1/projects/project-1/approvals/requests/request-1/external-reviewers'
+        expect(httpClient.get).toHaveBeenCalledWith(base)
+        expect(httpClient.post).toHaveBeenCalledWith(base, { grantId: 'grant-1' })
+        expect(httpClient.delete).toHaveBeenCalledWith(`${base}/grant-1`)
     })
 })
