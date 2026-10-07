@@ -22,6 +22,9 @@
 - Project Health / Risk Radar — #148
 - **Forms -> Workflow Engine — #152**
 - **Approval Workflows — #154**
+- **Client / Guest Portal foundation — #156**
+- **Client / Guest Portal guest comments — #159**
+- **Client / Guest Portal request-scoped external approvals — #160**
 
 ## Forms -> Workflow Engine — completed through #152
 
@@ -101,8 +104,8 @@ The older plan to move directly into bulk actions/CSV remains deliberately pause
 4. ✅ **Project Health / Risk Radar** — completed through #148.
 5. ✅ **Forms -> Workflow Engine** — completed through #152.
 6. ✅ **Approval Workflows** — completed through #154 with bounded human checkpoints, reviewer re-authorization and same-execution workflow resume.
-7. 🚧 **Client / Guest Portal — ACTIVE NOW** — bounded external visibility, comments, review requests and approvals without broad tenant membership.
-8. **Team Workload Engine** — capacity planning, overload detection and reassignment support without employee-surveillance scoring.
+7. ✅ **Client / Guest Portal** — completed through #156/#159/#160 with bounded external reads, guest comments and request-scoped external approvals.
+8. 🚧 **Team Workload Engine — ACTIVE NEXT** — capacity planning, overload detection and reassignment support without employee-surveillance scoring.
 9. **Workspace Knowledge Graph** — permission-aware graph connecting projects, tasks, people, decisions, documents and dependencies.
 10. **AI / Agent Teammates** — bounded agent work only after workflow, knowledge and authorization context are mature; human checkpoints remain mandatory for consequential actions.
 
@@ -122,9 +125,9 @@ V53 is now the immutable migration boundary. Public/guest approvals, escalation,
 
 Detailed contract: `guides/approval_workflows.md`.
 
-## Feature 7 — Client / Guest Portal — ACTIVE
+## Feature 7 — Client / Guest Portal — completed through #160
 
-The portal should provide bounded external collaboration without making clients/guests broad tenant members.
+Delivered scope includes the external-access/grant/session foundation (#156), bounded create-only guest task comments (#159), and request-scoped external approval review (#160).
 
 ### First-slice product scope
 
@@ -156,8 +159,16 @@ A guest is not a tenant member. Stored grants are explicit capabilities, not RBA
 - no public arbitrary search, user directory, billing/admin or workflow-management surface
 - revocation/expiry must invalidate future access even with stale browser state
 - portal access alone is not approval authority
+- `APPROVAL_REVIEW` is independent of `TASK_READ`; external approvers need not receive the task list
+- external approval requires exact active grant + current request-stage assignment
 - public endpoints require anti-enumeration, rate-limit and abuse protections
-- new persistence starts at V54+; V53 and earlier remain immutable
+- merged portal persistence ends at V56; V56 and earlier remain immutable and later persistence starts at V57+
+
+## Portal closeout
+
+The external-approval slice adds an approval-owned review contract, exact current-stage guest assignment, immutable external decision provenance, bounded guest approve/reject UI and focused regression coverage for revoked/wrong/unassigned grants, scope substitution and replayed decisions.
+
+There are currently no open GitHub issues. Parked roadmap items remain documentation-tracked until promoted into committed implementation work.
 
 ## Collaborative Whiteboard — optional later live-collaboration slice
 
