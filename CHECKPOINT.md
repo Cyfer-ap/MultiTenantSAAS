@@ -1,8 +1,8 @@
 # MultiTenantSAAS — Current Checkpoint
 
-Updated: 2026-09-23
+Updated: 2026-10-08
 Repository: `Cyfer-ap/MultiTenantSAAS`
-Branch target: `main` after PR #159 merge
+Branch target: `main` after PR #160 merge
 
 This file is the **single repository-side source of truth for current project status**. Do not create duplicate progress/checkpoint mirrors.
 
@@ -29,8 +29,9 @@ Delivered milestones now include:
 - **Approval Workflows — #154**
 - **Client / Guest Portal foundation — #156**
 - **Client / Guest Portal guest comments — #159**
+- **Client / Guest Portal request-scoped external approvals — #160**
 
-**Client / Guest Portal remains the active feature.** The grant/session boundary, project/task read UI and bounded guest task comments are complete; external approval is the remaining portal slice.
+**Client / Guest Portal is complete through request-scoped external approvals #160.** Guests remain outside tenant membership/RBAC; external visibility, comments and approval authority are explicit grant capabilities routed through owning-domain contracts.
 
 Live whiteboard presence/cursors remain an optional later enhancement and do not block the committed sequence. Bulk/CSV, broader custom fields, knowledge/documents and analytics remain parked unless explicitly reprioritized.
 
@@ -66,11 +67,11 @@ Project managers with `project.member.manage` can create/list/revoke guest grant
 
 The standalone `/guest` route uses the public HTTP client only. The invitation secret is read from the URL fragment and scrubbed after exchange; the issued opaque guest session is kept in browser `sessionStorage`, separate from tenant auth storage. The guest UI exposes only the granted project summary and optional task list.
 
-### Remaining Client / Guest Portal slice
+### Completed Client / Guest Portal boundary
 
-The foundation remains the credential/read boundary. Guest comments are completed in #159 below. The only remaining portal slice is external approval through an approval-owned narrow contract that intersects an active grant with the exact approval request/stage scope.
+The foundation remains the credential/read boundary. Guest comments are completed in #159 and request-scoped external approval is completed in #160. Approval access is an independent typed capability and does not require task-list visibility.
 
-Do not fake guests as `AppUser` authors/reviewers and do not add guest exceptions to ordinary tenant APIs.
+Guests are never represented as `AppUser` authors/reviewers and no guest exception is added to ordinary tenant APIs.
 
 Detailed contract: `guides/client_guest_portal.md`.
 
@@ -103,6 +104,32 @@ The task-collaboration-owned adapter revalidates tenant/project/task scope and p
 Guest-authored comments are visible in the normal internal task thread with an explicit Guest label, but tenant comment APIs reject edit/delete/pin/unpin/threaded-reply behavior for those records. Attachments and mentions are also excluded.
 
 The guest UI loads comments on demand per task and uses the public guest HTTP client/session boundary only.
+
+Detailed contract: `guides/client_guest_portal.md`.
+
+## Client / Guest Portal external approvals checkpoint — #160
+
+External approval completes the portal milestone without turning guest access into tenant authority.
+
+### Ownership and authority
+
+```text
+externalaccess
+    -> ExternalApprovalReviewPort
+    -> approvals-owned request/stage decision behavior
+
+approvals
+    -> ApprovalExternalGrantPort
+    -> externalaccess-owned active grant/capability validation
+```
+
+The typed `APPROVAL_REVIEW` capability is independent of `TASK_READ`: an external reviewer can receive only the project summary plus explicitly assigned approval requests without being given the shared task list. A project manager must explicitly bind an approval-capable grant to the **current request stage** before that guest can see or decide it.
+
+Every public approval list/decision request revalidates the guest session and active grant. Wrong tenant/project/request/stage substitution, revoked/expired grants, unassigned grants, replayed/completed decisions and stale stages are rejected before a decision is accepted.
+
+V56 adds request-stage external reviewer assignments and explicit decision actor provenance. External decisions persist the exact grant id plus guest name/email snapshots and retain existing approval locking/replay protection and typed `APPROVED` / `REJECTED` workflow resume behavior.
+
+The internal Approval Workflows history surface can assign/remove eligible external reviewer grants; the standalone guest portal lists only assigned pending reviews and exposes bounded approve/reject controls.
 
 Detailed contract: `guides/client_guest_portal.md`.
 
@@ -228,7 +255,7 @@ Detailed contract: `guides/recurring_work_and_templates.md`.
 
 ## Database checkpoint
 
-Portable PostgreSQL Flyway migrations extend through **V55**:
+Portable PostgreSQL Flyway migrations extend through **V56**:
 
 ```text
 V45 personal workspace favorites/recent items
@@ -242,15 +269,16 @@ V52 project forms/fields/submissions
 V53 approval definitions/stages/reviewers + durable requests/snapshots; workflow approval branches/state
 V54 external access grants/capabilities + hashed guest sessions
 V55 typed external guest task-comment provenance + TASK_COMMENT_CREATE capability
+V56 request-scoped external approval reviewers + external decision provenance + APPROVAL_REVIEW capability
 ```
 
-Project Simulation and Risk Radar add no migration. **V55 is immutable after merge/application.** New persistence starts at **V56+**.
+Project Simulation and Risk Radar add no migration. **V56 is immutable after merge/application.** New persistence starts at **V57+**.
 
 ## Non-negotiable architecture rule
 
 > **New functionality must live in an explicit domain module and interact with other domains through narrow services, contracts, or events — not by injecting five more services into existing god-services.**
 
-Current reference implementations include Search contributor contracts, Personal Workspace resolvers, My Work source ports, Saved Views validation SPI, Calendar deadline sources, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, Project Simulation source ports, Whiteboard project/task ports, Risk Radar task/dependency sources, Forms project/task/workflow ports, Approval checkpoint/reviewer/resolution contracts and Client/Guest Portal project/task projection plus task-collaboration external-comment ports.
+Current reference implementations include Search contributor contracts, Personal Workspace resolvers, My Work source ports, Saved Views validation SPI, Calendar deadline sources, Task Relationships gateways, `TaskCreationPort`, `ProjectCreationPort`, workflow events/`TaskAutomationMutationPort`, Project Simulation source ports, Whiteboard project/task ports, Risk Radar task/dependency sources, Forms project/task/workflow ports, Approval checkpoint/reviewer/resolution contracts and Client/Guest Portal project/task/comment/external-approval ports.
 
 ## Provider status
 
@@ -282,13 +310,12 @@ Canonical assessment: `guides/ENGINEERING_STANDARDS.md`.
 
 Continue in this order:
 
-1. **Client / Guest Portal external approval — ACTIVE NEXT**
-2. Team Workload Engine
-3. Workspace Knowledge Graph
-4. AI / Agent Teammates
-5. resume parked backlog such as bulk actions/CSV, broader custom fields, knowledge/documents and broader analytics unless priorities are explicitly changed
+1. **Team Workload Engine — ACTIVE NEXT**
+2. Workspace Knowledge Graph
+3. AI / Agent Teammates
+4. resume parked backlog such as bulk actions/CSV, broader custom fields, knowledge/documents and broader analytics unless priorities are explicitly changed
 
-Client / Guest Portal now provides the external-access foundation plus bounded guest task comments. The remaining external-approval slice must preserve the same boundary: guests stay outside tenant membership/RBAC, approval authority must be explicitly granted and request-scoped, and every decision must revalidate the active grant against the owning approval request.
+Client / Guest Portal is complete through #160. Any later external-collaboration expansion must preserve the same grant/session boundary and owning-domain contracts.
 
 ## Deferred platform work
 
