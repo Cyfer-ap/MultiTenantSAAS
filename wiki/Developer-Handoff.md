@@ -6,9 +6,9 @@ Use this page as the reader-facing Wiki pointer for resuming development. Reposi
 
 **Differentiated Work Platform Sequence**
 
-Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine and **Approval Workflows** are established through PR #154.
+Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows and the **Client / Guest Portal** are established through PR #160.
 
-**Client / Guest Portal is active next.** Live whiteboard presence/cursors remain a later optional enhancement rather than a prerequisite for the next committed feature.
+**Team Workload Engine is active next.** Live whiteboard presence/cursors remain a later optional enhancement rather than a prerequisite.
 
 ## Read first
 
@@ -31,7 +31,8 @@ Inside the repository:
 7. `guides/visual_workflow_builder.md`
 8. `guides/forms_workflow_engine.md`
 9. `guides/approval_workflows.md`
-10. `guides/project_simulation.md`
+10. `guides/client_guest_portal.md`
+11. `guides/project_simulation.md`
 11. `guides/collaborative_whiteboard.md`
 12. `guides/project_risk_radar.md`
 13. the focused guide for the domain being changed
@@ -89,34 +90,17 @@ The internal approval workspace includes definition/stage configuration, reviewe
 
 Detailed rules live in `guides/approval_workflows.md`.
 
-## Resume here — Client / Guest Portal
+## Client / Guest Portal closeout — #160
 
-Create a separate external-access domain; do not represent guests as tenant members.
+Merged portal persistence now extends through V56: V54 grants/capabilities/hashed guest sessions, V55 explicit guest-comment provenance and V56 request-scoped external approval reviewers/decision provenance.
 
-Initial goals:
+External approval authority is explicit and stage-scoped. `APPROVAL_REVIEW` is independent of `TASK_READ`; every public list/decision request revalidates the active grant/session, and decisions remain inside the approvals domain with immutable guest/grant provenance.
 
-1. bounded, revocable tenant/project/resource-scoped external grants
-2. hashed/rotatable invitation or access credentials and separate guest sessions
-3. a deliberately small grant-scoped project/task/review read model
-4. explicit comment/review mutation ports rather than direct repository writes
-5. external approval only through an approval-owned contract that intersects grant scope with the approval request
-6. deterministic expiry/revocation/session invalidation and immutable provenance
-7. anti-enumeration, cross-tenant/resource-substitution protection, rate limits and abuse controls
-8. deterministic tests for grant scope, revocation, stale sessions, public endpoint isolation and external decision boundaries
-9. new persistence, if needed, starts at V54+
+## Resume here — Team Workload Engine
 
-Guardrails:
+Create an explicit workload domain and keep the first slice advisory/explainable. Consume authorized project/task/member state through narrow read contracts; do not infer hidden productivity, monitor employee behavior or turn task counts into an opaque people score.
 
-- external grants are capabilities, not tenant RBAC or project membership
-- a grant never exposes an entire tenant/project by default
-- guest identity is never accepted by normal tenant-authenticated APIs
-- every resource ID is re-bound to the active grant before read/mutation
-- revoke/expire cuts off subsequent access even with a retained browser session
-- external comments/reviews/approvals retain guest and grant provenance
-- portal access alone never implies approval reviewer authority
-- no public arbitrary search, tenant/user directory, admin, billing or workflow-management surface
-
-After Client / Guest Portal continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+After Team Workload Engine, continue with Workspace Knowledge Graph and AI / Agent Teammates. Parked backlog remains bulk/CSV, broader custom fields, knowledge/documents, broader analytics and optional live whiteboard presence/cursors; deferred platform work remains operations/DR and provider live-readiness.
 
 ## Preserve these system invariants
 
