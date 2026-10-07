@@ -20,6 +20,8 @@ For current project status and next work, use **`CHECKPOINT.md`** and **`HANDOFF
 - dedicated Work Automation workspace for recurring rules, task/project templates, visual workflows and internal Forms
 - tenant-scoped Visual Workflow Builder with validated trigger/condition/action graphs, permission-aware task actions and execution history
 - project-scoped internal Forms with bounded typed schemas, authenticated submissions, task creation through task-owned contracts and optional form-submitted workflow entry
+- project-scoped Approval Workflows with bounded reviewer stages, immutable decision provenance, current reviewer re-authorization and workflow pause/resume
+- Client / Guest Portal with revocable external grants, isolated guest sessions, bounded project/task reads, create-only guest task comments and request-scoped external approvals through owning-domain ports
 - project-scoped Project Simulation / What-If workspace for advisory due-date, assignee and dependency scenarios with downstream conflict/workload impact
 - project-scoped Collaborative Whiteboard with versioned persisted boards, draggable/resizable visual nodes/connectors, optimistic autosave/recovery and sticky/text-to-task conversion through task-owned creation
 - project-scoped **Project Health / Risk Radar** with explainable overdue, blocked, stale, unassigned-critical and dependency-bottleneck signals, explicit bounds and no employee scoring
@@ -93,6 +95,7 @@ This rule is part of the persistent repository contract in `AGENTS.md`.
 - Visual Workflow Builder through explicit workflow ownership, task-domain events and task-owned mutation contract
 - Forms -> Workflow Engine through explicit `forms` ownership, task-owned creation and workflow-owned form-submission entry
 - Approval Workflows through explicit `approvals` ownership, reviewer re-authorization and workflow checkpoint/resume contracts
+- Client / Guest Portal through explicit `externalaccess` ownership, grant-scoped projection contracts, task-owned guest-comment mutation and approval-owned external-review decisions
 - Project Simulation / What-If Engine through explicit `projectsimulation` ownership and narrow task/dependency sources
 - Collaborative Whiteboard through explicit `whiteboards` ownership, optimistic concurrency and task-owned conversion
 - Project Health / Risk Radar through explicit `projectrisk` ownership and narrow task/dependency sources
@@ -101,9 +104,9 @@ Stripe is the validated deployed Test Mode payment path. Razorpay application/ca
 
 ## Database
 
-Production schema evolution is owned by Flyway. Shared PostgreSQL migrations extend through **V53**. Never rewrite an applied migration; later persistence begins at **V54+**.
+Production schema evolution is owned by Flyway. Shared PostgreSQL migrations extend through **V56**. Never rewrite an applied migration; later persistence begins at **V57+**.
 
-Recent product migrations include V45 personal-workspace favorites/recent items, V46 saved views, V47 task parent/dependency/label relationships, V48 recurring task definitions/occurrences plus project task templates, V49 tenant project templates with bounded starter-task snapshots, V50 visual workflow definitions/nodes/edges/executions, V51 project whiteboards/nodes/connectors, V52 project form definitions/fields/submissions, and V53 approval definitions/stages/reviewer snapshots plus workflow approval branches/state.
+Recent product migrations include V45 personal-workspace favorites/recent items, V46 saved views, V47 task parent/dependency/label relationships, V48 recurring task definitions/occurrences plus project task templates, V49 tenant project templates with bounded starter-task snapshots, V50 visual workflow definitions/nodes/edges/executions, V51 project whiteboards/nodes/connectors, V52 project form definitions/fields/submissions, V53 approval definitions/stages/reviewer snapshots plus workflow approval branches/state, V54 external-access grants/capabilities/guest sessions, V55 explicit external-guest task-comment provenance, and V56 request-scoped external approval reviewers plus external decision provenance.
 
 Project Simulation and Risk Radar are read-model/orchestration features and add no migration.
 
@@ -139,6 +142,8 @@ Use `.env.production.example` as the deployment-variable inventory. Never commit
 - `guides/recurring_work_and_templates.md` — work-generation contracts
 - `guides/visual_workflow_builder.md` — workflow graph/runtime/canvas contract
 - `guides/forms_workflow_engine.md` — Forms intake/task/workflow contract
+- `guides/approval_workflows.md` — approval definitions, reviewer authority and workflow checkpoint/resume contract
+- `guides/client_guest_portal.md` — external grant/session, guest read/comment and external-review boundary
 - `guides/project_simulation.md` — advisory What-If simulation contract
 - `guides/collaborative_whiteboard.md` — whiteboard persistence/workspace contract
 - `guides/project_risk_radar.md` — Risk Radar signal/bounds/UI contract
@@ -151,7 +156,7 @@ The Wiki is automatically validated and published from merged `main` by `.github
 
 ## Current product direction
 
-Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine and **Approval Workflows are complete**. **Client / Guest Portal is active next**, followed by Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine and **Approval Workflows are complete**. The **Client / Guest Portal is complete through request-scoped external approvals #160**. **Team Workload Engine is active next**, followed by Workspace Knowledge Graph and AI / Agent Teammates.
 
 Live whiteboard presence/cursors remain a later optional collaboration enhancement. Bulk actions/CSV, broader custom fields, knowledge/documents and broader analytics remain parked backlog unless priorities are explicitly changed.
 
