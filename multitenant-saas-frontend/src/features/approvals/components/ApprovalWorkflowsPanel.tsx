@@ -26,6 +26,8 @@ import {
 } from '@mui/material'
 import { useState } from 'react'
 
+import { externalAccessApi } from '../../client-guest-portal/api/externalAccessApi'
+import type { ExternalAccessGrant } from '../../client-guest-portal/types/externalAccess'
 import { projectMembersApi } from '../../projects/api/projectMembersApi'
 import type { ProjectMember } from '../../projects/types/projects'
 import { approvalsApi } from '../api/approvalsApi'
@@ -109,6 +111,132 @@ function requestLabel(request: ApprovalRequestSummary) {
         : `Task ${request.taskId.slice(0, 8)}`
 }
 
+function ExternalReviewerAssignment({
+    tenantId,
+    projectId,
+    requestId,
+    grants,
+}: {
+    tenantId: string
+    projectId: string
+    requestId: string
+    grants: ExternalAccessGrant[]
+}) {
+    const queryClient = useQueryClient()
+    const [selectedGrantId, setSelectedGrantId] = useState('')
+    const reviewersKey = ['approval-external-reviewers', tenantId, projectId, requestId] as const
+    const eligibleGrants = grants.filter(
+        (grant) =>
+            grant.capabilities.includes('APPROVAL_REVIEW') &&
+            grant.state !== 'REVOKED' &&
+            grant.state !== 'EXPIRED',
+    )
+
+    const reviewersQuery = useQuery({
+        queryKey: reviewersKey,
+        queryFn: () => approvalsApi.listExternalReviewers(tenantId, projectId, requestId),
+    })
+
+    const assignMutation = useMutation({
+        mutationFn: (grantId: string) =>
+            approvalsApi.assignExternalReviewer(tenantId, projectId, requestId, grantId),
+        onSuccess: async () => {
+            setSelectedGrantId('')
+            await queryClient.invalidateQueries({ queryKey: reviewersKey })
+        },
+    })
+
+    const revokeMutation = useMutation({
+        mutationFn: (grantId: string) =>
+            approvalsApi.revokeExternalReviewer(tenantId, projectId, requestId, grantId),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: reviewersKey })
+        },
+    })
+
+    const assignedGrantIds = new Set(reviewersQuery.data?.map((reviewer) => reviewer.grantId) ?? [])
+    const availableGrants = eligibleGrants.filter((grant) => !assignedGrantIds.has(grant.id))
+
+    return (
+        <Box sx={{ mt: 1.5 }}>
+            <Divider sx={{ mb: 1.5 }} />
+            <Stack spacing={1.25}>
+                <Typography sx={{ fontWeight: 600 }} variant="body2">
+                    External reviewers
+                </Typography>
+
+                {reviewersQuery.data?.map((reviewer) => (
+                    <Stack
+                        key={reviewer.id}
+                        direction={{ xs: 'column', sm: 'row' }}
+                        spacing={1}
+                        sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between' }}
+                    >
+                        <Typography variant="body2">
+                            {reviewer.guestName} ({reviewer.guestEmail})
+                        </Typography>
+                        <Button
+                            color="error"
+                            disabled={revokeMutation.isPending}
+                            onClick={() => revokeMutation.mutate(reviewer.grantId)}
+                            size="small"
+                        >
+                            Remove
+                        </Button>
+                    </Stack>
+                ))}
+
+                {!reviewersQuery.isLoading && reviewersQuery.data?.length === 0 ? (
+                    <Typography color="text.secondary" variant="body2">
+                        No external reviewer is assigned to the current stage.
+                    </Typography>
+                ) : null}
+
+                {availableGrants.length > 0 ? (
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                        <FormControl fullWidth size="small">
+                            <InputLabel id={`external-reviewer-${requestId}`}>
+                                Guest approval grant
+                            </InputLabel>
+                            <Select
+                                label="Guest approval grant"
+                                labelId={`external-reviewer-${requestId}`}
+                                onChange={(event) => setSelectedGrantId(event.target.value)}
+                                value={selectedGrantId}
+                            >
+                                {availableGrants.map((grant) => (
+                                    <MenuItem key={grant.id} value={grant.id}>
+                                        {grant.guestName} ({grant.guestEmail})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <Button
+                            disabled={!selectedGrantId || assignMutation.isPending}
+                            onClick={() => assignMutation.mutate(selectedGrantId)}
+                            variant="outlined"
+                        >
+                            Assign
+                        </Button>
+                    </Stack>
+                ) : (
+                    <Typography color="text.secondary" variant="caption">
+                        Create an active guest grant with Approval review capability to assign an
+                        external reviewer.
+                    </Typography>
+                )}
+
+                {reviewersQuery.isError || assignMutation.isError || revokeMutation.isError ? (
+                    <Alert severity="error">
+                        External reviewer assignment could not be updated. The request stage or
+                        guest grant may have changed.
+                    </Alert>
+                ) : null}
+            </Stack>
+        </Box>
+    )
+}
+
 export function ApprovalWorkflowsPanel({
     tenantId,
     projectId,
@@ -134,6 +262,11 @@ export function ApprovalWorkflowsPanel({
     const historyQuery = useQuery({
         queryKey: historyKey,
         queryFn: () => approvalsApi.history(tenantId, projectId),
+    })
+    const externalGrantsQuery = useQuery({
+        queryKey: ['approval-external-grants', tenantId, projectId],
+        queryFn: () => externalAccessApi.listGrants(tenantId, projectId),
+        enabled: canManage,
     })
     const membersQuery = useQuery({
         queryKey: ['approval-project-members', tenantId, projectId],
@@ -623,6 +756,14 @@ export function ApprovalWorkflowsPanel({
                                 </Box>
                                 <Chip label={request.status} />
                             </Stack>
+                            {canManage && request.status === 'PENDING' ? (
+                                <ExternalReviewerAssignment
+                                    grants={externalGrantsQuery.data?.content ?? []}
+                                    projectId={projectId}
+                                    requestId={request.id}
+                                    tenantId={tenantId}
+                                />
+                            ) : null}
                         </Paper>
                     ))}
                     {!historyQuery.isLoading && historyQuery.data?.content.length === 0 ? (
@@ -631,7 +772,10 @@ export function ApprovalWorkflowsPanel({
                 </Stack>
             ) : null}
 
-            {definitionsQuery.isError || inboxQuery.isError || historyQuery.isError ? (
+            {definitionsQuery.isError ||
+            inboxQuery.isError ||
+            historyQuery.isError ||
+            externalGrantsQuery.isError ? (
                 <Alert severity="error">Unable to load one or more approval surfaces.</Alert>
             ) : null}
         </Stack>
