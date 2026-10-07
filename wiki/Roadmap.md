@@ -159,7 +159,7 @@ A guest is not a tenant member. Stored grants are explicit capabilities, not RBA
 - revocation/expiry must invalidate future access even with stale browser state
 - portal access alone is not approval authority
 - public endpoints require anti-enumeration, rate-limit and abuse protections
-- new persistence starts at V54+; V53 and earlier remain immutable
+- merged portal persistence currently ends at V55; any external-approval persistence starts at V56+ and V55 or earlier remain immutable
 
 ## Current delivery lag / execution state
 
