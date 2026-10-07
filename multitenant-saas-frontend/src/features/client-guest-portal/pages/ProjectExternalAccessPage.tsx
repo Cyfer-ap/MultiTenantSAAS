@@ -200,7 +200,6 @@ export function ProjectExternalAccessPage() {
                                     setShareTasks(checked)
                                     if (!checked) {
                                         setAllowComments(false)
-                                        setAllowApprovals(false)
                                     }
                                 }}
                             />
@@ -223,7 +222,6 @@ export function ProjectExternalAccessPage() {
                         control={
                             <Checkbox
                                 checked={allowApprovals}
-                                disabled={!shareTasks}
                                 onChange={(event) => setAllowApprovals(event.target.checked)}
                             />
                         }
