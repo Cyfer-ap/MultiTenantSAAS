@@ -41,7 +41,7 @@ PostgreSQL
 
 ## Migration invariant
 
-The shared portable chain begins at V18 and currently extends through **V52**.
+The shared portable chain begins at V18 and currently extends through **V55**.
 
 Recent work-management/product migrations:
 
@@ -53,8 +53,11 @@ Recent work-management/product migrations:
 - V50 workflow definitions/nodes/edges/executions
 - V51 project whiteboards/nodes/connectors
 - V52 project form definitions/fields/submissions
+- V53 approval definitions/stages/reviewers, durable request snapshots and workflow approval state
+- V54 external-access grants/capabilities and hashed guest sessions
+- V55 explicit external-guest task-comment provenance and scoped constraints
 
-Never rewrite an already-applied migration. **V52 is immutable; new persistence starts at V53+.**
+Never rewrite an already-applied migration. **V55 is immutable; new merged persistence starts at V56+.** Draft PR #160 may contain V56 work, but it is not part of the merged migration chain until that work lands.
 
 ## Production schema ownership
 

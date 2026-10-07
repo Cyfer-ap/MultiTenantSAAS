@@ -65,9 +65,9 @@ Historical planning/recovery files may remain for provenance, but they are not c
 
 The committed differentiated sequence now includes the **Client / Guest Portal foundation (#156)** and **bounded guest comments (#159)**. The broader portal milestone remains active only for external approval.
 
-Portable migrations extend through **V55** after #159 merges. V55 is immutable after application; later persistence starts at **V56+**.
+Portable migrations extend through **V55** on merged `main`. V55 is immutable after application; later merged persistence starts at **V56+**.
 
-**Client / Guest Portal external approval is the active next slice.** After it completes the portal milestone, continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+**Client / Guest Portal external approval is the active remaining slice and is currently in draft PR #160, not on `main`.** After it completes the portal milestone, continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
 
 Live whiteboard presence/cursors remain a later optional collaboration enhancement. Bulk actions/CSV, broader custom fields, knowledge/documents and analytics remain valuable but parked behind the committed differentiated sequence unless explicitly reprioritized.
 

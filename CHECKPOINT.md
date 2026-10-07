@@ -1,8 +1,8 @@
 # MultiTenantSAAS — Current Checkpoint
 
-Updated: 2026-09-23
+Updated: 2026-10-07
 Repository: `Cyfer-ap/MultiTenantSAAS`
-Branch target: `main` after PR #159 merge
+Branch target: `main` at PR #159; draft PR #160 is not merged
 
 This file is the **single repository-side source of truth for current project status**. Do not create duplicate progress/checkpoint mirrors.
 
@@ -30,7 +30,16 @@ Delivered milestones now include:
 - **Client / Guest Portal foundation — #156**
 - **Client / Guest Portal guest comments — #159**
 
-**Client / Guest Portal remains the active feature.** The grant/session boundary, project/task read UI and bounded guest task comments are complete; external approval is the remaining portal slice.
+**Client / Guest Portal remains the active feature.** The grant/session boundary, project/task read UI and bounded guest task comments are complete on `main`; request-scoped external approval is the remaining portal slice and currently exists only in draft PR #160.
+
+### Delivery / lag snapshot — 2026-10-07
+
+- `main` is still at merge commit `d87d43d44b1f54988c338320d469e4af0840ed29` for #159; no later product slice has merged.
+- PR #160 (`feature/client-guest-external-approval`) is open as a draft, last updated 2026-09-23. It is not a delivered capability.
+- The draft proposes typed external approval authority, an approval-owned external-review contract and V56 persistence, but its own remaining-work list still includes backend contract/security coverage, the bounded guest approval UI, canonical documentation and final green gates.
+- The last recorded Security, CI, Container CI and Qodana runs for the PR head concluded `action_required`; there is therefore no green release signal for #160.
+- **V56 is draft-only until #160 (or a successor) merges.** The immutable migration ceiling on `main` remains V55.
+- There are currently no open GitHub issues. Product backlog is therefore roadmap/document tracked rather than issue tracked; convert backlog items into issues when they become committed implementation work.
 
 Live whiteboard presence/cursors remain an optional later enhancement and do not block the committed sequence. Bulk/CSV, broader custom fields, knowledge/documents and analytics remain parked unless explicitly reprioritized.
 
@@ -282,7 +291,7 @@ Canonical assessment: `guides/ENGINEERING_STANDARDS.md`.
 
 Continue in this order:
 
-1. **Client / Guest Portal external approval — ACTIVE NEXT**
+1. **Client / Guest Portal external approval — IN PROGRESS in draft PR #160; not on `main`**
 2. Team Workload Engine
 3. Workspace Knowledge Graph
 4. AI / Agent Teammates

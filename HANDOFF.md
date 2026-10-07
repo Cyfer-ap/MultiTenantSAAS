@@ -1,6 +1,6 @@
 # MultiTenantSAAS — Development Handoff
 
-Updated: 2026-09-23
+Updated: 2026-10-07
 
 This is the **single repository-side resume document**. Current status lives in `CHECKPOINT.md`; architecture/quality rules live in `AGENTS.md` and `guides/ENGINEERING_STANDARDS.md`.
 
@@ -47,6 +47,8 @@ Major product milestones are complete through **Client / Guest Portal guest comm
 - Approval Workflows — #154
 - Client / Guest Portal foundation — #156
 - Client / Guest Portal guest comments — #159
+
+Active work is draft PR **#160 — request-scoped external approvals** on branch `feature/client-guest-external-approval`. It was last updated on 2026-09-23, is not merged, and has no green CI state; the last recorded CI/Security/Container/Qodana runs concluded `action_required`. Treat V56 and all external-approval behavior on that branch as unshipped until the PR (or a successor) is completed and merged.
 
 Portable PostgreSQL Flyway migrations extend through **V55**. Never modify V55 or earlier after merge/application; later persistence starts at **V56+**.
 
@@ -198,11 +200,20 @@ External guest comments are top-level and create-only. They can be read by the g
 
 Detailed rules: `guides/client_guest_portal.md`.
 
-## Resume here — Client / Guest Portal external approval
+## Resume here — complete draft PR #160
 
-Continue the **Client / Guest Portal** milestone with external approval only.
+Do **not** restart the external-approval slice from scratch. Resume `feature/client-guest-external-approval`, reconcile it with current `main`, and finish the remaining bounded external-approval work before starting another product feature.
 
-Next slice:
+Immediate completion checklist:
+
+1. finish backend contract/security tests for revoked or wrong grants, project/request/stage substitution, replay/completed requests and workflow resume
+2. finish the bounded guest approval frontend and keep all guest calls on the public guest client/session boundary
+3. recheck the approval-owned external-review contract, immutable guest/grant decision provenance and V56 schema assertions
+4. refresh feature documentation only for behavior that is actually present on the final branch
+5. obtain green Repository Hygiene, PostgreSQL/Flyway, backend, frontend, Security, Container CI, Qodana and Wiki Sync gates on the final current head
+6. mark #160 ready and merge only after the final head is green; after merge, advance the migration ceiling to V56 in canonical docs
+
+Architecture requirements for the slice:
 
 1. add a typed external approval capability; do not reuse a broad portal mutation permission
 2. define an approval-owned narrow external-decision port/contract

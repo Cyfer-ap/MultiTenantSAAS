@@ -4,7 +4,7 @@
 
 Client / Guest Portal introduces bounded external collaboration without converting clients or guests into tenant members.
 
-The portal now has two completed slices: the external-access security/read boundary and bounded create-only guest task comments. External approval remains the next slice.
+The portal has two merged slices on `main`: the external-access security/read boundary and bounded create-only guest task comments. Request-scoped external approval is the remaining slice; draft PR #160 contains partial implementation work but is not merged or release-validated.
 
 ## Ownership and boundaries
 
@@ -131,11 +131,17 @@ Guest comments are deliberately limited to top-level, create-only comments. Gues
 
 Tenant mutation paths reject editing, deletion, pinning/unpinning and threaded replies for external guest comments. Attachments and mentions are also rejected/excluded in this slice.
 
+## Draft external approval status — not on `main`
+
+As of 2026-10-07, PR #160 (`feature/client-guest-external-approval`) is still an open draft last updated on 2026-09-23. The branch proposes a typed external approval capability, an approval-owned external-review contract, explicit request/stage-to-grant assignment, immutable external decision provenance and V56 persistence.
+
+Do not document those items as delivered yet. The PR still requires its remaining backend contract/security coverage, bounded guest approval frontend, final documentation reconciliation and green CI/PostgreSQL/frontend/Security/Container/Qodana gates. Until merge, the production/merged migration ceiling remains V55.
+
 ## Deliberately excluded from the current portal
 
 Not yet exposed:
 
-- external approval decisions,
+- external approval decisions on merged `main` (draft #160 is not yet delivered),
 - guest comment editing/deleting/threaded replies,
 - guest comment mentions or attachments,
 - attachments/downloads,
