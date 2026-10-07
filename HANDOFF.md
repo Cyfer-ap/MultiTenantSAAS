@@ -1,6 +1,6 @@
 # MultiTenantSAAS — Development Handoff
 
-Updated: 2026-09-23
+Updated: 2026-10-08
 
 This is the **single repository-side resume document**. Current status lives in `CHECKPOINT.md`; architecture/quality rules live in `AGENTS.md` and `guides/ENGINEERING_STANDARDS.md`.
 
@@ -23,7 +23,7 @@ This is the **single repository-side resume document**. Current status lives in 
 
 ## Current state
 
-Major product milestones are complete through **Client / Guest Portal guest comments #159**:
+Major product milestones are complete through **Client / Guest Portal request-scoped external approvals #160**:
 
 - billing/catalog — #106
 - tenant outbound webhooks — #112
@@ -47,8 +47,11 @@ Major product milestones are complete through **Client / Guest Portal guest comm
 - Approval Workflows — #154
 - Client / Guest Portal foundation — #156
 - Client / Guest Portal guest comments — #159
+- Client / Guest Portal request-scoped external approvals — #160
 
-Portable PostgreSQL Flyway migrations extend through **V55**. Never modify V55 or earlier after merge/application; later persistence starts at **V56+**.
+Client / Guest Portal is now complete through request-scoped external approvals. Guests remain outside tenant membership/RBAC; external approval authority is explicit, stage-scoped and independent of task-list visibility.
+
+Portable PostgreSQL Flyway migrations extend through **V56**. Never modify V56 or earlier after merge/application; later persistence starts at **V57+**.
 
 Stripe remains the validated deployed Test Mode billing path. Razorpay integration/catalog provisioning remains implemented while recurring Test Mode authorization is provider-sandbox blocked.
 
@@ -198,29 +201,39 @@ External guest comments are top-level and create-only. They can be read by the g
 
 Detailed rules: `guides/client_guest_portal.md`.
 
-## Resume here — Client / Guest Portal external approval
+## Client / Guest Portal external approvals — #160
 
-Continue the **Client / Guest Portal** milestone with external approval only.
+The request-scoped external-approval slice completes the Client / Guest Portal milestone.
 
-Next slice:
+Boundary:
 
-1. add a typed external approval capability; do not reuse a broad portal mutation permission
-2. define an approval-owned narrow external-decision port/contract
-3. allow an approval request/stage to explicitly opt into external review; ordinary approval definitions remain internal-only by default
-4. external authority must be the intersection of:
-   - an active, unexpired, unrevoked guest grant
-   - the same tenant/project
-   - the exact approval request/stage
-   - explicit external-review permission on that request/stage
-5. portal access or `PROJECT_READ` / `TASK_READ` / `TASK_COMMENT_CREATE` alone must never imply reviewer authority
-6. preserve immutable guest/grant decision provenance without manufacturing an `AppUser`
-7. preserve approval concurrency/replay protections and typed `APPROVED` / `REJECTED` workflow resume behavior
-8. keep approval mutation inside the approvals domain; `externalaccess` must not write approval repositories
-9. expose only request information necessary for the external reviewer; no reviewer directory, definition administration or workflow configuration
-10. add deterministic tests for revoked/expired grants, wrong project/request/stage substitution, duplicate decisions, completed requests and workflow resume
-11. if persistence changes are required, start at **V56+**; never edit V55 or earlier
+```text
+externalaccess
+    -> ExternalApprovalReviewPort
+    -> approvals-owned decision behavior
 
-After external approval completes the Client / Guest Portal milestone, continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+approvals
+    -> ApprovalExternalGrantPort
+    -> externalaccess-owned grant/capability validation
+```
+
+`APPROVAL_REVIEW` is explicit and independent of `TASK_READ`. Internal project managers assign an active approval-capable guest grant to the current approval stage; portal access or project/task/comment capabilities alone never imply reviewer authority.
+
+The public guest portal exposes only assigned pending reviews and bounded approve/reject controls. Every list/decision request revalidates the guest session and active grant. The approvals domain keeps mutation ownership, current-stage checks, locking/replay protection and workflow resume behavior.
+
+V56 adds external reviewer assignments plus explicit `TENANT_USER` / `EXTERNAL_GUEST` decision actor provenance. External decisions retain the exact grant id and guest name/email snapshots without creating an `AppUser`.
+
+Regression coverage locks revoked/expired grants, missing capability, cross-project/request substitution, wrong/unassigned stage/grant, completed-request replay, scoped public-client usage and guest/manager UI interactions.
+
+Detailed rules: `guides/client_guest_portal.md`.
+
+## Resume here — Team Workload Engine
+
+Client / Guest Portal is complete. Continue the committed sequence with **Team Workload Engine**.
+
+Preserve the established architecture contract: create an explicit workload domain, consume task/project/member state through narrow authorized read contracts, keep recommendations/advisory signals explainable, and do not introduce employee-surveillance or opaque productivity scoring.
+
+After Team Workload Engine, continue with Workspace Knowledge Graph and AI / Agent Teammates.
 
 ## Validation before merge
 
