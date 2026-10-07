@@ -6,9 +6,9 @@ Use this page as the reader-facing Wiki pointer for resuming development. Reposi
 
 **Differentiated Work Platform Sequence**
 
-Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine and **Approval Workflows** are established through PR #154.
+Search, Command Palette, Favorites/Recently Viewed, My Work, Saved Views, Dashboard, Calendar/Deadline View, Task Relationships/Task Planning, recurring work, project/task templates, Work Automation, Visual Workflow Builder, Project Simulation / What-If Engine, Collaborative Whiteboard, Project Health / Risk Radar, Forms -> Workflow Engine, Approval Workflows and the **Client / Guest Portal foundation + guest comments** are established through PR #159.
 
-**Client / Guest Portal is active next.** Live whiteboard presence/cursors remain a later optional enhancement rather than a prerequisite for the next committed feature.
+**Resume draft PR #160 for request-scoped external approval.** It is not merged and currently has no green CI state. Live whiteboard presence/cursors remain a later optional enhancement rather than a prerequisite.
 
 ## Read first
 
@@ -31,7 +31,8 @@ Inside the repository:
 7. `guides/visual_workflow_builder.md`
 8. `guides/forms_workflow_engine.md`
 9. `guides/approval_workflows.md`
-10. `guides/project_simulation.md`
+10. `guides/client_guest_portal.md`
+11. `guides/project_simulation.md`
 11. `guides/collaborative_whiteboard.md`
 12. `guides/project_risk_radar.md`
 13. the focused guide for the domain being changed
@@ -89,34 +90,20 @@ The internal approval workspace includes definition/stage configuration, reviewe
 
 Detailed rules live in `guides/approval_workflows.md`.
 
-## Resume here — Client / Guest Portal
+## Resume here — external approval draft #160
 
-Create a separate external-access domain; do not represent guests as tenant members.
+Do not recreate the already-merged portal foundation or guest-comment slice. Continue `feature/client-guest-external-approval` and finish the request-scoped external-approval slice.
 
-Initial goals:
+Current state:
 
-1. bounded, revocable tenant/project/resource-scoped external grants
-2. hashed/rotatable invitation or access credentials and separate guest sessions
-3. a deliberately small grant-scoped project/task/review read model
-4. explicit comment/review mutation ports rather than direct repository writes
-5. external approval only through an approval-owned contract that intersects grant scope with the approval request
-6. deterministic expiry/revocation/session invalidation and immutable provenance
-7. anti-enumeration, cross-tenant/resource-substitution protection, rate limits and abuse controls
-8. deterministic tests for grant scope, revocation, stale sessions, public endpoint isolation and external decision boundaries
-9. new persistence, if needed, starts at V54+
+- merged `main`: V54 grants/capabilities/hashed guest sessions and V55 explicit guest-comment provenance
+- draft #160: typed external approval authority, approval-owned external-review contract and V56 work
+- still required before merge: wrong/revoked grant and request/stage substitution tests, replay/completed-request coverage, bounded guest approval UI, final documentation reconciliation and green CI/PostgreSQL/frontend/Security/Container/Qodana/Wiki gates
+- V56 must not be treated as merged until the final PR head is green and lands
 
-Guardrails:
+Guardrails remain unchanged: guests are not tenant members/RBAC subjects; every public mutation revalidates the active grant/session; read/comment capability never implies approval authority; external decisions stay inside the approvals domain with immutable guest/grant provenance.
 
-- external grants are capabilities, not tenant RBAC or project membership
-- a grant never exposes an entire tenant/project by default
-- guest identity is never accepted by normal tenant-authenticated APIs
-- every resource ID is re-bound to the active grant before read/mutation
-- revoke/expire cuts off subsequent access even with a retained browser session
-- external comments/reviews/approvals retain guest and grant provenance
-- portal access alone never implies approval reviewer authority
-- no public arbitrary search, tenant/user directory, admin, billing or workflow-management surface
-
-After Client / Guest Portal continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+After Client / Guest Portal completes, continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates. Parked backlog remains bulk/CSV, broader custom fields, knowledge/documents, broader analytics and optional live whiteboard presence/cursors; deferred platform work remains operations/DR and provider live-readiness.
 
 ## Preserve these system invariants
 
