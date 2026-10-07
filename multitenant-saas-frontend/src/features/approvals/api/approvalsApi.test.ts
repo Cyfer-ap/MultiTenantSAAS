@@ -89,18 +89,8 @@ describe('approvalsApi', () => {
         vi.mocked(httpClient.delete).mockImplementation(() => response(null))
 
         await approvalsApi.listExternalReviewers('tenant-1', 'project-1', 'request-1')
-        await approvalsApi.assignExternalReviewer(
-            'tenant-1',
-            'project-1',
-            'request-1',
-            'grant-1',
-        )
-        await approvalsApi.revokeExternalReviewer(
-            'tenant-1',
-            'project-1',
-            'request-1',
-            'grant-1',
-        )
+        await approvalsApi.assignExternalReviewer('tenant-1', 'project-1', 'request-1', 'grant-1')
+        await approvalsApi.revokeExternalReviewer('tenant-1', 'project-1', 'request-1', 'grant-1')
 
         const base =
             '/api/tenants/tenant-1/projects/project-1/approvals/requests/request-1/external-reviewers'

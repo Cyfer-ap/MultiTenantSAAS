@@ -321,9 +321,7 @@ export function GuestPortalPage() {
 
     const canReadTasks = Boolean(sessionQuery.data?.capabilities.includes('TASK_READ'))
     const canComment = Boolean(sessionQuery.data?.capabilities.includes('TASK_COMMENT_CREATE'))
-    const canReviewApprovals = Boolean(
-        sessionQuery.data?.capabilities.includes('APPROVAL_REVIEW'),
-    )
+    const canReviewApprovals = Boolean(sessionQuery.data?.capabilities.includes('APPROVAL_REVIEW'))
 
     const tasksQuery = useQuery({
         queryKey: ['guest-portal-tasks', sessionToken],

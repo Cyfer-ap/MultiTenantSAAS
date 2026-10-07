@@ -38,8 +38,7 @@ class ApprovalExternalGrantAdapterTest {
         when(grantRepository.findByTenantIdAndProjectIdAndId(tenantId, projectId, grantId))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(
-                        () -> adapter.requireApprovalReviewGrant(tenantId, projectId, grantId))
+        assertThatThrownBy(() -> adapter.requireApprovalReviewGrant(tenantId, projectId, grantId))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessage("External access grant not found");
     }
