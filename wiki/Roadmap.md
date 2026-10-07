@@ -22,6 +22,8 @@
 - Project Health / Risk Radar — #148
 - **Forms -> Workflow Engine — #152**
 - **Approval Workflows — #154**
+- **Client / Guest Portal foundation — #156**
+- **Client / Guest Portal guest comments — #159**
 
 ## Forms -> Workflow Engine — completed through #152
 
@@ -101,7 +103,7 @@ The older plan to move directly into bulk actions/CSV remains deliberately pause
 4. ✅ **Project Health / Risk Radar** — completed through #148.
 5. ✅ **Forms -> Workflow Engine** — completed through #152.
 6. ✅ **Approval Workflows** — completed through #154 with bounded human checkpoints, reviewer re-authorization and same-execution workflow resume.
-7. 🚧 **Client / Guest Portal — ACTIVE NOW** — bounded external visibility, comments, review requests and approvals without broad tenant membership.
+7. 🚧 **Client / Guest Portal — IN PROGRESS** — foundation/project-task reads (#156) and bounded guest comments (#159) are merged; request-scoped external approval remains draft-only in #160.
 8. **Team Workload Engine** — capacity planning, overload detection and reassignment support without employee-surveillance scoring.
 9. **Workspace Knowledge Graph** — permission-aware graph connecting projects, tasks, people, decisions, documents and dependencies.
 10. **AI / Agent Teammates** — bounded agent work only after workflow, knowledge and authorization context are mature; human checkpoints remain mandatory for consequential actions.
@@ -122,9 +124,9 @@ V53 is now the immutable migration boundary. Public/guest approvals, escalation,
 
 Detailed contract: `guides/approval_workflows.md`.
 
-## Feature 7 — Client / Guest Portal — ACTIVE
+## Feature 7 — Client / Guest Portal — IN PROGRESS
 
-The portal should provide bounded external collaboration without making clients/guests broad tenant members.
+Merged delivery now includes the external-access/grant/session foundation (#156) and bounded create-only guest task comments (#159). Request-scoped external approval is the remaining portal slice and is not yet on `main`.
 
 ### First-slice product scope
 
@@ -158,6 +160,13 @@ A guest is not a tenant member. Stored grants are explicit capabilities, not RBA
 - portal access alone is not approval authority
 - public endpoints require anti-enumeration, rate-limit and abuse protections
 - new persistence starts at V54+; V53 and earlier remain immutable
+
+## Current delivery lag / execution state
+
+- Draft PR #160 (`feature/client-guest-external-approval`) has been open since 2026-09-23 without a later update. Its last recorded Security, CI, Container CI and Qodana runs concluded `action_required`, so it has no green validation state.
+- The PR body still lists backend contract/security tests, the bounded guest approval frontend, canonical documentation and final green gates as remaining work.
+- V56 exists only as draft work until external approval merges; `main` remains at V55.
+- There are currently no open GitHub issues. Parked roadmap items are therefore not yet issue-tracked implementation commitments.
 
 ## Collaborative Whiteboard — optional later live-collaboration slice
 
