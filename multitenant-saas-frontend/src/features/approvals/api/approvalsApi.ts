@@ -7,6 +7,7 @@ import type {
     ApprovalDefinitionSummary,
     ApprovalRequest,
     ApprovalRequestSummary,
+    ExternalApprovalReviewer,
 } from '../types/approvals'
 
 const basePath = (tenantId: string, projectId: string) =>
@@ -133,6 +134,41 @@ async function decide(
     return response.data.data
 }
 
+async function listExternalReviewers(
+    tenantId: string,
+    projectId: string,
+    requestId: string,
+): Promise<ExternalApprovalReviewer[]> {
+    const response = await httpClient.get<ApiResponse<ExternalApprovalReviewer[]>>(
+        `${basePath(tenantId, projectId)}/requests/${requestId}/external-reviewers`,
+    )
+    return response.data.data
+}
+
+async function assignExternalReviewer(
+    tenantId: string,
+    projectId: string,
+    requestId: string,
+    grantId: string,
+): Promise<ExternalApprovalReviewer> {
+    const response = await httpClient.post<ApiResponse<ExternalApprovalReviewer>>(
+        `${basePath(tenantId, projectId)}/requests/${requestId}/external-reviewers`,
+        { grantId },
+    )
+    return response.data.data
+}
+
+async function revokeExternalReviewer(
+    tenantId: string,
+    projectId: string,
+    requestId: string,
+    grantId: string,
+): Promise<void> {
+    await httpClient.delete(
+        `${basePath(tenantId, projectId)}/requests/${requestId}/external-reviewers/${grantId}`,
+    )
+}
+
 export const approvalsApi = {
     listDefinitions,
     getDefinition,
@@ -144,4 +180,7 @@ export const approvalsApi = {
     history,
     getRequest,
     decide,
+    listExternalReviewers,
+    assignExternalReviewer,
+    revokeExternalReviewer,
 }
