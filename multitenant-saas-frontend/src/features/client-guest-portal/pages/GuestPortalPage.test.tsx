@@ -39,7 +39,6 @@ describe('GuestPortalPage', () => {
 
         vi.spyOn(externalAccessApi, 'getGuestSession').mockResolvedValue({
             grantId: 'grant-1',
-            projectId: 'project-1',
             guestName: 'Client Reviewer',
             guestEmail: 'client@example.com',
             capabilities: ['PROJECT_READ', 'TASK_READ', 'APPROVAL_REVIEW'],
