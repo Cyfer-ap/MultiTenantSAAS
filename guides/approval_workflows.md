@@ -162,7 +162,7 @@ V1 intentionally excludes:
 - parallel approval stages,
 - approval-driven permission grants.
 
-External/client approval belongs behind the later Client / Guest Portal authentication and abuse boundary. Expiry, cancellation, reassignment and escalation require explicit lifecycle semantics before introduction.
+External/client approval is now available through the Client / Guest Portal boundary established by V54-V56. External authority is an explicit `APPROVAL_REVIEW` grant plus exact current request-stage assignment; portal access, task visibility and comment capability do not imply reviewer permission. Decisions remain approvals-owned and retain external grant/name/email provenance. Expiry, cancellation, reassignment and escalation still require explicit lifecycle semantics before introduction.
 
 ## Security invariants
 
