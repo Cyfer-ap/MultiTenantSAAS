@@ -44,7 +44,7 @@ When a fact changes, update the document that owns that fact rather than copying
 - `visual_workflow_builder.md` — V50 workflow graph, runtime/event boundaries, task mutation port, execution history and visual canvas contract
 - `forms_workflow_engine.md` — V52 bounded project intake forms, task-creation boundary, submission provenance and optional form-submitted workflow entry
 - `approval_workflows.md` — V53 project-scoped human approval definitions, immutable decision provenance, reviewer re-authorization and workflow pause/resume contract
-- `client_guest_portal.md` — V54 external grant/session boundary plus V55 bounded guest-comment capability/provenance and owning-domain ports
+- `client_guest_portal.md` — V54 grant/session boundary, V55 bounded guest comments and V56 request-scoped external approval contracts/provenance
 - `project_simulation.md` — advisory What-If baseline/simulation APIs, narrow source ports, scenario validation and private frontend workspace
 - `collaborative_whiteboard.md` — V51 project-scoped board/document persistence, optimistic concurrency, project/task ports, persisted visual workspace and node-to-task conversion contract
 - `project_risk_radar.md` — explainable Risk Radar signal model, bounds, narrow task/dependency sources, guardrails and project-facing read-only surface
@@ -63,11 +63,11 @@ Historical planning/recovery files may remain for provenance, but they are not c
 
 ## Current direction
 
-The committed differentiated sequence now includes the **Client / Guest Portal foundation (#156)** and **bounded guest comments (#159)**. The broader portal milestone remains active only for external approval.
+The committed differentiated sequence now includes the **completed Client / Guest Portal milestone (#156/#159/#160)**.
 
-Portable migrations extend through **V55** after #159 merges. V55 is immutable after application; later persistence starts at **V56+**.
+Portable migrations extend through **V56** after #160. V56 is immutable after application; later persistence starts at **V57+**.
 
-**Client / Guest Portal external approval is the active next slice.** After it completes the portal milestone, continue with Team Workload Engine, Workspace Knowledge Graph and AI / Agent Teammates.
+**Team Workload Engine is the active next slice.** After it, continue with Workspace Knowledge Graph and AI / Agent Teammates.
 
 Live whiteboard presence/cursors remain a later optional collaboration enhancement. Bulk actions/CSV, broader custom fields, knowledge/documents and analytics remain valuable but parked behind the committed differentiated sequence unless explicitly reprioritized.
 
