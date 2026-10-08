@@ -335,7 +335,11 @@ export function ProjectTemplatesPanel({
                             </Paper>
                         ))}
                         {saveMutation.isError ? (
-                            <Alert severity="error">Unable to save project template.</Alert>
+                            <Alert severity="error">
+                                {saveMutation.error instanceof Error && saveMutation.error.message
+                                    ? saveMutation.error.message
+                                    : 'Unable to save project template.'}
+                            </Alert>
                         ) : null}
                         <Stack direction="row" spacing={1}>
                             <Button

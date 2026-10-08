@@ -108,6 +108,30 @@ class ProjectTemplateServiceTest {
     }
 
     @Test
+    void createAllowsZeroStarterTasks() {
+        UUID tenantId = UUID.randomUUID();
+        UUID actorId = UUID.randomUUID();
+        AppUser actor = org.mockito.Mockito.mock(AppUser.class);
+        when(currentActorService.getRequiredActiveActor(tenantId, jwt)).thenReturn(actor);
+        when(actor.getId()).thenReturn(actorId);
+        when(templateRepository.save(any(ProjectTemplate.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(taskRepository.saveAll(any())).thenReturn(List.of());
+
+        ProjectTemplateDtos.UpsertRequest request =
+                new ProjectTemplateDtos.UpsertRequest(
+                        "Temp", "Project1", "test", ProjectStatus.PLANNING, List.of());
+
+        ProjectTemplateDtos.Response response = service().create(tenantId, request, jwt);
+
+        assertThat(response.name()).isEqualTo("Temp");
+        assertThat(response.projectNameSeed()).isEqualTo("Project1");
+        assertThat(response.initialStatus()).isEqualTo(ProjectStatus.PLANNING);
+        assertThat(response.tasks()).isEmpty();
+        verify(taskRepository).saveAll(List.of());
+    }
+
+    @Test
     void rejectsMoreThanFiftyTaskSnapshotsBeforePersistence() {
         List<ProjectTemplateDtos.TaskSnapshotRequest> tasks = new ArrayList<>();
         for (int index = 0; index < 51; index++) {
