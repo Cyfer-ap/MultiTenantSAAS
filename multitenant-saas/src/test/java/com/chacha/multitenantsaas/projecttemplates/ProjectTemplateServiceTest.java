@@ -120,11 +120,7 @@ class ProjectTemplateServiceTest {
 
         ProjectTemplateDtos.UpsertRequest request =
                 new ProjectTemplateDtos.UpsertRequest(
-                        "Temp",
-                        "Project1",
-                        "test",
-                        ProjectStatus.PLANNING,
-                        List.of());
+                        "Temp", "Project1", "test", ProjectStatus.PLANNING, List.of());
 
         ProjectTemplateDtos.Response response = service().create(tenantId, request, jwt);
 

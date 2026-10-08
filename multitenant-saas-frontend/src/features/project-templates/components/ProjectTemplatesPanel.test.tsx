@@ -37,10 +37,9 @@ function renderPanel() {
         )
     }
 
-    return render(
-        <ProjectTemplatesPanel tenantId="tenant-1" canRead canManage />,
-        { wrapper: Wrapper },
-    )
+    return render(<ProjectTemplatesPanel tenantId="tenant-1" canRead canManage />, {
+        wrapper: Wrapper,
+    })
 }
 
 const savedTemplate: ProjectTemplate = {
